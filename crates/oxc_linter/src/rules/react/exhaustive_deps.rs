@@ -455,7 +455,7 @@ impl Rule for ExhaustiveDeps {
 
                     if has_write_reference
                         || get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-                            .is_some_and(|decl| decl.scope_id() != component_scope_id)
+                            .is_some_and(|decl| ctx.semantic().scope_id(decl.id()) != component_scope_id)
                     {
                         continue;
                     }
@@ -865,7 +865,7 @@ fn is_identifier_a_dependency_impl<'a>(
     let scopes = semantic.scoping();
 
     // if the variable was declared in the root scope, then it's not a dependency
-    if declaration.scope_id() == scopes.root_scope_id() {
+    if semantic.scope_id(declaration.id()) == scopes.root_scope_id() {
         return false;
     }
 
@@ -882,7 +882,7 @@ fn is_identifier_a_dependency_impl<'a>(
     if scopes
         .scope_ancestors(component_scope_id)
         .skip(1)
-        .any(|parent| parent == declaration.scope_id())
+        .any(|parent| parent == semantic.scope_id(declaration.id()))
     {
         return false;
     }
@@ -896,7 +896,7 @@ fn is_identifier_a_dependency_impl<'a>(
     //   }, []);
     //  return <div />;
     // }
-    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == semantic.scope_id(declaration.id())) {
         return false;
     }
 

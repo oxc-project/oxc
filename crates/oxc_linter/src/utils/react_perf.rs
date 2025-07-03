@@ -60,7 +60,7 @@ where
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
-        if node.scope_id() == ctx.scoping().root_scope_id() {
+        if ctx.scoping().scope_id(node.id()) == ctx.scoping().root_scope_id() {
             return;
         }
 

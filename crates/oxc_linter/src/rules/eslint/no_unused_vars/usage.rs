@@ -780,7 +780,7 @@ impl<'a> Symbol<'_, 'a> {
     /// Get the [`ScopeId`] where a [`Reference`] is located.
     #[inline]
     fn get_ref_scope(&self, reference: &Reference) -> ScopeId {
-        self.nodes().get_node(reference.node_id()).scope_id()
+        self.scoping().scope_id(reference.node_id())
     }
 
     /// Get the [`Span`] covering the [`AstNode`] containing a [`Reference`].

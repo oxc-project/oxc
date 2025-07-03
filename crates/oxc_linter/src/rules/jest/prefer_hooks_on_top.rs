@@ -170,10 +170,10 @@ impl PreferHooksOnTop {
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Test)],
         ) {
-            hooks_context.insert(node.scope_id(), true);
+            hooks_context.insert(ctx.scoping().scope_id(node.id()), true);
         }
 
-        let Some((_, has_hook)) = hooks_context.get_key_value(&node.scope_id()) else {
+        let Some((_, has_hook)) = hooks_context.get_key_value(&ctx.scoping().scope_id(node.id())) else {
             return;
         };
 

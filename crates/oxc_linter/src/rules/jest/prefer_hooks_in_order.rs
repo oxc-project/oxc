@@ -156,16 +156,16 @@ impl Rule for PreferHooksInOrder {
             let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
                 parse_jest_fn_call(call_expr, possible_jest_node, ctx)
             else {
-                previous_hook_orders.remove(&node.scope_id());
+                previous_hook_orders.remove(&ctx.scoping().scope_id(node.id()));
                 continue;
             };
 
             if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
-                previous_hook_orders.remove(&node.scope_id());
+                previous_hook_orders.remove(&ctx.scoping().scope_id(node.id()));
                 continue;
             }
 
-            let previous_hook_order = previous_hook_orders.get(&node.scope_id());
+            let previous_hook_order = previous_hook_orders.get(&ctx.scoping().scope_id(node.id()));
 
             let hook_name = jest_fn_call.name.as_ref();
             let Some(hook_order) = get_hook_order(hook_name) else {
@@ -185,7 +185,7 @@ impl Rule for PreferHooksInOrder {
                     continue;
                 }
             }
-            previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
+            previous_hook_orders.insert(ctx.scoping().scope_id(node.id()), (hook_order, call_expr.span));
         }
     }
 }

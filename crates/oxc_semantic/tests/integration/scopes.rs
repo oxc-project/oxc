@@ -183,7 +183,7 @@ fn test_enums() {
         .iter()
         .find(|node| matches!(node.kind(), AstKind::Program(_)))
         .expect("No program node found");
-    assert_eq!(program.scope_id(), semantic.scoping().root_scope_id());
+    assert_eq!(semantic.scoping().scope_id(program.id()), semantic.scoping().root_scope_id());
 
     let (enum_node, enum_decl) = semantic
         .nodes()
@@ -195,13 +195,13 @@ fn test_enums() {
         .expect("Expected TS test case to have an enum declaration for A.");
 
     assert_eq!(
-        enum_node.scope_id(),
-        program.scope_id(),
+        semantic.scoping().scope_id(enum_node.id()),
+        semantic.scoping().scope_id(program.id()),
         "Expected `enum A` to be created in the top-level scope."
     );
     let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
     assert_ne!(
-        enum_node.scope_id(),
+        semantic.scoping().scope_id(enum_node.id()),
         enum_decl_scope_id,
         "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
     );

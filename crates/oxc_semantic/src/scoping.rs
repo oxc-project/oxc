@@ -62,6 +62,8 @@ pub struct Scoping {
 
     /// Maps a scope to its node id.
     scope_node_ids: IndexVec<ScopeId, NodeId>,
+    /// Maps a node ID to the scope ID it belongs to.
+    node_scope_ids: IndexVec<NodeId, ScopeId>,
 
     scope_flags: IndexVec<ScopeId, ScopeFlags>,
 
@@ -86,6 +88,7 @@ impl Default for Scoping {
             scope_parent_ids: IndexVec::new(),
             scope_build_child_ids: false,
             scope_node_ids: IndexVec::new(),
+            node_scope_ids: IndexVec::new(),
             scope_flags: IndexVec::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(allocator),
@@ -219,6 +222,22 @@ impl Scoping {
     #[inline]
     pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.symbol_scope_ids[symbol_id] = scope_id;
+    }
+
+    /// Get the [`ScopeId`] that a given `NodeId` belongs to.
+    #[inline]
+    pub fn scope_id(&self, node_id: NodeId) -> ScopeId {
+        self.node_scope_ids[node_id]
+    }
+
+    #[inline]
+    pub(crate) fn set_node_scope_id(&mut self, node_id: NodeId, scope_id: ScopeId) {
+        debug_assert_eq!(
+            self.node_scope_ids.next_idx(),
+            node_id,
+            "The node_id must be the next available NodeId."
+        );
+        self.node_scope_ids.push(scope_id);
     }
 
     #[inline]
@@ -843,6 +862,7 @@ impl Scoping {
             scope_parent_ids: self.scope_parent_ids.clone(),
             scope_build_child_ids: self.scope_build_child_ids,
             scope_node_ids: self.scope_node_ids.clone(),
+            node_scope_ids: self.node_scope_ids.clone(),
             scope_flags: self.scope_flags.clone(),
             cell: self.cell.with_dependent(|allocator, cell| {
                 let allocator = Allocator::with_capacity(allocator.used_bytes());

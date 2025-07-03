@@ -191,6 +191,11 @@ impl<'a> Semantic<'a> {
         self.scoping.symbol_scope_id(symbol_id)
     }
 
+    /// Get the [`ScopeId`] that a given `NodeId` belongs to.
+    pub fn scope_id(&self, node_id: NodeId) -> ScopeId {
+        self.scoping.scope_id(node_id)
+    }
+
     /// Get all resolved references for a symbol
     pub fn symbol_references(
         &self,

@@ -357,14 +357,13 @@ impl<'t> Mangler<'t> {
 
                 // If the symbol is declared by `var`, then it can be hoisted to
                 // parent, so we need to include the scope where it is declared.
-                // (for cases like `function foo() { { var x; let y; } }`)
-                let declared_scope_id =
-                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
+                let declared_scope_id = scoping
+                    .scope_id(ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).id());
 
                 // Calculate the scope ids that this symbol is alive in.
                 let lived_scope_ids = scoping
                     .get_resolved_references(symbol_id)
-                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id())
+                    .map(|reference| scoping.scope_id(reference.node_id()))
                     .chain([scope_id, declared_scope_id])
                     .flat_map(|used_scope_id| {
                         scoping.scope_ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)

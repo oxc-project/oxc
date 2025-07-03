@@ -141,7 +141,7 @@ impl RequireTopLevelDescribe {
     ) {
         let node = possible_jest_node.node;
         let scopes = ctx.scoping();
-        let is_top = scopes.scope_flags(node.scope_id()).is_top();
+        let is_top = scopes.scope_flags(scopes.scope_id(node.id())).is_top();
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -169,8 +169,8 @@ impl RequireTopLevelDescribe {
                     return;
                 }
 
-                let Some((_, count)) = describe_contexts.get_key_value(&node.scope_id()) else {
-                    describe_contexts.insert(node.scope_id(), 1);
+                let Some((_, count)) = describe_contexts.get_key_value(&scopes.scope_id(node.id())) else {
+                    describe_contexts.insert(scopes.scope_id(node.id()), 1);
                     return;
                 };
 
@@ -181,7 +181,7 @@ impl RequireTopLevelDescribe {
                         call_expr.span,
                     ));
                 } else {
-                    describe_contexts.insert(node.scope_id(), count + 1);
+                    describe_contexts.insert(scopes.scope_id(node.id()), count + 1);
                 }
             }
             _ => (),

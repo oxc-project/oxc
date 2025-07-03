@@ -196,7 +196,7 @@ impl Rule for NoCommonjs {
 
                 // exports.
                 if object.is_specific_id("exports") {
-                    if node.scope_id() != ctx.scoping().root_scope_id() {
+                    if ctx.scoping().scope_id(node.id()) != ctx.scoping().root_scope_id() {
                         return;
                     }
 
@@ -209,7 +209,7 @@ impl Rule for NoCommonjs {
             }
             AstKind::CallExpression(call_expr) => {
                 if self.allow_conditional_require
-                    && node.scope_id() != ctx.scoping().root_scope_id()
+                    && ctx.scoping().scope_id(node.id()) != ctx.scoping().root_scope_id()
                 {
                     return;
                 }

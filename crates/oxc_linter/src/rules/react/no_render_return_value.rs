@@ -73,7 +73,7 @@ impl Rule for NoRenderReturnValue {
                             ));
                         }
 
-                        let scope_id = parent_node.scope_id();
+                        let scope_id = ctx.scoping().scope_id(parent_node.id());
                         if ctx.scoping().scope_flags(scope_id).is_arrow() {
                             if let AstKind::ArrowFunctionExpression(e) =
                                 ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))

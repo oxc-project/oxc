@@ -232,7 +232,7 @@ impl ConsistentTestIt {
         };
 
         if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            let scope_id = node.scope_id();
+            let scope_id = ctx.scoping().scope_id(node.id());
             let current_count = describe_nesting_hash.get(&scope_id).unwrap_or(&0);
             describe_nesting_hash.insert(scope_id, *current_count + 1);
             return;

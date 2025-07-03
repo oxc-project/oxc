@@ -72,13 +72,16 @@ impl Rule for BlockScopedVar {
         if decl.kind != VariableDeclarationKind::Var {
             return;
         }
-        let cur_node_scope_id = node.scope_id();
+        let cur_node_scope_id = ctx.scoping().scope_id(node.id());
         if !ctx.scoping().scope_flags(cur_node_scope_id).is_strict_mode() {
             return;
         }
         // `scope_arr` contains all the scopes that are children of the current scope
         // we should eliminate all of them
-        let scope_arr = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
+        let scope_arr = ctx
+            .scoping()
+            .iter_all_scope_child_ids(ctx.scoping().scope_id(node.id()))
+            .collect::<Vec<_>>();
 
         let declarations = &decl.declarations;
         for item in declarations {
@@ -86,14 +89,16 @@ impl Rule for BlockScopedVar {
             // e.g. "var [a, b] = [1, 2]"
             for ident in id.get_binding_identifiers() {
                 let name = ident.name.as_str();
-                let Some(symbol_id) = ctx.scoping().find_binding(node.scope_id(), name) else {
+                let Some(symbol_id) =
+                    ctx.scoping().find_binding(ctx.scoping().scope_id(node.id()), name)
+                else {
                     continue;
                 };
                 // e.g. "if (true} { var a = 4; } else { var a = 4; }"
                 // in this case we can't find the reference of 'a' by call `get_resolved_references`
                 // so i use `symbol_redeclarations` to find all the redeclarations
                 for redeclaration in ctx.scoping().symbol_redeclarations(symbol_id) {
-                    let re_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
+                    let re_scope_id = ctx.scoping().scope_id(redeclaration.declaration);
                     if !scope_arr.contains(&re_scope_id) && re_scope_id != cur_node_scope_id {
                         ctx.diagnostic(redeclaration_diagnostic(
                             item.id.span(),
@@ -104,7 +109,7 @@ impl Rule for BlockScopedVar {
                 }
                 // e.g. "var a = 4; console.log(a);"
                 for reference in ctx.scoping().get_resolved_references(symbol_id) {
-                    let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
+                    let reference_scope_id = ctx.scoping().scope_id(reference.node_id());
                     if !scope_arr.contains(&reference_scope_id)
                         && reference_scope_id != cur_node_scope_id
                     {

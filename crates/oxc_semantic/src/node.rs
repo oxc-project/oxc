@@ -3,10 +3,7 @@ use oxc_ast::AstKind;
 use oxc_cfg::BlockNodeId;
 use oxc_index::IndexVec;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::{
-    node::{NodeFlags, NodeId},
-    scope::ScopeId,
-};
+use oxc_syntax::node::{NodeFlags, NodeId};
 
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
@@ -14,9 +11,6 @@ pub struct AstNode<'a> {
     id: NodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
-
-    /// Associated Scope (initialized by binding)
-    scope_id: ScopeId,
 
     /// Associated `BasicBlockId` in CFG (initialized by control_flow)
     cfg_id: BlockNodeId,
@@ -28,12 +22,11 @@ impl<'a> AstNode<'a> {
     #[inline]
     pub(crate) fn new(
         kind: AstKind<'a>,
-        scope_id: ScopeId,
         cfg_id: BlockNodeId,
         flags: NodeFlags,
         id: NodeId,
     ) -> Self {
-        Self { id, kind, scope_id, cfg_id, flags }
+        Self { id, kind, cfg_id, flags }
     }
 
     /// This node's unique identifier.
@@ -54,16 +47,6 @@ impl<'a> AstNode<'a> {
     #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
-    }
-
-    /// The scope in which this node was declared.
-    ///
-    /// It is important to note that this is _not_ the scope created _by_ the
-    /// node. For example, given a function declaration, this is the scope where
-    /// the function is declared, not the scope created by its body.
-    #[inline]
-    pub fn scope_id(&self) -> ScopeId {
-        self.scope_id
     }
 
     /// Flags providing additional information about the node.
@@ -229,13 +212,12 @@ impl<'a> AstNodes<'a> {
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
-        scope_id: ScopeId,
         parent_node_id: NodeId,
         cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(Some(parent_node_id));
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
+        let node = AstNode::new(kind, cfg_id, flags, node_id);
         self.nodes.push(node);
         node_id
     }
@@ -244,13 +226,12 @@ impl<'a> AstNodes<'a> {
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
-        scope_id: ScopeId,
         cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(None);
         self.root = Some(node_id);
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
+        let node = AstNode::new(kind, cfg_id, flags, node_id);
         self.nodes.push(node);
         node_id
     }

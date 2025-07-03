@@ -98,10 +98,10 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 }
 
 fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) -> bool {
-    let mut was_in_root_scope = node.scope_id() == root_scope_id;
+    let mut was_in_root_scope = ctx.scoping().scope_id(node.id()) == root_scope_id;
     let mut is_multiple = false;
     for parent in ctx.nodes().ancestors(node.id()) {
-        let parent_scope = parent.scope_id();
+        let parent_scope = ctx.scoping().scope_id(parent.id());
         if was_in_root_scope && parent_scope != root_scope_id {
             is_multiple = false;
             break;
@@ -170,7 +170,7 @@ impl Rule for PreferSetHas {
             return;
         }
 
-        let root_scope = node.scope_id();
+        let root_scope = ctx.scoping().scope_id(node.id());
 
         if len == 1 {
             let Some(reference) = references.peek() else {

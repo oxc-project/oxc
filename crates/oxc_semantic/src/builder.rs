@@ -309,11 +309,11 @@ impl<'a> SemanticBuilder<'a> {
 
         self.current_node_id = self.nodes.add_node(
             kind,
-            self.current_scope_id,
             self.current_node_id,
             control_flow!(self, |cfg| cfg.current_node_ix),
             flags,
         );
+        self.scoping.set_node_scope_id(self.current_node_id, self.current_scope_id);
         self.record_ast_node();
     }
 
@@ -622,10 +622,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // and `self.jsdoc.retrieve_attached_jsdoc`, as they are all no-ops for `Program`.
         self.current_node_id = self.nodes.add_program_node(
             kind,
-            self.current_scope_id,
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
+        self.scoping.set_node_scope_id(self.current_node_id, self.current_scope_id);
 
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.

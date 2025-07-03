@@ -219,7 +219,7 @@ fn no_else_return_diagnostic_fix(
     let else_content_span = else_stmt.span();
     let else_keyword_span = Span::new(prev_span.end, else_content_span.start);
     let diagnostic = no_else_return_diagnostic(else_keyword_span, last_return_span);
-    let parent_scope_id = if_block_node.scope_id();
+    let parent_scope_id = ctx.scoping().scope_id(if_block_node.id());
 
     if !is_safe_from_name_collisions(ctx, else_stmt, parent_scope_id) {
         ctx.diagnostic(diagnostic);

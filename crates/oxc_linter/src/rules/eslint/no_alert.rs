@@ -95,7 +95,7 @@ impl Rule for NoAlert {
             return;
         };
 
-        let scope_id = node.scope_id();
+        let scope_id = ctx.scoping().scope_id(node.id());
         let callee = &call_expr.callee;
 
         if let Expression::Identifier(ident) = callee {

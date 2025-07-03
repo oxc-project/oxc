@@ -221,7 +221,7 @@ impl Rule for PreferLowercaseTitle {
         }
 
         if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            if self.ignore_top_level_describe && scopes.scope_flags(node.scope_id()).is_top() {
+            if self.ignore_top_level_describe && scopes.scope_flags(scopes.scope_id(node.id())).is_top() {
                 return;
             }
         } else if !matches!(

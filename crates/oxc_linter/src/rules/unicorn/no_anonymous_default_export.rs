@@ -119,7 +119,7 @@ fn is_common_js_export(expr: &AssignmentExpression) -> bool {
 }
 
 fn is_top_expr(ctx: &LintContext, node: &AstNode) -> bool {
-    if !ctx.scoping().scope_flags(node.scope_id()).is_top() {
+    if !ctx.scoping().scope_flags(ctx.scoping().scope_id(node.id())).is_top() {
         return false;
     }
 

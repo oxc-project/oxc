@@ -47,7 +47,7 @@ impl Rule for NoSetterReturn {
             return;
         }
 
-        for scope_id in ctx.scoping().scope_ancestors(node.scope_id()) {
+        for scope_id in ctx.scoping().scope_ancestors(ctx.scoping().scope_id(node.id())) {
             let flags = ctx.scoping().scope_flags(scope_id);
             if flags.is_set_accessor() {
                 ctx.diagnostic(no_setter_return_diagnostic(stmt.span));

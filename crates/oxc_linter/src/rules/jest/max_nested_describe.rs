@@ -151,7 +151,7 @@ impl MaxNestedDescribe {
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;
-        let scope_id = node.scope_id();
+        let scope_id = ctx.scoping().scope_id(node.id());
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

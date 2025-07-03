@@ -110,7 +110,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
             match &parent_decl.init {
                 // handles "let a = JSON; let b = a; a();"
                 Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
-                    let decl_scope = decl.scope_id();
+                    let decl_scope = ctx.scoping().scope_id(decl.id());
                     resolve_global_binding(parent_ident, decl_scope, ctx)
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
@@ -136,7 +136,7 @@ impl Rule for NoObjCalls {
             Expression::Identifier(ident) => {
                 // handle new Math(), Math(), etc
                 if let Some(top_level_reference) =
-                    resolve_global_binding(ident, node.scope_id(), ctx)
+                    resolve_global_binding(ident, ctx.scoping().scope_id(node.id()), ctx)
                 {
                     if is_global_obj(top_level_reference) {
                         ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));

@@ -55,7 +55,7 @@ declare_oxc_lint!(
 impl Rule for NoWebpackLoaderSyntax {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // not in top level
-        if node.scope_id() != ctx.scoping().root_scope_id() {
+        if ctx.scoping().scope_id(node.id()) != ctx.scoping().root_scope_id() {
             return;
         }
 
