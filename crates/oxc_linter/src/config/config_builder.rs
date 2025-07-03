@@ -11,6 +11,7 @@ use oxc_span::{CompactStr, format_compact_str};
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     config::{ESLintRule, LintPlugins, OxlintOverrides, OxlintRules, overrides::OxlintOverride},
+    external_linter::ExternalLinter,
     rules::RULES,
 };
 
@@ -83,6 +84,7 @@ impl ConfigStoreBuilder {
     pub fn from_oxlintrc(
         start_empty: bool,
         oxlintrc: Oxlintrc,
+        _external_linter: Option<&ExternalLinter>,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
@@ -375,7 +377,7 @@ impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
 
     #[inline]
     fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        Self::from_oxlintrc(false, oxlintrc)
+        Self::from_oxlintrc(false, oxlintrc, None)
     }
 }
 
@@ -640,7 +642,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap();
+        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None).unwrap();
         for (rule, severity) in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -815,6 +817,7 @@ mod test {
                 "fixtures/extends_config/extends_invalid_config.json",
             ))
             .unwrap(),
+            None,
         );
         let err = invalid_config.unwrap_err();
         assert!(matches!(err, ConfigBuilderError::InvalidConfigFile { .. }));
@@ -943,12 +946,18 @@ mod test {
     }
 
     fn config_store_from_path(path: &str) -> Config {
-        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::from_file(&PathBuf::from(path)).unwrap())
-            .unwrap()
-            .build()
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
+            None,
+        )
+        .unwrap()
+        .build()
     }
 
     fn config_store_from_str(s: &str) -> Config {
-        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap()).unwrap().build()
+        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap(), None)
+            .unwrap()
+            .build()
     }
 }

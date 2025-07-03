@@ -54,7 +54,7 @@ impl ServerLinter {
 
         // clone because we are returning it for ignore builder
         let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None).unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -131,7 +131,7 @@ impl ServerLinter {
                 warn!("Skipping invalid config file: {}", file_path.display());
                 continue;
             };
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
+            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None)
             else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;

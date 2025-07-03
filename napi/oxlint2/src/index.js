@@ -2,8 +2,16 @@ import { lint } from './bindings.js';
 
 class Linter {
   run() {
-    return lint();
+    return lint(this.loadPlugin.bind(this), this.lint.bind(this));
   }
+
+  loadPlugin = async (_pluginName) => {
+    throw new Error('unimplemented');
+  };
+
+  lint = async () => {
+    throw new Error('unimplemented');
+  };
 }
 
 async function main() {

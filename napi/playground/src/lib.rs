@@ -291,7 +291,7 @@ impl Oxc {
                     Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().to_string())
                         .unwrap_or_default();
                 let config_builder =
-                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap_or_default();
+                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None).unwrap_or_default();
                 config_builder.build()
             } else {
                 ConfigStoreBuilder::default().build()

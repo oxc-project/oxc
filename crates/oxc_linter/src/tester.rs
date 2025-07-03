@@ -507,8 +507,12 @@ impl Tester {
                 eslint_config
                     .map_or_else(ConfigStoreBuilder::empty, |mut v| {
                         v.as_object_mut().unwrap().insert("categories".into(), json!({}));
-                        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-                            .unwrap()
+                        ConfigStoreBuilder::from_oxlintrc(
+                            true,
+                            Oxlintrc::deserialize(v).unwrap(),
+                            None,
+                        )
+                        .unwrap()
                     })
                     .with_plugins(self.plugins.union(LintPlugins::from(self.plugin_name)))
                     .with_rule(rule, AllowWarnDeny::Warn)

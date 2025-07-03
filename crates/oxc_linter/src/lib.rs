@@ -8,6 +8,7 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
+mod external_linter;
 mod fixer;
 mod frameworks;
 mod globals;
@@ -32,6 +33,9 @@ pub use crate::{
         Oxlintrc,
     },
     context::LintContext,
+    external_linter::{
+        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+    },
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
