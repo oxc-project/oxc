@@ -32,8 +32,10 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::StringLiteral(lit) => js::check_string_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
-        AstKind::ModuleDeclaration(decl) => {
-            js::check_module_declaration(decl, ctx);
+        m if m.is_module_declaration() => {
+            if let Some(mod_decl_kind) = m.as_module_declaration_kind() {
+                js::check_module_declaration(&mod_decl_kind, ctx);
+            }
         }
         AstKind::MetaProperty(prop) => js::check_meta_property(prop, ctx),
 

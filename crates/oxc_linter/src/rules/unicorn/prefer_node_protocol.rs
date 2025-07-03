@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ModuleDeclaration, TSModuleReference},
+    ast::{Expression, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,10 +60,8 @@ impl Rule for PreferNodeProtocol {
             AstKind::CallExpression(call) if !call.optional => {
                 call.common_js_require().map(|s| (s.value, s.span))
             }
-            AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
-                Some((import.source.value, import.source.span))
-            }
-            AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(export)) => {
+            AstKind::ImportDeclaration(import) => Some((import.source.value, import.source.span)),
+            AstKind::ExportNamedDeclaration(export) => {
                 export.source.as_ref().map(|item| (item.value, item.span))
             }
             _ => None,

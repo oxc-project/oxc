@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ObjectPropertyKind, PropertyKey, match_expression,
+        BindingPatternKind, CallExpression, Declaration, Expression, ObjectPropertyKind,
+        PropertyKey, match_expression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -99,7 +99,7 @@ impl Rule for NoThenable {
                     ctx.diagnostic(class(span));
                 }
             }
-            AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
+            AstKind::ExportNamedDeclaration(decl) => {
                 // check declaration
                 if let Some(decl) = &decl.declaration {
                     match decl {

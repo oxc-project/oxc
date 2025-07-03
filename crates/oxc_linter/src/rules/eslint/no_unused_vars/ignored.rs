@@ -56,11 +56,11 @@ impl NoUnusedVars {
     pub(super) fn is_ignored(&self, symbol: &Symbol<'_, '_>) -> bool {
         let declared_binding = symbol.name();
         match symbol.declaration().kind() {
+            m if m.is_module_declaration() => self.is_ignored_var(declared_binding),
             AstKind::BindingRestElement(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_)
             | AstKind::ImportSpecifier(_)
-            | AstKind::ModuleDeclaration(_)
             | AstKind::TSEnumDeclaration(_)
             | AstKind::TSEnumMember(_)
             | AstKind::TSImportEqualsDeclaration(_)

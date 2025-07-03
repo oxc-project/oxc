@@ -144,8 +144,7 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
             AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
                 break;
             }
-            AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
-                // export namespace N {}
+            m if m.is_module_declaration() => {
                 // We need to check the parent of the parent
             }
             _ => {

@@ -2733,8 +2733,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ModuleDeclaration<'a>,
     ) {
-        let kind = AstType::ModuleDeclaration;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             ModuleDeclaration::ImportDeclaration(it) => visitor.visit_import_declaration(it),
             ModuleDeclaration::ExportAllDeclaration(it) => visitor.visit_export_all_declaration(it),
@@ -2749,7 +2748,6 @@ pub mod walk_mut {
                 visitor.visit_ts_namespace_export_declaration(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

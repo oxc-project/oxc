@@ -18,10 +18,30 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
+        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
             | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
-        )
+        ) || self.is_module_declaration()
+    }
+
+    pub fn is_module_declaration(self) -> bool {
+        self.as_module_declaration_kind().is_some()
+    }
+
+    pub fn as_module_declaration_kind(&self) -> Option<ModuleDeclarationKind<'a>> {
+        match self {
+            Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
+            Self::ExportAllDeclaration(decl) => Some(ModuleDeclarationKind::ExportAll(decl)),
+            Self::ExportNamedDeclaration(decl) => Some(ModuleDeclarationKind::ExportNamed(decl)),
+            Self::ExportDefaultDeclaration(decl) => {
+                Some(ModuleDeclarationKind::ExportDefault(decl))
+            }
+            Self::TSExportAssignment(decl) => Some(ModuleDeclarationKind::TSExportAssignment(decl)),
+            Self::TSNamespaceExportDeclaration(decl) => {
+                Some(ModuleDeclarationKind::TSNamespaceExport(decl))
+            }
+            _ => None,
+        }
     }
 
     #[rustfmt::skip]
@@ -309,7 +329,6 @@ impl AstKind<'_> {
 
             Self::Decorator(_) => "Decorator".into(),
 
-            Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
             Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
@@ -502,6 +521,42 @@ impl GetSpan for MemberExpressionKind<'_> {
             Self::Computed(member_expr) => member_expr.span,
             Self::Static(member_expr) => member_expr.span,
             Self::PrivateField(member_expr) => member_expr.span,
+        }
+    }
+}
+
+pub enum ModuleDeclarationKind<'a> {
+    Import(&'a ImportDeclaration<'a>),
+    ExportAll(&'a ExportAllDeclaration<'a>),
+    ExportNamed(&'a ExportNamedDeclaration<'a>),
+    ExportDefault(&'a ExportDefaultDeclaration<'a>),
+    TSExportAssignment(&'a TSExportAssignment<'a>),
+    TSNamespaceExport(&'a TSNamespaceExportDeclaration<'a>),
+}
+
+impl ModuleDeclarationKind<'_> {
+    /// Returns whether this module declaration is an `export` declaration.
+    pub fn is_export(&self) -> bool {
+        matches!(
+            self,
+            Self::ExportAll(_)
+                | Self::ExportNamed(_)
+                | Self::ExportDefault(_)
+                | Self::TSExportAssignment(_)
+                | Self::TSNamespaceExport(_)
+        )
+    }
+}
+
+impl GetSpan for ModuleDeclarationKind<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Import(decl) => decl.span,
+            Self::ExportAll(decl) => decl.span,
+            Self::ExportNamed(decl) => decl.span,
+            Self::ExportDefault(decl) => decl.span,
+            Self::TSExportAssignment(decl) => decl.span,
+            Self::TSNamespaceExport(decl) => decl.span,
         }
     }
 }

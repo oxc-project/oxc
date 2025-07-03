@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName, ModuleDeclaration},
+    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -40,9 +40,7 @@ declare_oxc_lint!(
 
 impl Rule for NoScriptComponentInHead {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
-            node.kind()
-        else {
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
 

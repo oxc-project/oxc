@@ -37,7 +37,6 @@ const ENUMS_WHITE_LIST: &[&str] = &[
     "AssignmentTarget",
     "SimpleAssignmentTarget",
     "AssignmentTargetPattern",
-    "ModuleDeclaration",
 ];
 
 /// Generator for `AstKind`, `AstType`, and related code.

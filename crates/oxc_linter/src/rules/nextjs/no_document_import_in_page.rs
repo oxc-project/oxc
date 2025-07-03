@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::ModuleDeclaration};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -41,9 +41,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDocumentImportInPage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
-            node.kind()
-        else {
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
 

@@ -112,7 +112,6 @@ pub enum AstNodes<'a> {
     PropertyDefinition(&'a AstNode<'a, PropertyDefinition<'a>>),
     PrivateIdentifier(&'a AstNode<'a, PrivateIdentifier<'a>>),
     StaticBlock(&'a AstNode<'a, StaticBlock<'a>>),
-    ModuleDeclaration(&'a AstNode<'a, ModuleDeclaration<'a>>),
     AccessorProperty(&'a AstNode<'a, AccessorProperty<'a>>),
     ImportExpression(&'a AstNode<'a, ImportExpression<'a>>),
     ImportDeclaration(&'a AstNode<'a, ImportDeclaration<'a>>),
@@ -2402,7 +2401,6 @@ impl<'a> AstNodes<'a> {
             Self::PropertyDefinition(n) => n.span(),
             Self::PrivateIdentifier(n) => n.span(),
             Self::StaticBlock(n) => n.span(),
-            Self::ModuleDeclaration(n) => n.span(),
             Self::AccessorProperty(n) => n.span(),
             Self::ImportExpression(n) => n.span(),
             Self::ImportDeclaration(n) => n.span(),
@@ -2598,7 +2596,6 @@ impl<'a> AstNodes<'a> {
             Self::PropertyDefinition(n) => n.parent,
             Self::PrivateIdentifier(n) => n.parent,
             Self::StaticBlock(n) => n.parent,
-            Self::ModuleDeclaration(n) => n.parent,
             Self::AccessorProperty(n) => n.parent,
             Self::ImportExpression(n) => n.parent,
             Self::ImportDeclaration(n) => n.parent,
@@ -2794,7 +2791,6 @@ impl<'a> AstNodes<'a> {
             Self::PropertyDefinition(n) => SiblingNode::from(n.inner),
             Self::PrivateIdentifier(n) => SiblingNode::from(n.inner),
             Self::StaticBlock(n) => SiblingNode::from(n.inner),
-            Self::ModuleDeclaration(n) => n.parent.as_sibling_node(),
             Self::AccessorProperty(n) => SiblingNode::from(n.inner),
             Self::ImportExpression(n) => SiblingNode::from(n.inner),
             Self::ImportDeclaration(n) => SiblingNode::from(n.inner),
@@ -2990,7 +2986,6 @@ impl<'a> AstNodes<'a> {
             Self::PropertyDefinition(_) => "PropertyDefinition",
             Self::PrivateIdentifier(_) => "PrivateIdentifier",
             Self::StaticBlock(_) => "StaticBlock",
-            Self::ModuleDeclaration(_) => "ModuleDeclaration",
             Self::AccessorProperty(_) => "AccessorProperty",
             Self::ImportExpression(_) => "ImportExpression",
             Self::ImportDeclaration(_) => "ImportDeclaration",
@@ -5662,12 +5657,15 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     .as_ast_nodes();
             }
             it @ match_module_declaration!(Statement) => {
-                AstNodes::ModuleDeclaration(self.allocator.alloc(AstNode {
-                    inner: it.to_module_declaration(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_module_declaration(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
@@ -8115,7 +8113,7 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
 impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::ModuleDeclaration(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             ModuleDeclaration::ImportDeclaration(s) => {
                 AstNodes::ImportDeclaration(self.allocator.alloc(AstNode {
