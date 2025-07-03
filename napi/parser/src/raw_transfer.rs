@@ -46,7 +46,7 @@ const BUMP_ALIGN: usize = 16;
 ///
 /// Does not check that the offset is within bounds of `buffer`.
 /// To ensure it always is, provide a `Uint8Array` of at least 4 GiB size.
-#[napi]
+#[napi(skip_typescript)]
 pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     let buffer = &*buffer;
     let buffer_addr32 = buffer.as_ptr() as u32;
@@ -77,7 +77,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// # Panics
 ///
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
-#[napi]
+#[napi(skip_typescript)]
 pub unsafe fn parse_sync_raw(
     filename: String,
     mut buffer: Uint8Array,
@@ -120,7 +120,7 @@ pub unsafe fn parse_sync_raw(
 /// # Panics
 ///
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
-#[napi]
+#[napi(skip_typescript)]
 pub fn parse_async_raw(
     filename: String,
     buffer: Uint8Array,
