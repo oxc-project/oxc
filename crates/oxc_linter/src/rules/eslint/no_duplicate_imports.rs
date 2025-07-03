@@ -312,7 +312,13 @@ fn can_merge_imports(
     let has_default = default.is_some();
 
     match current_type {
-        ImportType::Named => has_named,
+        ImportType::Named => {
+            has_named
+                || (has_default
+                    && !namespace.is_some_and(|(_, namespace_span, _)| {
+                        return default.unwrap().1 == *namespace_span;
+                    }))
+        }
         ImportType::Namespace => {
             if has_named && has_default {
                 if let Some((_, named_span, _)) = named {
@@ -492,6 +498,21 @@ fn test() {
             // https://github.com/oxc-project/oxc/pull/11320#issuecomment-2912286528
             r#"import type { PriorityDialogCustomClassNames, WeightDialogCustomClassNames } from "./HostEditDialogs";
             import { PriorityDialog, WeightDialog } from "./HostEditDialogs";"#,
+            None,
+        ),
+        (
+            "
+                import b from 'foo';
+                import { a } from 'foo';
+            ",
+            None,
+        ),
+        (
+            "
+                import * as bar from 'foo';
+                import b from 'foo';
+                import { a } from 'foo';
+            ",
             None,
         ),
     ];

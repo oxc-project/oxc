@@ -40,6 +40,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──┬─
    ·                  ╰── Can be merged with this import
  2 │           import { something } from "os";
+   ·                                     ──┬─
+   ·                                       ╰── This import is duplicated
+ 3 │           import * as foobar from "os";
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:16]
+ 1 │ import os from "os";
+   ·                ──┬─
+   ·                  ╰── Can be merged with this import
+ 2 │           import { something } from "os";
  3 │           import * as foobar from "os";
    ·                                   ──┬─
    ·                                     ╰── This import is duplicated
@@ -167,5 +179,31 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import { PriorityDialog, WeightDialog } from "./HostEditDialogs";
    ·                                                          ─────────┬─────────
    ·                                                                   ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'foo' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:31]
+ 1 │ 
+ 2 │                 import b from 'foo';
+   ·                               ──┬──
+   ·                                 ╰── Can be merged with this import
+ 3 │                 import { a } from 'foo';
+   ·                                   ──┬──
+   ·                                     ╰── This import is duplicated
+ 4 │             
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'foo' import is duplicated
+   ╭─[no_duplicate_imports.tsx:2:38]
+ 1 │ 
+ 2 │                 import * as bar from 'foo';
+   ·                                      ──┬──
+   ·                                        ╰── Can be merged with this import
+ 3 │                 import b from 'foo';
+   ·                               ──┬──
+   ·                                 ╰── This import is duplicated
+ 4 │                 import { a } from 'foo';
    ╰────
   help: Merge the duplicated import into a single import statement
