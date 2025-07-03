@@ -1,5 +1,6 @@
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{
     ModuleRecord,
@@ -111,6 +112,10 @@ impl Rule for NoBarrelFile {
 
         let threshold = self.threshold;
         if total >= threshold {
+            if labels.is_empty() {
+                labels.push(Span::new(0, 0).label("File defined here."));
+            }
+
             ctx.diagnostic(no_barrel_file(total, threshold, labels));
         }
     }
