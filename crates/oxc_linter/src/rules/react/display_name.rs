@@ -120,10 +120,22 @@ impl Rule for DisplayName {
         // Only check context objects if React version is >= 16.3.0
         let check_context_objects =
             self.0.check_context_objects && test_react_version_for_context_objects(ctx);
-        let mut resolve_buffer: Vec<String> = Vec::new();
 
-        // First pass: collect all React components
+        // Single pass: collect React components and process displayName assignments
         for node in ctx.nodes() {
+            // Process displayName assignments first (so they can resolve components found later)
+            if let AstKind::AssignmentExpression(assign) = node.kind() {
+                if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
+                    if member.property.name == "displayName" {
+                        if let Some(path) = get_static_property_path(&member.object) {
+                            let component_name = path.join(".");
+                            debug_resolve("CALLSITE8", component_name.as_str());
+                            tracker.resolve_display_name(&component_name);
+                        }
+                    }
+                }
+            }
+
             // Guard: skip nodes that are part of React.memo(React.forwardRef(...)) assignments
             let mut should_skip = false;
             for ancestor in ctx.nodes().ancestor_ids(node.id()) {
@@ -156,6 +168,8 @@ impl Rule for DisplayName {
             if should_skip {
                 continue;
             }
+
+            // Process component detection
             match node.kind() {
                 AstKind::Class(class) => {
                     if let Some(name) = &class.name() {
@@ -746,26 +760,6 @@ impl Rule for DisplayName {
                 }
                 _ => {}
             }
-        }
-
-        // Second pass: buffer displayName assignments
-        for node in ctx.nodes() {
-            if let AstKind::AssignmentExpression(assign) = node.kind() {
-                if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
-                    if member.property.name == "displayName" {
-                        if let Some(path) = get_static_property_path(&member.object) {
-                            let component_name = path.join(".");
-                            debug_resolve("CALLSITE8", component_name.as_str());
-                            resolve_buffer.push(component_name);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Apply all buffered resolves
-        for name in resolve_buffer {
-            tracker.resolve_display_name(&name);
         }
 
         // Report unresolved components
