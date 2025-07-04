@@ -129,7 +129,6 @@ impl Rule for DisplayName {
                     if member.property.name == "displayName" {
                         if let Some(path) = get_static_property_path(&member.object) {
                             let component_name = path.join(".");
-                            debug_resolve("CALLSITE8", component_name.as_str());
                             tracker.resolve_display_name(&component_name);
                         }
                     }
@@ -209,7 +208,6 @@ impl Rule for DisplayName {
                             });
 
                             if has_static_display_name {
-                                debug_resolve("CALLSITE1", name);
                                 tracker.resolve_display_name(name);
                             } else if contains_jsx {
                                 if ignore_transpiler_name {
@@ -219,7 +217,6 @@ impl Rule for DisplayName {
                                         ComponentType::Class,
                                     );
                                 } else {
-                                    debug_resolve("CALLSITE2", name);
                                     tracker.resolve_display_name(name);
                                 }
                             }
@@ -250,7 +247,6 @@ impl Rule for DisplayName {
                                     }
                                 } else {
                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
-                                    debug_resolve("CALLSITE3", &name.name);
                                     tracker.resolve_display_name(&format!(
                                         "[CALLSITE3] {}",
                                         name.name
@@ -394,10 +390,6 @@ impl Rule for DisplayName {
                                                                     );
                                                                 } else {
                                                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
-                                                                    debug_resolve(
-                                                                        "CALLSITE5",
-                                                                        &name.name,
-                                                                    );
                                                                     tracker.resolve_display_name(
                                                                         &name.name,
                                                                     );
@@ -547,7 +539,6 @@ impl Rule for DisplayName {
                                                         );
                                                     } else {
                                                         // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
-                                                        debug_resolve("CALLSITE5", &name.name);
                                                         tracker.resolve_display_name(&format!(
                                                             "[CALLSITE5] {}",
                                                             name.name
@@ -579,7 +570,6 @@ impl Rule for DisplayName {
                                             ComponentType::Function,
                                         );
                                     } else {
-                                        debug_resolve("CALLSITE6", &name.name);
                                         tracker.resolve_display_name(&format!(
                                             "[CALLSITE6] {}",
                                             name.name
@@ -633,7 +623,6 @@ impl Rule for DisplayName {
                                     });
 
                                     if has_static_display_name {
-                                        debug_resolve("CALLSITE7", &name.name);
                                         tracker.resolve_display_name(&format!(
                                             "[CALLSITE7] {}",
                                             name.name
@@ -824,7 +813,6 @@ fn process_variable_declaration<'a>(
                     if ignore_transpiler_name {
                         tracker.add_component(component_name, decl.span, ComponentType::Function);
                     } else {
-                        debug_resolve("CALLSITE9", component_name.as_str());
                         tracker.resolve_display_name(&component_name);
                     }
                 } else {
@@ -840,7 +828,6 @@ fn process_variable_declaration<'a>(
                                         ComponentType::Function,
                                     );
                                 } else {
-                                    debug_resolve("CALLSITE10", &func_id.name);
                                     tracker.resolve_display_name(&func_id.name);
                                 }
                             } else {
@@ -901,7 +888,6 @@ fn process_variable_declaration<'a>(
                                 });
 
                                 if has_display_name {
-                                    debug_resolve("CALLSITE11", name.as_str());
                                     tracker.resolve_display_name(&format!("[CALLSITE11] {name}"));
                                 } else if ignore_transpiler_name {
                                     tracker.add_component(
@@ -936,10 +922,6 @@ fn process_variable_declaration<'a>(
                                                 match inner_expr {
                                                     Expression::FunctionExpression(func) => {
                                                         if let Some(func_id) = &func.id {
-                                                            debug_resolve(
-                                                                "CALLSITE12",
-                                                                func_id.name.as_str(),
-                                                            );
                                                             tracker.resolve_display_name(&format!(
                                                                 "[CALLSITE12] {name}"
                                                             ));
@@ -951,10 +933,6 @@ fn process_variable_declaration<'a>(
                                                         }
                                                     }
                                                     Expression::Identifier(ident) => {
-                                                        debug_resolve(
-                                                            "CALLSITE14",
-                                                            ident.name.as_str(),
-                                                        );
                                                         tracker.resolve_display_name(&format!(
                                                             "[CALLSITE14] {name}"
                                                         ));
@@ -982,10 +960,6 @@ fn process_variable_declaration<'a>(
                                                 match inner_expr {
                                                     Expression::FunctionExpression(func) => {
                                                         if let Some(func_id) = &func.id {
-                                                            debug_resolve(
-                                                                "CALLSITE16",
-                                                                func_id.name.as_str(),
-                                                            );
                                                             tracker.resolve_display_name(&format!(
                                                                 "[CALLSITE16] {name}"
                                                             ));
@@ -997,10 +971,6 @@ fn process_variable_declaration<'a>(
                                                         }
                                                     }
                                                     Expression::Identifier(ident) => {
-                                                        debug_resolve(
-                                                            "CALLSITE18",
-                                                            ident.name.as_str(),
-                                                        );
                                                         tracker.resolve_display_name(&format!(
                                                             "[CALLSITE18] {name}"
                                                         ));
@@ -1032,10 +1002,6 @@ fn process_variable_declaration<'a>(
                                                     InnermostFunction::Function(func) => {
                                                         if func.id.is_some() {
                                                             if let Some(func_id) = &func.id {
-                                                                debug_resolve(
-                                                                    "CALLSITE21",
-                                                                    func_id.name.as_str(),
-                                                                );
                                                                 tracker.resolve_display_name(
                                                                     &format!(
                                                                         "[CALLSITE21] {}",
@@ -1062,7 +1028,6 @@ fn process_variable_declaration<'a>(
                                             }
                                         }
                                     } else {
-                                        debug_resolve("CALLSITE20", name.as_str());
                                         tracker
                                             .resolve_display_name(&format!("[CALLSITE20] {name}"));
                                     }
@@ -1128,7 +1093,6 @@ fn process_object_expression(
                                         ComponentType::ObjectProperty,
                                     );
                                 } else {
-                                    debug_resolve("CALLSITE22", component_name.as_str());
                                     tracker.resolve_display_name(&format!(
                                         "[CALLSITE22] {component_name}"
                                     ));
@@ -1149,7 +1113,6 @@ fn process_object_expression(
                                     ComponentType::ObjectProperty,
                                 );
                             } else {
-                                debug_resolve("CALLSITE23", component_name.as_str());
                                 tracker.resolve_display_name(&format!(
                                     "[CALLSITE23] {component_name}"
                                 ));
@@ -2728,9 +2691,4 @@ fn test() {
     // ),];
 
     Tester::new(DisplayName::NAME, DisplayName::PLUGIN, pass, fail).test_and_snapshot();
-}
-
-// Helper function for debug logging
-fn debug_resolve(_tag: &str, _name: &str) {
-    // Debug logging disabled
 }
