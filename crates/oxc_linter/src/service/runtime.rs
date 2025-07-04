@@ -157,7 +157,7 @@ pub trait RuntimeFileSystem {
     ///
     /// # Errors
     /// When the program does not have write permission for the file system
-    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error>;
+    fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
 }
 
 struct OsFileSystem;
@@ -171,7 +171,7 @@ impl RuntimeFileSystem for OsFileSystem {
         read_to_arena_str(path, allocator)
     }
 
-    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error> {
+    fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
         fs::write(path, content)
     }
 }
@@ -562,7 +562,7 @@ impl<'l> Runtime<'l> {
                     }
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
-                    if let Cow::Owned(new_source_text) = new_source_text {
+                    if let Cow::Owned(new_source_text) = &new_source_text {
                         me.file_system.write_file(path, new_source_text).unwrap();
                     }
                 });

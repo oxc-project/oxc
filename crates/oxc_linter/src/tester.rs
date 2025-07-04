@@ -207,7 +207,7 @@ impl RuntimeFileSystem for TesterFileSystem {
         read_to_arena_str(path, allocator)
     }
 
-    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+    fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
         panic!("writing file should not be allowed in Tester");
     }
 }
