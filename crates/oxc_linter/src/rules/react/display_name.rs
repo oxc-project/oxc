@@ -1906,6 +1906,7 @@ fn test() {
             None,
         ),
         // NOTE: this test throws an unexpected token error.
+        // It seems that eslint-plugin-react parses this as Flow rather than TypeScript, so it rightly fails.
         // (
         //     r#"
         // 	        import {Component} from "react";
@@ -2224,7 +2225,6 @@ fn test() {
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
-        // TODO: check if this test case is accurate.
         (
             "
         	        import { createContext } from 'react';
