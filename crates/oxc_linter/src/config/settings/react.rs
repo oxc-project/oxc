@@ -100,13 +100,7 @@ impl ReactPluginSettings {
     }
 
     pub fn is_component_wrapper_function(&self, name: &str) -> bool {
-        eprintln!(
-            "is_component_wrapper_function: checking '{}' against {:?}",
-            name, self.component_wrapper_functions
-        );
-        let result = self.component_wrapper_functions.iter().any(|func| func == name);
-        eprintln!("is_component_wrapper_function: result = {}", result);
-        result
+        self.component_wrapper_functions.iter().any(|func| func == name)
     }
 }
 
