@@ -1911,8 +1911,6 @@ dependencies = [
  "lazy_static",
  "markdown",
  "memchr",
- "napi",
- "napi-derive",
  "nonmax",
  "oxc-schemars",
  "oxc_allocator",
@@ -1952,6 +1950,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxlint",
+ "serde_json",
 ]
 
 [[package]]

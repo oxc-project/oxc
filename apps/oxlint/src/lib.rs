@@ -10,7 +10,9 @@ pub mod cli {
     pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
 }
 
-pub use oxc_linter::{ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb};
+pub use oxc_linter::{
+    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+};
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]

@@ -26,6 +26,7 @@ oxlint = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
+serde_json = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }

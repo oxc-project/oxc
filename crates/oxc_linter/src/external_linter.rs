@@ -1,17 +1,28 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, pin::Pin, sync::Arc};
 
-use napi::{Status, bindgen_prelude::Promise, threadsafe_function::ThreadsafeFunction};
-use napi_derive::napi;
+use serde::{Deserialize, Serialize};
 
-#[napi]
-pub type ExternalLinterCb =
-    Arc<ThreadsafeFunction<(), /* TODO: correct return type */ (), (), Status, false>>;
+pub type ExternalLinterLoadPluginCb = Arc<
+    dyn Fn(
+            String,
+        ) -> Pin<
+            Box<
+                dyn Future<
+                        Output = Result<PluginLoadResult, Box<dyn std::error::Error + Send + Sync>>,
+                    > + Send,
+            >,
+        > + Send
+        + Sync
+        + 'static,
+>;
 
-#[napi]
-pub type ExternalLinterLoadPluginCb =
-    Arc<ThreadsafeFunction<String, Promise<PluginLoadResult>, String, Status, false>>;
+pub type ExternalLinterCb = Arc<
+    dyn Fn() -> Pin<
+        Box<dyn Future<Output = Result<(), Box<dyn std::error::Error + Send + Sync>>> + Send>,
+    >,
+>;
 
-#[napi]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum PluginLoadResult {
     Success,
     Failure(String),
@@ -26,7 +37,7 @@ pub struct ExternalLinter {
 
 impl ExternalLinter {
     pub fn new(run: ExternalLinterCb, load_plugin: ExternalLinterLoadPluginCb) -> Self {
-        ExternalLinter { load_plugin, run }
+        Self { load_plugin, run }
     }
 }
 

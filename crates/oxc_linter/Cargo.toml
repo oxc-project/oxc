@@ -58,8 +58,6 @@ language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
-napi = { workspace = true }
-napi-derive = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
