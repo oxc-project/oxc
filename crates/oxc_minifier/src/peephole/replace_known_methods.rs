@@ -73,6 +73,9 @@ impl<'a> PeepholeOptimizations {
             "fromCharCode" => Self::try_fold_string_from_char_code(*span, arguments, object, ctx),
             "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
             "pow" => self.try_fold_pow(*span, arguments, object, ctx),
+            "isFinite" | "isNaN" | "isInteger" | "isSafeInteger" => {
+                Self::try_fold_number_methods(*span, arguments, object, name, ctx)
+            }
             "sqrt" | "cbrt" => Self::try_fold_roots(*span, arguments, name, object, ctx),
             "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
                 Self::try_fold_math_unary(*span, arguments, name, object, ctx)
@@ -1025,12 +1028,46 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         }
     }
+
+    fn try_fold_number_methods(
+        span: Span,
+        args: &mut Arguments<'a>,
+        object: &Expression<'a>,
+        name: &str,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if !Self::validate_global_reference(object, "Number", ctx) {
+            return None;
+        }
+        if args.len() != 1 {
+            return None;
+        }
+        let extracted_expr = args.first()?.as_expression()?;
+        if !extracted_expr.is_number_literal() {
+            return None;
+        }
+        let extracted = extracted_expr.get_side_free_number_value(ctx)?;
+        let result = match name {
+            "isFinite" => Some(extracted.is_finite()),
+            "isInteger" => Some(extracted.fract().abs() < f64::EPSILON),
+            "isNaN" => Some(extracted.is_nan()),
+            "isSafeInteger" => {
+                let integer = extracted.fract().abs() < f64::EPSILON;
+                let safe = extracted.abs() <= 2f64.powi(53) - 1.0;
+                Some(safe && integer)
+            }
+            _ => None,
+        };
+        result.map(|value| ctx.ast.expression_boolean_literal(span, value))
+    }
 }
 
 /// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
+    use cow_utils::CowUtils;
     use oxc_syntax::es_target::ESTarget;
+    use std::borrow::Cow;
 
     use crate::{
         CompressOptions,
@@ -1043,7 +1080,17 @@ mod test {
     }
 
     fn test_value(code: &str, expected: &str) {
-        test(format!("x = {code}").as_str(), format!("x = {expected}").as_str());
+        test(
+            format!("x = {code}").as_str(),
+            format!(
+                "x = {}",
+                // It's recommended to use `Cow` to replace to avoid extra memory allocation.
+                // If the result holds `false`, the actual minified code will be `!1`, and `true` will be `!0`.
+                // So we need to replace it.
+                Cow::from(expected).cow_replace("false", "!1").cow_replace("true", "!0")
+            )
+            .as_str(),
+        );
     }
 
     fn test_same_value(code: &str) {
@@ -1640,46 +1687,43 @@ mod test {
     #[test]
     #[ignore]
     fn test_fold_math_functions_pow() {
-        test("Math.pow(1, 2)", "1");
-        test("Math.pow(2, 0)", "1");
-        test("Math.pow(2, 2)", "4");
-        test("Math.pow(2, 32)", "4294967296");
-        test("Math.pow(Infinity, 0)", "1");
-        test("Math.pow(Infinity, 1)", "Infinity");
-        test("Math.pow('a', 33)", "NaN");
+        test_value("Math.pow(1, 2)", "1");
+        test_value("Math.pow(2, 0)", "1");
+        test_value("Math.pow(2, 2)", "4");
+        test_value("Math.pow(2, 32)", "4294967296");
+        test_value("Math.pow(Infinity, 0)", "1");
+        test_value("Math.pow(Infinity, 1)", "Infinity");
+        test_value("Math.pow('a', 33)", "NaN");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_number_functions_is_safe_integer() {
-        test("Number.isSafeInteger(1)", "true");
-        test("Number.isSafeInteger(1.5)", "false");
-        test("Number.isSafeInteger(9007199254740991)", "true");
-        test("Number.isSafeInteger(9007199254740992)", "false");
-        test("Number.isSafeInteger(-9007199254740991)", "true");
-        test("Number.isSafeInteger(-9007199254740992)", "false");
+        test_value("Number.isSafeInteger(1)", "true");
+        test_value("Number.isSafeInteger(1.5)", "false");
+        test_value("Number.isSafeInteger(9007199254740991)", "true");
+        test_value("Number.isSafeInteger(9007199254740992)", "false");
+        test_value("Number.isSafeInteger(-9007199254740991)", "true");
+        test_value("Number.isSafeInteger(-9007199254740992)", "false");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_number_functions_is_finite() {
-        test("Number.isFinite(1)", "true");
-        test("Number.isFinite(1.5)", "true");
-        test("Number.isFinite(NaN)", "false");
-        test("Number.isFinite(Infinity)", "false");
-        test("Number.isFinite(-Infinity)", "false");
-        test_same("Number.isFinite('a')");
+        test_value("Number.isFinite(1)", "true");
+        test_value("Number.isFinite(1.5)", "true");
+        test_value("Number.isFinite(NaN)", "false");
+        test_value("Number.isFinite(Infinity)", "false");
+        test_value("Number.isFinite(-Infinity)", "false");
+        test_same_value("Number.isFinite('a')");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_number_functions_is_nan() {
-        test("Number.isNaN(1)", "false");
-        test("Number.isNaN(1.5)", "false");
-        test("Number.isNaN(NaN)", "true");
-        test_same("Number.isNaN('a')");
+        test_value("Number.isNaN(1)", "false");
+        test_value("Number.isNaN(1.5)", "false");
+        test_value("Number.isNaN(NaN)", "true");
+        test_same_value("Number.isNaN('a')");
         // unknown function may have side effects
-        test_same("Number.isNaN(+(void unknown()))");
+        test_same_value("Number.isNaN(+(void unknown()))");
     }
 
     #[test]
