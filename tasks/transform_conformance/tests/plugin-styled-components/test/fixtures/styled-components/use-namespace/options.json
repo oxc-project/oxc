@@ -1,0 +1,8 @@
+{
+  "plugins": [
+    ["styled-components", {
+      "namespace": "test-namespace",
+      "transpileTemplateLiterals": false
+    }]
+  ]
+}

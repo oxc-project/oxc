@@ -61,6 +61,8 @@ pub const PLUGINS: &[&str] = &[
     "regexp",
     // Legacy decorators, tests almost ported from TypeScript
     "legacy-decorators",
+    // Built-in third-party plugins
+    "plugin-styled-components",
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[

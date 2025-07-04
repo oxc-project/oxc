@@ -1,0 +1,7 @@
+{
+  "plugins": [
+    ["styled-components", {
+      "pure": true
+    }]
+  ]
+}
