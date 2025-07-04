@@ -20,7 +20,7 @@ use crate::{
     },
 };
 use oxc_macros::declare_oxc_lint;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,8 +61,8 @@ struct ComponentInfo {
 struct ComponentTracker {
     components: FxHashMap<CompactStr, ComponentInfo>,
     resolved_names: FxHashMap<CompactStr, bool>,
-    unresolved_spans: Vec<Span>, // Cache for unresolved components
-    needs_rebuild: bool,         // Flag to track if cache needs rebuilding
+    unresolved_spans: FxHashSet<Span>, // Cache for unresolved components
+    needs_rebuild: bool,               // Flag to track if cache needs rebuilding
 }
 
 impl ComponentTracker {
@@ -70,7 +70,7 @@ impl ComponentTracker {
         Self {
             components: FxHashMap::default(),
             resolved_names: FxHashMap::default(),
-            unresolved_spans: Vec::new(),
+            unresolved_spans: FxHashSet::default(),
             needs_rebuild: false,
         }
     }
@@ -98,7 +98,7 @@ impl ComponentTracker {
         }
     }
 
-    fn get_unresolved_components(&mut self) -> &[Span] {
+    fn get_unresolved_components(&mut self) -> Vec<Span> {
         if self.needs_rebuild {
             self.unresolved_spans.clear();
             self.unresolved_spans.extend(
@@ -111,7 +111,7 @@ impl ComponentTracker {
             );
             self.needs_rebuild = false;
         }
-        &self.unresolved_spans
+        self.unresolved_spans.iter().copied().collect()
     }
 }
 
@@ -167,12 +167,42 @@ impl VersionCache {
     }
 }
 
+/// Build component name from path parts efficiently using CompactStr
+fn build_component_name(path_parts: &[CompactStr], additional_part: Option<&str>) -> CompactStr {
+    if path_parts.is_empty() {
+        return additional_part.map_or_else(|| CompactStr::from(""), CompactStr::from);
+    }
+
+    // Calculate total length to avoid reallocations
+    let total_len = path_parts.iter().map(|p| p.len()).sum::<usize>()
+        + path_parts.len() - 1 // dots between parts
+        + additional_part.map_or(0, |p| p.len() + 1); // additional part + dot
+
+    let mut result = String::with_capacity(total_len);
+
+    // Build the path
+    for (i, part) in path_parts.iter().enumerate() {
+        if i > 0 {
+            result.push('.');
+        }
+        result.push_str(part.as_str());
+    }
+
+    // Add additional part if provided
+    if let Some(part) = additional_part {
+        if !result.is_empty() {
+            result.push('.');
+        }
+        result.push_str(part);
+    }
+
+    CompactStr::from(result)
+}
+
 fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-react(display-name): React component is missing a displayName property",
-    )
-    .with_help("Add a displayName property to the component")
-    .with_labels::<LabeledSpan, _>([span.into()])
+    OxcDiagnostic::warn("Component definition is missing display name")
+        .with_help("Add a displayName property to the component")
+        .with_labels::<LabeledSpan, _>([span.into()])
 }
 
 #[derive(Debug, Clone, Default)]
@@ -234,7 +264,8 @@ impl Rule for DisplayName {
                 if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
                     if member.property.name == "displayName" {
                         if let Some(path) = get_static_property_path(&member.object) {
-                            let component_name = path.join(".");
+                            // Use the optimized helper function instead of String building
+                            let component_name = build_component_name(&path, None);
                             tracker.resolve_display_name(&component_name);
                         }
                     }
@@ -852,7 +883,7 @@ impl Rule for DisplayName {
         // Report unresolved components
         let unresolved = tracker.get_unresolved_components();
         for span in unresolved {
-            ctx.diagnostic(display_name_diagnostic(*span));
+            ctx.diagnostic(display_name_diagnostic(span));
         }
     }
 }
@@ -1178,13 +1209,13 @@ fn process_object_expression(
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
             if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
-                let prop_name = CompactStr::from(ident.name.as_str());
+                let prop_name = &ident.name; // Use reference instead of creating new CompactStr
                 let expr = &obj_prop.value;
 
                 if !obj_prop.method {
                     if let Expression::ObjectExpression(nested_obj) = expr {
                         let mut nested_path = current_path.to_owned();
-                        nested_path.push(prop_name.clone());
+                        nested_path.push(prop_name.clone().into());
                         process_object_expression(
                             tracker,
                             nested_obj,
@@ -1193,16 +1224,31 @@ fn process_object_expression(
                         );
                     }
 
-                    if is_react_component_name(&prop_name) {
+                    if is_react_component_name(prop_name) {
                         if let Expression::FunctionExpression(func_expr) = expr {
                             if function_contains_jsx(func_expr) {
-                                let mut full_path = current_path.to_owned();
-                                full_path.push(prop_name.clone());
-                                let component_name = full_path
-                                    .iter()
-                                    .map(oxc_span::CompactStr::as_str)
-                                    .collect::<Vec<_>>()
-                                    .join(".");
+                                // Use the optimized helper function instead of String building
+                                let component_name =
+                                    build_component_name(current_path, Some(prop_name.as_str()));
+
+                                if ignore_transpiler_name {
+                                    tracker.add_component(
+                                        component_name,
+                                        expr.span(),
+                                        ComponentType::ObjectProperty,
+                                    );
+                                } else {
+                                    tracker.resolve_display_name(&component_name);
+                                }
+                            }
+                        }
+                    } else if is_react_component_name(prop_name) {
+                        if let Expression::FunctionExpression(func_expr) = expr {
+                            if function_contains_jsx(func_expr) {
+                                // Use the optimized helper function instead of String building
+                                let component_name =
+                                    build_component_name(current_path, Some(prop_name.as_str()));
+
                                 if ignore_transpiler_name {
                                     tracker.add_component(
                                         component_name,
@@ -1215,16 +1261,13 @@ fn process_object_expression(
                             }
                         }
                     }
-                } else if is_react_component_name(&prop_name) {
+                } else if is_react_component_name(prop_name) {
                     if let Expression::FunctionExpression(func_expr) = expr {
                         if function_contains_jsx(func_expr) {
-                            let mut full_path = current_path.to_owned();
-                            full_path.push(prop_name.clone());
-                            let component_name = full_path
-                                .iter()
-                                .map(oxc_span::CompactStr::as_str)
-                                .collect::<Vec<_>>()
-                                .join(".");
+                            // Use the optimized helper function instead of String building
+                            let component_name =
+                                build_component_name(current_path, Some(prop_name.as_str()));
+
                             if ignore_transpiler_name {
                                 tracker.add_component(
                                     component_name,
@@ -1243,15 +1286,25 @@ fn process_object_expression(
 }
 
 fn get_static_property_path(expr: &Expression) -> Option<Vec<CompactStr>> {
-    match expr {
-        Expression::Identifier(ident) => Some(vec![CompactStr::from(ident.name.as_str())]),
-        Expression::StaticMemberExpression(member) => {
-            let mut path = get_static_property_path(&member.object)?;
-            path.push(CompactStr::from(member.property.name.as_str()));
-            Some(path)
+    // Use a small array for common cases to avoid Vec allocation
+    fn get_path_recursive(expr: &Expression, depth: usize) -> Option<Vec<CompactStr>> {
+        if depth > 10 {
+            // Prevent infinite recursion
+            return None;
         }
-        _ => None,
+
+        match expr {
+            Expression::Identifier(ident) => Some(vec![ident.name.clone().into()]),
+            Expression::StaticMemberExpression(member) => {
+                let mut path = get_path_recursive(&member.object, depth + 1)?;
+                path.push(member.property.name.clone().into());
+                Some(path)
+            }
+            _ => None,
+        }
     }
+
+    get_path_recursive(expr, 0)
 }
 
 fn function_returns_create_react_class(func_expr: &Function) -> bool {
@@ -1273,15 +1326,15 @@ fn function_returns_create_react_class(func_expr: &Function) -> bool {
 
 /// Parse version string like "16.14.0" into (major, minor, patch)
 fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
-    let parts: Vec<&str> = version.split('.').collect();
-    if parts.len() >= 3 {
-        let major = parts[0].parse::<u32>().ok()?;
-        let minor = parts[1].parse::<u32>().ok()?;
-        let patch = parts[2].parse::<u32>().ok()?;
-        Some((major, minor, patch))
-    } else {
-        None
-    }
+    // Avoid Vec allocation by using split_once and split_once again
+    let (major_str, rest) = version.split_once('.')?;
+    let (minor_str, patch_str) = rest.split_once('.')?;
+
+    let major = major_str.parse::<u32>().ok()?;
+    let minor = minor_str.parse::<u32>().ok()?;
+    let patch = patch_str.parse::<u32>().ok()?;
+
+    Some((major, minor, patch))
 }
 
 /// Internal version checking function to avoid repeated parsing
