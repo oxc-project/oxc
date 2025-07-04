@@ -1687,13 +1687,13 @@ mod test {
     #[test]
     #[ignore]
     fn test_fold_math_functions_pow() {
-        test_value("Math.pow(1, 2)", "1");
-        test_value("Math.pow(2, 0)", "1");
-        test_value("Math.pow(2, 2)", "4");
-        test_value("Math.pow(2, 32)", "4294967296");
-        test_value("Math.pow(Infinity, 0)", "1");
-        test_value("Math.pow(Infinity, 1)", "Infinity");
-        test_value("Math.pow('a', 33)", "NaN");
+        test("Math.pow(1, 2)", "1");
+        test("Math.pow(2, 0)", "1");
+        test("Math.pow(2, 2)", "4");
+        test("Math.pow(2, 32)", "4294967296");
+        test("Math.pow(Infinity, 0)", "1");
+        test("Math.pow(Infinity, 1)", "Infinity");
+        test("Math.pow('a', 33)", "NaN");
     }
 
     #[test]
