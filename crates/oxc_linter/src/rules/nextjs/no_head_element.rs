@@ -3,7 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_in_app_dir};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_in_app_dir,
+};
 
 fn no_head_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `<head>` element. Use `<Head />` from `next/head` instead.")
@@ -73,14 +78,19 @@ impl Rule for NoHeadElement {
             if id.name != "head" {
                 return;
             }
-            let Some(full_file_path) = ctx.file_path().to_str() else {
-                return;
-            };
-            if is_in_app_dir(full_file_path) {
-                return;
-            }
             ctx.diagnostic(no_head_element_diagnostic(elem.span));
         }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        let Some(full_file_path) = ctx.file_path().to_str() else {
+            return false;
+        };
+        if is_in_app_dir(full_file_path) {
+            return false;
+        }
+
+        true
     }
 }
 
