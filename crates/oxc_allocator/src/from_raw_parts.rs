@@ -117,6 +117,66 @@ impl Allocator {
 
         Self::from_bump(bump)
     }
+
+    /// Set data pointer for this [`Allocator`]'s current chunk.
+    ///
+    /// This is dangerous, and this method should not ordinarily be used.
+    /// It is only here for manually writing data to start of the allocator chunk,
+    /// and then adjusting the start pointer to after it.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * `ptr` must point to within the allocation underlying this allocator.
+    /// * `ptr` must be aligned on [`RAW_MIN_ALIGN`].
+    ///
+    /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
+    pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
+        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
+
+        // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
+        // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
+        // is alive, beyond setting the data pointer.
+        let chunk_footer = unsafe { self.chunk_footer_mut() };
+        chunk_footer.data = ptr;
+    }
+
+    /// Get mutable reference to current [`ChunkFooter`].
+    ///
+    /// It would be safer if this method took a `&mut self`, but that would preclude using this method
+    /// while any references to data in the arena exist, which is too restrictive.
+    /// So we just need to be careful how we use this method.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * Caller must not allocate into this `Allocator`, or perform any other action which would
+    ///   read or alter the `ChunkFooter`, or create another reference to it, while the `&mut ChunkFooter`
+    ///   reference returned by this method is alive.
+    #[expect(clippy::mut_from_ref)]
+    unsafe fn chunk_footer_mut(&self) -> &mut ChunkFooter {
+        let current_chunk_footer_field_offset = get_current_chunk_footer_field_offset();
+
+        // Get mut reference to current `ChunkFooter`.
+        // SAFETY: We've established the offset of the `current_chunk_footer` field above.
+        let current_chunk_footer_field = unsafe {
+            let bump = self.bump();
+            let field_ptr = ptr::from_ref(bump)
+                .cast::<Cell<NonNull<ChunkFooter>>>()
+                .add(current_chunk_footer_field_offset);
+            &*field_ptr
+        };
+        let mut chunk_footer_ptr = current_chunk_footer_field.get();
+        // SAFETY: Caller guarantees `Allocator` has an allocated chunk, so this isn't `EmptyChunkFooter`,
+        // which it'd be UB to obtain a mutable reference to.
+        // Caller promises not to take any other action which would generate another reference to the
+        // `ChunkFooter` while this reference is alive.
+        unsafe { chunk_footer_ptr.as_mut() }
+    }
 }
 
 /// Allocator chunk footer.
