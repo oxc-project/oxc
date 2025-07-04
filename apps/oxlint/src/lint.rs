@@ -70,11 +70,6 @@ impl Runner for LintRunner {
 
         let external_linter = self.external_linter.as_ref();
 
-        let search_for_nested_configs = !disable_nested_config &&
-            // If the `--config` option is explicitly passed, we should not search for nested config files
-            // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
-
         let mut paths = paths;
         let provided_path_count = paths.len();
         let now = Instant::now();
@@ -178,6 +173,11 @@ impl Runner for LintRunner {
         let number_of_files = paths.len();
 
         let handler = GraphicalReportHandler::new();
+
+        let search_for_nested_configs = !disable_nested_config &&
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none();
 
         let nested_configs = if search_for_nested_configs {
             match Self::get_nested_configs(stdout, &handler, &filters, &paths, external_linter) {
