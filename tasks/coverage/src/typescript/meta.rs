@@ -151,6 +151,14 @@ impl TestCaseContent {
         let is_module = test_unit_data.len() > 1;
         let test_unit_data = test_unit_data
             .into_iter()
+            // Some snapshot units contain an invalid file with just a message, not even a comment!
+            // e.g. typescript/tests/cases/compiler/extendsUntypedModule.ts
+            // e.g. typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
+            // Based on some config, it's not expected to be read in the first place.
+            .filter(|unit| {
+                !(unit.content.starts_with("This file is not ")
+                    || unit.content.starts_with("Nor is this one."))
+            })
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
                 if is_module {
