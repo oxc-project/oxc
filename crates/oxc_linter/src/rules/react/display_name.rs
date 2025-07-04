@@ -10,7 +10,11 @@ use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{is_create_element_call, is_react_component_name},
+};
 use oxc_macros::declare_oxc_lint;
 use rustc_hash::FxHashMap;
 
@@ -172,7 +176,7 @@ impl Rule for DisplayName {
             match node.kind() {
                 AstKind::Class(class) => {
                     if let Some(name) = &class.name() {
-                        if name.chars().next().is_some_and(char::is_uppercase) {
+                        if is_react_component_name(name) {
                             // Check if class has static displayName
                             let has_static_display_name =
                                 class.body.body.iter().any(|element| match element {
@@ -234,7 +238,7 @@ impl Rule for DisplayName {
                 }
                 AstKind::Function(func) => {
                     if let Some(name) = &func.id {
-                        if name.name.chars().next().is_some_and(char::is_uppercase) {
+                        if is_react_component_name(&name.name) {
                             if function_contains_jsx(func) {
                                 if ignore_transpiler_name {
                                     // Only add if not already resolved (to avoid duplicates from HOC handling)
@@ -560,7 +564,7 @@ impl Rule for DisplayName {
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                             if let Some(name) = &func.id {
-                                if name.name.chars().next().is_some_and(char::is_uppercase)
+                                if is_react_component_name(&name.name)
                                     && function_contains_jsx(func)
                                 {
                                     if ignore_transpiler_name {
@@ -580,7 +584,7 @@ impl Rule for DisplayName {
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                             if let Some(name) = &class.id {
-                                if name.name.chars().next().is_some_and(char::is_uppercase) {
+                                if is_react_component_name(&name.name) {
                                     // Check if class has static displayName
                                     let has_static_display_name =
                                         class.body.body.iter().any(|element| match element {
@@ -1187,12 +1191,9 @@ fn contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
         Expression::CallExpression(call) => {
-            // Check if this is a createElement call (React.createElement or just createElement)
-            if let Some(callee_name) = call.callee_name() {
-                if callee_name == "createElement" || callee_name.ends_with(".createElement") {
-                    // This is a React createElement call, so it's a React element
-                    return true;
-                }
+            // Use the utility function to check for createElement calls
+            if is_create_element_call(call) {
+                return true;
             }
             // Check if any arguments contain JSX
             call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
@@ -1286,15 +1287,45 @@ fn find_innermost_function_with_jsx<'a>(expr: &'a Expression<'a>) -> Option<Inne
     }
 }
 
-/// Test if the React version is compatible with skipping displayName for React.memo(React.forwardRef(...))
-/// Compatible versions: ^0.14.10 || ^15.7.0 || >= 16.12.0
-fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
-    // Get React version from settings
+/// Parse version string like "16.14.0" into (major, minor, patch)
+fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() >= 3 {
+        let major = parts[0].parse::<u32>().ok()?;
+        let minor = parts[1].parse::<u32>().ok()?;
+        let patch = parts[2].parse::<u32>().ok()?;
+        Some((major, minor, patch))
+    } else {
+        None
+    }
+}
+
+/// Check if React version meets minimum requirements
+fn check_react_version(ctx: &LintContext, min_major: u32, min_minor: u32) -> bool {
     let react_version = ctx.settings().react.version.as_deref();
 
     match react_version {
         Some(version) => {
-            // Parse version string like "16.14.0", "15.7.0", "0.14.10", etc.
+            if let Some((major, minor, _)) = parse_version(version) {
+                major >= min_major && (major > min_major || minor >= min_minor)
+            } else {
+                false
+            }
+        }
+        None => {
+            // If no version specified, assume modern React
+            true
+        }
+    }
+}
+
+/// Test if the React version is compatible with skipping displayName for React.memo(React.forwardRef(...))
+/// Compatible versions: ^0.14.10 || ^15.7.0 || >= 16.12.0
+fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
+    let react_version = ctx.settings().react.version.as_deref();
+
+    match react_version {
+        Some(version) => {
             if let Some((major, minor, patch)) = parse_version(version) {
                 // ^0.14.10: major == 0 && minor >= 14 && patch >= 10
                 if major == 0 && minor >= 14 && patch >= 10 {
@@ -1308,7 +1339,6 @@ fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
                 if major >= 16 && (major > 16 || minor >= 12) {
                     return true;
                 }
-
                 false
             } else {
                 false
@@ -1324,37 +1354,7 @@ fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
 /// Test if the React version is compatible with checking context objects
 /// Compatible versions: >= 16.3.0
 fn test_react_version_for_context_objects(ctx: &LintContext) -> bool {
-    // Get React version from settings
-    let react_version = ctx.settings().react.version.as_deref();
-
-    match react_version {
-        Some(version) => {
-            // Parse version string like "16.3.0", "16.4.0", etc.
-            if let Some((major, minor, _)) = parse_version(version) {
-                // >= 16.3.0: major >= 16 && (major > 16 || minor >= 3)
-                major >= 16 && (major > 16 || minor >= 3)
-            } else {
-                false
-            }
-        }
-        None => {
-            // If no version specified, assume modern React (>= 16.3.0)
-            true
-        }
-    }
-}
-
-/// Parse version string like "16.14.0" into (major, minor, patch)
-fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
-    let parts: Vec<&str> = version.split('.').collect();
-    if parts.len() >= 3 {
-        let major = parts[0].parse::<u32>().ok()?;
-        let minor = parts[1].parse::<u32>().ok()?;
-        let patch = parts[2].parse::<u32>().ok()?;
-        Some((major, minor, patch))
-    } else {
-        None
-    }
+    check_react_version(ctx, 16, 3)
 }
 
 #[test]
