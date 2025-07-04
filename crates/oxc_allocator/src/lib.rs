@@ -18,6 +18,10 @@
 //!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
+//!
+//! * `fixed_size` - Makes [`AllocatorPool`] create large fixed-size allocators, instead of
+//!   flexibly-sized ones.
+//!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 
 #![warn(missing_docs)]
 
