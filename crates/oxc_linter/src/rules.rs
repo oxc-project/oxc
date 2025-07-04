@@ -42,6 +42,7 @@ mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod camelcase;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -165,6 +166,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod nonsense;
     pub mod operator_assignment;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
@@ -578,6 +580,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
+    eslint::camelcase,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
@@ -701,6 +704,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::nonsense,
     eslint::operator_assignment,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
