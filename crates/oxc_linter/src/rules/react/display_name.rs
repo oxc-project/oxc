@@ -7,6 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::PropName;
+use oxc_span::CompactStr;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
@@ -55,20 +56,32 @@ struct ComponentInfo {
 }
 
 struct ComponentTracker {
-    components: FxHashMap<String, ComponentInfo>,
+    components: FxHashMap<CompactStr, ComponentInfo>,
+    resolved_names: FxHashMap<CompactStr, bool>,
 }
 
 impl ComponentTracker {
     fn new() -> Self {
-        Self { components: FxHashMap::default() }
+        Self { components: FxHashMap::default(), resolved_names: FxHashMap::default() }
     }
 
-    fn add_component(&mut self, name: String, span: Span, _component_type: ComponentType) {
-        self.components.insert(name, ComponentInfo { span, has_display_name: false });
+    fn add_component<S: AsRef<str>>(
+        &mut self,
+        name: S,
+        span: Span,
+        _component_type: ComponentType,
+    ) {
+        let name_str = CompactStr::from(name.as_ref());
+        if self.resolved_names.contains_key(&name_str) {
+            return;
+        }
+        self.components.insert(name_str, ComponentInfo { span, has_display_name: false });
     }
 
-    fn resolve_display_name(&mut self, name: &str) {
-        if let Some(component) = self.components.get_mut(name) {
+    fn resolve_display_name<S: AsRef<str>>(&mut self, name: S) {
+        let name_ref = CompactStr::from(name.as_ref());
+        self.resolved_names.insert(name_ref.clone(), true);
+        if let Some(component) = self.components.get_mut(&name_ref) {
             component.has_display_name = true;
         }
     }
@@ -76,7 +89,9 @@ impl ComponentTracker {
     fn get_unresolved_components(&self) -> Vec<Span> {
         self.components
             .iter()
-            .filter(|(_, comp)| !comp.has_display_name)
+            .filter(|(name, comp)| {
+                !comp.has_display_name && !self.resolved_names.contains_key(*name)
+            })
             .map(|(_, comp)| comp.span)
             .collect()
     }
@@ -127,6 +142,21 @@ impl Rule for DisplayName {
 
         // Single pass: collect React components and process displayName assignments
         for node in ctx.nodes() {
+            // Early return: skip nodes that can't be React components
+            match node.kind() {
+                AstKind::Class(_)
+                | AstKind::Function(_)
+                | AstKind::VariableDeclaration(_)
+                | AstKind::AssignmentExpression(_)
+                | AstKind::ExportDefaultDeclaration(_) => {
+                    // These node types can contain React components, continue processing
+                }
+                _ => {
+                    // Skip other node types that can't contain React components
+                    continue;
+                }
+            }
+
             // Process displayName assignments first (so they can resolve components found later)
             if let AstKind::AssignmentExpression(assign) = node.kind() {
                 if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
@@ -146,23 +176,13 @@ impl Rule for DisplayName {
                 if let AstKind::VariableDeclarator(decl) = ancestor_node.kind() {
                     if let Some(Expression::CallExpression(call)) = &decl.init {
                         if let Some(callee_name) = call.callee_name() {
-                            if callee_name.ends_with("memo") {
-                                if let Some(first_arg) = call.arguments.first() {
-                                    if let Some(Expression::CallExpression(inner_call)) =
-                                        first_arg.as_expression()
-                                    {
-                                        if let Some(inner_callee_name) = inner_call.callee_name() {
-                                            if inner_callee_name.ends_with("forwardRef") {
-                                                // Only skip if React version is compatible
-                                                if test_react_version_for_memo_forwardref(ctx) {
-                                                    should_skip = true;
-                                                    break;
-                                                }
-                                                // else: do nothing here, fall through
-                                            }
-                                        }
-                                    }
+                            if is_hoc_call(callee_name) {
+                                // Only skip if React version is compatible
+                                if test_react_version_for_memo_forwardref(ctx) {
+                                    should_skip = true;
+                                    break;
                                 }
+                                // else: do nothing here, fall through
                             }
                         }
                     }
@@ -216,7 +236,7 @@ impl Rule for DisplayName {
                             } else if contains_jsx {
                                 if ignore_transpiler_name {
                                     tracker.add_component(
-                                        name.to_string(),
+                                        name.as_str(),
                                         class.span,
                                         ComponentType::Class,
                                     );
@@ -242,9 +262,9 @@ impl Rule for DisplayName {
                             if function_contains_jsx(func) {
                                 if ignore_transpiler_name {
                                     // Only add if not already resolved (to avoid duplicates from HOC handling)
-                                    if !tracker.components.contains_key(&name.name.to_string()) {
+                                    if !tracker.components.contains_key(name.name.as_str()) {
                                         tracker.add_component(
-                                            name.name.to_string(),
+                                            name.name.as_str(),
                                             func.span,
                                             ComponentType::Function,
                                         );
@@ -261,7 +281,7 @@ impl Rule for DisplayName {
                             {
                                 // Handle functions that return createReactClass calls
                                 tracker.add_component(
-                                    name.name.to_string(),
+                                    name.name.as_str(),
                                     func.span,
                                     ComponentType::CreateReactClass,
                                 );
@@ -277,7 +297,7 @@ impl Rule for DisplayName {
                                                 {
                                                     if function_contains_jsx(returned_func) {
                                                         tracker.add_component(
-                                                            "<anonymous>".to_string(),
+                                                            "<anonymous>",
                                                             func.span,
                                                             ComponentType::Function,
                                                         );
@@ -289,7 +309,7 @@ impl Rule for DisplayName {
                                                 {
                                                     if function_like_contains_jsx(expr) {
                                                         tracker.add_component(
-                                                            "<anonymous>".to_string(),
+                                                            "<anonymous>",
                                                             func.span,
                                                             ComponentType::Function,
                                                         );
@@ -312,7 +332,7 @@ impl Rule for DisplayName {
                                         {
                                             if function_contains_jsx(returned_func) {
                                                 tracker.add_component(
-                                                    "<anonymous>".to_string(),
+                                                    "<anonymous>",
                                                     func.span,
                                                     ComponentType::Function,
                                                 );
@@ -324,7 +344,7 @@ impl Rule for DisplayName {
                                         {
                                             if function_like_contains_jsx(expr) {
                                                 tracker.add_component(
-                                                    "<anonymous>".to_string(),
+                                                    "<anonymous>",
                                                     func.span,
                                                     ComponentType::Function,
                                                 );
@@ -353,7 +373,7 @@ impl Rule for DisplayName {
                                                 {
                                                     if contains_jsx(&expr_stmt.expression) {
                                                         tracker.add_component(
-                                                            "<anonymous export>".to_string(),
+                                                            "<anonymous export>",
                                                             assign.span,
                                                             ComponentType::Function,
                                                         );
@@ -367,7 +387,7 @@ impl Rule for DisplayName {
                                                     if let Some(expr) = &ret_stmt.argument {
                                                         if contains_jsx(expr) {
                                                             tracker.add_component(
-                                                                "<anonymous export>".to_string(),
+                                                                "<anonymous export>",
                                                                 assign.span,
                                                                 ComponentType::Function,
                                                             );
@@ -388,7 +408,7 @@ impl Rule for DisplayName {
                                                                 if ignore_transpiler_name {
                                                                     // Use the function name as the component name
                                                                     tracker.add_component(
-                                                                        name.name.to_string(),
+                                                                        name.name.as_str(),
                                                                         assign.span,
                                                                         ComponentType::Function,
                                                                     );
@@ -443,7 +463,7 @@ impl Rule for DisplayName {
                                                 if !has_display_name {
                                                     // Only track if missing displayName
                                                     tracker.add_component(
-                                                        "<anonymous export>".to_string(),
+                                                        "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::CreateReactClass,
                                                     );
@@ -454,7 +474,7 @@ impl Rule for DisplayName {
                                                 // Handle React.createContext calls in assignment expressions
                                                 if check_context_objects {
                                                     tracker.add_component(
-                                                        "<anonymous export>".to_string(),
+                                                        "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::Function,
                                                     );
@@ -478,7 +498,7 @@ impl Rule for DisplayName {
                                     // Handle React.createContext calls in simple variable assignments
                                     if check_context_objects {
                                         tracker.add_component(
-                                            ident.name.to_string(),
+                                            ident.name.as_str(),
                                             assign.span,
                                             ComponentType::Function,
                                         );
@@ -502,7 +522,7 @@ impl Rule for DisplayName {
                                     {
                                         if contains_jsx(&expr_stmt.expression) {
                                             tracker.add_component(
-                                                "<anonymous export>".to_string(),
+                                                "<anonymous export>",
                                                 export.span,
                                                 ComponentType::Function,
                                             );
@@ -516,7 +536,7 @@ impl Rule for DisplayName {
                                         if let Some(expr) = &ret_stmt.argument {
                                             if contains_jsx(expr) {
                                                 tracker.add_component(
-                                                    "<anonymous export>".to_string(),
+                                                    "<anonymous export>",
                                                     export.span,
                                                     ComponentType::Function,
                                                 );
@@ -537,7 +557,7 @@ impl Rule for DisplayName {
                                                     if ignore_transpiler_name {
                                                         // Use the function name as the component name
                                                         tracker.add_component(
-                                                            name.name.to_string(),
+                                                            name.name.as_str(),
                                                             export.span,
                                                             ComponentType::Function,
                                                         );
@@ -551,7 +571,7 @@ impl Rule for DisplayName {
                                                 } else {
                                                     // Anonymous function
                                                     tracker.add_component(
-                                                        "<anonymous export>".to_string(),
+                                                        "<anonymous export>",
                                                         export.span,
                                                         ComponentType::Function,
                                                     );
@@ -569,7 +589,7 @@ impl Rule for DisplayName {
                                 {
                                     if ignore_transpiler_name {
                                         tracker.add_component(
-                                            name.name.to_string(),
+                                            name.name.as_str(),
                                             export.span,
                                             ComponentType::Function,
                                         );
@@ -634,7 +654,7 @@ impl Rule for DisplayName {
                                     } else if contains_jsx {
                                         if ignore_transpiler_name {
                                             tracker.add_component(
-                                                name.name.to_string(),
+                                                name.name.as_str(),
                                                 export.span,
                                                 ComponentType::Class,
                                             );
@@ -672,7 +692,7 @@ impl Rule for DisplayName {
 
                                             if extends_react_component {
                                                 tracker.add_component(
-                                                    "<anonymous export>".to_string(),
+                                                    "<anonymous export>",
                                                     export.span,
                                                     ComponentType::Class,
                                                 );
@@ -704,7 +724,7 @@ impl Rule for DisplayName {
                                     if ignore_transpiler_name {
                                         // When ignoreTranspilerName is true, require displayName for all anonymous classes
                                         tracker.add_component(
-                                            "<anonymous export>".to_string(),
+                                            "<anonymous export>",
                                             export.span,
                                             ComponentType::Class,
                                         );
@@ -738,7 +758,7 @@ impl Rule for DisplayName {
 
                                         if extends_react_component {
                                             tracker.add_component(
-                                                "<anonymous export>".to_string(),
+                                                "<anonymous export>",
                                                 export.span,
                                                 ComponentType::Class,
                                             );
@@ -773,19 +793,19 @@ fn process_variable_declaration<'a>(
     for var_decl in &decl.declarations {
         if let Some(Expression::CallExpression(call)) = &var_decl.init {
             if let Some(callee_name) = call.callee_name() {
-                if callee_name.ends_with("memo") {
+                if is_hoc_call(callee_name) {
                     if let Some(Expression::CallExpression(inner_call)) =
                         call.arguments.first().and_then(|arg| arg.as_expression())
                     {
                         if let Some(inner_callee_name) = inner_call.callee_name() {
-                            if inner_callee_name.ends_with("forwardRef")
+                            if is_hoc_call(inner_callee_name)
                                 && test_react_version_for_memo_forwardref(ctx)
                             {
                                 return;
                             }
                             if let Some(name) = var_decl.id.get_identifier_name() {
                                 tracker.add_component(
-                                    name.to_string(),
+                                    name.as_str(),
                                     decl.span,
                                     ComponentType::Function,
                                 );
@@ -799,10 +819,8 @@ fn process_variable_declaration<'a>(
         // Always check for innermost function with JSX and add to tracker
         if let Some(expr) = &var_decl.init {
             if let Some(innermost_func) = find_innermost_function_with_jsx(expr) {
-                let component_name = var_decl
-                    .id
-                    .get_identifier_name()
-                    .map_or_else(|| "<anonymous>".to_string(), |s| s.to_string());
+                let component_name =
+                    var_decl.id.get_identifier_name().map_or_else(|| "<anonymous>", |s| s.as_str());
                 // is_direct is true only if the innermost function with JSX is the same as init
                 let is_direct = match innermost_func {
                     InnermostFunction::Function(func) => {
@@ -827,7 +845,7 @@ fn process_variable_declaration<'a>(
                                 // Named function: use the function name as displayName
                                 if ignore_transpiler_name {
                                     tracker.add_component(
-                                        func_id.name.to_string(),
+                                        func_id.name.as_str(),
                                         decl.span,
                                         ComponentType::Function,
                                     );
@@ -863,7 +881,7 @@ fn process_variable_declaration<'a>(
                         process_object_expression(
                             tracker,
                             obj_expr.as_ref(),
-                            &[name.to_string()],
+                            &[CompactStr::from(name.as_str())],
                             ignore_transpiler_name,
                         );
                     }
@@ -895,7 +913,7 @@ fn process_variable_declaration<'a>(
                                     tracker.resolve_display_name(&format!("[CALLSITE11] {name}"));
                                 } else if ignore_transpiler_name {
                                     tracker.add_component(
-                                        name.to_string(),
+                                        name.as_str(),
                                         decl.span,
                                         ComponentType::CreateReactClass,
                                     );
@@ -915,7 +933,7 @@ fn process_variable_declaration<'a>(
                                                     if let Some(inner_callee_name) =
                                                         inner_call.callee_name()
                                                     {
-                                                        if inner_callee_name.ends_with("forwardRef")
+                                                        if is_hoc_call(inner_callee_name)
                                                             && test_react_version_for_memo_forwardref(ctx)
                                                         {
                                                             return;
@@ -951,7 +969,7 @@ fn process_variable_declaration<'a>(
                                             }
                                         }
                                         tracker.add_component(
-                                            name.to_string(),
+                                            name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
                                         );
@@ -989,7 +1007,7 @@ fn process_variable_declaration<'a>(
                                             }
                                         }
                                         tracker.add_component(
-                                            name.to_string(),
+                                            name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
                                         );
@@ -1015,7 +1033,7 @@ fn process_variable_declaration<'a>(
                                                             }
                                                         } else {
                                                             tracker.add_component(
-                                                                name.to_string(),
+                                                                name.as_str(),
                                                                 decl.span,
                                                                 ComponentType::Function,
                                                             );
@@ -1023,7 +1041,7 @@ fn process_variable_declaration<'a>(
                                                     }
                                                     InnermostFunction::ArrowFunction(_) => {
                                                         tracker.add_component(
-                                                            name.to_string(),
+                                                            name.as_str(),
                                                             decl.span,
                                                             ComponentType::Function,
                                                         );
@@ -1043,7 +1061,7 @@ fn process_variable_declaration<'a>(
                                     // Handle React.createContext calls - always require explicit displayName
                                     if check_context_objects {
                                         tracker.add_component(
-                                            name.to_string(),
+                                            name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
                                         );
@@ -1063,13 +1081,13 @@ fn process_variable_declaration<'a>(
 fn process_object_expression(
     tracker: &mut ComponentTracker,
     obj_expr: &ObjectExpression,
-    current_path: &[String],
+    current_path: &[CompactStr],
     ignore_transpiler_name: bool,
 ) {
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
             if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
-                let prop_name = ident.name.to_string();
+                let prop_name = CompactStr::from(ident.name.as_str());
                 let expr = &obj_prop.value;
 
                 if !obj_prop.method {
@@ -1089,7 +1107,11 @@ fn process_object_expression(
                             if function_contains_jsx(func_expr) {
                                 let mut full_path = current_path.to_owned();
                                 full_path.push(prop_name.clone());
-                                let component_name = full_path.join(".");
+                                let component_name = full_path
+                                    .iter()
+                                    .map(|s| s.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(".");
                                 if ignore_transpiler_name {
                                     tracker.add_component(
                                         component_name,
@@ -1103,13 +1125,37 @@ fn process_object_expression(
                                 }
                             }
                         }
+                    } else if prop_name.chars().next().is_some_and(char::is_uppercase) {
+                        if let Expression::FunctionExpression(func_expr) = expr {
+                            if function_contains_jsx(func_expr) {
+                                let mut full_path = current_path.to_owned();
+                                full_path.push(prop_name.clone());
+                                let component_name = full_path
+                                    .iter()
+                                    .map(|s| s.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(".");
+                                if ignore_transpiler_name {
+                                    tracker.add_component(
+                                        component_name,
+                                        expr.span(),
+                                        ComponentType::ObjectProperty,
+                                    );
+                                } else {
+                                    tracker.resolve_display_name(&format!(
+                                        "[CALLSITE23] {component_name}"
+                                    ));
+                                }
+                            }
+                        }
                     }
                 } else if prop_name.chars().next().is_some_and(char::is_uppercase) {
                     if let Expression::FunctionExpression(func_expr) = expr {
                         if function_contains_jsx(func_expr) {
                             let mut full_path = current_path.to_owned();
                             full_path.push(prop_name.clone());
-                            let component_name = full_path.join(".");
+                            let component_name =
+                                full_path.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(".");
                             if ignore_transpiler_name {
                                 tracker.add_component(
                                     component_name,
@@ -1129,12 +1175,12 @@ fn process_object_expression(
     }
 }
 
-fn get_static_property_path(expr: &Expression) -> Option<Vec<String>> {
+fn get_static_property_path(expr: &Expression) -> Option<Vec<CompactStr>> {
     match expr {
-        Expression::Identifier(ident) => Some(vec![ident.name.to_string()]),
+        Expression::Identifier(ident) => Some(vec![CompactStr::from(ident.name.as_str())]),
         Expression::StaticMemberExpression(member) => {
             let mut path = get_static_property_path(&member.object)?;
-            path.push(member.property.name.to_string());
+            path.push(CompactStr::from(member.property.name.as_str()));
             Some(path)
         }
         _ => None,
@@ -1191,11 +1237,9 @@ fn contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
         Expression::CallExpression(call) => {
-            // Use the utility function to check for createElement calls
             if is_create_element_call(call) {
                 return true;
             }
-            // Check if any arguments contain JSX
             call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
         }
         Expression::ParenthesizedExpression(inner) => contains_jsx(&inner.expression),
@@ -1239,8 +1283,7 @@ fn find_innermost_function_with_jsx<'a>(expr: &'a Expression<'a>) -> Option<Inne
         Expression::CallExpression(call) => {
             // Check if this is a HOC call
             if let Some(callee_name) = call.callee_name() {
-                let hoc_names = ["memo", "forwardRef"];
-                if hoc_names.iter().any(|&hoc| callee_name.ends_with(hoc)) {
+                if is_hoc_call(callee_name) {
                     // This is a HOC, recursively check the first argument
                     if let Some(first_arg) = call.arguments.first() {
                         if let Some(inner_expr) = first_arg.as_expression() {
@@ -1355,6 +1398,12 @@ fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
 /// Compatible versions: >= 16.3.0
 fn test_react_version_for_context_objects(ctx: &LintContext) -> bool {
     check_react_version(ctx, 16, 3)
+}
+
+fn is_hoc_call(callee_name: &str) -> bool {
+    matches!(callee_name, "memo" | "forwardRef")
+        || callee_name.ends_with("memo")
+        || callee_name.ends_with("forwardRef")
 }
 
 #[test]
