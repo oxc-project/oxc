@@ -156,11 +156,9 @@ impl Oxlintrc {
         let json = serde_json::from_str::<serde_json::Value>(json_string)
             .unwrap_or(serde_json::Value::Null);
 
-        let config = Self::deserialize(&json).map_err(|err| {
+        Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
-        })?;
-
-        Ok(config)
+        })
     }
 
     /// Merges two [Oxlintrc] files together
