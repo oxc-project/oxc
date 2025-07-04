@@ -1,8 +1,4 @@
-use std::{
-    mem::ManuallyDrop,
-    ops::{Deref, DerefMut},
-    sync::Mutex,
-};
+use std::{mem::ManuallyDrop, ops::Deref, sync::Mutex};
 
 use crate::Allocator;
 
@@ -23,7 +19,7 @@ impl AllocatorPool {
 
     /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
     ///
-    /// Returns an [`AllocatorGuard`] that gives mutable access to the allocator.
+    /// Returns an [`AllocatorGuard`] that gives access to the allocator.
     ///
     /// # Panics
     ///
@@ -64,12 +60,6 @@ impl Deref for AllocatorGuard<'_> {
 
     fn deref(&self) -> &Self::Target {
         &self.allocator
-    }
-}
-
-impl DerefMut for AllocatorGuard<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.allocator
     }
 }
 
