@@ -122,8 +122,7 @@ impl ComponentTracker {
                     .components
                     .values()
                     .find(|comp| comp.span == span)
-                    .map(|comp| comp.is_context)
-                    .unwrap_or(false);
+                    .is_some_and(|comp| comp.is_context);
                 (span, is_context)
             })
             .collect()
@@ -189,7 +188,7 @@ fn build_component_name(path_parts: &[CompactStr], additional_part: Option<&str>
     }
 
     // Calculate total length to avoid reallocations
-    let total_len = path_parts.iter().map(|p| p.len()).sum::<usize>()
+    let total_len = path_parts.iter().map(CompactStr::len).sum::<usize>()
         + path_parts.len() - 1 // dots between parts
         + additional_part.map_or(0, |p| p.len() + 1); // additional part + dot
 
@@ -1279,53 +1278,13 @@ fn process_object_expression(
                 if !obj_prop.method {
                     if let Expression::ObjectExpression(nested_obj) = expr {
                         let mut nested_path = current_path.to_owned();
-                        nested_path.push(prop_name.clone().into());
+                        nested_path.push((*prop_name).into());
                         process_object_expression(
                             tracker,
                             nested_obj,
                             &nested_path,
                             ignore_transpiler_name,
                         );
-                    }
-
-                    if is_react_component_name(prop_name) {
-                        if let Expression::FunctionExpression(func_expr) = expr {
-                            if function_contains_jsx(func_expr) {
-                                // Use the optimized helper function instead of String building
-                                let component_name =
-                                    build_component_name(current_path, Some(prop_name.as_str()));
-
-                                if ignore_transpiler_name {
-                                    tracker.add_component(
-                                        component_name,
-                                        expr.span(),
-                                        ComponentType::ObjectProperty,
-                                        false,
-                                    );
-                                } else {
-                                    tracker.resolve_display_name(&component_name);
-                                }
-                            }
-                        }
-                    } else if is_react_component_name(prop_name) {
-                        if let Expression::FunctionExpression(func_expr) = expr {
-                            if function_contains_jsx(func_expr) {
-                                // Use the optimized helper function instead of String building
-                                let component_name =
-                                    build_component_name(current_path, Some(prop_name.as_str()));
-
-                                if ignore_transpiler_name {
-                                    tracker.add_component(
-                                        component_name,
-                                        expr.span(),
-                                        ComponentType::ObjectProperty,
-                                        false,
-                                    );
-                                } else {
-                                    tracker.resolve_display_name(&component_name);
-                                }
-                            }
-                        }
                     }
                 } else if is_react_component_name(prop_name) {
                     if let Expression::FunctionExpression(func_expr) = expr {
@@ -1361,10 +1320,10 @@ fn get_static_property_path(expr: &Expression) -> Option<Vec<CompactStr>> {
         }
 
         match expr {
-            Expression::Identifier(ident) => Some(vec![ident.name.clone().into()]),
+            Expression::Identifier(ident) => Some(vec![ident.name.into()]),
             Expression::StaticMemberExpression(member) => {
                 let mut path = get_path_recursive(&member.object, depth + 1)?;
-                path.push(member.property.name.clone().into());
+                path.push(member.property.name.into());
                 Some(path)
             }
             _ => None,
