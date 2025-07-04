@@ -2337,7 +2337,7 @@ fn test() {
         ),
     ];
 
-    let fail: Vec<_> = vec![
+    let fail = vec![
         (
             r#"
         	        var Hello = createReactClass({
