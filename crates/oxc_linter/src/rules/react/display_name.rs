@@ -129,29 +129,21 @@ impl Rule for DisplayName {
             for ancestor in ctx.nodes().ancestor_ids(node.id()) {
                 let ancestor_node = ctx.nodes().get_node(ancestor);
                 if let AstKind::VariableDeclarator(decl) = ancestor_node.kind() {
-                    if let Some(init) = &decl.init {
-                        if let Expression::CallExpression(call) = init {
-                            if let Some(callee_name) = call.callee_name() {
-                                if callee_name.ends_with("memo") {
-                                    if let Some(first_arg) = call.arguments.first() {
-                                        if let Some(inner_expr) = first_arg.as_expression() {
-                                            if let Expression::CallExpression(inner_call) =
-                                                inner_expr
-                                            {
-                                                if let Some(inner_callee_name) =
-                                                    inner_call.callee_name()
-                                                {
-                                                    if inner_callee_name.ends_with("forwardRef") {
-                                                        // Only skip if React version is compatible
-                                                        if test_react_version_for_memo_forwardref(
-                                                            ctx,
-                                                        ) {
-                                                            should_skip = true;
-                                                            break;
-                                                        }
-                                                        // else: do nothing here, fall through
-                                                    }
+                    if let Some(Expression::CallExpression(call)) = &decl.init {
+                        if let Some(callee_name) = call.callee_name() {
+                            if callee_name.ends_with("memo") {
+                                if let Some(first_arg) = call.arguments.first() {
+                                    if let Some(Expression::CallExpression(inner_call)) =
+                                        first_arg.as_expression()
+                                    {
+                                        if let Some(inner_callee_name) = inner_call.callee_name() {
+                                            if inner_callee_name.ends_with("forwardRef") {
+                                                // Only skip if React version is compatible
+                                                if test_react_version_for_memo_forwardref(ctx) {
+                                                    should_skip = true;
+                                                    break;
                                                 }
+                                                // else: do nothing here, fall through
                                             }
                                         }
                                     }
@@ -563,21 +555,21 @@ impl Rule for DisplayName {
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                             if let Some(name) = &func.id {
-                                if name.name.chars().next().is_some_and(char::is_uppercase) {
-                                    if function_contains_jsx(func) {
-                                        if ignore_transpiler_name {
-                                            tracker.add_component(
-                                                name.name.to_string(),
-                                                export.span,
-                                                ComponentType::Function,
-                                            );
-                                        } else {
-                                            debug_resolve("CALLSITE6", &name.name);
-                                            tracker.resolve_display_name(&format!(
-                                                "[CALLSITE6] {}",
-                                                name.name
-                                            ));
-                                        }
+                                if name.name.chars().next().is_some_and(char::is_uppercase)
+                                    && function_contains_jsx(func)
+                                {
+                                    if ignore_transpiler_name {
+                                        tracker.add_component(
+                                            name.name.to_string(),
+                                            export.span,
+                                            ComponentType::Function,
+                                        );
+                                    } else {
+                                        debug_resolve("CALLSITE6", &name.name);
+                                        tracker.resolve_display_name(&format!(
+                                            "[CALLSITE6] {}",
+                                            name.name
+                                        ));
                                     }
                                 }
                             }
@@ -1036,11 +1028,7 @@ fn process_variable_declaration<'a>(
                                         return;
                                     }
                                     // For all other HOC cases (including plain React.memo), continue as before
-                                    if !ignore_transpiler_name {
-                                        debug_resolve("CALLSITE20", name.as_str());
-                                        tracker
-                                            .resolve_display_name(&format!("[CALLSITE20] {name}"));
-                                    } else {
+                                    if ignore_transpiler_name {
                                         // Find the innermost function that renders JSX
                                         if let Some(expr) = &var_decl.init {
                                             if let Some(innermost_func) =
@@ -1079,6 +1067,10 @@ fn process_variable_declaration<'a>(
                                                 }
                                             }
                                         }
+                                    } else {
+                                        debug_resolve("CALLSITE20", name.as_str());
+                                        tracker
+                                            .resolve_display_name(&format!("[CALLSITE20] {name}"));
                                     }
                                     // HOC handled, skip fallback tracking
                                     return;
@@ -1265,12 +1257,10 @@ fn function_returns_create_react_class(func_expr: &Function) -> bool {
     if let Some(body) = &func_expr.body {
         for stmt in &body.statements {
             if let Statement::ReturnStatement(ret_stmt) = stmt {
-                if let Some(expr) = &ret_stmt.argument {
-                    if let Expression::CallExpression(call) = expr {
-                        if let Some(callee_name) = call.callee_name() {
-                            if callee_name == "createClass" || callee_name == "createReactClass" {
-                                return true;
-                            }
+                if let Some(Expression::CallExpression(call)) = &ret_stmt.argument {
+                    if let Some(callee_name) = call.callee_name() {
+                        if callee_name == "createClass" || callee_name == "createReactClass" {
+                            return true;
                         }
                     }
                 }
