@@ -18,10 +18,6 @@ pub mod offset_to_position;
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
-
-    /// All paths to lint
-    paths: Vec<Arc<OsStr>>,
-
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
 
@@ -30,11 +26,11 @@ pub struct LintServiceOptions {
 
 impl LintServiceOptions {
     #[must_use]
-    pub fn new<T>(cwd: T, paths: Vec<Arc<OsStr>>) -> Self
+    pub fn new<T>(cwd: T) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
+        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
     }
 
     #[inline]
@@ -85,6 +81,12 @@ impl<'l> LintService<'l> {
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
     ) -> Self {
         self.runtime = self.runtime.with_file_system(file_system);
+        self
+    }
+
+    #[must_use]
+    pub fn with_paths(mut self, paths: Vec<Arc<OsStr>>) -> Self {
+        self.runtime = self.runtime.with_paths(paths);
         self
     }
 

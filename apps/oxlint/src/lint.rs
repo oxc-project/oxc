@@ -258,8 +258,7 @@ impl Runner for LintRunner {
         } else {
             nested_configs.values().any(|config| config.plugins().has_import())
         };
-        let mut options =
-            LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
+        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
         let lint_config = config_builder.build();
 
@@ -303,7 +302,8 @@ impl Runner for LintRunner {
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, allocator_pool, options);
+            let mut lint_service =
+                LintService::new(&linter, allocator_pool, options).with_paths(paths);
             lint_service.run(&tx_error);
         });
 

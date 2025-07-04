@@ -139,18 +139,16 @@ impl IsolatedLintHandler {
 
         debug!("lint {}", path.display());
 
-        let lint_service_options = LintServiceOptions::new(
-            self.options.root_path.clone(),
-            vec![Arc::from(path.as_os_str())],
-        )
-        .with_cross_module(self.options.use_cross_module);
+        let lint_service_options = LintServiceOptions::new(self.options.root_path.clone())
+            .with_cross_module(self.options.use_cross_module);
 
         let mut lint_service =
             LintService::new(&self.linter, AllocatorPool::default(), lint_service_options)
                 .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
                     path.to_path_buf(),
                     source_text,
-                )));
+                )))
+                .with_paths(vec![Arc::from(path.as_os_str())]);
         let result = lint_service.run_source(allocator);
 
         Some(result)

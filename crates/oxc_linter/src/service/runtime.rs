@@ -188,7 +188,7 @@ impl<'l> Runtime<'l> {
         Self {
             allocator_pool,
             cwd: options.cwd,
-            paths: options.paths.iter().cloned().collect(),
+            paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher),
             linter,
             resolver,
             file_system: Box::new(OsFileSystem),
@@ -200,6 +200,11 @@ impl<'l> Runtime<'l> {
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
     ) -> Self {
         self.file_system = file_system;
+        self
+    }
+
+    pub fn with_paths(mut self, paths: Vec<Arc<OsStr>>) -> Self {
+        self.paths = paths.into_iter().collect();
         self
     }
 
