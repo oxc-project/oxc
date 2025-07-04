@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxlint = { workspace = true }
+oxlint = { workspace = true, features = ["napi_bindings"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }

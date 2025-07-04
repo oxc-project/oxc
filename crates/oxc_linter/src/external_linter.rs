@@ -1,17 +1,19 @@
 use std::{fmt::Debug, sync::Arc};
 
 use napi::{Status, bindgen_prelude::Promise, threadsafe_function::ThreadsafeFunction};
+
+#[cfg(feature = "napi_bindings")]
 use napi_derive::napi;
 
-#[napi]
+#[cfg_attr(feature = "napi_bindings", napi)]
 pub type ExternalLinterCb =
     Arc<ThreadsafeFunction<(), /* TODO: correct return type */ (), (), Status, false>>;
 
-#[napi]
+#[cfg_attr(feature = "napi_bindings", napi)]
 pub type ExternalLinterLoadPluginCb =
     Arc<ThreadsafeFunction<String, Promise<PluginLoadResult>, String, Status, false>>;
 
-#[napi]
+#[cfg_attr(feature = "napi_bindings", napi)]
 pub enum PluginLoadResult {
     Success,
     Failure(String),

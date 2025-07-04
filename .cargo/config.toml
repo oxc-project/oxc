@@ -42,11 +42,3 @@ rustflags = [
 # See https://x.com/Brooooook_lyn/status/1895848334692401270
 [target.'cfg(target_env = "gnu")']
 rustflags = ["-C", "link-args=-Wl,-z,nodelete"]
-
-[target.'cfg(all(target_os = "linux", target_env = "gnu"))']
-rustflags = [
-  "-C",
-  "link-args=-Wl,--warn-unresolved-symbols",
-  "-C",
-  "link-args=-Wl,-z,nodelete",
-]

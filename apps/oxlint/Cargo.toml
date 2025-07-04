@@ -60,3 +60,4 @@ lazy-regex = { workspace = true }
 [features]
 default = []
 allocator = ["dep:mimalloc-safe"]
+napi_bindings = ["oxc_linter/napi_bindings"]
