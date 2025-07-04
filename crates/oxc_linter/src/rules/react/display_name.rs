@@ -56,6 +56,7 @@ enum ComponentType {
 struct ComponentInfo {
     span: Span,
     has_display_name: bool,
+    is_context: bool, // Track whether this is a context object
 }
 
 struct ComponentTracker {
@@ -80,12 +81,14 @@ impl ComponentTracker {
         name: S,
         span: Span,
         _component_type: ComponentType,
+        is_context: bool,
     ) {
         let name_str = CompactStr::from(name.as_ref());
         if self.resolved_names.contains_key(&name_str) {
             return;
         }
-        self.components.insert(name_str, ComponentInfo { span, has_display_name: false });
+        self.components
+            .insert(name_str, ComponentInfo { span, has_display_name: false, is_context });
         self.needs_rebuild = true;
     }
 
@@ -98,7 +101,7 @@ impl ComponentTracker {
         }
     }
 
-    fn get_unresolved_components(&mut self) -> Vec<Span> {
+    fn get_unresolved_components(&mut self) -> Vec<(Span, bool)> {
         if self.needs_rebuild {
             self.unresolved_spans.clear();
             self.unresolved_spans.extend(
@@ -111,7 +114,19 @@ impl ComponentTracker {
             );
             self.needs_rebuild = false;
         }
-        self.unresolved_spans.iter().copied().collect()
+        self.unresolved_spans
+            .iter()
+            .copied()
+            .map(|span| {
+                let is_context = self
+                    .components
+                    .values()
+                    .find(|comp| comp.span == span)
+                    .map(|comp| comp.is_context)
+                    .unwrap_or(false);
+                (span, is_context)
+            })
+            .collect()
     }
 }
 
@@ -199,9 +214,15 @@ fn build_component_name(path_parts: &[CompactStr], additional_part: Option<&str>
     CompactStr::from(result)
 }
 
-fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
+fn component_display_name_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Component definition is missing display name")
         .with_help("Add a displayName property to the component")
+        .with_labels::<LabeledSpan, _>([span.into()])
+}
+
+fn context_display_name_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Context definition is missing display name")
+        .with_help("Add a displayName property to the context")
         .with_labels::<LabeledSpan, _>([span.into()])
 }
 
@@ -342,6 +363,7 @@ impl Rule for DisplayName {
                                         name.as_str(),
                                         class.span,
                                         ComponentType::Class,
+                                        false,
                                     );
                                 } else {
                                     tracker.resolve_display_name(name);
@@ -372,6 +394,7 @@ impl Rule for DisplayName {
                                             name.name.as_str(),
                                             func.span,
                                             ComponentType::Function,
+                                            false,
                                         );
                                     }
                                 } else {
@@ -386,6 +409,7 @@ impl Rule for DisplayName {
                                     name.name.as_str(),
                                     func.span,
                                     ComponentType::CreateReactClass,
+                                    false,
                                 );
                             } else {
                                 // Handle anonymous functions that return JSX
@@ -402,6 +426,7 @@ impl Rule for DisplayName {
                                                             "<anonymous>",
                                                             func.span,
                                                             ComponentType::Function,
+                                                            false,
                                                         );
                                                         break;
                                                     }
@@ -414,6 +439,7 @@ impl Rule for DisplayName {
                                                             "<anonymous>",
                                                             func.span,
                                                             ComponentType::Function,
+                                                            false,
                                                         );
                                                         break;
                                                     }
@@ -437,6 +463,7 @@ impl Rule for DisplayName {
                                                     "<anonymous>",
                                                     func.span,
                                                     ComponentType::Function,
+                                                    false,
                                                 );
                                                 break;
                                             }
@@ -449,6 +476,7 @@ impl Rule for DisplayName {
                                                     "<anonymous>",
                                                     func.span,
                                                     ComponentType::Function,
+                                                    false,
                                                 );
                                                 break;
                                             }
@@ -478,6 +506,7 @@ impl Rule for DisplayName {
                                                             "<anonymous export>",
                                                             assign.span,
                                                             ComponentType::Function,
+                                                            false,
                                                         );
                                                     }
                                                 }
@@ -492,6 +521,7 @@ impl Rule for DisplayName {
                                                                 "<anonymous export>",
                                                                 assign.span,
                                                                 ComponentType::Function,
+                                                                false,
                                                             );
                                                         }
                                                     }
@@ -513,6 +543,7 @@ impl Rule for DisplayName {
                                                                         name.name.as_str(),
                                                                         assign.span,
                                                                         ComponentType::Function,
+                                                                        false,
                                                                     );
                                                                 } else {
                                                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
@@ -526,6 +557,7 @@ impl Rule for DisplayName {
                                                                     "<anonymous export>",
                                                                     assign.span,
                                                                     ComponentType::Function,
+                                                                    false,
                                                                 );
                                                             }
                                                         }
@@ -567,6 +599,7 @@ impl Rule for DisplayName {
                                                         "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::CreateReactClass,
+                                                        false,
                                                     );
                                                 }
                                             } else if callee_name == "createContext"
@@ -578,6 +611,7 @@ impl Rule for DisplayName {
                                                         "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::Function,
+                                                        true, // This is a context object
                                                     );
                                                 }
                                             }
@@ -602,6 +636,7 @@ impl Rule for DisplayName {
                                             ident.name.as_str(),
                                             assign.span,
                                             ComponentType::Function,
+                                            true, // This is a context object
                                         );
                                     }
                                 }
@@ -626,6 +661,7 @@ impl Rule for DisplayName {
                                                 "<anonymous export>",
                                                 export.span,
                                                 ComponentType::Function,
+                                                false,
                                             );
                                         }
                                     }
@@ -640,6 +676,7 @@ impl Rule for DisplayName {
                                                     "<anonymous export>",
                                                     export.span,
                                                     ComponentType::Function,
+                                                    false,
                                                 );
                                             }
                                         }
@@ -661,6 +698,7 @@ impl Rule for DisplayName {
                                                             name.name.as_str(),
                                                             export.span,
                                                             ComponentType::Function,
+                                                            false,
                                                         );
                                                     } else {
                                                         // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
@@ -672,6 +710,7 @@ impl Rule for DisplayName {
                                                         "<anonymous export>",
                                                         export.span,
                                                         ComponentType::Function,
+                                                        false,
                                                     );
                                                 }
                                             }
@@ -690,6 +729,7 @@ impl Rule for DisplayName {
                                             name.name.as_str(),
                                             export.span,
                                             ComponentType::Function,
+                                            false,
                                         );
                                     } else {
                                         tracker.resolve_display_name(name.name);
@@ -749,6 +789,7 @@ impl Rule for DisplayName {
                                                 name.name.as_str(),
                                                 export.span,
                                                 ComponentType::Class,
+                                                false,
                                             );
                                         } else {
                                             // When ignoreTranspilerName is false, require displayName if it extends React.Component
@@ -787,6 +828,7 @@ impl Rule for DisplayName {
                                                     "<anonymous export>",
                                                     export.span,
                                                     ComponentType::Class,
+                                                    false,
                                                 );
                                             }
                                             // For plain classes with render methods (not extending React.Component), do not require displayName
@@ -819,6 +861,7 @@ impl Rule for DisplayName {
                                             "<anonymous export>",
                                             export.span,
                                             ComponentType::Class,
+                                            false,
                                         );
                                     } else {
                                         // When ignoreTranspilerName is false, require displayName if it extends React.Component
@@ -853,6 +896,7 @@ impl Rule for DisplayName {
                                                 "<anonymous export>",
                                                 export.span,
                                                 ComponentType::Class,
+                                                false,
                                             );
                                         }
                                         // For plain classes with render methods (not extending React.Component), do not require displayName
@@ -882,8 +926,12 @@ impl Rule for DisplayName {
 
         // Report unresolved components
         let unresolved = tracker.get_unresolved_components();
-        for span in unresolved {
-            ctx.diagnostic(display_name_diagnostic(span));
+        for (span, is_context) in unresolved {
+            if is_context {
+                ctx.diagnostic(context_display_name_diagnostic(span));
+            } else {
+                ctx.diagnostic(component_display_name_diagnostic(span));
+            }
         }
     }
 }
@@ -914,6 +962,7 @@ fn process_variable_declaration<'a>(
                                     name.as_str(),
                                     decl.span,
                                     ComponentType::Function,
+                                    false,
                                 );
                             }
                             return;
@@ -939,7 +988,12 @@ fn process_variable_declaration<'a>(
 
                 if is_direct {
                     if ignore_transpiler_name {
-                        tracker.add_component(component_name, decl.span, ComponentType::Function);
+                        tracker.add_component(
+                            component_name,
+                            decl.span,
+                            ComponentType::Function,
+                            false,
+                        );
                     } else {
                         tracker.resolve_display_name(component_name);
                     }
@@ -954,6 +1008,7 @@ fn process_variable_declaration<'a>(
                                         func_id.name.as_str(),
                                         decl.span,
                                         ComponentType::Function,
+                                        false,
                                     );
                                 } else {
                                     tracker.resolve_display_name(func_id.name);
@@ -964,6 +1019,7 @@ fn process_variable_declaration<'a>(
                                     component_name,
                                     decl.span,
                                     ComponentType::Function,
+                                    false,
                                 );
                             }
                         }
@@ -973,6 +1029,7 @@ fn process_variable_declaration<'a>(
                                 component_name,
                                 decl.span,
                                 ComponentType::Function,
+                                false,
                             );
                         }
                     }
@@ -998,6 +1055,7 @@ fn process_variable_declaration<'a>(
                                 component_name,
                                 decl.span,
                                 ComponentType::Function,
+                                false,
                             );
                         }
                     }
@@ -1046,6 +1104,7 @@ fn process_variable_declaration<'a>(
                                         name.as_str(),
                                         decl.span,
                                         ComponentType::CreateReactClass,
+                                        false,
                                     );
                                 }
                             } else {
@@ -1093,6 +1152,7 @@ fn process_variable_declaration<'a>(
                                             name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
+                                            false,
                                         );
                                         return;
                                     }
@@ -1122,6 +1182,7 @@ fn process_variable_declaration<'a>(
                                             name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
+                                            false,
                                         );
                                         return;
                                     }
@@ -1163,6 +1224,7 @@ fn process_variable_declaration<'a>(
                                                     name.as_str(),
                                                     decl.span,
                                                     ComponentType::Function,
+                                                    false,
                                                 );
                                             }
                                         }
@@ -1172,6 +1234,7 @@ fn process_variable_declaration<'a>(
                                             name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
+                                            false,
                                         );
                                     }
                                     // HOC handled, skip fallback tracking
@@ -1185,6 +1248,7 @@ fn process_variable_declaration<'a>(
                                             name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
+                                            true, // This is a context object
                                         );
                                     }
                                     return;
@@ -1236,6 +1300,7 @@ fn process_object_expression(
                                         component_name,
                                         expr.span(),
                                         ComponentType::ObjectProperty,
+                                        false,
                                     );
                                 } else {
                                     tracker.resolve_display_name(&component_name);
@@ -1254,6 +1319,7 @@ fn process_object_expression(
                                         component_name,
                                         expr.span(),
                                         ComponentType::ObjectProperty,
+                                        false,
                                     );
                                 } else {
                                     tracker.resolve_display_name(&component_name);
@@ -1273,6 +1339,7 @@ fn process_object_expression(
                                     component_name,
                                     expr.span(),
                                     ComponentType::ObjectProperty,
+                                    false,
                                 );
                             } else {
                                 tracker.resolve_display_name(&component_name);
