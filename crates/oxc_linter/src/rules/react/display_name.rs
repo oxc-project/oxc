@@ -12,7 +12,7 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 use oxc_macros::declare_oxc_lint;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -51,12 +51,12 @@ struct ComponentInfo {
 }
 
 struct ComponentTracker {
-    components: HashMap<String, ComponentInfo>,
+    components: FxHashMap<String, ComponentInfo>,
 }
 
 impl ComponentTracker {
     fn new() -> Self {
-        Self { components: HashMap::new() }
+        Self { components: FxHashMap::default() }
     }
 
     fn add_component(&mut self, name: String, span: Span, _component_type: ComponentType) {
@@ -86,26 +86,14 @@ fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
     .with_labels::<LabeledSpan, _>([span.into()])
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DisplayNameConfig {
     ignore_transpiler_name: bool,
     check_context_objects: bool,
 }
 
-impl Default for DisplayNameConfig {
-    fn default() -> Self {
-        Self { ignore_transpiler_name: false, check_context_objects: false }
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DisplayName(Box<DisplayNameConfig>);
-
-impl Default for DisplayName {
-    fn default() -> Self {
-        Self(Box::default())
-    }
-}
 
 impl Rule for DisplayName {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -113,11 +101,11 @@ impl Rule for DisplayName {
             DisplayNameConfig {
                 ignore_transpiler_name: config
                     .get("ignoreTranspilerName")
-                    .and_then(|v| v.as_bool())
+                    .and_then(serde_json::Value::as_bool)
                     .unwrap_or(false),
                 check_context_objects: config
                     .get("checkContextObjects")
-                    .and_then(|v| v.as_bool())
+                    .and_then(serde_json::Value::as_bool)
                     .unwrap_or(false),
             }
         } else {
@@ -128,7 +116,7 @@ impl Rule for DisplayName {
 
     fn run_once(&self, ctx: &LintContext) {
         let mut tracker = ComponentTracker::new();
-        let _ignore_transpiler_name = self.0.ignore_transpiler_name;
+        let ignore_transpiler_name = self.0.ignore_transpiler_name;
         // Only check context objects if React version is >= 16.3.0
         let check_context_objects =
             self.0.check_context_objects && test_react_version_for_context_objects(ctx);
@@ -145,7 +133,7 @@ impl Rule for DisplayName {
                         if let Expression::CallExpression(call) = init {
                             if let Some(callee_name) = call.callee_name() {
                                 if callee_name.ends_with("memo") {
-                                    if let Some(first_arg) = call.arguments.get(0) {
+                                    if let Some(first_arg) = call.arguments.first() {
                                         if let Some(inner_expr) = first_arg.as_expression() {
                                             if let Expression::CallExpression(inner_call) =
                                                 inner_expr
@@ -179,7 +167,7 @@ impl Rule for DisplayName {
             match node.kind() {
                 AstKind::Class(class) => {
                     if let Some(name) = &class.name() {
-                        if name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+                        if name.chars().next().is_some_and(char::is_uppercase) {
                             // Check if class has static displayName
                             let has_static_display_name =
                                 class.body.body.iter().any(|element| match element {
@@ -218,7 +206,7 @@ impl Rule for DisplayName {
                                 debug_resolve("CALLSITE1", name);
                                 tracker.resolve_display_name(name);
                             } else if contains_jsx {
-                                if _ignore_transpiler_name {
+                                if ignore_transpiler_name {
                                     tracker.add_component(
                                         name.to_string(),
                                         class.span,
@@ -236,16 +224,16 @@ impl Rule for DisplayName {
                     process_variable_declaration(
                         &mut tracker,
                         decl,
-                        _ignore_transpiler_name,
+                        ignore_transpiler_name,
                         check_context_objects,
                         ctx,
                     );
                 }
                 AstKind::Function(func) => {
                     if let Some(name) = &func.id {
-                        if name.name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
-                            if function_contains_jsx(&func) {
-                                if _ignore_transpiler_name {
+                        if name.name.chars().next().is_some_and(char::is_uppercase) {
+                            if function_contains_jsx(func) {
+                                if ignore_transpiler_name {
                                     // Only add if not already resolved (to avoid duplicates from HOC handling)
                                     if !tracker.components.contains_key(&name.name.to_string()) {
                                         tracker.add_component(
@@ -262,8 +250,8 @@ impl Rule for DisplayName {
                                         name.name
                                     ));
                                 }
-                            } else if _ignore_transpiler_name
-                                && function_returns_create_react_class(&func)
+                            } else if ignore_transpiler_name
+                                && function_returns_create_react_class(func)
                             {
                                 // Handle functions that return createReactClass calls
                                 tracker.add_component(
@@ -391,7 +379,7 @@ impl Rule for DisplayName {
                                                         if contains_jsx(expr) {
                                                             // Check if the function has a name
                                                             if let Some(name) = &func.id {
-                                                                if _ignore_transpiler_name {
+                                                                if ignore_transpiler_name {
                                                                     // Use the function name as the component name
                                                                     tracker.add_component(
                                                                         name.name.to_string(),
@@ -439,7 +427,7 @@ impl Rule for DisplayName {
                                                                     prop.prop_name()
                                                                 {
                                                                     prop_name == "displayName"
-                                                                        || (!_ignore_transpiler_name
+                                                                        || (!ignore_transpiler_name
                                                                             && prop_name == "name")
                                                                 } else {
                                                                     false
@@ -544,7 +532,7 @@ impl Rule for DisplayName {
                                             if contains_jsx(expr) {
                                                 // Check if the function has a name
                                                 if let Some(name) = &func.id {
-                                                    if _ignore_transpiler_name {
+                                                    if ignore_transpiler_name {
                                                         // Use the function name as the component name
                                                         tracker.add_component(
                                                             name.name.to_string(),
@@ -575,15 +563,9 @@ impl Rule for DisplayName {
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                             if let Some(name) = &func.id {
-                                if name
-                                    .name
-                                    .chars()
-                                    .next()
-                                    .map(|c| c.is_uppercase())
-                                    .unwrap_or(false)
-                                {
+                                if name.name.chars().next().is_some_and(char::is_uppercase) {
                                     if function_contains_jsx(func) {
-                                        if _ignore_transpiler_name {
+                                        if ignore_transpiler_name {
                                             tracker.add_component(
                                                 name.name.to_string(),
                                                 export.span,
@@ -602,13 +584,7 @@ impl Rule for DisplayName {
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                             if let Some(name) = &class.id {
-                                if name
-                                    .name
-                                    .chars()
-                                    .next()
-                                    .map(|c| c.is_uppercase())
-                                    .unwrap_or(false)
-                                {
+                                if name.name.chars().next().is_some_and(char::is_uppercase) {
                                     // Check if class has static displayName
                                     let has_static_display_name =
                                         class.body.body.iter().any(|element| match element {
@@ -657,7 +633,7 @@ impl Rule for DisplayName {
                                             name.name
                                         ));
                                     } else if contains_jsx {
-                                        if _ignore_transpiler_name {
+                                        if ignore_transpiler_name {
                                             tracker.add_component(
                                                 name.name.to_string(),
                                                 export.span,
@@ -668,7 +644,7 @@ impl Rule for DisplayName {
                                             let extends_react_component = class
                                                 .super_class
                                                 .as_ref()
-                                                .map_or(false, |super_class| {
+                                                .is_some_and(|super_class| {
                                                     if let Some(member_expr) =
                                                         super_class.as_member_expression()
                                                     {
@@ -726,7 +702,7 @@ impl Rule for DisplayName {
                                 });
 
                                 if contains_jsx {
-                                    if _ignore_transpiler_name {
+                                    if ignore_transpiler_name {
                                         // When ignoreTranspilerName is true, require displayName for all anonymous classes
                                         tracker.add_component(
                                             "<anonymous export>".to_string(),
@@ -735,10 +711,8 @@ impl Rule for DisplayName {
                                         );
                                     } else {
                                         // When ignoreTranspilerName is false, require displayName if it extends React.Component
-                                        let extends_react_component = class
-                                            .super_class
-                                            .as_ref()
-                                            .map_or(false, |super_class| {
+                                        let extends_react_component =
+                                            class.super_class.as_ref().is_some_and(|super_class| {
                                                 if let Some(member_expr) =
                                                     super_class.as_member_expression()
                                                 {
@@ -813,63 +787,59 @@ impl Rule for DisplayName {
 fn process_variable_declaration<'a>(
     tracker: &mut ComponentTracker,
     decl: &VariableDeclaration<'a>,
-    _ignore_transpiler_name: bool,
+    ignore_transpiler_name: bool,
     check_context_objects: bool,
     ctx: &LintContext<'a>,
 ) {
     for var_decl in &decl.declarations {
-        if let Some(init) = &var_decl.init {
-            // Guard: skip React.memo(React.forwardRef(...))
-            if let Expression::CallExpression(call) = init {
-                if let Some(callee_name) = call.callee_name() {
-                    if callee_name.ends_with("memo") {
-                        if let Some(first_arg) = call.arguments.get(0) {
-                            if let Some(inner_expr) = first_arg.as_expression() {
-                                if let Expression::CallExpression(inner_call) = inner_expr {
-                                    if let Some(inner_callee_name) = inner_call.callee_name() {
-                                        if inner_callee_name.ends_with("forwardRef") {
-                                            if test_react_version_for_memo_forwardref(ctx) {
-                                                return;
-                                            }
-                                            if let Some(name) = var_decl.id.get_identifier_name() {
-                                                tracker.add_component(
-                                                    name.to_string(),
-                                                    decl.span,
-                                                    ComponentType::Function,
-                                                );
-                                            }
-                                            return;
-                                        }
-                                    }
-                                }
+        if let Some(Expression::CallExpression(call)) = &var_decl.init {
+            if let Some(callee_name) = call.callee_name() {
+                if callee_name.ends_with("memo") {
+                    if let Some(Expression::CallExpression(inner_call)) =
+                        call.arguments.first().and_then(|arg| arg.as_expression())
+                    {
+                        if let Some(inner_callee_name) = inner_call.callee_name() {
+                            if inner_callee_name.ends_with("forwardRef")
+                                && test_react_version_for_memo_forwardref(ctx)
+                            {
+                                return;
                             }
+                            if let Some(name) = var_decl.id.get_identifier_name() {
+                                tracker.add_component(
+                                    name.to_string(),
+                                    decl.span,
+                                    ComponentType::Function,
+                                );
+                            }
+                            return;
                         }
                     }
                 }
             }
-            // Always check for innermost function with JSX and add to tracker
-            if let Some(innermost_func) = find_innermost_function_with_jsx(init) {
+        }
+        // Always check for innermost function with JSX and add to tracker
+        if let Some(expr) = &var_decl.init {
+            if let Some(innermost_func) = find_innermost_function_with_jsx(expr) {
                 let component_name = var_decl
                     .id
                     .get_identifier_name()
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| "<anonymous>".to_string());
+                    .map_or_else(|| "<anonymous>".to_string(), |s| s.to_string());
                 // is_direct is true only if the innermost function with JSX is the same as init
                 let is_direct = match innermost_func {
                     InnermostFunction::Function(func) => {
-                        matches!(init, Expression::FunctionExpression(f) if std::ptr::eq(f.as_ref(), func))
+                        matches!(var_decl.init.as_ref(), Some(Expression::FunctionExpression(f)) if std::ptr::eq(f.as_ref(), func))
                     }
                     InnermostFunction::ArrowFunction(arrow) => {
-                        matches!(init, Expression::ArrowFunctionExpression(a) if std::ptr::eq(a.as_ref(), arrow))
+                        matches!(var_decl.init.as_ref(), Some(Expression::ArrowFunctionExpression(a)) if std::ptr::eq(a.as_ref(), arrow))
                     }
                 };
 
                 if is_direct {
-                    if !_ignore_transpiler_name {
+                    if ignore_transpiler_name {
+                        tracker.add_component(component_name, decl.span, ComponentType::Function);
+                    } else {
                         debug_resolve("CALLSITE9", component_name.as_str());
                         tracker.resolve_display_name(&component_name);
-                    } else {
-                        tracker.add_component(component_name, decl.span, ComponentType::Function);
                     }
                 } else {
                     // For curried/nested functions, check if the innermost function is named
@@ -877,15 +847,15 @@ fn process_variable_declaration<'a>(
                         InnermostFunction::Function(func) => {
                             if let Some(func_id) = &func.id {
                                 // Named function: use the function name as displayName
-                                if !_ignore_transpiler_name {
-                                    debug_resolve("CALLSITE10", &func_id.name);
-                                    tracker.resolve_display_name(&func_id.name);
-                                } else {
+                                if ignore_transpiler_name {
                                     tracker.add_component(
                                         func_id.name.to_string(),
                                         decl.span,
                                         ComponentType::Function,
                                     );
+                                } else {
+                                    debug_resolve("CALLSITE10", &func_id.name);
+                                    tracker.resolve_display_name(&func_id.name);
                                 }
                             } else {
                                 // Anonymous function: always require explicit displayName
@@ -908,14 +878,16 @@ fn process_variable_declaration<'a>(
                 }
                 return;
             }
+        }
+        if let Some(init) = &var_decl.init {
             match init {
                 Expression::ObjectExpression(obj_expr) => {
                     if let Some(name) = var_decl.id.get_identifier_name() {
                         process_object_expression(
                             tracker,
-                            obj_expr,
-                            vec![name.to_string()],
-                            _ignore_transpiler_name,
+                            obj_expr.as_ref(),
+                            &[name.to_string()],
+                            ignore_transpiler_name,
                         );
                     }
                 }
@@ -931,7 +903,7 @@ fn process_variable_declaration<'a>(
                                         obj_expr.properties.iter().any(|prop| {
                                             if let Some((prop_name, _)) = prop.prop_name() {
                                                 prop_name == "displayName"
-                                                    || (!_ignore_transpiler_name
+                                                    || (!ignore_transpiler_name
                                                         && prop_name == "name")
                                             } else {
                                                 false
@@ -944,8 +916,8 @@ fn process_variable_declaration<'a>(
 
                                 if has_display_name {
                                     debug_resolve("CALLSITE11", name.as_str());
-                                    tracker.resolve_display_name(&format!("[CALLSITE11] {}", name));
-                                } else if _ignore_transpiler_name {
+                                    tracker.resolve_display_name(&format!("[CALLSITE11] {name}"));
+                                } else if ignore_transpiler_name {
                                     tracker.add_component(
                                         name.to_string(),
                                         decl.span,
@@ -958,7 +930,7 @@ fn process_variable_declaration<'a>(
                                 if hoc_names.iter().any(|&hoc| callee_name.ends_with(hoc)) {
                                     // Special case: React.memo(React.forwardRef(...)), skip reporting
                                     if callee_name.ends_with("memo") {
-                                        if let Some(first_arg) = call.arguments.get(0) {
+                                        if let Some(first_arg) = call.arguments.first() {
                                             if let Some(inner_expr) = first_arg.as_expression() {
                                                 // If React.memo(React.forwardRef(...)), skip reporting
                                                 if let Expression::CallExpression(inner_call) =
@@ -968,10 +940,9 @@ fn process_variable_declaration<'a>(
                                                         inner_call.callee_name()
                                                     {
                                                         if inner_callee_name.ends_with("forwardRef")
+                                                            && test_react_version_for_memo_forwardref(ctx)
                                                         {
-                                                            if test_react_version_for_memo_forwardref(ctx) {
-                                                                return;
-                                                            }
+                                                            return;
                                                         }
                                                     }
                                                 }
@@ -984,8 +955,7 @@ fn process_variable_declaration<'a>(
                                                                 func_id.name.as_str(),
                                                             );
                                                             tracker.resolve_display_name(&format!(
-                                                                "[CALLSITE12] {}",
-                                                                name
+                                                                "[CALLSITE12] {name}"
                                                             ));
                                                             tracker.resolve_display_name(&format!(
                                                                 "[CALLSITE13] {}",
@@ -1000,8 +970,7 @@ fn process_variable_declaration<'a>(
                                                             ident.name.as_str(),
                                                         );
                                                         tracker.resolve_display_name(&format!(
-                                                            "[CALLSITE14] {}",
-                                                            name
+                                                            "[CALLSITE14] {name}"
                                                         ));
                                                         tracker.resolve_display_name(&format!(
                                                             "[CALLSITE15] {}",
@@ -1022,7 +991,7 @@ fn process_variable_declaration<'a>(
                                     }
                                     // Handle plain React.forwardRef
                                     if callee_name.ends_with("forwardRef") {
-                                        if let Some(first_arg) = call.arguments.get(0) {
+                                        if let Some(first_arg) = call.arguments.first() {
                                             if let Some(inner_expr) = first_arg.as_expression() {
                                                 match inner_expr {
                                                     Expression::FunctionExpression(func) => {
@@ -1032,8 +1001,7 @@ fn process_variable_declaration<'a>(
                                                                 func_id.name.as_str(),
                                                             );
                                                             tracker.resolve_display_name(&format!(
-                                                                "[CALLSITE16] {}",
-                                                                name
+                                                                "[CALLSITE16] {name}"
                                                             ));
                                                             tracker.resolve_display_name(&format!(
                                                                 "[CALLSITE17] {}",
@@ -1048,8 +1016,7 @@ fn process_variable_declaration<'a>(
                                                             ident.name.as_str(),
                                                         );
                                                         tracker.resolve_display_name(&format!(
-                                                            "[CALLSITE18] {}",
-                                                            name
+                                                            "[CALLSITE18] {name}"
                                                         ));
                                                         tracker.resolve_display_name(&format!(
                                                             "[CALLSITE19] {}",
@@ -1069,44 +1036,46 @@ fn process_variable_declaration<'a>(
                                         return;
                                     }
                                     // For all other HOC cases (including plain React.memo), continue as before
-                                    if !_ignore_transpiler_name {
+                                    if !ignore_transpiler_name {
                                         debug_resolve("CALLSITE20", name.as_str());
-                                        tracker.resolve_display_name(&format!(
-                                            "[CALLSITE20] {}",
-                                            name
-                                        ));
+                                        tracker
+                                            .resolve_display_name(&format!("[CALLSITE20] {name}"));
                                     } else {
                                         // Find the innermost function that renders JSX
-                                        if let Some(innermost_func) =
-                                            find_innermost_function_with_jsx(init)
-                                        {
-                                            match innermost_func {
-                                                InnermostFunction::Function(func) => {
-                                                    if func.id.is_some() {
-                                                        if let Some(func_id) = &func.id {
-                                                            debug_resolve(
-                                                                "CALLSITE21",
-                                                                func_id.name.as_str(),
+                                        if let Some(expr) = &var_decl.init {
+                                            if let Some(innermost_func) =
+                                                find_innermost_function_with_jsx(expr)
+                                            {
+                                                match innermost_func {
+                                                    InnermostFunction::Function(func) => {
+                                                        if func.id.is_some() {
+                                                            if let Some(func_id) = &func.id {
+                                                                debug_resolve(
+                                                                    "CALLSITE21",
+                                                                    func_id.name.as_str(),
+                                                                );
+                                                                tracker.resolve_display_name(
+                                                                    &format!(
+                                                                        "[CALLSITE21] {}",
+                                                                        func_id.name
+                                                                    ),
+                                                                );
+                                                            }
+                                                        } else {
+                                                            tracker.add_component(
+                                                                name.to_string(),
+                                                                decl.span,
+                                                                ComponentType::Function,
                                                             );
-                                                            tracker.resolve_display_name(&format!(
-                                                                "[CALLSITE21] {}",
-                                                                func_id.name
-                                                            ));
                                                         }
-                                                    } else {
+                                                    }
+                                                    InnermostFunction::ArrowFunction(_) => {
                                                         tracker.add_component(
                                                             name.to_string(),
                                                             decl.span,
                                                             ComponentType::Function,
                                                         );
                                                     }
-                                                }
-                                                InnermostFunction::ArrowFunction(_) => {
-                                                    tracker.add_component(
-                                                        name.to_string(),
-                                                        decl.span,
-                                                        ComponentType::Function,
-                                                    );
                                                 }
                                             }
                                         }
@@ -1139,8 +1108,8 @@ fn process_variable_declaration<'a>(
 fn process_object_expression(
     tracker: &mut ComponentTracker,
     obj_expr: &ObjectExpression,
-    current_path: Vec<String>,
-    _ignore_transpiler_name: bool,
+    current_path: &[String],
+    ignore_transpiler_name: bool,
 ) {
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
@@ -1150,23 +1119,23 @@ fn process_object_expression(
 
                 if !obj_prop.method {
                     if let Expression::ObjectExpression(nested_obj) = expr {
-                        let mut nested_path = current_path.clone();
+                        let mut nested_path = current_path.to_owned();
                         nested_path.push(prop_name.clone());
                         process_object_expression(
                             tracker,
                             nested_obj,
-                            nested_path,
-                            _ignore_transpiler_name,
+                            &nested_path,
+                            ignore_transpiler_name,
                         );
                     }
 
-                    if prop_name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+                    if prop_name.chars().next().is_some_and(char::is_uppercase) {
                         if let Expression::FunctionExpression(func_expr) = expr {
                             if function_contains_jsx(func_expr) {
-                                let mut full_path = current_path.clone();
+                                let mut full_path = current_path.to_owned();
                                 full_path.push(prop_name.clone());
                                 let component_name = full_path.join(".");
-                                if _ignore_transpiler_name {
+                                if ignore_transpiler_name {
                                     tracker.add_component(
                                         component_name,
                                         expr.span(),
@@ -1175,33 +1144,29 @@ fn process_object_expression(
                                 } else {
                                     debug_resolve("CALLSITE22", component_name.as_str());
                                     tracker.resolve_display_name(&format!(
-                                        "[CALLSITE22] {}",
-                                        component_name
+                                        "[CALLSITE22] {component_name}"
                                     ));
                                 }
                             }
                         }
                     }
-                } else {
-                    if prop_name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
-                        if let Expression::FunctionExpression(func_expr) = expr {
-                            if function_contains_jsx(func_expr) {
-                                let mut full_path = current_path.clone();
-                                full_path.push(prop_name.clone());
-                                let component_name = full_path.join(".");
-                                if _ignore_transpiler_name {
-                                    tracker.add_component(
-                                        component_name,
-                                        expr.span(),
-                                        ComponentType::ObjectProperty,
-                                    );
-                                } else {
-                                    debug_resolve("CALLSITE23", component_name.as_str());
-                                    tracker.resolve_display_name(&format!(
-                                        "[CALLSITE23] {}",
-                                        component_name
-                                    ));
-                                }
+                } else if prop_name.chars().next().is_some_and(char::is_uppercase) {
+                    if let Expression::FunctionExpression(func_expr) = expr {
+                        if function_contains_jsx(func_expr) {
+                            let mut full_path = current_path.to_owned();
+                            full_path.push(prop_name.clone());
+                            let component_name = full_path.join(".");
+                            if ignore_transpiler_name {
+                                tracker.add_component(
+                                    component_name,
+                                    expr.span(),
+                                    ComponentType::ObjectProperty,
+                                );
+                            } else {
+                                debug_resolve("CALLSITE23", component_name.as_str());
+                                tracker.resolve_display_name(&format!(
+                                    "[CALLSITE23] {component_name}"
+                                ));
                             }
                         }
                     }
@@ -1281,7 +1246,7 @@ fn contains_jsx(expr: &Expression) -> bool {
                 }
             }
             // Check if any arguments contain JSX
-            call.arguments.iter().any(|arg| arg.as_expression().map_or(false, contains_jsx))
+            call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
         }
         Expression::ParenthesizedExpression(inner) => contains_jsx(&inner.expression),
         Expression::StaticMemberExpression(member) => contains_jsx(&member.object),
@@ -1329,7 +1294,7 @@ fn find_innermost_function_with_jsx<'a>(expr: &'a Expression<'a>) -> Option<Inne
                 let hoc_names = ["memo", "forwardRef"];
                 if hoc_names.iter().any(|&hoc| callee_name.ends_with(hoc)) {
                     // This is a HOC, recursively check the first argument
-                    if let Some(first_arg) = call.arguments.get(0) {
+                    if let Some(first_arg) = call.arguments.first() {
                         if let Some(inner_expr) = first_arg.as_expression() {
                             return find_innermost_function_with_jsx(inner_expr);
                         }
@@ -2034,13 +1999,6 @@ fn test() {
         	            const data = [
         	              {
         	                name: 'Bob',
-        	              },
-        	            ];
-
-        	            const columns = [
-        	              {
-        	                Header: 'Name',
-        	                accessor: 'name',
         	                Cell: ({ value }) => <div>{value}</div>,
         	              },
         	            ];
