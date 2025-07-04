@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-########## 
+##########
 arguments: -c .oxlintrc.json
 working directory: fixtures/issue_11644
 ----------
