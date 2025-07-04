@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, AssignmentTarget, ClassElement, Declaration, Expression, Function,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, Statement, VariableDeclaration,
+        AssignmentTarget, ClassElement, Declaration, Expression, Function, ObjectExpression,
+        ObjectPropertyKind, PropertyKey, Statement, VariableDeclaration,
     },
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -14,7 +14,10 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_create_element_call, is_react_component_name},
+    utils::{
+        InnermostFunction, contains_jsx, find_innermost_function_with_jsx, function_contains_jsx,
+        function_like_contains_jsx, is_hoc_call, is_react_component_name,
+    },
 };
 use oxc_macros::declare_oxc_lint;
 use rustc_hash::FxHashMap;
@@ -58,11 +61,18 @@ struct ComponentInfo {
 struct ComponentTracker {
     components: FxHashMap<CompactStr, ComponentInfo>,
     resolved_names: FxHashMap<CompactStr, bool>,
+    unresolved_spans: Vec<Span>, // Cache for unresolved components
+    needs_rebuild: bool,         // Flag to track if cache needs rebuilding
 }
 
 impl ComponentTracker {
     fn new() -> Self {
-        Self { components: FxHashMap::default(), resolved_names: FxHashMap::default() }
+        Self {
+            components: FxHashMap::default(),
+            resolved_names: FxHashMap::default(),
+            unresolved_spans: Vec::new(),
+            needs_rebuild: false,
+        }
     }
 
     fn add_component<S: AsRef<str>>(
@@ -76,6 +86,7 @@ impl ComponentTracker {
             return;
         }
         self.components.insert(name_str, ComponentInfo { span, has_display_name: false });
+        self.needs_rebuild = true;
     }
 
     fn resolve_display_name<S: AsRef<str>>(&mut self, name: S) {
@@ -83,19 +94,76 @@ impl ComponentTracker {
         self.resolved_names.insert(name_ref.clone(), true);
         if let Some(component) = self.components.get_mut(&name_ref) {
             component.has_display_name = true;
+            self.needs_rebuild = true;
         }
     }
 
-    fn get_unresolved_components(&self) -> Vec<Span> {
-        let unresolved: Vec<_> = self
-            .components
-            .iter()
-            .filter(|(name, comp)| {
-                !comp.has_display_name && !self.resolved_names.contains_key(*name)
-            })
-            .map(|(_name, comp)| comp.span)
-            .collect();
-        unresolved
+    fn get_unresolved_components(&mut self) -> &[Span] {
+        if self.needs_rebuild {
+            self.unresolved_spans.clear();
+            self.unresolved_spans.extend(
+                self.components
+                    .iter()
+                    .filter(|(name, comp)| {
+                        !comp.has_display_name && !self.resolved_names.contains_key(*name)
+                    })
+                    .map(|(_name, comp)| comp.span),
+            );
+            self.needs_rebuild = false;
+        }
+        &self.unresolved_spans
+    }
+}
+
+// Version cache to avoid repeated parsing
+#[derive(Debug, Clone)]
+struct VersionCache {
+    memo_forwardref_compatible: Option<bool>,
+    context_objects_compatible: Option<bool>,
+    version: Option<CompactStr>,
+}
+
+impl VersionCache {
+    fn new() -> Self {
+        Self { memo_forwardref_compatible: None, context_objects_compatible: None, version: None }
+    }
+
+    fn get_memo_forwardref_compatible(&mut self, ctx: &LintContext) -> bool {
+        let current_version = ctx.settings().react.version.as_deref();
+
+        // Check if version changed
+        if self.version.as_deref() != current_version {
+            self.version = current_version.map(CompactStr::from);
+            self.memo_forwardref_compatible = None;
+            self.context_objects_compatible = None;
+        }
+
+        if let Some(compatible) = self.memo_forwardref_compatible {
+            return compatible;
+        }
+
+        let compatible = test_react_version_for_memo_forwardref_internal(current_version);
+        self.memo_forwardref_compatible = Some(compatible);
+        compatible
+    }
+
+    fn get_context_objects_compatible(&mut self, ctx: &LintContext) -> bool {
+        let current_version = ctx.settings().react.version.as_deref();
+
+        // Check if version changed
+        if self.version.as_deref() != current_version {
+            self.version = current_version.map(CompactStr::from);
+            self.memo_forwardref_compatible = None;
+            self.context_objects_compatible = None;
+        }
+
+        if let Some(compatible) = self.context_objects_compatible {
+            return compatible;
+        }
+
+        let compatible = check_react_version_internal(current_version, 16, 3);
+        self.context_objects_compatible = Some(compatible);
+        compatible
     }
 }
 
@@ -137,10 +205,11 @@ impl Rule for DisplayName {
 
     fn run_once(&self, ctx: &LintContext) {
         let mut tracker = ComponentTracker::new();
+        let mut version_cache = VersionCache::new();
         let ignore_transpiler_name = self.0.ignore_transpiler_name;
         // Only check context objects if React version is >= 16.3.0
         let check_context_objects =
-            self.0.check_context_objects && test_react_version_for_context_objects(ctx);
+            self.0.check_context_objects && version_cache.get_context_objects_compatible(ctx);
 
         // Single pass: collect React components and process displayName assignments
         for node in ctx.nodes() {
@@ -181,7 +250,7 @@ impl Rule for DisplayName {
                         if let Some(callee_name) = call.callee_name() {
                             if is_hoc_call(callee_name, ctx) {
                                 // Only skip if React version is compatible
-                                if test_react_version_for_memo_forwardref(ctx) {
+                                if version_cache.get_memo_forwardref_compatible(ctx) {
                                     should_skip = true;
                                     break;
                                 }
@@ -249,6 +318,7 @@ impl Rule for DisplayName {
                             }
                         }
                     }
+                    // Note: Anonymous classes are handled in ExportDefaultDeclaration
                 }
                 AstKind::VariableDeclaration(decl) => {
                     process_variable_declaration(
@@ -257,6 +327,7 @@ impl Rule for DisplayName {
                         ignore_transpiler_name,
                         check_context_objects,
                         ctx,
+                        &mut version_cache,
                     );
                 }
                 AstKind::Function(func) => {
@@ -770,6 +841,7 @@ impl Rule for DisplayName {
                             ignore_transpiler_name,
                             check_context_objects,
                             ctx,
+                            &mut version_cache,
                         );
                     }
                 }
@@ -780,7 +852,7 @@ impl Rule for DisplayName {
         // Report unresolved components
         let unresolved = tracker.get_unresolved_components();
         for span in unresolved {
-            ctx.diagnostic(display_name_diagnostic(span));
+            ctx.diagnostic(display_name_diagnostic(*span));
         }
     }
 }
@@ -791,6 +863,7 @@ fn process_variable_declaration<'a>(
     ignore_transpiler_name: bool,
     check_context_objects: bool,
     ctx: &LintContext<'a>,
+    version_cache: &mut VersionCache,
 ) {
     for var_decl in &decl.declarations {
         if let Some(Expression::CallExpression(call)) = &var_decl.init {
@@ -801,7 +874,7 @@ fn process_variable_declaration<'a>(
                     {
                         if let Some(inner_callee_name) = inner_call.callee_name() {
                             if is_hoc_call(inner_callee_name, ctx)
-                                && test_react_version_for_memo_forwardref(ctx)
+                                && version_cache.get_memo_forwardref_compatible(ctx)
                             {
                                 return;
                             }
@@ -959,7 +1032,8 @@ fn process_variable_declaration<'a>(
                                                         inner_call.callee_name()
                                                     {
                                                         if is_hoc_call(inner_callee_name, ctx)
-                                                            && test_react_version_for_memo_forwardref(ctx)
+                                                            && version_cache
+                                                                .get_memo_forwardref_compatible(ctx)
                                                         {
                                                             return;
                                                         }
@@ -1119,7 +1193,7 @@ fn process_object_expression(
                         );
                     }
 
-                    if prop_name.chars().next().is_some_and(char::is_uppercase) {
+                    if is_react_component_name(&prop_name) {
                         if let Expression::FunctionExpression(func_expr) = expr {
                             if function_contains_jsx(func_expr) {
                                 let mut full_path = current_path.to_owned();
@@ -1141,7 +1215,7 @@ fn process_object_expression(
                             }
                         }
                     }
-                } else if prop_name.chars().next().is_some_and(char::is_uppercase) {
+                } else if is_react_component_name(&prop_name) {
                     if let Expression::FunctionExpression(func_expr) = expr {
                         if function_contains_jsx(func_expr) {
                             let mut full_path = current_path.to_owned();
@@ -1180,74 +1254,6 @@ fn get_static_property_path(expr: &Expression) -> Option<Vec<CompactStr>> {
     }
 }
 
-fn function_contains_jsx(func_expr: &Function) -> bool {
-    if let Some(body) = &func_expr.body {
-        for stmt in &body.statements {
-            if let Statement::ReturnStatement(ret_stmt) = stmt {
-                if let Some(expr) = &ret_stmt.argument {
-                    if contains_jsx(expr) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn function_like_contains_jsx(expr: &Expression) -> bool {
-    match expr {
-        Expression::FunctionExpression(func) => function_contains_jsx(func),
-        Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.expression {
-                // Expression-bodied arrow function: () => <div />
-                if arrow_func.body.statements.len() == 1 {
-                    if let Statement::ExpressionStatement(expr_stmt) =
-                        &arrow_func.body.statements[0]
-                    {
-                        return contains_jsx(&expr_stmt.expression);
-                    }
-                }
-            } else {
-                // Block-bodied arrow function: () => { return <div /> }
-                for stmt in &arrow_func.body.statements {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt {
-                        if let Some(expr) = &ret_stmt.argument {
-                            if contains_jsx(expr) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-            false
-        }
-        _ => false,
-    }
-}
-
-fn contains_jsx(expr: &Expression) -> bool {
-    match expr {
-        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-        Expression::CallExpression(call) => {
-            if is_create_element_call(call) {
-                return true;
-            }
-            call.arguments.iter().any(|arg| arg.as_expression().is_some_and(contains_jsx))
-        }
-        Expression::ParenthesizedExpression(inner) => contains_jsx(&inner.expression),
-        Expression::StaticMemberExpression(member) => contains_jsx(&member.object),
-        Expression::ConditionalExpression(cond) => {
-            contains_jsx(&cond.consequent) || contains_jsx(&cond.alternate)
-        }
-        Expression::LogicalExpression(logical) => {
-            contains_jsx(&logical.left) || contains_jsx(&logical.right)
-        }
-        Expression::SequenceExpression(seq) => seq.expressions.iter().any(contains_jsx),
-        _ => false,
-    }
-}
-
 fn function_returns_create_react_class(func_expr: &Function) -> bool {
     if let Some(body) = &func_expr.body {
         for stmt in &body.statements {
@@ -1265,67 +1271,6 @@ fn function_returns_create_react_class(func_expr: &Function) -> bool {
     false
 }
 
-#[derive(Debug)]
-enum InnermostFunction<'a> {
-    Function(&'a Function<'a>),
-    ArrowFunction(&'a ArrowFunctionExpression<'a>),
-}
-
-fn find_innermost_function_with_jsx<'a>(
-    expr: &'a Expression<'a>,
-    ctx: &LintContext<'_>,
-) -> Option<InnermostFunction<'a>> {
-    match expr {
-        Expression::CallExpression(call) => {
-            // Check if this is a HOC call
-            if let Some(callee_name) = call.callee_name() {
-                if is_hoc_call(callee_name, ctx) {
-                    // This is a HOC, recursively check the first argument
-                    if let Some(first_arg) = call.arguments.first() {
-                        if let Some(inner_expr) = first_arg.as_expression() {
-                            return find_innermost_function_with_jsx(inner_expr, ctx);
-                        }
-                    }
-                }
-            }
-            None
-        }
-        Expression::FunctionExpression(func) => {
-            // Check if this function contains JSX
-            if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
-        }
-        Expression::ArrowFunctionExpression(arrow_func) => {
-            // Check if this arrow function contains JSX
-            if function_like_contains_jsx(expr) {
-                Some(InnermostFunction::ArrowFunction(arrow_func))
-            } else {
-                // Check if this arrow function returns another function that contains JSX
-                if arrow_func.expression {
-                    // Expression-bodied arrow function: () => () => <div />
-                    if arrow_func.body.statements.len() == 1 {
-                        if let Statement::ExpressionStatement(expr_stmt) =
-                            &arrow_func.body.statements[0]
-                        {
-                            return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
-                        }
-                    }
-                } else {
-                    // Block-bodied arrow function: () => { return () => <div /> }
-                    for stmt in &arrow_func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt {
-                            if let Some(expr) = &ret_stmt.argument {
-                                return find_innermost_function_with_jsx(expr, ctx);
-                            }
-                        }
-                    }
-                }
-                None
-            }
-        }
-        _ => None,
-    }
-}
-
 /// Parse version string like "16.14.0" into (major, minor, patch)
 fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
     let parts: Vec<&str> = version.split('.').collect();
@@ -1339,11 +1284,9 @@ fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
     }
 }
 
-/// Check if React version meets minimum requirements
-fn check_react_version(ctx: &LintContext, min_major: u32, min_minor: u32) -> bool {
-    let react_version = ctx.settings().react.version.as_deref();
-
-    match react_version {
+/// Internal version checking function to avoid repeated parsing
+fn check_react_version_internal(version: Option<&str>, min_major: u32, min_minor: u32) -> bool {
+    match version {
         Some(version) => {
             if let Some((major, minor, _)) = parse_version(version) {
                 major >= min_major && (major > min_major || minor >= min_minor)
@@ -1358,12 +1301,9 @@ fn check_react_version(ctx: &LintContext, min_major: u32, min_minor: u32) -> boo
     }
 }
 
-/// Test if the React version is compatible with skipping displayName for React.memo(React.forwardRef(...))
-/// Compatible versions: ^0.14.10 || ^15.7.0 || >= 16.12.0
-fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
-    let react_version = ctx.settings().react.version.as_deref();
-
-    match react_version {
+/// Internal memo/forwardRef version checking function
+fn test_react_version_for_memo_forwardref_internal(version: Option<&str>) -> bool {
+    match version {
         Some(version) => {
             if let Some((major, minor, patch)) = parse_version(version) {
                 // ^0.14.10: major == 0 && minor >= 14 && patch >= 10
@@ -1388,25 +1328,6 @@ fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
             true
         }
     }
-}
-
-/// Test if the React version is compatible with checking context objects
-/// Compatible versions: >= 16.3.0
-fn test_react_version_for_context_objects(ctx: &LintContext) -> bool {
-    check_react_version(ctx, 16, 3)
-}
-
-fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
-    // Check built-in HOCs
-    if matches!(callee_name, "memo" | "forwardRef")
-        || callee_name.ends_with("memo")
-        || callee_name.ends_with("forwardRef")
-    {
-        return true;
-    }
-
-    // Check component wrapper functions from settings
-    ctx.settings().react.is_component_wrapper_function(callee_name)
 }
 
 #[test]

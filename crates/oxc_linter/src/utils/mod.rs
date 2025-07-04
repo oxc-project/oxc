@@ -12,8 +12,10 @@ use oxc_allocator::Allocator;
 mod comment;
 mod config;
 mod express;
+mod hoc;
 mod jest;
 mod jsdoc;
+mod jsx;
 mod nextjs;
 mod promise;
 mod react;
@@ -24,8 +26,8 @@ mod url;
 mod vitest;
 
 pub use self::{
-    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
-    react_perf::*, regex::*, unicorn::*, url::*, vitest::*,
+    comment::*, config::*, express::*, hoc::*, jest::*, jsdoc::*, jsx::*, nextjs::*, promise::*,
+    react::*, react_perf::*, regex::*, unicorn::*, url::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.
