@@ -123,9 +123,12 @@ impl Rule for NoStringRefs {
                     ctx.diagnostic(string_in_ref_deprecated(attr.span));
                 }
             }
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
                 if matches!(member_expr.object(), Expression::ThisExpression(_))
-                    && member_expr.static_property_name() == Some("refs")
+                    && member_expr.static_property_name().is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {
                     ctx.diagnostic(this_refs_deprecated(member_expr.span()));

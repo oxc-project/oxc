@@ -7,13 +7,11 @@ use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
-use oxc_traverse::{
-    Ancestor, BoundIdentifier, TraverseCtx, ast_operations::get_var_name_from_node,
-};
+use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_node};
 
 use crate::{
-    TransformCtx,
     common::helper_loader::Helper,
+    context::{TransformCtx, TraverseCtx},
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
     },

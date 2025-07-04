@@ -36,7 +36,7 @@ impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
             .zip(self.properties.iter());
         let mut join = f.join_nodes_with_soft_line();
         for (format_entry, node) in entries {
-            join.entry(node.span(), source_text, &format_entry);
+            join.entry(node.span(), &format_entry);
         }
         join.finish()
     }

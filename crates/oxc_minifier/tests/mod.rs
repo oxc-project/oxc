@@ -13,7 +13,7 @@ use oxc_span::SourceType;
 #[track_caller]
 pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) {
     let source_type = SourceType::default();
-    let first = run(source_text, source_type, Some(options));
+    let first = run(source_text, source_type, Some(options.clone()));
 
     let expected = run(expected, source_type, None);
     assert_eq!(first, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{first}");

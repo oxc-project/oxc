@@ -11,8 +11,18 @@ pub fn test_same(source_text: &str) {
 }
 
 #[track_caller]
+pub fn test_same_options(source_text: &str, options: &CompressOptions) {
+    test_options(source_text, source_text, options);
+}
+
+#[track_caller]
 pub fn test(source_text: &str, expected: &str) {
-    let result = run(source_text, Some(CompressOptions::smallest()));
+    test_options(source_text, expected, &CompressOptions::smallest());
+}
+
+#[track_caller]
+pub fn test_options(source_text: &str, expected: &str, options: &CompressOptions) {
+    let result = run(source_text, Some(options.clone()));
     let expected = run(expected, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }

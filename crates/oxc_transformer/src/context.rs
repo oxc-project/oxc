@@ -14,7 +14,10 @@ use crate::{
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
+    state::TransformState,
 };
+
+pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, TransformState<'a>>;
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,

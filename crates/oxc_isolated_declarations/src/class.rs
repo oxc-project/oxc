@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
@@ -9,6 +9,27 @@ use crate::{
         method_must_have_explicit_return_type, property_must_have_explicit_type,
     },
 };
+
+struct AccessorAnnotation<'a> {
+    setter: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+    getter: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+}
+
+impl<'a> AccessorAnnotation<'a> {
+    fn get_setter_annotation(
+        &self,
+        allocator: &'a Allocator,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
+        self.setter.as_ref().or(self.getter.as_ref()).map(|t| t.clone_in(allocator))
+    }
+
+    fn get_getter_annotation(
+        &self,
+        allocator: &'a Allocator,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
+        self.getter.as_ref().or(self.setter.as_ref()).map(|t| t.clone_in(allocator))
+    }
+}
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
@@ -261,25 +282,24 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
         params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
-        let mut elements = self.ast.vec();
-        for (index, param) in function.params.items.iter().enumerate() {
-            if param.has_modifier() {
-                let type_annotation =
-                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
-                        None
-                    } else {
-                        // transformed params will definitely have type annotation
-
-                        params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
-                    };
-                if let Some(new_element) =
+        self.ast.vec_from_iter(
+            function
+                .params
+                .items
+                .iter()
+                .filter(|param| param.has_modifier())
+                .enumerate()
+                .filter_map(|(index, param)| {
+                    let type_annotation =
+                        if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            // transformed params will definitely have type annotation
+                            params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
+                        };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
-                {
-                    elements.push(new_element);
-                }
-            }
-        }
-        elements
+                }),
+        )
     }
 
     /// Collect return_type of getter and first parma type of setter
@@ -295,8 +315,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn collect_accessor_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> Vec<(PropertyKey<'a>, ArenaBox<'a, TSTypeAnnotation<'a>>)> {
-        let mut method_annotations = Vec::new();
+    ) -> Vec<(PropertyKey<'a>, AccessorAnnotation<'a>)> {
+        let mut method_annotations: Vec<(PropertyKey<'_>, AccessorAnnotation<'_>)> = Vec::new();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
@@ -314,15 +334,33 @@ impl<'a> IsolatedDeclarations<'a> {
                         if let Some(annotation) =
                             first_param.pattern.type_annotation.clone_in(self.ast.allocator)
                         {
-                            method_annotations
-                                .push((method.key.clone_in(self.ast.allocator), annotation));
+                            if let Some(entry) = method_annotations
+                                .iter_mut()
+                                .find(|(key, _)| method.key.content_eq(key))
+                            {
+                                entry.1.setter = Some(annotation);
+                            } else {
+                                method_annotations.push((
+                                    method.key.clone_in(self.ast.allocator),
+                                    AccessorAnnotation { setter: Some(annotation), getter: None },
+                                ));
+                            }
                         }
                     }
                     MethodDefinitionKind::Get => {
                         let function = &method.value;
                         if let Some(annotation) = self.infer_function_return_type(function) {
-                            method_annotations
-                                .push((method.key.clone_in(self.ast.allocator), annotation));
+                            if let Some(entry) = method_annotations
+                                .iter_mut()
+                                .find(|(key, _)| method.key.content_eq(key))
+                            {
+                                entry.1.getter = Some(annotation);
+                            } else {
+                                method_annotations.push((
+                                    method.key.clone_in(self.ast.allocator),
+                                    AccessorAnnotation { setter: None, getter: Some(annotation) },
+                                ));
+                            }
                         }
                     }
                     _ => {}
@@ -362,11 +400,15 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.has_internal_annotation(method.span) {
                         continue;
                     }
-                    if !(method.r#type.is_abstract() || method.optional)
-                        && method.value.body.is_none()
+                    if !(
+                        // `abstract` methods are always allowed to have no body
+                        method.r#type.is_abstract()
+                        // optional methods are allowed to have no body
+                        || method.optional
+                    ) && method.value.body.is_none()
                     {
                         is_function_overloads = true;
-                    } else if is_function_overloads {
+                    } else if is_function_overloads && !method.kind.is_constructor() {
                         // Skip implementation of function overloads
                         is_function_overloads = false;
                         continue;
@@ -397,20 +439,27 @@ impl<'a> IsolatedDeclarations<'a> {
                                     if let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
-                                                Some(annotation.clone_in(self.ast.allocator))
+                                                Some(
+                                                    annotation
+                                                        .get_setter_annotation(self.ast.allocator),
+                                                )
                                             } else {
                                                 None
                                             }
                                         })
                                     {
-                                        param.pattern.type_annotation = Some(annotation);
+                                        param.pattern.type_annotation = annotation;
                                     }
                                 }
                                 params
                             }
                         }
                         MethodDefinitionKind::Constructor => {
-                            let params = self.transform_formal_parameters(&function.params);
+                            let is_private =
+                                method.accessibility.is_some_and(TSAccessibility::is_private);
+
+                            let params =
+                                self.transform_formal_parameters(&function.params, is_private);
                             elements.splice(
                                 0..0,
                                 self.transform_constructor_params_to_class_properties(
@@ -418,7 +467,12 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
 
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            if is_function_overloads && function.body.is_some() {
+                                is_function_overloads = false;
+                                continue;
+                            }
+
+                            if is_private {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -426,11 +480,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             params
                         }
                         _ => {
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            let is_private =
+                                method.accessibility.is_some_and(TSAccessibility::is_private);
+                            if is_private {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
-                            self.transform_formal_parameters(&function.params)
+                            self.transform_formal_parameters(&function.params, is_private)
                         }
                     };
 
@@ -447,7 +503,13 @@ impl<'a> IsolatedDeclarations<'a> {
                         MethodDefinitionKind::Get => {
                             let rt = accessor_annotations.iter().find_map(|(key, annotation)| {
                                 if method.key.content_eq(key) {
-                                    Some(annotation.clone_in(self.ast.allocator))
+                                    // No explicit return type for getter, should infer it from the first parameter of setter, if not exists,
+                                    // use the inferred return type of getter.
+                                    if method.value.return_type.is_none() {
+                                        annotation.get_setter_annotation(self.ast.allocator)
+                                    } else {
+                                        annotation.get_getter_annotation(self.ast.allocator)
+                                    }
                                 } else {
                                     None
                                 }

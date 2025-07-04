@@ -53,7 +53,7 @@ pub trait MemoizeFormat<'a> {
     /// # }
     /// ```
     ///
-    fn memoized(self) -> Memoized<Self>
+    fn memoized(self) -> Memoized<'a, Self>
     where
         Self: Sized + Format<'a>,
     {
@@ -65,12 +65,12 @@ impl<T> MemoizeFormat<'_> for T {}
 
 /// Memoizes the output of its inner [Format] to avoid re-formatting a potential expensive object.
 #[derive(Debug)]
-pub struct Memoized<F> {
+pub struct Memoized<'ast, F> {
     inner: F,
-    memory: OnceCell<FormatResult<Option<FormatElement>>>,
+    memory: OnceCell<FormatResult<Option<FormatElement<'ast>>>>,
 }
 
-impl<'ast, F> Memoized<F>
+impl<'ast, F> Memoized<'ast, F>
 where
     F: Format<'ast>,
 {
@@ -134,11 +134,11 @@ where
     /// # }
     ///
     /// ```
-    pub fn inspect(&mut self, f: &mut Formatter<'_, 'ast>) -> FormatResult<&[FormatElement]> {
+    pub fn inspect(&mut self, f: &mut Formatter<'_, 'ast>) -> FormatResult<&[FormatElement<'ast>]> {
         let result = self.memory.get_or_init(|| f.intern(&self.inner));
 
         match result.as_ref() {
-            Ok(Some(FormatElement::Interned(interned))) => Ok(&**interned),
+            Ok(Some(FormatElement::Interned(interned))) => Ok(interned),
             Ok(Some(other)) => Ok(std::slice::from_ref(other)),
             Ok(None) => Ok(&[]),
             Err(error) => Err(*error),
@@ -146,7 +146,7 @@ where
     }
 }
 
-impl<'ast, F> Format<'ast> for Memoized<F>
+impl<'ast, F> Format<'ast> for Memoized<'ast, F>
 where
     F: Format<'ast>,
 {

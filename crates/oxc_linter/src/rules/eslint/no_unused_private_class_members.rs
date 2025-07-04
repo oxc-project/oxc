@@ -118,8 +118,10 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
+            (member_expr, AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_))
+                if member_expr.is_member_expression_kind() => {}
             (
-                AstKind::SimpleAssignmentTarget(_) | AstKind::MemberExpression(_),
+                AstKind::SimpleAssignmentTarget(_),
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_),
             ) => {}
             (
@@ -129,7 +131,10 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::AssignmentTargetWithDefault(_)
                 | AstKind::AssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::ArrayAssignmentTarget(_),
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                 return false;

@@ -55,7 +55,7 @@ declare_oxc_lint!(
     ///
     /// ```json
     /// {
-    ///     "ignores": ["*.json"]
+    ///     "ignore": ["*.json"]
     /// }
     /// ```
     ///

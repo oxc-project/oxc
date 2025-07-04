@@ -38,9 +38,9 @@ impl<'a> JSDoc<'a> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
-    use oxc_span::SourceType;
+    use oxc_span::{SourceType, Span};
 
-    use crate::{Semantic, SemanticBuilder};
+    use crate::{Semantic, SemanticBuilder, jsdoc::parser::jsdoc_parts::JSDocCommentPart};
 
     fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
@@ -322,5 +322,26 @@ line2
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind.parsed(), "example");
+    }
+
+    #[test]
+    fn parses_issue_11992() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            "/**@property [
+*/",
+        );
+        let jsdoc = semantic.jsdoc().iter_all().next().unwrap();
+
+        let mut tags = jsdoc.tags().iter();
+        assert_eq!(tags.len(), 1);
+
+        let tag = tags.next().unwrap();
+        assert_eq!(
+            tag.type_name_comment(),
+            (None, None, JSDocCommentPart::new(" [\n", Span::new(12, 15)))
+        );
+        assert_eq!(tag.kind.parsed(), "property");
     }
 }

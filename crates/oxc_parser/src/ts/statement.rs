@@ -140,9 +140,10 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let intrinsic_ident = self
-                    .ast
-                    .alloc_identifier_reference(intrinsic_token.span(), Kind::Intrinsic.to_str());
+                let intrinsic_ident = self.ast.alloc_identifier_reference(
+                    intrinsic_token.span(),
+                    self.token_source(&intrinsic_token),
+                );
                 let type_name = self.parse_ts_qualified_type_name(
                     intrinsic_token.start(),
                     TSTypeName::IdentifierReference(intrinsic_ident),
@@ -198,11 +199,8 @@ impl<'a> ParserImpl<'a> {
             ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
-        if !implements.is_empty() {
-            self.error(diagnostics::interface_implements(Span::new(
-                implements.first().unwrap().span.start,
-                implements.last().unwrap().span.end,
-            )));
+        if let Some((implements_kw_span, _)) = implements {
+            self.error(diagnostics::interface_implements(implements_kw_span));
         }
         for extend in &extends {
             if !extend.expression.is_entity_name_expression() {

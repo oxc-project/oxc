@@ -1,6 +1,6 @@
 //! ECMAScript Minifier
 
-#![allow(clippy::literal_string_with_formatting_args)]
+#![allow(clippy::literal_string_with_formatting_args, clippy::needless_pass_by_ref_mut)]
 
 mod compressor;
 mod ctx;
@@ -18,11 +18,9 @@ use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
-pub use crate::{
-    compressor::Compressor, options::CompressOptions, options::CompressOptionsKeepNames,
-};
+pub use crate::{compressor::Compressor, options::*};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
     pub compress: Option<CompressOptions>,

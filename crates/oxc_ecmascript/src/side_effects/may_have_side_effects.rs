@@ -18,12 +18,12 @@ use super::{PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 /// - TDZ errors does not happen.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool;
+pub trait MayHaveSideEffects<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool;
 }
 
-impl MayHaveSideEffects for Expression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             Expression::Identifier(ident) => ident.may_have_side_effects(ctx),
             Expression::NumericLiteral(_)
@@ -68,8 +68,8 @@ impl MayHaveSideEffects for Expression<'_> {
     }
 }
 
-impl MayHaveSideEffects for IdentifierReference<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self.name.as_str() {
             "NaN" | "Infinity" | "undefined" => false,
             // Reading global variables may have a side effect.
@@ -80,8 +80,8 @@ impl MayHaveSideEffects for IdentifierReference<'_> {
     }
 }
 
-impl MayHaveSideEffects for TemplateLiteral<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for TemplateLiteral<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.expressions.iter().any(|e| {
             // ToString is called for each expression.
             // If the expression is a Symbol or ToPrimitive returns a Symbol, an error is thrown.
@@ -91,8 +91,8 @@ impl MayHaveSideEffects for TemplateLiteral<'_> {
     }
 }
 
-impl MayHaveSideEffects for UnaryExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for UnaryExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self.operator {
             UnaryOperator::Delete => true,
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
@@ -121,8 +121,8 @@ impl MayHaveSideEffects for UnaryExpression<'_> {
     }
 }
 
-impl MayHaveSideEffects for BinaryExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self.operator {
             BinaryOperator::Equality
             | BinaryOperator::Inequality
@@ -277,20 +277,20 @@ fn is_known_global_constructor(name: &str) -> bool {
     )
 }
 
-impl MayHaveSideEffects for LogicalExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.left.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
     }
 }
 
-impl MayHaveSideEffects for ArrayExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ArrayExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.elements.iter().any(|element| element.may_have_side_effects(ctx))
     }
 }
 
-impl MayHaveSideEffects for ArrayExpressionElement<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ArrayExpressionElement<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ArrayExpressionElement::SpreadElement(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
@@ -306,8 +306,8 @@ impl MayHaveSideEffects for ArrayExpressionElement<'_> {
     }
 }
 
-impl MayHaveSideEffects for ObjectPropertyKind<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ObjectPropertyKind<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(ctx),
             ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
@@ -320,14 +320,14 @@ impl MayHaveSideEffects for ObjectPropertyKind<'_> {
     }
 }
 
-impl MayHaveSideEffects for ObjectProperty<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ObjectProperty<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.key.may_have_side_effects(ctx) || self.value.may_have_side_effects(ctx)
     }
 }
 
-impl MayHaveSideEffects for PropertyKey<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for PropertyKey<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
@@ -339,9 +339,9 @@ impl MayHaveSideEffects for PropertyKey<'_> {
     }
 }
 
-impl MayHaveSideEffects for Class<'_> {
+impl<'a> MayHaveSideEffects<'a> for Class<'a> {
     /// Based on <https://github.com/evanw/esbuild/blob/v0.25.0/internal/js_ast/js_ast_helpers.go#L2320>
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if !self.decorators.is_empty() {
             return true;
         }
@@ -359,8 +359,8 @@ impl MayHaveSideEffects for Class<'_> {
     }
 }
 
-impl MayHaveSideEffects for ClassElement<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             // TODO: check side effects inside the block
             ClassElement::StaticBlock(block) => !block.body.is_empty(),
@@ -381,8 +381,8 @@ impl MayHaveSideEffects for ClassElement<'_> {
     }
 }
 
-impl MayHaveSideEffects for ChainElement<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ChainElement<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             ChainElement::CallExpression(e) => e.may_have_side_effects(ctx),
             ChainElement::TSNonNullExpression(e) => e.expression.may_have_side_effects(ctx),
@@ -393,8 +393,8 @@ impl MayHaveSideEffects for ChainElement<'_> {
     }
 }
 
-impl MayHaveSideEffects for MemberExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(e) => e.may_have_side_effects(ctx),
             MemberExpression::StaticMemberExpression(e) => e.may_have_side_effects(ctx),
@@ -405,14 +405,14 @@ impl MayHaveSideEffects for MemberExpression<'_> {
     }
 }
 
-impl MayHaveSideEffects for StaticMemberExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for StaticMemberExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         property_access_may_have_side_effects(&self.object, &self.property.name, ctx)
     }
 }
 
-impl MayHaveSideEffects for ComputedMemberExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match &self.expression {
             Expression::StringLiteral(s) => {
                 property_access_may_have_side_effects(&self.object, &s.value, ctx)
@@ -440,10 +440,10 @@ impl MayHaveSideEffects for ComputedMemberExpression<'_> {
     }
 }
 
-fn property_access_may_have_side_effects(
-    object: &Expression,
+fn property_access_may_have_side_effects<'a>(
+    object: &Expression<'a>,
     property: &str,
-    ctx: &impl MayHaveSideEffectsContext,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
     if object.may_have_side_effects(ctx) {
         return true;
@@ -461,10 +461,10 @@ fn property_access_may_have_side_effects(
     }
 }
 
-fn integer_index_property_access_may_have_side_effects(
-    object: &Expression,
+fn integer_index_property_access_may_have_side_effects<'a>(
+    object: &Expression<'a>,
     property: u32,
-    ctx: &impl MayHaveSideEffectsContext,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
     if object.may_have_side_effects(ctx) {
         return true;
@@ -493,9 +493,9 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .sum()
 }
 
-impl MayHaveSideEffects for CallExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if (self.pure && ctx.respect_annotations()) || ctx.is_pure_call(&self.callee) {
+impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
         } else {
             true
@@ -503,9 +503,9 @@ impl MayHaveSideEffects for CallExpression<'_> {
     }
 }
 
-impl MayHaveSideEffects for NewExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if (self.pure && ctx.respect_annotations()) || ctx.is_pure_call(&self.callee) {
+impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
         } else {
             true
@@ -513,14 +513,18 @@ impl MayHaveSideEffects for NewExpression<'_> {
     }
 }
 
-impl MayHaveSideEffects for TaggedTemplateExpression<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
-        if ctx.is_pure_call(&self.tag) { self.quasi.may_have_side_effects(ctx) } else { true }
+impl<'a> MayHaveSideEffects<'a> for TaggedTemplateExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        if ctx.manual_pure_functions(&self.tag) {
+            self.quasi.may_have_side_effects(ctx)
+        } else {
+            true
+        }
     }
 }
 
-impl MayHaveSideEffects for Argument<'_> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext) -> bool {
+impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
             Argument::SpreadElement(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),

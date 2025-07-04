@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.73.0",
+  "version": "0.75.1",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
@@ -46,11 +46,15 @@
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
     "generated/deserialize/lazy.js",
-    "raw-transfer/index.js",
+    "generated/deserialize/lazy-types.js",
+    "generated/deserialize/lazy-visit.js",
+    "raw-transfer/common.js",
     "raw-transfer/eager.js",
     "raw-transfer/lazy.js",
     "raw-transfer/lazy-common.js",
-    "raw-transfer/node-array.js"
+    "raw-transfer/node-array.js",
+    "raw-transfer/supported.js",
+    "raw-transfer/visitor.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -62,7 +66,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "^0.2.7",
-    "@vitest/browser": "3.2.2",
+    "@vitest/browser": "3.2.4",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
     "tinypool": "^1.1.0",
@@ -86,6 +90,7 @@
       "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
+      "aarch64-linux-android",
       "wasm32-wasip1-threads"
     ],
     "wasm": {

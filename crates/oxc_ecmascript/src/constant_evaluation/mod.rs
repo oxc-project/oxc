@@ -22,11 +22,11 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext {
+pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
     fn ast(&self) -> AstBuilder<'a>;
 }
 
-pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
+pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     /// Evaluate the expression to a constant value.
     ///
     /// Use the specific functions (e.g. [`ConstantEvaluation::evaluate_value_to_boolean`], [`ConstantEvaluation::evaluate_value`]).
@@ -110,7 +110,10 @@ impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
             "Infinity" if ctx.is_global_reference(self)? => {
                 Some(ConstantValue::Number(f64::INFINITY))
             }
-            _ => None,
+            _ => self
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id)),
         }
     }
 }

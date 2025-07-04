@@ -15,12 +15,12 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
-impl<'a, 'b> PeepholeOptimizations {
+impl<'a> PeepholeOptimizations {
     pub fn remove_dead_code_exit_statement(
         &self,
         stmt: &mut Statement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
@@ -41,7 +41,7 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         expr: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => {
@@ -62,7 +62,7 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         stmts: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
@@ -126,7 +126,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// `{ block } -> block`
     fn try_optimize_block(
         stmt: &mut BlockStatement<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         match stmt.body.len() {
             0 => {
@@ -161,7 +161,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn try_fold_if(
         if_stmt: &mut IfStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
@@ -186,8 +186,8 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => {}
         }
 
-        if let Some(boolean) = if_stmt.test.evaluate_value_to_boolean(&ctx) {
-            let test_has_side_effects = if_stmt.test.may_have_side_effects(&ctx);
+        if let Some(boolean) = if_stmt.test.evaluate_value_to_boolean(ctx) {
+            let test_has_side_effects = if_stmt.test.may_have_side_effects(ctx);
             // Use "1" and "0" instead of "true" and "false" to be shorter.
             // And also prevent swapping consequent and alternate when `!0` is encountered.
             if !test_has_side_effects {
@@ -247,7 +247,7 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         for_stmt: &mut ForStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         if let Some(init) = &mut for_stmt.init {
             if let Some(init) = init.as_expression_mut() {
@@ -265,8 +265,8 @@ impl<'a, 'b> PeepholeOptimizations {
         }
 
         let test_boolean =
-            for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(&ctx));
-        if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(&ctx)) {
+            for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(ctx));
+        if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
             return None;
         }
         match test_boolean {
@@ -314,7 +314,10 @@ impl<'a, 'b> PeepholeOptimizations {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+    fn try_fold_labeled(
+        s: &mut LabeledStatement<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Statement<'a>> {
         let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
@@ -337,7 +340,7 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         stmt: &mut Statement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
@@ -354,7 +357,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Statement<'a>> {
         if let Some(handler) = &mut s.handler {
             if s.block.body.is_empty() {
                 let mut var = KeepVar::new(ctx.ast);
@@ -392,10 +395,10 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         expr: &mut ConditionalExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
-            if expr.test.may_have_side_effects(&ctx) {
+        expr.test.evaluate_value_to_boolean(ctx).map(|v| {
+            if expr.test.may_have_side_effects(ctx) {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_array([
                     {
@@ -444,7 +447,7 @@ impl<'a, 'b> PeepholeOptimizations {
         &self,
         sequence_expr: &mut SequenceExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, 'b>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let should_keep_as_sequence_expr = sequence_expr
             .expressions
@@ -493,7 +496,10 @@ impl<'a, 'b> PeepholeOptimizations {
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
-    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
+    pub fn should_keep_indirect_access(
+        access_value: &Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
@@ -535,7 +541,7 @@ impl<'a, 'b> PeepholeOptimizations {
 }
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: Ctx<'a, '_>) {
+    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut Ctx<'a, '_>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 
@@ -755,5 +761,10 @@ mod test {
             "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
             "var i; for (i = 0; i < 10; i++) foo(i);",
         );
+    }
+
+    #[test]
+    fn remove_constant_value() {
+        test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
     }
 }

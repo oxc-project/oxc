@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
+use crate::{context::LintContext, disable_directives::RuleCommentType, rule::Rule};
 
 fn no_abusive_eslint_disable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -55,13 +55,18 @@ declare_oxc_lint!(
 
 impl Rule for NoAbusiveEslintDisable {
     fn run_once(&self, ctx: &LintContext) {
-        for span in ctx.disable_directives().disable_all_comments() {
-            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(*span));
-        }
-
-        for DisableRuleComment { span, rules } in ctx.disable_directives().disable_rule_comments() {
-            if rules.is_empty() || !is_valid_rule_name(rules[0]) {
-                ctx.diagnostic(no_abusive_eslint_disable_diagnostic(*span));
+        for comment in ctx.disable_directives().disable_rule_comments() {
+            match &comment.r#type {
+                RuleCommentType::All => {
+                    ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                }
+                RuleCommentType::Single(rules) => {
+                    for rule in rules {
+                        if !is_valid_rule_name(rule.rule_name) {
+                            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                        }
+                    }
+                }
             }
         }
     }

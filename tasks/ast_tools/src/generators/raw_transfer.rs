@@ -618,10 +618,10 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     write_it!(code, "
         function {fn_name}(pos) {{
             const arr = [],
-                pos32 = pos >> 2,
-                len = uint32[{len_pos32}];
+                pos32 = pos >> 2;
             pos = uint32[{ptr_pos32}];
-            for (let i = 0; i < len; i++) {{
+            const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
+            while (pos !== endPos) {{
                 arr.push({inner_fn_name}(pos));
                 pos += {inner_type_size};
             }}

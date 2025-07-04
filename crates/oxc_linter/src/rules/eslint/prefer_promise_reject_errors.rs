@@ -1,5 +1,4 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::MemberExpression;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -170,9 +169,7 @@ fn check_reject_in_function(
         }
 
         let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else { continue };
-        let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(member_expr)) =
-            parent.kind()
-        else {
+        let AstKind::ComputedMemberExpression(member_expr) = parent.kind() else {
             continue;
         };
 
@@ -243,6 +240,8 @@ fn test() {
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
+        // TODO: This currently passes, as we only look at the immediate parent of the member expression
+        ("new Promise(function (...rest) { (rest[1])(5); });", None),
     ];
 
     let fail = vec![

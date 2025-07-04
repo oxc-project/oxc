@@ -47,9 +47,12 @@
 
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct ReactDisplayName<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -61,7 +64,7 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ReactDisplayName<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,

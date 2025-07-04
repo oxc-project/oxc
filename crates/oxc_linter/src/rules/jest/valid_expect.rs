@@ -1,9 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -60,7 +57,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// `expect()` is a function that is used to assert values in tests. It should be called with a single argument, which is the value to be tested. If you call `expect()` with no arguments, or with more than one argument, it will not work as expected.
+    /// `expect()` is a function that is used to assert values in tests.
+    /// It should be called with a single argument, which is the value to be tested.
+    /// If you call `expect()` with no arguments, or with more than one argument, it will not work as expected.
     ///
     /// ### Examples
     ///
@@ -145,7 +144,8 @@ impl ValidExpect {
             return;
         };
         let reporting_span = jest_fn_call.expect_error.map_or(call_expr.span, |_| {
-            find_top_most_member_expression(node, ctx).map_or(call_expr.span, GetSpan::span)
+            find_top_most_member_expression(node, ctx)
+                .map_or(call_expr.span, |top_most_member_expr| top_most_member_expr.span())
         });
 
         match jest_fn_call.expect_error {
@@ -244,18 +244,18 @@ impl ValidExpect {
 fn find_top_most_member_expression<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b MemberExpression<'a>> {
+) -> Option<AstKind<'a>> {
     let mut top_most_member_expression = None;
     let mut node = node;
 
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
                 top_most_member_expression = Some(member_expr);
             }
             _ => {
-                if !matches!(parent.kind(), AstKind::MemberExpression(_)) {
+                if !parent.kind().is_member_expression_kind() {
                     break;
                 }
             }
@@ -305,21 +305,18 @@ fn get_parent_with_ignore<'a, 'b>(
     let mut node = node;
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
-        if !matches!(parent.kind(), AstKind::Argument(_) | AstKind::ArrayExpressionElement(_)) {
+        if !matches!(parent.kind(), AstKind::Argument(_)) {
             // we don't want to report `Promise.all([invalidExpectCall_1, invalidExpectCall_2])` twice.
             // so we need mark whether the node is the first item of an array.
             // if it not the first item, we ignore it in `find_promise_call_expression_node`.
-            if let AstKind::ArrayExpressionElement(array_expr_element) = node.kind() {
-                if let AstKind::ArrayExpression(array_expr) = parent.kind() {
-                    return Some((
-                        parent,
-                        array_expr.elements.first()?.span() == array_expr_element.span(),
-                    ));
-                }
-            }
+            let is_first_item = if let AstKind::ArrayExpression(array_expr) = parent.kind() {
+                array_expr.elements.first()?.span() == node.span()
+            } else {
+                // if parent is not an array, we assume it's the first item
+                true
+            };
 
-            // if parent is not an array, we assume it's the first item
-            return Some((parent, true));
+            return Some((parent, is_first_item));
         }
 
         node = parent;

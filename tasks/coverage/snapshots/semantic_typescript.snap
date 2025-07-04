@@ -47344,6 +47344,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResoluti
 Bindings mismatch:
 after transform: ScopeId(0): ["User", "getUser", "user"]
 rebuilt        : ScopeId(0): ["getUser", "user"]
+Unresolved references mismatch:
+after transform: ["User"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerDirectoryModule.ts
 Bindings mismatch:

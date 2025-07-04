@@ -1,8 +1,11 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod nullish_coalescing_operator;
 mod optional_chaining;
@@ -31,7 +34,7 @@ impl<'a, 'ctx> ES2020<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ES2020<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.nullish_coalescing_operator {
             self.nullish_coalescing_operator.enter_expression(expr, ctx);

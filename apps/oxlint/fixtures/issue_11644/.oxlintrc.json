@@ -1,0 +1,26 @@
+{
+  "plugins": [
+    "eslint",
+    "import",
+    "jsx-a11y",
+    "nextjs",
+    "node",
+    "oxc",
+    "promise",
+    "react",
+    "react-perf",
+    "typescript",
+    "unicorn"
+  ],
+  "rules": {
+    "import/no-default-export": 0,
+    "no-console": 1,
+    "react/button-has-type": 0,
+    "react/rules-of-hooks": 2,
+    "typescript/explicit-function-return-type": 0,
+    "typescript/no-non-null-assertion": 0,
+    "unicorn/filename-case": [2, { "case": "kebabCase" }],
+    "unicorn/no-nested-ternary": 0,
+    // "jsx-a11y/label-has-associated-control": ["warn", { "depth": 0}]
+  }
+}

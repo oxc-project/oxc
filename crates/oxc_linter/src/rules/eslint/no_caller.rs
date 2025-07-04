@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -74,9 +74,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCaller {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
-            node.kind()
-        {
+        if let AstKind::StaticMemberExpression(expr) = node.kind() {
             if (expr.property.name == "callee" || expr.property.name == "caller")
                 && expr.object.is_specific_id("arguments")
             {

@@ -37,7 +37,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[estree(
     rename = "Identifier",
     add_fields(name = This, decorators = EmptyArray, optional = False),
-    field_order(span, decorators, name, optional, type_annotation),
+    field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSThisParameter<'a> {
     pub span: Span,
@@ -751,9 +751,12 @@ pub struct TSBigIntKeyword {
 ///
 /// ## Example
 /// ```ts
-/// type C = A;
-/// type D = B.a;
-/// type E = D.c.b.a;
+/// type A = X;
+/// //       ^
+/// type B = Y.a;
+/// //       ^^^
+/// type C<T> = Z.b<T>;
+/// //          ^^^^^^
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -764,9 +767,9 @@ pub struct TSTypeReference<'a> {
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// TypeName:
+/// TSTypeName:
 ///     IdentifierReference
-///     NamespaceName . IdentifierReference
+///     TSTypeName . IdentifierName
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -792,6 +795,7 @@ pub use match_ts_type_name;
 /// ## Example
 /// ```ts
 /// type Foo = A.B.C;
+/// //         ^^^^^
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -1084,7 +1088,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[estree(
     rename = "Identifier",
     add_fields(decorators = EmptyArray, optional = False),
-    field_order(span, decorators, name, optional, type_annotation),
+    field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
@@ -1438,7 +1442,7 @@ pub struct TSConstructorType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
-    field_order(span, key, constraint, name_type, type_annotation, optional, readonly),
+    field_order(key, constraint, name_type, type_annotation, optional, readonly, span),
 )]
 pub struct TSMappedType<'a> {
     pub span: Span,

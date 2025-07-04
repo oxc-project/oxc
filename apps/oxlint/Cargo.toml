@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.1.0"
+version = "1.5.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,6 +16,8 @@ description.workspace = true
 workspace = true
 
 [lib]
+crate-type = ["lib"]
+path = "src/lib.rs"
 doctest = false
 
 [[bin]]
@@ -25,6 +27,7 @@ test = false
 doctest = false
 
 [dependencies]
+oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
@@ -33,6 +36,7 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
+napi = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }

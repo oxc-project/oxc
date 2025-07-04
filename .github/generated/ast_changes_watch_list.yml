@@ -61,6 +61,8 @@ src:
   - 'crates/oxc_syntax/src/symbol.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
   - 'napi/parser/generated/deserialize/js.js'
+  - 'napi/parser/generated/deserialize/lazy-types.js'
+  - 'napi/parser/generated/deserialize/lazy-visit.js'
   - 'napi/parser/generated/deserialize/lazy.js'
   - 'napi/parser/generated/deserialize/ts.js'
   - 'napi/parser/src/generated/assert_layouts.rs'

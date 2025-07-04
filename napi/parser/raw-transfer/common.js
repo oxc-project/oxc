@@ -1,10 +1,14 @@
 'use strict';
 
 const os = require('node:os');
-const bindings = require('../bindings.js');
+const rawTransferSupported = require('./supported.js');
+const {
+  parseSyncRaw: parseSyncRawBinding,
+  parseAsyncRaw: parseAsyncRawBinding,
+  getBufferOffset,
+} = require('../bindings.js');
 
 module.exports = {
-  rawTransferSupported,
   parseSyncRawImpl,
   parseAsyncRawImpl,
   prepareRaw,
@@ -12,19 +16,24 @@ module.exports = {
   returnBufferToCache,
 };
 
-// Import `eager.js` and `lazy.js` after the exports above, because of circular dependencies
-const { parseSyncRaw, parseAsyncRaw } = require('./eager.js');
-module.exports.parseSyncRaw = parseSyncRaw;
-module.exports.parseAsyncRaw = parseAsyncRaw;
-
-const { parseSyncLazy, parseAsyncLazy } = require('./lazy.js');
-module.exports.parseSyncLazy = parseSyncLazy;
-module.exports.parseAsyncLazy = parseAsyncLazy;
-
-function parseSyncRawImpl(filename, sourceText, options, deserialize) {
-  const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  bindings.parseSyncRaw(filename, buffer, sourceByteLen, optionsAmended);
-  return deserialize(buffer, sourceText, sourceByteLen);
+/**
+ * Parse JS/TS source synchronously on current thread using raw transfer.
+ *
+ * Convert the buffer returned by Rust to a JS object with provided `convert` function.
+ *
+ * This function contains logic shared by both `parseSyncRaw` and `parseSyncLazy`.
+ *
+ * @param {string} filename - Filename
+ * @param {string} sourceText - Source text of file
+ * @param {Object|undefined} options - Parsing options
+ * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
+ * @returns {Object} - The return value of `convert`
+ * @throws {Error} - If raw transfer is not supported on this platform
+ */
+function parseSyncRawImpl(filename, sourceText, options, convert) {
+  const { buffer, sourceByteLen } = prepareRaw(sourceText);
+  parseSyncRawBinding(filename, buffer, sourceByteLen, options);
+  return convert(buffer, sourceText, sourceByteLen);
 }
 
 // User should not schedule more async tasks than there are available CPUs, as it hurts performance,
@@ -65,7 +74,23 @@ function parseSyncRawImpl(filename, sourceText, options, deserialize) {
 let availableCores = os.availableParallelism ? os.availableParallelism() : os.cpus().length;
 const queue = [];
 
-async function parseAsyncRawImpl(filename, sourceText, options, deserialize) {
+/**
+ * Parse JS/TS source asynchronously using raw transfer.
+ *
+ * Convert the buffer returned by Rust to a JS object with provided `convert` function.
+ *
+ * Queues up parsing operations if more calls than number of CPU cores (see above).
+ *
+ * This function contains logic shared by both `parseAsyncRaw` and `parseAsyncLazy`.
+ *
+ * @param {string} filename - Filename
+ * @param {string} sourceText - Source text of file
+ * @param {Object|undefined} options - Parsing options
+ * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
+ * @returns {Object} - The return value of `convert`
+ * @throws {Error} - If raw transfer is not supported on this platform
+ */
+async function parseAsyncRawImpl(filename, sourceText, options, convert) {
   // Wait for a free CPU core if all CPUs are currently busy.
   //
   // Note: `availableCores` is NOT decremented if have to wait in the queue first,
@@ -87,9 +112,9 @@ async function parseAsyncRawImpl(filename, sourceText, options, deserialize) {
   }
 
   // Parse
-  const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  await bindings.parseAsyncRaw(filename, buffer, sourceByteLen, optionsAmended);
-  const ret = deserialize(buffer, sourceText, sourceByteLen);
+  const { buffer, sourceByteLen } = prepareRaw(sourceText);
+  await parseAsyncRawBinding(filename, buffer, sourceByteLen, options);
+  const data = convert(buffer, sourceText, sourceByteLen);
 
   // Free the CPU core
   if (queue.length > 0) {
@@ -102,7 +127,7 @@ async function parseAsyncRawImpl(filename, sourceText, options, deserialize) {
     availableCores++;
   }
 
-  return ret;
+  return data;
 }
 
 const ONE_GIB = 1 << 30,
@@ -140,21 +165,28 @@ const ONE_GIB = 1 << 30,
 // point creating a new buffer, when one already exists.
 const CLEAR_BUFFERS_TIMEOUT = 10_000; // 10 seconds
 const buffers = [], oldBuffers = [];
+let clearBuffersTimeout = null;
 
-let encoder = null, clearBuffersTimeout = null;
+const textEncoder = new TextEncoder();
 
-// Get a buffer (from cache if possible), copy source text into it, and amend options object
-function prepareRaw(sourceText, options) {
+/**
+ * Get a buffer (from cache if possible), and copy source text into it.
+ *
+ * @param {string} sourceText - Source text of file
+ * @returns {Object} - Object of form `{ buffer, sourceByteLen }`.
+ *   - `buffer`: `Uint8Array` containing the AST in raw form.
+ *   - `sourceByteLen`: Length of source text in UTF-8 bytes
+ *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
+ * @throws {Error} - If raw transfer is not supported on this platform
+ */
+function prepareRaw(sourceText) {
   if (!rawTransferSupported()) {
     throw new Error(
-      '`experimentalRawTransfer` option is not supported on 32-bit or big-endian systems, ' +
-        'versions of NodeJS prior to v22.0.0, versions of Deno prior to v2.0.0, and other runtimes',
+      '`experimentalRawTransfer` and `experimentalLazy` options are not supported ' +
+        'on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, ' +
+        'versions of Deno prior to v2.0.0, or other runtimes',
     );
   }
-
-  // Delete `experimentalRawTransfer` and `experimentalLazy` options
-  let _;
-  ({ experimentalRawTransfer: _, experimentalLazy: _, ...options } = options);
 
   // Cancel timeout for clearing buffers
   if (clearBuffersTimeout !== null) {
@@ -176,29 +208,36 @@ function prepareRaw(sourceText, options) {
   // Reuse existing buffer, or create a new one
   const buffer = buffers.length > 0 ? buffers.pop() : createBuffer();
 
-  // Get/create `TextEncoder`
-  if (encoder === null) encoder = new TextEncoder();
-
   // Write source into start of buffer.
   // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB,
   // so create a view into buffer of this size to write into.
   const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
-  const { read, written: sourceByteLen } = encoder.encodeInto(sourceText, sourceBuffer);
+  const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error('Failed to write source text into buffer');
 
-  return { buffer, sourceByteLen, options };
+  return { buffer, sourceByteLen };
 }
 
-// Get if AST should be parsed as JS or TS.
-// Rust side sets a `bool` in this position in buffer which is `true` if TS.
+/**
+ * Get if AST should be parsed as JS or TS.
+ * Rust side sets a `bool` in this position in buffer which is `true` if TS.
+ *
+ * @param {Uint8Array} buffer - Buffer containing AST in raw form
+ * @returns {boolean} - `true` if AST is JS, `false` if TS
+ */
 function isJsAst(buffer) {
   // 2147483636 = (2 * 1024 * 1024 * 1024) - 12
   // i.e. 12 bytes from end of 2 GiB buffer
   return buffer[2147483636] === 0;
 }
 
-// Return buffer to cache, to be reused.
-// Set a timer to clear buffers.
+/**
+ * Return buffer to cache, to be reused.
+ * Set a timer to clear buffers.
+ *
+ * @param {Uint8Array} buffer - Buffer
+ * @returns {undefined}
+ */
 function returnBufferToCache(buffer) {
   buffers.push(buffer);
 
@@ -207,8 +246,12 @@ function returnBufferToCache(buffer) {
   clearBuffersTimeout.unref();
 }
 
-// Downgrade buffers in tier 1 cache (`buffers`) to tier 2 (`oldBuffers`),
-// so they can be garbage collected
+/**
+ * Downgrade buffers in tier 1 cache (`buffers`) to tier 2 (`oldBuffers`)
+ * so they can be garbage collected.
+ *
+ * @returns {undefined}
+ */
 function clearBuffersCache() {
   clearBuffersTimeout = null;
 
@@ -218,66 +261,26 @@ function clearBuffersCache() {
   buffers.length = 0;
 }
 
-// Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
-//
-// Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
-// chopping off that number of bytes from the start, and shortening to 2 GiB.
-//
-// It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
-// no matter how the 6 GiB buffer is aligned.
-//
-// Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
-// It does not consume physical memory until data is actually written to the `Uint8Array`.
-// Physical memory consumed corresponds to the quantity of data actually written.
+/**
+ * Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
+ *
+ * Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
+ * chopping off that number of bytes from the start, and shortening to 2 GiB.
+ *
+ * It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
+ * no matter how the 6 GiB buffer is aligned.
+ *
+ * Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
+ * It does not consume physical memory until data is actually written to the `Uint8Array`.
+ * Physical memory consumed corresponds to the quantity of data actually written.
+ *
+ * @returns {Uint8Array} - Buffer
+ */
 function createBuffer() {
   const arrayBuffer = new ArrayBuffer(SIX_GIB);
-  const offset = bindings.getBufferOffset(new Uint8Array(arrayBuffer));
+  const offset = getBufferOffset(new Uint8Array(arrayBuffer));
   const buffer = new Uint8Array(arrayBuffer, offset, TWO_GIB);
   buffer.uint32 = new Uint32Array(arrayBuffer, offset, TWO_GIB / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, TWO_GIB / 8);
   return buffer;
-}
-
-let rawTransferIsSupported = null;
-
-// Returns `true` if `experimentalRawTransfer` is option is supported.
-//
-// Raw transfer is only supported on 64-bit little-endian systems,
-// and NodeJS >= v22.0.0 or Deno >= v2.0.0.
-//
-// Versions of NodeJS prior to v22.0.0 do not support creating an `ArrayBuffer` larger than 4 GiB.
-// Bun (as at v1.2.4) also does not support creating an `ArrayBuffer` larger than 4 GiB.
-// Support on Deno v1 is unknown and it's EOL, so treating Deno before v2.0.0 as unsupported.
-function rawTransferSupported() {
-  if (rawTransferIsSupported === null) {
-    rawTransferIsSupported = rawTransferRuntimeSupported() && bindings.rawTransferSupported();
-  }
-  return rawTransferIsSupported;
-}
-
-// Checks copied from:
-// https://github.com/unjs/std-env/blob/ab15595debec9e9115a9c1d31bc7597a8e71dbfd/src/runtimes.ts
-// MIT license: https://github.com/unjs/std-env/blob/ab15595debec9e9115a9c1d31bc7597a8e71dbfd/LICENCE
-function rawTransferRuntimeSupported() {
-  let global;
-  try {
-    global = globalThis;
-  } catch (e) {
-    return false;
-  }
-
-  const isBun = !!global.Bun || !!global.process?.versions?.bun;
-  if (isBun) return false;
-
-  const isDeno = !!global.Deno;
-  if (isDeno) {
-    const match = Deno.version?.deno?.match(/^(\d+)\./);
-    return !!match && match[1] * 1 >= 2;
-  }
-
-  const isNode = global.process?.release?.name === 'node';
-  if (!isNode) return false;
-
-  const match = process.version?.match(/^v(\d+)\./);
-  return !!match && match[1] * 1 >= 22;
 }

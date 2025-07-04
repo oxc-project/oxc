@@ -46,14 +46,13 @@ declare_oxc_lint!(
 impl Rule for PreferDomNodeTextContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
-                if let Some((span, name)) = member_expr.static_property_info() {
-                    if name == "innerText" && !member_expr.is_computed() {
-                        ctx.diagnostic_with_fix(
-                            prefer_dom_node_text_content_diagnostic(span),
-                            |fixer| fixer.replace(span, "textContent"),
-                        );
-                    }
+            AstKind::StaticMemberExpression(member_expr) => {
+                let (span, name) = member_expr.static_property_info();
+                if name == "innerText" {
+                    ctx.diagnostic_with_fix(
+                        prefer_dom_node_text_content_diagnostic(span),
+                        |fixer| fixer.replace(span, "textContent"),
+                    );
                 }
             }
             // `const {innerText} = node` or `({innerText: text} = node)`
@@ -63,11 +62,20 @@ impl Rule for PreferDomNodeTextContent {
                 }
 
                 let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
-                let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
+                let (Some(parent_node_kind), Some(mut grand_parent_node_kind)) =
                     (ancestor_kinds.next(), ancestor_kinds.next())
                 else {
                     return;
                 };
+                if matches!(
+                    grand_parent_node_kind,
+                    AstKind::BindingProperty(_) | AstKind::AssignmentTargetPropertyProperty(_)
+                ) {
+                    grand_parent_node_kind = match ancestor_kinds.next() {
+                        Some(kind) => kind,
+                        None => return,
+                    };
+                }
 
                 if matches!(parent_node_kind, AstKind::PropertyKey(_))
                     && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
@@ -88,11 +96,13 @@ impl Rule for PreferDomNodeTextContent {
                 }
 
                 let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
-                let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
-                    (ancestor_kinds.next(), ancestor_kinds.next())
-                else {
-                    return;
-                };
+
+                let Some(mut parent_node_kind) = ancestor_kinds.next() else { return };
+                if matches!(parent_node_kind, AstKind::AssignmentTargetPropertyIdentifier(_)) {
+                    let Some(next) = ancestor_kinds.next() else { return };
+                    parent_node_kind = next;
+                }
+                let Some(grand_parent_node_kind) = ancestor_kinds.next() else { return };
 
                 if matches!(
                     parent_node_kind,

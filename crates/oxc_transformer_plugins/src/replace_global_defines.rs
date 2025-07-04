@@ -1,5 +1,7 @@
 use std::{cmp::Ordering, sync::Arc};
 
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{Address, Allocator, GetAddress};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitMut;
@@ -8,8 +10,9 @@ use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ScopeFlags, Scoping};
 use oxc_span::{CompactStr, SPAN, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx, traverse_mut};
-use rustc_hash::FxHashSet;
+use oxc_traverse::{Ancestor, Traverse, traverse_mut};
+
+use crate::TraverseCtx;
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -226,7 +229,7 @@ pub struct ReplaceGlobalDefines<'a> {
     ast_node_lock: Option<Address>,
 }
 
-impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
+impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.ast_node_lock.is_some() {
             return;
@@ -280,7 +283,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
-        let scoping = traverse_mut(self, self.allocator, program, scoping);
+        let scoping = traverse_mut(self, self.allocator, program, scoping, ());
         ReplaceGlobalDefinesReturn { scoping }
     }
 

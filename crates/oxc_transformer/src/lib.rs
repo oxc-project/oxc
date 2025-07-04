@@ -12,13 +12,14 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
+use oxc_traverse::{Traverse, traverse_mut};
 
 // Core
 mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+mod state;
 mod utils;
 
 // Presets: <https://babel.dev/docs/presets>
@@ -38,7 +39,7 @@ mod typescript;
 mod decorator;
 
 use common::Common;
-use context::TransformCtx;
+use context::{TransformCtx, TraverseCtx};
 use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
@@ -52,6 +53,7 @@ use jsx::Jsx;
 use proposals::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
+use state::TransformState;
 use typescript::TypeScript;
 
 pub use crate::{
@@ -157,7 +159,8 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let scoping = traverse_mut(&mut transformer, allocator, program, scoping);
+        let state = TransformState::default();
+        let scoping = traverse_mut(&mut transformer, allocator, program, scoping, state);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
         TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
@@ -183,7 +186,7 @@ struct TransformerImpl<'a, 'ctx> {
     common: Common<'a, 'ctx>,
 }
 
-impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);

@@ -75,6 +75,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
+    let ranges = options.range.unwrap_or(false);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
@@ -106,14 +107,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            program.to_estree_js_json_with_fixes()
+            program.to_estree_js_json_with_fixes(ranges)
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // despite appearances to the contrary in AST explorers.
             // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes()
+            program.to_estree_ts_json_with_fixes(ranges)
         }
     };
 

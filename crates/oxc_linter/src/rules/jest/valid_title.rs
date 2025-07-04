@@ -79,6 +79,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### Options
+    /// ```typescript
     /// interface Options {
     ///     ignoreSpaces?: boolean;
     ///     ignoreTypeOfTestName?: boolean;
@@ -87,6 +88,8 @@ declare_oxc_lint!(
     ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
+    /// ```
+    ///
     ValidTitle,
     jest,
     correctness,

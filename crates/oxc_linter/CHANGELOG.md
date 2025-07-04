@@ -4,6 +4,154 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.5.0] - 2025-07-02
+
+### 🚀 Features
+
+- 899b8b4 linter: Allow namespace re-export in `import/no-cycle` (#11995) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f732589 linter: Panic in `consistent-type-imports` when the source contains a `{` (#12002) (camc314)
+
+### 🚜 Refactor
+
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- cfa52c2 ast: Add `AstKind` for `AssignmentTargetRest` (#11984) (camc314)
+- 3f91f24 linter: Remove `RulesCache` (#11981) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+
+
+## [1.4.0] - 2025-06-30
+
+### 🚀 Features
+
+- 8e1573d linter: Add id-length rule from eslint (#11887) (Nicholas Rayburn)
+- 5dfcac5 linter: Add eslint/arrow-body-style rule (#11937) (yefan)
+- f102cb1 linter: Add `import/prefer-default-export` rule (#11891) (yefan)
+
+### 🐛 Bug Fixes
+
+- 114c4fb linter/no-useless-spread: Panic with multi byte char (#11964) (camc314)
+- c2e5439 linter: Fix default values for `unicorn/consistent-function-scoping` (#11960) (Sysix)
+- 214c8e7 linter: Fix default values for `import/no-absolute-path` (#11959) (Sysix)
+- b4cc222 linter: Fix `typescript/no-namespace` default values (#11958) (Sysix)
+- 11e0a43 linter/prefer-dom-node-remove: Panic when callee is ts non null expression (#11949) (camc314)
+- 4903e39 linter/no-standalone-expect: False positive in callback fn (#11940) (camc314)
+- 1e88dba oxc_linter: Make linter file paths clickable within JetBrains terminals (#11619) (Nicholas Rayburn)
+- fe4006b linter/jsx-key: False positive in react/jsx-key (#11918) (camc314)
+- d32cb4b linter: Fix default values for `eslint/no-redeclare` (#11911) (Sysix)
+- d80c19d linter: Fix default values for `eslint/max-lines-per-function` (#11910) (Sysix)
+- 41a5342 linter: Fix default values for `eslint/max-nested-callbacks` (#11909) (Sysix)
+- 2e3db4e linter: Fix default values for `eslint/max-depth` (#11908) (Sysix)
+- a358797 linter: Remove false positives for `no-extend-native` (#11888) (camchenry)
+- 6f67b52 linter: Revert prefer-promise-reject-errors to old behavior (#11889) (camchenry)
+- d991fed linter: Fix `jsx-a11y/label-has-associated-control` default values (#11832) (Sysix)
+- a0a4aa1 linter: Count own indirect export entries to the threshold for `oxc/no-barrel-file` (#11838) (Sysix)
+
+### 🚜 Refactor
+
+- 344f3f9 linter: Minor refactors to `eslint/id-length` (#11976) (camc314)
+- 46b59d8 linter: Remove unused `ContextHost::with_config` (#11970) (camc314)
+- 17e0898 linter: Move `import/no-duplicates` to style category (#11929) (Sysix)
+- dd2e196 linter: Move `unicorn/no-nested-ternary` to style category (#11928) (Sysix)
+- 8404da4 linter: Remove unused `LintPluginOptions` (#11919) (camc314)
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- e840680 linter/no-named-as-default-members: Remove needless lambda (#11896) (camc314)
+- 2760591 linter/no-console: Early return if ident does not match (#11895) (camc314)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+### 📚 Documentation
+
+- 940b98f linter: Fix docs for `typescript/no-this-alias` (#11963) (Sysix)
+- c4a95a2 linter: Move `jest/valid-title` options into a codeblock (#11961) (Sysix)
+- 0d3e8e7 linter: Fix prefer-string-replace-all example (#11921) (Bruno Henriques)
+- 06781ab linter: Fix doc formatting for perfer-logical-op-over-ternary (#11920) (camc314)
+
+### ⚡ Performance
+
+- 2cf63ea linter: `nextjs/no-document-import-in-page` check the filepath before running the rule (#11962) (Sysix)
+- 19cee8c linter/no-extend-native: Do not create unnecessary `CompactStr` (#11885) (overlookmotel)
+- 66dbf9d linter/no-console: Get static property name only once (#11880) (overlookmotel)
+
+### 🧪 Testing
+
+- 168f776 linter/no-console: Add more tests (#11878) (overlookmotel)
+
+
+## [1.3.0] - 2025-06-23
+
+### 🚀 Features
+
+- 1a54184 linter: Add fix for unused disable directive (#11708) (Sysix)
+- 816ff03 linter: Read source text into the arena (#11825) (camc314)
+- dc6f584 linter: Add `read_to_arena_str` function (#11823) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 76891da linter/exhaustive-deps: False positive with ident used in type param (#11812) (camc314)
+
+### 🚜 Refactor
+
+- b39d1fa linter: Output smaller spans for unused disable directives with multiple rules (#11781) (Sysix)
+
+### 📚 Documentation
+
+- faab3ee linter: Improve docs for typescript/no-this-alias (#11845) (camc314)
+
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 8c341a2 sema/check: Ts setters cannot have initializers (#11695) (Don Isaac)
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- bf8263d playground: Allow specifying a JSON string as the linter config (#11710) (Nicholas Rayburn)
+- 52ecc87 linter: Implement import/extensions (#11548) (Tyler Earls)
+
+### 🐛 Bug Fixes
+
+- 3d88eeb linter/no-console: False negative when `console.*` methods are used as args to functions (#11790) (camc314)
+- c80e405 linter/no-new-wrappers: Fix panic in fixer with multi byte chars (#11773) (camc314)
+- e58a0b0 linter: Panic in unicorn/consistent-function-scoping (#11772) (camc314)
+- 80c87d4 linter: Typo in typescript/consistent-index-object-style (#11744) (camc314)
+- ff775e9 linter/consistent-function-scoping: Descriptive diagnostic labels (#11682) (Don Isaac)
+- 989634a linter/no-inner-declaration: False negative with for loops (#11692) (camc314)
+- b272b91 linter/no-undef: False negative with unresolved ref after type ref (#11721) (camc314)
+- 6252275 linter: Panic in import/extensions with empty file names (#11720) (camc314)
+- f34e432 linter: Use fixer::noop in dangerous cases for eslint/no-var (#11693) (camc314)
+- 6c2b41c linter/consistent-function-scoping: Allow functions in TS modules/namespaces (#11681) (Don Isaac)
+- 2ca1c70 linter/exhaustive-deps: False positive with TS Non null assertion operator (#11690) (camc314)
+- ee15f7d linter: False negative in typescript/prefer-function-type (#11674) (camc314)
+- abd0441 linter: Add missing menuitemradio and menutitemcheckbox roles (#11651) (Daniel Flynn)
+- 8776301 linter/no-inner-declarations: Flag `var` statement as body of `for` loop (#11632) (overlookmotel)
+
+### 🚜 Refactor
+
+- 5ca3d04 ast: Add `TSArrayType` as `AstKind` (#11745) (camchenry)
+- 219adcc ast: Don't generate AstKind for ArrayExpressionElement (#11684) (Ulrich Stark)
+- c1be6b8 linter: Shorten Span construction (#11686) (Ulrich Stark)
+- 4ca659c linter: Cleanup typescript/prefer-function-type  (#11672) (Brad Dunbar)
+- 8e30c5f ast: Don't generate AstKind for ForStatementInit (#11617) (Ulrich Stark)
+
+### 📚 Documentation
+
+- ea6ce9d linter: Fix typo in import/no-namespace (#11741) (camc314)
+- 8b6076e linter: Document options for the `typescript/array-type` rule (#11665) (yefan)
+
+### ⚡ Performance
+
+- f539f64 allocator: Remove `Arc` from `AllocatorPool` (#11760) (overlookmotel)
+- cfdc518 linter/no-inner-declarations: Move work to cold path (#11746) (overlookmotel)
+- 7c0fff7 linter: Skip running `consistent-function-scoping` on `.d.ts` files (#11739) (camc314)
+- b34c6f6 parser,semantic: Improve handling of diagnostics (#11641) (Boshen)
+- 2cd786b linter/no-inner-declarations: Remove unnecessary code and reduce branches (#11633) (overlookmotel)
+
+### 🧪 Testing
+
+- 44a9df8 linter: Update testsuite for `no-undef` (#11706) (Sysix)
+
+
 ## [1.1.0] - 2025-06-12
 
 ### 🚀 Features

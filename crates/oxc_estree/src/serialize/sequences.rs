@@ -121,12 +121,12 @@ mod tests {
 
         let foo = Foo { none: &[], one: &["one"], two: ["two one", "two two"] };
 
-        let mut serializer = CompactTSSerializer::new();
+        let mut serializer = CompactTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(&s, r#"{"none":[],"one":["one"],"two":["two one","two two"]}"#);
 
-        let mut serializer = PrettyTSSerializer::new();
+        let mut serializer = PrettyTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(

@@ -2,8 +2,8 @@ commit: 1d4546bc
 
 parser_babel Summary:
 AST Parsed     : 2351/2362 (99.53%)
-Positive Passed: 2329/2362 (98.60%)
-Negative Passed: 1592/1698 (93.76%)
+Positive Passed: 2330/2362 (98.65%)
+Negative Passed: 1600/1698 (94.23%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -134,27 +134,11 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts
 
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
+
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-abstract-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/invalid-static-block-with-modifier-abstract/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 
@@ -660,16 +644,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
-
-  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts:3:21]
- 2 │ // but they are always type-checking errors.
- 3 │ interface A extends this.B {}
-   ·                     ──────
- 4 │ type T = typeof var.bar;
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
@@ -2804,12 +2778,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────
    ╰────
 
-  × A rest parameter must be last in a parameter list
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:2]
- 1 │ (...rest,) => {}
-   ·  ───────
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:9]
  1 │ (...rest,) => {}
@@ -2872,11 +2840,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × A rest parameter must be last in a parameter list
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
  3 │     ...second,
-   ·     ─────────
+   ·     ───
  4 │     third
    ╰────
 
@@ -5722,12 +5690,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × A rest parameter must be last in a parameter list
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:8]
- 1 │ async (...a,) => {};
-   ·        ────
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:12]
  1 │ async (...a,) => {};
@@ -5999,12 +5961,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/7/input.js:1:7]
  1 │ let { ...x, y, z } = obj;
    ·       ────
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/8/input.js:1:13]
- 1 │ let { x, y, ...z, } = obj;
-   ·             ────
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -8808,12 +8764,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ┬     ┬
    ·      │     ╰── It can not be redeclared here
    ·      ╰── `b` has already been declared here
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:5]
- 1 │ ([a,...b,])=>0;
-   ·     ────
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -12088,6 +12038,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × 'declare' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   declare get foo()
+   ·   ───────
+ 3 │   declare set foo(v)
+   ╰────
+
+  × 'declare' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:3]
+ 2 │   declare get foo()
+ 3 │   declare set foo(v)
+   ·   ───────
+ 4 │ }
+   ╰────
+
   × Getters and setters must have an implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:15]
  1 │ class Foo {
@@ -12144,6 +12110,51 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   public public a;
    ·          ──────
  3 │   private public b;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'public' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:3:11]
+ 2 │   public public a;
+ 3 │   private public b;
+   ·           ──────
+ 4 │   protected private c;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'private' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:4:13]
+ 3 │   private public b;
+ 4 │   protected private c;
+   ·             ───────
+ 5 │   public protected d;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:5:10]
+ 4 │   protected private c;
+ 5 │   public protected d;
+   ·          ─────────
+ 6 │   public protected private e;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:10]
+ 5 │   public protected d;
+ 6 │   public protected private e;
+   ·          ─────────
+ 7 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'private' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:20]
+ 5 │   public protected d;
+ 6 │   public protected private e;
+   ·                    ───────
+ 7 │ }
    ╰────
   help: Remove the duplicate modifier.
 
@@ -12806,14 +12817,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts:3:21]
- 2 │ // but they are always type-checking errors.
- 3 │ interface A extends this.B {}
-   ·                     ──────
- 4 │ type T = typeof var.bar;
-   ╰────
-
   × Identifier `A` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-class/input.ts:1:7]
  1 │ class A {}
@@ -13154,11 +13157,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ╰── It can not be redeclared here
    ╰────
 
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   private static {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:2:18]
  1 │ class Foo {
  2 │   static private {}
    ·                  ─
+ 3 │ }
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   protected static {}
+   ·   ─────────
  3 │ }
    ╰────
 
@@ -13170,11 +13189,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   public static {}
+   ·   ──────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-02/input.ts:2:17]
  1 │ class Foo {
  2 │   static public {}
    ·                 ─
+ 3 │ }
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-abstract-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   abstract static {}
+   ·   ────────
  3 │ }
    ╰────
 
@@ -13186,6 +13221,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   override static {}
+   ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-01/invalid-static-block-with-modifier-abstract/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   abstract static {}
+   ·   ────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-override-02/input.ts:2:19]
  1 │ class Foo {
@@ -13194,11 +13245,35 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   static static {}
+   ·   ──────
+ 3 │ }
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   declare static {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-02/input.ts:2:18]
  1 │ class Foo {
  2 │   static declare {}
    ·                  ─
+ 3 │ }
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   readonly static {}
+   ·   ────────
  3 │ }
    ╰────
 

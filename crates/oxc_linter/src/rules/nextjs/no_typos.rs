@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Declaration, ModuleDeclaration},
+    ast::{BindingPatternKind, Declaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,9 +73,7 @@ impl Rule for NoTypos {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(en_decl)) =
-            node.kind()
-        {
+        if let AstKind::ExportNamedDeclaration(en_decl) = node.kind() {
             if let Some(decl) = &en_decl.declaration {
                 match decl {
                     Declaration::VariableDeclaration(decl) => {

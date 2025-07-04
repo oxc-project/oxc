@@ -323,7 +323,7 @@ impl<'a> ParserImpl<'a> {
                 let start_span = self.start_span();
                 let checkpoint = self.checkpoint();
                 self.bump_any(); // bump `let`
-                // disallow for `(let in ...`
+                // disallow `for (let in ...`
                 if self.cur_kind().is_after_let() {
                     return self.parse_variable_declaration_for_statement(
                         span,
@@ -375,24 +375,29 @@ impl<'a> ParserImpl<'a> {
 
         let init_expression = self.context(Context::empty(), Context::In, ParserImpl::parse_expr);
 
-        // for (a.b in ...), for ([a] in ..), for ({a} in ..)
-        if self.at(Kind::In) || self.at(Kind::Of) {
-            if self.at(Kind::Of) && init_expression.is_identifier_reference() {
-                if !r#await && is_async {
-                    // `for (async of ...)` is not allowed
-                    self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
-                }
-                if is_let {
-                    // `for (let of ...)` is not allowed
-                    self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
-                }
+        match self.cur_kind() {
+            Kind::In => {
+                let target = AssignmentTarget::cover(init_expression, self);
+                let for_stmt_left = ForStatementLeft::from(target);
+                self.parse_for_in_loop(span, r#await, for_stmt_left)
             }
-            let target = AssignmentTarget::cover(init_expression, self);
-            let for_stmt_left = ForStatementLeft::from(target);
-            return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
+            Kind::Of => {
+                if init_expression.is_identifier_reference() {
+                    if !r#await && is_async {
+                        // `for (async of ...)` is not allowed
+                        self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
+                    }
+                    if is_let {
+                        // `for (let of ...)` is not allowed
+                        self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
+                    }
+                }
+                let target = AssignmentTarget::cover(init_expression, self);
+                let for_stmt_left = ForStatementLeft::from(target);
+                self.parse_for_of_loop(span, r#await, for_stmt_left)
+            }
+            _ => self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await),
         }
-
-        self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await)
     }
 
     fn parse_variable_declaration_for_statement(
@@ -414,14 +419,7 @@ impl<'a> ParserImpl<'a> {
             p.parse_variable_declaration(start_span, kind, decl_ctx, &Modifiers::empty())
         });
 
-        // for (.. a in) for (.. a of)
-        if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::VariableDeclaration(init_declaration);
-            return self.parse_for_in_or_of_loop(span, r#await, init);
-        }
-
-        let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
-        self.parse_for_loop(span, init, r#await)
+        self.parse_any_for_loop(span, init_declaration, r#await)
     }
 
     fn is_using_declaration(&mut self) -> bool {
@@ -457,13 +455,33 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::VariableDeclaration(self.alloc(using_decl));
-            return self.parse_for_in_or_of_loop(span, r#await, init);
-        }
+        let init_declaration = self.alloc(using_decl);
+        self.parse_any_for_loop(span, init_declaration, r#await)
+    }
 
-        let init = Some(ForStatementInit::VariableDeclaration(self.alloc(using_decl)));
-        self.parse_for_loop(span, init, r#await)
+    fn parse_any_for_loop(
+        &mut self,
+        span: u32,
+        init_declaration: Box<'a, VariableDeclaration<'a>>,
+        r#await: bool,
+    ) -> Statement<'a> {
+        match self.cur_kind() {
+            Kind::In => self.parse_for_in_loop(
+                span,
+                r#await,
+                ForStatementLeft::VariableDeclaration(init_declaration),
+            ),
+            Kind::Of => self.parse_for_of_loop(
+                span,
+                r#await,
+                ForStatementLeft::VariableDeclaration(init_declaration),
+            ),
+            _ => self.parse_for_loop(
+                span,
+                Some(ForStatementInit::VariableDeclaration(init_declaration)),
+                r#await,
+            ),
+        }
     }
 
     fn parse_for_loop(
@@ -497,33 +515,38 @@ impl<'a> ParserImpl<'a> {
         self.ast.statement_for(self.end_span(span), init, test, update, body)
     }
 
-    fn parse_for_in_or_of_loop(
+    fn parse_for_in_loop(
         &mut self,
         span: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
-        let is_for_in = self.at(Kind::In);
-        self.bump_any(); // bump `in` or `of`
-        let right = if is_for_in {
-            self.parse_expr()
-        } else {
-            self.parse_assignment_expression_or_higher()
-        };
+        self.bump_any(); // bump `in`
+        let right = self.parse_expr();
         self.expect(Kind::RParen);
 
-        if r#await && is_for_in {
+        if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
+        self.ast.statement_for_in(span, left, right, body)
+    }
 
-        if is_for_in {
-            self.ast.statement_for_in(span, left, right, body)
-        } else {
-            self.ast.statement_for_of(span, r#await, left, right, body)
-        }
+    fn parse_for_of_loop(
+        &mut self,
+        span: u32,
+        r#await: bool,
+        left: ForStatementLeft<'a>,
+    ) -> Statement<'a> {
+        self.bump_any(); // bump `of`
+        let right = self.parse_assignment_expression_or_higher();
+        self.expect(Kind::RParen);
+
+        let body = self.parse_statement_list_item(StatementContext::For);
+        let span = self.end_span(span);
+        self.ast.statement_for_of(span, r#await, left, right, body)
     }
 
     /// Section 14.8 Continue Statement

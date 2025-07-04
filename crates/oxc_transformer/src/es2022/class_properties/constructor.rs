@@ -112,10 +112,13 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
 
-use crate::utils::ast_builder::{
-    create_assignment, create_class_constructor_with_params, create_super_call,
+use crate::{
+    context::TraverseCtx,
+    utils::ast_builder::{
+        create_assignment, create_class_constructor_with_params, create_super_call,
+    },
 };
 
 use super::{ClassProperties, utils::exprs_into_stmts};

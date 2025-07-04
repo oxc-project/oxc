@@ -89,7 +89,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "decorator",
-            "node_id": 31
+            "node_id": 32
           }
         ]
       },

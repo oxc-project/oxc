@@ -495,6 +495,15 @@ describe('NodeArray', () => {
     expect(stmtsTwice[3]).toBe(body[1]);
   });
 
+  it('get length', () => {
+    const body0 = parseSyncLazy('test.js', '').program.body;
+    expect(body0.length).toBe(0);
+    const body2 = parseSyncLazy('test.js', 'let x = 1; x = 2;').program.body;
+    expect(body2.length).toBe(2);
+    const body4 = parseSyncLazy('test.js', 'x; y; z; 123;').program.body;
+    expect(body4.length).toBe(4);
+  });
+
   it('set length (throws)', () => {
     const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
     expect(() => body.length = 0)
@@ -521,6 +530,8 @@ describe('NodeArray', () => {
     expect(() => body[1] = {}).toThrow(new TypeError('Cannot redefine property: 1'));
     expect(() => body[2] = {})
       .toThrow(new TypeError("'defineProperty' on proxy: trap returned falsish for property '2'"));
+    expect(() => body[4294967294] = {})
+      .toThrow(new TypeError("'defineProperty' on proxy: trap returned falsish for property '4294967294'"));
   });
 
   it('set element via `defineProperty` (throws)', () => {
@@ -531,28 +542,45 @@ describe('NodeArray', () => {
       .toThrow(new TypeError("'defineProperty' on proxy: trap returned falsish for property '1'"));
     expect(() => Object.defineProperty(body, 2, { value: {} }))
       .toThrow(new TypeError("'defineProperty' on proxy: trap returned falsish for property '2'"));
+    expect(() => Object.defineProperty(body, 4294967294, { value: {} }))
+      .toThrow(new TypeError("'defineProperty' on proxy: trap returned falsish for property '4294967294'"));
   });
+
+  const propertyKeys = [
+    'foo',
+    'bar',
+    Symbol('yeah'),
+    -1,
+    '01',
+    '0x1',
+    '1 ',
+    ' 1',
+    '1e1',
+    '4294967295',
+    '4294967296',
+    '10000000000000',
+  ];
 
   it('set properties', () => {
     const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
 
-    const keys = [
-      'foo',
-      'bar',
-      Symbol('yeah'),
-      -1,
-      '01',
-      '0x1',
-      '1 ',
-      ' 1',
-      '1e1',
-    ];
-
-    for (const [i, key] of keys.entries()) {
+    for (const [i, key] of propertyKeys.entries()) {
       body[key] = i + 100;
     }
 
-    for (const [i, key] of keys.entries()) {
+    for (const [i, key] of propertyKeys.entries()) {
+      expect(body[key]).toBe(i + 100);
+    }
+  });
+
+  it('set properties via `defineProperty`', () => {
+    const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+
+    for (const [i, key] of propertyKeys.entries()) {
+      Object.defineProperty(body, key, { value: i + 100 });
+    }
+
+    for (const [i, key] of propertyKeys.entries()) {
       expect(body[key]).toBe(i + 100);
     }
   });

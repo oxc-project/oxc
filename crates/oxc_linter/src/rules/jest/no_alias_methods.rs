@@ -106,43 +106,39 @@ impl Rule for NoAliasMethods {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        run(jest_node, ctx);
+        let node = jest_node.node;
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, jest_node, ctx) else {
+            return;
+        };
+        let Some(matcher) = jest_fn_call.matcher() else {
+            return;
+        };
+        let Some(alias) = matcher.name() else {
+            return;
+        };
+
+        let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) else {
+            return;
+        };
+        let (name, canonical_name) = method_name.name_with_canonical();
+
+        let mut span = matcher.span;
+        // expect(a).not['toThrowError']()
+        // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
+        if matcher.element.is_string_literal() {
+            span.start += 1;
+            span.end -= 1;
+        }
+
+        ctx.diagnostic_with_fix(
+            no_alias_methods_diagnostic(name, canonical_name, matcher.span),
+            // || Fix::new(canonical_name, Span::new(start, end)),
+            |fixer| fixer.replace(span, canonical_name),
+        );
     }
-}
-
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else {
-        return;
-    };
-    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
-        return;
-    };
-    let Some(matcher) = jest_fn_call.matcher() else {
-        return;
-    };
-    let Some(alias) = matcher.name() else {
-        return;
-    };
-
-    let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) else {
-        return;
-    };
-    let (name, canonical_name) = method_name.name_with_canonical();
-
-    let mut span = matcher.span;
-    // expect(a).not['toThrowError']()
-    // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
-    if matcher.element.is_string_literal() {
-        span.start += 1;
-        span.end -= 1;
-    }
-
-    ctx.diagnostic_with_fix(
-        no_alias_methods_diagnostic(name, canonical_name, matcher.span),
-        // || Fix::new(canonical_name, Span::new(start, end)),
-        |fixer| fixer.replace(span, canonical_name),
-    );
 }
 
 enum BadAliasMethodName {

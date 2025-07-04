@@ -101,9 +101,10 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
+use crate::{context::TraverseCtx, state::TransformState};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -172,7 +173,7 @@ impl ArrowFunctionConverter<'_> {
     }
 }
 
-impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
     // Note: No visitors for `TSModuleBlock` because `this` is not legal in TS module blocks.
     // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
 

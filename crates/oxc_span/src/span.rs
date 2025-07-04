@@ -12,6 +12,9 @@ use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
+#[cfg(feature = "serialize")]
+use oxc_estree::ESTreeSpan;
+
 /// An empty span.
 ///
 /// Should be used for newly created new AST nodes.
@@ -78,7 +81,12 @@ pub const SPAN: Span = Span::new(0, 0);
 #[generate_derive(ESTree)]
 #[builder(skip)]
 #[content_eq(skip)]
-#[estree(no_type, flatten)]
+#[estree(
+    no_type,
+    flatten,
+    no_ts_def,
+    add_ts_def = "interface Span { start: number; end: number; range?: [number, number]; }"
+)]
 pub struct Span {
     /// The zero-based start offset of the span
     pub start: u32,
@@ -561,6 +569,15 @@ impl Serialize for Span {
         map.serialize_entry("start", &self.start)?;
         map.serialize_entry("end", &self.end)?;
         map.end()
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTreeSpan for Span {
+    #[expect(clippy::inline_always)] // `#[inline(always)]` because it's a no-op
+    #[inline(always)]
+    fn range(self) -> [u32; 2] {
+        [self.start, self.end]
     }
 }
 

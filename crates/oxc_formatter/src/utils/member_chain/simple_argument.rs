@@ -192,10 +192,14 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     fn is_simple_template(&self, depth: u8) -> bool {
-        if let Self::Expression(Expression::TemplateLiteral(template)) = self {
-            is_simple_template_literal(template, depth + 1)
-        } else {
-            false
+        match self {
+            Self::Expression(Expression::TemplateLiteral(template)) => {
+                is_simple_template_literal(template, depth + 1)
+            }
+            Self::Expression(Expression::TaggedTemplateExpression(template)) => {
+                is_simple_template_literal(&template.quasi, depth + 1)
+            }
+            _ => false,
         }
     }
 

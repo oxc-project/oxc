@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -106,7 +106,7 @@ fn remove_new_operator<'a>(
     name: &'a str,
 ) -> RuleFix<'a> {
     debug_assert!(expr.callee.is_identifier_reference());
-    let remove_new_fix = fixer.delete_range(Span::sized(expr.span.start, 4 /* "new " */));
+    let remove_new_fix = fixer.delete_range(Span::new(expr.span.start, expr.callee.span().start));
 
     let Some(arg) = expr.arguments.first().and_then(Argument::as_expression) else {
         return remove_new_fix;
@@ -180,6 +180,7 @@ fn test() {
         ("var a = new String((((('hello')))));", "var a = 'hello';"),
         ("var a = new Number(10);", "var a = 10;"),
         ("var a = new Number(10 as number);", "var a = 10;"),
+        ("(new Number())", "(Number())"),
     ];
 
     Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail)

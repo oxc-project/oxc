@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🚀 Features
+
+- c9b6513 semantic/example: Add ability to print symbols and references in example (#12017) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 2e79d01 semantic: Panic when brackets are unmatched (#12001) (camc314)
+- 404cb14 semantic: Remove needless ts type param empty check (#11899) (camc314)
+
+### 🚜 Refactor
+
+- 07e14a4 semantic: Remove redundant code handling reference flags (#12043) (Dunqing)
+- f1d4086 ast: Remove `AstKind` for `ModuleDeclaration` (#12022) (camchenry)
+- 754c05a ast: Remove `AstKind` for `TSTypeName` (#11990) (camchenry)
+- d6563f8 semantic: Derive `PartialEq`, `Eq` for `JSDocCommentPart` (#12000) (camc314)
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+- 9f6784a ast: Add `AstKind` for `TSInterfaceBody` (#11967) (camc314)
+- 3f50cef ast: Add `AstKind` for `TSIndexSignature` (#11966) (camc314)
+- 03bce3f ast: Add `AstKind` for `TSConstructorType` (#11965) (camc314)
+- 0cef370 ast: Add `AstKind::TemplateElement` (#11955) (camchenry)
+
+### 📚 Documentation
+
+- 9bf52f9 semantic: Add docs for `JSDocCommentPart` (#11999) (camc314)
+- 5845a24 semantic: Add docs for `JSDocTagTypePart` (#11998) (camc314)
+- 1a612ad semantic: Add docs for `JSDoctagTypeNamePart` (#11997) (camc314)
+
+
+## [0.75.0] - 2025-06-25
+
+### 🚜 Refactor
+
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+
+## [0.74.0] - 2025-06-23
+
+### 💥 BREAKING CHANGES
+
+- e81be6e semantic: [**BREAKING**] Rename `symbol_is_used` to `symbol_is_unused` (#11802) (Boshen)
+
+
+## [0.73.2] - 2025-06-18
+
+### 🚀 Features
+
+- 4ad86ff sema/check: Check for reserved type names (#11694) (Don Isaac)
+
+### 🚜 Refactor
+
+- eccac91 semantic: Rename function params (#11775) (overlookmotel)
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 371473c ast, semantic: Implement `GetAddress` for `AstKind` and `AstNode` (#11758) (overlookmotel)
+- 6095438 ast: Add AstKind to TSRestType node (#11752) (therewillbecode)
+- b949ece ast: Add AstKind to TSTupleType node (#11749) (therewillbecode)
+- d74c4af ast: Add AstKind to `TSTypePredicate` node (#11726) (therewillbecode)
+- c25b153 ast: Add AstKind to ` TSCallSignatureDeclaration` node (#11725) (therewillbecode)
+- 866470a ast: Add AstKind to `TSIndexSignature` node (#11724) (therewillbecode)
+
+### 🚜 Refactor
+
+- 5ca3d04 ast: Add `TSArrayType` as `AstKind` (#11745) (camchenry)
+- 4fbe4b1 ast: Remove AstKind from `TSModuleReference` node (#11732) (therewillbecode)
+- 219adcc ast: Don't generate AstKind for ArrayExpressionElement (#11684) (Ulrich Stark)
+- b0a1561 parser: Move empty ts type parameter checks to parser (#11696) (Don Isaac)
+- ff19684 semantic: Shorten Span construction (#11687) (Ulrich Stark)
+
+
 ## [0.73.0] - 2025-06-13
 
 ### 💥 BREAKING CHANGES

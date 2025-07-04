@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -70,45 +70,31 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        let span = match kind {
-            AstKind::VariableDeclaration(decl)
-                if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>
-            {
-                Span::sized(decl.span.start, 3) // 3 for "var".len()
-            }
-            AstKind::Function(func) if func.is_function_declaration() => {
-                Span::sized(func.span.start, 8) // 8 for "function".len()
-            }
-            _ => return,
-        };
-
-        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
-        match parent_node.kind() {
-            AstKind::Program(_)
-            | AstKind::FunctionBody(_)
-            | AstKind::StaticBlock(_)
-            | AstKind::ExportNamedDeclaration(_)
-            | AstKind::ExportDefaultDeclaration(_) => return,
-            AstKind::ForStatement(for_stmt) => {
-                if for_stmt.init.as_ref().is_some_and(|init| init.span() == kind.span()) {
+        match node.kind() {
+            AstKind::VariableDeclaration(decl) => {
+                if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
             }
-            AstKind::ForInStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
-                return;
+            AstKind::Function(func) => {
+                if !func.is_function_declaration() {
+                    return;
+                }
             }
-            AstKind::ForOfStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
-                return;
-            }
-            _ => {}
+            _ => return,
         }
 
-        let decl_type = match node.kind() {
-            AstKind::VariableDeclaration(_) => "variable",
-            AstKind::Function(_) => "function",
-            _ => unreachable!(),
-        };
+        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
+        if matches!(
+            parent_node.kind(),
+            AstKind::Program(_)
+                | AstKind::FunctionBody(_)
+                | AstKind::StaticBlock(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
 
         let mut body = "program";
         let mut parent = ctx.nodes().parent_node(parent_node.id());
@@ -126,6 +112,18 @@ impl Rule for NoInnerDeclarations {
                 _ => parent = ctx.nodes().parent_node(parent_node.id()),
             }
         }
+
+        let (decl_type, span) = match node.kind() {
+            AstKind::VariableDeclaration(decl) => {
+                let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
+                ("variable", span)
+            }
+            AstKind::Function(func) => {
+                let span = Span::sized(func.span.start, 8); // 8 for "function".len()
+                ("function", span)
+            }
+            _ => unreachable!(),
+        };
 
         ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
     }
@@ -167,9 +165,6 @@ fn test() {
         ("class C { method() { var x; } }", Some(serde_json::json!(["both"]))),
         ("class C { static { function foo() {} } }", Some(serde_json::json!(["both"]))),
         ("class C { static { var x; } }", Some(serde_json::json!(["both"]))),
-        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
         ("for (const x in {}) { let y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x of []) { let y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x = 1; a < 10; a++) { let y = 5; }", Some(serde_json::json!(["both"]))),
@@ -214,6 +209,9 @@ fn test() {
         ("for (const x in {}) var y = 5;", Some(serde_json::json!(["both"]))),
         ("for (const x of []) var y = 5;", Some(serde_json::json!(["both"]))),
         ("for (const x = 1; a < 10; a++) var y = 5;", Some(serde_json::json!(["both"]))),
+        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)

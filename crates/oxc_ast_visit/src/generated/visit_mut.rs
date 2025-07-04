@@ -1477,8 +1477,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ArrayExpressionElement<'a>,
     ) {
-        let kind = AstType::ArrayExpressionElement;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
@@ -1486,7 +1485,6 @@ pub mod walk_mut {
                 visitor.visit_expression(it.to_expression_mut())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1577,8 +1575,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TemplateElement;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1586,8 +1586,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut MemberExpression<'a>,
     ) {
-        let kind = AstType::MemberExpression;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
@@ -1599,7 +1598,6 @@ pub mod walk_mut {
                 visitor.visit_private_field_expression(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1607,10 +1605,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ComputedMemberExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::ComputedMemberExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1618,10 +1618,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut StaticMemberExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::StaticMemberExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_identifier_name(&mut it.property);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1629,10 +1631,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut PrivateFieldExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::PrivateFieldExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_private_identifier(&mut it.field);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1879,9 +1883,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetRest<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetRest;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_assignment_target(&mut it.target);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1934,12 +1940,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetPropertyIdentifier;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_reference(&mut it.binding);
         if let Some(init) = &mut it.init {
             visitor.visit_expression(init);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1947,10 +1955,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetPropertyProperty;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.name);
         visitor.visit_assignment_target_maybe_default(&mut it.binding);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2457,10 +2467,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut BindingProperty<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::BindingProperty;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_binding_pattern(&mut it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2721,8 +2733,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ModuleDeclaration<'a>,
     ) {
-        let kind = AstType::ModuleDeclaration;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             ModuleDeclaration::ImportDeclaration(it) => visitor.visit_import_declaration(it),
             ModuleDeclaration::ExportAllDeclaration(it) => visitor.visit_export_all_declaration(it),
@@ -2737,7 +2748,6 @@ pub mod walk_mut {
                 visitor.visit_ts_namespace_export_declaration(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2745,7 +2755,8 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AccessorProperty<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AccessorProperty;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
@@ -2755,6 +2766,7 @@ pub mod walk_mut {
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2846,10 +2858,12 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_with_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithClause<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::WithClause;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2857,10 +2871,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportAttribute<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::ImportAttribute;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_import_attribute_key(&mut it.key);
         visitor.visit_string_literal(&mut it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3499,16 +3515,20 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeOperator<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSTypeOperator;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSArrayType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSArrayType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.element_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3526,9 +3546,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTupleType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSTupleType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_tuple_elements(&mut it.element_types);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3549,16 +3571,20 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSOptionalType<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSOptionalType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSRestType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSRestType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3715,13 +3741,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_type_name<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTypeName<'a>) {
-        let kind = AstType::TSTypeName;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             TSTypeName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             TSTypeName::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3836,9 +3860,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSInterfaceBody<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSInterfaceBody;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_signatures(&mut it.body);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3877,10 +3903,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignature<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSIndexSignature;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_index_signature_names(&mut it.parameters);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3888,7 +3916,8 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSCallSignatureDeclaration<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSCallSignatureDeclaration;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -3900,6 +3929,7 @@ pub mod walk_mut {
         if let Some(return_type) = &mut it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_ts_method_signature<'a, V: VisitMut<'a>>(
@@ -3950,9 +3980,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignatureName<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSIndexSignatureName;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3975,12 +4007,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypePredicate<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSTypePredicate;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_predicate_name(&mut it.parameter_name);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4143,13 +4177,15 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructorType<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSConstructorType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_formal_parameters(&mut it.params);
         visitor.visit_ts_type_annotation(&mut it.return_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4239,8 +4275,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSModuleReference<'a>,
     ) {
-        let kind = AstType::TSModuleReference;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -4249,7 +4284,6 @@ pub mod walk_mut {
                 visitor.visit_ts_type_name(it.to_ts_type_name_mut())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4302,9 +4336,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSNamespaceExportDeclaration<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSNamespaceExportDeclaration;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.id);
+        visitor.leave_node(kind);
     }
 
     #[inline]

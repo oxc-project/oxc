@@ -33,9 +33,12 @@ use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct NullishCoalescingOperator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -47,7 +50,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)

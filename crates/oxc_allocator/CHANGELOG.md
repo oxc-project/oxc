@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 📚 Documentation
+
+- ff1d42f allocator: Update comments about `bumpalo` version (#12033) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+
+## [0.74.0] - 2025-06-23
+
+### 🚀 Features
+
+- f2ce5ad allocator: Add `Allocator::alloc_slice_copy` method (#11822) (overlookmotel)
+- 4ba5258 allocator: Add `Allocator::alloc_layout` method (#11821) (overlookmotel)
+
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+
+### 🚜 Refactor
+
+- 01e52bc allocator: Re-order code (#11759) (overlookmotel)
+
+### 📚 Documentation
+
+- 9fefb46 allocator: Improve `Allocator` code examples (#11670) (overlookmotel)
+
+### ⚡ Performance
+
+- 2641030 allocator: Reduce operations while `Mutex` lock is held in `AllocatorPool` (#11761) (overlookmotel)
+- f539f64 allocator: Remove `Arc` from `AllocatorPool` (#11760) (overlookmotel)
+
+
 
 # Changelog
 

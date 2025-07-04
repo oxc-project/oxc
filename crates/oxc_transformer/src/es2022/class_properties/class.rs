@@ -11,9 +11,13 @@ use oxc_syntax::{
     scope::ScopeFlags,
     symbol::{SymbolFlags, SymbolId},
 };
-use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier};
 
-use crate::{TransformCtx, common::helper_loader::Helper, utils::ast_builder::create_assignment};
+use crate::{
+    common::helper_loader::Helper,
+    context::{TransformCtx, TraverseCtx},
+    utils::ast_builder::create_assignment,
+};
 
 use super::{
     ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,

@@ -3,6 +3,7 @@ use std::str::FromStr;
 use napi::Either;
 use napi_derive::napi;
 
+use oxc_minifier::TreeShakeOptions;
 use oxc_sourcemap::napi::SourceMap;
 use oxc_syntax::es_target::ESTarget;
 
@@ -54,9 +55,10 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 .map(|s| ESTarget::from_str(s))
                 .transpose()?
                 .unwrap_or(default.target),
-            keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
+            keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
+            treeshake: TreeShakeOptions::default(),
         })
     }
 }

@@ -188,30 +188,37 @@ impl Rule for PreferForOf {
                 return true;
             };
 
-            if let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) {
-                match ref_grand_parent.kind() {
-                    AstKind::SimpleAssignmentTarget(_) => {
-                        return true;
-                    }
-                    AstKind::UnaryExpression(unary_expr)
-                        if unary_expr.operator == UnaryOperator::Delete =>
-                    {
-                        return true;
-                    }
-                    _ => {}
+            let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) else {
+                return true;
+            };
+
+            match ref_grand_parent.kind() {
+                AstKind::SimpleAssignmentTarget(_) => {
+                    return true;
                 }
+                AstKind::UnaryExpression(unary_expr)
+                    if unary_expr.operator == UnaryOperator::Delete =>
+                {
+                    return true;
+                }
+                _ => {}
             }
 
             let parent_kind = ref_parent.kind();
-            let AstKind::MemberExpression(mem_expr) = parent_kind else {
-                return true;
-            };
-            match mem_expr.object() {
-                Expression::Identifier(id) => id.name.as_str() != array_name,
-                expr if expr.is_member_expression() => {
-                    match expr.to_member_expression().static_property_name() {
-                        Some(prop_name) => prop_name != array_name,
-                        None => true,
+            match parent_kind {
+                mem_expr if mem_expr.is_member_expression_kind() => {
+                    let Some(mem_expr) = mem_expr.as_member_expression_kind() else {
+                        return true;
+                    };
+                    match &mem_expr.object() {
+                        Expression::Identifier(id) => id.name.as_str() != array_name,
+                        expr if expr.is_member_expression() => {
+                            match expr.to_member_expression().static_property_name() {
+                                Some(prop_name) => prop_name != array_name,
+                                None => true,
+                            }
+                        }
+                        _ => true,
                     }
                 }
                 _ => true,

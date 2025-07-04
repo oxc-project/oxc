@@ -4,19 +4,26 @@ use base64::{
     encoded_len as base64_encoded_len,
     prelude::{BASE64_STANDARD, Engine},
 };
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use sha1::{Digest, Sha1};
 
 use oxc_allocator::{
     Address, CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
 };
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
-use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_call_expression, walk_declaration},
+};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 use super::options::ReactRefreshOptions;
 
@@ -117,6 +124,8 @@ pub struct ReactRefresh<'a, 'ctx> {
     // (function_scope_id, key)
     function_signature_keys: FxHashMap<ScopeId, String>,
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
+    /// Used to determine which bindings are used in JSX calls.
+    used_in_jsx_bindings: FxHashSet<SymbolId>,
 }
 
 impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
@@ -134,12 +143,15 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
+            used_in_jsx_bindings: FxHashSet::default(),
         }
     }
 }
 
-impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
+
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
         for mut statement in program.body.take_in(ctx.ast) {
             let next_statement = self.process_statement(&mut statement, ctx);
@@ -805,13 +817,8 @@ impl<'a> ReactRefresh<'a, '_> {
         let found_inside = self
             .replace_inner_components(&id.name, init, /* is_variable_declarator */ true, ctx);
 
-        if !found_inside {
-            // See if this identifier is used in JSX. Then it's a component.
-            // TODO: Here we should check if the variable is used in JSX. But now we only check if it has value references.
-            // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
-            if !ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_value) {
-                return None;
-            }
+        if !found_inside && !self.used_in_jsx_bindings.contains(&symbol_id) {
+            return None;
         }
 
         Some(self.create_assignment_expression(id, ctx))
@@ -909,4 +916,85 @@ fn is_builtin_hook(hook_name: &str) -> bool {
         "useFormStatus" | "useFormState" | "useActionState" |
         "useOptimistic"
     )
+}
+
+/// Collects all bindings that are used in JSX elements or JSX-like calls.
+///
+/// For <https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199>
+struct UsedInJSXBindingsCollector<'a, 'b> {
+    ctx: &'b TraverseCtx<'a>,
+    bindings: FxHashSet<SymbolId>,
+}
+
+impl<'a, 'b> UsedInJSXBindingsCollector<'a, 'b> {
+    fn collect(program: &Program<'a>, ctx: &'b TraverseCtx<'a>) -> FxHashSet<SymbolId> {
+        let mut visitor = Self { ctx, bindings: FxHashSet::default() };
+        visitor.visit_program(program);
+        visitor.bindings
+    }
+
+    fn is_jsx_like_call(name: &str) -> bool {
+        matches!(name, "createElement" | "jsx" | "jsxDEV" | "jsxs")
+    }
+}
+
+impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        walk_call_expression(self, it);
+
+        let is_jsx_call = match &it.callee {
+            Expression::Identifier(ident) => Self::is_jsx_like_call(&ident.name),
+            Expression::StaticMemberExpression(member) => {
+                Self::is_jsx_like_call(&member.property.name)
+            }
+            _ => false,
+        };
+
+        if is_jsx_call {
+            if let Some(Argument::Identifier(ident)) = it.arguments.first() {
+                if let Some(symbol_id) =
+                    self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+                {
+                    self.bindings.insert(symbol_id);
+                }
+            }
+        }
+    }
+
+    fn visit_jsx_opening_element(&mut self, it: &JSXOpeningElement<'_>) {
+        if let Some(ident) = it.name.get_identifier() {
+            if let Some(symbol_id) =
+                self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+            {
+                self.bindings.insert(symbol_id);
+            }
+        }
+    }
+
+    #[inline]
+    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
+        // Skip type annotations because it definitely doesn't have any JSX bindings
+    }
+
+    #[inline]
+    fn visit_declaration(&mut self, it: &Declaration<'a>) {
+        if matches!(
+            it,
+            Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_)
+        ) {
+            // Skip type-only declarations because it definitely doesn't have any JSX bindings
+            return;
+        }
+        walk_declaration(self, it);
+    }
+
+    #[inline]
+    fn visit_import_declaration(&mut self, _it: &ImportDeclaration<'a>) {
+        // Skip import declarations because it definitely doesn't have any JSX bindings
+    }
+
+    #[inline]
+    fn visit_export_all_declaration(&mut self, _it: &ExportAllDeclaration<'a>) {
+        // Skip export all declarations because it definitely doesn't have any JSX bindings
+    }
 }

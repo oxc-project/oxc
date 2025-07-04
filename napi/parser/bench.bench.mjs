@@ -1,11 +1,19 @@
-import { writeFile } from 'fs/promises';
-import { join as pathJoin } from 'path';
+import { writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { join as pathJoin } from 'node:path';
 import { bench, describe } from 'vitest';
 import bindings from './bindings.js';
-import deserializeJS from './generated/deserialize/js.js';
-import deserializeTS from './generated/deserialize/ts.js';
-import { parseAsync, parseSync } from './index.js';
-import { isJsAst, prepareRaw } from './raw-transfer/index.js';
+import { experimentalGetLazyVisitor, parseAsync, parseSync } from './index.js';
+
+// Use `require` not `import` to load these internal modules, to avoid evaluating the modules
+// twice as ESM and CJS
+const require = createRequire(import.meta.filename);
+const deserializeJS = require('./generated/deserialize/js.js');
+const deserializeTS = require('./generated/deserialize/ts.js');
+const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
+const { getVisitorsArr } = require('./raw-transfer/visitor.js');
+const { TOKEN } = require('./raw-transfer/lazy-common.js');
+const walkProgram = require('./generated/deserialize/lazy-visit.js');
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
@@ -78,13 +86,114 @@ for (const { filename, code } of fixtures) {
       const { program, comments, module, errors } = ret;
     });
 
+    benchRaw('parser_napi_raw_no_deser', () => {
+      const { buffer, sourceByteLen } = prepareRaw(code);
+      bindings.parseSyncRaw(filename, buffer, sourceByteLen, {});
+      returnBufferToCache(buffer);
+    });
+
     // Prepare buffer but don't deserialize
-    const { buffer, sourceByteLen, options } = prepareRaw(code, { experimentalRawTransfer: true });
-    bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+    const { buffer, sourceByteLen } = prepareRaw(code);
+    bindings.parseSyncRaw(filename, buffer, sourceByteLen, {});
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
     benchRaw('parser_napi_raw_deser_only', () => {
       deserialize(buffer, code, sourceByteLen);
+    });
+
+    // Create visitors
+    const Visitor = experimentalGetLazyVisitor();
+
+    let debuggerCount = 0;
+    const debuggerVisitor = new Visitor({
+      DebuggerStatement(debuggerStmt) {
+        debuggerCount++;
+      },
+    });
+
+    let identCount = 0;
+    const identVisitor = new Visitor({
+      BindingIdentifier(ident) {
+        identCount++;
+      },
+      IdentifierReference(ident) {
+        identCount++;
+      },
+      IdentifierName(ident) {
+        identCount++;
+      },
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit(debugger)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      debuggerCount = 0;
+      visit(debuggerVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit(ident)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      identCount = 0;
+      visit(identVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visitor(debugger)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      debuggerCount = 0;
+      const debuggerVisitor = new Visitor({
+        DebuggerStatement(debuggerStmt) {
+          debuggerCount++;
+        },
+      });
+      visit(debuggerVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visitor(ident)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      identCount = 0;
+      const identVisitor = new Visitor({
+        BindingIdentifier(ident) {
+          identCount++;
+        },
+        IdentifierReference(ident) {
+          identCount++;
+        },
+        IdentifierName(ident) {
+          identCount++;
+        },
+      });
+      visit(identVisitor);
+      dispose();
+    });
+
+    const debuggerVisitorsArr = getVisitorsArr(debuggerVisitor);
+    const identVisitorsArr = getVisitorsArr(identVisitor);
+
+    const ast = {
+      buffer,
+      sourceText: code,
+      sourceLen: sourceByteLen,
+      sourceIsAscii: code.length === sourceByteLen,
+      nodes: null, // Initialized in bench functions
+      token: TOKEN,
+    };
+
+    // (2 * 1024 * 1024 * 1024 - 16) >> 2
+    const metadataPos32 = 536870908;
+    const programPos = buffer.uint32[metadataPos32];
+
+    benchRaw('parser_napi_raw_lazy_visit_only(debugger)', () => {
+      ast.nodes = new Map();
+      debuggerCount = 0;
+      walkProgram(programPos, ast, debuggerVisitorsArr);
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit_only(ident)', () => {
+      ast.nodes = new Map();
+      identCount = 0;
+      walkProgram(programPos, ast, identVisitorsArr);
     });
   });
 }

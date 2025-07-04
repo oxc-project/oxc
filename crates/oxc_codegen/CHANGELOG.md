@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🚀 Features
+
+- 28fca3c codegen: Preserve comments for lingui /*i18n*/ (#12047) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 22799c3 codegen: Escape `</script` (#11782) (Cheng Xu)
+- b8ede17 codegen: Fix sourcemap for template literals (#12028) (Boshen)
+
+### 🚜 Refactor
+
+- e0d70ef codegen: Clarify comments (#12036) (overlookmotel)
+
+### ⚡ Performance
+
+- 5b99cad codegen: Optimize printing strings (#12040) (overlookmotel)
+- 41ec54e codegen: Reduce branches printing `TemplateLiteral`s (#12041) (overlookmotel)
+- 3982963 codegen: Remove branch (#12037) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 🐛 Bug Fixes
+
+- f41705f codegen: Do not generate sourcemap for empty length spans (#11892) (Boshen)
+
+
+
+
+
 ## [0.73.0] - 2025-06-13
 
 ### 💥 BREAKING CHANGES

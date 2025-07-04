@@ -182,6 +182,9 @@ impl Rule for ArrayType {
             &self.readonly.clone().unwrap_or_else(|| default_config.clone());
 
         match node.kind() {
+            AstKind::TSArrayType(ts_array_type) => {
+                check(&ts_array_type.element_type, default_config, readonly_config, ctx);
+            }
             AstKind::TSTypeAnnotation(ts_type_annotation) => {
                 check(&ts_type_annotation.type_annotation, default_config, readonly_config, ctx);
             }

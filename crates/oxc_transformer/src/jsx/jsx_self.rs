@@ -31,9 +31,12 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SPAN, Span};
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 const SELF: &str = "__self";
 
@@ -47,7 +50,7 @@ impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for JsxSelf<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,

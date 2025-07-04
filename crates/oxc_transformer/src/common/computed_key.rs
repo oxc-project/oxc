@@ -2,9 +2,11 @@
 
 use oxc_ast::ast::Expression;
 use oxc_semantic::SymbolFlags;
-use oxc_traverse::TraverseCtx;
 
-use crate::{TransformCtx, utils::ast_builder::create_assignment};
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    utils::ast_builder::create_assignment,
+};
 
 impl<'a> TransformCtx<'a> {
     /// Check if temp var is required for `key`.

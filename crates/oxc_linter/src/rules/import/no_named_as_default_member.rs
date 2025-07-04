@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
+    ast::{BindingPatternKind, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
@@ -121,30 +121,31 @@ impl Rule for NoNamedAsDefaultMember {
                     })
             };
 
-        let process_member_expr = |member_expr: &MemberExpression| {
-            let Expression::Identifier(ident) = member_expr.object() else {
-                return;
-            };
-            let Some(prop_str) = member_expr.static_property_name() else {
-                return;
-            };
-            if let Some(module_name) = get_external_module_name_if_has_entry(ident, prop_str) {
-                ctx.diagnostic(no_named_as_default_member_dignostic(
-                    match member_expr {
-                        MemberExpression::ComputedMemberExpression(it) => it.span,
-                        MemberExpression::StaticMemberExpression(it) => it.span,
-                        MemberExpression::PrivateFieldExpression(it) => it.span,
-                    },
-                    &ident.name,
-                    prop_str,
-                    module_name.name(),
-                ));
-            }
-        };
-
         for item in ctx.nodes() {
             match item.kind() {
-                AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
+                member_expr if member_expr.is_member_expression_kind() => {
+                    let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
+                        continue;
+                    };
+                    let Expression::Identifier(ident) = member_expr_kind.object() else {
+                        continue;
+                    };
+                    let Some(prop_str) =
+                        member_expr_kind.static_property_name().map(|n| n.as_str())
+                    else {
+                        continue;
+                    };
+                    if let Some(module_name) =
+                        get_external_module_name_if_has_entry(ident, prop_str)
+                    {
+                        ctx.diagnostic(no_named_as_default_member_dignostic(
+                            member_expr_kind.span(),
+                            &ident.name,
+                            prop_str,
+                            module_name.name(),
+                        ));
+                    }
+                }
                 AstKind::VariableDeclarator(decl) => {
                     let Some(Expression::Identifier(ident)) = &decl.init else {
                         continue;

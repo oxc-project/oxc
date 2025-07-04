@@ -1014,15 +1014,21 @@ fn test_jsx_single_line() {
 }
 
 #[test]
-#[ignore]
 fn test_avoid_slash_script() {
     // Positive cases
     test("x = '</script'", "x = \"<\\/script\";\n");
+    test("x = '</SCRIPT'", "x = \"<\\/SCRIPT\";\n");
+    test("x = '</ScRiPt'", "x = \"<\\/ScRiPt\";\n");
+    test("x = 'abc </script def'", "x = \"abc <\\/script def\";\n");
+    test("x = 'abc </ScRiPt def'", "x = \"abc <\\/ScRiPt def\";\n");
     test("x = `</script`", "x = `<\\/script`;\n");
     test("x = `</SCRIPT`", "x = `<\\/SCRIPT`;\n");
     test("x = `</ScRiPt`", "x = `<\\/ScRiPt`;\n");
     test("x = `</script${y}`", "x = `<\\/script${y}`;\n");
     test("x = `${y}</script`", "x = `${y}<\\/script`;\n");
+    test("x = `<</script`", "x = `<<\\/script`;\n");
+    test("x = `</</script`", "x = `</<\\/script`;\n");
+    test("x = `</script</script`", "x = `<\\/script<\\/script`;\n");
     test_minify("x = 1 < /script/.exec(y).length", "x=1< /script/.exec(y).length;");
     test_minify("x = 1 < /SCRIPT/.exec(y).length", "x=1< /SCRIPT/.exec(y).length;");
     test_minify("x = 1 < /ScRiPt/.exec(y).length", "x=1< /ScRiPt/.exec(y).length;");
@@ -1030,29 +1036,14 @@ fn test_avoid_slash_script() {
     test("//! </script\n//! >/script\n//! /script", "//! <\\/script\n//! >/script\n//! /script\n");
     test("//! </SCRIPT\n//! >/SCRIPT\n//! /SCRIPT", "//! <\\/SCRIPT\n//! >/SCRIPT\n//! /SCRIPT\n");
     test("//! </ScRiPt\n//! >/ScRiPt\n//! /ScRiPt", "//! <\\/ScRiPt\n//! >/ScRiPt\n//! /ScRiPt\n");
-    test("/*! </script \n </script */", "/*! <\\/script \n <\\/script */\n");
-    test("/*! </SCRIPT \n </SCRIPT */", "/*! <\\/SCRIPT \n <\\/SCRIPT */\n");
-    test("/*! </ScRiPt \n </ScRiPt */", "/*! <\\/ScRiPt \n <\\/ScRiPt */\n");
-    test(
-        "String.raw`</script`",
-        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\"])));\n",
-    );
-    test(
-        "String.raw`</script${a}`",
-        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\", \"\"])), a);\n",
-    );
-    test(
-        "String.raw`${a}</script`",
-        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"\", \"<\\/script\"])), a);\n",
-    );
-    test(
-        "String.raw`</SCRIPT`",
-        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/SCRIPT\"])));\n",
-    );
-    test(
-        "String.raw`</ScRiPt`",
-        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/ScRiPt\"])));\n",
-    );
+    test("/*! </script \n</script */", "/*! <\\/script \n<\\/script */");
+    test("/*! </SCRIPT \n</SCRIPT */", "/*! <\\/SCRIPT \n<\\/SCRIPT */");
+    test("/*! </ScRiPt \n</ScRiPt */", "/*! <\\/ScRiPt \n<\\/ScRiPt */");
+    test("String.raw`</script`", "String.raw`<\\/script`;\n");
+    test("String.raw`</script${a}`", "String.raw`<\\/script${a}`;\n");
+    test("String.raw`${a}</script`", "String.raw`${a}<\\/script`;\n");
+    test("String.raw`</SCRIPT`", "String.raw`<\\/SCRIPT`;\n");
+    test("String.raw`</ScRiPt`", "String.raw`<\\/ScRiPt`;\n");
 
     // Negative cases
     test("x = '</'", "x = \"</\";\n");

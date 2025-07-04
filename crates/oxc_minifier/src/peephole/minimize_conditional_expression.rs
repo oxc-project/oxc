@@ -15,7 +15,7 @@ impl<'a> PeepholeOptimizations {
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
         self.try_minimize_conditional(&mut cond_expr, ctx)
@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
     pub fn try_minimize_conditional(
         &self,
         expr: &mut ConditionalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
@@ -250,8 +250,8 @@ impl<'a> PeepholeOptimizations {
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
-                && !expr.test.may_have_side_effects(&ctx)
-                && !consequent.callee.may_have_side_effects(&ctx)
+                && !expr.test.may_have_side_effects(ctx)
+                && !consequent.callee.may_have_side_effects(ctx)
                 && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
@@ -391,7 +391,7 @@ impl<'a> PeepholeOptimizations {
 
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // "/* @__PURE__ */ a() ? b : b" => "b"
-            if !expr.test.may_have_side_effects(&ctx) {
+            if !expr.test.may_have_side_effects(ctx) {
                 return Some(expr.consequent.take_in(ctx.ast));
             }
 
@@ -411,7 +411,7 @@ impl<'a> PeepholeOptimizations {
     fn try_merge_conditional_expression_inside(
         &self,
         expr: &mut ConditionalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let (
             Expression::AssignmentExpression(consequent),
@@ -456,7 +456,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if Self::inject_optional_chaining_if_matched_inner(
             target_id_name,
@@ -481,7 +481,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         match expr {
             Expression::StaticMemberExpression(e) => {

@@ -7,7 +7,7 @@ pub trait ArrayJoin<'a> {
     /// <https://tc39.es/ecma262/#sec-array.prototype.join>
     fn array_join(
         &self,
-        is_global_reference: &impl IsGlobalReference,
+        is_global_reference: &impl IsGlobalReference<'a>,
         separator: Option<&str>,
     ) -> Option<String>;
 }
@@ -15,7 +15,7 @@ pub trait ArrayJoin<'a> {
 impl<'a> ArrayJoin<'a> for ArrayExpression<'a> {
     fn array_join(
         &self,
-        is_global_reference: &impl IsGlobalReference,
+        is_global_reference: &impl IsGlobalReference<'a>,
         separator: Option<&str>,
     ) -> Option<String> {
         let strings = self

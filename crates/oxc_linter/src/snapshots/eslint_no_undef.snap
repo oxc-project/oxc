@@ -168,3 +168,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ hasOwnProperty()
    · ──────────────
    ╰────
+
+  ⚠ eslint(no-undef): 'r' is not defined.
+   ╭─[no_undef.tsx:1:49]
+ 1 │ export class Foo{ bar: notDefined; }; const t = r + 1;
+   ·                                                 ─
+   ╰────

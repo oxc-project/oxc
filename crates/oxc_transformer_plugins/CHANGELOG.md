@@ -5,6 +5,17 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+
+## [0.74.0] - 2025-06-23
+
+### 💥 BREAKING CHANGES
+
+- 8ef1be2 traverse: [**BREAKING**] Introduce `TraverseCtx<'a, State>` (#11770) (Boshen)
+
+
+
+
+
 # Changelog
 
 All notable changes to this package will be documented in this file.

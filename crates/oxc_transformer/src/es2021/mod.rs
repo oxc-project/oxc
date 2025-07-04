@@ -1,7 +1,10 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod logical_assignment_operators;
 mod options;
@@ -22,7 +25,7 @@ impl<'a, 'ctx> ES2021<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ES2021<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2021<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.logical_assignment_operators {
             self.logical_assignment_operators.enter_expression(expr, ctx);

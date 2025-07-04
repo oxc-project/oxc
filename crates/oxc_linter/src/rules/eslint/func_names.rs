@@ -185,6 +185,9 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             matches!(pattern.left.kind, BindingPatternKind::BindingIdentifier(_))
                 && is_same_function(&pattern.right, function)
         }
+        AstKind::AssignmentTargetPropertyIdentifier(ident) => {
+            ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))
+        }
         AstKind::ObjectAssignmentTarget(target) => {
             for property in &target.properties {
                 let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) =

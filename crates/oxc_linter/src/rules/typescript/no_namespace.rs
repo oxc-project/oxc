@@ -18,10 +18,16 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoNamespace {
     allow_declarations: bool,
     allow_definition_files: bool,
+}
+
+impl Default for NoNamespace {
+    fn default() -> Self {
+        Self { allow_declarations: false, allow_definition_files: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -130,7 +136,7 @@ impl Rule for NoNamespace {
                 .get(0)
                 .and_then(|x| x.get("allowDefinitionFiles"))
                 .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
+                .unwrap_or(true),
         }
     }
 

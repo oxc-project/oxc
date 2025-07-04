@@ -3,6 +3,7 @@
 use std::{
     alloc::Layout,
     cell::Cell,
+    mem::ManuallyDrop,
     ptr::{self, NonNull},
 };
 
@@ -33,7 +34,7 @@ impl Allocator {
     /// This code only remains sound as long as the code in version of `bumpalo` we're using matches
     /// the duplicate of `bumpalo`'s internals contained in this file.
     ///
-    /// `bumpalo` is pinned to version `=3.17.0` in `Cargo.toml`.
+    /// `bumpalo` is pinned to version `=3.19.0` in `Cargo.toml`.
     ///
     /// The [`Allocator`] which is returned takes ownership of the memory allocation,
     /// and the allocation will be freed if the `Allocator` is dropped.
@@ -71,58 +72,7 @@ impl Allocator {
         debug_assert!(is_multiple_of(size, MIN_ALIGN));
         debug_assert!(size >= CHUNK_FOOTER_SIZE);
 
-        // `Bump` is defined as:
-        //
-        // ```
-        // pub struct Bump {
-        //     current_chunk_footer: Cell<NonNull<ChunkFooter>>,
-        //     allocation_limit: Cell<Option<usize>>,
-        // }
-        // ```
-        //
-        // `Bump` is not `#[repr(C)]`, so which order the fields are in is unpredictable.
-        // Deduce the offset of `current_chunk_footer` field by creating a dummy `Bump` where the value
-        // of the `allocation_limit` field is known.
-        //
-        // This should all be const-folded down by compiler.
-        let current_chunk_footer_field_offset: usize = {
-            const {
-                assert!(size_of::<Bump>() == size_of::<[usize; 3]>());
-                assert!(align_of::<Bump>() == align_of::<[usize; 3]>());
-                assert!(size_of::<Cell<NonNull<ChunkFooter>>>() == size_of::<usize>());
-                assert!(align_of::<Cell<NonNull<ChunkFooter>>>() == align_of::<usize>());
-                assert!(size_of::<Cell<Option<usize>>>() == size_of::<[usize; 2]>());
-                assert!(align_of::<Cell<Option<usize>>>() == align_of::<usize>());
-            }
-
-            let bump = Bump::new();
-            bump.set_allocation_limit(Some(123));
-
-            // SAFETY:
-            // `Bump` has same layout as `[usize; 3]` (checked by const assertions above).
-            // Strictly speaking, reading the fields as `usize`s is UB, as the layout of `Option`
-            // is not specified. But in practice, `Option` stores its discriminant before its payload,
-            // so either field order means 3rd `usize` is fully initialized
-            // (it's either `NonNull<ChunkFooter>>` or the `usize` in `Option<usize>`).
-            // Once we've figured out the field order, should be safe to check the `Option`
-            // discriminant as a `u8`.
-            // Const assertion at top of this function ensures this is a little-endian system,
-            // so first byte of the 8 bytes containing the discriminant will be initialized, regardless
-            // of whether compiler chooses to represent the discriminant as `u8`, `u16`, `u32` or `u64`.
-            unsafe {
-                let ptr = ptr::from_ref(&bump).cast::<usize>();
-                if *ptr.add(2) == 123 {
-                    // `allocation_limit` is 2nd field. So `current_chunk_footer` is 1st.
-                    assert_eq!(*ptr.add(1).cast::<u8>(), 1);
-                    0
-                } else {
-                    // `allocation_limit` is 1st field. So `current_chunk_footer` is 2nd.
-                    assert_eq!(*ptr.add(1), 123);
-                    assert_eq!(*ptr.cast::<u8>(), 1);
-                    2
-                }
-            }
-        };
+        let current_chunk_footer_field_offset = get_current_chunk_footer_field_offset();
 
         // Create empty bump with allocation limit of 0 - i.e. it cannot grow.
         // This means that the memory chunk we're about to add to the `Bump` will remain its only chunk.
@@ -171,7 +121,7 @@ impl Allocator {
 
 /// Allocator chunk footer.
 ///
-/// Copied exactly from `bumpalo` v3.17.0.
+/// Copied exactly from `bumpalo` v3.19.0.
 ///
 /// This type is not exposed by `bumpalo` crate, but the type is `#[repr(C)]`, so we can rely on our
 /// duplicate here having the same layout, as long as we don't change the version of `bumpalo` we use.
@@ -198,6 +148,58 @@ struct ChunkFooter {
     /// The canonical empty chunk has a size of 0 and for all other chunks, `allocated_bytes` will be
     /// the allocated_bytes of the current chunk plus the allocated bytes of the `prev` chunk.
     allocated_bytes: usize,
+}
+
+/// Get offset of `current_chunk_footer` field in `Bump`, in units of `usize`.
+///
+/// `Bump` is defined as:
+///
+/// ```ignore
+/// pub struct Bump {
+///     current_chunk_footer: Cell<NonNull<ChunkFooter>>,
+///     allocation_limit: Cell<Option<usize>>,
+/// }
+/// ```
+///
+/// `Bump` is not `#[repr(C)]`, so which order the fields are in is unpredictable.
+/// Deduce the offset of `current_chunk_footer` field by creating a dummy `Bump` where the value
+/// of the `allocation_limit` field is known.
+///
+/// This should all be const-folded down by compiler.
+/// <https://godbolt.org/z/eKdMcdEYa>
+/// `#[inline(always)]` because this is essentially a const function.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn get_current_chunk_footer_field_offset() -> usize {
+    const {
+        assert!(size_of::<Bump>() == size_of::<[usize; 3]>());
+        assert!(align_of::<Bump>() == align_of::<[usize; 3]>());
+        assert!(size_of::<Cell<NonNull<ChunkFooter>>>() == size_of::<usize>());
+        assert!(align_of::<Cell<NonNull<ChunkFooter>>>() == align_of::<usize>());
+        assert!(size_of::<Cell<Option<usize>>>() == size_of::<[usize; 2]>());
+        assert!(align_of::<Cell<Option<usize>>>() == align_of::<usize>());
+    }
+
+    let bump = ManuallyDrop::new(Bump::<1>::with_min_align());
+    bump.set_allocation_limit(Some(123));
+
+    // SAFETY:
+    // `Bump` has same layout as `[usize; 3]` (checked by const assertions above).
+    // Strictly speaking, reading the fields as `usize`s is UB, as the layout of `Option`
+    // is not specified. But in practice, `Option` stores its discriminant before its payload,
+    // so either field order means 3rd `usize` is fully initialized
+    // (it's either `NonNull<ChunkFooter>>` or the `usize` in `Option<usize>`).
+    unsafe {
+        let ptr = ptr::from_ref(&bump).cast::<usize>();
+        if *ptr.add(2) == 123 {
+            // `allocation_limit` is 2nd field. So `current_chunk_footer` is 1st.
+            0
+        } else {
+            // `allocation_limit` is 1st field. So `current_chunk_footer` is 2nd.
+            assert_eq!(*ptr.add(1), 123);
+            2
+        }
+    }
 }
 
 /// Returns `true` if `n` is a multiple of `divisor`.

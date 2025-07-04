@@ -10,10 +10,11 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
-    LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -28,13 +29,18 @@ use crate::{
 pub struct LintRunner {
     options: LintCommand,
     cwd: PathBuf,
+    external_linter: Option<ExternalLinter>,
 }
 
 impl Runner for LintRunner {
     type Options = LintCommand;
 
-    fn new(options: Self::Options) -> Self {
-        Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
+    fn new(options: Self::Options, external_linter: Option<ExternalLinter>) -> Self {
+        Self {
+            options,
+            cwd: env::current_dir().expect("Failed to get current working directory"),
+            external_linter,
+        }
     }
 
     fn run(self, stdout: &mut dyn Write) -> CliRunResult {
@@ -62,10 +68,7 @@ impl Runner for LintRunner {
             ..
         } = self.options;
 
-        let search_for_nested_configs = !disable_nested_config &&
-            // If the `--config` option is explicitly passed, we should not search for nested config files
-            // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
+        let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -171,8 +174,13 @@ impl Runner for LintRunner {
 
         let handler = GraphicalReportHandler::new();
 
+        let search_for_nested_configs = !disable_nested_config &&
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none();
+
         let nested_configs = if search_for_nested_configs {
-            match Self::get_nested_configs(stdout, &handler, &filters, &paths) {
+            match Self::get_nested_configs(stdout, &handler, &filters, &paths, external_linter) {
                 Ok(v) => v,
                 Err(v) => return v,
             }
@@ -191,20 +199,21 @@ impl Runner for LintRunner {
         } else {
             None
         };
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
+        let config_builder =
+            match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, external_linter) {
+                Ok(builder) => builder,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to parse configuration file.\n{}\n",
+                            render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
-        }
-        .with_filters(&filters);
+            .with_filters(&filters);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -290,9 +299,11 @@ impl Runner for LintRunner {
 
         let number_of_rules = linter.number_of_rules();
 
+        let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
+
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, options);
+            let mut lint_service = LintService::new(&linter, allocator_pool, options);
             lint_service.run(&tx_error);
         });
 
@@ -384,6 +395,7 @@ impl LintRunner {
         handler: &GraphicalReportHandler,
         filters: &Vec<LintFilter>,
         paths: &Vec<Arc<OsStr>>,
+        external_linter: Option<&ExternalLinter>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
@@ -414,7 +426,8 @@ impl LintRunner {
         // iterate over each config and build the ConfigStore
         for (dir, oxlintrc) in nested_oxlintrc {
             // TODO(refactor): clean up all of the error handling in this function
-            let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+            let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, external_linter)
+            {
                 Ok(builder) => builder,
                 Err(e) => {
                     print_and_flush_stdout(
@@ -1155,5 +1168,11 @@ mod test {
     fn test_plugins_inside_overrides_categories_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_10394".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_jsx_a11y_label_has_associated_control() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
     }
 }

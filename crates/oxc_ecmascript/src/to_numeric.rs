@@ -26,17 +26,17 @@ impl ToNumericResult {
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumeric>
 pub trait ToNumeric<'a> {
-    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference) -> ToNumericResult;
+    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult;
 }
 
-impl ToNumeric<'_> for Expression<'_> {
-    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference) -> ToNumericResult {
+impl<'a> ToNumeric<'a> for Expression<'a> {
+    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult {
         self.to_primitive(is_global_reference).to_numeric(is_global_reference)
     }
 }
 
-impl ToNumeric<'_> for ToPrimitiveResult {
-    fn to_numeric(&self, _is_global_reference: &impl IsGlobalReference) -> ToNumericResult {
+impl<'a> ToNumeric<'a> for ToPrimitiveResult {
+    fn to_numeric(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult {
         match self {
             // Symbol throws an error when passed to ToNumber in step 3
             ToPrimitiveResult::Symbol | ToPrimitiveResult::Undetermined => {

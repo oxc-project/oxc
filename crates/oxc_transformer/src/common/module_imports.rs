@@ -40,9 +40,12 @@ use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct ModuleImports<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -54,7 +57,7 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ModuleImports<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.ctx.module_imports.insert_into_program(self.ctx, ctx);
     }

@@ -163,8 +163,8 @@ impl<'a> Expression<'a> {
     /// Remove nested parentheses from this expression.
     pub fn without_parentheses(&self) -> &Self {
         let mut expr = self;
-        while let Expression::ParenthesizedExpression(paran_expr) = expr {
-            expr = &paran_expr.expression;
+        while let Expression::ParenthesizedExpression(paren_expr) = expr {
+            expr = &paren_expr.expression;
         }
         expr
     }
@@ -373,8 +373,11 @@ impl<'a> Expression<'a> {
 
     /// Is identifier or `a.b` expression where `a` is an identifier.
     pub fn is_entity_name_expression(&self) -> bool {
-        matches!(self.without_parentheses(), Expression::Identifier(_))
-            || self.is_property_access_entity_name_expression()
+        // Special case: treat `this.B` like `this` was an identifier
+        matches!(
+            self.without_parentheses(),
+            Expression::Identifier(_) | Expression::ThisExpression(_)
+        ) || self.is_property_access_entity_name_expression()
     }
 
     /// `a.b` expression where `a` is an identifier.
@@ -594,7 +597,7 @@ impl<'a> MemberExpression<'a> {
     /// - `a.b` would return `Some("b")`
     /// - `a["b"]` would return `Some("b")`
     /// - `a[b]` would return `None`
-    /// - `a.#b` would return `Some("b")`
+    /// - `a.#b` would return `None`
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -614,8 +617,8 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
-                    if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
+                    if lit.quasis.len() == 1 {
+                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
                         None
                     }
@@ -659,12 +662,22 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit)
-                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
-            {
-                Some(lit.quasis[0].value.raw)
-            }
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
             Expression::RegExpLiteral(lit) => lit.raw,
+            _ => None,
+        }
+    }
+
+    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+        match &self.expression {
+            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+            }
+            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
         }
     }
@@ -691,6 +704,12 @@ impl<'a> StaticMemberExpression<'a> {
 
             return object;
         }
+    }
+
+    /// Returns the static property name of this static member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    pub fn static_property_info(&self) -> (Span, &'a str) {
+        (self.property.span, self.property.name.as_str())
     }
 }
 

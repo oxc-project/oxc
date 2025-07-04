@@ -340,9 +340,10 @@ enum Escape {
     DQ = 11, // "     - Double quote
     BQ = 12, // `     - Backtick quote
     DO = 13, // $     - Dollar sign
-    LS = 14, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
-    NB = 15, // NBSP  - Non-breaking space (first byte)
-    LO = 16, // �     - U+FFFD lossy replacement character (first byte)
+    LT = 14, // <     - Less-than sign
+    LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
+    NB = 16, // NBSP  - Non-breaking space (first byte)
+    LO = 17, // �     - U+FFFD lossy replacement character (first byte)
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -362,7 +363,7 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         NU, __, __, __, __, __, __, BE, BK, __, NL, VT, FF, CR, __, __, // 0
         __, __, __, __, __, __, __, __, __, __, __, ES, __, __, __, __, // 1
         __, __, DQ, __, DO, __, __, SQ, __, __, __, __, __, __, __, __, // 2
-        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
+        __, __, __, __, __, __, __, __, __, __, __, __, LT, __, __, __, // 3
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 4
         __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
         BQ, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
@@ -385,9 +386,10 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
 ///
-/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 128 bytes in total.
-/// Aligned on 128, so occupies a pair of L1 cache lines.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
+/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
+/// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
+/// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -401,6 +403,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_double_quote,
     print_backtick,
     print_dollar,
+    print_less_than,
     print_ls_or_ps,
     print_non_breaking_space,
     print_lossy_replacement,
@@ -579,6 +582,29 @@ unsafe fn print_dollar(codegen: &mut Codegen, state: &mut PrintStringState) {
     }
 }
 
+// <
+unsafe fn print_less_than(codegen: &mut Codegen, state: &mut PrintStringState) {
+    debug_assert_eq!(state.peek(), Some(b'<'));
+
+    // Get slice of remaining bytes, including leading `<`
+    let slice = state.bytes.as_slice();
+
+    // SAFETY: Next byte is `<`, which is ASCII
+    unsafe { state.consume_byte_unchecked() };
+
+    if slice.len() >= 8 && is_script_close_tag(&slice[0..8]) {
+        // Flush up to and including `<`. Skip `/`. Write `\/` instead. Then skip over `script`.
+        // Next chunk starts with `script`.
+        // SAFETY: We already consumed `<`. Next byte is `/`, which is ASCII.
+        unsafe { state.flush_and_consume_byte(codegen) };
+        codegen.print_str("\\/");
+        // SAFETY: The check above ensures there are 6 bytes left, after consuming 2 already.
+        // `script` / `SCRIPT` is all ASCII bytes, so skipping them leaves `bytes` iterator
+        // positioned on UTF-8 char boundary.
+        unsafe { state.consume_bytes_unchecked::<6>() };
+    }
+}
+
 // 0xE2 - first byte of <LS> or <PS>
 unsafe fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert_eq!(state.peek(), Some(0xE2));
@@ -695,4 +721,24 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()
+}
+
+/// Check if `slice` is `</script`, regardless of case.
+///
+/// `slice.len()` must be 8.
+//
+// `#[inline(always)]` so that compiler can see from caller that `slice.len() == 8`
+// and so `slice.try_into().unwrap()` cannot fail. This function is only 4 instructions.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+pub fn is_script_close_tag(slice: &[u8]) -> bool {
+    // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
+    // https://godbolt.org/z/K8q68WGn6
+    let mut slice: [u8; 8] = slice.try_into().unwrap();
+    for b in slice.iter_mut().skip(2) {
+        // `| 32` converts ASCII upper case letters to lower case.
+        *b |= 32;
+    }
+
+    slice == *b"</script"
 }

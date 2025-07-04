@@ -15,13 +15,13 @@ use super::TraverseCtx;
 ///
 /// [`TraverseAncestry`]: super::TraverseAncestry
 #[repr(transparent)]
-pub struct ReusableTraverseCtx<'a>(TraverseCtx<'a>);
+pub struct ReusableTraverseCtx<'a, State>(TraverseCtx<'a, State>);
 
 // Public methods
-impl<'a> ReusableTraverseCtx<'a> {
+impl<'a, State> ReusableTraverseCtx<'a, State> {
     /// Create new [`ReusableTraverseCtx`].
-    pub fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
-        Self(TraverseCtx::new(scoping, allocator))
+    pub fn new(state: State, scoping: Scoping, allocator: &'a Allocator) -> Self {
+        Self(TraverseCtx::new(state, scoping, allocator))
     }
 
     /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].
@@ -39,16 +39,16 @@ impl<'a> ReusableTraverseCtx<'a> {
     ///
     /// [`TraverseAncestry`]: super::TraverseAncestry
     #[inline]
-    pub unsafe fn unwrap(self) -> TraverseCtx<'a> {
+    pub unsafe fn unwrap(self) -> TraverseCtx<'a, State> {
         self.0
     }
 }
 
 // Internal methods
-impl<'a> ReusableTraverseCtx<'a> {
+impl<'a, State> ReusableTraverseCtx<'a, State> {
     /// Mutably borrow [`TraverseCtx`] from a [`ReusableTraverseCtx`].
     #[inline] // because this function is a no-op at run time
-    pub(crate) fn get_mut(&mut self) -> &mut TraverseCtx<'a> {
+    pub(crate) fn get_mut(&mut self) -> &mut TraverseCtx<'a, State> {
         &mut self.0
     }
 }

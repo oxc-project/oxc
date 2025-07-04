@@ -6,9 +6,8 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
-use oxc_traverse::TraverseCtx;
 
-use crate::Helper;
+use crate::{Helper, context::TraverseCtx};
 
 use super::{
     ClassProperties,
@@ -103,7 +102,7 @@ impl<'a> ClassProperties<'a, '_> {
 /// 2. Transform `super` expressions.
 struct PrivateMethodVisitor<'a, 'ctx, 'v> {
     super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
-    /// `TraverseCtx` object.
+    /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 

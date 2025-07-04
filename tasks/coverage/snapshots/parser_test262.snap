@@ -3038,29 +3038,32 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:53:7]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:53:18]
  52 │ var f;
  53 │ f = ([...[x], y]) => {
-    ·       ──────
+    ·                  ▲
  54 │   
     ╰────
+  help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:53:7]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:53:16]
  52 │ var f;
  53 │ f = ([...x, y]) => {
-    ·       ────
+    ·                ▲
  54 │   
     ╰────
+  help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:53:7]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:53:20]
  52 │ var f;
  53 │ f = ([...{ x }, y]) => {
-    ·       ────────
+    ·                    ▲
  54 │   
     ╰────
+  help: Try insert a semicolon here
 
   × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:53:10]
@@ -3086,7 +3089,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × Spread must be last element
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-ary.js:53:7]
  52 │ var f;
  53 │ f = ([...[x], y] = [1, 2, 3]) => {
@@ -3094,7 +3097,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × Spread must be last element
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-id.js:53:7]
  52 │ var f;
  53 │ f = ([...x, y] = [1, 2, 3]) => {
@@ -3102,7 +3105,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × Spread must be last element
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-obj.js:53:7]
  52 │ var f;
  53 │ f = ([...{ x }, y] = [1, 2, 3]) => {
@@ -3502,14 +3505,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  132 │ };
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:5]
- 54 │ 
- 55 │ 0, (...a,) => {
-    ·     ────
- 56 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:9]
@@ -6851,14 +6846,6 @@ Negative Passed: 4519/4519 (100.00%)
  124 │ });
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:9]
- 46 │ 
- 47 │ (async (...a,) => {
-    ·         ────
- 48 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:13]
  46 │ 
@@ -7118,14 +7105,6 @@ Negative Passed: 4519/4519 (100.00%)
  110 │ });
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:19]
- 33 │ 
- 34 │ (async function f(...a,) {
-    ·                   ────
- 35 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:23]
  33 │ 
@@ -7175,14 +7154,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  110 │ });
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:17]
- 33 │ 
- 34 │ (async function(...a,) {
-    ·                 ────
- 35 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:21]
@@ -7758,14 +7729,6 @@ Negative Passed: 4519/4519 (100.00%)
  113 │ };
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:22]
- 36 │ 
- 37 │ 0, async function* g(...a,) {
-    ·                      ────
- 38 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:26]
  36 │ 
@@ -7895,14 +7858,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  113 │ };
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:20]
- 36 │ 
- 37 │ 0, async function*(...a,) {
-    ·                    ────
- 38 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:24]
@@ -8155,14 +8110,6 @@ Negative Passed: 4519/4519 (100.00%)
  137 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:17]
- 60 │ 0, class {
- 61 │   async *method(...a,) {
-    ·                 ────
- 62 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:21]
  60 │ 0, class {
@@ -8382,14 +8329,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  137 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:24]
- 60 │ 0, class {
- 61 │   static async *method(...a,) {
-    ·                        ────
- 62 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
@@ -8611,14 +8550,6 @@ Negative Passed: 4519/4519 (100.00%)
  135 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:23]
- 57 │ var C = class {
- 58 │   static async method(...a,) {
-    ·                       ────
- 59 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:27]
  57 │ var C = class {
@@ -8732,14 +8663,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  135 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:23]
- 57 │ var C = class {
- 58 │   static async method(...a,) {
-    ·                       ────
- 59 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:27]
@@ -13674,14 +13597,6 @@ Negative Passed: 4519/4519 (100.00%)
  158 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:11]
- 81 │ 0, class {
- 82 │   *method(...a,) {
-    ·           ────
- 83 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:15]
  81 │ 0, class {
@@ -13847,14 +13762,6 @@ Negative Passed: 4519/4519 (100.00%)
  158 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:18]
- 81 │ 0, class {
- 82 │   static *method(...a,) {
-    ·                  ────
- 83 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:22]
  81 │ 0, class {
@@ -14018,14 +13925,6 @@ Negative Passed: 4519/4519 (100.00%)
  154 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:10]
- 76 │ 0, class {
- 77 │   method(...a,) {
-    ·          ────
- 78 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:14]
  76 │ 0, class {
@@ -14083,14 +13982,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  154 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:17]
- 76 │ 0, class {
- 77 │   static method(...a,) {
-    ·                 ────
- 78 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:21]
@@ -17275,14 +17166,6 @@ Negative Passed: 4519/4519 (100.00%)
  133 │ };
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:13]
- 55 │ 
- 56 │ 0, function(...a,) {
-    ·             ────
- 57 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:17]
  55 │ 
@@ -17550,14 +17433,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  134 │ };
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:14]
- 57 │ 
- 58 │ 0, function*(...a,) {
-    ·              ────
- 59 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:18]
@@ -18617,14 +18492,6 @@ Negative Passed: 4519/4519 (100.00%)
  118 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:17]
- 41 │ 0, {
- 42 │   async *method(...a,) {
-    ·                 ────
- 43 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:21]
  41 │ 0, {
@@ -18788,14 +18655,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  111 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:17]
- 34 │ ({
- 35 │   async *method(...a,) {
-    ·                 ────
- 36 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:21]
@@ -19012,14 +18871,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  140 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:11]
- 63 │ 0, {
- 64 │   *method(...a,) {
-    ·           ────
- 65 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:15]
@@ -19241,14 +19092,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  136 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:10]
- 58 │ 0, {
- 59 │   method(...a,) {
-    ·          ────
- 60 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:14]
@@ -25863,14 +25706,6 @@ Negative Passed: 4519/4519 (100.00%)
  110 │ }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:18]
- 33 │ 
- 34 │ async function f(...a,) {
-    ·                  ────
- 35 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:22]
  33 │ 
@@ -26087,14 +25922,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  113 │ }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:19]
- 36 │ 
- 37 │ async function* f(...a,) {
-    ·                   ────
- 38 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:23]
@@ -26549,14 +26376,6 @@ Negative Passed: 4519/4519 (100.00%)
  136 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:17]
- 59 │ class C {
- 60 │   async *method(...a,) {
-    ·                 ────
- 61 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:21]
  59 │ class C {
@@ -26776,14 +26595,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  137 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:24]
- 60 │ class C {
- 61 │   static async *method(...a,) {
-    ·                        ────
- 62 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
@@ -27013,14 +26824,6 @@ Negative Passed: 4519/4519 (100.00%)
  135 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:16]
- 57 │ class C {
- 58 │   async method(...a,) {
-    ·                ────
- 59 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:20]
  57 │ class C {
@@ -27134,14 +26937,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  134 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:23]
- 56 │ class C {
- 57 │   static async method(...a,) {
-    ·                       ────
- 58 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:27]
@@ -32287,14 +32082,6 @@ Negative Passed: 4519/4519 (100.00%)
  156 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:11]
- 79 │ class C {
- 80 │   *method(...a,) {
-    ·           ────
- 81 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:15]
  79 │ class C {
@@ -32460,14 +32247,6 @@ Negative Passed: 4519/4519 (100.00%)
  156 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:18]
- 79 │ class C {
- 80 │   static *method(...a,) {
-    ·                  ────
- 81 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:22]
  79 │ class C {
@@ -32631,14 +32410,6 @@ Negative Passed: 4519/4519 (100.00%)
  153 │   }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:10]
- 75 │ class C {
- 76 │   method(...a,) {
-    ·          ────
- 77 │     
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:14]
  75 │ class C {
@@ -32696,14 +32467,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·     ─────────────
  153 │   }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:17]
- 75 │ class C {
- 76 │   static method(...a,) {
-    ·                 ────
- 77 │     
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:21]
@@ -36325,14 +36088,6 @@ Negative Passed: 4519/4519 (100.00%)
  134 │ }
      ╰────
 
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:12]
- 56 │ 
- 57 │ function f(...a,) {
-    ·            ────
- 58 │   
-    ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:16]
  56 │ 
@@ -36502,14 +36257,6 @@ Negative Passed: 4519/4519 (100.00%)
      ·   ─────────────
  134 │ }
      ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:13]
- 57 │ 
- 58 │ function* f(...a,) {
-    ·             ────
- 59 │   
-    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:17]

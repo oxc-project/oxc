@@ -17,6 +17,8 @@
     "**/CHANGELOG.md",
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
+    "napi/oxlint2/src/bindings.js",
+    "napi/oxlint2/src/bindings.d.ts",
     "napi/{transform,minify,playground}/index.js",
     "napi/{parser,transform,minify,playground}/index.d.ts",
     "napi/{parser,transform,minify,playground}/*.wasi-browser.js",

@@ -9,11 +9,11 @@ use crate::{
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber>
 pub trait ToNumber<'a> {
-    fn to_number(&self, is_global_reference: &impl IsGlobalReference) -> Option<f64>;
+    fn to_number(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<f64>;
 }
 
 impl<'a> ToNumber<'a> for Expression<'a> {
-    fn to_number(&self, is_global_reference: &impl IsGlobalReference) -> Option<f64> {
+    fn to_number(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<f64> {
         match self {
             Expression::NumericLiteral(number_literal) => Some(number_literal.value),
             Expression::BooleanLiteral(bool_literal) => {

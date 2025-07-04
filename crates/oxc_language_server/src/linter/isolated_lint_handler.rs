@@ -10,12 +10,12 @@ use tower_lsp_server::{
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
-use oxc_allocator::Allocator;
-use oxc_linter::RuntimeFileSystem;
+use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader, read_to_string,
+    loader::Loader, read_to_arena_str,
 };
+use oxc_linter::{RuntimeFileSystem, read_to_string};
 
 use super::error_with_position::{
     DiagnosticReport, PossibleFixContent, message_with_position_to_lsp_diagnostic_report,
@@ -45,15 +45,20 @@ impl IsolatedLintHandlerFileSystem {
 }
 
 impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+    fn read_to_arena_str<'a>(
+        &self,
+        path: &Path,
+        allocator: &'a Allocator,
+    ) -> Result<&'a str, std::io::Error> {
         if path == self.path_to_lint {
-            return Ok(self.source_text.clone());
+            // TODO: i think we can avoid allocating here.
+            return Ok(allocator.alloc_str(&self.source_text));
         }
 
-        read_to_string(path)
+        read_to_arena_str(path, allocator)
     }
 
-    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+    fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
         panic!("writing file should not be allowed in Language Server");
     }
 }
@@ -110,6 +115,7 @@ impl IsolatedLintHandler {
                             data: None,
                         },
                         fixed_content: PossibleFixContent::None,
+                        rule_name: None,
                     });
                 }
             }
@@ -128,6 +134,7 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
+
         let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
         debug!("lint {}", path.display());
@@ -139,9 +146,11 @@ impl IsolatedLintHandler {
         .with_cross_module(self.options.use_cross_module);
 
         let mut lint_service =
-            LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
-                IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
-            ));
+            LintService::new(&self.linter, AllocatorPool::default(), lint_service_options)
+                .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
+                    path.to_path_buf(),
+                    source_text,
+                )));
         let result = lint_service.run_source(allocator);
 
         Some(result)

@@ -196,3 +196,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───
    ╰────
   help: Move variable declaration to program root
+
+  ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
+   ╭─[no_inner_declarations.tsx:1:6]
+ 1 │ for (var x in {}) {}
+   ·      ───
+   ╰────
+  help: Move variable declaration to program root
+
+  ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
+   ╭─[no_inner_declarations.tsx:1:6]
+ 1 │ for (var x of []) {}
+   ·      ───
+   ╰────
+  help: Move variable declaration to program root
+
+  ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
+   ╭─[no_inner_declarations.tsx:1:6]
+ 1 │ for (var x = 1; a < 10; a++) {}
+   ·      ───
+   ╰────
+  help: Move variable declaration to program root

@@ -1,3 +1,4 @@
+use oxc_allocator::{Address, GetAddress};
 use oxc_ast::AstKind;
 use oxc_cfg::BlockNodeId;
 use oxc_index::IndexVec;
@@ -82,6 +83,13 @@ impl GetSpan for AstNode<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.kind.span()
+    }
+}
+
+impl GetAddress for AstNode<'_> {
+    #[inline]
+    fn address(&self) -> Address {
+        self.kind.address()
     }
 }
 

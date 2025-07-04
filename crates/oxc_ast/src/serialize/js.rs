@@ -3,7 +3,6 @@ use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
-use oxc_span::GetSpan;
 
 use crate::ast::*;
 
@@ -57,40 +56,38 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
 
-        match &self.kind {
+        let span = match &self.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
                 state.serialize_field("type", &JsonSafeString("Identifier"));
-                state.serialize_field("start", &ident.span.start);
-                state.serialize_field("end", &ident.span.end);
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("name", &JsonSafeString(ident.name.as_str()));
+                ident.span
             }
             BindingPatternKind::ObjectPattern(object) => {
                 state.serialize_field("type", &JsonSafeString("ObjectPattern"));
-                state.serialize_field("start", &object.span.start);
-                state.serialize_field("end", &object.span.end);
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("properties", &Concat2(&object.properties, &object.rest));
+                object.span
             }
             BindingPatternKind::ArrayPattern(array) => {
                 state.serialize_field("type", &JsonSafeString("ArrayPattern"));
-                state.serialize_field("start", &array.span.start);
-                state.serialize_field("end", &array.span.end);
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("elements", &Concat2(&array.elements, &array.rest));
+                array.span
             }
             BindingPatternKind::AssignmentPattern(assignment) => {
                 state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-                state.serialize_field("start", &assignment.span.start);
-                state.serialize_field("end", &assignment.span.end);
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("left", &assignment.left);
                 state.serialize_field("right", &assignment.right);
+                assignment.span
             }
-        }
+        };
 
         state.serialize_field("optional", &self.optional);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+
+        state.serialize_span(span);
 
         state.end();
     }
@@ -124,8 +121,6 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             pos = uint32[(POS_OFFSET.rest) >> 2];
             params.push({
                 type: 'RestElement',
-                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
                 /* IF_TS */
                 decorators: [],
                 /* END_IF_TS */
@@ -137,6 +132,8 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                 ),
                 value: null,
                 /* END_IF_TS */
+                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
             });
         }
         params
@@ -168,13 +165,12 @@ impl ESTree for FormalParametersRest<'_, '_> {
         let rest = self.0;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_field("start", &rest.span.start);
-        state.serialize_field("end", &rest.span.end);
         state.serialize_ts_field("decorators", &EmptyArray(()));
         state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("optional", &rest.argument.optional);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("value", &Null(()));
+        state.serialize_span(rest.span);
         state.end();
     }
 }
@@ -204,14 +200,14 @@ impl ESTree for FormalParametersRest<'_, '_> {
         } else {
             param = {
                 type: 'TSParameterProperty',
-                start: DESER[u32](POS_OFFSET.span.start),
-                end: DESER[u32](POS_OFFSET.span.end),
                 accessibility,
                 decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
                 override,
                 parameter: DESER[BindingPattern](POS_OFFSET.pattern),
                 readonly,
                 static: false,
+                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
             };
         }
         param
@@ -228,14 +224,13 @@ impl ESTree for FormalParameterConverter<'_, '_> {
             if param.has_modifier() {
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
-                state.serialize_field("start", &param.span.start);
-                state.serialize_field("end", &param.span.end);
                 state.serialize_field("accessibility", &param.accessibility);
                 state.serialize_field("decorators", &param.decorators);
                 state.serialize_field("override", &param.r#override);
                 state.serialize_field("parameter", &param.pattern);
                 state.serialize_field("readonly", &param.readonly);
                 state.serialize_field("static", &false);
+                state.serialize_span(param.span);
                 state.end();
             } else {
                 BindingPatternKindAndTsFields {
@@ -380,52 +375,6 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // Misc
 // ----------------------------------------
 
-/// Serializer for `key` field of `MethodDefinition`.
-///
-/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
-/// is represented as an `Identifier`.
-/// In Acorn and Espree, it's a `Literal`.
-/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
-#[ast_meta]
-#[estree(
-    ts_type = "PropertyKey",
-    raw_deser = "
-        /* IF_JS */
-        DESER[PropertyKey](POS_OFFSET.key)
-        /* END_IF_JS */
-
-        /* IF_TS */
-        let key = DESER[PropertyKey](POS_OFFSET.key);
-        if (THIS.kind === 'constructor') {
-            key = {
-                type: 'Identifier',
-                start: key.start,
-                end: key.end,
-                decorators: [],
-                name: 'constructor',
-                optional: false,
-                typeAnnotation: null,
-            };
-        }
-        key
-        /* END_IF_TS */
-    "
-)]
-pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
-
-impl ESTree for MethodDefinitionKey<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let method = self.0;
-        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
-            // `key` can only be either an identifier `constructor`, or string `"constructor"`
-            let span = method.key.span();
-            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
-        } else {
-            method.key.serialize(serializer);
-        }
-    }
-}
-
 /// Serializer for `body` field of `ArrowFunctionExpression`.
 ///
 /// Serialize as either an expression (if `expression` property is set),
@@ -462,8 +411,6 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                 ? keyCopy
                 : {
                     type: 'AssignmentPattern',
-                    start: THIS.start,
-                    end: THIS.end,
                     /* IF_TS */
                     decorators: [],
                     /* END_IF_TS */
@@ -473,6 +420,8 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     optional: false,
                     typeAnnotation: null,
                     /* END_IF_TS */
+                    start: THIS.start,
+                    end: THIS.end,
                 };
         value
     "
@@ -486,13 +435,12 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         if let Some(init) = &self.0.init {
             let mut state = serializer.serialize_struct();
             state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-            state.serialize_field("start", &self.0.span.start);
-            state.serialize_field("end", &self.0.span.end);
             state.serialize_ts_field("decorators", &EmptyArray(()));
             state.serialize_field("left", &self.0.binding);
             state.serialize_field("right", init);
             state.serialize_ts_field("optional", &false);
             state.serialize_ts_field("typeAnnotation", &Null(()));
+            state.serialize_span(self.0.span);
             state.end();
         } else {
             self.0.binding.serialize(serializer);

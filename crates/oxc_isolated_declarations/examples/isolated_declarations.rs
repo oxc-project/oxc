@@ -13,7 +13,7 @@ use oxc_span::SourceType;
 // or `just example isolated_declarations`
 
 fn main() -> std::io::Result<()> {
-    let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
+    let name = env::args().nth(1).unwrap_or_else(|| "test.ts".to_string());
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();

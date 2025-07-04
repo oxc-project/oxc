@@ -18,9 +18,15 @@ fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> O
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsistentIndexedObjectStyle {
     is_record_mode: bool,
+}
+
+impl Default for ConsistentIndexedObjectStyle {
+    fn default() -> Self {
+        Self { is_record_mode: true }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
@@ -33,7 +39,7 @@ enum ConsistentIndexedObjectStyleConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require or disallow the `Record` type.
+    /// Choose between requiring either `Record` type or indexed signature types.
     ///
     /// ### Why is this bad?
     ///
@@ -41,8 +47,10 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule with the default "record":
     /// ```ts
+    /// /*eslint consistent-indexed-object-style: ["error", "record"]*/
+    ///
     /// interface Foo {
     ///  [key: string]: unknown;
     /// }
@@ -53,7 +61,28 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```ts
+    /// /*eslint consistent-indexed-object-style: ["error", "record"]*/
+    ///
     /// type Foo = Record<string, unknown>;
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with "index-signature":
+    /// ```ts
+    /// /*eslint consistent-indexed-object-style: ["error", "index-signature"]*/
+    ///
+    /// type Foo = Record<string, unknown>;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// /*eslint consistent-indexed-object-style: ["error", "index-signature"]*/
+    ///
+    /// interface Foo {
+    ///  [key: string]: unknown;
+    /// }
+    /// type Foo = {
+    ///  [key: string]: unknown;
+    /// };
     /// ```
     ConsistentIndexedObjectStyle,
     typescript,
@@ -492,7 +521,7 @@ fn test() {
         ),
         ("type Foo = Generic<Record<string, any>>;", Some(serde_json::json!(["index-signature"]))),
         ("function foo(arg: Record<string, any>) {}", Some(serde_json::json!(["index-signature"]))),
-        ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
+        ("function foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
     Tester::new(

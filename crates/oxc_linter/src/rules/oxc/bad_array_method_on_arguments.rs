@@ -1,10 +1,7 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -60,57 +57,26 @@ impl Rule for BadArrayMethodOnArguments {
         if !node.kind().is_specific_id_reference("arguments") {
             return;
         }
-        let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else {
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return;
         };
-        let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else {
+        let Some(member_expr) = parent.kind().as_member_expression_kind() else {
             return;
         };
-        let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else {
+        let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
             return;
         };
-        let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else {
+        let AstKind::CallExpression(_) = grandparent.kind() else {
             return;
         };
-        match member_expr {
-            MemberExpression::StaticMemberExpression(expr) => {
-                if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
-                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                        expr.property.name.as_str(),
-                        expr.span,
-                    ));
-                }
-            }
-            MemberExpression::ComputedMemberExpression(expr) => {
-                match &expr.expression {
-                    Expression::StringLiteral(name) => {
-                        if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
-                            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                                name.value.as_str(),
-                                expr.span,
-                            ));
-                        }
-                    }
-                    Expression::TemplateLiteral(template) => {
-                        // only check template string like "arguments[`METHOD_NAME`]" for Oxc compatible
-                        if template.expressions.is_empty() && template.quasis.len() == 1 {
-                            if let Some(name) =
-                                template.quasis.first().and_then(|template_element| {
-                                    template_element.value.cooked.as_deref()
-                                })
-                            {
-                                if ARRAY_METHODS.binary_search(&name).is_ok() {
-                                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                                        name, expr.span,
-                                    ));
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            MemberExpression::PrivateFieldExpression(_) => {}
+        let Some(name) = member_expr.static_property_name() else {
+            return;
+        };
+        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
+            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                name.as_str(),
+                member_expr.span(),
+            ));
         }
     }
 }

@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression,
-        MemberExpression, UnaryOperator,
+        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -57,10 +56,7 @@ declare_oxc_lint!(
 impl Rule for PreferArrayFind {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Zero index access
-        if let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(
-            computed_member_expr,
-        )) = node.kind()
-        {
+        if let AstKind::ComputedMemberExpression(computed_member_expr) = node.kind() {
             if computed_member_expr.expression.is_number_0() {
                 if let Expression::CallExpression(call_expr) =
                     computed_member_expr.object.get_inner_expression()
@@ -142,9 +138,9 @@ impl Rule for PreferArrayFind {
 
                         for reference in ctx.symbol_references(ident.symbol_id()) {
                             match ctx.nodes().parent_kind(reference.node_id()) {
-                                Some(AstKind::MemberExpression(
-                                    MemberExpression::ComputedMemberExpression(c),
-                                )) if c.expression.is_number_0() => {
+                                Some(AstKind::ComputedMemberExpression(c))
+                                    if c.expression.is_number_0() =>
+                                {
                                     zero_index_nodes.push(reference);
                                 }
                                 Some(AstKind::VariableDeclarator(var_declarator)) => {

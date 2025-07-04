@@ -189,7 +189,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
         return false;
     };
 
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::sized(spread_elem.span.start, 3);
 
     match node.kind() {
         AstKind::ObjectExpression(_) => {
@@ -205,13 +205,9 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
         }
         AstKind::ArrayExpression(array_expr) => match parent_parent.kind() {
             // ...[ ...[] ]
-            AstKind::ArrayExpressionElement(_) => {
+            AstKind::ArrayExpression(outer_array) => {
                 let diagnostic = spread_in_list(span, "array");
-                if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
-                    diagnose_array_in_array_spread(ctx, diagnostic, &outer_array, array_expr);
-                } else {
-                    ctx.diagnostic(diagnostic);
-                }
+                diagnose_array_in_array_spread(ctx, diagnostic, outer_array, array_expr);
                 true
             }
             // foo(...[ ])
@@ -244,13 +240,9 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
 fn diagnose_array_in_array_spread<'a>(
     ctx: &LintContext<'a>,
     diagnostic: OxcDiagnostic,
-    outer_array: &AstKind<'a>,
+    outer_array: &'a ArrayExpression<'a>,
     inner_array: &ArrayExpression<'a>,
 ) {
-    let AstKind::ArrayExpression(outer_array) = outer_array else {
-        ctx.diagnostic(diagnostic);
-        return;
-    };
     match outer_array.elements.len() {
         0 => unreachable!(),
         1 => {
@@ -469,6 +461,7 @@ fn fix_by_removing_array_spread<'a, S: GetSpan>(
 ///
 /// ## Examples
 /// - `{...{ a, b, }}` -> `{ a, b }`
+#[expect(clippy::cast_possible_truncation)]
 fn fix_by_removing_object_spread<'a>(
     fixer: RuleFixer<'_, 'a>,
     spread: &SpreadElement<'a>,
@@ -480,10 +473,10 @@ fn fix_by_removing_object_spread<'a>(
     // remove trailing commas to avoid syntax errors if this spread is followed
     // by another property
     // e.g. ` a, b, ` -> `a, b`
-    let mut end_shrink_amount = 0;
+    let mut end_shrink_amount: u32 = 0;
     for c in fixer.source_range(*replacement_span).chars().rev() {
         if c.is_whitespace() || c == ',' {
-            end_shrink_amount += 1;
+            end_shrink_amount += c.len_utf8() as u32;
         } else {
             break;
         }
@@ -773,6 +766,7 @@ fn test() {
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
         ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
         ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
+        ("S={...{ }}", "S={}"),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

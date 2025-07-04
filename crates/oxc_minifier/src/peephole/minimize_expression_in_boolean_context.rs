@@ -8,7 +8,11 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn try_fold_stmt_in_boolean_context(&self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
+    pub fn try_fold_stmt_in_boolean_context(
+        &self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
         let expr = match stmt {
             Statement::IfStatement(s) => Some(&mut s.test),
             Statement::WhileStatement(s) => Some(&mut s.test),
@@ -28,7 +32,7 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_expr_in_boolean_context(
         &self,
         expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         match expr {
             // "!!a" => "a"
@@ -45,7 +49,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
                     && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
-                    && e.left.is_int32_or_uint32(&ctx) =>
+                    && e.left.is_int32_or_uint32(ctx) =>
             {
                 let argument = e.left.take_in(ctx.ast);
                 *expr = if matches!(
@@ -65,7 +69,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
-                if e.right.get_side_free_boolean_value(&ctx) == Some(true) {
+                if e.right.get_side_free_boolean_value(ctx) == Some(true) {
                     *expr = e.left.take_in(ctx.ast);
                     return true;
                 }
@@ -75,7 +79,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
-                if e.right.get_side_free_boolean_value(&ctx) == Some(false) {
+                if e.right.get_side_free_boolean_value(ctx) == Some(false) {
                     *expr = e.left.take_in(ctx.ast);
                     return true;
                 }
@@ -84,7 +88,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a ? !!b : !!c)" => "if (a ? b : c)"
                 self.try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
-                if let Some(boolean) = e.consequent.get_side_free_boolean_value(&ctx) {
+                if let Some(boolean) = e.consequent.get_side_free_boolean_value(ctx) {
                     let right = e.alternate.take_in(ctx.ast);
                     let left = e.test.take_in(ctx.ast);
                     let span = e.span;
@@ -98,7 +102,7 @@ impl<'a> PeepholeOptimizations {
                     *expr = self.join_with_left_associative_op(span, op, left, right, ctx);
                     return true;
                 }
-                if let Some(boolean) = e.alternate.get_side_free_boolean_value(&ctx) {
+                if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
                     let left = e.test.take_in(ctx.ast);
                     let right = e.consequent.take_in(ctx.ast);
                     let span = e.span;

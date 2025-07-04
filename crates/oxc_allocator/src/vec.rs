@@ -311,7 +311,7 @@ mod test {
         let mut v = Vec::new_in(&allocator);
         v.push("x");
 
-        let mut serializer = CompactTSSerializer::new();
+        let mut serializer = CompactTSSerializer::new(false);
         v.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#"["x"]"#);

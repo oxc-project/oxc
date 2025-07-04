@@ -15,7 +15,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
@@ -28,7 +28,7 @@ use crate::{
     fixer::PossibleFixes,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    utils::read_to_string,
+    utils::read_to_arena_str,
 };
 
 #[cfg(feature = "language_server")]
@@ -42,19 +42,21 @@ pub struct Runtime<'l> {
     resolver: Option<Resolver>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+
+    allocator_pool: AllocatorPool,
 }
 
 /// Output of `Runtime::process_path`
-struct ModuleProcessOutput {
+struct ModuleProcessOutput<'alloc_pool> {
     /// All paths in `Runtime` are stored as `OsStr`, because `OsStr` hash is faster
     /// than `Path` - go checkout their source code.
     path: Arc<OsStr>,
-    processed_module: ProcessedModule,
+    processed_module: ProcessedModule<'alloc_pool>,
 }
 
 /// A module processed from a path
 #[derive(Default)]
-struct ProcessedModule {
+struct ProcessedModule<'alloc_pool> {
     /// Module records of source sections, or diagnostics if parsing failed on that section.
     ///
     /// Modules with special extensions such as .vue could contain multiple source sections (see `PartialLoader::PartialLoader`).
@@ -69,7 +71,7 @@ struct ProcessedModule {
     ///
     /// Note that `content` is `Some` even if parsing is unsuccessful as long as the source to lint is valid utf-8.
     /// It is designed this way to cover the case where some but not all the sections fail to parse.
-    content: Option<ModuleContent>,
+    content: Option<ModuleContent<'alloc_pool>>,
 }
 
 struct ResolvedModuleRequest {
@@ -84,18 +86,22 @@ struct ResolvedModuleRecord {
 }
 
 self_cell! {
-    struct ModuleContent {
-        owner: ModuleContentOwner,
+    struct ModuleContent<'alloc_pool> {
+        owner: ModuleContentOwner<'alloc_pool>,
         #[not_covariant]
-        dependent: SectionContents,
+        dependent: ModuleContentDependent,
     }
 }
-// Safety: dependent borrows from owner. They're safe to be sent together.
-unsafe impl Send for ModuleContent {}
+struct ModuleContentDependent<'a> {
+    source_text: &'a str,
+    section_contents: SectionContents<'a>,
+}
 
-struct ModuleContentOwner {
-    source_text: String,
-    allocator: Allocator,
+// Safety: dependent borrows from owner. They're safe to be sent together.
+unsafe impl Send for ModuleContent<'_> {}
+
+struct ModuleContentOwner<'alloc_pool> {
+    allocator: AllocatorGuard<'alloc_pool>,
 }
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
@@ -111,13 +117,16 @@ struct SectionContent<'a> {
 ///
 /// A `ModuleWithContent` is generated for each path in `runtime.paths`. It's basically the same
 /// as `ProcessedModule`, except `content` is non-Option.
-struct ModuleToLint {
+struct ModuleToLint<'alloc_pool> {
     path: Arc<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
-    content: ModuleContent,
+    content: ModuleContent<'alloc_pool>,
 }
-impl ModuleToLint {
-    fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
+impl<'alloc_pool> ModuleToLint<'alloc_pool> {
+    fn from_processed_module(
+        path: Arc<OsStr>,
+        processed_module: ProcessedModule<'alloc_pool>,
+    ) -> Option<Self> {
         processed_module.content.map(|content| Self {
             path,
             section_module_records: processed_module
@@ -138,33 +147,46 @@ pub trait RuntimeFileSystem {
     ///
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+    fn read_to_arena_str<'a>(
+        &self,
+        path: &Path,
+        allocator: &'a Allocator,
+    ) -> Result<&'a str, std::io::Error>;
 
     /// write a file to the file system
     ///
     /// # Errors
     /// When the program does not have write permission for the file system
-    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error>;
+    fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
 }
 
 struct OsFileSystem;
 
 impl RuntimeFileSystem for OsFileSystem {
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
-        read_to_string(path)
+    fn read_to_arena_str<'a>(
+        &self,
+        path: &Path,
+        allocator: &'a Allocator,
+    ) -> Result<&'a str, std::io::Error> {
+        read_to_arena_str(path, allocator)
     }
 
-    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error> {
+    fn write_file(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
         fs::write(path, content)
     }
 }
 
 impl<'l> Runtime<'l> {
-    pub(super) fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
+    pub(super) fn new(
+        linter: &'l Linter,
+        allocator_pool: AllocatorPool,
+        options: LintServiceOptions,
+    ) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
+            allocator_pool,
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
             linter,
@@ -206,11 +228,12 @@ impl<'l> Runtime<'l> {
         })
     }
 
-    fn get_source_type_and_text(
+    fn get_source_type_and_text<'a>(
         &self,
         path: &Path,
         ext: &str,
-    ) -> Option<Result<(SourceType, String), Error>> {
+        allocator: &'a Allocator,
+    ) -> Option<Result<(SourceType, &'a str), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
@@ -224,7 +247,7 @@ impl<'l> Runtime<'l> {
             source_type = source_type.with_jsx(true);
         }
 
-        let file_result = self.file_system.read_to_string(path).map_err(|e| {
+        let file_result = self.file_system.read_to_arena_str(path, allocator).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
@@ -473,11 +496,11 @@ impl<'l> Runtime<'l> {
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(|owner, sections| {
+                module_to_lint.content.with_dependent_mut(|_owner, dep| {
                     // If there are fixes, we will accumulate all of them and write to the file at the end.
                     // This means we do not write multiple times to the same file if there are multiple sources
                     // in the same file (for example, multiple scripts in an `.astro` file).
-                    let mut new_source_text = Cow::from(owner.source_text.as_str());
+                    let mut new_source_text = Cow::from(dep.source_text);
                     // This is used to keep track of the cumulative offset from applying fixes.
                     // Otherwise, spans for fixes will be incorrect due to varying size of the
                     // source code after each fix.
@@ -485,9 +508,14 @@ impl<'l> Runtime<'l> {
 
                     let path = Path::new(&module_to_lint.path);
 
-                    assert_eq!(module_to_lint.section_module_records.len(), sections.len());
-                    for (record_result, section) in
-                        module_to_lint.section_module_records.into_iter().zip(sections.drain(..))
+                    assert_eq!(
+                        module_to_lint.section_module_records.len(),
+                        dep.section_contents.len()
+                    );
+                    for (record_result, section) in module_to_lint
+                        .section_module_records
+                        .into_iter()
+                        .zip(dep.section_contents.drain(..))
                     {
                         let mut messages = match record_result {
                             Ok(module_record) => me.linter.run(
@@ -522,19 +550,19 @@ impl<'l> Runtime<'l> {
 
                         if !messages.is_empty() {
                             let errors = messages.into_iter().map(Into::into).collect();
-                            let path = path.strip_prefix(&me.cwd).unwrap_or(path);
                             let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &me.cwd,
                                 path,
-                                &owner.source_text,
+                                dep.source_text,
                                 section.source.start,
                                 errors,
                             );
-                            tx_error.send(Some(diagnostics)).unwrap();
+                            tx_error.send(Some((path.to_path_buf(), diagnostics))).unwrap();
                         }
                     }
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
-                    if let Cow::Owned(new_source_text) = new_source_text {
+                    if let Cow::Owned(new_source_text) = &new_source_text {
                         me.file_system.write_file(path, new_source_text).unwrap();
                     }
                 });
@@ -582,106 +610,112 @@ impl<'l> Runtime<'l> {
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
-                module.content.with_dependent_mut(|owner, dependent| {
-                    assert_eq!(module.section_module_records.len(), dependent.len());
+                module.content.with_dependent_mut(
+                    |_owner, ModuleContentDependent { source_text, section_contents }| {
+                        assert_eq!(module.section_module_records.len(), section_contents.len());
 
-                    let rope = &Rope::from_str(&owner.source_text);
+                        let rope = &Rope::from_str(source_text);
 
-                    for (record_result, section) in
-                        module.section_module_records.into_iter().zip(dependent.drain(..))
-                    {
-                        match record_result {
-                            Err(diagnostics) => {
-                                messages
-                                    .lock()
-                                    .unwrap()
-                                    .extend(diagnostics.into_iter().map(std::convert::Into::into));
-                            }
-                            Ok(module_record) => {
-                                let section_message = me.linter.run(
-                                    Path::new(&module.path),
-                                    Rc::new(section.semantic.unwrap()),
-                                    Arc::clone(&module_record),
-                                );
+                        for (record_result, section) in module
+                            .section_module_records
+                            .into_iter()
+                            .zip(section_contents.drain(..))
+                        {
+                            match record_result {
+                                Err(diagnostics) => {
+                                    messages.lock().unwrap().extend(
+                                        diagnostics.into_iter().map(std::convert::Into::into),
+                                    );
+                                }
+                                Ok(module_record) => {
+                                    let section_message = me.linter.run(
+                                        Path::new(&module.path),
+                                        Rc::new(section.semantic.unwrap()),
+                                        Arc::clone(&module_record),
+                                    );
 
-                                messages.lock().unwrap().extend(section_message.iter().map(
-                                    |message| {
-                                        let message = message.clone_in(allocator);
+                                    messages.lock().unwrap().extend(section_message.iter().map(
+                                        |message| {
+                                            let message = message.clone_in(allocator);
 
-                                        let labels = &message.error.labels.clone().map(|labels| {
-                                            labels
-                                                .into_iter()
-                                                .map(|labeled_span| {
-                                                    let offset = labeled_span.offset() as u32;
-                                                    let start_position = offset_to_position(
-                                                        rope,
-                                                        offset + section.source.start,
-                                                        &owner.source_text,
-                                                    );
-                                                    let end_position = offset_to_position(
-                                                        rope,
-                                                        offset
-                                                            + section.source.start
-                                                            + labeled_span.len() as u32,
-                                                        &owner.source_text,
-                                                    );
-                                                    let message = labeled_span
-                                                        .label()
-                                                        .map(|label| Cow::Owned(label.to_string()));
+                                            let labels =
+                                                &message.error.labels.clone().map(|labels| {
+                                                    labels
+                                                        .into_iter()
+                                                        .map(|labeled_span| {
+                                                            let offset =
+                                                                labeled_span.offset() as u32;
+                                                            let start_position = offset_to_position(
+                                                                rope,
+                                                                offset + section.source.start,
+                                                                source_text,
+                                                            );
+                                                            let end_position = offset_to_position(
+                                                                rope,
+                                                                offset
+                                                                    + section.source.start
+                                                                    + labeled_span.len() as u32,
+                                                                source_text,
+                                                            );
+                                                            let message =
+                                                                labeled_span.label().map(|label| {
+                                                                    Cow::Owned(label.to_string())
+                                                                });
 
-                                                    SpanPositionMessage::new(
-                                                        start_position,
-                                                        end_position,
-                                                    )
-                                                    .with_message(message)
-                                                })
-                                                .collect::<Vec<_>>()
-                                        });
+                                                            SpanPositionMessage::new(
+                                                                start_position,
+                                                                end_position,
+                                                            )
+                                                            .with_message(message)
+                                                        })
+                                                        .collect::<Vec<_>>()
+                                                });
 
-                                        MessageWithPosition {
-                                            message: message.error.message.clone(),
-                                            severity: message.error.severity,
-                                            help: message.error.help.clone(),
-                                            url: message.error.url.clone(),
-                                            code: message.error.code.clone(),
-                                            labels: labels.clone(),
-                                            fixes: match &message.fixes {
-                                                PossibleFixes::None => {
-                                                    PossibleFixesWithPosition::None
-                                                }
-                                                PossibleFixes::Single(fix) => {
-                                                    PossibleFixesWithPosition::Single(
-                                                        fix_to_fix_with_position(
-                                                            fix,
-                                                            rope,
-                                                            section.source.start,
-                                                            &owner.source_text,
-                                                        ),
-                                                    )
-                                                }
-                                                PossibleFixes::Multiple(fixes) => {
-                                                    PossibleFixesWithPosition::Multiple(
-                                                        fixes
-                                                            .iter()
-                                                            .map(|fix| {
-                                                                fix_to_fix_with_position(
-                                                                    fix,
-                                                                    rope,
-                                                                    section.source.start,
-                                                                    &owner.source_text,
-                                                                )
-                                                            })
-                                                            .collect(),
-                                                    )
-                                                }
-                                            },
-                                        }
-                                    },
-                                ));
+                                            MessageWithPosition {
+                                                message: message.error.message.clone(),
+                                                severity: message.error.severity,
+                                                help: message.error.help.clone(),
+                                                url: message.error.url.clone(),
+                                                code: message.error.code.clone(),
+                                                labels: labels.clone(),
+                                                fixes: match &message.fixes {
+                                                    PossibleFixes::None => {
+                                                        PossibleFixesWithPosition::None
+                                                    }
+                                                    PossibleFixes::Single(fix) => {
+                                                        PossibleFixesWithPosition::Single(
+                                                            fix_to_fix_with_position(
+                                                                fix,
+                                                                rope,
+                                                                section.source.start,
+                                                                source_text,
+                                                            ),
+                                                        )
+                                                    }
+                                                    PossibleFixes::Multiple(fixes) => {
+                                                        PossibleFixesWithPosition::Multiple(
+                                                            fixes
+                                                                .iter()
+                                                                .map(|fix| {
+                                                                    fix_to_fix_with_position(
+                                                                        fix,
+                                                                        rope,
+                                                                        section.source.start,
+                                                                        source_text,
+                                                                    )
+                                                                })
+                                                                .collect(),
+                                                        )
+                                                    }
+                                                },
+                                            }
+                                        },
+                                    ));
+                                }
                             }
                         }
-                    }
-                });
+                    },
+                );
             });
         });
 
@@ -713,28 +747,32 @@ impl<'l> Runtime<'l> {
         let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {
             self.resolve_modules(scope, check_syntax_errors, tx_error, |me, mut module| {
-                module.content.with_dependent_mut(|_owner, dependent| {
-                    assert_eq!(module.section_module_records.len(), dependent.len());
-                    for (record_result, section) in
-                        module.section_module_records.into_iter().zip(dependent.drain(..))
-                    {
-                        messages.lock().unwrap().extend(
-                            match record_result {
-                                Ok(module_record) => me.linter.run(
-                                    Path::new(&module.path),
-                                    Rc::new(section.semantic.unwrap()),
-                                    Arc::clone(&module_record),
-                                ),
-                                Err(errors) => errors
-                                    .into_iter()
-                                    .map(|err| Message::new(err, PossibleFixes::None))
-                                    .collect(),
-                            }
+                module.content.with_dependent_mut(
+                    |_owner, ModuleContentDependent { source_text: _, section_contents }| {
+                        assert_eq!(module.section_module_records.len(), section_contents.len());
+                        for (record_result, section) in module
+                            .section_module_records
                             .into_iter()
-                            .map(|message| message.clone_in(allocator)),
-                        );
-                    }
-                });
+                            .zip(section_contents.drain(..))
+                        {
+                            messages.lock().unwrap().extend(
+                                match record_result {
+                                    Ok(module_record) => me.linter.run(
+                                        Path::new(&module.path),
+                                        Rc::new(section.semantic.unwrap()),
+                                        Arc::clone(&module_record),
+                                    ),
+                                    Err(errors) => errors
+                                        .into_iter()
+                                        .map(|err| Message::new(err, PossibleFixes::None))
+                                        .collect(),
+                                }
+                                .into_iter()
+                                .map(|message| message.clone_in(allocator)),
+                            );
+                        }
+                    },
+                );
             });
         });
         messages.into_inner().unwrap()
@@ -746,54 +784,82 @@ impl<'l> Runtime<'l> {
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> ModuleProcessOutput {
-        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
-            return ModuleProcessOutput {
-                path: Arc::clone(path),
-                processed_module: ProcessedModule::default(),
-            };
-        };
-        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(path), ext) else {
-            return ModuleProcessOutput {
-                path: Arc::clone(path),
-                processed_module: ProcessedModule::default(),
-            };
+        let default_output = || ModuleProcessOutput {
+            path: Arc::clone(path),
+            processed_module: ProcessedModule::default(),
         };
 
-        let (source_type, source_text) = match source_type_and_text {
-            Ok(source_text) => source_text,
-            Err(e) => {
-                tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
-                return ModuleProcessOutput {
-                    path: Arc::clone(path),
-                    processed_module: ProcessedModule::default(),
-                };
-            }
+        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
+            return default_output();
         };
+
+        if SourceType::from_path(Path::new(path))
+            .as_ref()
+            .is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
+        {
+            return default_output();
+        }
+
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
         let mut module_content: Option<ModuleContent> = None;
-        let allocator = Allocator::default();
+
         if self.paths.contains(path) {
-            module_content =
-                Some(ModuleContent::new(ModuleContentOwner { source_text, allocator }, |owner| {
-                    let mut section_contents = SmallVec::new();
-                    records = self.process_source(
-                        Path::new(path),
-                        ext,
-                        check_syntax_errors,
-                        source_type,
-                        owner.source_text.as_str(),
-                        &owner.allocator,
-                        Some(&mut section_contents),
-                    );
-                    section_contents
-                }));
+            let allocator = self.allocator_pool.get();
+
+            let build = ModuleContent::try_new(ModuleContentOwner { allocator }, |owner| {
+                let Some(stt) =
+                    self.get_source_type_and_text(Path::new(path), ext, &owner.allocator)
+                else {
+                    return Err(());
+                };
+
+                let (source_type, source_text) = match stt {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                        return Err(());
+                    }
+                };
+
+                let mut section_contents = SmallVec::new();
+                records = self.process_source(
+                    Path::new(path),
+                    ext,
+                    check_syntax_errors,
+                    source_type,
+                    source_text,
+                    &owner.allocator,
+                    Some(&mut section_contents),
+                );
+
+                Ok(ModuleContentDependent { source_text, section_contents })
+            });
+
+            module_content = match build {
+                Ok(mc) => Some(mc),
+                Err(()) => return default_output(),
+            };
         } else {
+            let allocator = self.allocator_pool.get();
+
+            let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, &allocator) else {
+                return default_output();
+            };
+
+            let (source_type, source_text) = match stt {
+                Ok(v) => v,
+                Err(e) => {
+                    tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                    return default_output();
+                }
+            };
+
             records = self.process_source(
                 Path::new(path),
                 ext,
                 check_syntax_errors,
                 source_type,
-                source_text.as_str(),
+                source_text,
                 &allocator,
                 None,
             );

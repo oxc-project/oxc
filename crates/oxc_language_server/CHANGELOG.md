@@ -5,6 +5,32 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+
+## [1.3.0] - 2025-06-23
+
+### 🚀 Features
+
+- 1a54184 linter: Add fix for unused disable directive (#11708) (Sysix)
+- 816ff03 linter: Read source text into the arena (#11825) (camc314)
+
+### 🚜 Refactor
+
+- b39d1fa linter: Output smaller spans for unused disable directives with multiple rules (#11781) (Sysix)
+
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- 094b81c language_server: Add `unusedDisableDirectives` option (#11645) (Sysix)
+
+### 🚜 Refactor
+
+- abdbaa9 language_server: Use rule name directly from OxcCode instead of parsing out of the stringified version of OxcCode (#11714) (Nicholas Rayburn)
+
+
+
 ## [1.0.0] - 2025-06-10
 
 ## [0.18.1] - 2025-06-09

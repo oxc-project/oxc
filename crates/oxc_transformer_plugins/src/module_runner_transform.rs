@@ -56,7 +56,9 @@ use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx, traverse_mut};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
+
+use crate::TraverseCtx;
 
 #[derive(Debug, Default)]
 pub struct ModuleRunnerTransform<'a> {
@@ -89,7 +91,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         program: &mut Program<'a>,
         scoping: Scoping,
     ) -> (FxHashSet<String>, FxHashSet<String>) {
-        traverse_mut(&mut self, allocator, program, scoping);
+        traverse_mut(&mut self, allocator, program, scoping, ());
         (self.deps, self.dynamic_deps)
     }
 }
@@ -102,7 +104,7 @@ const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll_
 const SSR_IMPORT_META_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import_meta__");
 const DEFAULT: Atom<'static> = Atom::new_const("default");
 
-impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
+impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     #[inline]
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_imports_and_exports(program, ctx);

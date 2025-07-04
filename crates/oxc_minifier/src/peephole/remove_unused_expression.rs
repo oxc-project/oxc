@@ -2,7 +2,10 @@ use std::iter;
 
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ecmascript::{ToPrimitive, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    ToPrimitive,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -16,7 +19,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         match e {
             Expression::ArrayExpression(_) => self.fold_array_expression(e, state, ctx),
@@ -29,7 +32,7 @@ impl<'a> PeepholeOptimizations {
             Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, state, ctx),
             Expression::BinaryExpression(_) => self.fold_binary_expression(e, state, ctx),
             Expression::CallExpression(_) => self.fold_call_expression(e, state, ctx),
-            _ => !e.may_have_side_effects(&ctx),
+            _ => !e.may_have_side_effects(ctx),
         }
     }
 
@@ -37,7 +40,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
@@ -63,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
 
@@ -80,7 +83,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::LogicalExpression(logical_expr) = e else { return false };
         if !logical_expr.operator.is_coalesce()
@@ -185,7 +188,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
@@ -196,7 +199,7 @@ impl<'a> PeepholeOptimizations {
 
         let old_len = array_expr.elements.len();
         array_expr.elements.retain_mut(|el| match el {
-            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(&ctx),
+            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(ctx),
             ArrayExpressionElement::Elision(_) => false,
             match_expression!(ArrayExpressionElement) => {
                 let el_expr = el.to_expression_mut();
@@ -240,23 +243,23 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
-        if !new_expr.pure {
-            return false;
-        }
-        let mut exprs =
-            self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
-        if exprs.is_empty() {
-            return true;
-        } else if exprs.len() == 1 {
-            *e = exprs.pop().unwrap();
+        if new_expr.pure && ctx.annotations() {
+            let mut exprs =
+                self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                *e = exprs.pop().unwrap();
+                state.changed = true;
+                return false;
+            }
+            *e = ctx.ast.expression_sequence(new_expr.span, exprs);
             state.changed = true;
             return false;
         }
-        *e = ctx.ast.expression_sequence(new_expr.span, exprs);
-        state.changed = true;
         false
     }
 
@@ -265,13 +268,13 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::TemplateLiteral(temp_lit) = e else { return false };
         if temp_lit.expressions.is_empty() {
             return true;
         }
-        if temp_lit.expressions.iter().all(|e| e.to_primitive(&ctx).is_symbol() != Some(false))
+        if temp_lit.expressions.iter().all(|e| e.to_primitive(ctx).is_symbol() != Some(false))
             && temp_lit.quasis.iter().all(|q| q.value.raw.is_empty())
         {
             return false;
@@ -281,7 +284,7 @@ impl<'a> PeepholeOptimizations {
         let mut pending_to_string_required_exprs = ctx.ast.vec();
 
         for mut e in temp_lit.expressions.drain(..) {
-            if e.to_primitive(&ctx).is_symbol() != Some(false) {
+            if e.to_primitive(ctx).is_symbol() != Some(false) {
                 pending_to_string_required_exprs.push(e);
             } else if !self.remove_unused_expression(&mut e, state, ctx) {
                 if !pending_to_string_required_exprs.is_empty() {
@@ -350,7 +353,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::ObjectExpression(object_expr) = e else {
             return false;
@@ -420,7 +423,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::ConditionalExpression(conditional_expr) = e else {
             return false;
@@ -474,7 +477,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
             return false;
@@ -520,7 +523,7 @@ impl<'a> PeepholeOptimizations {
                 Self::fold_string_addition_chain(e, state, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
-            _ => !e.may_have_side_effects(&ctx),
+            _ => !e.may_have_side_effects(ctx),
         }
     }
 
@@ -528,18 +531,18 @@ impl<'a> PeepholeOptimizations {
     fn fold_string_addition_chain(
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
-            return e.to_primitive(&ctx).is_string() == Some(true);
+            return e.to_primitive(ctx).is_string() == Some(true);
         };
         if binary_expr.operator != BinaryOperator::Addition {
-            return e.to_primitive(&ctx).is_string() == Some(true);
+            return e.to_primitive(ctx).is_string() == Some(true);
         }
 
         let left_is_string = Self::fold_string_addition_chain(&mut binary_expr.left, state, ctx);
         if left_is_string {
-            if !binary_expr.left.may_have_side_effects(&ctx)
+            if !binary_expr.left.may_have_side_effects(ctx)
                 && !binary_expr.left.is_specific_string_literal("")
             {
                 binary_expr.left =
@@ -547,9 +550,9 @@ impl<'a> PeepholeOptimizations {
                 state.changed = true;
             }
 
-            let right_as_primitive = binary_expr.right.to_primitive(&ctx);
+            let right_as_primitive = binary_expr.right.to_primitive(ctx);
             if right_as_primitive.is_symbol() == Some(false)
-                && !binary_expr.right.may_have_side_effects(&ctx)
+                && !binary_expr.right.may_have_side_effects(ctx)
             {
                 *e = binary_expr.left.take_in(ctx.ast);
                 state.changed = true;
@@ -558,9 +561,9 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
 
-        let right_as_primitive = binary_expr.right.to_primitive(&ctx);
+        let right_as_primitive = binary_expr.right.to_primitive(ctx);
         if right_as_primitive.is_string() == Some(true) {
-            if !binary_expr.right.may_have_side_effects(&ctx)
+            if !binary_expr.right.may_have_side_effects(ctx)
                 && !binary_expr.right.is_specific_string_literal("")
             {
                 binary_expr.right =
@@ -576,11 +579,11 @@ impl<'a> PeepholeOptimizations {
         &self,
         e: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
-        if call_expr.pure {
+        if call_expr.pure && ctx.annotations() {
             let mut exprs =
                 self.fold_arguments_into_needed_expressions(&mut call_expr.arguments, state, ctx);
             if exprs.is_empty() {
@@ -643,7 +646,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         args: &mut Vec<'a, Argument<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Vec<'a, Expression<'a>> {
         ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
             let mut expr = match arg {
@@ -660,7 +663,10 @@ impl<'a> PeepholeOptimizations {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions, TreeShakeOptions,
+        tester::{test, test_options, test_same, test_same_options},
+    };
 
     #[test]
     fn test_remove_unused_expression() {
@@ -934,5 +940,26 @@ mod test {
         check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
         check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
         check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+    }
+
+    #[test]
+    fn treeshake_options_annotations_false() {
+        let options = CompressOptions {
+            treeshake: TreeShakeOptions { annotations: false, ..TreeShakeOptions::default() },
+            ..CompressOptions::smallest()
+        };
+        test_same_options("function test() {} /* @__PURE__ */ test()", &options);
+        test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
+
+        let options = CompressOptions {
+            treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },
+            ..CompressOptions::smallest()
+        };
+        test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
+        test_options(
+            "function test() {} /* @__PURE__ */ new test()",
+            "function test() {}",
+            &options,
+        );
     }
 }

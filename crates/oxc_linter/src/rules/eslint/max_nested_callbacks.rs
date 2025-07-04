@@ -18,9 +18,17 @@ fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDia
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct MaxNestedCallbacks {
     max: usize,
+}
+
+const DEFAULT_MAX_NESTED_CALLBACKS: usize = 10;
+
+impl Default for MaxNestedCallbacks {
+    fn default() -> Self {
+        Self { max: DEFAULT_MAX_NESTED_CALLBACKS }
+    }
 }
 
 declare_oxc_lint!(
@@ -126,7 +134,9 @@ impl Rule for MaxNestedCallbacks {
                 .and_then(|config| config.get("max"))
                 .and_then(Value::as_number)
                 .and_then(serde_json::Number::as_u64)
-                .map_or(10, |v| usize::try_from(v).unwrap_or(10))
+                .map_or(DEFAULT_MAX_NESTED_CALLBACKS, |v| {
+                    usize::try_from(v).unwrap_or(DEFAULT_MAX_NESTED_CALLBACKS)
+                })
         };
         Self { max }
     }
@@ -140,9 +150,13 @@ fn is_callback<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
     fn nested_functions(d: usize) -> String {
         ["foo(function() {".repeat(d), "});".repeat(d)].concat()
     }
+
+    let defaults = MaxNestedCallbacks::default();
+    assert_eq!(defaults.max, 10);
 
     let nested_10 = nested_functions(10);
     let nested_11 = nested_functions(11);

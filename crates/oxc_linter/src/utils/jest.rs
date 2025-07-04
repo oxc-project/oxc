@@ -187,7 +187,9 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
                         return Some(PossibleJestNode { node: parent, original });
                     } else if matches!(
                         parent_kind,
-                        AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
+                        AstKind::StaticMemberExpression(_)
+                            | AstKind::TaggedTemplateExpression(_)
+                            | AstKind::ComputedMemberExpression(_)
                     ) {
                         id = parent.id();
                     } else {

@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
-        Statement,
+        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
+        JSXFragment, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -150,6 +150,7 @@ enum InsideArrayOrIterator {
     Iterator(Span),
 }
 
+#[expect(clippy::bool_to_int_with_if)]
 fn is_in_array_or_iter<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
@@ -158,6 +159,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
+    let mut argument = None;
 
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
@@ -202,9 +204,15 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parentheses();
 
-                if let Some(v) = callee.as_member_expression() {
-                    if let Some((span, ident)) = v.static_property_info() {
-                        if TARGET_METHODS.contains(&ident) {
+                if let Some(member_expr) = callee.as_member_expression() {
+                    if let Some((span, ident)) = member_expr.static_property_info() {
+                        if TARGET_METHODS.contains(&ident)
+                            && argument.is_some_and(|argument: &Argument<'_>| {
+                                v.arguments
+                                    .get(if ident == "from" { 1 } else { 0 })
+                                    .is_some_and(|arg| arg.span() == argument.span())
+                            })
+                        {
                             return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
@@ -218,6 +226,9 @@ fn is_in_array_or_iter<'a, 'b>(
             | AstKind::JSXFragment(_) => return None,
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
+            }
+            AstKind::Argument(arg) => {
+                argument = Some(arg);
             }
             _ => {}
         }
@@ -495,6 +506,7 @@ fn test() {
             );
            }))}
         ",
+        r"const DummyComponent: FC<{ children: ReactNode }> = ({ children }) => { const wrappedChildren = Children.map(children, (child) => { return <div>{child}</div>; }); return <main>{wrappedChildren}</main>; };",
     ];
 
     let fail = vec![

@@ -129,7 +129,7 @@ use serde::Deserialize;
 
 use oxc_traverse::Traverse;
 
-use crate::context::TransformCtx;
+use crate::{context::TransformCtx, state::TransformState};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -152,4 +152,4 @@ impl<'a, 'ctx> ArrowFunctions<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ArrowFunctions<'a, '_> {}
+impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctions<'a, '_> {}

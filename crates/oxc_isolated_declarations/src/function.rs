@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         if return_type.is_none() {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
-        let params = self.transform_formal_parameters(&func.params);
+        let params = self.transform_formal_parameters(&func.params, false);
         self.ast.alloc_function(
             func.span,
             func.r#type,
@@ -113,19 +113,26 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_formal_parameters(
         &self,
         params: &FormalParameters<'a>,
+        skip_no_accessibility_param: bool,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
         }
 
-        let items =
-            self.ast.vec_from_iter(params.items.iter().enumerate().filter_map(|(index, item)| {
-                let is_remaining_params_have_required =
-                    params.items.iter().skip(index).any(|item| {
-                        !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
-                    });
-                self.transform_formal_parameter(item, is_remaining_params_have_required)
-            }));
+        let items = self.ast.vec_from_iter(
+            params
+                .items
+                .iter()
+                .enumerate()
+                .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
+                .filter_map(|(index, item)| {
+                    let is_remaining_params_have_required =
+                        params.items.iter().skip(index).any(|item| {
+                            !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
+                        });
+                    self.transform_formal_parameter(item, is_remaining_params_have_required)
+                }),
+        );
 
         if let Some(rest) = &params.rest {
             if rest.argument.type_annotation.is_none() {

@@ -1,7 +1,10 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod class_properties;
 mod class_static_block;
@@ -44,7 +47,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ES2022<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {

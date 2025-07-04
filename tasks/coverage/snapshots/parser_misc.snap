@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 43/43 (100.00%)
 Positive Passed: 43/43 (100.00%)
-Negative Passed: 45/45 (100.00%)
+Negative Passed: 47/47 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -116,6 +116,29 @@ Negative Passed: 45/45 (100.00%)
  1 │ namespace a;
    ·            ┬
    ·            ╰── `{` expected
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[misc/fail/oxc-11789-1.ts:1:12]
+ 1 │ interface i<>implements 
+   ·            ──
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11789-1.ts:1:25]
+ 1 │ interface i<>implements 
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[misc/fail/oxc-11789-2.ts:1:12]
+ 1 │ interface i<>implements K {}
+   ·            ──
+   ╰────
+
+  × TS(1176): Interface declaration cannot have 'implements' clause.
+   ╭─[misc/fail/oxc-11789-2.ts:1:14]
+ 1 │ interface i<>implements K {}
+   ·              ──────────
    ╰────
 
   × Unexpected token

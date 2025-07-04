@@ -85,7 +85,12 @@ pub fn parse_jest_fn_call<'a>(
         // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
         // the full chain is not a valid jest function call chain
         if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
-            matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
+            matches!(
+                parent_node.kind(),
+                AstKind::CallExpression(_)
+                    | AstKind::StaticMemberExpression(_)
+                    | AstKind::ComputedMemberExpression(_)
+            )
         }) {
             return None;
         }
@@ -139,9 +144,13 @@ fn parse_jest_expect_fn_call<'a>(
     }
 
     if matches!(expect_error, Some(ExpectError::MatcherNotFound)) {
-        let parent = ctx.nodes().parent_node(node.id())?;
-        if matches!(parent.kind(), AstKind::MemberExpression(_)) {
-            expect_error = Some(ExpectError::MatcherNotCalled);
+        // If the parent is a member expression, we can assume that the matcher
+        // is not called, so we can set the error to `MatcherNotCalled`.
+        match ctx.nodes().parent_kind(node.id())? {
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                expect_error = Some(ExpectError::MatcherNotCalled);
+            }
+            _ => {}
         }
     }
 
@@ -241,7 +250,9 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
 
         match parent.kind() {
             AstKind::CallExpression(_) => return false,
-            AstKind::MemberExpression(_) => node = parent,
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                node = parent;
+            }
             _ => {
                 return true;
             }

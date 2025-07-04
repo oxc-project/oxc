@@ -9,9 +9,9 @@ use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, StringLiteral,
 };
 use oxc_span::Atom;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TypeScriptOptions;
+use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
 
 use super::options::RewriteExtensionsMode;
 
@@ -48,7 +48,7 @@ impl TypeScriptRewriteExtensions {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptRewriteExtensions {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptRewriteExtensions {
     fn enter_import_declaration(
         &mut self,
         node: &mut ImportDeclaration<'a>,

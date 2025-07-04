@@ -85,7 +85,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@b1ae8d918b6e85bd611117d3d9a3be4f903ee5e4 # v1.33.1
+      - uses: crate-ci/typos@392b78fe18a52790c53f42456e46124f77346842 # v1.34.0
         with:
           files: .
 
@@ -205,16 +205,6 @@ jobs:
           components: clippy
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-      # Waiting for https://github.com/rust-lang/rust-clippy/pull/13435
-      - name: Check Char and Byte Offset
-        run: |
-          npm i @ast-grep/cli -g
-          output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
-          echo "Output: $output"
-          if [ -n "$output" ]; then
-            echo "Error: Unexpected output detected"
-            exit 1
-          fi
 
   doc:
     name: Doc

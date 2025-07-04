@@ -9,9 +9,9 @@ use oxc_allocator::CloneIn;
 use oxc_ast::ast::{AssignmentOperator, Expression};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
 
-use crate::TransformCtx;
+use crate::context::{TransformCtx, TraverseCtx};
 
 impl<'a> TransformCtx<'a> {
     /// Duplicate expression to be used twice.

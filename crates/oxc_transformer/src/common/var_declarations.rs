@@ -20,11 +20,12 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
-use oxc_traverse::{
-    Ancestor, BoundIdentifier, Traverse, TraverseCtx, ast_operations::GatherNodeParts,
-};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::GatherNodeParts};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 /// Transform that maintains the stack of `Vec<VariableDeclarator>`s, and adds a `var` statement
 /// to top of a statement block if another transform has requested that.
@@ -40,7 +41,7 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for VarDeclarations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for VarDeclarations<'a, '_> {
     fn enter_statements(
         &mut self,
         _stmts: &mut ArenaVec<'a, Statement<'a>>,

@@ -61,7 +61,9 @@ pub fn find_type_name_range(s: &str) -> Option<(usize, usize)> {
 
     // Everything is a token
     if let Some(start) = start {
-        return Some((start, s.len()));
+        if bracket == 0 {
+            return Some((start, s.len()));
+        }
     }
 
     None
@@ -133,10 +135,13 @@ t9b: number;
             ("n.n8", Some("n.n8")),
             ("n[].n9", Some("n[].n9")),
             (r#"[ n10 = ["{}", "[]"] ]"#, Some(r#"[ n10 = ["{}", "[]"] ]"#)),
-            ("[n11... c11", Some("[n11... c11")),
-            ("[n12[]\nc12", Some("[n12[]\nc12")),
+            ("[n11... c11]", Some("[n11... c11]")),
+            ("[n12[]\nc12]", Some("[n12[]\nc12]")),
             ("n12.n12", Some("n12.n12")),
             ("n13[].n13", Some("n13[].n13")),
+            // if square brackets are unmatched, `None`
+            ("[n12[]\nc12", None),
+            ("[n12\nc12", None),
         ] {
             assert_eq!(find_type_name_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }

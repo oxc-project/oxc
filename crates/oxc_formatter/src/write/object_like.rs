@@ -5,6 +5,7 @@ use crate::{
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
+        trivia::format_dangling_comments,
     },
     generated::ast_nodes::AstNode,
     options::Expand,
@@ -18,6 +19,13 @@ pub enum ObjectLike<'a, 'b> {
 }
 
 impl<'a> ObjectLike<'a, '_> {
+    fn span(&self) -> Span {
+        match self {
+            ObjectLike::ObjectExpression(o) => o.span,
+            ObjectLike::TSTypeLiteral(o) => o.span,
+        }
+    }
+
     fn members_have_leading_newline(&self, f: &Formatter<'_, 'a>) -> bool {
         // TODO: Polish the code
         match self {
@@ -56,8 +64,7 @@ impl<'a> Format<'a> for ObjectLike<'a, '_> {
         write!(f, "{")?;
 
         if self.members_are_empty() {
-            // TODO
-            // write!(f, [format_dangling_comments(self.syntax()).with_block_indent(),])?;
+            write!(f, format_dangling_comments(self.span()).with_block_indent())?;
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
             let should_expand = (f.options().expand == Expand::Auto

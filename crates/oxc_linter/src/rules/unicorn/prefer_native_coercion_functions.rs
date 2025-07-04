@@ -212,7 +212,7 @@ fn check_array_callback_methods(
         return false;
     };
 
-    if !std::ptr::eq(&call_expr.arguments[0], parent_call_expr_arg) {
+    if !std::ptr::eq(&raw const call_expr.arguments[0], parent_call_expr_arg) {
         return false;
     }
     if call_expr.optional {

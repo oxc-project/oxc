@@ -38,8 +38,9 @@ pub struct OxcParserOptions {
 
 #[napi(object)]
 #[derive(Default)]
-#[expect(clippy::empty_structs_with_brackets)]
-pub struct OxcLinterOptions {}
+pub struct OxcLinterOptions {
+    pub config: Option<String>,
+}
 
 #[napi(object)]
 #[derive(Default)]

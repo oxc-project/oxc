@@ -1,4 +1,4 @@
-use std::slice;
+use std::{num::NonZeroU64, slice};
 
 use oxc_data_structures::{code_buffer::CodeBuffer, pointer_ext::PointerExt};
 
@@ -44,14 +44,14 @@ pub struct LoneSurrogatesString<'s>(pub &'s str);
 impl ESTree for LoneSurrogatesString<'_> {
     #[inline(always)]
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        write_str(self.0, &ESCAPE_LONE_SURROGATES, serializer.buffer_mut());
+        write_str::<LoneSurrogatesEscapeTable>(self.0, serializer.buffer_mut());
     }
 }
 
 /// [`ESTree`] implementation for string slice.
 impl ESTree for str {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        write_str(self, &ESCAPE, serializer.buffer_mut());
+        write_str::<StandardEscapeTable>(self, serializer.buffer_mut());
     }
 }
 
@@ -74,8 +74,8 @@ enum Escape {
     RR = b'r',  // \x0D
     QU = b'"',  // \x22
     BS = b'\\', // \x5C
-    LO = LOSSY_REPLACEMENT_CHAR_FIRST_BYTE,
-    UU = b'u', // \x00...\x1F except the ones above
+    LO = b'X',  // Lossy escape character first byte
+    UU = b'u',  // \x00...\x1F except the ones above
 }
 
 /// Lookup table of escape sequences. A value of `b'x'` at index `i` means that byte `i`
@@ -113,13 +113,137 @@ const fn create_table(lo: Escape) -> [Escape; 256] {
     ]
 }
 
+/// Trait for tables determining whether bytes need escaping.
+trait EscapeTable {
+    /// `true` if need to escape lone surrogate escape sequences.
+    const LONE_SURROGATES: bool;
+
+    /// Get `Escape` for a byte.
+    /// If byte does not require escaping, returns `Escape::__`.
+    fn get_escape_for_byte(b: u8) -> Escape;
+
+    /// Check a block of 8 bytes for whether any byte needs escaping.
+    ///
+    /// Returns a `u64` mask, with each byte representing whether the corresponding byte in `bytes`
+    /// needs escaping or not.
+    ///
+    /// * Bytes which need escaping are represented by `0x80`.
+    /// * Bytes which don't need escaping are represented by `0`.
+    ///
+    /// If no bytes in `bytes` require escaping, the returned `u64` is 0.
+    ///
+    /// The returned `u64` is in native byte order.
+    /// i.e. 1st byte in `bytes` is lowest byte in returned `u64`.
+    ///
+    /// For `_"_____"`, returns:
+    /// * `0x0080_0000_0000_0080` on little endian.
+    /// * `0x8000_0000_0000_8000` on big endian.
+    fn get_escapes_mask(bytes: [u8; 8]) -> u64;
+}
+
+/// Escape table for standard strings (`impl ESTree for str`).
+struct StandardEscapeTable;
+
+impl EscapeTable for StandardEscapeTable {
+    const LONE_SURROGATES: bool = false;
+
+    #[inline]
+    fn get_escape_for_byte(b: u8) -> Escape {
+        ESCAPE[b as usize]
+    }
+
+    /// Adapted from:
+    /// <https://chromium.googlesource.com/v8/v8/+/1645281bbd1b183a252835d376166bd210135bbe/src/json/json-stringifier.cc#521>
+    ///
+    /// An efficient way to check 8 bytes in one go, without any branches.
+    /// <https://godbolt.org/z/TEKqxcnP4>
+    ///
+    /// I (@overlookmotel) tried to expand this search to 16 bytes using loops which I'd hoped would be
+    /// auto-vectorized to SIMD ops, but compiler does not do a good job of auto-vectorizing this.
+    /// It is SIMD-able, but would require explicit SIMD ops.
+    #[inline]
+    fn get_escapes_mask(bytes: [u8; 8]) -> u64 {
+        const SPACES: u64 = splat_u64(b' ');
+        const QUOTES: u64 = splat_u64(b'"');
+        const SLASHES: u64 = splat_u64(b'\\');
+        const ONES: u64 = splat_u64(1);
+        const TOP_BITS: u64 = splat_u64(0x80);
+
+        // Convert bytes to a `u64` in native byte order
+        let n = u64::from_ne_bytes(bytes);
+
+        // 0x00..=0x1F -> 0xE0..=0xFF (top bit set).
+        // All other ASCII bytes -> 0x00..=0x5F (top bit unset).
+        // Some non-ASCII bytes also have top bit set.
+        let less_than_spaces = n.wrapping_sub(SPACES);
+        // `"` -> 0xFF (top bit set).
+        // All other ASCII bytes -> values with top bit unset.
+        let quotes = (n ^ QUOTES).wrapping_sub(ONES);
+        // `\` -> 0xFF (top bit set).
+        // All other ASCII bytes -> values with top bit unset.
+        let slashes = (n ^ SLASHES).wrapping_sub(ONES);
+        // Any bytes requiring escape -> top bit set.
+        // Any ASCII bytes not requiring escape -> top bit unset.
+        // Non-ASCII bytes -> may or may not have top bit set.
+        let escapes = less_than_spaces | quotes | slashes;
+        // ASCII bytes -> 0x80 (top bit set).
+        // Non-ASCII bytes -> 0x00 (top bit unset).
+        let asciis = (!n) & TOP_BITS;
+        // Mask `escapes` to only top bits, and zero any non-ASCII bytes.
+        // Now any bytes needing escape = 0x80.
+        // Any bytes not needing escape = 0.
+        escapes & asciis
+    }
+}
+
+/// Escape table for strings containing lone surrogates (`impl ESTree for LoneSurrogatesString`).
+struct LoneSurrogatesEscapeTable;
+
+impl EscapeTable for LoneSurrogatesEscapeTable {
+    const LONE_SURROGATES: bool = true;
+
+    #[inline]
+    fn get_escape_for_byte(b: u8) -> Escape {
+        ESCAPE_LONE_SURROGATES[b as usize]
+    }
+
+    #[inline]
+    fn get_escapes_mask(bytes: [u8; 8]) -> u64 {
+        const LOSSYS: u64 = splat_u64(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+        const ONES: u64 = splat_u64(1);
+        const TOP_BITS: u64 = splat_u64(0x80);
+
+        // Get mask for ASCII escapes
+        let ascii_escapes = StandardEscapeTable::get_escapes_mask(bytes);
+
+        // Convert bytes to a `u64` in native byte order
+        let n = u64::from_ne_bytes(bytes);
+
+        // 0xEF -> 0xFF (top bit set).
+        // All other non-ASCII bytes -> values with top bit unset.
+        let lossys = (n ^ LOSSYS).wrapping_sub(ONES);
+        // ASCII bytes -> 0x00 (top bit unset).
+        // Non-ASCII bytes -> 0x80 (top bit set).
+        let non_ascii = n & TOP_BITS;
+        // Mask `lossys` to only top bits, and zero any ASCII bytes
+        let lossys = lossys & non_ascii;
+
+        // Combine masks for ASCII escapes and lossy replacement characters.
+        // Now any bytes needing escape = 0x80.
+        // Any bytes not needing escape = 0.
+        ascii_escapes | lossys
+    }
+}
+
+/// Create `u64` with all bytes set to `n`.
+/// e.g. `0x20` -> `0x2020202020202020`.
+const fn splat_u64(n: u8) -> u64 {
+    (u64::MAX / 0xFF) * (n as u64)
+}
+
 /// Write string to buffer.
 /// String is wrapped in `"`s, and with any characters which are not valid in JSON escaped.
-//
-// `#[inline(always)]` because this is a hot path, and to make compiler remove the code
-// for handling lone surrogates when outputting a normal string (the common case).
-#[inline(always)]
-fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
+fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
     buffer.print_ascii_byte(b'"');
 
     let bytes = s.as_bytes();
@@ -128,35 +252,47 @@ fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
 
     'outer: loop {
         // Consume bytes which require no unescaping.
-        // Search in batches of 16 bytes for speed with longer strings.
-        const BATCH_SIZE: usize = 16;
-
+        // Search in batches of 8 bytes for speed with longer strings.
+        // Use arithmetic operations to check 8 bytes in one go.
         let mut byte;
         let mut escape;
         'inner: loop {
-            if let Some(batch) = iter.as_slice().get(..BATCH_SIZE) {
-                // Enough bytes remaining to process as a batch. Compiler unrolls this loop.
-                for (i, &next_byte) in batch.iter().enumerate() {
-                    byte = next_byte;
-                    escape = table[byte as usize];
-                    if escape != Escape::__ {
-                        // Consume bytes before this one.
-                        // SAFETY: `i < BATCH_SIZE` and there are at least `BATCH_SIZE` bytes remaining in `iter`
-                        unsafe { advance_unchecked(&mut iter, i) };
-                        break 'inner;
-                    }
+            if let Some(chunk) = iter.as_slice().get(..8) {
+                let chunk: &[u8; 8] = chunk.try_into().unwrap(); // Infallible
+
+                let escapes_mask = T::get_escapes_mask(*chunk);
+                // `NonZeroU64::trailing_zeros` is more efficient than `u64::trailing_zeros`
+                // on some platforms. Ditto `leading_zeros`.
+                if let Some(escapes_mask) = NonZeroU64::new(escapes_mask) {
+                    // At least 1 byte in this chunk needs escaping. Get index of that byte.
+                    let found_bit_index = if cfg!(target_endian = "little") {
+                        escapes_mask.trailing_zeros()
+                    } else {
+                        escapes_mask.leading_zeros()
+                    };
+                    let found_byte_index = (found_bit_index as usize) / 8;
+
+                    // SAFETY: `escapes_mask` is non-zero, so must have at least 1 bit set.
+                    // So `found_bit_index <= 63`, therefore `found_byte_index <= 7`.
+                    // Chunk is 8 bytes, so `found_byte_index` cannot be out of bounds.
+                    byte = unsafe { *chunk.get_unchecked(found_byte_index) };
+                    escape = T::get_escape_for_byte(byte);
+                    // Consume bytes before this one.
+                    // SAFETY: `found_byte_index < 8` and there are at least 8 bytes remaining in `iter`
+                    unsafe { advance_unchecked(&mut iter, found_byte_index) };
+                    break 'inner;
                 }
 
                 // Consume the whole batch.
                 // SAFETY: There are at least `BATCH_SIZE` bytes remaining in `iter`.
-                unsafe { advance_unchecked(&mut iter, BATCH_SIZE) };
+                unsafe { advance_unchecked(&mut iter, 8) };
 
                 // Go round `'inner` loop again to continue searching
             } else {
                 // Not enough bytes remaining for a batch. Search byte-by-byte.
                 for (i, &next_byte) in iter.clone().enumerate() {
                     byte = next_byte;
-                    escape = table[byte as usize];
+                    escape = T::get_escape_for_byte(byte);
                     if escape != Escape::__ {
                         // Consume bytes before this one.
                         // SAFETY: `i` is an index of `iter`, so cannot be out of bounds.
@@ -166,7 +302,7 @@ fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
                 }
 
                 // Got to end of string with no further characters requiring escaping found.
-                // No need to advance `iter`, as we don't use it's current pointer again.
+                // No need to advance `iter`, as we don't use its current pointer again.
                 break 'outer;
             }
         }
@@ -174,10 +310,8 @@ fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
         // Found a character that needs escaping
 
         // Handle lone surrogates.
-        // `table == &ESCAPE_LONE_SURROGATES` is statically knowable when this function is inlined.
-        // That condition is included to remove this whole block when not converting lone surrogates
-        // in `impl ESTree for str`.
-        if table == &ESCAPE_LONE_SURROGATES && escape == Escape::LO {
+        // Skip this block if not escaping lone surrogates.
+        if T::LONE_SURROGATES && escape == Escape::LO {
             // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character,
             // so reading next 2 bytes cannot be out of bounds
             let next_2_bytes = unsafe { iter.as_slice().get_unchecked(1..3) };
@@ -298,6 +432,7 @@ unsafe fn advance_unchecked(iter: &mut slice::Iter<u8>, count: usize) {
     };
 }
 
+/// Write escape sequence to `buffer`.
 fn write_char_escape(escape: Escape, byte: u8, buffer: &mut CodeBuffer) {
     #[expect(clippy::if_not_else)]
     if escape != Escape::UU {
@@ -340,6 +475,7 @@ mod tests {
                 "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
                 r#""\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f""#,
             ),
+            (r"\r\n\q", r#""\\r\\n\\q""#),
             (
                 r#"They call me "Bob" but I prefer "Dennis", innit?"#,
                 r#""They call me \"Bob\" but I prefer \"Dennis\", innit?""#,
@@ -347,7 +483,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new();
+            let mut serializer = CompactTSSerializer::new(false);
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -359,7 +495,7 @@ mod tests {
         let cases = [(String::new(), r#""""#), ("foobar".to_string(), r#""foobar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new();
+            let mut serializer = CompactTSSerializer::new(false);
             input.to_string().serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -371,7 +507,7 @@ mod tests {
         let cases = [("", r#""""#), ("a", r#""a""#), ("abc", r#""abc""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new();
+            let mut serializer = CompactTSSerializer::new(false);
             JsonSafeString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -387,10 +523,14 @@ mod tests {
             ("_x_\u{FFFD}d834\u{FFFD}d835", r#""_x_\ud834\ud835""#),
             ("\u{FFFD}d834\u{FFFD}d835_y_", r#""\ud834\ud835_y_""#),
             ("_x_\u{FFFD}d834_y_\u{FFFD}d835_z_", r#""_x_\ud834_y_\ud835_z_""#),
+            (
+                "They call me \"Bob\" but I prefer \"Den\u{FFFD}d834\\qnis\", innit?",
+                r#""They call me \"Bob\" but I prefer \"Den\ud834\\qnis\", innit?""#,
+            ),
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new();
+            let mut serializer = CompactTSSerializer::new(false);
             LoneSurrogatesString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

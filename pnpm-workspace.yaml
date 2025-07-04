@@ -8,5 +8,5 @@ packages:
 
 catalog:
   "@napi-rs/cli": 3.0.0-alpha.88
-  "vitest": 3.2.2
+  "vitest": 3.2.4
   "typescript": 5.8.3

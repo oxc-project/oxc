@@ -9,6 +9,7 @@ pub use super::{
         tag::{LabelId, Tag, TagKind},
         *,
     },
+    format_extensions::{MemoizeFormat, Memoized},
     formatter::Formatter,
     trivia::{format_dangling_comments, format_leading_comments},
 };

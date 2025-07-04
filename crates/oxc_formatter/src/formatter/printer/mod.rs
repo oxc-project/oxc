@@ -52,7 +52,7 @@ impl<'a> Printer<'a> {
     /// starting at the specified indentation level
     pub fn print_with_indent(
         mut self,
-        document: &'a Document,
+        document: &'a Document<'a>,
         indent: u16,
     ) -> PrintResult<Printed> {
         let mut stack = PrintCallStack::new(PrintElementArgs::new());
@@ -93,14 +93,13 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            FormatElement::StaticText { text } => self.print_text(text, None),
-            FormatElement::DynamicText { text, source_position } => {
-                self.print_text(text, Some(*source_position));
+            FormatElement::StaticText { text } => self.print_text(text),
+            FormatElement::DynamicText { text } => {
+                self.print_text(text);
             }
             FormatElement::LocatedTokenText { slice, source_position } => {
-                self.print_text(slice, Some(*source_position));
+                self.print_text(slice);
             }
-
             FormatElement::Line(line_mode) => {
                 if args.mode().is_flat() {
                     match line_mode {
@@ -301,7 +300,7 @@ impl<'a> Printer<'a> {
         result
     }
 
-    fn print_text(&mut self, text: &str, source_position: Option<TextSize>) {
+    fn print_text(&mut self, text: &str) {
         if !self.state.pending_indent.is_empty() {
             let (indent_char, repeat_count) = match self.options.indent_style() {
                 IndentStyle::Tab => ('\t', 1),
@@ -701,7 +700,7 @@ struct PrinterState<'a> {
     fits_stack: Vec<StackFrame>,
     fits_indent_stack: Vec<Indention>,
     fits_stack_tem_indent: Vec<Indention>,
-    fits_queue: Vec<&'a [FormatElement]>,
+    fits_queue: Vec<&'a [FormatElement<'a>]>,
 }
 
 /// Tracks the mode in which groups with ids are printed. Stores the groups at `group.id()` index.
@@ -1016,8 +1015,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
             }
 
-            FormatElement::StaticText { text } => return Ok(self.fits_text(text)),
-            FormatElement::DynamicText { text, .. } => return Ok(self.fits_text(text)),
+            FormatElement::StaticText { text } | FormatElement::DynamicText { text, .. } => {
+                return Ok(self.fits_text(text));
+            }
             FormatElement::LocatedTokenText { slice, .. } => return Ok(self.fits_text(slice)),
 
             FormatElement::LineSuffixBoundary => {

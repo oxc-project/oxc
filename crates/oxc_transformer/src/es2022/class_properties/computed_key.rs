@@ -3,7 +3,8 @@
 
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+
+use crate::context::TraverseCtx;
 
 use super::ClassProperties;
 

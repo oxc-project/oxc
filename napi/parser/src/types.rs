@@ -23,6 +23,14 @@ pub struct ParserOptions {
     #[napi(ts_type = "'js' | 'ts'")]
     pub ast_type: Option<String>,
 
+    /// Controls whether the `range` property is included on AST nodes.
+    /// The `range` property is a `[number, number]` which indicates the start/end offsets
+    /// of the node in the file contents.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub range: Option<bool>,
+
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by

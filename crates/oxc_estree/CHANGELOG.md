@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🚜 Refactor
+
+- 016634f ast/estree: Introduce `serialize_span` method (#12013) (overlookmotel)
+- 5584e76 ast/estree: Add `#[inline(always)]` to `ranges` methods (#12009) (overlookmotel)
+
+### 📚 Documentation
+
+- c71529f ast/estree: Document `ranges` methods (#12011) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+
+
+
+## [0.73.1] - 2025-06-17
+
+### ⚡ Performance
+
+- c4faee2 ast/estree: Faster serializing strings to JSON (#11753) (overlookmotel)
+
+### 🧪 Testing
+
+- c53a7bd ast/estree: More tests for escaping strings in JSON (#11756) (overlookmotel)
+
+
 
 # Changelog
 

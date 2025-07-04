@@ -10,7 +10,7 @@ impl<'a> LineSuffixes<'a> {
     /// Extends the line suffixes with `elements`, storing their call stack arguments with them.
     pub(super) fn extend<I>(&mut self, args: PrintElementArgs, elements: I)
     where
-        I: IntoIterator<Item = &'a FormatElement>,
+        I: IntoIterator<Item = &'a FormatElement<'a>>,
     {
         self.suffixes.extend(elements.into_iter().map(LineSuffixEntry::Suffix));
         self.suffixes.push(LineSuffixEntry::Args(args));
@@ -32,7 +32,7 @@ impl<'a> LineSuffixes<'a> {
 #[derive(Debug, Copy, Clone)]
 pub(super) enum LineSuffixEntry<'a> {
     /// A line suffix to print
-    Suffix(&'a FormatElement),
+    Suffix(&'a FormatElement<'a>),
 
     /// Potentially changed call arguments that should be used to format any following items.
     Args(PrintElementArgs),

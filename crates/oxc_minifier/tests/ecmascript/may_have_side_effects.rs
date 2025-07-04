@@ -25,17 +25,17 @@ impl Default for Ctx {
         }
     }
 }
-impl IsGlobalReference for Ctx {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+impl<'a> IsGlobalReference<'a> for Ctx {
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
-impl MayHaveSideEffectsContext for Ctx {
-    fn respect_annotations(&self) -> bool {
+impl MayHaveSideEffectsContext<'_> for Ctx {
+    fn annotations(&self) -> bool {
         self.annotation
     }
 
-    fn is_pure_call(&self, callee: &Expression) -> bool {
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
         if let Expression::Identifier(id) = callee {
             self.pure_function_names.iter().any(|name| name == id.name.as_str())
         } else {

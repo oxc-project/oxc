@@ -249,6 +249,8 @@ impl<'a> Symbol<'_, 'a> {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::AssignmentTarget(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
                     return options.is_ignored_assignment_target(self, &assignment.left);
@@ -845,7 +847,7 @@ impl<'a> Symbol<'_, 'a> {
         loop {
             node = match node.kind() {
                 AstKind::TSTypeQuery(_) => return true,
-                AstKind::TSQualifiedName(_) | AstKind::TSTypeName(_) => {
+                AstKind::TSQualifiedName(_) | AstKind::IdentifierReference(_) => {
                     if let Some(parent) = self.nodes().parent_node(node.id()) {
                         parent
                     } else {

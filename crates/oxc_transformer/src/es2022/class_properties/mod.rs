@@ -204,9 +204,12 @@ use serde::Deserialize;
 use oxc_ast::ast::*;
 use oxc_span::Atom;
 use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod class;
 mod class_bindings;
@@ -316,7 +319,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {

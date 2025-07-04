@@ -1,0 +1,1 @@
+interface i<>implements K {}

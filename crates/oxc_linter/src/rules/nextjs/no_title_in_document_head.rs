@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName, ModuleDeclaration},
+    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -20,18 +20,43 @@ pub struct NoTitleInDocumentHead;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevent usage of `<title>` with `Head` component from `next/document`.
     ///
     /// ### Why is this bad?
     ///
+    /// A `<title>` element should only be used for any `<head>` code that is common for all pages.
+    /// Title tags should be defined at the page-level using `next/head` instead.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
+    /// import {Head} from 'next/document'
+    ///
+    /// export function Home() {
+    ///   return (
+    ///     <div>
+    ///       <Head>
+    ///         <title>My page title</title>
+    ///       </Head>
+    ///     </div>
+    ///   )
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
+    /// import Head from 'next/head'
+    ///
+    /// export function Home() {
+    ///   return (
+    ///     <div>
+    ///       <Head>
+    ///         <title>My page title</title>
+    ///       </Head>
+    ///     </div>
+    ///   )
+    /// }
     /// ```
     NoTitleInDocumentHead,
     nextjs,
@@ -40,9 +65,7 @@ declare_oxc_lint!(
 
 impl Rule for NoTitleInDocumentHead {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
-            node.kind()
-        else {
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
 
@@ -99,7 +122,7 @@ fn test() {
 
     let pass = vec![
         r#"import Head from "next/head";
-			
+
 			     class Test {
 			      render() {
 			        return (
@@ -110,7 +133,7 @@ fn test() {
 			      }
 			     }"#,
         r#"import Document, { Html, Head } from "next/document";
-			
+
 			     class MyDocument extends Document {
 			      render() {
 			        return (
@@ -121,7 +144,7 @@ fn test() {
 			        );
 			      }
 			     }
-			
+
 			     export default MyDocument;
 			     "#,
     ];
@@ -129,7 +152,7 @@ fn test() {
     let fail = vec![
         r#"
 			      import { Head } from "next/document";
-			
+
 			      class Test {
 			        render() {
 			          return (

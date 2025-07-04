@@ -170,7 +170,7 @@ impl Rule for Namespace {
                     let name = entry.local_name.name();
 
                     match node.kind() {
-                        AstKind::MemberExpression(member) => {
+                        member if member.is_member_expression_kind() => {
                             if matches!(
                                 ctx.nodes().parent_kind(node.id()),
                                 Some(AstKind::SimpleAssignmentTarget(_))
@@ -178,7 +178,9 @@ impl Rule for Namespace {
                                 ctx.diagnostic(assignment(member.span(), name));
                             }
 
-                            if !self.allow_computed && member.is_computed() {
+                            if !self.allow_computed
+                                && matches!(member, AstKind::ComputedMemberExpression(_))
+                            {
                                 return ctx.diagnostic(computed_reference(member.span(), name));
                             }
 
@@ -267,8 +269,11 @@ fn check_deep_namespace_for_node(
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
 ) -> Option<()> {
-    let expr = node.kind().as_member_expression()?;
-    let (span, name) = expr.static_property_info()?;
+    let (span, name) = match node.kind() {
+        AstKind::StaticMemberExpression(mem_expr) => mem_expr.static_property_info(),
+        AstKind::ComputedMemberExpression(computed_expr) => computed_expr.static_property_info()?,
+        _ => return None,
+    };
 
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id())?;

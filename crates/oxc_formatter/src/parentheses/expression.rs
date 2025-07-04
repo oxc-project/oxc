@@ -11,7 +11,7 @@ use crate::{
     Format,
     formatter::Formatter,
     generated::ast_nodes::{AstNode, AstNodes},
-    write::{BinaryLikeExpression, should_flatten},
+    write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
 };
 
 use super::NeedsParentheses;
@@ -59,7 +59,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::TSNonNullExpression(it) => it.needs_parentheses(f),
             AstNodes::TSInstantiationExpression(it) => it.needs_parentheses(f),
             AstNodes::V8IntrinsicExpression(it) => it.needs_parentheses(f),
-            AstNodes::MemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::StaticMemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::ComputedMemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::PrivateFieldExpression(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -70,10 +72,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        if let AstNodes::MemberExpression(member) = self.parent {
-            if let MemberExpression::StaticMemberExpression(e) = member.as_ref() {
-                return e.object.without_parentheses().span() == self.span();
-            }
+        if let AstNodes::StaticMemberExpression(member) = self.parent {
+            return member.object.without_parentheses().span() == self.span();
         }
         false
     }
@@ -114,7 +114,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let parent = self.parent;
         is_class_extends(parent, self.span())
-            || is_first_in_statement(parent, FirstInStatementMode::ExpressionStatementOrArrow)
+            || is_first_in_statement(
+                self.span,
+                parent,
+                FirstInStatementMode::ExpressionStatementOrArrow,
+            )
     }
 }
 
@@ -150,8 +154,21 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // TODO
-        matches!(self.parent, AstNodes::NewExpression(_) | AstNodes::ExportDefaultDeclaration(_))
+        matches!(self.parent, AstNodes::NewExpression(_))
+            || matches!(self.parent, AstNodes::ExportDefaultDeclaration(_)) && {
+                let callee = &self.callee;
+                let callee_span = callee.span();
+                let leftmost = ExpressionLeftSide::leftmost(callee);
+                // require parens for iife and
+                // when the leftmost expression is not a class expression or a function expression
+                callee_span != leftmost.span()
+                    && matches!(
+                        leftmost,
+                        ExpressionLeftSide::Expression(
+                            Expression::ClassExpression(_) | Expression::FunctionExpression(_)
+                        )
+                    )
+            }
     }
 }
 
@@ -258,7 +275,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Function<'a>> {
         matches!(
             parent,
             AstNodes::CallExpression(_) | AstNodes::NewExpression(_) | AstNodes::TemplateLiteral(_)
-        ) || is_first_in_statement(parent, FirstInStatementMode::ExpressionOrExportDefault)
+        ) || is_first_in_statement(
+            self.span,
+            parent,
+            FirstInStatementMode::ExpressionOrExportDefault,
+        )
     }
 }
 
@@ -270,12 +291,17 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
                 let parent_parent = parent.parent;
                 if let AstNodes::FunctionBody(body) = parent_parent {
                     let parent_parent_parent = body.parent;
-                    return matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression());
+                    matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression())
+                } else {
+                    is_first_in_statement(
+                        self.span,
+                        self.parent,
+                        FirstInStatementMode::ExpressionStatementOrArrow,
+                    ) && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
                 }
-                false
             }
-            AstNodes::ExportDefaultDeclaration(_) => true,
-            _ => false,
+            AstNodes::AssignmentExpression(_) | AstNodes::ComputedMemberExpression(_) => false,
+            _ => true,
         }
     }
 }
@@ -315,7 +341,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Class<'a>> {
             | AstNodes::NewExpression(_)
             | AstNodes::ExportDefaultDeclaration(_) => true,
             parent if is_class_extends(parent, self.span()) => true,
-            _ => is_first_in_statement(parent, FirstInStatementMode::ExpressionOrExportDefault),
+            _ => is_first_in_statement(
+                self.span,
+                parent,
+                FirstInStatementMode::ExpressionOrExportDefault,
+            ),
         }
     }
 }
@@ -416,10 +446,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSNonNullExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        if let AstNodes::MemberExpression(e) = self.parent {
-            return e.object().without_parentheses().span() == self.span();
-        }
-        false
+        let expr = match self.parent {
+            AstNodes::StaticMemberExpression(expr) => &expr.object,
+            AstNodes::ComputedMemberExpression(expr) => &expr.object,
+            AstNodes::PrivateFieldExpression(expr) => &expr.object,
+            _ => return false,
+        };
+
+        self.span == expr.span()
     }
 }
 
@@ -434,7 +468,7 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         | AstNodes::SpreadElement(_)
         | AstNodes::CallExpression(_)
         | AstNodes::NewExpression(_)
-        | AstNodes::MemberExpression(_)
+        | AstNodes::StaticMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
         AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
@@ -522,19 +556,25 @@ fn unary_like_expression_needs_parens(node: UnaryLike<'_, '_>) -> bool {
 fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
     if matches!(
         parent,
-        // JsSyntaxKind::JS_EXTENDS_CLAUSE
-        // | JsSyntaxKind::JS_TEMPLATE_EXPRESSION
-        AstNodes::TSNonNullExpression(_) | AstNodes::CallExpression(_) | AstNodes::NewExpression(_)
-    ) {
+        AstNodes::TSNonNullExpression(_)
+            | AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::StaticMemberExpression(_)
+            | AstNodes::TemplateLiteral(_)
+            | AstNodes::TaggedTemplateExpression(_)
+    ) || is_class_extends(parent, span)
+    {
         return true;
     }
-    if let AstNodes::MemberExpression(member_expr) = parent {
-        return member_expr.object().get_inner_expression().span() == span;
+
+    if let AstNodes::ComputedMemberExpression(computed_member_expr) = parent {
+        return computed_member_expr.object.span() == span;
     }
+
     false
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FirstInStatementMode {
     /// Considers [ExpressionStatement] and the body of [ArrowFunctionExpression] as the first statement.
     ExpressionStatementOrArrow,
@@ -546,19 +586,87 @@ pub enum FirstInStatementMode {
 ///
 /// Traverses upwards the tree for as long as the `node` is the left most expression until the node isn't
 /// the left most node or reached a statement.
-fn is_first_in_statement(parent: &AstNodes<'_>, mode: FirstInStatementMode) -> bool {
-    // TODO: incomplete
-    // https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/parentheses/expression.rs#L979-L1105
+fn is_first_in_statement(
+    mut current_span: Span,
+    mut parent: &AstNodes<'_>,
+    mode: FirstInStatementMode,
+) -> bool {
+    let mut is_not_first_iteration = false;
+    loop {
+        match parent {
+            AstNodes::ExpressionStatement(stmt) => {
+                if matches!(stmt.parent.parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
+                {
+                    if mode == FirstInStatementMode::ExpressionStatementOrArrow {
+                        if is_not_first_iteration
+                            && matches!(
+                                stmt.expression,
+                                Expression::SequenceExpression(_)
+                                    | Expression::AssignmentExpression(_)
+                            )
+                        {
+                            // The original node doesn't need parens,
+                            // because an ancestor requires parens.
+                            break;
+                        }
+                    } else {
+                        return false;
+                    }
+                }
 
-    if let AstNodes::ExpressionStatement(parent) = parent {
-        let parent_parent = parent.parent;
-        if let AstNodes::FunctionBody(body) = parent_parent {
-            let parent_parent_parent = body.parent;
-            return !matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression());
+                return true;
+            }
+            AstNodes::StaticMemberExpression(_)
+            | AstNodes::TemplateLiteral(_)
+            | AstNodes::TaggedTemplateExpression(_)
+            | AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::TSAsExpression(_)
+            | AstNodes::TSSatisfiesExpression(_)
+            | AstNodes::TSNonNullExpression(_) => {}
+            AstNodes::SequenceExpression(sequence) => {
+                if sequence.expressions.first().unwrap().span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::ComputedMemberExpression(member) => {
+                if member.object.span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::AssignmentExpression(assignment) => {
+                if assignment.left.span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::ConditionalExpression(conditional) => {
+                if conditional.test.span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::BinaryExpression(binary) => {
+                if binary.left.span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::LogicalExpression(logical) => {
+                if logical.left.span() != current_span {
+                    break;
+                }
+            }
+            AstNodes::ExportDefaultDeclaration(_)
+                if mode == FirstInStatementMode::ExpressionOrExportDefault =>
+            {
+                return !is_not_first_iteration;
+            }
+            _ => break,
         }
-        return true;
+        current_span = parent.span();
+        parent = parent.parent();
+        is_not_first_iteration = true;
     }
-    matches!(parent, AstNodes::ExportDefaultDeclaration(_))
+
+    false
 }
 
 fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {

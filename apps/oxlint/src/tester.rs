@@ -37,7 +37,7 @@ impl Tester {
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
+        let _ = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
     }
 
     pub fn test_and_snapshot(&self, args: &[&str]) {
@@ -59,7 +59,7 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice(b"----------\n");
-            let result = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
+            let result = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
 
             output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());

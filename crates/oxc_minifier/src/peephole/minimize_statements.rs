@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         stmts: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
@@ -290,7 +290,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
@@ -340,7 +340,7 @@ impl<'a> PeepholeOptimizations {
     fn join_sequence(
         a: &mut Expression<'a>,
         b: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         let a = a.take_in(ctx.ast);
         let b = b.take_in(ctx.ast);
@@ -388,7 +388,7 @@ impl<'a> PeepholeOptimizations {
         mut expr_stmt: Box<'a, ExpressionStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             let a = &mut prev_expr_stmt.expression;
@@ -405,7 +405,7 @@ impl<'a> PeepholeOptimizations {
         mut switch_stmt: Box<'a, SwitchStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             let a = &mut prev_expr_stmt.expression;
@@ -425,7 +425,7 @@ impl<'a> PeepholeOptimizations {
         mut if_stmt: Box<'a, IfStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         // Absorb a previous expression statement
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -572,7 +572,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             if let Some(argument) = &mut ret_stmt.argument {
@@ -592,7 +592,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
             let a = &mut prev_expr_stmt.expression;
@@ -610,7 +610,7 @@ impl<'a> PeepholeOptimizations {
         mut for_stmt: Box<'a, ForStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         match result.last_mut() {
             Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
@@ -659,7 +659,7 @@ impl<'a> PeepholeOptimizations {
         mut for_in_stmt: Box<'a, ForInStatement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         match result.last_mut() {
             // "a; for (var b in c) d" => "for (var b in a, c) d"
@@ -675,7 +675,7 @@ impl<'a> PeepholeOptimizations {
                                 && var_decl.declarations[0]
                                     .init
                                     .as_ref()
-                                    .is_some_and(|init| init.may_have_side_effects(&ctx))
+                                    .is_some_and(|init| init.may_have_side_effects(ctx))
                         } else {
                             // the spec does not allow multiple declarations though
                             true

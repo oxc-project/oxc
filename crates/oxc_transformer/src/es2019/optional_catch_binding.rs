@@ -36,7 +36,9 @@
 use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
+
+use crate::{context::TraverseCtx, state::TransformState};
 
 pub struct OptionalCatchBinding;
 
@@ -46,7 +48,7 @@ impl OptionalCatchBinding {
     }
 }
 
-impl<'a> Traverse<'a> for OptionalCatchBinding {
+impl<'a> Traverse<'a, TransformState<'a>> for OptionalCatchBinding {
     /// If CatchClause has no param, add a parameter called `unused`.
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         if clause.param.is_some() {

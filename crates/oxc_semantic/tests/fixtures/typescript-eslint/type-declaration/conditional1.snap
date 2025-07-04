@@ -23,7 +23,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "flags": "ReferenceFlags(Type)",
                     "id": 1,
                     "name": "V",
-                    "node_id": 15
+                    "node_id": 13
                   }
                 ]
               }
@@ -44,7 +44,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "U",
-                "node_id": 9
+                "node_id": 8
               }
             ]
           }

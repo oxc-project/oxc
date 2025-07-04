@@ -80,8 +80,15 @@ impl Rule for NoExtraNonNullAssertion {
                     None
                 }
             }
-            AstKind::MemberExpression(expr) if expr.optional() => {
-                if let Expression::TSNonNullExpression(expr) = expr.object().without_parentheses() {
+            AstKind::StaticMemberExpression(expr) if expr.optional => {
+                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
+                    Some(expr)
+                } else {
+                    None
+                }
+            }
+            AstKind::ComputedMemberExpression(expr) if expr.optional => {
+                if let Expression::TSNonNullExpression(expr) = expr.object.without_parentheses() {
                     Some(expr)
                 } else {
                     None

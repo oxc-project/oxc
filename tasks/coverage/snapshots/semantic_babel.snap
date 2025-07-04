@@ -176,13 +176,19 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-babel-7/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-dot-this/input.js
@@ -196,13 +202,19 @@ after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-with-options/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-with-options-babel-7/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain/input.ts
@@ -1416,7 +1428,6 @@ after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
-An interface can only extend an identifier/qualified-name with optional type arguments.
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -2677,13 +2688,19 @@ after transform: ScopeId(0): ["A", "B", "T", "Types"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic/input.ts
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-babel-7/input.ts
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/indexed/input.ts

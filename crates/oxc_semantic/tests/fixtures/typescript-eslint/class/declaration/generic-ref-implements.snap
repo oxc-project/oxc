@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "flags": "ReferenceFlags(Type)",
                 "id": 1,
                 "name": "A",
-                "node_id": 12
+                "node_id": 10
               }
             ]
           }

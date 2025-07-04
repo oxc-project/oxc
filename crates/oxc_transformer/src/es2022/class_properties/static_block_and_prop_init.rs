@@ -7,9 +7,8 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use oxc_traverse::TraverseCtx;
 
-use crate::utils::ast_builder::wrap_statements_in_arrow_function_iife;
+use crate::{context::TraverseCtx, utils::ast_builder::wrap_statements_in_arrow_function_iife};
 
 use super::{
     ClassProperties,
@@ -216,7 +215,7 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     scope_depth: u32,
     /// Converter for `super` expressions.
     super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
-    /// `TraverseCtx` object.
+    /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 

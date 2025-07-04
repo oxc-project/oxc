@@ -182,8 +182,8 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.5 Hashbang Comments
     pub(super) fn read_hashbang_comment(&mut self) -> Kind {
-        while let Some(c) = self.peek_char().as_ref() {
-            if is_line_terminator(*c) {
+        while let Some(c) = self.peek_char() {
+            if is_line_terminator(c) {
                 break;
             }
             self.consume_char();

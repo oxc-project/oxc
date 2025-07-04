@@ -12,9 +12,9 @@ export default function generateTraverseTraitCode(types) {
     const snakeName = camelToSnake(type.name);
     traverseMethods += `
       #[inline]
-      fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
+      fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a, State>) {}
       #[inline]
-      fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
+      fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a, State>) {}
     `;
   }
 
@@ -25,7 +25,7 @@ export default function generateTraverseTraitCode(types) {
     use crate::TraverseCtx;
 
     #[expect(unused_variables)]
-    pub trait Traverse<'a> {
+    pub trait Traverse<'a, State> {
       ${traverseMethods}
     }
   `;

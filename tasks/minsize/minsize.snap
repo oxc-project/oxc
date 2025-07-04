@@ -21,7 +21,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 3.20 MB    | 1.01 MB    | 1.01 MB    | 324.12 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.28 MB    | 2.31 MB    | 466.11 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.28 MB    | 2.31 MB    | 466.10 kB  | 488.28 kB  | antd.js   
 
 10.95 MB   | 3.35 MB    | 3.49 MB    | 860.93 kB  | 915.50 kB  | typescript.js
 

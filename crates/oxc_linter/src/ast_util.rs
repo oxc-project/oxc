@@ -399,7 +399,7 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let member_expr = call_expr.callee.without_parentheses().as_member_expression()?;
+    let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
     member_expr.static_property_info()
 }
 
@@ -653,7 +653,8 @@ pub fn is_default_this_binding<'a>(
     let mut current_node = node;
     loop {
         let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
-        match parent.kind() {
+        let parent_kind = parent.kind();
+        match parent_kind {
             AstKind::ChainExpression(_)
             | AstKind::ConditionalExpression(_)
             | AstKind::LogicalExpression(_)
@@ -719,9 +720,12 @@ pub fn is_default_this_binding<'a>(
 
                 return !is_constructor;
             }
-            AstKind::MemberExpression(mem_expr) => {
-                if mem_expr.object().span() == current_node.span()
-                    && matches!(mem_expr.static_property_name(), Some("apply" | "bind" | "call"))
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                let member_expr_kind = parent_kind.as_member_expression_kind().unwrap();
+                if member_expr_kind.object().span() == current_node.span()
+                    && member_expr_kind
+                        .static_property_name()
+                        .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
                     if let AstKind::CallExpression(call_expr) = node.kind() {

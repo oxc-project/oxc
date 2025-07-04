@@ -5,7 +5,8 @@
     "lib": ["ES2021"],
     "outDir": "dist",
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true
   },
   "include": ["./client", "./tests"],
   "exclude": ["node_modules", ".vscode-test"]

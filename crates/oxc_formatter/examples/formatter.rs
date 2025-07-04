@@ -17,7 +17,11 @@ fn main() -> Result<(), String> {
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::new();
     let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            preserve_parens: false,
+            allow_v8_intrinsics: true,
+            ..ParseOptions::default()
+        })
         .parse();
 
     for error in ret.errors {

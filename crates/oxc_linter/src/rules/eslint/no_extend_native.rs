@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, ContentEq, GetSpan};
+use oxc_span::{CompactStr, GetSpan};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -97,8 +97,7 @@ impl Rule for NoExtendNative {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
-                let compact_name = CompactStr::from(name);
-                if self.exceptions.contains(&compact_name) {
+                if self.exceptions.iter().any(|exception| name == exception) {
                     continue;
                 }
                 // If the first letter is capital, like `Object`, we will assume it is a native object
@@ -183,22 +182,24 @@ fn get_property_assignment<'a>(
 ) -> Option<&'a AstNode<'a>> {
     for parent in ctx.nodes().ancestors(node.id()).skip(1) {
         match parent.kind() {
-            AstKind::AssignmentExpression(_) => return Some(parent),
-            AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
-                if let AstKind::MemberExpression(node_expr) = node.kind() {
-                    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
-                    // given node is the `expression` of the computed member expression)
-                    if computed
-                        .expression
-                        .as_member_expression()
-                        .is_some_and(|expression| expression.content_eq(node_expr))
-                    {
-                        return None;
-                    }
-                    return None;
-                }
+            AstKind::AssignmentExpression(assignment_expr)
+                if assignment_expr.left.span().contains_inclusive(node.span()) =>
+            {
+                return Some(parent);
             }
-            _ => {}
+            AstKind::ArrayAssignmentTarget(assign_target)
+                if assign_target.elements.iter().any(|e| {
+                    e.as_ref().is_some_and(|e| e.span().contains_inclusive(node.span()))
+                }) =>
+            {
+                return Some(parent);
+            }
+            AstKind::ComputedMemberExpression(computed_expr)
+                if computed_expr.object.span().contains_inclusive(node.span()) => {}
+            AstKind::StaticMemberExpression(_)
+            | AstKind::SimpleAssignmentTarget(_)
+            | AstKind::AssignmentTarget(_) => {}
+            _ => return None,
         }
     }
     None
@@ -215,51 +216,27 @@ fn get_prototype_property_accessed<'a>(
     };
     let parent = ctx.nodes().parent_node(node.id())?;
     let mut prototype_node = Some(parent);
-    let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
-        return None;
-    };
-    let prop_name = prop_access_expr.static_property_name()?;
-    if prop_name != "prototype" {
-        return None;
-    }
-    let grandparent_node = ctx.nodes().parent_node(parent.id())?;
-
-    if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-        prototype_node = Some(grandparent_node);
-        if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
-            prototype_node = Some(grandparent_parent);
-        }
-    }
-
-    if is_computed_member_expression_matching(grandparent_node, prop_access_expr) {
-        prototype_node = Some(grandparent_node);
-    }
-
-    prototype_node
-}
-
-fn is_computed_member_expression_matching(
-    node: &AstNode,
-    prop_access_expr: &MemberExpression,
-) -> bool {
-    match node.kind() {
-        AstKind::ChainExpression(chain_expr) => {
-            if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
-                return computed
-                    .object
-                    .as_member_expression()
-                    .is_some_and(|object| object.content_eq(prop_access_expr));
+    match parent.kind() {
+        prop_access_expr if prop_access_expr.is_member_expression_kind() => {
+            let prop_name = prop_access_expr
+                .as_member_expression_kind()
+                .and_then(|m| m.static_property_name())?;
+            if prop_name != "prototype" {
+                return None;
             }
+            let grandparent_node = ctx.nodes().parent_node(parent.id())?;
+
+            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
+                prototype_node = Some(grandparent_node);
+                if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
+                    prototype_node = Some(grandparent_parent);
+                }
+            }
+
+            prototype_node
         }
-        AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
-            return computed
-                .object
-                .as_member_expression()
-                .is_some_and(|object| object.content_eq(prop_access_expr));
-        }
-        _ => {}
+        _ => None,
     }
-    false
 }
 
 #[test]
@@ -287,6 +264,14 @@ fn test() {
         ("Object.defineProperties()", None),
         ("function foo() { var Object = function() {}; Object.prototype.p = 0 }", None),
         ("{ let Object = function() {}; Object.prototype.p = 0 }", None), // { "ecmaVersion": 6 }
+        ("x = Object.prototype.p", None),
+        ("x = Array.prototype.p", None),
+        ("Array.#prototype.p = 0", None),
+        ("foo(Number.prototype.xyz).x = 1", None),
+        ("let { z = Array.prototype.p } = {} ", None),
+        ("Object.x.defineProperty(Array.prototype, 'p', {value: 0})", None),
+        ("Object['defineProperty']['x'](Array.prototype, 'p', {value: 0})", None),
+        ("(Object?.x?.['prototype'])['p'] = 0", None),
     ];
 
     let fail = vec![
@@ -315,6 +300,7 @@ fn test() {
         ("Array.prototype.p &&= 0", None), // { "ecmaVersion": 2021 },
         ("Array.prototype.p ||= 0", None), // { "ecmaVersion": 2021 },
         ("Array.prototype.p ??= 0", None), // { "ecmaVersion": 2021 }
+        ("[Array.prototype.p] = [() => {}]", None),
     ];
 
     Tester::new(NoExtendNative::NAME, NoExtendNative::PLUGIN, pass, fail).test_and_snapshot();

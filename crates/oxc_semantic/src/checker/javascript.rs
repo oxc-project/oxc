@@ -1,7 +1,7 @@
 use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
@@ -140,7 +140,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                AstKind::MemberExpression(_) => break,
+                m if m.is_member_expression_kind() => break,
                 _ => {}
             }
         }
@@ -314,7 +314,7 @@ fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_label(span1)
 }
 
-pub fn check_module_declaration(decl: &ModuleDeclaration, ctx: &SemanticBuilder<'_>) {
+pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
     // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
     // Basically we need to "upgrade" from script to module if we see any module syntax inside the
     // semantic builder
@@ -323,12 +323,12 @@ pub fn check_module_declaration(decl: &ModuleDeclaration, ctx: &SemanticBuilder<
     }
 
     let text = match decl {
-        ModuleDeclaration::ImportDeclaration(_) => "import statement",
-        ModuleDeclaration::ExportAllDeclaration(_)
-        | ModuleDeclaration::ExportDefaultDeclaration(_)
-        | ModuleDeclaration::ExportNamedDeclaration(_)
-        | ModuleDeclaration::TSExportAssignment(_)
-        | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
+        ModuleDeclarationKind::Import(_) => "import statement",
+        ModuleDeclarationKind::ExportAll(_)
+        | ModuleDeclarationKind::ExportDefault(_)
+        | ModuleDeclarationKind::ExportNamed(_)
+        | ModuleDeclarationKind::TSExportAssignment(_)
+        | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
     };
     let start = decl.span().start;
     let span = Span::sized(start, 6);
@@ -935,12 +935,13 @@ fn super_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
-pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
-    if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
-        // `super.#m`
-        if private_expr.object.is_super() {
-            ctx.error(super_private(private_expr.span));
-        }
+pub fn check_private_field_expression(
+    private_expr: &PrivateFieldExpression,
+    ctx: &SemanticBuilder<'_>,
+) {
+    // `super.#m`
+    if private_expr.object.is_super() {
+        ctx.error(super_private(private_expr.span));
     }
 }
 
