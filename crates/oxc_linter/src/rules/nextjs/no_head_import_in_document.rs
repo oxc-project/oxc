@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn no_head_import_in_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `next/head` in `pages/_document.js`.")
@@ -45,30 +49,34 @@ impl Rule for NoHeadImportInDocument {
             return;
         }
 
+        ctx.diagnostic(no_head_import_in_document_diagnostic(import_decl.span));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         let full_file_path = ctx.file_path();
 
-        if let Some(file_name) = full_file_path.file_name() {
-            if let Some(file_name) = file_name.to_str() {
-                // check `_document.*` case
-
-                if file_name.starts_with("_document.") {
-                    ctx.diagnostic(no_head_import_in_document_diagnostic(import_decl.span));
-                // check `_document/index.*` case
-                } else if file_name.starts_with("index") {
-                    if let Some(p) = full_file_path.parent() {
-                        if let Some(file_name) = p.file_name() {
-                            if let Some(file_name) = file_name.to_str() {
-                                if file_name.starts_with("_document") {
-                                    ctx.diagnostic(no_head_import_in_document_diagnostic(
-                                        import_decl.span,
-                                    ));
-                                }
-                            }
-                        }
+        if let Some(file_name) =
+            full_file_path.file_name().as_ref().and_then(|file_name| file_name.to_str())
+        {
+            // check `_document.*` case
+            if file_name.starts_with("_document.") {
+                return true;
+            // check `_document/index.*` case
+            } else if file_name.starts_with("index") {
+                if let Some(file_name) = full_file_path
+                    .parent()
+                    .as_ref()
+                    .and_then(|p| p.file_name())
+                    .and_then(|file_name| file_name.to_str())
+                {
+                    if file_name.starts_with("_document") {
+                        return true;
                     }
                 }
             }
         }
+
+        false
     }
 }
 
