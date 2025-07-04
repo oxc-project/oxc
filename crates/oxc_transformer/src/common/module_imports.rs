@@ -42,17 +42,14 @@ use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 pub struct ModuleImports<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }
@@ -158,7 +155,7 @@ impl<'a> ModuleImportsStore<'a> {
     }
 
     /// Insert `import` / `require` statements at top of program.
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn insert_into_program(&self, transform_ctx: &TransformState<'a>, ctx: &mut TraverseCtx<'a>) {
         if transform_ctx.source_type.is_script() {
             self.insert_require_statements(transform_ctx, ctx);
         } else {
@@ -166,7 +163,7 @@ impl<'a> ModuleImportsStore<'a> {
         }
     }
 
-    fn insert_import_statements(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_import_statements(&self, transform_ctx: &TransformState<'a>, ctx: &TraverseCtx<'a>) {
         let mut imports = self.imports.borrow_mut();
         let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
         transform_ctx.top_level_statements.insert_statements(stmts);
@@ -174,7 +171,7 @@ impl<'a> ModuleImportsStore<'a> {
 
     fn insert_require_statements(
         &self,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut imports = self.imports.borrow_mut();

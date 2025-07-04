@@ -14,12 +14,11 @@ use crate::{
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
-    state::TransformState,
 };
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, TransformState<'a>>;
 
-pub struct TransformCtx<'a> {
+pub struct TransformState<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     /// <https://babeljs.io/docs/options#filename>
@@ -53,7 +52,7 @@ pub struct TransformCtx<'a> {
     pub is_class_properties_plugin_enabled: bool,
 }
 
-impl TransformCtx<'_> {
+impl TransformState<'_> {
     pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension

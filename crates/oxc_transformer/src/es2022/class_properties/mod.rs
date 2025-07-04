@@ -206,10 +206,7 @@ use oxc_span::Atom;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 mod class;
 mod class_bindings;
@@ -253,7 +250,7 @@ pub struct ClassProperties<'a, 'ctx> {
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
 
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     // ----- State used during all phases of transform -----
     //
@@ -294,7 +291,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
         let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
