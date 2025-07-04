@@ -15,8 +15,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        InnermostFunction, contains_jsx, find_innermost_function_with_jsx, function_contains_jsx,
-        function_like_contains_jsx, is_hoc_call, is_react_component_name,
+        InnermostFunction, contains_jsx, expression_contains_jsx, find_innermost_function_with_jsx,
+        function_contains_jsx, is_hoc_call, is_react_component_name,
     },
 };
 use oxc_macros::declare_oxc_lint;
@@ -433,7 +433,7 @@ impl Rule for DisplayName {
                                                     _returned_func,
                                                 ) = expr
                                                 {
-                                                    if function_like_contains_jsx(expr) {
+                                                    if expression_contains_jsx(expr) {
                                                         tracker.add_component(
                                                             "<anonymous>",
                                                             func.span,
@@ -470,7 +470,7 @@ impl Rule for DisplayName {
                                             _returned_func,
                                         ) = expr
                                         {
-                                            if function_like_contains_jsx(expr) {
+                                            if expression_contains_jsx(expr) {
                                                 tracker.add_component(
                                                     "<anonymous>",
                                                     func.span,
