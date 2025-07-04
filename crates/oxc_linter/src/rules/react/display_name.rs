@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// ```
     DisplayName,
     react,
-    correctness
+    style
 );
 
 #[derive(Debug, Clone)]
