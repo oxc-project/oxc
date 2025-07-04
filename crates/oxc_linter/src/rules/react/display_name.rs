@@ -5,7 +5,7 @@ use oxc_ast::{
         ObjectPropertyKind, PropertyKey, Statement, VariableDeclaration,
     },
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_span::CompactStr;
 use oxc_span::GetSpan;
@@ -21,6 +21,18 @@ use crate::{
 };
 use oxc_macros::declare_oxc_lint;
 use rustc_hash::{FxHashMap, FxHashSet};
+
+fn component_display_name_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Component definition is missing display name")
+        .with_help("Add a displayName property to the component")
+        .with_label(span)
+}
+
+fn context_display_name_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Context definition is missing display name")
+        .with_help("Add a displayName property to the context")
+        .with_label(span)
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -211,18 +223,6 @@ fn build_component_name(path_parts: &[CompactStr], additional_part: Option<&str>
     }
 
     CompactStr::from(result)
-}
-
-fn component_display_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Component definition is missing display name")
-        .with_help("Add a displayName property to the component")
-        .with_labels::<LabeledSpan, _>([span.into()])
-}
-
-fn context_display_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Context definition is missing display name")
-        .with_help("Add a displayName property to the context")
-        .with_labels::<LabeledSpan, _>([span.into()])
 }
 
 #[derive(Debug, Clone, Default)]
