@@ -93,10 +93,7 @@ impl ComponentTracker {
             .filter(|(name, comp)| {
                 !comp.has_display_name && !self.resolved_names.contains_key(*name)
             })
-            .map(|(name, comp)| {
-                eprintln!("Unresolved component: {} at {:?}", name, comp.span);
-                comp.span
-            })
+            .map(|(_name, comp)| comp.span)
             .collect();
         unresolved
     }
@@ -277,7 +274,7 @@ impl Rule for DisplayName {
                                     }
                                 } else {
                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
-                                    tracker.resolve_display_name(&name.name);
+                                    tracker.resolve_display_name(name.name);
                                 }
                             } else if ignore_transpiler_name
                                 && function_returns_create_react_class(func)
@@ -418,14 +415,13 @@ impl Rule for DisplayName {
                                                                 } else {
                                                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
                                                                     tracker.resolve_display_name(
-                                                                        &name.name,
+                                                                        name.name,
                                                                     );
                                                                 }
                                                             } else {
                                                                 // Anonymous function
                                                                 tracker.add_component(
-                                                                    "<anonymous export>"
-                                                                        .to_string(),
+                                                                    "<anonymous export>",
                                                                     assign.span,
                                                                     ComponentType::Function,
                                                                 );
@@ -566,7 +562,7 @@ impl Rule for DisplayName {
                                                         );
                                                     } else {
                                                         // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
-                                                        tracker.resolve_display_name(&name.name);
+                                                        tracker.resolve_display_name(name.name);
                                                     }
                                                 } else {
                                                     // Anonymous function
@@ -594,7 +590,7 @@ impl Rule for DisplayName {
                                             ComponentType::Function,
                                         );
                                     } else {
-                                        tracker.resolve_display_name(&name.name);
+                                        tracker.resolve_display_name(name.name);
                                     }
                                 }
                             }
@@ -644,7 +640,7 @@ impl Rule for DisplayName {
                                     });
 
                                     if has_static_display_name {
-                                        tracker.resolve_display_name(&name.name);
+                                        tracker.resolve_display_name(name.name);
                                     } else if contains_jsx {
                                         if ignore_transpiler_name {
                                             tracker.add_component(
@@ -767,16 +763,14 @@ impl Rule for DisplayName {
                 }
                 AstKind::ExportNamedDeclaration(export) => {
                     // Handle export const Component = observer(() => { ... })
-                    if let Some(declaration) = &export.declaration {
-                        if let Declaration::VariableDeclaration(decl) = declaration {
-                            process_variable_declaration(
-                                &mut tracker,
-                                decl,
-                                ignore_transpiler_name,
-                                check_context_objects,
-                                ctx,
-                            );
-                        }
+                    if let Some(Declaration::VariableDeclaration(decl)) = &export.declaration {
+                        process_variable_declaration(
+                            &mut tracker,
+                            decl,
+                            ignore_transpiler_name,
+                            check_context_objects,
+                            ctx,
+                        );
                     }
                 }
                 _ => {}
@@ -843,7 +837,7 @@ fn process_variable_declaration<'a>(
                     if ignore_transpiler_name {
                         tracker.add_component(component_name, decl.span, ComponentType::Function);
                     } else {
-                        tracker.resolve_display_name(&component_name);
+                        tracker.resolve_display_name(component_name);
                     }
                 } else {
                     // For curried/nested functions, check if the innermost function is named
@@ -858,7 +852,7 @@ fn process_variable_declaration<'a>(
                                         ComponentType::Function,
                                     );
                                 } else {
-                                    tracker.resolve_display_name(&func_id.name);
+                                    tracker.resolve_display_name(func_id.name);
                                 }
                             } else {
                                 // Anonymous function: always require explicit displayName
@@ -1132,28 +1126,7 @@ fn process_object_expression(
                                 full_path.push(prop_name.clone());
                                 let component_name = full_path
                                     .iter()
-                                    .map(|s| s.as_str())
-                                    .collect::<Vec<_>>()
-                                    .join(".");
-                                if ignore_transpiler_name {
-                                    tracker.add_component(
-                                        component_name,
-                                        expr.span(),
-                                        ComponentType::ObjectProperty,
-                                    );
-                                } else {
-                                    tracker.resolve_display_name(&component_name);
-                                }
-                            }
-                        }
-                    } else if prop_name.chars().next().is_some_and(char::is_uppercase) {
-                        if let Expression::FunctionExpression(func_expr) = expr {
-                            if function_contains_jsx(func_expr) {
-                                let mut full_path = current_path.to_owned();
-                                full_path.push(prop_name.clone());
-                                let component_name = full_path
-                                    .iter()
-                                    .map(|s| s.as_str())
+                                    .map(oxc_span::CompactStr::as_str)
                                     .collect::<Vec<_>>()
                                     .join(".");
                                 if ignore_transpiler_name {
@@ -1173,8 +1146,11 @@ fn process_object_expression(
                         if function_contains_jsx(func_expr) {
                             let mut full_path = current_path.to_owned();
                             full_path.push(prop_name.clone());
-                            let component_name =
-                                full_path.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(".");
+                            let component_name = full_path
+                                .iter()
+                                .map(oxc_span::CompactStr::as_str)
+                                .collect::<Vec<_>>()
+                                .join(".");
                             if ignore_transpiler_name {
                                 tracker.add_component(
                                     component_name,
@@ -1295,27 +1271,18 @@ enum InnermostFunction<'a> {
     ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
-fn find_innermost_function_with_jsx<'a, 'b>(
+fn find_innermost_function_with_jsx<'a>(
     expr: &'a Expression<'a>,
-    ctx: &LintContext<'b>,
+    ctx: &LintContext<'_>,
 ) -> Option<InnermostFunction<'a>> {
     match expr {
         Expression::CallExpression(call) => {
-            eprintln!("find_innermost_function_with_jsx: found CallExpression");
             // Check if this is a HOC call
             if let Some(callee_name) = call.callee_name() {
-                eprintln!("find_innermost_function_with_jsx: callee_name = '{}'", callee_name);
                 if is_hoc_call(callee_name, ctx) {
-                    eprintln!(
-                        "find_innermost_function_with_jsx: '{}' is a HOC, checking first argument",
-                        callee_name
-                    );
                     // This is a HOC, recursively check the first argument
                     if let Some(first_arg) = call.arguments.first() {
                         if let Some(inner_expr) = first_arg.as_expression() {
-                            eprintln!(
-                                "find_innermost_function_with_jsx: recursively checking inner expression"
-                            );
                             return find_innermost_function_with_jsx(inner_expr, ctx);
                         }
                     }
@@ -1328,10 +1295,8 @@ fn find_innermost_function_with_jsx<'a, 'b>(
             if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
         }
         Expression::ArrowFunctionExpression(arrow_func) => {
-            eprintln!("find_innermost_function_with_jsx: found ArrowFunctionExpression");
             // Check if this arrow function contains JSX
             if function_like_contains_jsx(expr) {
-                eprintln!("find_innermost_function_with_jsx: arrow function contains JSX");
                 Some(InnermostFunction::ArrowFunction(arrow_func))
             } else {
                 // Check if this arrow function returns another function that contains JSX
@@ -1432,22 +1397,16 @@ fn test_react_version_for_context_objects(ctx: &LintContext) -> bool {
 }
 
 fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
-    eprintln!("Checking if '{}' is a HOC call", callee_name);
-
     // Check built-in HOCs
     if matches!(callee_name, "memo" | "forwardRef")
         || callee_name.ends_with("memo")
         || callee_name.ends_with("forwardRef")
     {
-        eprintln!("'{}' is a built-in HOC", callee_name);
         return true;
     }
 
     // Check component wrapper functions from settings
-    let is_wrapper = ctx.settings().react.is_component_wrapper_function(callee_name);
-    eprintln!("'{}' is_component_wrapper_function: {}", callee_name, is_wrapper);
-
-    is_wrapper
+    ctx.settings().react.is_component_wrapper_function(callee_name)
 }
 
 #[test]
