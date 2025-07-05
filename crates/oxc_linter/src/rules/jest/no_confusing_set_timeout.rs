@@ -137,9 +137,7 @@ fn collect_jest_reference_id(
         if !is_jest_call(ctx.semantic().reference_name(reference)) {
             continue;
         }
-        let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
-            continue;
-        };
+        let parent_node = nodes.parent_node(reference.node_id());
         if !parent_node.kind().is_member_expression_kind() {
             continue;
         }
@@ -161,9 +159,7 @@ fn handle_jest_set_time_out<'a>(
     for reference_id in reference_id_list {
         let reference = symbol_table.get_reference(reference_id);
 
-        let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
-            continue;
-        };
+        let parent_node = nodes.parent_node(reference.node_id());
 
         if !is_jest_call(ctx.semantic().reference_name(reference)) {
             if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
@@ -202,17 +198,11 @@ fn is_jest_fn_call<'a>(
     let mut id = parent_node.id();
     loop {
         let parent = ctx.nodes().parent_node(id);
-        if let Some(parent) = parent {
-            let parent_kind = parent.kind();
-            if matches!(
-                parent_kind,
-                AstKind::CallExpression(_) | AstKind::TaggedTemplateExpression(_)
-            ) || parent_kind.is_member_expression_kind()
-            {
-                id = parent.id();
-            } else {
-                break;
-            }
+        let parent_kind = parent.kind();
+        if matches!(parent_kind, AstKind::CallExpression(_) | AstKind::TaggedTemplateExpression(_))
+            || parent_kind.is_member_expression_kind()
+        {
+            id = parent.id();
         } else {
             break;
         }

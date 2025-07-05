@@ -186,10 +186,8 @@ impl Rule for PreferSetHas {
 
         if references.any(|reference| {
             let node = ctx.nodes().get_node(reference.node_id());
-            let Some(parent_id) = ctx.nodes().parent_id(node.id()) else {
-                return true;
-            };
-            let Some(AstKind::CallExpression(call_expression)) = ctx.nodes().parent_kind(parent_id)
+            let parent_id = ctx.nodes().parent_id(node.id());
+            let AstKind::CallExpression(call_expression) = ctx.nodes().parent_kind(parent_id)
             else {
                 return true;
             };
@@ -200,8 +198,7 @@ impl Rule for PreferSetHas {
             if arg.is_spread() {
                 return true;
             }
-            let Some(AstKind::StaticMemberExpression(member_expr)) =
-                ctx.nodes().parent_kind(node.id())
+            let AstKind::StaticMemberExpression(member_expr) = ctx.nodes().parent_kind(node.id())
             else {
                 return true;
             };
@@ -272,10 +269,9 @@ impl Rule for PreferSetHas {
             let references = symbol_table.get_resolved_references(symbol_id);
             for reference in references {
                 let node = ctx.nodes().get_node(reference.node_id());
-                let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-                    continue;
-                };
-                let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
+                let AstKind::StaticMemberExpression(member_expr) =
+                    ctx.nodes().parent_kind(node.id())
+                else {
                     continue;
                 };
                 let property_info = member_expr.static_property_info();

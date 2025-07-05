@@ -89,11 +89,7 @@ impl Rule for ConsistentGenericConstructors {
                 self.check(type_ann, init, ctx);
             }
             AstKind::AssignmentPattern(assignment_pattern) => {
-                let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
-                    return;
-                };
-
-                if !matches!(parent, AstKind::FormalParameter(_)) {
+                if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::FormalParameter(_)) {
                     return;
                 }
 

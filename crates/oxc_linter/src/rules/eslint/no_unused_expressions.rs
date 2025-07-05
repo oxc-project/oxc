@@ -93,11 +93,11 @@ impl Rule for NoUnusedExpressions {
 }
 
 fn is_parent_arrow_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+    let parent = ctx.nodes().parent_node(node.id());
 
     let AstKind::FunctionBody(_) = parent.kind() else { return false };
 
-    let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) else { return false };
+    let grand_parent = ctx.nodes().parent_node(parent.id());
 
     let AstKind::ArrowFunctionExpression(arrow_function_expression) = grand_parent.kind() else {
         return false;

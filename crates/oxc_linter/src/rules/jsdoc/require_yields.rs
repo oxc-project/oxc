@@ -198,7 +198,8 @@ impl Rule for RequireYields {
                 // Find the nearest generator function
                 let mut generator_func_node = None;
                 let mut current_node = node;
-                while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
+                while !matches!(current_node.kind(), AstKind::Program(_)) {
+                    let parent_node = ctx.nodes().parent_node(current_node.id());
                     // If syntax is valid, `yield` should be inside a generator function
                     if let AstKind::Function(func) = parent_node.kind() {
                         if func.generator && (func.is_expression() || func.is_declaration()) {

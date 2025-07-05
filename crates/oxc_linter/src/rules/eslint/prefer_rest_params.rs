@@ -83,7 +83,8 @@ impl Rule for PreferRestParams {
 
 fn is_inside_of_function(node: &AstNode, ctx: &LintContext) -> bool {
     let mut current = node;
-    while let Some(parent) = ctx.nodes().parent_node(current.id()) {
+    while !matches!(current.kind(), AstKind::Program(_)) {
+        let parent = ctx.nodes().parent_node(current.id());
         if matches!(parent.kind(), AstKind::Function(_)) {
             return true;
         }
@@ -93,11 +94,8 @@ fn is_inside_of_function(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 fn is_not_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
-    let parent = ctx.nodes().parent_node(identifier.id());
-    if let Some(parent) = parent {
-        if let AstKind::StaticMemberExpression(member) = parent.kind() {
-            return member.object.span() == identifier.span();
-        }
+    if let AstKind::StaticMemberExpression(member) = ctx.nodes().parent_kind(identifier.id()) {
+        return member.object.span() == identifier.span();
     }
     false
 }

@@ -64,6 +64,7 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {
+            AstKind::Program(_) => return None,
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_)
@@ -79,13 +80,13 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             => {
                 // /** This JSDoc should NOT found for `VariableDeclaration` */
                 // export const foo = () => {}
-                let parent_node = semantic.nodes().parent_node(current_node.id())?;
+                let parent_node = semantic.nodes().parent_node(current_node.id());
                 match parent_node.kind() {
                     AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => return Some(parent_node),
                     _ => return None
                 }
             },
-            _ => current_node = semantic.nodes().parent_node(current_node.id())?,
+            _ => current_node = semantic.nodes().parent_node(current_node.id()),
         }
     }
 

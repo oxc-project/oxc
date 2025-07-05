@@ -145,10 +145,10 @@ impl Rule for NoPlusplus {
 ///   - An operand of a sequence expression that is child of another sequence expression, etc.,
 ///     up to the sequence expression that is the update node: for (;; foo(), (bar(), (baz(), i++))) {}
 fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> Option<bool> {
-    let mut cur = ctx.nodes().parent_node(node.id())?;
+    let mut cur = ctx.nodes().parent_node(node.id());
 
     while let AstKind::SequenceExpression(_) | AstKind::ParenthesizedExpression(_) = cur.kind() {
-        cur = ctx.nodes().parent_node(cur.id())?;
+        cur = ctx.nodes().parent_node(cur.id());
     }
 
     Some(matches!(cur.kind(), AstKind::ForStatement(stmt) if stmt.update.is_some()))

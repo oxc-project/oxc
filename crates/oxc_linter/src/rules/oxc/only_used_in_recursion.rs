@@ -168,8 +168,7 @@ fn create_diagnostic(
             for reference in ctx.semantic().symbol_references(function_id.symbol_id()) {
                 let node = ctx.nodes().get_node(reference.node_id());
 
-                if let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(node.id())
-                {
+                if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) {
                     if call_expr.arguments.len() != function_parameters.items.len()
                         || function_span.contains_inclusive(call_expr.span)
                     {
@@ -276,11 +275,11 @@ fn is_argument_only_used_in_recursion<'a>(
     let function_symbol_id = function_id.symbol_id();
 
     for reference in references {
-        let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) else {
+        let AstKind::Argument(argument) = ctx.nodes().parent_kind(reference.node_id()) else {
             return false;
         };
-        let Some(AstKind::CallExpression(call_expr)) =
-            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).unwrap().id())
+        let AstKind::CallExpression(call_expr) =
+            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).id())
         else {
             return false;
         };
@@ -318,9 +317,7 @@ fn is_property_only_used_in_recursion_jsx(
         // 1. The reference is inside a JSXExpressionContainer.
         // 2. The JSXElement calls the recursive function itself.
         // 3. The reference is in a JSXAttribute, and the attribute name has the same name as the function.
-        let Some(may_jsx_expr_container) = ctx.nodes().parent_node(reference.node_id()) else {
-            return false;
-        };
+        let may_jsx_expr_container = ctx.nodes().parent_node(reference.node_id());
         let AstKind::JSXExpressionContainer(_) = may_jsx_expr_container.kind() else {
             // In this case, we simply ignore the references inside JSXExpressionContainer that are not single-node expression.
             //   e.g. <Increment count={count+1} />
@@ -383,10 +380,7 @@ fn is_function_maybe_reassigned<'a>(
     ctx: &'a LintContext<'_>,
 ) -> bool {
     ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
-        matches!(
-            ctx.nodes().parent_kind(reference.node_id()),
-            Some(AstKind::SimpleAssignmentTarget(_))
-        )
+        matches!(ctx.nodes().parent_kind(reference.node_id()), AstKind::SimpleAssignmentTarget(_))
     })
 }
 

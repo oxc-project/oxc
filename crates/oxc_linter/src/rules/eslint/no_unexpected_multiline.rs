@@ -113,7 +113,7 @@ impl Rule for NoUnexpectedMultiline {
                 if call_expr.optional {
                     return;
                 }
-                if let Some(AstKind::ChainExpression(_)) = ctx.nodes().parent_kind(node.id()) {
+                if let AstKind::ChainExpression(_) = ctx.nodes().parent_kind(node.id()) {
                     return;
                 }
 
@@ -175,7 +175,7 @@ impl Rule for NoUnexpectedMultiline {
                 if binary_expr.operator != BinaryOperator::Division {
                     return;
                 }
-                let Some(AstKind::BinaryExpression(parent_binary_expr)) =
+                let AstKind::BinaryExpression(parent_binary_expr) =
                     ctx.nodes().parent_kind(node.id())
                 else {
                     return;

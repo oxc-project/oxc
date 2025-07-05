@@ -148,7 +148,7 @@ impl GetterReturn {
 
     /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
-        let parent = ctx.nodes().parent_node(node.id())?;
+        let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
                 if matches!(mdef.kind, MethodDefinitionKind::Get) {
@@ -163,9 +163,9 @@ impl GetterReturn {
                     return Some(false);
                 }
 
-                let parent_2 = ctx.nodes().parent_node(parent.id())?;
-                let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
-                let parent_4 = ctx.nodes().parent_node(parent_3.id())?;
+                let parent_2 = ctx.nodes().parent_node(parent.id());
+                let parent_3 = ctx.nodes().parent_node(parent_2.id());
+                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 // handle (X())
                 match parent_4.kind() {
                     AstKind::ParenthesizedExpression(p) => {
@@ -181,8 +181,8 @@ impl GetterReturn {
                     _ => {}
                 }
 
-                let parent_5 = ctx.nodes().parent_node(parent_4.id())?;
-                let parent_6 = ctx.nodes().parent_node(parent_5.id())?;
+                let parent_5 = ctx.nodes().parent_node(parent_4.id());
+                let parent_6 = ctx.nodes().parent_node(parent_5.id());
                 match parent_6.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {

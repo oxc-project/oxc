@@ -138,7 +138,7 @@ impl Rule for MediaHasCaption {
             return;
         }
 
-        let Some(AstKind::JSXElement(parent)) = ctx.nodes().parent_kind(node.id()) else {
+        let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
 

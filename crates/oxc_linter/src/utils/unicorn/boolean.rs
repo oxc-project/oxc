@@ -29,9 +29,9 @@ pub fn is_boolean_call(kind: &AstKind) -> bool {
 }
 pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let arg_id = ctx.nodes().parent_id(node.id());
-    let parent = arg_id.and_then(|id| ctx.nodes().parent_kind(id));
+    let parent = ctx.nodes().parent_kind(arg_id);
     // println!("{parent:#?}");
-    matches!(parent, Some(parent) if is_boolean_call(&parent))
+    is_boolean_call(&parent)
 }
 
 pub fn is_boolean_node<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
@@ -89,11 +89,10 @@ pub fn get_boolean_ancestor<'a, 'b>(
                 cur = parent;
                 continue;
             }
-            if let Some(parent) = ctx.nodes().parent_node(parent.id()) {
-                if is_boolean_call(&parent.kind()) {
-                    cur = parent;
-                    continue;
-                }
+            let parent = ctx.nodes().parent_node(parent.id());
+            if is_boolean_call(&parent.kind()) {
+                cur = parent;
+                continue;
             }
             break;
         }

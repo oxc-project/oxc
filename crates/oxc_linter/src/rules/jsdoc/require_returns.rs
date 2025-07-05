@@ -145,7 +145,8 @@ impl Rule for RequireReturns {
                 // IMO: This is a fault of the original rule design...
                 AstKind::ReturnStatement(return_stmt) => {
                     let mut current_node = node;
-                    while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
+                    while !matches!(current_node.kind(), AstKind::Program(_)) {
+                        let parent_node = ctx.nodes().parent_node(current_node.id());
                         match parent_node.kind() {
                             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                                 // Ignore `return;`
@@ -278,7 +279,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                     // IMO: This is a fault of the original rule design...
                     for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
                         // Check if `resolve` is called with value
-                        match ctx.nodes().parent_node(resolve_ref.node_id())?.kind() {
+                        match ctx.nodes().parent_kind(resolve_ref.node_id()) {
                             // `resolve(foo)`
                             AstKind::CallExpression(call_expr) => {
                                 if !call_expr.arguments.is_empty() {

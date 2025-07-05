@@ -204,7 +204,7 @@ pub fn get_enclosing_function<'a, 'b>(
         {
             return Some(current_node);
         }
-        current_node = semantic.nodes().parent_node(current_node.id())?;
+        current_node = semantic.nodes().parent_node(current_node.id());
     }
 }
 
@@ -222,11 +222,10 @@ pub fn outermost_paren<'a, 'b>(
     let mut node = node;
 
     loop {
-        if let Some(parent) = semantic.nodes().parent_node(node.id()) {
-            if let AstKind::ParenthesizedExpression(_) = parent.kind() {
-                node = parent;
-                continue;
-            }
+        let parent = semantic.nodes().parent_node(node.id());
+        if let AstKind::ParenthesizedExpression(_) = parent.kind() {
+            node = parent;
+            continue;
         }
 
         break;
@@ -652,7 +651,7 @@ pub fn is_default_this_binding<'a>(
 
     let mut current_node = node;
     loop {
-        let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
+        let parent = semantic.nodes().parent_node(current_node.id());
         let parent_kind = parent.kind();
         match parent_kind {
             AstKind::ChainExpression(_)

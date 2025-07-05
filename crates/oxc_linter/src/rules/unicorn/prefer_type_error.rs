@@ -64,9 +64,7 @@ impl Rule for PreferTypeError {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         let AstKind::BlockStatement(block_stmt) = parent.kind() else {
             return;
@@ -76,11 +74,7 @@ impl Rule for PreferTypeError {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
-            return;
-        };
-
-        let AstKind::IfStatement(if_stmt) = parent.kind() else {
+        let AstKind::IfStatement(if_stmt) = ctx.nodes().parent_kind(parent.id()) else {
             return;
         };
 
