@@ -1,0 +1,197 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(valid-title): correct is not allowed in test title
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test("the correct way to properly handle all things", () => {});
+   ·      ───────────────────────────────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): correct is not allowed in test title
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe("the correct way to do things", function () {})
+   ·          ──────────────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): ALL is not allowed in test title
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it("has ALL the things", () => {})
+   ·    ────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): every is not allowed in test title
+   ╭─[valid_title.tsx:1:11]
+ 1 │ xdescribe("every single one of them", function () {})
+   ·           ──────────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): Descriptive is not allowed in test title
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe('Very Descriptive Title Goes Here', function () {})
+   ·          ──────────────────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): properly is not allowed in test title
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test(`that the value is set properly`, function () {})
+   ·      ────────────────────────────────
+   ╰────
+  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+
+  ⚠ eslint-plugin-vitest(valid-title): Title must be a string
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test(bar, () => {});
+   ·      ───
+   ╰────
+  help: Replace your title with a string
+
+  ⚠ eslint-plugin-vitest(valid-title): describe should match ^[^#]+$|(?:#(?:unit|e2e))
+    ╭─[valid_title.tsx:9:19]
+  8 │ 
+  9 │                   describe('e2e tests #e4e', () => {
+    ·                            ────────────────
+ 10 │                     it('is another test #e2e #vitest4life', () => {});
+    ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
+  ⚠ eslint-plugin-vitest(valid-title): Please include "#unit" or "#e2e" in titles
+   ╭─[valid_title.tsx:8:19]
+ 7 │ 
+ 8 │                   describe('e2e tests #e4e', () => {
+   ·                            ────────────────
+ 9 │                     it('is another test #e2e #vitest4life', () => {});
+   ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
+  ⚠ eslint-plugin-vitest(valid-title): test should match #(?:unit|integration|e2e)
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test("the correct way to properly handle all things", () => {});
+   ·      ───────────────────────────────────────────────
+   ╰────
+  help: Make sure the title matches the `mustMatch` of your config file
+
+  ⚠ eslint-plugin-vitest(valid-title): describe should not have an empty title
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe("", function () {})
+   ·          ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): it should not have an empty title
+   ╭─[valid_title.tsx:3:13]
+ 2 │                    describe('foo', () => {
+ 3 │                   it('', () => {});
+   ·                      ──
+ 4 │                    });
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): it should not have an empty title
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it("", function () {})
+   ·    ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): it should not have an empty title
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it("", function () {})
+   ·    ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): it should not have an empty title
+   ╭─[valid_title.tsx:1:15]
+ 1 │ it.concurrent("", function () {})
+   ·               ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): test should not have an empty title
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test("", function () {})
+   ·      ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): test should not have an empty title
+   ╭─[valid_title.tsx:1:17]
+ 1 │ test.concurrent("", function () {})
+   ·                 ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): test should not have an empty title
+   ╭─[valid_title.tsx:1:17]
+ 1 │ test.concurrent(``, function () {})
+   ·                 ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): describe should not have an empty title
+   ╭─[valid_title.tsx:1:11]
+ 1 │ xdescribe('', () => {})
+   ·           ──
+   ╰────
+  help: Write a meaningful title for your test
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe(" foo", function () {})
+   ·          ──────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:17]
+ 1 │ describe.each()(" foo", function () {})
+   ·                 ──────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:22]
+ 1 │ describe.only.each()(" foo", function () {})
+   ·                      ──────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe(" foo foe fum", function () {})
+   ·          ──────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:10]
+ 1 │ describe("foo foe fum ", function () {})
+   ·          ──────────────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:9]
+ 1 │ it.skip(" foo", function () {})
+   ·         ──────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:5]
+ 1 │ fit("foo ", function () {})
+   ·     ──────
+   ╰────
+  help: Remove the leading or trailing spaces
+
+  ⚠ eslint-plugin-vitest(valid-title): Should not have leading or trailing spaces
+   ╭─[valid_title.tsx:1:9]
+ 1 │ it.skip("foo ", function () {})
+   ·         ──────
+   ╰────
+  help: Remove the leading or trailing spaces

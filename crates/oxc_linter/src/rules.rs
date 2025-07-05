@@ -637,6 +637,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod valid_title;
 }
 
 pub(crate) mod node {
@@ -1258,17 +1259,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
-    vue::define_props_destructuring,
-    vue::define_emits_declaration,
-    vue::define_props_declaration,
-    vue::max_props,
-    vue::no_import_compiler_macros,
-    vue::no_export_in_script_setup,
-    vue::no_multiple_slot_args,
-    vue::no_required_prop_with_default,
-    vue::prefer_import_from_vue,
-    vue::require_default_export,
-    vue::require_typed_ref,
-    vue::valid_define_emits,
-    vue::valid_define_props,
+    vitest::valid_title,
 }
