@@ -30,7 +30,7 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -65,7 +65,6 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "require-top-level-describe",
     "valid-describe-callback",
     "valid-expect",
-    "valid-title",
 ];
 
 // List of Eslint rules that have Typescript equivalents.
