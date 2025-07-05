@@ -2,13 +2,14 @@ pub mod jsdoc;
 mod jsx_a11y;
 mod next;
 mod react;
+pub mod vitest;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use self::{
     jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
-    react::ReactPluginSettings,
+    react::ReactPluginSettings, vitest::VitestPluginSettings,
 };
 
 /// # Oxlint Plugin Settings
@@ -52,6 +53,9 @@ pub struct OxlintSettings {
 
     #[serde(default)]
     pub jsdoc: JSDocPluginSettings,
+
+    #[serde(default)]
+    pub vitest: VitestPluginSettings,
 }
 
 #[cfg(test)]
