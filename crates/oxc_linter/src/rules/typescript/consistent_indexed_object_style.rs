@@ -185,7 +185,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     return;
                                 };
 
-                                if ide.name != &dec.id.name {
+                                if ide.name != dec.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         "record",
                                         "index signature",
