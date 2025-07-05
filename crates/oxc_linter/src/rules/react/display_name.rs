@@ -283,11 +283,39 @@ impl Rule for DisplayName {
             if let AstKind::AssignmentExpression(assign) = node.kind() {
                 if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
                     if member.property.name == "displayName" {
-                        if let Some(path) = get_static_property_path(&member.object) {
-                            // Use the optimized helper function instead of String building
-                            let component_name = build_component_name(&path, None);
-                            tracker.resolve_display_name(&component_name);
-                        }
+                        // Extract component name directly from the member expression
+                        let component_name = match &member.object {
+                            Expression::Identifier(ident) => {
+                                // Simple case: Component.displayName
+                                CompactStr::from(ident.name.as_str())
+                            }
+                            Expression::StaticMemberExpression(_nested_member) => {
+                                // Nested case: Namespace.Component.displayName
+                                // Build the full path by traversing up the chain
+                                let mut path_parts = Vec::new();
+                                let mut current = &member.object;
+
+                                // Collect all parts of the path
+                                while let Expression::StaticMemberExpression(m) = current {
+                                    path_parts.push(m.property.name.into());
+                                    current = &m.object;
+                                }
+
+                                // Add the base identifier
+                                if let Expression::Identifier(ident) = current {
+                                    path_parts.push(ident.name.into());
+                                }
+
+                                // Reverse to get correct order and build the name
+                                path_parts.reverse();
+                                build_component_name(&path_parts, None)
+                            }
+                            _ => {
+                                // Skip other cases
+                                continue;
+                            }
+                        };
+                        tracker.resolve_display_name(&component_name);
                     }
                 }
             }
@@ -610,7 +638,7 @@ impl Rule for DisplayName {
                                                         "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::Function,
-                                                        true, // This is a context object
+                                                        true,
                                                     );
                                                 }
                                             }
@@ -635,7 +663,7 @@ impl Rule for DisplayName {
                                             ident.name.as_str(),
                                             assign.span,
                                             ComponentType::Function,
-                                            true, // This is a context object
+                                            true,
                                         );
                                     }
                                 }
@@ -1037,7 +1065,7 @@ fn process_variable_declaration<'a>(
             }
         }
 
-        // Additional fix: If this is a HOC call with an arrow function as first argument, require displayName
+        // If this is a HOC call with an arrow function as first argument, require displayName
         if let Some(Expression::CallExpression(call)) = &var_decl.init {
             if let Some(callee_name) = call.callee_name() {
                 if is_hoc_call(callee_name, ctx) {
@@ -1247,7 +1275,7 @@ fn process_variable_declaration<'a>(
                                             name.as_str(),
                                             decl.span,
                                             ComponentType::Function,
-                                            true, // This is a context object
+                                            true,
                                         );
                                     }
                                     return;
@@ -1259,7 +1287,6 @@ fn process_variable_declaration<'a>(
                 _ => {}
             }
         }
-        // If this is a custom HOC (from componentWrapperFunctions), always require displayName
     }
 }
 
@@ -1272,7 +1299,7 @@ fn process_object_expression(
     for prop in &obj_expr.properties {
         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
             if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
-                let prop_name = &ident.name; // Use reference instead of creating new CompactStr
+                let prop_name = &ident.name;
                 let expr = &obj_prop.value;
 
                 if !obj_prop.method {
@@ -1289,7 +1316,6 @@ fn process_object_expression(
                 } else if is_react_component_name(prop_name) {
                     if let Expression::FunctionExpression(func_expr) = expr {
                         if function_contains_jsx(func_expr) {
-                            // Use the optimized helper function instead of String building
                             let component_name =
                                 build_component_name(current_path, Some(prop_name.as_str()));
 
@@ -1309,28 +1335,6 @@ fn process_object_expression(
             }
         }
     }
-}
-
-fn get_static_property_path(expr: &Expression) -> Option<Vec<CompactStr>> {
-    // Use a small array for common cases to avoid Vec allocation
-    fn get_path_recursive(expr: &Expression, depth: usize) -> Option<Vec<CompactStr>> {
-        if depth > 10 {
-            // Prevent infinite recursion
-            return None;
-        }
-
-        match expr {
-            Expression::Identifier(ident) => Some(vec![ident.name.into()]),
-            Expression::StaticMemberExpression(member) => {
-                let mut path = get_path_recursive(&member.object, depth + 1)?;
-                path.push(member.property.name.into());
-                Some(path)
-            }
-            _ => None,
-        }
-    }
-
-    get_path_recursive(expr, 0)
 }
 
 fn function_returns_create_react_class(func_expr: &Function) -> bool {
