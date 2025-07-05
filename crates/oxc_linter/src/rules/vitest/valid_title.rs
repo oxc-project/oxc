@@ -432,7 +432,7 @@ fn check_disallowed_words(title: &str, span: Span, valid_title: &ValidTitle, ctx
                 CompactStr::from(format!("{} is not allowed in test title", matched.as_str()));
             ctx.diagnostic(valid_title_diagnostic(
                 error.as_str(),
-                "It is included in the `disallowedWords` of your config file, try to remove it from your title",
+                format!("{} is included in the `disallowedWords` list, try to remove it from your test title", matched.as_str()).as_str(),
                 span,
             ));
         }
@@ -454,7 +454,7 @@ fn check_pattern_matching(
             if let Some(message) = message.as_ref() {
                 ctx.diagnostic(valid_title_diagnostic(
                     message.as_str(),
-                    "Make sure the title matches the `mustMatch` of your config file",
+                    "Make sure the title matches the configured `mustMatch` pattern",
                     span,
                 ));
             } else {
@@ -463,7 +463,7 @@ fn check_pattern_matching(
                     CompactStr::from(format!("{un_prefixed_name} should match {raw_pattern}"));
                 ctx.diagnostic(valid_title_diagnostic(
                     msg.as_str(),
-                    "Make sure the title matches the `mustMatch` of your config file",
+                    "Make sure the title matches the configured `mustMatch` pattern",
                     span,
                 ));
             }
@@ -478,7 +478,7 @@ fn check_pattern_matching(
             if let Some(message) = message.as_ref() {
                 ctx.diagnostic(valid_title_diagnostic(
                     message.as_str(),
-                    "Make sure the title not matches the `mustNotMatch` of your config file",
+                    "Make sure the title does not match the configured `mustNotMatch` pattern",
                     span,
                 ));
             } else {
@@ -487,7 +487,7 @@ fn check_pattern_matching(
                     CompactStr::from(format!("{un_prefixed_name} should not match {raw_pattern}"));
                 ctx.diagnostic(valid_title_diagnostic(
                     msg.as_str(),
-                    "Make sure the title not matches the `mustNotMatch` of your config file",
+                    "Make sure the title does not match the configured `mustNotMatch` pattern",
                     span,
                 ));
             }
@@ -520,7 +520,7 @@ impl Message {
             }
             Self::DuplicatePrefix => (
                 "Should not have duplicate prefix",
-                "The function name has already contains the prefix, try remove the duplicate prefix",
+                "The function name already contains the prefix, try to remove the duplicate",
             ),
             Self::AccidentalSpace => (
                 "Should not have leading or trailing spaces",
