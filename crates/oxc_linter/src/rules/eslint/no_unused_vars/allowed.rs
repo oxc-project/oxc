@@ -115,7 +115,7 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, '_>,
         declaration_id: NodeId,
     ) -> bool {
-        matches!(symbol.nodes().parent_kind(declaration_id), Some(AstKind::TSMappedType(_)))
+        matches!(symbol.nodes().parent_kind(declaration_id), AstKind::TSMappedType(_))
     }
 
     /// Returns `true` if this unused parameter should be allowed (i.e. not

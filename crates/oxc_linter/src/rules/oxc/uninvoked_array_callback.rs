@@ -60,16 +60,12 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
 
-        let Some(member_expr_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-
+        let member_expr_node = ctx.nodes().parent_node(node.id());
         let Some(member_expr) = member_expr_node.kind().as_member_expression_kind() else {
             return;
         };
 
-        let Some(AstKind::CallExpression(call_expr)) =
-            ctx.nodes().parent_kind(member_expr_node.id())
+        let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(member_expr_node.id())
         else {
             return;
         };

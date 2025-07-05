@@ -99,8 +99,7 @@ impl Rule for InlineScriptId {
         let AstKind::ImportDefaultSpecifier(specifier) = node.kind() else {
             return;
         };
-        let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(node.id())
-        else {
+        let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
 
@@ -111,13 +110,12 @@ impl Rule for InlineScriptId {
         'references_loop: for reference in
             ctx.semantic().symbol_references(specifier.local.symbol_id())
         {
-            let parent_node = ctx.nodes().parent_node(reference.node_id()).unwrap();
+            let parent_node = ctx.nodes().parent_node(reference.node_id());
             let AstKind::JSXOpeningElement(jsx_opening_element) = parent_node.kind() else {
                 continue;
             };
 
-            let Some(AstKind::JSXElement(jsx_element)) = ctx.nodes().parent_kind(parent_node.id())
-            else {
+            let AstKind::JSXElement(jsx_element) = ctx.nodes().parent_kind(parent_node.id()) else {
                 continue;
             };
 

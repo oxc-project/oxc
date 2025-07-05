@@ -346,12 +346,8 @@ impl Rule for NoElseReturn {
             return;
         };
 
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-
         if !matches!(
-            parent_node.kind(),
+            ctx.nodes().parent_kind(node.id()),
             AstKind::Program(_)
                 | AstKind::BlockStatement(_)
                 | AstKind::StaticBlock(_)

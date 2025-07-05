@@ -84,14 +84,12 @@ pub fn parse_jest_fn_call<'a>(
         // Ensure that we're at the "top" of the function call chain otherwise when
         // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
         // the full chain is not a valid jest function call chain
-        if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
-            matches!(
-                parent_node.kind(),
-                AstKind::CallExpression(_)
-                    | AstKind::StaticMemberExpression(_)
-                    | AstKind::ComputedMemberExpression(_)
-            )
-        }) {
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::CallExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+        ) {
             return None;
         }
 
@@ -146,11 +144,11 @@ fn parse_jest_expect_fn_call<'a>(
     if matches!(expect_error, Some(ExpectError::MatcherNotFound)) {
         // If the parent is a member expression, we can assume that the matcher
         // is not called, so we can set the error to `MatcherNotCalled`.
-        match ctx.nodes().parent_kind(node.id())? {
-            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
-                expect_error = Some(ExpectError::MatcherNotCalled);
-            }
-            _ => {}
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_)
+        ) {
+            expect_error = Some(ExpectError::MatcherNotCalled);
         }
     }
 
@@ -244,9 +242,7 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     let mut node = node;
 
     loop {
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return true;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
             AstKind::CallExpression(_) => return false,

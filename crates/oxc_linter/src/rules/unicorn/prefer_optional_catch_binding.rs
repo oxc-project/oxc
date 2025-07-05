@@ -55,10 +55,7 @@ impl Rule for PreferOptionalCatchBinding {
         if references_count != 0 {
             return;
         }
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-        let AstKind::CatchClause(catch_clause) = parent_node.kind() else {
+        let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
         ctx.diagnostic_with_fix(

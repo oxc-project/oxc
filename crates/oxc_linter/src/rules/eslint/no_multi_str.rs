@@ -53,7 +53,7 @@ impl Rule for NoMultiStr {
 }
 
 fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {
-    matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttribute(_)))
+    matches!(ctx.nodes().parent_kind(id), AstKind::JSXAttribute(_))
 }
 
 #[test]

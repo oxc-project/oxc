@@ -184,15 +184,9 @@ impl Rule for PreferForOf {
                 return false;
             }
 
-            let Some(ref_parent) = nodes.parent_node(ref_id) else {
-                return true;
-            };
-
-            let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) else {
-                return true;
-            };
-
-            match ref_grand_parent.kind() {
+            let parent = nodes.parent_node(ref_id);
+            let grand_parent = nodes.parent_node(parent.id());
+            match grand_parent.kind() {
                 AstKind::SimpleAssignmentTarget(_) => {
                     return true;
                 }
@@ -204,7 +198,7 @@ impl Rule for PreferForOf {
                 _ => {}
             }
 
-            let parent_kind = ref_parent.kind();
+            let parent_kind = parent.kind();
             match parent_kind {
                 mem_expr if mem_expr.is_member_expression_kind() => {
                     let Some(mem_expr) = mem_expr.as_member_expression_kind() else {

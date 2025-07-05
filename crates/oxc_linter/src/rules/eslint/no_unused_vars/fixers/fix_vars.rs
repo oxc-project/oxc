@@ -35,12 +35,7 @@ impl NoUnusedVars {
             return fixer.noop();
         }
 
-        let Some(parent) = symbol.nodes().parent_node(decl_id) else {
-            #[cfg(debug_assertions)]
-            panic!("VariableDeclarator nodes should always have a parent node");
-            #[cfg(not(debug_assertions))]
-            return fixer.noop();
-        };
+        let parent = symbol.nodes().parent_node(decl_id);
         let (span, declarations) = match parent.kind() {
             AstKind::VariableDeclaration(decl) => (decl.span, &decl.declarations),
             _ => {
@@ -53,10 +48,9 @@ impl NoUnusedVars {
             }
         };
 
-        if let Some(
-            AstKind::ForOfStatement(ForOfStatement { span, .. })
-            | AstKind::ForInStatement(ForInStatement { span, .. }),
-        ) = symbol.nodes().parent_kind(parent.id())
+        if let AstKind::ForOfStatement(ForOfStatement { span, .. })
+        | AstKind::ForInStatement(ForInStatement { span, .. }) =
+            symbol.nodes().parent_kind(parent.id())
         {
             if span.contains_inclusive(symbol.span()) {
                 if let Some(new_name) = self.get_unused_var_name(symbol) {

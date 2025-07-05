@@ -218,8 +218,7 @@ impl Rule for MaxLinesPerFunction {
 
         let final_lines = lines_in_function.saturating_sub(comment_lines);
         if final_lines > self.max {
-            let name =
-                get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()).unwrap());
+            let name = get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()));
             ctx.diagnostic(max_lines_per_function_diagnostic(&name, final_lines, self.max, span));
         }
     }

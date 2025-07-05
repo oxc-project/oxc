@@ -99,16 +99,13 @@ impl Rule for VarsOnTop {
         if declaration.kind != VariableDeclarationKind::Var {
             return;
         }
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
             AstKind::ExportNamedDeclaration(_) => {
-                if let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) {
-                    if let AstKind::Program(grand_parent) = grand_parent.kind() {
-                        global_var_check(parent, grand_parent, ctx);
-                    }
+                let grand_parent = ctx.nodes().parent_node(parent.id());
+                if let AstKind::Program(grand_parent) = grand_parent.kind() {
+                    global_var_check(parent, grand_parent, ctx);
                 }
             }
             AstKind::Program(parent) => {
@@ -150,14 +147,12 @@ fn is_var_on_top(node: &AstNode, statements: &[Statement], ctx: &LintContext) ->
     let len = statements.len();
     let parent = ctx.nodes().parent_node(node.id());
 
-    if let Some(parent) = parent {
-        if !matches!(parent.kind(), AstKind::StaticBlock(_)) {
-            while i < len {
-                if !looks_like_directive(&statements[i]) && !looks_like_import(&statements[i]) {
-                    break;
-                }
-                i += 1;
+    if !matches!(parent.kind(), AstKind::StaticBlock(_)) {
+        while i < len {
+            if !looks_like_directive(&statements[i]) && !looks_like_import(&statements[i]) {
+                break;
             }
+            i += 1;
         }
     }
 
@@ -184,25 +179,24 @@ fn global_var_check(node: &AstNode, parent: &Program, ctx: &LintContext) {
 }
 
 fn block_scope_var_check(node: &AstNode, ctx: &LintContext) {
-    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-        match parent.kind() {
-            AstKind::BlockStatement(block) => {
-                if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) {
-                    return;
-                }
+    let parent = ctx.nodes().parent_node(node.id());
+    match parent.kind() {
+        AstKind::BlockStatement(block) => {
+            if check_var_on_top_in_function_scope(node, &block.body, parent, ctx) {
+                return;
             }
-            AstKind::FunctionBody(block) => {
-                if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) {
-                    return;
-                }
-            }
-            AstKind::StaticBlock(block) => {
-                if is_var_on_top(node, &block.body, ctx) {
-                    return;
-                }
-            }
-            _ => {}
         }
+        AstKind::FunctionBody(block) => {
+            if check_var_on_top_in_function_scope(node, &block.statements, parent, ctx) {
+                return;
+            }
+        }
+        AstKind::StaticBlock(block) => {
+            if is_var_on_top(node, &block.body, ctx) {
+                return;
+            }
+        }
+        _ => {}
     }
     ctx.diagnostic(vars_on_top_diagnostic(node.span()));
 }
@@ -213,14 +207,13 @@ fn check_var_on_top_in_function_scope(
     parent: &AstNode,
     ctx: &LintContext,
 ) -> bool {
-    if let Some(grandparent) = ctx.nodes().parent_node(parent.id()) {
-        if matches!(
-            grandparent.kind(),
-            AstKind::Function(_) | AstKind::FunctionBody(_) | AstKind::ArrowFunctionExpression(_)
-        ) && is_var_on_top(node, statements, ctx)
-        {
-            return true;
-        }
+    let grandparent = ctx.nodes().parent_node(parent.id());
+    if matches!(
+        grandparent.kind(),
+        AstKind::Function(_) | AstKind::FunctionBody(_) | AstKind::ArrowFunctionExpression(_)
+    ) && is_var_on_top(node, statements, ctx)
+    {
+        return true;
     }
 
     false

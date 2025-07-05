@@ -149,14 +149,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                     let mut is_parent_exported = false;
                     let mut node_start = interface_decl.span.start;
                     let mut node_end = interface_decl.span.end;
-                    if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                        if let AstKind::ExportNamedDeclaration(export_name_decl) =
-                            parent_node.kind()
-                        {
-                            is_parent_exported = true;
-                            node_start = export_name_decl.span.start;
-                            node_end = export_name_decl.span.end;
-                        }
+                    if let AstKind::ExportNamedDeclaration(export_name_decl) =
+                        ctx.nodes().parent_kind(node.id())
+                    {
+                        is_parent_exported = true;
+                        node_start = export_name_decl.span.start;
+                        node_end = export_name_decl.span.end;
                     }
 
                     let has_comments = ctx.has_comments_between(interface_decl.span);

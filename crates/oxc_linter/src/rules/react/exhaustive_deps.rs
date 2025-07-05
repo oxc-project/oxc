@@ -435,21 +435,15 @@ impl Rule for ExhaustiveDeps {
                     let reference = ctx.scoping().get_reference(ident.reference_id());
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
-                            ctx.nodes().parent_node(reference.node_id()).is_some_and(|parent| {
-                                let AstKind::StaticMemberExpression(member_expr) = parent.kind()
-                                else {
-                                    return false;
-                                };
-                                if member_expr.property.name != "current" {
-                                    return false;
-                                }
-                                ctx.nodes().parent_node(parent.id()).is_some_and(|grand_parent| {
-                                    matches!(
-                                        grand_parent.kind(),
-                                        AstKind::SimpleAssignmentTarget(_)
-                                    )
-                                })
-                            })
+                            let parent = ctx.nodes().parent_node(reference.node_id());
+                            let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
+                                return false;
+                            };
+                            if member_expr.property.name != "current" {
+                                return false;
+                            }
+                            let grand_parent = ctx.nodes().parent_node(parent.id());
+                            matches!(grand_parent.kind(), AstKind::SimpleAssignmentTarget(_))
                         })
                     });
 
@@ -1026,7 +1020,7 @@ fn is_stable_value<'a, 'b>(
                     .any(|reference| {
                         matches!(
                             ctx.nodes().parent_kind(reference.node_id()),
-                            Some(AstKind::SimpleAssignmentTarget(_))
+                            AstKind::SimpleAssignmentTarget(_)
                         )
                     })
             {

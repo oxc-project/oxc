@@ -73,10 +73,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
-        let Some(parent_node) = ctx.semantic().nodes().parent_node(node.id()) else {
-            return;
-        };
-        let AstKind::ClassBody(class_body) = parent_node.kind() else {
+        let AstKind::ClassBody(class_body) = ctx.semantic().nodes().parent_kind(node.id()) else {
             return;
         };
 

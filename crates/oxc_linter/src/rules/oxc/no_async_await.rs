@@ -50,7 +50,7 @@ impl Rule for NoAsyncAwait {
                             //     async bar() {}
                             // }
                             // ```
-                            Some(AstKind::MethodDefinition(method_def)) => {
+                            AstKind::MethodDefinition(method_def) => {
                                 Span::new(method_def.span.start, method_def.key.span().start)
                             }
                             // The function is part of an object property like:
@@ -59,7 +59,7 @@ impl Rule for NoAsyncAwait {
                             //     async foo() {}
                             // };
                             // ```
-                            Some(AstKind::ObjectProperty(obj_prop)) => {
+                            AstKind::ObjectProperty(obj_prop) => {
                                 Span::new(obj_prop.span.start, obj_prop.key.span().start)
                             }
                             _ => func_decl.span,

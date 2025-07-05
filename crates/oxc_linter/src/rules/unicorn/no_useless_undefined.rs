@@ -127,10 +127,9 @@ fn is_undefined(arg: &Argument) -> bool {
 }
 
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
+    let parent_node = ctx.nodes().parent_node(node.id());
     match parent_node.kind() {
+        AstKind::Program(_) => false,
         AstKind::ArrowFunctionExpression(arrow_func_express) => {
             arrow_func_express.return_type.is_some()
         }
@@ -156,16 +155,15 @@ impl Rule for NoUselessUndefined {
                 if undefined_literal.name == "undefined" =>
             {
                 let mut parent_node: &AstNode<'a> = node;
-                while let Some(parent) = ctx.nodes().parent_node(parent_node.id()) {
-                    let parent_kind = parent.kind();
-
-                    if let AstKind::ParenthesizedExpression(_) = parent_kind {
+                loop {
+                    let parent = ctx.nodes().parent_node(parent_node.id());
+                    if let AstKind::ParenthesizedExpression(_) = parent.kind() {
                         parent_node = parent;
                     } else {
                         break;
                     }
                 }
-                let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) else { return };
+                let parent_node = ctx.nodes().parent_node(parent_node.id());
                 let parent_node_kind = parent_node.kind();
 
                 match parent_node_kind {
@@ -204,19 +202,13 @@ impl Rule for NoUselessUndefined {
                         if !self.check_arrow_function_body {
                             return;
                         }
-                        let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id())
-                        else {
-                            return;
-                        };
+                        let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
                         let AstKind::FunctionBody(func_body) = grand_parent_node_kind else {
                             return;
                         };
-                        let Some(grand_grand_parent_node) =
-                            ctx.nodes().parent_node(grand_parent_node.id())
-                        else {
-                            return;
-                        };
+                        let grand_grand_parent_node =
+                            ctx.nodes().parent_node(grand_parent_node.id());
                         let grand_grand_parent_node_kind = grand_grand_parent_node.kind();
                         let AstKind::ArrowFunctionExpression(_) = grand_grand_parent_node_kind
                         else {
@@ -234,10 +226,7 @@ impl Rule for NoUselessUndefined {
                     }
                     // `let foo = undefined` / `var foo = undefined`
                     AstKind::VariableDeclarator(variable_declarator) => {
-                        let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id())
-                        else {
-                            return;
-                        };
+                        let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
                         let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
                             return;

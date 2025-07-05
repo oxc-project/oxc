@@ -116,12 +116,9 @@ fn get_reference_declaration<'a>(
     let reference_node = ctx.symbol_declaration(symbol_id);
     if matches!(reference_node.kind(), AstKind::VariableDeclarator(_)) {
         // we need return reference_node's parent node
-        if let Some(parent) = ctx.nodes().parent_node(reference_node.id()) {
-            if let AstKind::VariableDeclaration(decl) = parent.kind() {
-                if matches!(decl.kind, VariableDeclarationKind::Let | VariableDeclarationKind::Var)
-                {
-                    return Some(decl);
-                }
+        if let AstKind::VariableDeclaration(decl) = ctx.nodes().parent_kind(reference_node.id()) {
+            if matches!(decl.kind, VariableDeclarationKind::Let | VariableDeclarationKind::Var) {
+                return Some(decl);
             }
         }
     }

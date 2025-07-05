@@ -214,7 +214,7 @@ fn get_prototype_property_accessed<'a>(
     let AstKind::IdentifierReference(_) = node.kind() else {
         return None;
     };
-    let parent = ctx.nodes().parent_node(node.id())?;
+    let parent = ctx.nodes().parent_node(node.id());
     let mut prototype_node = Some(parent);
     match parent.kind() {
         prop_access_expr if prop_access_expr.is_member_expression_kind() => {
@@ -224,13 +224,11 @@ fn get_prototype_property_accessed<'a>(
             if prop_name != "prototype" {
                 return None;
             }
-            let grandparent_node = ctx.nodes().parent_node(parent.id())?;
+            let grandparent_node = ctx.nodes().parent_node(parent.id());
 
             if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-                prototype_node = Some(grandparent_node);
-                if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
-                    prototype_node = Some(grandparent_parent);
-                }
+                let grandparent_parent = ctx.nodes().parent_node(grandparent_node.id());
+                prototype_node = Some(grandparent_parent);
             }
 
             prototype_node

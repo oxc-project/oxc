@@ -69,36 +69,35 @@ impl Rule for NoReturnAssign {
             return;
         };
         if !self.always_disallow_assignment_in_return
-            && ctx
-                .nodes()
-                .parent_node(node.id())
-                .is_some_and(|node| node.kind().as_parenthesized_expression().is_some())
+            && ctx.nodes().parent_kind(node.id()).as_parenthesized_expression().is_some()
         {
             return;
         }
 
         let mut parent_node = ctx.nodes().parent_node(node.id());
-        while parent_node.is_some_and(|parent| !is_sentinel_node(parent.kind())) {
-            parent_node = ctx.nodes().parent_node(parent_node.unwrap().id());
+        while !is_sentinel_node(parent_node.kind()) {
+            if matches!(parent_node.kind(), AstKind::Program(_)) {
+                break;
+            }
+            parent_node = ctx.nodes().parent_node(parent_node.id());
         }
-        if let Some(parent) = parent_node {
-            match parent.kind() {
-                AstKind::ReturnStatement(_) => {
+
+        match parent_node.kind() {
+            AstKind::ReturnStatement(_) => {
+                ctx.diagnostic(no_return_assign_diagnostic(
+                    assign.span(),
+                    "Return statements should not contain an assignment.",
+                ));
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                if arrow.expression {
                     ctx.diagnostic(no_return_assign_diagnostic(
                         assign.span(),
-                        "Return statements should not contain an assignment.",
+                        "Arrow functions should not return an assignment.",
                     ));
                 }
-                AstKind::ArrowFunctionExpression(arrow) => {
-                    if arrow.expression {
-                        ctx.diagnostic(no_return_assign_diagnostic(
-                            assign.span(),
-                            "Arrow functions should not return an assignment.",
-                        ));
-                    }
-                }
-                _ => (),
             }
+            _ => (),
         }
     }
 }

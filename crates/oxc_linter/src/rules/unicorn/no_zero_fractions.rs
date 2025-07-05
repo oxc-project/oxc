@@ -74,10 +74,8 @@ impl Rule for NoZeroFractions {
             |fixer| {
                 let mut fixed = fmt.clone();
                 let is_decimal_integer = fmt.parse::<i64>().is_ok();
-                let is_member_expression = ctx
-                    .nodes()
-                    .parent_node(node.id())
-                    .is_some_and(|parent_node| parent_node.kind().is_member_expression_kind());
+                let is_member_expression =
+                    ctx.nodes().parent_kind(node.id()).is_member_expression_kind();
 
                 if is_member_expression && is_decimal_integer {
                     fixed = format!("({fixed})");

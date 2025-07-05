@@ -181,10 +181,7 @@ fn check_type_literal(
     if matches!(allow_object_types, AllowObjectTypes::Always) {
         return;
     }
-    let Some(parent_node) = ctx.nodes().parent_node(node_id) else {
-        return;
-    };
-    match parent_node.kind() {
+    match ctx.nodes().parent_kind(node_id) {
         AstKind::TSIntersectionType(_) => return,
         AstKind::TSTypeAliasDeclaration(alias) => {
             if alias.id.name.as_str() == allow_with_name {

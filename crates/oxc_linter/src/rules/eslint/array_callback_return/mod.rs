@@ -153,7 +153,8 @@ impl Rule for ArrayCallbackReturn {
 /// to the target array methods we're interested in.
 pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
     let mut current_node = node;
-    while let Some(parent) = ctx.nodes().parent_node(current_node.id()) {
+    loop {
+        let parent = ctx.nodes().parent_node(current_node.id());
         match parent.kind() {
             // foo.every(nativeFoo || function foo() { ... })
             AstKind::LogicalExpression(_)
@@ -174,7 +175,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                 let func_node = outermost_paren(func_node, ctx);
 
                 // the node that calls func_node
-                let func_parent = ctx.nodes().parent_node(func_node.id()).unwrap();
+                let func_parent = ctx.nodes().parent_node(func_node.id());
 
                 if let AstKind::CallExpression(call) = func_parent.kind() {
                     let expected_callee = &call.callee;

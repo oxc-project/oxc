@@ -232,9 +232,7 @@ impl Rule for FuncStyle {
         for node in semantic.nodes() {
             match node.kind() {
                 AstKind::Function(func) => {
-                    let Some(parent) = semantic.nodes().parent_node(node.id()) else {
-                        continue;
-                    };
+                    let parent = semantic.nodes().parent_node(node.id());
                     match func.r#type {
                         FunctionType::FunctionDeclaration => {
                             // There are two situations to diagnostic
@@ -301,7 +299,7 @@ impl Rule for FuncStyle {
                         .ancestors(node.id())
                         .skip(1)
                         .find(|v| matches!(v.kind(), AstKind::FunctionBody(_)))
-                        .map(|el| semantic.nodes().parent_node(el.id()).unwrap());
+                        .map(|el| semantic.nodes().parent_node(el.id()));
                     if let Some(ret) = arrow_func_ancestor {
                         arrow_func_ancestor_records.insert(ret.id());
                     }
@@ -317,9 +315,7 @@ impl Rule for FuncStyle {
         // We deal with arrow functions that do not contain this and super
         for node in arrow_func_nodes {
             if !arrow_func_ancestor_records.contains(&node.id()) {
-                let Some(parent) = semantic.nodes().parent_node(node.id()) else {
-                    return;
-                };
+                let parent = semantic.nodes().parent_node(node.id());
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
                     let is_type_annotation =
                         self.allow_type_annotation && decl.id.type_annotation.is_some();

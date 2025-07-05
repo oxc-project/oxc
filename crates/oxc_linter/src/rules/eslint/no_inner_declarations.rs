@@ -84,7 +84,7 @@ impl Rule for NoInnerDeclarations {
             _ => return,
         }
 
-        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
+        let parent_node = ctx.nodes().parent_node(node.id());
         if matches!(
             parent_node.kind(),
             AstKind::Program(_)
@@ -98,9 +98,9 @@ impl Rule for NoInnerDeclarations {
 
         let mut body = "program";
         let mut parent = ctx.nodes().parent_node(parent_node.id());
-        while let Some(parent_node) = parent {
-            let parent_kind = parent_node.kind();
-            match parent_kind {
+        loop {
+            match parent.kind() {
+                AstKind::Program(_) => break,
                 AstKind::StaticBlock(_) => {
                     body = "class static block body";
                     break;
@@ -109,7 +109,7 @@ impl Rule for NoInnerDeclarations {
                     body = "function body";
                     break;
                 }
-                _ => parent = ctx.nodes().parent_node(parent_node.id()),
+                _ => parent = ctx.nodes().parent_node(parent.id()),
             }
         }
 

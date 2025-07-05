@@ -199,15 +199,13 @@ impl ValidExpect {
             return;
         };
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         let should_be_awaited =
             jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_unequal("not"))
                 || self.async_matchers.contains(&matcher_name.to_string());
 
-        if ctx.nodes().parent_node(parent.id()).is_none() || !should_be_awaited {
+        if matches!(parent.kind(), AstKind::Program(_)) || !should_be_awaited {
             return;
         }
 
@@ -218,9 +216,7 @@ impl ValidExpect {
         let Some(final_node) = find_promise_call_expression_node(node, ctx, target_node) else {
             return;
         };
-        let Some(parent) = ctx.nodes().parent_node(final_node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(final_node.id());
         if !is_acceptable_return_node(parent, !self.always_await, ctx) {
             let span;
             let (error, help) = if target_node.id() == final_node.id() {
@@ -249,7 +245,7 @@ fn find_top_most_member_expression<'a, 'b>(
     let mut node = node;
 
     loop {
-        let parent = ctx.nodes().parent_node(node.id())?;
+        let parent = ctx.nodes().parent_node(node.id());
         match node.kind() {
             member_expr if member_expr.is_member_expression_kind() => {
                 top_most_member_expression = Some(member_expr);
@@ -282,10 +278,7 @@ fn is_acceptable_return_node<'a, 'b>(
             | AstKind::Argument(_)
             | AstKind::ExpressionStatement(_)
             | AstKind::FunctionBody(_) => {
-                let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-                    return false;
-                };
-                node = parent;
+                node = ctx.nodes().parent_node(node.id());
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
             AstKind::AwaitExpression(_) => return true,
@@ -304,7 +297,7 @@ fn get_parent_with_ignore<'a, 'b>(
 ) -> Option<ParentAndIsFirstItem<'a, 'b>> {
     let mut node = node;
     loop {
-        let parent = ctx.nodes().parent_node(node.id())?;
+        let parent = ctx.nodes().parent_node(node.id());
         if !matches!(parent.kind(), AstKind::Argument(_)) {
             // we don't want to report `Promise.all([invalidExpectCall_1, invalidExpectCall_2])` twice.
             // so we need mark whether the node is the first item of an array.
@@ -347,7 +340,7 @@ fn find_promise_call_expression_node<'a, 'b>(
         if let Some(member_expr) = call_expr.callee.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {
                 if matches!(ident.name.as_str(), "Promise")
-                    && ctx.nodes().parent_node(parent.id()).is_some()
+                    && !matches!(parent.kind(), AstKind::Program(_))
                 {
                     if is_first_array_item {
                         return Some(parent);
@@ -365,12 +358,7 @@ fn get_parent_if_thenable<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> &'b AstNode<'a> {
-    let grandparent =
-        ctx.nodes().parent_node(node.id()).and_then(|node| ctx.nodes().parent_node(node.id()));
-
-    let Some(grandparent) = grandparent else {
-        return node;
-    };
+    let grandparent = ctx.nodes().parent_node(ctx.nodes().parent_id(node.id()));
     let AstKind::CallExpression(call_expr) = grandparent.kind() else {
         return node;
     };

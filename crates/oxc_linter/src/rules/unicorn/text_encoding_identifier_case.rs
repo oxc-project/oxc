@@ -85,9 +85,7 @@ impl Rule for TextEncodingIdentifierCase {
 }
 
 fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(id) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_node(id);
     let AstKind::JSXAttribute(jsx_attr) = parent.kind() else {
         return false;
     };
@@ -97,8 +95,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
     if !ident.name.eq_ignore_ascii_case("charset") {
         return false;
     }
-    let Some(AstKind::JSXOpeningElement(opening_elem)) = ctx.nodes().parent_kind(parent.id())
-    else {
+    let AstKind::JSXOpeningElement(opening_elem) = ctx.nodes().parent_kind(parent.id()) else {
         return false;
     };
     opening_elem

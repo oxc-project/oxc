@@ -75,72 +75,68 @@ impl Rule for PreferStringRaw {
 
         let parent_node = ctx.nodes().parent_node(node.id());
 
-        if let Some(parent_node) = parent_node {
-            match parent_node.kind() {
-                AstKind::Directive(_) => return,
-                AstKind::ImportDeclaration(decl) => {
-                    if string_literal.span == decl.source.span {
+        match parent_node.kind() {
+            AstKind::Directive(_) => return,
+            AstKind::ImportDeclaration(decl) => {
+                if string_literal.span == decl.source.span {
+                    return;
+                }
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                if let Some(source) = &decl.source {
+                    if string_literal.span == source.span {
                         return;
                     }
                 }
-                AstKind::ExportNamedDeclaration(decl) => {
-                    if let Some(source) = &decl.source {
-                        if string_literal.span == source.span {
-                            return;
-                        }
-                    }
+            }
+            AstKind::ExportAllDeclaration(decl) => {
+                if string_literal.span == decl.source.span {
+                    return;
                 }
-                AstKind::ExportAllDeclaration(decl) => {
-                    if string_literal.span == decl.source.span {
-                        return;
-                    }
+            }
+            AstKind::ObjectProperty(prop) => {
+                let PropertyKey::StringLiteral(key) = &prop.key else {
+                    return;
+                };
+
+                if !prop.computed && string_literal.span == key.span {
+                    return;
                 }
-                AstKind::ObjectProperty(prop) => {
+            }
+            AstKind::PropertyKey(_) => {
+                if let AstKind::ObjectProperty(prop) = ctx.nodes().parent_kind(parent_node.id()) {
                     let PropertyKey::StringLiteral(key) = &prop.key else {
                         return;
                     };
 
-                    if !prop.computed && string_literal.span == key.span {
+                    if !prop.computed && key.span == string_literal.span {
                         return;
                     }
                 }
-                AstKind::PropertyKey(_) => {
-                    if let Some(AstKind::ObjectProperty(prop)) =
-                        ctx.nodes().parent_node(parent_node.id()).map(AstNode::kind)
-                    {
-                        let PropertyKey::StringLiteral(key) = &prop.key else {
-                            return;
-                        };
-
-                        if !prop.computed && key.span == string_literal.span {
-                            return;
-                        }
-                    }
-                }
-                AstKind::JSXAttribute(attr) => {
-                    let Some(JSXAttributeValue::StringLiteral(value)) = &attr.value else {
-                        return;
-                    };
-
-                    if value.span == string_literal.span {
-                        return;
-                    }
-                }
-                AstKind::TSEnumMember(member) => {
-                    if member.span == string_literal.span {
-                        return;
-                    }
-
-                    let TSEnumMemberName::String(id) = &member.id else {
-                        return;
-                    };
-
-                    if id.span == string_literal.span {
-                        return;
-                    }
-                }
-                _ => {}
             }
+            AstKind::JSXAttribute(attr) => {
+                let Some(JSXAttributeValue::StringLiteral(value)) = &attr.value else {
+                    return;
+                };
+
+                if value.span == string_literal.span {
+                    return;
+                }
+            }
+            AstKind::TSEnumMember(member) => {
+                if member.span == string_literal.span {
+                    return;
+                }
+
+                let TSEnumMemberName::String(id) = &member.id else {
+                    return;
+                };
+
+                if id.span == string_literal.span {
+                    return;
+                }
+            }
+            _ => {}
         }
 
         let raw = ctx.source_range(string_literal.span);

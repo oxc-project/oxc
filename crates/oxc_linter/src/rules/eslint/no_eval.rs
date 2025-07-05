@@ -184,7 +184,7 @@ impl Rule for NoEval {
                 }
             }
             AstKind::ThisExpression(_) if !self.allow_indirect => {
-                let parent = ctx.nodes().parent_node(node.id()).unwrap();
+                let parent = ctx.nodes().parent_node(node.id());
                 let property_info = match parent.kind() {
                     AstKind::StaticMemberExpression(mem_expr) => {
                         Some(mem_expr.static_property_info())

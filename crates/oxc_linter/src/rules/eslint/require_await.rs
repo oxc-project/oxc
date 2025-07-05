@@ -84,9 +84,7 @@ impl Rule for RequireAwait {
         if body.is_empty() {
             return;
         }
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
             AstKind::Function(func) => {
@@ -104,10 +102,10 @@ impl Rule for RequireAwait {
                             );
                         } else {
                             let parent_parent_node = ctx.nodes().parent_kind(parent.id());
-                            if let Some(
-                                AstKind::ObjectProperty(ObjectProperty { span, key, .. })
-                                | AstKind::MethodDefinition(MethodDefinition { span, key, .. }),
-                            ) = parent_parent_node
+                            if let AstKind::ObjectProperty(ObjectProperty { span, key, .. })
+                            | AstKind::MethodDefinition(MethodDefinition {
+                                span, key, ..
+                            }) = parent_parent_node
                             {
                                 let need_delete_span = get_delete_span(ctx, span.start);
                                 let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))

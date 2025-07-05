@@ -118,12 +118,8 @@ impl Rule for NoStaticOnlyClass {
                 return fixer.noop();
             }
 
-            let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
-                return fixer.noop();
-            };
-
             if (matches!(
-                parent,
+                ctx.nodes().parent_kind(node.id()),
                 AstKind::ExportDefaultDeclaration(_) | AstKind::ReturnStatement(_)
             ) && class.id.is_some())
             {

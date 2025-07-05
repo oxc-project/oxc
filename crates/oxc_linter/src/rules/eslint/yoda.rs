@@ -218,16 +218,15 @@ impl Rule for Yoda {
             return;
         };
 
-        if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-            if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
-                let parent_logical_expr = ctx.nodes().parent_node(parent_node.id());
+        let parent_node = ctx.nodes().parent_node(node.id());
+        if let AstKind::LogicalExpression(logical_expr) = parent_node.kind() {
+            let parent_logical_expr = ctx.nodes().parent_node(parent_node.id());
 
-                if self.except_range
-                    && parent_logical_expr.is_some_and(|e| is_parenthesized(e))
-                    && is_range(logical_expr, ctx)
-                {
-                    return;
-                }
+            if self.except_range
+                && is_parenthesized(parent_logical_expr)
+                && is_range(logical_expr, ctx)
+            {
+                return;
             }
         }
 

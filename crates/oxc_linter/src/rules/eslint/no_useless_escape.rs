@@ -118,7 +118,7 @@ impl Rule for NoUselessEscape {
                 literal.span.start,
                 &check_string(literal.span.source_text(ctx.source_text())),
             ),
-            AstKind::TemplateLiteral(literal) if !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::TaggedTemplateExpression(expr)) if expr.quasi.span == literal.span) => {
+            AstKind::TemplateLiteral(literal) if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TaggedTemplateExpression(expr) if expr.quasi.span == literal.span) => {
                 for template_element in &literal.quasis {
                     check(
                         ctx,
@@ -153,7 +153,7 @@ impl Rule for NoUselessEscape {
 }
 
 fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {
-    matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttribute(_)))
+    matches!(ctx.nodes().parent_kind(id), AstKind::JSXAttribute(_))
 }
 
 #[expect(clippy::cast_possible_truncation)]

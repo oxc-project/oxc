@@ -69,7 +69,7 @@ impl Rule for PreferGlobalThis {
             return;
         }
 
-        if let Some(AstKind::StaticMemberExpression(e)) = ctx.nodes().parent_kind(node.id()) {
+        if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id()) {
             if let Expression::Identifier(ident) = &e.object {
                 if ident.name == "self"
                     && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
@@ -110,8 +110,7 @@ impl Rule for PreferGlobalThis {
 
 /// `window[foo]`, `self[bar]`, etc. are allowed.
 fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    let Some(AstKind::ComputedMemberExpression(member_expr)) = ctx.nodes().parent_kind(node.id())
-    else {
+    let AstKind::ComputedMemberExpression(member_expr) = ctx.nodes().parent_kind(node.id()) else {
         return false;
     };
     let Expression::Identifier(obj_ident) = &member_expr.object.get_inner_expression() else {

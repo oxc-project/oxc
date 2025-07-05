@@ -97,7 +97,7 @@ impl Rule for HeadingHasContent {
             return;
         }
 
-        if let Some(AstKind::JSXElement(parent)) = ctx.nodes().parent_kind(node.id()) {
+        if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
             if object_has_accessible_child(ctx, parent) {
                 return;
             }

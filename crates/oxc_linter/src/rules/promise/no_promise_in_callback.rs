@@ -61,7 +61,7 @@ impl Rule for NoPromiseInCallback {
         // When a Promise is returned in a ReturnStatement, the function is most likely
         // being used as part of a Promise chain rather than as a callback function.
         // To avoid false positives, this case is intentionally excluded from the scope of this rule.
-        if let Some(AstKind::ReturnStatement(_)) = ctx.nodes().parent_kind(node.id()) {
+        if let AstKind::ReturnStatement(_) = ctx.nodes().parent_kind(node.id()) {
             return;
         }
 
@@ -107,14 +107,12 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         return false;
     }
 
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_node(node.id());
     if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
         return false;
     }
 
-    let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(parent.id()) else {
+    let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) else {
         return false;
     };
 

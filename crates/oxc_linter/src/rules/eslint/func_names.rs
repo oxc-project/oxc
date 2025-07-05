@@ -248,9 +248,7 @@ impl Rule for FuncNames {
             match node.kind() {
                 // check function if it invalid, do not report it because maybe later the function is calling itself
                 AstKind::Function(func) => {
-                    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-                        continue;
-                    };
+                    let parent_node = ctx.nodes().parent_node(node.id());
                     let config =
                         if func.generator { &self.generators_config } else { &self.default_config };
 

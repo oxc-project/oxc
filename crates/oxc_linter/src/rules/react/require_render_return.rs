@@ -73,9 +73,7 @@ impl Rule for RequireRenderReturn {
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
             return;
         }
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
         if !is_render_fn(parent) {
             return;
         }
@@ -192,28 +190,28 @@ fn is_render_fn(node: &AstNode) -> bool {
 }
 
 fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let Some(ancestors_0) = ctx.nodes().parent_node(node.id()) else { return false };
+    let ancestors_0 = ctx.nodes().parent_node(node.id());
     if !matches!(ancestors_0.kind(), AstKind::ObjectExpression(_)) {
         return false;
     }
 
-    let Some(ancestors_1) = ctx.nodes().parent_node(ancestors_0.id()) else { return false };
+    let ancestors_1 = ctx.nodes().parent_node(ancestors_0.id());
     if !matches!(ancestors_1.kind(), AstKind::Argument(_)) {
         return false;
     }
 
-    let Some(ancestors_2) = ctx.nodes().parent_node(ancestors_1.id()) else { return false };
+    let ancestors_2 = ctx.nodes().parent_node(ancestors_1.id());
 
     is_es5_component(ancestors_2)
 }
 
 fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+    let parent = ctx.nodes().parent_node(node.id());
     if !matches!(parent.kind(), AstKind::ClassBody(_)) {
         return false;
     }
 
-    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else { return false };
+    let grandparent = ctx.nodes().parent_node(parent.id());
     is_es6_component(grandparent)
 }
 

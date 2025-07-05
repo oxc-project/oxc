@@ -140,11 +140,7 @@ impl Rule for RulesOfHooks {
         // Check if our parent function is part of a class.
         if matches!(
             nodes.parent_kind(parent_func.id()),
-            Some(
-                AstKind::MethodDefinition(_)
-                    | AstKind::StaticBlock(_)
-                    | AstKind::PropertyDefinition(_)
-            )
+            AstKind::MethodDefinition(_) | AstKind::StaticBlock(_) | AstKind::PropertyDefinition(_)
         ) {
             return ctx.diagnostic(diagnostics::class_component(span, hook_name));
         }
@@ -339,12 +335,12 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
 /// Returns `true` if this node is a function argument and that isn't a React special function.
 /// Otherwise it would return `false`.
 fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let argument = match nodes.parent_node(node_id) {
-        Some(parent) if matches!(parent.kind(), AstKind::Argument(_)) => parent,
-        _ => return false,
-    };
+    let parent = nodes.parent_node(node_id);
+    if !matches!(parent.kind(), AstKind::Argument(_)) {
+        return false;
+    }
 
-    let Some(AstKind::CallExpression(call)) = nodes.parent_kind(argument.id()) else {
+    let AstKind::CallExpression(call) = nodes.parent_kind(parent.id()) else {
         return false;
     };
 

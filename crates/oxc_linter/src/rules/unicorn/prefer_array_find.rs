@@ -138,12 +138,12 @@ impl Rule for PreferArrayFind {
 
                         for reference in ctx.symbol_references(ident.symbol_id()) {
                             match ctx.nodes().parent_kind(reference.node_id()) {
-                                Some(AstKind::ComputedMemberExpression(c))
+                                AstKind::ComputedMemberExpression(c)
                                     if c.expression.is_number_0() =>
                                 {
                                     zero_index_nodes.push(reference);
                                 }
-                                Some(AstKind::VariableDeclarator(var_declarator)) => {
+                                AstKind::VariableDeclarator(var_declarator) => {
                                     if let BindingPatternKind::ArrayPattern(array_pat) =
                                         &var_declarator.id.kind
                                     {
@@ -154,7 +154,7 @@ impl Rule for PreferArrayFind {
                                         }
                                     }
                                 }
-                                Some(AstKind::AssignmentExpression(assignment_expr)) => {
+                                AstKind::AssignmentExpression(assignment_expr) => {
                                     if let AssignmentTarget::ArrayAssignmentTarget(target) =
                                         &assignment_expr.left
                                     {
@@ -240,23 +240,14 @@ fn is_filter_call(call_expr: &CallExpression) -> bool {
 }
 
 fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-        match parent.kind() {
-            AstKind::ArrayPattern(_) | AstKind::SimpleAssignmentTarget(_) => return true,
-            AstKind::AssignmentExpression(expr) => {
-                return expr.left.span() == node.span();
-            }
-            AstKind::AssignmentPattern(expr) => return expr.left.span() == node.span(),
-            AstKind::UpdateExpression(expr) => return expr.argument.span() == node.span(),
-            AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete => {
-                return true;
-            }
-
-            _ => return false,
-        }
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::ArrayPattern(_) | AstKind::SimpleAssignmentTarget(_) => true,
+        AstKind::AssignmentExpression(expr) => expr.left.span() == node.span(),
+        AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
+        AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
+        AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Delete,
+        _ => false,
     }
-
-    false
 }
 
 #[test]

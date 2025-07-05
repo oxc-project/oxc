@@ -294,13 +294,13 @@ impl Rule for NoMagicNumbers {
         }
 
         let nodes = ctx.nodes();
-        let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
+        let config = InternConfig::from(node, nodes.parent_node(node.id()));
 
         if self.is_skipable(&config, nodes) {
             return;
         }
 
-        let parent_kind = nodes.parent_node(config.node.id()).unwrap().kind();
+        let parent_kind = nodes.parent_kind(config.node.id());
         let span = config.node.kind().span();
 
         let Some(reason) = self.get_report_reason(&parent_kind) else {
@@ -400,7 +400,7 @@ fn is_ts_numeric_literal<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<
         node.kind(),
         AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
     ) {
-        node = nodes.parent_node(node.id()).unwrap();
+        node = nodes.parent_node(node.id());
     }
 
     matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_))
@@ -417,7 +417,7 @@ fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNo
         node.kind(),
         AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
     ) {
-        node = nodes.parent_node(node.id()).unwrap();
+        node = nodes.parent_node(node.id());
     }
 
     matches!(node.kind(), AstKind::TSIndexedAccessType(_))
@@ -429,7 +429,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        let parent = nodes.parent_node(config.node.id()).unwrap();
+        let parent = nodes.parent_node(config.node.id());
         let parent_kind = parent.kind();
 
         if self.ignore_enums && is_ts_enum(&parent_kind) {
@@ -452,7 +452,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        let parent_parent = nodes.parent_node(parent.id()).unwrap();
+        let parent_parent = nodes.parent_node(parent.id());
 
         if is_parse_int_radix(parent_parent) {
             return true;

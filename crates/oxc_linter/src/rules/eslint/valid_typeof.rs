@@ -104,7 +104,7 @@ impl Rule for ValidTypeof {
         };
 
         let binary_expr = match ctx.nodes().parent_kind(node.id()) {
-            Some(AstKind::BinaryExpression(binary_expr)) if binary_expr.operator.is_equality() => {
+            AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr
             }
             _ => return,

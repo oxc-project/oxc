@@ -57,16 +57,11 @@ impl Rule for BadArrayMethodOnArguments {
         if !node.kind().is_specific_id_reference("arguments") {
             return;
         }
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
         let Some(member_expr) = parent.kind().as_member_expression_kind() else {
             return;
         };
-        let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
-            return;
-        };
-        let AstKind::CallExpression(_) = grandparent.kind() else {
+        let AstKind::CallExpression(_) = ctx.nodes().parent_kind(parent.id()) else {
             return;
         };
         let Some(name) = member_expr.static_property_name() else {

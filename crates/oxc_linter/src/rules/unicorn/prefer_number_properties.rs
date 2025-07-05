@@ -128,21 +128,18 @@ impl Rule for PreferNumberProperties {
                         "isNaN" | "isFinite" | "parseFloat" | "parseInt"
                     ) && matches!(
                         ctx.nodes().parent_kind(node.id()),
-                        Some(AstKind::ObjectProperty(_))
+                        AstKind::ObjectProperty(_)
                     ))
                 {
                     let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id())
                     {
-                        Some(AstKind::ObjectProperty(object_property))
-                            if object_property.shorthand =>
-                        {
+                        AstKind::ObjectProperty(object_property) if object_property.shorthand => {
                             fixer.insert_text_before(
                                 &ident_ref.span,
                                 format!("{}: Number.", ident_ref.name.as_str()),
                             )
                         }
-                        Some(_) => fixer.insert_text_before(&ident_ref.span, "Number."),
-                        None => unreachable!(),
+                        _ => fixer.insert_text_before(&ident_ref.span, "Number."),
                     };
 
                     if ident_ref.name.as_str() == "isNaN" || ident_ref.name.as_str() == "isFinite" {

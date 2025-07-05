@@ -148,10 +148,8 @@ fn check_reject_in_function(
         };
 
         ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
-            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
-                return;
-            };
-            if let AstKind::CallExpression(call_expr) = node.kind() {
+            if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
+            {
                 check_reject_call(call_expr, ctx, allow_empty_reject);
             }
         });
@@ -168,7 +166,7 @@ fn check_reject_in_function(
             continue;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else { continue };
+        let parent = ctx.nodes().parent_node(reference.node_id());
         let AstKind::ComputedMemberExpression(member_expr) = parent.kind() else {
             continue;
         };
@@ -181,11 +179,7 @@ fn check_reject_in_function(
             continue;
         }
 
-        let Some(node) = ctx.nodes().parent_node(parent.id()) else {
-            continue;
-        };
-
-        if let AstKind::CallExpression(call_expr) = node.kind() {
+        if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) {
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     }

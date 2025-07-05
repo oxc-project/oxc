@@ -99,7 +99,7 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        if let Some(AstKind::IfStatement(_)) = ctx.nodes().parent_kind(node.id()) {
+        if let AstKind::IfStatement(_) = ctx.nodes().parent_kind(node.id()) {
             return;
         }
 

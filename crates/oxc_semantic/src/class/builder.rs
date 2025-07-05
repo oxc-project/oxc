@@ -36,7 +36,7 @@ impl<'a> ClassTableBuilder<'a> {
         current_node_id: NodeId,
         nodes: &AstNodes,
     ) {
-        let parent_id = nodes.parent_id(current_node_id).unwrap_or_else(|| unreachable!());
+        let parent_id = nodes.parent_id(current_node_id);
         self.current_class_id = Some(self.classes.declare_class(self.current_class_id, parent_id));
 
         for element in &class.body {
@@ -102,25 +102,21 @@ impl<'a> ClassTableBuilder<'a> {
         nodes: &AstNodes,
     ) {
         let parent_kind = nodes.parent_kind(current_node_id);
-        if let Some(parent_kind) = parent_kind {
-            if matches!(parent_kind, AstKind::PrivateInExpression(_))
-                || parent_kind.is_member_expression_kind()
-            {
-                if let Some(class_id) = self.current_class_id {
-                    let element_ids = self.classes.get_element_ids(
-                        class_id,
-                        &ident.name,
-                        /* is_private */ true,
-                    );
 
-                    let reference = PrivateIdentifierReference::new(
-                        current_node_id,
-                        ident.name,
-                        ident.span,
-                        element_ids,
-                    );
-                    self.classes.add_private_identifier_reference(class_id, reference);
-                }
+        if matches!(parent_kind, AstKind::PrivateInExpression(_))
+            || parent_kind.is_member_expression_kind()
+        {
+            if let Some(class_id) = self.current_class_id {
+                let element_ids =
+                    self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
+
+                let reference = PrivateIdentifierReference::new(
+                    current_node_id,
+                    ident.name,
+                    ident.span,
+                    element_ids,
+                );
+                self.classes.add_private_identifier_reference(class_id, reference);
             }
         }
     }

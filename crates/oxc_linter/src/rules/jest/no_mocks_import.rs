@@ -62,10 +62,8 @@ impl Rule for NoMocksImport {
 
         for &reference_id in require_reference_ids {
             let reference = ctx.scoping().get_reference(reference_id);
-            let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
-                return;
-            };
-            let AstKind::CallExpression(call_expr) = parent.kind() else {
+            let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
+            else {
                 return;
             };
 
