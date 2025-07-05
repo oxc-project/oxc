@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 157/293
+Passed: 158/293
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1417,7 +1417,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (1/34)
+# plugin-styled-components (2/34)
 * styled-components/add-display-names/input.js
 x Output mismatch
 
@@ -1428,13 +1428,10 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/add-identifier-with-top-level-import-paths/input.js
-x Output mismatch
+styled-components: unknown field `topLevelImportPaths`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/add-identifier-with-top-level-import-paths-and-named-import/input.js
-x Output mismatch
-
-* styled-components/allow-chains-of-member-calls/input.js
-x Output mismatch
+styled-components: unknown field `topLevelImportPaths`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/annotate-create-global-style-with-pure-comments/input.js
 x Output mismatch
@@ -1470,7 +1467,7 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/minify-single-line-comments-with-interpolations/input.js
-x Output mismatch
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/not-use-private-api-if-not-required/input.js
 x Output mismatch
@@ -1485,34 +1482,34 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/transpile-css-prop/input.jsx
-x Output mismatch
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/transpile-css-prop-add-import/input.jsx
-x Output mismatch
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/transpile-css-prop-add-require/input.jsx
-x Output mismatch
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/transpile-css-prop-all-options-on/input.jsx
-x Output mismatch
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/transpile-require-default/input.js
 x Output mismatch
 
 * styled-components/transpile-template-literals-with-config/input.js
-x Output mismatch
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/transpile-template-literals-without-config/input.js
-x Output mismatch
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/use-directory-name/input.js
-x Output mismatch
+styled-components: unknown field `meaninglessFileNames`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/use-file-name/input.js
 x Output mismatch
 
 * styled-components/use-namespace/input.js
-x Output mismatch
+styled-components: unknown field `namespace`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
 
 * styled-components/work-with-hoisted-default-as-import/input.js
 x Output mismatch

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    ReactRefreshOptions,
+    PluginsOptions, ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
@@ -69,6 +69,9 @@ pub struct TransformOptions {
     /// Proposals
     pub proposals: ProposalOptions,
 
+    /// Plugins
+    pub plugins: PluginsOptions,
+
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -90,6 +93,7 @@ impl TransformOptions {
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             proposals: ProposalOptions::default(),
+            plugins: PluginsOptions::default(),
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -258,6 +262,11 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             ..HelperLoaderOptions::default()
         };
 
+        let mut plugins = PluginsOptions::default();
+        if let Some(styled_components) = &options.plugins.styled_components {
+            plugins.styled_components = Some(styled_components.clone());
+        }
+
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
             assumptions: options.assumptions,
@@ -280,6 +289,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 explicit_resource_management: options.plugins.explicit_resource_management,
             },
             helper_loader,
+            plugins,
         })
     }
 }
