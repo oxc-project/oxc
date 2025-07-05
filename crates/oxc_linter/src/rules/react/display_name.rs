@@ -333,7 +333,6 @@ impl Rule for DisplayName {
                                     should_skip = true;
                                     break;
                                 }
-                                // else: do nothing here, fall through
                             }
                         }
                     }
