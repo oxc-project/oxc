@@ -341,7 +341,7 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
             ctx.error(module_code(text, span));
         }
         ModuleKind::Module => {
-            if matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::Program(_))) {
+            if matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::Program(_)) {
                 return;
             }
             ctx.error(top_level(text, span));
@@ -749,7 +749,7 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
         && class.id.is_none()
         && !matches!(
             ctx.nodes.parent_kind(ctx.current_node_id),
-            Some(AstKind::ExportDefaultDeclaration(_))
+            AstKind::ExportDefaultDeclaration(_)
         )
     {
         let start = class.span.start;
@@ -798,8 +798,8 @@ fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 
 pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
     let super_call_span = match ctx.nodes.parent_kind(ctx.current_node_id) {
-        Some(AstKind::CallExpression(expr)) => Some(expr.span),
-        Some(AstKind::NewExpression(expr)) => Some(expr.span),
+        AstKind::CallExpression(expr) => Some(expr.span),
+        AstKind::NewExpression(expr) => Some(expr.span),
         _ => None,
     };
 
@@ -809,7 +809,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
             if flags.is_function()
                 && matches!(
                     ctx.nodes.parent_kind(ctx.scoping.get_node_id(scope_id)),
-                    Some(AstKind::ObjectProperty(_))
+                    AstKind::ObjectProperty(_)
                 )
             {
                 if let Some(super_call_span) = super_call_span {
@@ -877,10 +877,8 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
             // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
             // Check this function if is a class method, if it isn't, then it a plain function
             let function_node_id = ctx.scoping.get_node_id(scope_id);
-            let is_class_method = matches!(
-                ctx.nodes.parent_kind(function_node_id),
-                Some(AstKind::MethodDefinition(_))
-            );
+            let is_class_method =
+                matches!(ctx.nodes.parent_kind(function_node_id), AstKind::MethodDefinition(_));
             if !is_class_method {
                 ctx.error(unexpected_super_reference(sup.span));
             }

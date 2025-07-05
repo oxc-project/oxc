@@ -20,10 +20,9 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = builder
+        let is_declare = matches!(builder
             .nodes
-            .parent_kind(builder.current_node_id)
-            .is_some_and(|kind| matches!(kind, AstKind::VariableDeclaration(decl) if decl.declare));
+            .parent_kind(builder.current_node_id), AstKind::VariableDeclaration(decl) if decl.declare);
 
         let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const
@@ -143,8 +142,7 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
     if builder.current_scope_flags().is_strict_mode() {
         return false;
     }
-    let Some(AstKind::IfStatement(stmt)) = builder.nodes.parent_kind(builder.current_node_id)
-    else {
+    let AstKind::IfStatement(stmt) = builder.nodes.parent_kind(builder.current_node_id) else {
         return false;
     };
     if let Statement::FunctionDeclaration(func) = &stmt.consequent {
@@ -193,9 +191,7 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if let Some(AstKind::ObjectProperty(prop)) =
-            builder.nodes.parent_kind(builder.current_node_id)
-        {
+        if let AstKind::ObjectProperty(prop) = builder.nodes.parent_kind(builder.current_node_id) {
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
@@ -216,7 +212,7 @@ impl<'a> Binder<'a> for Function<'a> {
 impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else {
             return;
         };
@@ -238,7 +234,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         if parameters.kind.is_signature() {
@@ -305,8 +301,7 @@ fn declare_symbol_for_import_specifier(
     builder: &mut SemanticBuilder,
 ) {
     let includes = if is_type
-        || builder.nodes.parent_kind(builder.current_node_id).is_some_and(
-            |decl| matches!(decl, AstKind::ImportDeclaration(decl) if decl.import_kind.is_type()),
+        || matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
         ) {
         SymbolFlags::TypeImport
     } else {
@@ -688,7 +683,7 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let scope_id = if matches!(
             builder.nodes.parent_kind(builder.current_node_id),
-            Some(AstKind::TSInferType(_))
+            AstKind::TSInferType(_)
         ) {
             builder
                 .scoping

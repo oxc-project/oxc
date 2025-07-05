@@ -485,7 +485,7 @@ pub fn check_jsx_expression_container(
     ctx: &SemanticBuilder<'_>,
 ) {
     if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttribute(_)))
+        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::JSXAttribute(_))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
     }
