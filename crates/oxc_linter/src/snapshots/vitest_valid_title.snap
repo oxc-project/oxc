@@ -6,42 +6,42 @@ source: crates/oxc_linter/src/tester.rs
  1 │ test("the correct way to properly handle all things", () => {});
    ·      ───────────────────────────────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: correct is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): correct is not allowed in test title
    ╭─[valid_title.tsx:1:10]
  1 │ describe("the correct way to do things", function () {})
    ·          ──────────────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: correct is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): ALL is not allowed in test title
    ╭─[valid_title.tsx:1:4]
  1 │ it("has ALL the things", () => {})
    ·    ────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: ALL is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): every is not allowed in test title
    ╭─[valid_title.tsx:1:11]
  1 │ xdescribe("every single one of them", function () {})
    ·           ──────────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: every is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): Descriptive is not allowed in test title
    ╭─[valid_title.tsx:1:10]
  1 │ describe('Very Descriptive Title Goes Here', function () {})
    ·          ──────────────────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: Descriptive is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): properly is not allowed in test title
    ╭─[valid_title.tsx:1:6]
  1 │ test(`that the value is set properly`, function () {})
    ·      ────────────────────────────────
    ╰────
-  help: It is included in the `disallowedWords` of your config file, try to remove it from your title
+  help: properly is included in the `disallowedWords` list, try to remove it from your test title
 
   ⚠ eslint-plugin-vitest(valid-title): Title must be a string
    ╭─[valid_title.tsx:1:6]
@@ -57,7 +57,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                            ────────────────
  10 │                     it('is another test #e2e #vitest4life', () => {});
     ╰────
-  help: Make sure the title matches the `mustMatch` of your config file
+  help: Make sure the title matches the configured `mustMatch` pattern
 
   ⚠ eslint-plugin-vitest(valid-title): Please include "#unit" or "#e2e" in titles
    ╭─[valid_title.tsx:8:19]
@@ -66,14 +66,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────────────
  9 │                     it('is another test #e2e #vitest4life', () => {});
    ╰────
-  help: Make sure the title matches the `mustMatch` of your config file
+  help: Make sure the title matches the configured `mustMatch` pattern
 
   ⚠ eslint-plugin-vitest(valid-title): test should match #(?:unit|integration|e2e)
    ╭─[valid_title.tsx:1:6]
  1 │ test("the correct way to properly handle all things", () => {});
    ·      ───────────────────────────────────────────────
    ╰────
-  help: Make sure the title matches the `mustMatch` of your config file
+  help: Make sure the title matches the configured `mustMatch` pattern
 
   ⚠ eslint-plugin-vitest(valid-title): describe should not have an empty title
    ╭─[valid_title.tsx:1:10]
