@@ -10,6 +10,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
+    /// React version to use for version-specific behavior.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "version": "16.14.0"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub version: Option<CompactStr>,
+
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
     /// Example:
@@ -56,6 +72,21 @@ pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,
+
+    /// Functions that wrap React components and should be treated as HOCs.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "componentWrapperFunctions": ["observer", "withRouter"]
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    #[serde(rename = "componentWrapperFunctions")]
+    component_wrapper_functions: Vec<CompactStr>,
     // TODO: More properties should be added
 }
 
@@ -67,6 +98,10 @@ impl ReactPluginSettings {
 
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
+    }
+
+    pub fn is_component_wrapper_function(&self, name: &str) -> bool {
+        self.component_wrapper_functions.iter().any(|func| func == name)
     }
 }
 
