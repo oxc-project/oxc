@@ -36,6 +36,9 @@ working directory: fixtures
       "implementsReplacesDocs": false,
       "exemptDestructuredRootsFromChecks": false,
       "tagNamePreference": {}
+    },
+    "vitest": {
+      "typecheck": false
     }
   },
   "env": {
