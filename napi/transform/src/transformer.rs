@@ -19,8 +19,8 @@ use oxc::{
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, PluginsOptions,
+        ProposalOptions, RewriteExtensionsMode,
     },
     transformer_plugins::{
         InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
@@ -182,6 +182,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
+            plugins: PluginsOptions::default(),
         })
     }
 }

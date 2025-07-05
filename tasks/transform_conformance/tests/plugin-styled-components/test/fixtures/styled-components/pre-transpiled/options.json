@@ -1,0 +1,15 @@
+{
+  "plugins": [
+    ["styled-components", {
+      "fileName": false,
+      "transpileTemplateLiterals": false,
+      "ssr": true
+    }],
+    [
+      "@babel/plugin-transform-class-properties",
+      {
+        "loose": true
+      }
+    ]
+  ]
+}

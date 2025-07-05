@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 156/259
+Passed: 158/293
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1415,5 +1415,103 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
+
+
+# plugin-styled-components (2/34)
+* styled-components/add-display-names/input.js
+x Output mismatch
+
+* styled-components/add-identifier/input.js
+x Output mismatch
+
+* styled-components/add-identifier-and-display-name/input.js
+x Output mismatch
+
+* styled-components/add-identifier-with-top-level-import-paths/input.js
+styled-components: unknown field `topLevelImportPaths`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/add-identifier-with-top-level-import-paths-and-named-import/input.js
+styled-components: unknown field `topLevelImportPaths`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/annotate-create-global-style-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-css-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-keyframes-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-styled-calls-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-withtheme-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/css-declared-after-component/input.jsx
+x Output mismatch
+
+* styled-components/does-not-replace-native-with-no-tags/input.js
+x Output mismatch
+
+* styled-components/ignore-external-styled-import/input.jsx
+x Output mismatch
+
+* styled-components/minify-css-in-helpers/input.js
+x Output mismatch
+
+* styled-components/minify-css-to-use-with-transpilation/input.js
+x Output mismatch
+
+* styled-components/minify-css-to-use-without-transpilation/input.js
+x Output mismatch
+
+* styled-components/minify-single-line-comments-with-interpolations/input.js
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/not-use-private-api-if-not-required/input.js
+x Output mismatch
+
+* styled-components/pre-transpiled/input.js
+x Output mismatch
+
+* styled-components/track-the-imported-variable/input.js
+x Output mismatch
+
+* styled-components/transformed-imports-with-jsx-member-expressions/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop/input.jsx
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/transpile-css-prop-add-import/input.jsx
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/transpile-css-prop-add-require/input.jsx
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/transpile-css-prop-all-options-on/input.jsx
+styled-components: unknown field `cssProp`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/transpile-require-default/input.js
+x Output mismatch
+
+* styled-components/transpile-template-literals-with-config/input.js
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/transpile-template-literals-without-config/input.js
+styled-components: unknown field `minify`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/use-directory-name/input.js
+styled-components: unknown field `meaninglessFileNames`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/use-file-name/input.js
+x Output mismatch
+
+* styled-components/use-namespace/input.js
+styled-components: unknown field `namespace`, expected one of `displayName`, `fileName`, `ssr`, `transpileTemplateLiterals`, `pure`
+
+* styled-components/work-with-hoisted-default-as-import/input.js
+x Output mismatch
 
 
