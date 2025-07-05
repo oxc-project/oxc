@@ -369,7 +369,7 @@ fn validate_title(
         } else {
             name
         };
-        let error = format!("{function_name} should not have an empty title");
+        let error = format!("`{function_name}` should not have an empty title");
         ctx.diagnostic(valid_title_diagnostic(
             &error,
             "Write a meaningful title for your test",
@@ -429,10 +429,10 @@ fn check_disallowed_words(title: &str, span: Span, valid_title: &ValidTitle, ctx
     if let Ok(disallowed_words_reg) = Regex::new(&pattern) {
         if let Some(matched) = disallowed_words_reg.find(title) {
             let error =
-                CompactStr::from(format!("{} is not allowed in test title", matched.as_str()));
+                CompactStr::from(format!("`{}` is not allowed in test title", matched.as_str()));
             ctx.diagnostic(valid_title_diagnostic(
                 error.as_str(),
-                format!("{} is included in the `disallowedWords` list, try to remove it from your test title", matched.as_str()).as_str(),
+                format!("`{}` is included in the `disallowedWords` list, try to remove it from your test title", matched.as_str()).as_str(),
                 span,
             ));
         }
@@ -460,7 +460,7 @@ fn check_pattern_matching(
             } else {
                 // Use CompactStr for the message to avoid heap allocation
                 let msg =
-                    CompactStr::from(format!("{un_prefixed_name} should match {raw_pattern}"));
+                    CompactStr::from(format!("`{un_prefixed_name}` should match `{raw_pattern}`"));
                 ctx.diagnostic(valid_title_diagnostic(
                     msg.as_str(),
                     "Make sure the title matches the configured `mustMatch` pattern",
@@ -483,8 +483,9 @@ fn check_pattern_matching(
                 ));
             } else {
                 // Use CompactStr for the message to avoid heap allocation
-                let msg =
-                    CompactStr::from(format!("{un_prefixed_name} should not match {raw_pattern}"));
+                let msg = CompactStr::from(format!(
+                    "`{un_prefixed_name}` should not match `{raw_pattern}`"
+                ));
                 ctx.diagnostic(valid_title_diagnostic(
                     msg.as_str(),
                     "Make sure the title does not match the configured `mustNotMatch` pattern",
