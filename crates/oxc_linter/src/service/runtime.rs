@@ -148,7 +148,7 @@ pub trait RuntimeFileSystem {
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
     fn read_to_arena_str<'a>(
-        &self,
+        &'a self,
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error>;
@@ -229,7 +229,7 @@ impl<'l> Runtime<'l> {
     }
 
     fn get_source_type_and_text<'a>(
-        &self,
+        &'a self,
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
