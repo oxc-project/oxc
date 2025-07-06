@@ -13,7 +13,7 @@ const deserializeTS = require('./generated/deserialize/ts.js');
 const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
 const { getVisitorsArr } = require('./raw-transfer/visitor.js');
 const { TOKEN } = require('./raw-transfer/lazy-common.js');
-const walkProgram = require('./generated/deserialize/lazy-visit.js');
+const walkProgram = require('./generated/lazy/walk.js');
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [

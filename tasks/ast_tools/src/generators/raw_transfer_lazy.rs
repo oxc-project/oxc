@@ -37,15 +37,15 @@ impl Generator for RawTransferLazyGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.js"),
                 code: constructors,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy-visit.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.js"),
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy-types.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.js"),
                 code: node_type_ids_map,
             },
         ]
@@ -182,7 +182,7 @@ fn generate(
 
         const {{
             {constructor_names}
-        }} = require('./lazy.js').constructors;
+        }} = require('./constructors.js').constructors;
 
         module.exports = walkProgram;
 

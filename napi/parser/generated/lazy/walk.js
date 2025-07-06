@@ -182,7 +182,7 @@ const {
   JSDocNullableType,
   JSDocNonNullableType,
   JSDocUnknownType,
-} = require('./lazy.js').constructors;
+} = require('./constructors.js').constructors;
 
 module.exports = walkProgram;
 

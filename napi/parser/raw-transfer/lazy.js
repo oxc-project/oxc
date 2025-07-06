@@ -2,8 +2,8 @@
 
 const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./common.js'),
   { TOKEN } = require('./lazy-common.js'),
-  constructLazyData = require('../generated/deserialize/lazy.js').construct,
-  walkProgram = require('../generated/deserialize/lazy-visit.js'),
+  constructLazyData = require('../generated/lazy/constructors.js').construct,
+  walkProgram = require('../generated/lazy/walk.js'),
   { Visitor, getVisitorsArr } = require('./visitor.js');
 
 module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
