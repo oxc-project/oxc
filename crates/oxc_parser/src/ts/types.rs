@@ -59,9 +59,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = {
             let return_type_span = self.start_span();
-            let Some(return_type) = self.parse_return_type(Kind::Arrow, /* is_type */ false) else {
-                return self.unexpected();
-            };
+            let return_type = self.parse_return_type();
             self.ast.ts_type_annotation(self.end_span(return_type_span), return_type)
         };
 
@@ -1038,47 +1036,22 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_return_type_annotation(
         &mut self,
-        kind: Kind,
-        is_type: bool,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
-        if !self.is_ts {
-            return None;
-        }
         if !self.at(Kind::Colon) {
             return None;
         }
         let span = self.start_span();
-        self.parse_return_type(kind, is_type)
-            .map(|return_type| self.ast.alloc_ts_type_annotation(self.end_span(span), return_type))
+        let return_type = self.parse_return_type();
+        Some(self.ast.alloc_ts_type_annotation(self.end_span(span), return_type))
     }
 
-    fn parse_return_type(&mut self, return_kind: Kind, is_type: bool) -> Option<TSType<'a>> {
-        if self.should_parse_return_type(return_kind, is_type) {
-            return Some(self.context(
-                Context::empty(),
-                Context::DisallowConditionalTypes,
-                Self::parse_type_or_type_predicate,
-            ));
-        }
-        None
-    }
-
-    fn should_parse_return_type(&mut self, return_kind: Kind, _is_type: bool) -> bool {
-        if return_kind == Kind::Arrow {
-            self.bump_any();
-            return true;
-        }
-        if self.eat(Kind::Colon) {
-            return true;
-        }
-        // TODO
-        // if (isType && token() === SyntaxKind.EqualsGreaterThanToken) {
-        // // This is easy to get backward, especially in type contexts, so parse the type anyway
-        // parseErrorAtCurrentToken(Diagnostics._0_expected, tokenToString(SyntaxKind.ColonToken));
-        // nextToken();
-        // return true;
-        // }
-        false
+    fn parse_return_type(&mut self) -> TSType<'a> {
+        self.bump_any();
+        self.context(
+            Context::empty(),
+            Context::DisallowConditionalTypes,
+            Self::parse_type_or_type_predicate,
+        )
     }
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
@@ -1134,7 +1107,7 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
             }
         }
-        let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
+        let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
         match kind {
             CallOrConstructorSignature::Call => self.ast.ts_signature_call_signature_declaration(
@@ -1163,7 +1136,7 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name();
         let (this_param, params) =
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
-        let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
+        let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
         if kind == TSMethodSignatureKind::Set {
             if let Some(return_type) = return_type.as_ref() {
@@ -1197,7 +1170,7 @@ impl<'a> ParserImpl<'a> {
             let type_parameters = self.parse_ts_type_parameters();
             let (this_param, params) = self
                 .parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
-            let return_type = self.parse_ts_return_type_annotation(Kind::Colon, true);
+            let return_type = self.parse_ts_return_type_annotation();
             self.parse_type_member_semicolon();
             self.ast.ts_signature_method_signature(
                 self.end_span(span),
