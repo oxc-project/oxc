@@ -303,6 +303,14 @@ fn can_merge_imports(
     current_type: &ImportType,
     existing: &[(ImportType, Span, ModuleType)],
 ) -> bool {
+    if *current_type == ImportType::AllButDefault {
+        return false;
+    }
+
+    if *current_type == ImportType::SideEffect {
+        return !existing.is_empty();
+    }
+
     let namespace = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Namespace));
     let named = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Named));
     let default = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Default));
@@ -333,8 +341,7 @@ fn can_merge_imports(
             has_namespace || has_default
         }
         ImportType::Default => has_default || has_namespace || has_named,
-        ImportType::SideEffect => !existing.is_empty(),
-        ImportType::AllButDefault => false,
+        _ => unreachable!("other ImportType values should be already checked"),
     }
 }
 
