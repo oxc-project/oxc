@@ -182,7 +182,7 @@ const {
   JSDocNullableType,
   JSDocNonNullableType,
   JSDocUnknownType,
-} = require('./constructors.js').constructors;
+} = require('./constructors.js');
 
 module.exports = walkProgram;
 

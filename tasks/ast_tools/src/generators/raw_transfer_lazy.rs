@@ -62,13 +62,7 @@ static CONSTRUCT_PRELUDE: &str = "
 
     const constructors = {};
 
-    module.exports = { construct, constructors };
-
-    function construct(ast) {
-        // (2 * 1024 * 1024 * 1024 - 16) >> 2
-        const metadataPos32 = 536870908;
-        return new RawTransferData(ast.buffer.uint32[metadataPos32], ast);
-    }
+    module.exports = constructors;
 
     const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
         decodeStr = textDecoder.decode.bind(textDecoder),
@@ -182,7 +176,7 @@ fn generate(
 
         const {{
             {constructor_names}
-        }} = require('./constructors.js').constructors;
+        }} = require('./constructors.js');
 
         module.exports = walkProgram;
 
