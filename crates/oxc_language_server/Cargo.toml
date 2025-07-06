@@ -18,8 +18,16 @@ workspace = true
 
 [[bin]]
 name = "oxc_language_server"
-test = true
+path = "src/lib.rs"
+test = false
 doctest = false
+debug = true
+strip = false # Keep debug information in binary
+
+# [[bin]]
+# name = "oxc_language_server"
+# test = true
+# doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
@@ -38,6 +46,9 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
+insta = { workspace = true }
+memory-stats = "1.2.0"
+rustc-demangle = "0.1.25"
 
 [dev-dependencies]
-insta = { workspace = true }
+

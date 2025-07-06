@@ -12,7 +12,8 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap, Options, Run,
+    ConcurrentHashMap,
+    options::{Options, Run},
     code_actions::{
         apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,

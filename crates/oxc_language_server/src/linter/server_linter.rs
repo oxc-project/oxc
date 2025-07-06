@@ -15,8 +15,8 @@ use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
 };
-use crate::options::UnusedDisableDirectives;
-use crate::{ConcurrentHashMap, Options};
+use crate::options::{UnusedDisableDirectives, Options};
+use crate::{ConcurrentHashMap};
 
 use super::config_walker::ConfigWalker;
 
@@ -245,7 +245,7 @@ mod test {
     use std::path::{Path, PathBuf};
 
     use crate::{
-        Options,
+        options::Options,
         linter::server_linter::{ServerLinter, normalize_path},
         tester::{Tester, get_file_path},
     };

@@ -1,0 +1,12 @@
+{
+  "plugins": ["import"],
+  "categories": {
+    "correctness": "error",
+    "restriction": "error",
+    "pedantic": "error",
+    "perf": "error",
+    "style": "error",
+    "suspicious": "error",
+    "nursery": "error"
+  }
+}

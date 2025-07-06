@@ -1,11 +1,11 @@
 use std::{fmt::Write, path::PathBuf};
 
+use crate::{options::Options, worker::WorkspaceWorker};
+use memory_stats::memory_stats;
 use tower_lsp_server::{
     UriExt,
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
-
-use crate::{Options, worker::WorkspaceWorker};
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -140,5 +140,18 @@ impl Tester<'_> {
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot);
         });
+    }
+
+    pub async fn test_memory_leak(&self, relative_file_path: &str, iterations: u32) {
+        let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
+
+        let worker = self.create_workspace_worker().await;
+
+        for _ in 0..iterations {
+            if let Some(usage) = memory_stats() {
+                println!("Current physical memory usage: {}", usage.physical_mem);
+            }
+            worker.lint_file(&uri, None).await.expect("lint file is ignored");
+        }
     }
 }

@@ -42,17 +42,6 @@ debugger;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 export function ThreeDMain() {
   return (
     <Canvas
