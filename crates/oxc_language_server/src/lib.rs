@@ -16,5 +16,6 @@ const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
 #[tokio::main]
 async fn main() {
     Tester::new("crates/oxc_language_server/fixtures/linter/oxc_resolver_memory_leak", None)
-        .test_memory_leak("index.tsx", 100).await;
+        .test_memory_leak("index.tsx", 100)
+        .await;
 }

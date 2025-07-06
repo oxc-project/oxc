@@ -1937,7 +1937,6 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_linter",
  "papaya",
- "rustc-demangle",
  "rustc-hash",
  "serde",
  "serde_json",

@@ -11,12 +11,12 @@ use tower_lsp_server::lsp_types::Uri;
 use oxc_linter::{AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Oxlintrc};
 use tower_lsp_server::UriExt;
 
+use crate::ConcurrentHashMap;
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
 };
-use crate::options::{UnusedDisableDirectives, Options};
-use crate::{ConcurrentHashMap};
+use crate::options::{Options, UnusedDisableDirectives};
 
 use super::config_walker::ConfigWalker;
 
@@ -245,8 +245,8 @@ mod test {
     use std::path::{Path, PathBuf};
 
     use crate::{
-        options::Options,
         linter::server_linter::{ServerLinter, normalize_path},
+        options::Options,
         tester::{Tester, get_file_path},
     };
     use rustc_hash::FxHashMap;

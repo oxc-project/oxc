@@ -13,7 +13,6 @@ use tower_lsp_server::{
 
 use crate::{
     ConcurrentHashMap,
-    options::{Options, Run},
     code_actions::{
         apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,
@@ -22,6 +21,7 @@ use crate::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
         server_linter::{ServerLinter, normalize_path},
     },
+    options::{Options, Run},
 };
 
 pub struct WorkspaceWorker {
