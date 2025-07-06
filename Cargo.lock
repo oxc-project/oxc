@@ -34,9 +34,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "anes"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "735d4f398ca57cfa2880225c2bf81c3b9af3be5bb22e44ae70118dad38713e84"
+checksum = "dc43e46599f3d77fcf2f2ca89e4d962910b0c19c44e7b58679cbbdfd1820a662"
 
 [[package]]
 name = "arraydeque"
@@ -176,9 +176,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.27"
+version = "1.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d487aa071b5f64da6f19a3e848e3578944b726ee5a4854b82172f02aa876bfdc"
+checksum = "5c1599538de2394445747c8cf7935946e3cc27e9625f889d979bfb2aaf569362"
 dependencies = [
  "shlex",
 ]
@@ -1137,6 +1137,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "io-uring"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b86e202f00093dcba4275d4636b93ef9dd75d025ae560d2521b45ea28ab49013"
+dependencies = [
+ "bitflags 2.9.1",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "is_ci"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1358,10 +1369,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "napi"
-version = "3.0.0-beta.10"
+name = "mio"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8a8bf588b2ea96bdf618cac8a81b2b6cb5e0f0f86a1ac4ac62859ab78fd79a8"
+checksum = "78bed444cc8a2160f01cbcf811ef18cac863ad68ae8ca62092e8db51d51c761c"
+dependencies = [
+ "libc",
+ "wasi 0.11.1+wasi-snapshot-preview1",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "napi"
+version = "3.0.0-beta.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20d04dd99c9471a6028fab8c99fb6ff91f8bf5d2a73de6204fa3fc55502e57ac"
 dependencies = [
  "bitflags 2.9.1",
  "ctor",
@@ -1374,15 +1396,15 @@ dependencies = [
 
 [[package]]
 name = "napi-build"
-version = "2.2.1"
+version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44e0e3177307063d3e7e55b7dd7b648cca9d7f46daa35422c0d98cc2bf48c2c1"
+checksum = "fff539e61c5e3dd4d7d283610662f5d672c2aea0f158df78af694f13dbb3287b"
 
 [[package]]
 name = "napi-derive"
-version = "3.0.0-beta.10"
+version = "3.0.0-beta.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cf56acb0b78c92cba806a559cfe62513f53cc4a7947807e2ff3c4ef865e9b3a"
+checksum = "2856e1df1ae797d8443a71c18d10c1a46d75e69a4b0d67f15504e8af98a0b0f6"
 dependencies = [
  "convert_case",
  "ctor",
@@ -1394,9 +1416,9 @@ dependencies = [
 
 [[package]]
 name = "napi-derive-backend"
-version = "2.0.0-beta.10"
+version = "2.0.0-beta.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6862700f1bdfe43767dc2fd3577306cf6342431f078b765c8336454dda382f1d"
+checksum = "49950e70710f3a5b04b23b5ab5de8c7d23c0a7580ec4aa0fb1322a7679d7daf9"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -1566,9 +1588,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.0.6"
+version = "2.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c7bcc31e3014fa4226346b8596cda0f5cb5797045fa2760c6b871407db5642c"
+checksum = "59d2b662fc47724189e32944e106876be89e15c2d1bbdcd9befc65873acb14a3"
 dependencies = [
  "nom",
  "rustc-hash",
@@ -2141,9 +2163,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.3.0"
+version = "11.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f19b3db1f043a341055dd99281c9a59f2a91f6bd15e32ce5b8d13c719abb25d6"
+checksum = "e300c931167c1f902f8029a7aac00372cc1742c6a0c9f625a8b67dd337f557c7"
 dependencies = [
  "cfg-if",
  "indexmap",
@@ -2781,9 +2803,9 @@ dependencies = [
 
 [[package]]
 name = "rust-lapper"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee43d8e721ac803031dbab6a944b957b49a3b11eadbc099880c8aaaebf23ed27"
+checksum = "2274b9cc4f205bc0945b7be3e4fc1a102b0b7119ba6482faaedb9c4f76dde5d1"
 dependencies = [
  "num-traits",
 ]
@@ -3246,12 +3268,16 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.45.1"
+version = "1.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75ef51a33ef1da925cea3e4eb122833cb377c61439ca401b770f54902b806779"
+checksum = "0cc3a2344dafbe23a245241fe8b09735b521110d30fcefbbd5feb1797ca35d17"
 dependencies = [
  "backtrace",
+ "io-uring",
+ "libc",
+ "mio",
  "pin-project-lite",
+ "slab",
  "tokio-macros",
 ]
 
