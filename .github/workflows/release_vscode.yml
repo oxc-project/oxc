@@ -83,7 +83,7 @@ jobs:
           pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@a27ef18d36cfa66b0af3a360104621793b41c036 # v2.54.3
+        uses: taiki-e/install-action@cb148fe1fce8758fff4870f9a63060b1d1a117ac # v2.56.6
         with:
           tool: cross
 
