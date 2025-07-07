@@ -13,6 +13,8 @@ describe('isolated declaration', () => {
      */
     foo = "bar";
   }
+  // Do not keep normal comments
+  export class B {}
   `;
 
   it('matches output', () => {
@@ -26,9 +28,10 @@ describe('isolated declaration', () => {
         '\t* jsdoc 2\n' +
         '\t*/\n' +
         '\tfoo: string;\n' +
-        '}\n',
+        '}\n' +
+        'export declare class B {}\n',
       map: {
-        mappings: ';;;AAIE,OAAO,cAAM,EAAE;;;;CAIb;AACD',
+        mappings: ';;;AAIE,OAAO,cAAM,EAAE;;;;CAIb;AACD;AAED,OAAO,cAAM,EAAE,CAAE',
         names: [],
         sources: ['test.ts'],
         sourcesContent: [code],

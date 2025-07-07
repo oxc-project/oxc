@@ -4,7 +4,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{Codegen, CodegenOptions},
+    codegen::{Codegen, CodegenOptions, CommentOptions},
     isolated_declarations::IsolatedDeclarations,
     parser::Parser,
     span::SourceType,
@@ -67,7 +67,11 @@ pub fn isolated_declaration(
         _ => None,
     };
     let codegen_ret = Codegen::new()
-        .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
+        .with_options(CodegenOptions {
+            comments: CommentOptions { jsdoc: true, ..CommentOptions::disabled() },
+            source_map_path,
+            ..CodegenOptions::default()
+        })
         .build(&transformed_ret.program);
 
     let diagnostics = ret.errors.into_iter().chain(transformed_ret.errors).collect::<Vec<_>>();

@@ -2032,9 +2032,10 @@ impl GenExpr for ImportExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
 
-        let has_comment_before_right_paren =
-            p.options.comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
-        let has_comment = p.options.comments
+        let has_comment_before_right_paren = p.options.print_annotation_comment()
+            && self.span.end > 0
+            && p.has_comment(self.span.end - 1);
+        let has_comment = p.options.print_annotation_comment()
             && (has_comment_before_right_paren
                 || p.has_comment(self.source.span().start)
                 || self

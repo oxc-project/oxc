@@ -40,7 +40,7 @@ use crate::{
 pub use crate::{
     context::Context,
     r#gen::{Gen, GenExpr},
-    options::{CodegenOptions, LegalComment},
+    options::{CodegenOptions, CommentOptions, LegalComment},
 };
 
 /// Output from [`Codegen::build`]

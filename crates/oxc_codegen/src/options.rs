@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 /// Codegen Options.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
     ///
@@ -13,33 +13,12 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
-    /// Print normal comments?
+    /// Print comments?
     ///
     /// At present, only some leading comments are preserved.
     ///
-    /// Does not control legal and annotation comments.
-    ///
-    /// Default is `true`.
-    pub comments: bool,
-
-    /// Print annotation comments.
-    ///
-    /// * jsdoc: `/** jsdoc */`
-    /// * pure: `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`
-    /// * webpack: `/* webpackChunkName */`
-    /// * vite: `/* @vite-ignore */`
-    /// * coverage: `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
-    ///
-    /// Default is `true`.
-    pub annotation_comments: bool,
-
-    /// Print legal comments.
-    ///
-    /// * starts with `//!` or `/*!`.
-    /// * contains `/* @license */` or `/* @preserve */`
-    ///
-    /// Default is [LegalComment::Inline].
-    pub legal_comments: LegalComment,
+    /// Default is [CodegenOptions::default].
+    pub comments: CommentOptions,
 
     /// Enable sourcemap.
     ///
@@ -49,56 +28,96 @@ pub struct CodegenOptions {
     pub source_map_path: Option<PathBuf>,
 }
 
-impl Default for CodegenOptions {
-    fn default() -> Self {
-        Self {
-            single_quote: false,
-            minify: false,
-            comments: true,
-            annotation_comments: true,
-            legal_comments: LegalComment::Inline,
-            source_map_path: None,
-        }
-    }
-}
-
 impl CodegenOptions {
     /// Minify whitespace and remove comments.
     pub fn minify() -> Self {
         Self {
             single_quote: false,
             minify: true,
-            comments: false,
-            annotation_comments: false,
-            legal_comments: LegalComment::None,
+            comments: CommentOptions::disabled(),
             source_map_path: None,
         }
     }
 
     #[inline]
     pub(crate) fn print_normal_comment(&self) -> bool {
-        self.comments
+        self.comments.normal
     }
 
     #[inline]
     pub(crate) fn print_legal_comment(&self) -> bool {
-        self.legal_comments.is_inline()
+        self.comments.legal.is_inline()
+    }
+
+    #[inline]
+    pub(crate) fn print_jsdoc_comment(&self) -> bool {
+        self.comments.jsdoc
     }
 
     #[inline]
     pub(crate) fn print_annotation_comment(&self) -> bool {
-        self.annotation_comments
+        self.comments.annotation
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// Comment Options
+pub struct CommentOptions {
+    /// Print normal comments that do not have special meanings.
+    ///
+    /// At present only statement level comments are printed.
+    ///
+    /// Default is `true`.
+    pub normal: bool,
+
+    /// Print jsdoc comments.
+    ///
+    /// * jsdoc: `/** jsdoc */`
+    ///
+    /// Default is `true`.
+    pub jsdoc: bool,
+
+    /// Print annotation comments.
+    ///
+    /// * pure: `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`
+    /// * webpack: `/* webpackChunkName */`
+    /// * vite: `/* @vite-ignore */`
+    /// * coverage: `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
+    ///
+    /// Default is `true`.
+    pub annotation: bool,
+
+    /// Print legal comments.
+    ///
+    /// * starts with `//!` or `/*!`.
+    /// * contains `/* @license */` or `/* @preserve */`
+    ///
+    /// Default is [LegalComment::Inline].
+    pub legal: LegalComment,
+}
+
+impl Default for CommentOptions {
+    fn default() -> Self {
+        Self { normal: true, jsdoc: true, annotation: true, legal: LegalComment::default() }
+    }
+}
+
+impl CommentOptions {
+    /// Disable Comments.
+    pub fn disabled() -> Self {
+        Self { normal: false, jsdoc: false, annotation: false, legal: LegalComment::None }
     }
 }
 
 /// Legal comment
 ///
 /// <https://esbuild.github.io/api/#legal-comments>
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub enum LegalComment {
     /// Do not preserve any legal comments.
     None,
     /// Preserve all legal comments (default).
+    #[default]
     Inline,
     /// Move all legal comments to the end of the file.
     Eof,

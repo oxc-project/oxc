@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::Codegen;
+use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -35,7 +35,13 @@ fn main() -> std::io::Result<()> {
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
             .build(&ret.program);
-    let printed = Codegen::new().build(&id_ret.program).code;
+    let printed = Codegen::new()
+        .with_options(CodegenOptions {
+            comments: CommentOptions { jsdoc: true, ..CommentOptions::disabled() },
+            ..CodegenOptions::default()
+        })
+        .build(&id_ret.program)
+        .code;
 
     println!("Dts Emit:\n");
     println!("{printed}\n");
