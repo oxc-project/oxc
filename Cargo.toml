@@ -156,6 +156,7 @@ syn = { version = "2", default-features = false }
 unicode-id-start = "1"
 
 #
+javascript-globals = "1"
 oxc-browserslist = "2"
 oxc_index = "3"
 oxc_resolver = "11"
@@ -193,7 +194,6 @@ ignore = "0.4.23"
 insta = "1.43.1"
 itertools = "0.14.0"
 itoa = "1.0.15"
-javascript-globals = "1.2.0"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy-regex = "3.4.1"
