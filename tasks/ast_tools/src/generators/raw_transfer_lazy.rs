@@ -62,8 +62,8 @@ struct State {
     constructor_names: String,
     /// Code for constructor class names which are used in walkers
     walked_constructor_names: String,
-    /// Code for mapping from struct name to boolean for leaf/non-leaf
-    node_names_map: String,
+    /// Code for node type names which are leaf nodes
+    leaf_node_names: String,
     /// Code for empty visitor object
     visitor_obj: String,
 }
@@ -95,7 +95,7 @@ fn generate(
         walkers: String::new(),
         constructor_names: String::new(),
         walked_constructor_names: String::new(),
-        node_names_map: String::new(),
+        leaf_node_names: String::new(),
         visitor_obj: String::new(),
     };
 
@@ -184,21 +184,20 @@ fn generate(
         {walkers}
     ");
 
-    // Generate file containing mapping from type names to node type IDs
-    // TODO: Update comment
-    let node_names_map = &state.node_names_map;
+    // Generate file containing list of leaf node type names, and function to create empty visitor object
+    let leaf_node_names = &state.leaf_node_names;
     let visitor_obj = &state.visitor_obj;
     #[rustfmt::skip]
     let node_type_ids_map = format!("
         'use strict';
 
-        // Mapping from node type name to boolean.
-        // `true` for leaf nodes, `false` for non-leaf nodes.
-        const NODE_TYPES = new Map([
-            {node_names_map}
-        ]);
+        // Array of names of leaf node types
+        const LEAF_NODE_TYPE_NAMES = [
+            {leaf_node_names}
+        ];
 
-        // Create empty compiled visitor object
+        // Create empty compiled visitor object.
+        // Leaf nodes are `false`, non-leaf nodes are `null`.
         function createEmptyVisitor() {{
             return {{
                 {visitor_obj}
@@ -206,7 +205,7 @@ fn generate(
         }}
 
         module.exports = {{
-            NODE_TYPES,
+            LEAF_NODE_TYPE_NAMES,
             createEmptyVisitor,
         }};
     ");
@@ -763,8 +762,7 @@ fn generate_struct(
     }
 
     // AST node which can be visited
-    let is_leaf = walk_stmts.is_empty();
-    if is_leaf {
+    let visitor_obj_value = if walk_stmts.is_empty() {
         // Leaf node. Just a single visitor.
         #[rustfmt::skip]
         write_it!(state.walkers, "
@@ -773,6 +771,10 @@ fn generate_struct(
                 if (visit !== null) visit(new {struct_name}(pos, ast));
             }}
         ");
+
+        write_it!(state.leaf_node_names, "'{struct_name}', ");
+
+        "false"
     } else {
         // AST node with children. 2 visitors for enter and exit.
         #[rustfmt::skip]
@@ -791,10 +793,11 @@ fn generate_struct(
                 if (exit) exit(node);
             }}
         ");
-    }
 
-    write_it!(state.node_names_map, "['{struct_name}', {is_leaf}],\n");
-    write_it!(state.visitor_obj, "{struct_name}: null,\n");
+        "null"
+    };
+
+    write_it!(state.visitor_obj, "{struct_name}: {visitor_obj_value},\n");
     write_it!(state.walked_constructor_names, "{struct_name}, ");
 }
 

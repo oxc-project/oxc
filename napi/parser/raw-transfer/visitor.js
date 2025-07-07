@@ -1,6 +1,6 @@
 'use strict';
 
-const { NODE_TYPES, createEmptyVisitor } = require('../generated/lazy/types.js');
+const { LEAF_NODE_TYPE_NAMES, createEmptyVisitor } = require('../generated/lazy/types.js');
 
 // Getter for private `#visitor` property of `Visitor` class. Initialized in class body below.
 let getCompiledVisitor;
@@ -76,35 +76,35 @@ function createCompiledVisitor(visitor) {
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
-    const isLeaf = NODE_TYPES.get(name);
-    if (isLeaf === true) {
-      // Leaf node. Store just 1 function.
-      const existingVisitFn = compiledVisitor[name];
-      if (existingVisitFn === null) {
-        compiledVisitor[name] = visitFn;
-      } else if (isExit) {
-        compiledVisitor[name] = combineVisitFunctions(existingVisitFn, visitFn);
-      } else {
-        compiledVisitor[name] = combineVisitFunctions(visitFn, existingVisitFn);
-      }
-      continue;
-    }
-
-    if (isLeaf === false) {
-      let enterExit = compiledVisitor[name];
-      if (enterExit === null) {
-        enterExit = compiledVisitor[name] = { enter: null, exit: null };
-      }
-
+    let existingVisitor = compiledVisitor[name];
+    if (existingVisitor === null) {
+      // Non-leaf node with no existing visitor
+      compiledVisitor[name] = isExit
+        ? { enter: null, exit: visitFn }
+        : { enter: visitFn, exit: null };
+    } else if (existingVisitor === false) {
+      // Leaf node with no existing visitor
+      compiledVisitor[name] = visitFn;
+    } else if (typeof existingVisitor === 'object') {
+      // Non-leaf node with an existing visitor. Add property for new
       if (isExit) {
-        enterExit.exit = visitFn;
+        existingVisitor.exit = visitFn;
       } else {
-        enterExit.enter = visitFn;
+        existingVisitor.enter = visitFn;
       }
-      continue;
+    } else if (typeof existingVisitor === 'function') {
+      // Leaf node with an existing visitor. Combine the 2.
+      compiledVisitor[name] = isExit
+        ? combineVisitFunctions(existingVisitor, visitFn)
+        : combineVisitFunctions(visitFn, existingVisitor);
+    } else {
+      throw new Error(`Unknown node type '${name}' in \`visitor\` object`);
     }
+  }
 
-    throw new Error(`Unknown node type '${name}' in \`visitor\` object`);
+  // Set properties for leaf nodes with no visitor to `null`
+  for (const name of LEAF_NODE_TYPE_NAMES) {
+    if (compiledVisitor[name] === false) compiledVisitor[name] = null;
   }
 
   return compiledVisitor;
