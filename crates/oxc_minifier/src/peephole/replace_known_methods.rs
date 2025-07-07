@@ -1065,9 +1065,7 @@ impl<'a> PeepholeOptimizations {
 /// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
-    use cow_utils::CowUtils;
     use oxc_syntax::es_target::ESTarget;
-    use std::borrow::Cow;
 
     use crate::{
         CompressOptions,
@@ -1080,17 +1078,7 @@ mod test {
     }
 
     fn test_value(code: &str, expected: &str) {
-        test(
-            format!("x = {code}").as_str(),
-            format!(
-                "x = {}",
-                // It's recommended to use `Cow` to replace to avoid extra memory allocation.
-                // If the result holds `false`, the actual minified code will be `!1`, and `true` will be `!0`.
-                // So we need to replace it.
-                Cow::from(expected).cow_replace("false", "!1").cow_replace("true", "!0")
-            )
-            .as_str(),
-        );
+        test(format!("x = {code}").as_str(), format!("x = {expected}").as_str());
     }
 
     fn test_same_value(code: &str) {
@@ -1698,29 +1686,29 @@ mod test {
 
     #[test]
     fn test_fold_number_functions_is_safe_integer() {
-        test_value("Number.isSafeInteger(1)", "true");
-        test_value("Number.isSafeInteger(1.5)", "false");
-        test_value("Number.isSafeInteger(9007199254740991)", "true");
-        test_value("Number.isSafeInteger(9007199254740992)", "false");
-        test_value("Number.isSafeInteger(-9007199254740991)", "true");
-        test_value("Number.isSafeInteger(-9007199254740992)", "false");
+        test_value("Number.isSafeInteger(1)", "!0");
+        test_value("Number.isSafeInteger(1.5)", "!1");
+        test_value("Number.isSafeInteger(9007199254740991)", "!0");
+        test_value("Number.isSafeInteger(9007199254740992)", "!1");
+        test_value("Number.isSafeInteger(-9007199254740991)", "!0");
+        test_value("Number.isSafeInteger(-9007199254740992)", "!1");
     }
 
     #[test]
     fn test_fold_number_functions_is_finite() {
-        test_value("Number.isFinite(1)", "true");
-        test_value("Number.isFinite(1.5)", "true");
-        test_value("Number.isFinite(NaN)", "false");
-        test_value("Number.isFinite(Infinity)", "false");
-        test_value("Number.isFinite(-Infinity)", "false");
+        test_value("Number.isFinite(1)", "!0");
+        test_value("Number.isFinite(1.5)", "!0");
+        test_value("Number.isFinite(NaN)", "!1");
+        test_value("Number.isFinite(Infinity)", "!1");
+        test_value("Number.isFinite(-Infinity)", "!1");
         test_same_value("Number.isFinite('a')");
     }
 
     #[test]
     fn test_fold_number_functions_is_nan() {
-        test_value("Number.isNaN(1)", "false");
-        test_value("Number.isNaN(1.5)", "false");
-        test_value("Number.isNaN(NaN)", "true");
+        test_value("Number.isNaN(1)", "!1");
+        test_value("Number.isNaN(1.5)", "!1");
+        test_value("Number.isNaN(NaN)", "!0");
         test_same_value("Number.isNaN('a')");
         // unknown function may have side effects
         test_same_value("Number.isNaN(+(void unknown()))");
