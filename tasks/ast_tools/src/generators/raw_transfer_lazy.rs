@@ -682,7 +682,7 @@ fn generate_struct(
         if walk_statuses[field_type.id()] == WalkStatus::Walk {
             let inner_walk_fn_name = field_type.walk_name(schema);
             let pos = pos_offset(field.offset_64());
-            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
+            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitor);\n");
         }
     }
 
@@ -754,7 +754,7 @@ fn generate_struct(
         // Just walk its fields.
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 {walk_stmts}
             }}
         ");
@@ -763,11 +763,11 @@ fn generate_struct(
 
     // AST node which can be visited
     let visitor_obj_value = if walk_stmts.is_empty() {
-        // Leaf node. Just a single visitor.
+        // Leaf node. Just a single visit function.
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                const visit = visitors.{struct_name};
+            function {walk_fn_name}(pos, ast, visitor) {{
+                const visit = visitor.{struct_name};
                 if (visit !== null) visit(new {struct_name}(pos, ast));
             }}
         ");
@@ -776,11 +776,11 @@ fn generate_struct(
 
         "false"
     } else {
-        // AST node with children. 2 visitors for enter and exit.
+        // AST node with children. 2 visit functions for enter and exit.
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                const enterExit = visitors.{struct_name};
+            function {walk_fn_name}(pos, ast, visitor) {{
+                const enterExit = visitor.{struct_name};
                 let node, enter, exit;
                 if (enterExit !== null) {{
                     ({{ enter, exit }} = enterExit);
@@ -840,7 +840,7 @@ fn generate_enum(
                 let variant_walk_fn_name = variant_type.walk_name(schema);
                 write_it!(
                     walk_cases,
-                    "{variant_walk_fn_name}({payload_pos}, ast, visitors); return;"
+                    "{variant_walk_fn_name}({payload_pos}, ast, visitor); return;"
                 );
             } else {
                 write_it!(walk_cases, "return;");
@@ -874,7 +874,7 @@ fn generate_enum(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 switch(ast.buffer[pos]) {{
                     {walk_cases}
                     default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
@@ -1016,8 +1016,8 @@ fn generate_option(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                if (!({none_condition})) {inner_walk_fn_name}({payload_pos}, ast, visitors);
+            function {walk_fn_name}(pos, ast, visitor) {{
+                if (!({none_condition})) {inner_walk_fn_name}({payload_pos}, ast, visitor);
             }}
         ");
     }
@@ -1054,8 +1054,8 @@ fn generate_box(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitors);
+            function {walk_fn_name}(pos, ast, visitor) {{
+                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitor);
             }}
         ");
     }
@@ -1119,13 +1119,13 @@ fn generate_vec(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 const {{ uint32 }} = ast.buffer,
                     pos32 = pos >> 2;
                 pos = uint32[{ptr_pos32}];
                 const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
                 while (pos < endPos) {{
-                    {inner_walk_fn_name}(pos, ast, visitors);
+                    {inner_walk_fn_name}(pos, ast, visitor);
                     pos += {inner_type_size};
                 }}
             }}
