@@ -6,7 +6,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins},
+    config::{BuiltinLintPlugins, LintConfig},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks,
@@ -131,7 +131,7 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> &LintPlugins {
+    pub fn plugins(&self) -> &BuiltinLintPlugins {
         &self.config.plugins
     }
 

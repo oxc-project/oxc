@@ -13,7 +13,8 @@ use crate::utils::read_to_string;
 
 use super::{
     categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals,
-    overrides::OxlintOverrides, plugins::LintPlugins, rules::OxlintRules, settings::OxlintSettings,
+    overrides::OxlintOverrides, plugins::BuiltinLintPlugins, rules::OxlintRules,
+    settings::OxlintSettings,
 };
 
 /// Oxlint Configuration File
@@ -63,7 +64,7 @@ use super::{
 #[serde(default)]
 #[non_exhaustive]
 pub struct Oxlintrc {
-    pub plugins: Option<LintPlugins>,
+    pub plugins: Option<BuiltinLintPlugins>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -234,7 +235,7 @@ mod test {
     #[test]
     fn test_oxlintrc_de_plugins_empty_array() {
         let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::empty()));
+        assert_eq!(config.plugins, Some(BuiltinLintPlugins::empty()));
     }
 
     #[test]
@@ -246,17 +247,20 @@ mod test {
     #[test]
     fn test_oxlintrc_specifying_plugins_will_override() {
         let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["react", "oxc"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::REACT.union(LintPlugins::OXC)));
+        assert_eq!(config.plugins, Some(BuiltinLintPlugins::REACT.union(BuiltinLintPlugins::OXC)));
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN)));
+        assert_eq!(
+            config.plugins,
+            Some(BuiltinLintPlugins::TYPESCRIPT.union(BuiltinLintPlugins::UNICORN))
+        );
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::all()));
+        assert_eq!(config.plugins, Some(BuiltinLintPlugins::all()));
 
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT));
+        assert_eq!(config.plugins, Some(BuiltinLintPlugins::TYPESCRIPT));
     }
 
     #[test]

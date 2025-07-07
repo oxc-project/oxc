@@ -7,7 +7,7 @@ use std::{
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+use crate::{BuiltinLintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -82,7 +82,7 @@ pub struct OxlintOverride {
     /// Optionally change what plugins are enabled for this override. When
     /// omitted, the base config's plugins are used.
     #[serde(default)]
-    pub plugins: Option<LintPlugins>,
+    pub plugins: Option<BuiltinLintPlugins>,
 
     #[serde(default)]
     pub rules: OxlintRules,
@@ -196,14 +196,17 @@ mod test {
             "plugins": [],
         }))
         .unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::empty()));
+        assert_eq!(config.plugins, Some(BuiltinLintPlugins::empty()));
 
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
             "plugins": ["typescript", "react"],
         }))
         .unwrap();
-        assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::TYPESCRIPT));
+        assert_eq!(
+            config.plugins,
+            Some(BuiltinLintPlugins::REACT | BuiltinLintPlugins::TYPESCRIPT)
+        );
     }
 
     #[test]

@@ -14,8 +14,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
-    Linter, Oxlintrc, RuleEnum,
+    AllowWarnDeny, BuiltinLintPlugins, ConfigStore, ConfigStoreBuilder, LintService,
+    LintServiceOptions, Linter, Oxlintrc, RuleEnum,
     fixer::{FixKind, Fixer},
     options::LintOptions,
     rules::RULES,
@@ -232,7 +232,7 @@ pub struct Tester {
     /// See: [insta::Settings::set_snapshot_suffix]
     snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
-    plugins: LintPlugins,
+    plugins: BuiltinLintPlugins,
 }
 
 impl Tester {
@@ -259,7 +259,7 @@ impl Tester {
             snapshot: String::new(),
             snapshot_suffix: None,
             current_working_directory,
-            plugins: LintPlugins::default(),
+            plugins: BuiltinLintPlugins::default(),
         }
     }
 
@@ -304,37 +304,37 @@ impl Tester {
     }
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::IMPORT, yes);
+        self.plugins.set(BuiltinLintPlugins::IMPORT, yes);
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::JEST, yes);
+        self.plugins.set(BuiltinLintPlugins::JEST, yes);
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::VITEST, yes);
+        self.plugins.set(BuiltinLintPlugins::VITEST, yes);
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::JSX_A11Y, yes);
+        self.plugins.set(BuiltinLintPlugins::JSX_A11Y, yes);
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NEXTJS, yes);
+        self.plugins.set(BuiltinLintPlugins::NEXTJS, yes);
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::REACT_PERF, yes);
+        self.plugins.set(BuiltinLintPlugins::REACT_PERF, yes);
         self
     }
 
     pub fn with_node_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NODE, yes);
+        self.plugins.set(BuiltinLintPlugins::NODE, yes);
         self
     }
 
@@ -514,7 +514,7 @@ impl Tester {
                         )
                         .unwrap()
                     })
-                    .with_plugins(self.plugins.union(LintPlugins::from(self.plugin_name)))
+                    .with_plugins(self.plugins.union(BuiltinLintPlugins::from(self.plugin_name)))
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(),
                 FxHashMap::default(),

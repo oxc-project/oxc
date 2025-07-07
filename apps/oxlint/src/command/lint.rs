@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use bpaf::Bpaf;
-use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use oxc_linter::{AllowWarnDeny, BuiltinLintPlugins, FixKind};
 
 use crate::output_formatter::OutputFormat;
 
@@ -327,24 +327,24 @@ impl OverrideToggle {
 }
 
 impl EnablePlugins {
-    pub fn apply_overrides(&self, plugins: &mut LintPlugins) {
-        self.react_plugin.inspect(|yes| plugins.set(LintPlugins::REACT, yes));
-        self.unicorn_plugin.inspect(|yes| plugins.set(LintPlugins::UNICORN, yes));
-        self.oxc_plugin.inspect(|yes| plugins.set(LintPlugins::OXC, yes));
-        self.typescript_plugin.inspect(|yes| plugins.set(LintPlugins::TYPESCRIPT, yes));
-        self.import_plugin.inspect(|yes| plugins.set(LintPlugins::IMPORT, yes));
-        self.jsdoc_plugin.inspect(|yes| plugins.set(LintPlugins::JSDOC, yes));
-        self.jest_plugin.inspect(|yes| plugins.set(LintPlugins::JEST, yes));
-        self.vitest_plugin.inspect(|yes| plugins.set(LintPlugins::VITEST, yes));
-        self.jsx_a11y_plugin.inspect(|yes| plugins.set(LintPlugins::JSX_A11Y, yes));
-        self.nextjs_plugin.inspect(|yes| plugins.set(LintPlugins::NEXTJS, yes));
-        self.react_perf_plugin.inspect(|yes| plugins.set(LintPlugins::REACT_PERF, yes));
-        self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
-        self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
+    pub fn apply_overrides(&self, plugins: &mut BuiltinLintPlugins) {
+        self.react_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::REACT, yes));
+        self.unicorn_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::UNICORN, yes));
+        self.oxc_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::OXC, yes));
+        self.typescript_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::TYPESCRIPT, yes));
+        self.import_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::IMPORT, yes));
+        self.jsdoc_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::JSDOC, yes));
+        self.jest_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::JEST, yes));
+        self.vitest_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::VITEST, yes));
+        self.jsx_a11y_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::JSX_A11Y, yes));
+        self.nextjs_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::NEXTJS, yes));
+        self.react_perf_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::REACT_PERF, yes));
+        self.promise_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::PROMISE, yes));
+        self.node_plugin.inspect(|yes| plugins.set(BuiltinLintPlugins::NODE, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
         if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
-            plugins.set(LintPlugins::JEST, true);
+            plugins.set(BuiltinLintPlugins::JEST, true);
         }
     }
 }
@@ -381,29 +381,30 @@ pub struct InlineConfigOptions {
 
 #[cfg(test)]
 mod plugins {
-    use oxc_linter::LintPlugins;
+    use oxc_linter::BuiltinLintPlugins;
 
     use super::{EnablePlugins, OverrideToggle};
 
     #[test]
     fn test_override_default() {
-        let mut plugins = LintPlugins::default();
+        let mut plugins = BuiltinLintPlugins::default();
         let enable = EnablePlugins::default();
 
         enable.apply_overrides(&mut plugins);
-        assert_eq!(plugins, LintPlugins::default());
+        assert_eq!(plugins, BuiltinLintPlugins::default());
     }
 
     #[test]
     fn test_overrides() {
-        let mut plugins = LintPlugins::default();
+        let mut plugins = BuiltinLintPlugins::default();
         let enable = EnablePlugins {
             react_plugin: OverrideToggle::Enable,
             unicorn_plugin: OverrideToggle::Disable,
             ..EnablePlugins::default()
         };
-        let expected =
-            LintPlugins::default().union(LintPlugins::REACT).difference(LintPlugins::UNICORN);
+        let expected = BuiltinLintPlugins::default()
+            .union(BuiltinLintPlugins::REACT)
+            .difference(BuiltinLintPlugins::UNICORN);
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);
@@ -411,10 +412,11 @@ mod plugins {
 
     #[test]
     fn test_override_vitest() {
-        let mut plugins = LintPlugins::default();
+        let mut plugins = BuiltinLintPlugins::default();
         let enable =
             EnablePlugins { vitest_plugin: OverrideToggle::Enable, ..EnablePlugins::default() };
-        let expected = LintPlugins::default() | LintPlugins::VITEST | LintPlugins::JEST;
+        let expected =
+            BuiltinLintPlugins::default() | BuiltinLintPlugins::VITEST | BuiltinLintPlugins::JEST;
 
         enable.apply_overrides(&mut plugins);
         assert_eq!(plugins, expected);

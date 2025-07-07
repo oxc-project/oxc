@@ -9,7 +9,7 @@ use serde::{
 bitflags! {
     // NOTE: may be increased to a u32 if needed
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub struct LintPlugins: u16 {
+    pub struct BuiltinLintPlugins: u16 {
         /// Not really a plugin. Included for completeness.
         const ESLINT = 0;
         /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks`
@@ -40,121 +40,122 @@ bitflags! {
         const NODE = 1 << 12;
     }
 }
-impl Default for LintPlugins {
+
+impl Default for BuiltinLintPlugins {
     #[inline]
     fn default() -> Self {
-        LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+        BuiltinLintPlugins::UNICORN | BuiltinLintPlugins::TYPESCRIPT | BuiltinLintPlugins::OXC
     }
 }
 
-impl LintPlugins {
+impl BuiltinLintPlugins {
     /// Returns `true` if the Vitest plugin is enabled.
     #[inline]
     pub fn has_vitest(self) -> bool {
-        self.contains(LintPlugins::VITEST)
+        self.contains(BuiltinLintPlugins::VITEST)
     }
 
     /// Returns `true` if the Jest plugin is enabled.
     #[inline]
     pub fn has_jest(self) -> bool {
-        self.contains(LintPlugins::JEST)
+        self.contains(BuiltinLintPlugins::JEST)
     }
 
     /// Returns `true` if Jest or Vitest plugins are enabled.
     #[inline]
     pub fn has_test(self) -> bool {
-        self.intersects(LintPlugins::JEST.union(LintPlugins::VITEST))
+        self.intersects(BuiltinLintPlugins::JEST.union(BuiltinLintPlugins::VITEST))
     }
 
     /// Returns `true` if the import plugin is enabled.
     #[inline]
     pub fn has_import(self) -> bool {
-        self.contains(LintPlugins::IMPORT)
+        self.contains(BuiltinLintPlugins::IMPORT)
     }
 }
 
-impl From<&str> for LintPlugins {
+impl From<&str> for BuiltinLintPlugins {
     fn from(value: &str) -> Self {
         match value {
-            "react" | "react-hooks" | "react_hooks" => LintPlugins::REACT,
-            "unicorn" => LintPlugins::UNICORN,
+            "react" | "react-hooks" | "react_hooks" => BuiltinLintPlugins::REACT,
+            "unicorn" => BuiltinLintPlugins::UNICORN,
             "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
-                LintPlugins::TYPESCRIPT
+                BuiltinLintPlugins::TYPESCRIPT
             }
             // deepscan for backwards compatibility. Those rules have been moved into oxc
-            "oxc" | "deepscan" => LintPlugins::OXC,
+            "oxc" | "deepscan" => BuiltinLintPlugins::OXC,
             // import-x has the same rules but better performance
-            "import" | "import-x" => LintPlugins::IMPORT,
-            "jsdoc" => LintPlugins::JSDOC,
-            "jest" => LintPlugins::JEST,
-            "vitest" => LintPlugins::VITEST,
-            "jsx-a11y" | "jsx_a11y" => LintPlugins::JSX_A11Y,
-            "nextjs" => LintPlugins::NEXTJS,
-            "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
-            "promise" => LintPlugins::PROMISE,
-            "node" => LintPlugins::NODE,
+            "import" | "import-x" => BuiltinLintPlugins::IMPORT,
+            "jsdoc" => BuiltinLintPlugins::JSDOC,
+            "jest" => BuiltinLintPlugins::JEST,
+            "vitest" => BuiltinLintPlugins::VITEST,
+            "jsx-a11y" | "jsx_a11y" => BuiltinLintPlugins::JSX_A11Y,
+            "nextjs" => BuiltinLintPlugins::NEXTJS,
+            "react-perf" | "react_perf" => BuiltinLintPlugins::REACT_PERF,
+            "promise" => BuiltinLintPlugins::PROMISE,
+            "node" => BuiltinLintPlugins::NODE,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
-            _ => LintPlugins::empty(),
+            _ => BuiltinLintPlugins::empty(),
         }
     }
 }
 
-impl From<LintPlugins> for &'static str {
-    fn from(value: LintPlugins) -> Self {
+impl From<BuiltinLintPlugins> for &'static str {
+    fn from(value: BuiltinLintPlugins) -> Self {
         match value {
-            LintPlugins::REACT => "react",
-            LintPlugins::UNICORN => "unicorn",
-            LintPlugins::TYPESCRIPT => "typescript",
-            LintPlugins::OXC => "oxc",
-            LintPlugins::IMPORT => "import",
-            LintPlugins::JSDOC => "jsdoc",
-            LintPlugins::JEST => "jest",
-            LintPlugins::VITEST => "vitest",
-            LintPlugins::JSX_A11Y => "jsx-a11y",
-            LintPlugins::NEXTJS => "nextjs",
-            LintPlugins::REACT_PERF => "react-perf",
-            LintPlugins::PROMISE => "promise",
-            LintPlugins::NODE => "node",
+            BuiltinLintPlugins::REACT => "react",
+            BuiltinLintPlugins::UNICORN => "unicorn",
+            BuiltinLintPlugins::TYPESCRIPT => "typescript",
+            BuiltinLintPlugins::OXC => "oxc",
+            BuiltinLintPlugins::IMPORT => "import",
+            BuiltinLintPlugins::JSDOC => "jsdoc",
+            BuiltinLintPlugins::JEST => "jest",
+            BuiltinLintPlugins::VITEST => "vitest",
+            BuiltinLintPlugins::JSX_A11Y => "jsx-a11y",
+            BuiltinLintPlugins::NEXTJS => "nextjs",
+            BuiltinLintPlugins::REACT_PERF => "react-perf",
+            BuiltinLintPlugins::PROMISE => "promise",
+            BuiltinLintPlugins::NODE => "node",
             _ => "",
         }
     }
 }
 
-impl<S: AsRef<str>> FromIterator<S> for LintPlugins {
+impl<S: AsRef<str>> FromIterator<S> for BuiltinLintPlugins {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
         iter.into_iter()
             .map(|plugin| plugin.as_ref().into())
-            .fold(LintPlugins::empty(), LintPlugins::union)
+            .fold(BuiltinLintPlugins::empty(), BuiltinLintPlugins::union)
     }
 }
 
-impl<'de> Deserialize<'de> for LintPlugins {
+impl<'de> Deserialize<'de> for BuiltinLintPlugins {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct LintPluginsVisitor;
         impl<'de> de::Visitor<'de> for LintPluginsVisitor {
-            type Value = LintPlugins;
+            type Value = BuiltinLintPlugins;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("a list of plugin names")
             }
 
             fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
-                Ok(LintPlugins::from(value))
+                Ok(BuiltinLintPlugins::from(value))
             }
 
             fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
             where
                 E: de::Error,
             {
-                Ok(LintPlugins::from(v.as_str()))
+                Ok(BuiltinLintPlugins::from(v.as_str()))
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
             where
                 A: de::SeqAccess<'de>,
             {
-                let mut plugins = LintPlugins::empty();
+                let mut plugins = BuiltinLintPlugins::empty();
                 loop {
                     // serde_json::from_str will provide an &str, while
                     // serde_json::from_value provides a String. The former is
@@ -182,14 +183,14 @@ impl<'de> Deserialize<'de> for LintPlugins {
     }
 }
 
-impl Serialize for LintPlugins {
+impl Serialize for BuiltinLintPlugins {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let vec: Vec<&str> = self.iter().map(Into::into).collect();
         vec.serialize(serializer)
     }
 }
 
-impl JsonSchema for LintPlugins {
+impl JsonSchema for BuiltinLintPlugins {
     fn schema_name() -> String {
         "LintPlugins".to_string()
     }
