@@ -64,7 +64,7 @@ module.exports = { Visitor, getVisitorsArr };
  */
 function createVisitorsArr(visitor) {
   if (visitor === null || typeof visitor !== 'object') {
-    throw new Error('`visitors` must be an object');
+    throw new Error('`visitor` must be an object');
   }
 
   // Create empty visitors array
@@ -77,14 +77,14 @@ function createVisitorsArr(visitor) {
   for (let name of Object.keys(visitor)) {
     const visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
-      throw new Error(`'${name}' property of \`visitors\` object is not a function`);
+      throw new Error(`'${name}' property of \`visitor\` object is not a function`);
     }
 
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in \`visitors\` object`);
+    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in \`visitor\` object`);
 
     if (typeId < LEAF_NODE_TYPES_COUNT) {
       // Leaf node. Store just 1 function.
