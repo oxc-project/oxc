@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.6.0] - 2025-07-07
+
+### 🚀 Features
+
+- f81d336 linter: Introduce `ExternalLinter` struct (#12052) (camc314)
+
+### 🐛 Bug Fixes
+
+- 5851d2c oxlint: Always follow symlinks; remove cli flag `--symlinks` (#12048) (Boshen)
+
+### 🚜 Refactor
+
+- 2f7cbda linter: Move napi bindings out of oxc_linter (#12072) (camc314)
+- 9254252 linter: Move code (#12071) (overlookmotel)
+
+
 ## [1.5.0] - 2025-07-02
 
 ### 🐛 Bug Fixes

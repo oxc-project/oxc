@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.6.0] - 2025-07-07
+
+### 🚀 Features
+
+- f81d336 linter: Introduce `ExternalLinter` struct (#12052) (camc314)
+
+### 🐛 Bug Fixes
+
+- 3f0e03e linter: Fix inconsistent behavior in `no-duplicate-imports` rule (#12051) (yefan)
+- 6dbacea linter/no-barrel-file: No diagnostic tag when some modules arent resolved (#12049) (camc314)
+- dd6b1ee linter/extensions: False positives with non configured extensions (#11872) (camc314)
+- eb1c596 linter/consistent-index-object-style: Fix default impl for rule config (#12031) (camc314)
+
+### 🚜 Refactor
+
+- 54cf5cb semantic: Remove Option from parent_* methods (#12087) (Ulrich Stark)
+- 8d1be94 language_server: Fix todo by avoiding allocation (#12096) (Ulrich Stark)
+- 72418ca linter: `RuntimeFileSystem::write_file` take `&str` (#12075) (overlookmotel)
+- 2f7cbda linter: Move napi bindings out of oxc_linter (#12072) (camc314)
+- 2319710 linter: Shorten code (#12070) (overlookmotel)
+- 387762d linter/no-unused-vars: Simplify check for export nodes (#12044) (Dunqing)
+- f1d4086 ast: Remove `AstKind` for `ModuleDeclaration` (#12022) (camchenry)
+- 754c05a ast: Remove `AstKind` for `TSTypeName` (#11990) (camchenry)
+- 0c7f9e8 linter: Remove a branch (#12032) (overlookmotel)
+
+### 📚 Documentation
+
+- 85ec382 linter: Add good/bad example for `nextjs/no-page-custom-font` (#12092) (Sysix)
+- 9240342 linter: Add docs for `nextjs/no-script-component-in-head` (#12091) (Sysix)
+- 0878414 linter: Add good/bad example for `nextjs/no-head-import-in-document` (#12061) (Sysix)
+- 222bc73 linter: Add bad/good example for `nextjs/no-head-element` (#12059) (Sysix)
+- a7e9f50 linter: Add good/bad example for `nextjs/no-title-in-document-head` (#12065) (Sysix)
+- 51c6818 linter: Add good/bad example for `nextjs/no-document-import-in-pages` (#12064) (Sysix)
+- c7b38f9 consistent-indexed-object-style: Clarify docs (#12019) (Luca Ban)
+
+### ⚡ Performance
+
+- 04e2de5 linter: Avoid iteration when checking import is `AllButDefault` or `SideEffect` in `eslint/no-duplicate-imports` (#12093) (Sysix)
+- e2a7d6a linter: Check filepath before running `nextjs/no-head-element` (#12062) (Sysix)
+- 00a9fd9 linter: Check for filename before running `nextjs/no-head-import-in-document` rule (#12060) (Sysix)
+- 62a3ce0 linter: Replace `unicode-segmentation` crate with `icu_segmenter` (#12063) (Sysix)
+
+
 ## [1.5.0] - 2025-07-02
 
 ### 🚀 Features
