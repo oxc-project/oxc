@@ -10,6 +10,7 @@ const ENTRY_POINT_PATH = path.join(PACKAGE_ROOT_PATH, 'src/index.js');
 async function runOxlint(cwd: string, args: string[] = []) {
   return await execa('node', [ENTRY_POINT_PATH, ...args], {
     cwd: path.join(PACKAGE_ROOT_PATH, cwd),
+    reject: false,
   });
 }
 
