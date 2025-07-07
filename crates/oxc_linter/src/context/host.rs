@@ -5,8 +5,8 @@ use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, FrameworkFlags,
-    config::{BuiltinLintPlugins, LintConfig},
+    AllowWarnDeny, FrameworkFlags, LintPlugins,
+    config::LintConfig,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks,
@@ -131,7 +131,7 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> &BuiltinLintPlugins {
+    pub fn plugins(&self) -> &LintPlugins {
         &self.config.plugins
     }
 

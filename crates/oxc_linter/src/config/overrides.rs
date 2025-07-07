@@ -7,7 +7,7 @@ use std::{
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-use crate::{BuiltinLintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -82,7 +82,7 @@ pub struct OxlintOverride {
     /// Optionally change what plugins are enabled for this override. When
     /// omitted, the base config's plugins are used.
     #[serde(default)]
-    pub plugins: Option<BuiltinLintPlugins>,
+    pub plugins: Option<LintPlugins>,
 
     #[serde(default)]
     pub rules: OxlintRules,
@@ -161,9 +161,10 @@ impl JsonSchema for GlobSet {
 
 #[cfg(test)]
 mod test {
-    use crate::config::globals::GlobalValue;
+    use crate::config::{globals::GlobalValue, plugins::BuiltinLintPlugins};
 
     use super::*;
+    use rustc_hash::FxHashSet;
     use serde_json::{from_value, json};
 
     #[test]
@@ -196,7 +197,10 @@ mod test {
             "plugins": [],
         }))
         .unwrap();
-        assert_eq!(config.plugins, Some(BuiltinLintPlugins::empty()));
+        assert_eq!(
+            config.plugins,
+            Some(LintPlugins::new(BuiltinLintPlugins::empty(), FxHashSet::default()))
+        );
 
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
@@ -205,7 +209,10 @@ mod test {
         .unwrap();
         assert_eq!(
             config.plugins,
-            Some(BuiltinLintPlugins::REACT | BuiltinLintPlugins::TYPESCRIPT)
+            Some(LintPlugins::new(
+                BuiltinLintPlugins::REACT | BuiltinLintPlugins::TYPESCRIPT,
+                FxHashSet::default()
+            ))
         );
     }
 

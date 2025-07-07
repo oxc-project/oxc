@@ -30,7 +30,7 @@ use oxc_semantic::{AstNode, Semantic};
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, Oxlintrc,
+        ESLintRule, LintPlugins, Oxlintrc,
     },
     context::LintContext,
     external_linter::{

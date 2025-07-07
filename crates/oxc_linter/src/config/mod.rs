@@ -17,13 +17,13 @@ pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
-pub use plugins::BuiltinLintPlugins;
+pub use plugins::{BuiltinLintPlugins, LintPlugins};
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
-    pub(crate) plugins: BuiltinLintPlugins,
+    pub(crate) plugins: LintPlugins,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
