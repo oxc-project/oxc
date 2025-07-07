@@ -4,7 +4,7 @@ const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./
   { TOKEN } = require('./lazy-common.js'),
   { RawTransferData } = require('../generated/lazy/constructors.js'),
   walkProgram = require('../generated/lazy/walk.js'),
-  { Visitor, getVisitorsArr } = require('./visitor.js');
+  { Visitor, getCompiledVisitor } = require('./visitor.js');
 
 module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
 
@@ -124,7 +124,7 @@ function construct(buffer, sourceText, sourceLen) {
     },
     dispose: dispose.bind(null, ast),
     visit(visitor) {
-      walkProgram(rawDataPos, ast, getVisitorsArr(visitor));
+      walkProgram(rawDataPos, ast, getCompiledVisitor(visitor));
     },
   };
 }

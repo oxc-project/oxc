@@ -1,19 +1,15 @@
 'use strict';
 
-const {
-  NODE_TYPE_IDS_MAP,
-  NODE_TYPES_COUNT,
-  LEAF_NODE_TYPES_COUNT,
-} = require('../generated/lazy/types.js');
+const { NODE_TYPES, createEmptyVisitor } = require('../generated/lazy/types.js');
 
-// Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
-let getVisitorsArr;
+// Getter for private `#visitor` property of `Visitor` class. Initialized in class body below.
+let getCompiledVisitor;
 
 /**
  * Visitor class, used to visit an AST.
  */
 class Visitor {
-  #visitorsArr;
+  #visitor;
 
   /**
    * Create `Visitor`.
@@ -39,41 +35,38 @@ class Visitor {
    * @returns {Visitor}
    */
   constructor(visitor) {
-    this.#visitorsArr = createVisitorsArr(visitor);
+    this.#visitor = createCompiledVisitor(visitor);
   }
 
   static {
-    getVisitorsArr = visitor => visitor.#visitorsArr;
+    getCompiledVisitor = visitor => visitor.#visitor;
   }
 }
 
-module.exports = { Visitor, getVisitorsArr };
+module.exports = { Visitor, getCompiledVisitor };
 
 /**
- * Create array of visitors, keyed by node type ID.
+ * Create compiled visitor object, keyed by node type name.
  *
- * Each element of array is one of:
+ * Each property of object is one of:
  *
  * * No visitor for this type = `null`.
  * * Visitor for leaf node = visit function.
  * * Visitor for non-leaf node = object of form `{ enter, exit }`,
  *   where each property is either a visitor function or `null`.
  *
- * @param {Object} visitor - Visitors object from user
- * @returns {Array<Object|function|null>} - Array of visitors
+ * @param {Object} visitor - Visitor object from user
+ * @returns {Object} - Compiled visitor object
  */
-function createVisitorsArr(visitor) {
+function createCompiledVisitor(visitor) {
   if (visitor === null || typeof visitor !== 'object') {
     throw new Error('`visitor` must be an object');
   }
 
-  // Create empty visitors array
-  const visitorsArr = [];
-  for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
-    visitorsArr.push(null);
-  }
+  // Create empty compiled visitor
+  const compiledVisitor = createEmptyVisitor();
 
-  // Populate visitors array from provided object
+  // Populate compiled visitor from provided object
   for (let name of Object.keys(visitor)) {
     const visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
@@ -83,35 +76,38 @@ function createVisitorsArr(visitor) {
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
-    const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in \`visitor\` object`);
-
-    if (typeId < LEAF_NODE_TYPES_COUNT) {
+    const isLeaf = NODE_TYPES.get(name);
+    if (isLeaf === true) {
       // Leaf node. Store just 1 function.
-      const existingVisitFn = visitorsArr[typeId];
+      const existingVisitFn = compiledVisitor[name];
       if (existingVisitFn === null) {
-        visitorsArr[typeId] = visitFn;
+        compiledVisitor[name] = visitFn;
       } else if (isExit) {
-        visitorsArr[typeId] = combineVisitFunctions(existingVisitFn, visitFn);
+        compiledVisitor[name] = combineVisitFunctions(existingVisitFn, visitFn);
       } else {
-        visitorsArr[typeId] = combineVisitFunctions(visitFn, existingVisitFn);
+        compiledVisitor[name] = combineVisitFunctions(visitFn, existingVisitFn);
       }
       continue;
     }
 
-    let enterExit = visitorsArr[typeId];
-    if (enterExit === null) {
-      enterExit = visitorsArr[typeId] = { enter: null, exit: null };
+    if (isLeaf === false) {
+      let enterExit = compiledVisitor[name];
+      if (enterExit === null) {
+        enterExit = compiledVisitor[name] = { enter: null, exit: null };
+      }
+
+      if (isExit) {
+        enterExit.exit = visitFn;
+      } else {
+        enterExit.enter = visitFn;
+      }
+      continue;
     }
 
-    if (isExit) {
-      enterExit.exit = visitFn;
-    } else {
-      enterExit.enter = visitFn;
-    }
+    throw new Error(`Unknown node type '${name}' in \`visitor\` object`);
   }
 
-  return visitorsArr;
+  return compiledVisitor;
 }
 
 /**

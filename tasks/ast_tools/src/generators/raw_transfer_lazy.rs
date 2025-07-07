@@ -62,14 +62,10 @@ struct State {
     constructor_names: String,
     /// Code for constructor class names which are used in walkers
     walked_constructor_names: String,
-    /// Code for mapping from struct name to ID
-    leaf_node_type_ids_map: String,
-    /// Code for mapping from struct name to ID
-    non_leaf_node_type_ids_map: String,
-    /// Next node type ID for leaf nodes
-    next_leaf_node_type_id: u32,
-    /// Next node type ID for non-leaf nodes
-    next_non_leaf_node_type_id: u32,
+    /// Code for mapping from struct name to boolean for leaf/non-leaf
+    node_names_map: String,
+    /// Code for empty visitor object
+    visitor_obj: String,
 }
 
 /// Generate construct and walk functions for all types.
@@ -91,7 +87,7 @@ fn generate(
 
     // Determine which types are walked
     // (not including types which aren't part of AST e.g. `Error`, and AST types which aren't visited).
-    let (walk_statuses, leaf_nodes_count) = WalkStatuses::calculate(estree_derive_id, schema);
+    let walk_statuses = WalkStatuses::calculate(estree_derive_id, schema);
 
     // Generate code
     let mut state = State {
@@ -99,10 +95,8 @@ fn generate(
         walkers: String::new(),
         constructor_names: String::new(),
         walked_constructor_names: String::new(),
-        leaf_node_type_ids_map: String::new(),
-        non_leaf_node_type_ids_map: String::new(),
-        next_leaf_node_type_id: 0,
-        next_non_leaf_node_type_id: leaf_nodes_count,
+        node_names_map: String::new(),
+        visitor_obj: String::new(),
     };
 
     let span_struct_def = schema.struct_def(span_type_id);
@@ -191,26 +185,29 @@ fn generate(
     ");
 
     // Generate file containing mapping from type names to node type IDs
-    assert_eq!(state.next_leaf_node_type_id, leaf_nodes_count);
-
-    let nodes_count = state.next_non_leaf_node_type_id;
-    let leaf_node_type_ids_map = &state.leaf_node_type_ids_map;
-    let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
+    // TODO: Update comment
+    let node_names_map = &state.node_names_map;
+    let visitor_obj = &state.visitor_obj;
     #[rustfmt::skip]
     let node_type_ids_map = format!("
         'use strict';
 
-        // Mapping from node type name to node type ID
-        const NODE_TYPE_IDS_MAP = new Map([
-            // Leaf nodes
-            {leaf_node_type_ids_map}// Non-leaf nodes
-            {non_leaf_node_type_ids_map}
+        // Mapping from node type name to boolean.
+        // `true` for leaf nodes, `false` for non-leaf nodes.
+        const NODE_TYPES = new Map([
+            {node_names_map}
         ]);
 
+        // Create empty compiled visitor object
+        function createEmptyVisitor() {{
+            return {{
+                {visitor_obj}
+            }};
+        }}
+
         module.exports = {{
-            NODE_TYPE_IDS_MAP,
-            NODE_TYPES_COUNT: {nodes_count},
-            LEAF_NODE_TYPES_COUNT: {leaf_nodes_count},
+            NODE_TYPES,
+            createEmptyVisitor,
         }};
     ");
 
@@ -220,7 +217,6 @@ fn generate(
 /// Structure for calculating which types need walk functions.
 struct WalkStatuses<'s> {
     statuses: IndexVec<TypeId, WalkStatus>,
-    leaf_nodes_count: u32,
     estree_derive_id: DeriveId,
     schema: &'s Schema,
 }
@@ -248,21 +244,15 @@ impl<'s> WalkStatuses<'s> {
     ///
     /// Return an `IndexVec` keyed by `TypeId`. Each type in AST has status `Walk` or `NoWalk`.
     /// Types which are not part of the AST (e.g. `Error`) are not visited and have status `Uncalculated`.
-    ///
-    /// Also calculate the number of leaf nodes i.e. nodes which don't have any children which are walked
-    /// e.g. `IdentifierReference`, `StringLiteral`.
-    fn calculate(
-        estree_derive_id: DeriveId,
-        schema: &'s Schema,
-    ) -> (/* walk statuses */ IndexVec<TypeId, WalkStatus>, /* leaf nodes count */ u32) {
+    fn calculate(estree_derive_id: DeriveId, schema: &'s Schema) -> IndexVec<TypeId, WalkStatus> {
         let statuses = index_vec![WalkStatus::Uncalculated; schema.types.len()];
 
-        let mut statuses = Self { statuses, leaf_nodes_count: 0, estree_derive_id, schema };
+        let mut statuses = Self { statuses, estree_derive_id, schema };
 
         let program_type = schema.type_by_name("Program");
         statuses.is_walked(program_type);
 
-        (statuses.statuses, statuses.leaf_nodes_count)
+        statuses.statuses
     }
 
     fn is_walked(&mut self, type_def: &TypeDef) -> bool {
@@ -292,32 +282,27 @@ impl<'s> WalkStatuses<'s> {
             return false;
         }
 
-        let mut has_type_field = !struct_def.estree.no_type;
-        if has_type_field {
+        let mut is_walked = !struct_def.estree.no_type;
+        if is_walked {
             // Set status early to avoid infinite loop
             self.statuses[struct_def.id()] = WalkStatus::Walk;
         }
 
-        let mut has_walked_field = false;
         for field in &struct_def.fields {
-            if field.name() == "type" {
-                if !has_type_field {
-                    has_type_field = true;
-                    self.statuses[struct_def.id()] = WalkStatus::Walk;
-                }
-            } else if !should_skip_field(field, self.schema) {
-                has_walked_field |= self.is_walked(field.type_def(self.schema));
+            let field_requires_walk = if field.name() == "type" {
+                true
+            } else {
+                !should_skip_field(field, self.schema)
+                    && self.is_walked(field.type_def(self.schema))
+            };
+
+            if field_requires_walk && !is_walked {
+                is_walked = true;
+                self.statuses[struct_def.id()] = WalkStatus::Walk;
             }
         }
 
-        if has_walked_field {
-            true
-        } else if has_type_field {
-            self.leaf_nodes_count += 1;
-            true
-        } else {
-            false
-        }
+        is_walked
     }
 
     fn enum_is_walked(&mut self, enum_def: &EnumDef) -> bool {
@@ -778,29 +763,22 @@ fn generate_struct(
     }
 
     // AST node which can be visited
-    if walk_stmts.is_empty() {
+    let is_leaf = walk_stmts.is_empty();
+    if is_leaf {
         // Leaf node. Just a single visitor.
-        let node_type_id = state.next_leaf_node_type_id;
-        state.next_leaf_node_type_id += 1;
-
         #[rustfmt::skip]
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
-                const visit = visitors[{node_type_id}];
+                const visit = visitors.{struct_name};
                 if (visit !== null) visit(new {struct_name}(pos, ast));
             }}
         ");
-
-        write_it!(state.leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
     } else {
         // AST node with children. 2 visitors for enter and exit.
-        let node_type_id = state.next_non_leaf_node_type_id;
-        state.next_non_leaf_node_type_id += 1;
-
         #[rustfmt::skip]
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
-                const enterExit = visitors[{node_type_id}];
+                const enterExit = visitors.{struct_name};
                 let node, enter, exit;
                 if (enterExit !== null) {{
                     ({{ enter, exit }} = enterExit);
@@ -813,10 +791,10 @@ fn generate_struct(
                 if (exit) exit(node);
             }}
         ");
-
-        write_it!(state.non_leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
     }
 
+    write_it!(state.node_names_map, "['{struct_name}', {is_leaf}],\n");
+    write_it!(state.visitor_obj, "{struct_name}: null,\n");
     write_it!(state.walked_constructor_names, "{struct_name}, ");
 }
 
