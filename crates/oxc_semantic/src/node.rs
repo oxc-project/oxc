@@ -1,3 +1,5 @@
+use std::iter::FusedIterator;
+
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::AstKind;
 use oxc_cfg::BlockNodeId;
@@ -289,3 +291,5 @@ impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
         }
     }
 }
+
+impl FusedIterator for AstNodeParentIter<'_, '_> {}
