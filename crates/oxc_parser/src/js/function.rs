@@ -117,8 +117,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
-        let return_type =
-            self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
+        let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
