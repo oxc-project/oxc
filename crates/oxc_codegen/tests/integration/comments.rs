@@ -1,10 +1,14 @@
-use crate::tester::test_same;
+use crate::tester::{test, test_same};
 
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // https://lingui.dev/ref/macro#definemessage
-    test_same("const message = /*i18n*/{};\n");
+    test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
+    test(
+        "function foo() { return /*i18n*/ {} }",
+        "function foo() {\n\treturn (\t/*i18n*/ {});\n}\n",
+    );
 }
 
 pub mod jsdoc {

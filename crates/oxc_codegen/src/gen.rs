@@ -1480,11 +1480,15 @@ impl GenExpr for ObjectExpression<'_> {
         let n = p.code_len();
         let len = self.properties.len();
         let is_multi_line = len > 1;
-        let wrap = p.start_of_stmt == n || p.start_of_arrow_expr == n;
+        let has_comment = p.has_comment(self.span.start);
+        let wrap = has_comment || p.start_of_stmt == n || p.start_of_arrow_expr == n;
         p.wrap(wrap, |p| {
             // Print comments for lingui https://lingui.dev/ref/macro#definemessage
             // `const message = /*i18n*/ { };`
-            p.print_leading_comments(self.span.start);
+            if has_comment {
+                p.print_leading_comments(self.span.start);
+                p.print_indent();
+            }
             p.add_source_mapping(self.span);
             p.print_ascii_byte(b'{');
             if is_multi_line {
