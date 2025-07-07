@@ -4,7 +4,6 @@ use napi::Either;
 use napi_derive::napi;
 
 use oxc_minifier::TreeShakeOptions;
-use oxc_sourcemap::napi::SourceMap;
 use oxc_syntax::es_target::ESTarget;
 
 #[napi(object)]
@@ -191,11 +190,4 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
         };
         Ok(oxc_minifier::MinifierOptions { compress, mangle })
     }
-}
-
-#[napi(object)]
-pub struct MinifyResult {
-    pub code: String,
-
-    pub map: Option<SourceMap>,
 }

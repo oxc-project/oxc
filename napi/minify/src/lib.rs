@@ -1,4 +1,4 @@
-#![expect(clippy::needless_pass_by_value, clippy::missing_errors_doc)]
+#![expect(clippy::needless_pass_by_value)]
 
 #[cfg(all(
     feature = "allocator",
@@ -16,11 +16,22 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_minifier::Minifier;
+use oxc_napi::OxcError;
 use oxc_parser::Parser;
+use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
-use crate::options::{MinifyOptions, MinifyResult};
+use crate::options::MinifyOptions;
+
+#[derive(Default)]
+#[napi(object)]
+pub struct MinifyResult {
+    pub code: String,
+    pub map: Option<SourceMap>,
+    pub errors: Vec<OxcError>,
+}
 
 /// Minify synchronously.
 #[napi]
@@ -28,19 +39,29 @@ pub fn minify(
     filename: String,
     source_text: String,
     options: Option<MinifyOptions>,
-) -> napi::Result<MinifyResult> {
+) -> MinifyResult {
     let options = options.unwrap_or_default();
 
     let minifier_options = match oxc_minifier::MinifierOptions::try_from(&options) {
         Ok(options) => options,
-        Err(error) => return Err(napi::Error::from_reason(&error)),
+        Err(error) => {
+            return MinifyResult {
+                errors: OxcError::from_diagnostics(
+                    &filename,
+                    &source_text,
+                    vec![OxcDiagnostic::error(error)],
+                ),
+                ..MinifyResult::default()
+            };
+        }
     };
 
     let allocator = Allocator::default();
 
     let source_type = SourceType::from_path(&filename).unwrap_or_default();
 
-    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut program = parser_ret.program;
 
     let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
 
@@ -52,10 +73,14 @@ pub fn minify(
     };
 
     if options.sourcemap == Some(true) {
-        codegen_options.source_map_path = Some(PathBuf::from(filename));
+        codegen_options.source_map_path = Some(PathBuf::from(&filename));
     }
 
     let ret = Codegen::new().with_options(codegen_options).with_scoping(scoping).build(&program);
 
-    Ok(MinifyResult { code: ret.code, map: ret.map.map(oxc_sourcemap::napi::SourceMap::from) })
+    MinifyResult {
+        code: ret.code,
+        map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
+        errors: OxcError::from_diagnostics(&filename, &source_text, parser_ret.errors),
+    }
 }

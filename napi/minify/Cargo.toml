@@ -24,7 +24,9 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_diagnostics = { workspace = true }
 oxc_minifier = { workspace = true }
+oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true, features = ["napi", "rayon"] }
 oxc_span = { workspace = true }

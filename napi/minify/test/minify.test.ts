@@ -23,20 +23,28 @@ describe('simple', () => {
         ],
         'version': 3,
       },
+      'errors': [],
     });
   });
 
   it('can turn off everything', () => {
     const ret = minify('test.js', code, { compress: false, mangle: false, codegen: { removeWhitespace: false } });
-    expect(ret).toStrictEqual({
-      'code': 'function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n',
-    });
+    expect(ret.code).toBe(
+      'function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n',
+    );
   });
 
   it('defaults to esnext', () => {
     const code = 'try { foo } catch (e) {}';
     const ret = minify('test.js', code);
     expect(ret.code).toBe('try{foo}catch{}');
+  });
+
+  it('returns parser error', () => {
+    const code = 'const';
+    const ret = minify('test.js', code);
+    expect(ret.code).toBe('');
+    expect(ret.errors.length).toBe(1);
   });
 });
 

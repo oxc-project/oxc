@@ -384,3 +384,4 @@ if (!nativeBinding) {
 
 module.exports = nativeBinding
 module.exports.minify = nativeBinding.minify
+module.exports.Severity = nativeBinding.Severity
