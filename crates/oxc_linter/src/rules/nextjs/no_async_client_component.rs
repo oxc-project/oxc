@@ -90,10 +90,7 @@ declare_oxc_lint!(
 
 impl Rule for NoAsyncClientComponent {
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else {
-            return;
-        };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
+        let program = ctx.nodes().program().unwrap();
 
         if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
             for node in &program.body {

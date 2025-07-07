@@ -15,6 +15,9 @@ impl NodeId {
     /// This is used for synthetically-created AST nodes, among other things.
     pub const DUMMY: Self = NodeId::new(0);
 
+    /// Node id of the Program node.
+    pub const ROOT: Self = NodeId::new(0);
+
     /// Create `NodeId` from `u32`.
     ///
     /// # Panics

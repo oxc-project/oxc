@@ -63,11 +63,7 @@ impl Rule for NoProcessExit {
 }
 
 fn has_hashbang(ctx: &LintContext) -> bool {
-    let Some(root) = ctx.nodes().root_node() else {
-        return false;
-    };
-    let AstKind::Program(program) = root.kind() else { unreachable!() };
-    program.hashbang.is_some()
+    ctx.nodes().program().unwrap().hashbang.is_some()
 }
 
 fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {
