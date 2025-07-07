@@ -1,0 +1,6 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`cli options for bundling > should lint a directory 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 0 files with 1 rules using X threads."
+`;

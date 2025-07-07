@@ -1,10 +1,10 @@
 packages:
-  - 'napi/*'
-  - 'wasm/*'
-  - 'npm/*'
-  - 'editors/*'
-  - 'tasks/transform_conformance'
-  - 'tasks/compat_data'
+  - napi/*
+  - wasm/*
+  - npm/*
+  - editors/*
+  - tasks/transform_conformance
+  - tasks/compat_data
 
 catalog:
   "@napi-rs/cli": 3.0.0-alpha.88
