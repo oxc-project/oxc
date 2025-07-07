@@ -1802,8 +1802,7 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPattern<'a>,
     ) {
-        let kind = AstKind::AssignmentTargetPattern(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             AssignmentTargetPattern::ArrayAssignmentTarget(it) => {
                 visitor.visit_array_assignment_target(it)
@@ -1812,7 +1811,6 @@ pub mod walk {
                 visitor.visit_object_assignment_target(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

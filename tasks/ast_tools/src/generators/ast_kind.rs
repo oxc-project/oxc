@@ -31,13 +31,8 @@ const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "TSFunctionType", "Span"
 /// Enums to create an `AstKind` for.
 ///
 /// Apart from this list, enums don't have `AstKind`s.
-const ENUMS_WHITE_LIST: &[&str] = &[
-    "PropertyKey",
-    "Argument",
-    "AssignmentTarget",
-    "SimpleAssignmentTarget",
-    "AssignmentTargetPattern",
-];
+const ENUMS_WHITE_LIST: &[&str] =
+    &["PropertyKey", "Argument", "AssignmentTarget", "SimpleAssignmentTarget"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;

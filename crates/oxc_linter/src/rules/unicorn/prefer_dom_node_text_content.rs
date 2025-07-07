@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -109,8 +109,10 @@ impl Rule for PreferDomNodeTextContent {
                     AstKind::ObjectAssignmentTarget(_)
                         | AstKind::AssignmentTarget(_)
                         | AstKind::SimpleAssignmentTarget(_)
-                ) && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
-                {
+                ) && matches!(
+                    grand_parent_node_kind,
+                    AstKind::AssignmentTarget(AssignmentTarget::ObjectAssignmentTarget(_))
+                ) {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
                 }
             }
@@ -157,7 +159,7 @@ fn test() {
     ];
 
     // TODO: implement a fixer for destructuring assignment cases
-    let fix = vec![
+    let fix: Vec<(&'static str, &'static str)> = vec![
         ("node.innerText;", "node.textContent;"),
         ("node?.innerText;", "node?.textContent;"),
         ("node.innerText = 'foo';", "node.textContent = 'foo';"),

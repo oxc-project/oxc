@@ -58,7 +58,6 @@ pub enum AstNodes<'a> {
     AssignmentExpression(&'a AstNode<'a, AssignmentExpression<'a>>),
     AssignmentTarget(&'a AstNode<'a, AssignmentTarget<'a>>),
     SimpleAssignmentTarget(&'a AstNode<'a, SimpleAssignmentTarget<'a>>),
-    AssignmentTargetPattern(&'a AstNode<'a, AssignmentTargetPattern<'a>>),
     ArrayAssignmentTarget(&'a AstNode<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
@@ -2347,7 +2346,6 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentExpression(n) => n.span(),
             Self::AssignmentTarget(n) => n.span(),
             Self::SimpleAssignmentTarget(n) => n.span(),
-            Self::AssignmentTargetPattern(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
@@ -2542,7 +2540,6 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentExpression(n) => n.parent,
             Self::AssignmentTarget(n) => n.parent,
             Self::SimpleAssignmentTarget(n) => n.parent,
-            Self::AssignmentTargetPattern(n) => n.parent,
             Self::ArrayAssignmentTarget(n) => n.parent,
             Self::ObjectAssignmentTarget(n) => n.parent,
             Self::AssignmentTargetRest(n) => n.parent,
@@ -2737,7 +2734,6 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentExpression(n) => SiblingNode::from(n.inner),
             Self::AssignmentTarget(n) => n.parent.as_sibling_node(),
             Self::SimpleAssignmentTarget(n) => n.parent.as_sibling_node(),
-            Self::AssignmentTargetPattern(n) => n.parent.as_sibling_node(),
             Self::ArrayAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::ObjectAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetRest(n) => SiblingNode::from(n.inner),
@@ -2932,7 +2928,6 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentExpression(_) => "AssignmentExpression",
             Self::AssignmentTarget(_) => "AssignmentTarget",
             Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget",
-            Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern",
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget",
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
@@ -4860,12 +4855,15 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                 }))
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
-                AstNodes::AssignmentTargetPattern(self.allocator.alloc(AstNode {
-                    inner: it.to_assignment_target_pattern(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_assignment_target_pattern(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
@@ -4950,7 +4948,7 @@ impl<'a> GetSpan for AstNode<'a, SimpleAssignmentTarget<'a>> {
 impl<'a> AstNode<'a, AssignmentTargetPattern<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::AssignmentTargetPattern(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(s) => {
                 AstNodes::ArrayAssignmentTarget(self.allocator.alloc(AstNode {

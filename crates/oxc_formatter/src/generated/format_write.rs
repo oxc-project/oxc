@@ -615,7 +615,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::AssignmentTargetPattern(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(inner) => allocator
                 .alloc(AstNode::<ArrayAssignmentTarget> {
