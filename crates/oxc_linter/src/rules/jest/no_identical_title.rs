@@ -162,7 +162,7 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
             Some(node.id())
         }
         _ => {
-            let parent = ctx.nodes().parent_node(node.id())?;
+            let parent = ctx.nodes().parent_node(node.id());
             get_closest_block(parent, ctx)
         }
     }

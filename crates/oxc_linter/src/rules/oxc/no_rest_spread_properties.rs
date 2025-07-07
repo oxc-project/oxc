@@ -88,11 +88,7 @@ impl Rule for NoRestSpreadProperties {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::SpreadElement(spread_element) => {
-                if ctx
-                    .nodes()
-                    .parent_kind(node.id())
-                    .is_some_and(|parent| matches!(parent, AstKind::ObjectExpression(_)))
-                {
+                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectExpression(_)) {
                     ctx.diagnostic(no_rest_spread_properties_diagnostic(
                         spread_element.span,
                         "object spread property",
@@ -101,11 +97,7 @@ impl Rule for NoRestSpreadProperties {
                 }
             }
             AstKind::BindingRestElement(rest_element) => {
-                if ctx
-                    .nodes()
-                    .parent_kind(node.id())
-                    .is_some_and(|parent| matches!(parent, AstKind::ObjectPattern(_)))
-                {
+                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectPattern(_)) {
                     ctx.diagnostic(no_rest_spread_properties_diagnostic(
                         rest_element.span,
                         "object rest property",

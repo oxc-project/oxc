@@ -147,66 +147,66 @@ impl GetterReturn {
     }
 
     /// Checks whether it is necessary to check the node
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
-        let parent = ctx.nodes().parent_node(node.id())?;
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+        let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
                 if matches!(mdef.kind, MethodDefinitionKind::Get) {
-                    return Some(true);
+                    return true;
                 }
             }
             AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
                 if matches!(kind, PropertyKind::Get) {
-                    return Some(true);
+                    return true;
                 }
                 if prop_key.name().is_some_and(|key| key != "get") {
-                    return Some(false);
+                    return false;
                 }
 
-                let parent_2 = ctx.nodes().parent_node(parent.id())?;
-                let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
-                let parent_4 = ctx.nodes().parent_node(parent_3.id())?;
+                let parent_2 = ctx.nodes().parent_node(parent.id());
+                let parent_3 = ctx.nodes().parent_node(parent_2.id());
+                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 // handle (X())
                 match parent_4.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {
-                            return Some(true);
+                            return true;
                         }
                     }
                     AstKind::CallExpression(ce) => {
                         if Self::handle_actual_expression(&ce.callee) {
-                            return Some(true);
+                            return true;
                         }
                     }
                     _ => {}
                 }
 
-                let parent_5 = ctx.nodes().parent_node(parent_4.id())?;
-                let parent_6 = ctx.nodes().parent_node(parent_5.id())?;
+                let parent_5 = ctx.nodes().parent_node(parent_4.id());
+                let parent_6 = ctx.nodes().parent_node(parent_5.id());
                 match parent_6.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {
-                            return Some(true);
+                            return true;
                         }
                     }
                     AstKind::CallExpression(ce) => {
                         if Self::handle_actual_expression(&ce.callee) {
-                            return Some(true);
+                            return true;
                         }
                     }
                     _ => {
-                        return Some(false);
+                        return false;
                     }
                 }
             }
             _ => {}
         }
 
-        Some(false)
+        false
     }
 
     fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
-        if !Self::is_wanted_node(node, ctx).unwrap_or_default() {
+        if !Self::is_wanted_node(node, ctx) {
             return;
         }
 

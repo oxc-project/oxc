@@ -141,9 +141,7 @@ impl Rule for NoAccumulatingSpread {
             return;
         };
         let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
-        let Some(declaration) = ctx.nodes().parent_node(declaration_id) else {
-            return;
-        };
+        let declaration = ctx.nodes().parent_node(declaration_id);
 
         check_reduce_usage(declaration, referenced_symbol_id, spread.span, ctx);
         check_loop_usage(
@@ -219,18 +217,17 @@ fn check_loop_usage<'a>(
         return;
     };
 
-    let Some(assignment_target) = ctx.nodes().parent_node(write_reference.node_id()) else {
-        return;
-    };
+    let assignment_target = ctx.nodes().parent_node(write_reference.node_id());
 
     let AstKind::SimpleAssignmentTarget(_) = assignment_target.kind() else { return };
 
-    let Some(assignment_expr) = ctx.nodes().parent_node(assignment_target.id()) else { return };
+    let assignment_expr = ctx.nodes().parent_node(assignment_target.id());
     if !matches!(assignment_expr.kind(), AstKind::AssignmentTarget(_)) {
         return;
     }
-    let Some(assignment) = ctx.nodes().parent_node(assignment_expr.id()) else { return };
-    let AstKind::AssignmentExpression(assignment_expression) = assignment.kind() else {
+    let AstKind::AssignmentExpression(assignment_expression) =
+        ctx.nodes().parent_kind(assignment_expr.id())
+    else {
         return;
     };
 

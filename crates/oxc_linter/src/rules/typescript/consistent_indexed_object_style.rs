@@ -139,7 +139,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                             for t in &uni.types {
                                 if let TSType::TSTypeReference(tref) = t {
                                     if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                                        let Some(AstKind::TSTypeAliasDeclaration(dec)) =
+                                        let AstKind::TSTypeAliasDeclaration(dec) =
                                             ctx.nodes().parent_kind(node.id())
                                         else {
                                             return;
@@ -179,18 +179,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                     match &sig.type_annotation.type_annotation {
                         TSType::TSTypeReference(r) => match &r.type_name {
                             TSTypeName::IdentifierReference(ide) => {
-                                let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
+                                let AstKind::TSTypeAliasDeclaration(dec) =
+                                    ctx.nodes().parent_kind(node.id())
+                                else {
                                     return;
                                 };
 
-                                let parent_name =
-                                    if let AstKind::TSTypeAliasDeclaration(dec) = parent {
-                                        &dec.id.name
-                                    } else {
-                                        return;
-                                    };
-
-                                if ide.name != parent_name {
+                                if ide.name != dec.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         "record",
                                         "index signature",
@@ -210,7 +205,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                             for t in &uni.types {
                                 if let TSType::TSTypeReference(tref) = t {
                                     if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                                        let Some(AstKind::TSTypeAliasDeclaration(dec)) =
+                                        let AstKind::TSTypeAliasDeclaration(dec) =
                                             ctx.nodes().parent_kind(node.id())
                                         else {
                                             return;

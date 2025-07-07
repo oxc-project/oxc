@@ -50,17 +50,11 @@ impl Rule for NoVarRequires {
             // the grandparent is an expression statement => this is a top level require()
             let is_expression_statement = {
                 let parent_node = ctx.nodes().parent_node(node.id());
-                let grandparent_node = parent_node.and_then(|x| ctx.nodes().parent_node(x.id()));
+                let grandparent_node = ctx.nodes().parent_node(parent_node.id());
                 matches!(
-                    (
-                        parent_node.map(oxc_semantic::AstNode::kind),
-                        grandparent_node.map(oxc_semantic::AstNode::kind)
-                    ),
-                    (Some(AstKind::ExpressionStatement(_)), _)
-                        | (
-                            Some(AstKind::ChainExpression(_)),
-                            Some(AstKind::ExpressionStatement(_))
-                        )
+                    (parent_node.kind(), grandparent_node.kind()),
+                    (AstKind::ExpressionStatement(_), _)
+                        | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
                 )
             };
 

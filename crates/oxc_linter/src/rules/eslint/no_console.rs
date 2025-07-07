@@ -142,10 +142,9 @@ impl Rule for NoConsole {
         ctx.diagnostic_with_suggestion(
             no_console_diagnostic(diagnostic_span, &self.allow),
             |fixer| {
-                if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-                    if let AstKind::CallExpression(_) = parent.kind() {
-                        return remove_console(fixer, ctx, parent);
-                    }
+                let parent = ctx.nodes().parent_node(node.id());
+                if let AstKind::CallExpression(_) = parent.kind() {
+                    return remove_console(fixer, ctx, parent);
                 }
                 fixer.noop()
             },

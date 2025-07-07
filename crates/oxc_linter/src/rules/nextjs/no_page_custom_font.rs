@@ -102,7 +102,7 @@ impl Rule for NoPageCustomFont {
         let in_document = ctx.file_path().file_name().is_some_and(|file_name| {
             file_name.to_str().is_some_and(|file_name| file_name.starts_with("_document."))
         });
-        let span = ctx.nodes().parent_kind(node.id()).unwrap().span();
+        let span = ctx.nodes().parent_kind(node.id()).span();
         let diagnostic = if in_document {
             if is_inside_export_default(node, ctx) {
                 return;
@@ -134,7 +134,7 @@ fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 
         let name = id.map_or_else(
             || {
-                let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id())?;
+                let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id());
 
                 let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
                     return None;

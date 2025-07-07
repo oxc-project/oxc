@@ -398,9 +398,7 @@ impl ExplicitFunctionReturnType {
     }
 
     fn check_allow_expressions(&self, node: &AstNode, ctx: &LintContext) -> bool {
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return false;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
         self.allow_expressions
             && !matches!(
                 parent.kind(),
@@ -497,9 +495,7 @@ fn is_constructor_argument(node: &AstNode) -> bool {
 }
 
 fn is_constructor_or_setter(node: &AstNode, ctx: &LintContext) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_node(node.id());
     is_constructor(parent) || is_setter(parent)
 }
 
@@ -718,9 +714,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
         return false;
     }
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_node(node.id());
     if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
         return false;
     }

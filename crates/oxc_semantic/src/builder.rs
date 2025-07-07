@@ -318,9 +318,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn pop_ast_node(&mut self) {
-        if let Some(parent_id) = self.nodes.parent_id(self.current_node_id) {
-            self.current_node_id = parent_id;
-        }
+        self.current_node_id = self.nodes.parent_id(self.current_node_id);
     }
 
     #[inline]

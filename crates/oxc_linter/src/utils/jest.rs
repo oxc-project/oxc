@@ -180,21 +180,17 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
         std::iter::from_fn(move || {
             loop {
                 let parent = semantic.nodes().parent_node(id);
-                if let Some(parent) = parent {
-                    let parent_kind = parent.kind();
-                    if matches!(parent_kind, AstKind::CallExpression(_)) {
-                        id = parent.id();
-                        return Some(PossibleJestNode { node: parent, original });
-                    } else if matches!(
-                        parent_kind,
-                        AstKind::StaticMemberExpression(_)
-                            | AstKind::TaggedTemplateExpression(_)
-                            | AstKind::ComputedMemberExpression(_)
-                    ) {
-                        id = parent.id();
-                    } else {
-                        return None;
-                    }
+                let parent_kind = parent.kind();
+                if matches!(parent_kind, AstKind::CallExpression(_)) {
+                    id = parent.id();
+                    return Some(PossibleJestNode { node: parent, original });
+                } else if matches!(
+                    parent_kind,
+                    AstKind::StaticMemberExpression(_)
+                        | AstKind::TaggedTemplateExpression(_)
+                        | AstKind::ComputedMemberExpression(_)
+                ) {
+                    id = parent.id();
                 } else {
                     return None;
                 }
@@ -214,8 +210,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             let symbol_id = SymbolId::from_usize(symbol_id);
             if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
-                let Some(AstKind::ImportDeclaration(import_decl)) =
-                    semantic.nodes().parent_kind(id)
+                let AstKind::ImportDeclaration(import_decl) = semantic.nodes().parent_kind(id)
                 else {
                     return None;
                 };

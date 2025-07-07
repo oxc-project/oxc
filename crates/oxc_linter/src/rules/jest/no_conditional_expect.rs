@@ -139,9 +139,7 @@ fn check_parents<'a>(
         return InConditional(false);
     }
 
-    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-        return InConditional(false);
-    };
+    let parent_node = ctx.nodes().parent_node(node.id());
 
     match parent_node.kind() {
         AstKind::CallExpression(call_expr) => {
@@ -185,9 +183,7 @@ fn check_parents<'a>(
             // To avoid infinite loop, we need to check if the function is already visited when
             // call `check_parents`.
             let boolean = symbol_table.get_resolved_references(symbol_id).any(|reference| {
-                let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
-                    return false;
-                };
+                let parent = ctx.nodes().parent_node(reference.node_id());
                 matches!(check_parents(parent, visited, in_conditional, ctx), InConditional(true))
             });
             return InConditional(boolean);

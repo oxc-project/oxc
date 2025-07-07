@@ -236,9 +236,7 @@ fn trim_like_react(text: &str) -> &str {
 }
 
 fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext) -> bool {
-    let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_kind(node.id());
 
     if !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
         // const a = <></>
@@ -306,7 +304,7 @@ fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
 }
 
 fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
-    if let Some(AstKind::JSXElement(elem)) = ctx.nodes().parent_kind(node.id()) {
+    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id()) {
         if is_html_element(&elem.opening_element.name) {
             return true;
         }
@@ -367,9 +365,7 @@ fn is_fragment_with_only_text_and_is_not_child<'a>(
     }
 
     if let Some(JSXChild::Text(_)) = node.first() {
-        let Some(parent) = ctx.nodes().parent_kind(id) else {
-            return false;
-        };
+        let parent = ctx.nodes().parent_kind(id);
         return !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_));
     }
 

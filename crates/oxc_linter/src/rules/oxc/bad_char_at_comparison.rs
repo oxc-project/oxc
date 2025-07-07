@@ -59,11 +59,7 @@ impl Rule for BadCharAtComparison {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-
-        let AstKind::BinaryExpression(binary_expr) = parent.kind() else {
+        let AstKind::BinaryExpression(binary_expr) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
         if !matches!(

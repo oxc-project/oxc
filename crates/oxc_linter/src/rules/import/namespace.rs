@@ -166,55 +166,54 @@ impl Rule for Namespace {
             };
 
             ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
-                if let Some(node) = ctx.nodes().parent_node(reference.node_id()) {
-                    let name = entry.local_name.name();
+                let parent = ctx.nodes().parent_node(reference.node_id());
+                let name = entry.local_name.name();
 
-                    match node.kind() {
-                        member if member.is_member_expression_kind() => {
-                            if matches!(
-                                ctx.nodes().parent_kind(node.id()),
-                                Some(AstKind::SimpleAssignmentTarget(_))
-                            ) {
-                                ctx.diagnostic(assignment(member.span(), name));
-                            }
-
-                            if !self.allow_computed
-                                && matches!(member, AstKind::ComputedMemberExpression(_))
-                            {
-                                return ctx.diagnostic(computed_reference(member.span(), name));
-                            }
-
-                            check_deep_namespace_for_node(
-                                node,
-                                &source,
-                                vec![entry.local_name.name().to_string()].as_slice(),
-                                &module,
-                                ctx,
-                            );
+                match parent.kind() {
+                    member if member.is_member_expression_kind() => {
+                        if matches!(
+                            ctx.nodes().parent_kind(parent.id()),
+                            AstKind::SimpleAssignmentTarget(_)
+                        ) {
+                            ctx.diagnostic(assignment(member.span(), name));
                         }
-                        AstKind::JSXMemberExpression(expr) => {
-                            check_binding_exported(
-                                &expr.property.name,
-                                || no_export(expr.property.span, &expr.property.name, &source),
-                                &module,
-                                ctx,
-                            );
-                        }
-                        AstKind::VariableDeclarator(decl) => {
-                            let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {
-                                return;
-                            };
 
-                            check_deep_namespace_for_object_pattern(
-                                pattern,
-                                &source,
-                                &[entry.local_name.name().to_string()],
-                                &module,
-                                ctx,
-                            );
+                        if !self.allow_computed
+                            && matches!(member, AstKind::ComputedMemberExpression(_))
+                        {
+                            return ctx.diagnostic(computed_reference(member.span(), name));
                         }
-                        _ => {}
+
+                        check_deep_namespace_for_node(
+                            parent,
+                            &source,
+                            vec![entry.local_name.name().to_string()].as_slice(),
+                            &module,
+                            ctx,
+                        );
                     }
+                    AstKind::JSXMemberExpression(expr) => {
+                        check_binding_exported(
+                            &expr.property.name,
+                            || no_export(expr.property.span, &expr.property.name, &source),
+                            &module,
+                            ctx,
+                        );
+                    }
+                    AstKind::VariableDeclarator(decl) => {
+                        let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {
+                            return;
+                        };
+
+                        check_deep_namespace_for_object_pattern(
+                            pattern,
+                            &source,
+                            &[entry.local_name.name().to_string()],
+                            &module,
+                            ctx,
+                        );
+                    }
+                    _ => {}
                 }
             });
         }
@@ -276,7 +275,7 @@ fn check_deep_namespace_for_node(
     };
 
     if let Some(module_source) = get_module_request_name(name, module) {
-        let parent_node = ctx.nodes().parent_node(node.id())?;
+        let parent_node = ctx.nodes().parent_node(node.id());
         let loaded_modules = module.loaded_modules.read().unwrap();
         let module_record = loaded_modules.get(module_source.as_str())?;
         let mut namespaces = namespaces.to_owned();

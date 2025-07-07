@@ -84,9 +84,7 @@ impl Rule for NoAccessorRecursion {
         let Some(nearest_func) = get_nearest_function(node, ctx) else {
             return;
         };
-        let Some(func_parent) = ctx.nodes().parent_node(nearest_func.id()) else {
-            return;
-        };
+        let func_parent = ctx.nodes().parent_node(nearest_func.id());
         if !is_property_or_method_def(func_parent) {
             return;
         }
@@ -222,17 +220,17 @@ fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
 }
 
 fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
-    let mut parent = ctx.nodes().parent_node(node.id())?;
-    while let Some(new_parent) = ctx.nodes().parent_node(parent.id()) {
+    let mut parent = ctx.nodes().parent_node(node.id());
+    loop {
         match parent.kind() {
-            AstKind::Function(_) => break,
+            AstKind::Program(_) | AstKind::Function(_) => break,
             // If a class is declared in the accessor, ignore it
             // e.g. "let foo = { get bar() { class baz { } } }"
             AstKind::Class(_) => {
                 return None;
             }
             _ => {
-                parent = new_parent;
+                parent = ctx.nodes().parent_node(parent.id());
             }
         }
     }

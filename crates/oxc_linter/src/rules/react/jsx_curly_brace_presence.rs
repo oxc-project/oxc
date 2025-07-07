@@ -550,7 +550,7 @@ fn has_adjacent_jsx_expression_containers<'a>(
     node_id: NodeId,
     // element: &JSXElement<'a>,
 ) -> bool {
-    let Some(parent) = ctx.nodes().parent_kind(node_id) else { return false };
+    let parent = ctx.nodes().parent_kind(node_id);
     let children = match parent {
         AstKind::JSXElement(el) => &el.children,
         AstKind::JSXFragment(fragment) => &fragment.children,

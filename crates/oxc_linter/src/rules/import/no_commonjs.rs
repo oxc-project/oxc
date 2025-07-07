@@ -118,10 +118,12 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
     if is_cond {
         true
     } else {
-        let Some(parent) = ctx.nodes().parent_node(parent_node.id()) else {
-            return false;
-        };
-        is_conditional(parent, ctx)
+        let parent = ctx.nodes().parent_node(parent_node.id());
+        if matches!(parent.kind(), AstKind::Program(_)) {
+            false
+        } else {
+            is_conditional(parent, ctx)
+        }
     }
 }
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
@@ -232,9 +234,7 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-                    return;
-                };
+                let parent_node = ctx.nodes().parent_node(node.id());
 
                 if self.allow_conditional_require && is_conditional(parent_node, ctx) {
                     return;

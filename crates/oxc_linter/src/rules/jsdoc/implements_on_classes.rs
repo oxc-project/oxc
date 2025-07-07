@@ -61,7 +61,8 @@ declare_oxc_lint!(
 
 fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut current_node = node;
-    while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
+    loop {
+        let parent_node = ctx.nodes().parent_node(current_node.id());
         match parent_node.kind() {
             AstKind::MethodDefinition(_) | AstKind::PropertyDefinition(_) => return true,
             // Keep looking up only if the node is wrapped by `()`
@@ -71,8 +72,6 @@ fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintConte
             _ => return false,
         }
     }
-
-    false
 }
 
 impl Rule for ImplementsOnClasses {

@@ -66,7 +66,7 @@ impl Rule for NoAwaitExpressionMember {
                     if member_expr.optional() {
                         return fixer.noop();
                     }
-                    let Some(AstKind::VariableDeclarator(parent)) =
+                    let AstKind::VariableDeclarator(parent) =
                         ctx.nodes().parent_kind(node.id())
                     else {
                         return fixer.noop();

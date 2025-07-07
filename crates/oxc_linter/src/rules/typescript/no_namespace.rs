@@ -153,10 +153,8 @@ impl Rule for NoNamespace {
             return;
         }
 
-        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-            if let AstKind::TSModuleDeclaration(_) = parent.kind() {
-                return;
-            }
+        if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
+            return;
         }
 
         if self.allow_declarations && is_declaration(node, ctx) {

@@ -224,9 +224,7 @@ impl IdLength {
             return;
         }
 
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent_node = ctx.nodes().parent_node(node.id());
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
                 if import_specifier.imported.name() == import_specifier.local.name {
@@ -238,7 +236,7 @@ impl IdLength {
                 }
             }
             AstKind::BindingProperty(_) => {
-                if let Some(AstKind::ObjectPattern(object_pattern)) =
+                if let AstKind::ObjectPattern(object_pattern) =
                     ctx.nodes().parent_kind(parent_node.id())
                 {
                     let binding_property_option =
@@ -279,9 +277,7 @@ impl IdLength {
             return;
         }
 
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent_node = ctx.nodes().parent_node(node.id());
         match parent_node.kind() {
             AstKind::ExportSpecifier(_)
             | AstKind::ImportAttribute(_)
@@ -292,10 +288,8 @@ impl IdLength {
             AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
-                    return;
-                };
-                let AstKind::SimpleAssignmentTarget(_) = parent_parent_node.kind() else {
+                let AstKind::SimpleAssignmentTarget(_) = ctx.nodes().parent_kind(parent_node.id())
+                else {
                     return;
                 };
 
@@ -308,11 +302,9 @@ impl IdLength {
                     return;
                 }
 
-                let Some(mut parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
-                    return;
-                };
+                let mut parent_parent_node = ctx.nodes().parent_node(parent_node.id());
                 if matches!(parent_parent_node.kind(), AstKind::BindingProperty(_)) {
-                    parent_parent_node = ctx.nodes().parent_node(parent_parent_node.id()).unwrap();
+                    parent_parent_node = ctx.nodes().parent_node(parent_parent_node.id());
                 }
 
                 match parent_parent_node.kind() {

@@ -109,7 +109,7 @@ fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintCont
         if !is_breakable_statement(nodes.kind(ancestor_id)) {
             continue;
         }
-        let Some(AstKind::LabeledStatement(labeled_stmt)) = nodes.parent_kind(ancestor_id) else {
+        let AstKind::LabeledStatement(labeled_stmt) = nodes.parent_kind(ancestor_id) else {
             return; // no need to check outer loops/switches
         };
         if labeled_stmt.label.name != label.name {

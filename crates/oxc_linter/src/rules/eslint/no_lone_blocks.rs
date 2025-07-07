@@ -57,9 +57,7 @@ impl Rule for NoLoneBlocks {
             return;
         };
 
-        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent_node = ctx.nodes().parent_node(node.id());
 
         if stmt.body.is_empty() {
             let is_comment_in_stmt =

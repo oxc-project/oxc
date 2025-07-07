@@ -147,7 +147,7 @@ impl Rule for MaxDepth {
 }
 
 fn should_count(node: &AstNode<'_>, nodes: &AstNodes<'_>) -> bool {
-    matches!(node.kind(), AstKind::IfStatement(_) if !matches!(nodes.parent_kind(node.id()), Some(AstKind::IfStatement(_))))
+    matches!(node.kind(), AstKind::IfStatement(_) if !matches!(nodes.parent_kind(node.id()), AstKind::IfStatement(_)))
         || matches!(node.kind(), |AstKind::SwitchStatement(_)| AstKind::TryStatement(_)
             | AstKind::DoWhileStatement(_)
             | AstKind::WhileStatement(_)

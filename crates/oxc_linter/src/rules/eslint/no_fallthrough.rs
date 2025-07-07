@@ -461,7 +461,7 @@ fn get_switch_semantic_cases(
                             .and_then(|it| it.node_id)
                             .map(|id| ctx.nodes().parent_kind(id))
                             .and_then(|it| match it {
-                                Some(AstKind::SwitchCase(case)) => Some(case),
+                                AstKind::SwitchCase(case) => Some(case),
                                 _ => None,
                             })
                     })

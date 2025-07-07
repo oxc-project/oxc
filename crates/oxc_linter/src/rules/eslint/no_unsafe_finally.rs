@@ -79,8 +79,7 @@ impl Rule for NoUnsafeFinally {
                 break;
             }
 
-            let Some(parent_node_id) = nodes.parent_id(node_id) else { break };
-            let parent_kind = nodes.kind(parent_node_id);
+            let parent_kind = nodes.parent_kind(node_id);
 
             if let AstKind::LabeledStatement(labeled_stmt) = parent_kind {
                 if label_name == Some(&labeled_stmt.label.name) {
@@ -90,7 +89,7 @@ impl Rule for NoUnsafeFinally {
 
             // Finally Block
             let parent_parent_kind = nodes.parent_kind(node_id);
-            if let Some(AstKind::TryStatement(try_stmt)) = parent_parent_kind {
+            if let AstKind::TryStatement(try_stmt) = parent_parent_kind {
                 if let Some(try_block_stmt) = &try_stmt.finalizer {
                     if let AstKind::BlockStatement(block_stmt) = ast_kind {
                         if try_block_stmt.span == block_stmt.span {
