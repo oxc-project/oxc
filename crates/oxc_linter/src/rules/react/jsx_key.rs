@@ -223,9 +223,10 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
             }
-            AstKind::Argument(arg) => {
-                argument = Some(arg);
-            }
+            // TODO:
+            // AstKind::Argument(arg) => {
+            //     argument = Some(arg);
+            // }
             _ => {}
         }
         node = parent;

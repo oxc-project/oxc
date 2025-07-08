@@ -108,9 +108,10 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
     }
 
     let parent = ctx.nodes().parent_node(node.id());
-    if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
-        return false;
-    }
+    // TODO:
+    // if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
+    //     return false;
+    // }
 
     let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) else {
         return false;

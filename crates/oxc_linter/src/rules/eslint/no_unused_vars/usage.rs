@@ -410,8 +410,8 @@ impl<'a> Symbol<'_, 'a> {
                 // references used in declaration of another variable are definitely
                 // used by others
                 AstKind::VariableDeclarator(_)
-                | AstKind::JSXExpressionContainer(_)
-                | AstKind::Argument(_) => {
+                | AstKind::JSXExpressionContainer(_) => {
+                // TODO: | AstKind::Argument(_) => {
                     // definitely used, short-circuit
                     return false;
                 }
