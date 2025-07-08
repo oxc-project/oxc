@@ -101,23 +101,24 @@ impl Rule for PreferRegexpTest {
                 }
             }
 
-            AstKind::Argument(_) => {
-                let Some(parent) = outermost_paren_parent(parent, ctx) else {
-                    return;
-                };
+            // TODO:
+            // AstKind::Argument(_) => {
+            //     let Some(parent) = outermost_paren_parent(parent, ctx) else {
+            //         return;
+            //     };
 
-                let AstKind::CallExpression(call_expr) = parent.kind() else {
-                    return;
-                };
+            //     let AstKind::CallExpression(call_expr) = parent.kind() else {
+            //         return;
+            //     };
 
-                let Expression::Identifier(ident) = &call_expr.callee else {
-                    return;
-                };
+            //     let Expression::Identifier(ident) = &call_expr.callee else {
+            //         return;
+            //     };
 
-                if ident.name.as_str() != "Boolean" {
-                    return;
-                }
-            }
+            //     if ident.name.as_str() != "Boolean" {
+            //         return;
+            //     }
+            // }
             AstKind::WhileStatement(_)
             | AstKind::DoWhileStatement(_)
             | AstKind::IfStatement(_)

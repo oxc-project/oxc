@@ -302,7 +302,6 @@ impl AstKind<'_> {
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
-            Self::Argument(_) => "Argument".into(),
             Self::SimpleAssignmentTarget(a) => {
                 format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
                     .into()

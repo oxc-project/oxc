@@ -159,7 +159,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
             // foo.every(nativeFoo || function foo() { ... })
             AstKind::LogicalExpression(_)
             | AstKind::ConditionalExpression(_)
-            | AstKind::Argument(_)
+            // TODO: | AstKind::Argument(_)
             | AstKind::ParenthesizedExpression(_)
             | AstKind::ChainExpression(_) => {
                 current_node = parent;
@@ -188,41 +188,42 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                 return None;
             }
 
-            AstKind::CallExpression(call) => {
-                let AstKind::Argument(current_node_arg) = current_node.kind() else {
-                    return None;
-                };
+            // TODO:
+            // AstKind::CallExpression(call) => {
+            //     let AstKind::Argument(current_node_arg) = current_node.kind() else {
+            //         return None;
+            //     };
 
-                let callee = call.callee.get_inner_expression();
-                let callee = if let Some(member) = callee.as_member_expression() {
-                    member
-                } else if let Expression::ChainExpression(chain) = callee {
-                    chain.expression.as_member_expression()?
-                } else {
-                    return None;
-                };
+            //     let callee = call.callee.get_inner_expression();
+            //     let callee = if let Some(member) = callee.as_member_expression() {
+            //         member
+            //     } else if let Expression::ChainExpression(chain) = callee {
+            //         chain.expression.as_member_expression()?
+            //     } else {
+            //         return None;
+            //     };
 
-                // Array.from
-                if callee.is_specific_member_access("Array", "from") {
-                    // Check that current node is parent's second argument
-                    if call.arguments.len() == 2 && is_nth_argument(call, current_node_arg, 1) {
-                        return Some("from");
-                    }
-                }
+            //     // Array.from
+            //     if callee.is_specific_member_access("Array", "from") {
+            //         // Check that current node is parent's second argument
+            //         if call.arguments.len() == 2 && is_nth_argument(call, current_node_arg, 1) {
+            //             return Some("from");
+            //         }
+            //     }
 
-                // "methods",
-                let array_method = callee.static_property_name()?;
+            //     // "methods",
+            //     let array_method = callee.static_property_name()?;
 
-                if TARGET_METHODS.contains(&array_method)
-                    // Check that current node is parent's first argument
-                    && call.arguments.len() == 1
-                    && is_nth_argument(call, current_node_arg, 0)
-                {
-                    return Some(array_method);
-                }
+            //     if TARGET_METHODS.contains(&array_method)
+            //         // Check that current node is parent's first argument
+            //         && call.arguments.len() == 1
+            //         && is_nth_argument(call, current_node_arg, 0)
+            //     {
+            //         return Some(array_method);
+            //     }
 
-                return None;
-            }
+            //     return None;
+            // }
 
             _ => return None,
         }
