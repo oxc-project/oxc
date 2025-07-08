@@ -8,6 +8,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use ignore::overrides::Override;
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
 use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
@@ -44,6 +45,8 @@ pub struct Runtime<'l> {
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 
     allocator_pool: AllocatorPool,
+
+    gitignore_overrides: FxHashMap<PathBuf, Override>,
 }
 
 /// Output of `Runtime::process_path`
@@ -180,6 +183,7 @@ impl<'l> Runtime<'l> {
     pub(super) fn new(
         linter: &'l Linter,
         allocator_pool: AllocatorPool,
+        gitignores: FxHashMap<PathBuf, Override>,
         options: LintServiceOptions,
     ) -> Self {
         let resolver = options.cross_module.then(|| {
@@ -191,6 +195,7 @@ impl<'l> Runtime<'l> {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
+            gitignore_overrides: gitignores,
             file_system: Box::new(OsFileSystem),
         }
     }
@@ -259,6 +264,24 @@ impl<'l> Runtime<'l> {
         })
     }
 
+    fn get_nearest_ignore(&self, path: &Path) -> Option<&Override> {
+        // TODO(perf): should we cache the computed nearest config for every directory,
+        // so we don't have to recompute it for every file?
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if let Some(config) = self.gitignore_overrides.get(dir) {
+                return Some(config);
+            }
+            current = dir.parent();
+        }
+        None
+    }
+
+    fn should_ignore_path(&self, path: &OsStr) -> bool {
+        let path = &Path::new(path);
+        !self.get_nearest_ignore(path).is_none_or(|ignore| ignore.matched(path, false).is_ignore())
+    }
+
     /// Prepare entry modules for linting.
     ///
     /// `on_module_to_lint` is called for each entry modules in `self.paths` when it's ready for linting,
@@ -272,6 +295,9 @@ impl<'l> Runtime<'l> {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
+                if self.should_ignore_path(path) {
+                    return;
+                }
                 let output = self.process_path(path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
@@ -363,6 +389,10 @@ impl<'l> Runtime<'l> {
             while pending_module_count < group_size && group_start < me.paths.len() {
                 let path = &me.paths[group_start];
                 group_start += 1;
+
+                if self.should_ignore_path(path) {
+                    continue;
+                }
 
                 // Check if this module to be linted is already processed as a dependency in former groups
                 if encountered_paths.insert(Arc::clone(path)) {

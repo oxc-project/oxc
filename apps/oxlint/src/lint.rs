@@ -119,6 +119,7 @@ impl Runner for LintRunner {
                 }
             }
 
+            // ToDo: remove the builder when nested ignores are supported
             let builder = builder.build().unwrap();
 
             // The ignore crate whitelists explicit paths, but priority
@@ -303,7 +304,8 @@ impl Runner for LintRunner {
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, allocator_pool, options);
+            let mut lint_service =
+                LintService::new(&linter, allocator_pool, FxHashMap::default(), options);
             lint_service.run(&tx_error);
         });
 

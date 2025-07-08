@@ -1,3 +1,5 @@
+use ignore::overrides::Override;
+use rustc_hash::FxHashMap;
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
@@ -73,9 +75,10 @@ impl<'l> LintService<'l> {
     pub fn new(
         linter: &'l Linter,
         allocator_pool: oxc_allocator::AllocatorPool,
+        gitignores: FxHashMap<PathBuf, Override>,
         options: LintServiceOptions,
     ) -> Self {
-        let runtime = Runtime::new(linter, allocator_pool, options);
+        let runtime = Runtime::new(linter, allocator_pool, gitignores, options);
         Self { runtime }
     }
 
