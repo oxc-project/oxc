@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2025-07-08
+
+### 🚜 Refactor
+
+- e8e2a25 ast: Remove `AstKind` for `AssignmentTargetPattern` (#12105) (camchenry)
+- 54cf5cb semantic: Remove Option from parent_* methods (#12087) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 2bf1d7e semantic: Implement `FusedIterator` for `AstNodeParentIter` (#12094) (overlookmotel)
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 🚀 Features

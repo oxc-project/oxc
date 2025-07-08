@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2025-07-08
+
+### 💥 BREAKING CHANGES
+
+- 1108a5c allocator: [**BREAKING**] Remove `DerefMut` impl from `AllocatorGuard` (#12077) (overlookmotel)
+
+### 📚 Documentation
+
+- 9cf5552 allocator: Improve doc comments for `AllocatorPool` (#12076) (overlookmotel)
+
+### ⚡ Performance
+
+- d732e85 allocator: `Allocator::from_raw_parts` get offset of chunk footer field as const (#12080) (overlookmotel)
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 📚 Documentation
