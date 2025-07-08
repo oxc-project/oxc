@@ -42,3 +42,4 @@ napi-build = { workspace = true }
 
 [features]
 default = []
+force_test_reporter = ["oxlint/force_test_reporter"]

@@ -172,7 +172,11 @@ impl Runner for LintRunner {
         let paths = walker.paths();
         let number_of_files = paths.len();
 
-        let handler = GraphicalReportHandler::new();
+        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
+            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+        } else {
+            GraphicalReportHandler::new()
+        };
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
