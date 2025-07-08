@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2025-07-08
+
+### 🚀 Features
+
+- 395aa5e napi/minify: Return parse errors (#12112) (Boshen)
+
+
 
 
 ## [0.74.0] - 2025-06-23

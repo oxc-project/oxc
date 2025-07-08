@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2025-07-08
+
+### 🐛 Bug Fixes
+
+- a490e00 napi/parser: Lazy visit: correct error messages (#12109) (overlookmotel)
+
+### 🚜 Refactor
+
+- c5e8d90 napi/parser: Lazy deser: `constructors.js` export static object (#12090) (overlookmotel)
+- fe35285 napi/parser: Lazy deser: remove `construct` function (#12089) (overlookmotel)
+- 9ae0815 napi/parser: Move files (#12088) (overlookmotel)
+
+
+## [0.76.0] - 2025-07-08
+
+### 🐛 Bug Fixes
+
+- a490e00 napi/parser: Lazy visit: correct error messages (#12109) (overlookmotel)
+
+### 🚜 Refactor
+
+- c5e8d90 napi/parser: Lazy deser: `constructors.js` export static object (#12090) (overlookmotel)
+- fe35285 napi/parser: Lazy deser: remove `construct` function (#12089) (overlookmotel)
+- 9ae0815 napi/parser: Move files (#12088) (overlookmotel)
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 🐛 Bug Fixes

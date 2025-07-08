@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.76.0] - 2025-07-08
+
+### 💥 BREAKING CHANGES
+
+- 8b30a5b codegen: [**BREAKING**] Introduce `CommentOptions` (#12114) (Boshen)
+
+### 🚀 Features
+
+- 35c6d48 minifier: Implement `Number` known methods (#12078) (Ethan Wu)
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 🚀 Features
