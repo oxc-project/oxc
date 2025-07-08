@@ -5,6 +5,7 @@
   "browser": "browser.js",
   "scripts": {
     "build-dev": "napi build --platform",
+    "build-test": "pnpm run build",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "test": "tsc && vitest run --dir ./test"

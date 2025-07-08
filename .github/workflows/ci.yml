@@ -172,7 +172,7 @@ jobs:
         name: Run tests in workspace
         run: |
           rustup target add wasm32-wasip1-threads
-          pnpm run build
+          pnpm run build-test
           pnpm run test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build-dev": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src --no-dts-cache --esm",
+    "build-test": "pnpm run build-dev --release",
     "build": "pnpm run build-dev --release",
     "test": "vitest"
   },

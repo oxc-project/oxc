@@ -8,6 +8,7 @@
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' build-dev",
+    "build-test": "pnpm --workspace-concurrency=1 --filter './napi/*' build-test",
     "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test"
   },
   "devDependencies": {
