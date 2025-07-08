@@ -6,10 +6,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
-use oxc_ast::{
-    AstKind,
-    ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
-};
+use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -137,10 +134,7 @@ impl Rule for SortImports {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else {
-            return;
-        };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
+        let program = ctx.nodes().program().unwrap();
 
         let mut import_declarations = vec![];
 

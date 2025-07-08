@@ -214,11 +214,8 @@ impl Rule for NoEval {
                         return;
                     }
 
-                    let root = ctx.nodes().get_node(ctx.nodes().root().unwrap());
-                    let program = root.kind().as_program().unwrap();
-
                     let is_valid = if scope_flags.is_top() {
-                        program.source_type.is_script()
+                        ctx.nodes().program().unwrap().source_type.is_script()
                     } else {
                         let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
                         ast_util::is_default_this_binding(ctx, node, true)

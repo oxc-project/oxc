@@ -1,9 +1,6 @@
 use std::convert::From;
 
-use oxc_ast::{
-    AstKind,
-    ast::{Statement, TSModuleReference},
-};
+use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -113,10 +110,7 @@ impl Rule for First {
         let mut non_import_count = 0;
         let mut any_relative = false;
 
-        let Some(root) = ctx.nodes().root_node() else {
-            return;
-        };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
+        let program = ctx.nodes().program().unwrap();
 
         for statement in &program.body {
             match statement {

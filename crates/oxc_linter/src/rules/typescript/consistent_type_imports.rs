@@ -576,8 +576,7 @@ fn get_type_only_named_import<'a>(
     ctx: &LintContext<'a>,
     source: &str,
 ) -> Option<&'a ImportDeclaration<'a>> {
-    let root = ctx.nodes().root_node()?;
-    let program = root.kind().as_program()?;
+    let program = ctx.nodes().program().unwrap();
 
     for stmt in &program.body {
         let Statement::ImportDeclaration(import_decl) = stmt else {

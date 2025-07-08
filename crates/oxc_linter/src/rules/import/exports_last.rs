@@ -1,8 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::{
-    AstKind,
-    ast::{ModuleDeclaration, Statement},
-};
+use oxc_ast::ast::{ModuleDeclaration, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -54,19 +51,15 @@ declare_oxc_lint!(
 impl Rule for ExportsLast {
     fn run_once(&self, ctx: &LintContext<'_>) {
         // find last non export declaration index
-        let Some(root) = ctx.nodes().root_node() else {
-            return;
-        };
-        if let AstKind::Program(program) = root.kind() {
-            let body = &program.body;
-            let find_res =
-                body.iter().rev().find_position(|statement| !is_exports_declaration(statement));
-            if let Some((index, _)) = find_res {
-                let end = body.len() - index;
-                for statement in &body[0..end] {
-                    if is_exports_declaration(statement) {
-                        ctx.diagnostic(exports_last_diagnostic(statement.span()));
-                    }
+        let program = ctx.nodes().program().unwrap();
+        let body = &program.body;
+        let find_res =
+            body.iter().rev().find_position(|statement| !is_exports_declaration(statement));
+        if let Some((index, _)) = find_res {
+            let end = body.len() - index;
+            for statement in &body[0..end] {
+                if is_exports_declaration(statement) {
+                    ctx.diagnostic(exports_last_diagnostic(statement.span()));
                 }
             }
         }
