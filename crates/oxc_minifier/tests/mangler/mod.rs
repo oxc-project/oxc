@@ -53,6 +53,13 @@ fn mangler() {
         "function _() { { var x; let y; } }", // x and y should have different names
         "function _() { let a; { let b; { let c; { let d; var x; } } } }",
         "function _() { let a; { let b; { let c; { console.log(a); let d; var x; } } } }",
+        "function _() {
+          if (bar) var a = 0;
+          else {
+            let b = 0;
+            var a = 1;
+          }
+        }", // a and b should have different names
     ];
     let top_level_cases = [
         "function foo(a) {a}",
