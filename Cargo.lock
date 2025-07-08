@@ -1961,6 +1961,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tokio",
 ]
 
 [[package]]

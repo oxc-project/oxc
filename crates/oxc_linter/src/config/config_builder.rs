@@ -1,9 +1,10 @@
 use std::{
     fmt::{self, Debug, Display},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use itertools::Itertools;
+use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::FxHashMap;
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -88,7 +89,7 @@ impl ConfigStoreBuilder {
     pub fn from_oxlintrc(
         start_empty: bool,
         oxlintrc: Oxlintrc,
-        _external_linter: Option<&ExternalLinter>,
+        external_linter: Option<&ExternalLinter>,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
@@ -138,9 +139,14 @@ impl ConfigStoreBuilder {
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
         if let Some(plugins) = oxlintrc.plugins.as_ref() {
-            #[expect(clippy::never_loop)]
+            let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
             for plugin_name in &plugins.external {
-                return Err(ConfigBuilderError::UnknownPlugin(plugin_name.clone()));
+                Self::load_external_plugin(
+                    &oxlintrc.path,
+                    plugin_name,
+                    external_linter,
+                    &resolver,
+                )?;
             }
         }
         let plugins = oxlintrc.plugins.unwrap_or_default();
@@ -378,6 +384,53 @@ impl ConfigStoreBuilder {
         oxlintrc.rules = OxlintRules::new(new_rules);
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
+
+    #[cfg(not(feature = "oxlint2"))]
+    fn load_external_plugin(
+        _oxlintrc_path: &Path,
+        _plugin_name: &str,
+        _external_linter: Option<&ExternalLinter>,
+        _resolver: &Resolver,
+    ) -> Result<(), ConfigBuilderError> {
+        Err(ConfigBuilderError::NoExternalLinterConfigured)
+    }
+
+    #[cfg(feature = "oxlint2")]
+    fn load_external_plugin(
+        oxlintrc_path: &Path,
+        plugin_name: &str,
+        external_linter: Option<&ExternalLinter>,
+        resolver: &Resolver,
+    ) -> Result<(), ConfigBuilderError> {
+        use crate::PluginLoadResult;
+        let Some(linter) = external_linter else {
+            return Err(ConfigBuilderError::NoExternalLinterConfigured);
+        };
+        let resolved =
+            resolver.resolve(oxlintrc_path.parent().unwrap(), plugin_name).map_err(|e| {
+                ConfigBuilderError::PluginLoadFailed {
+                    plugin_name: plugin_name.into(),
+                    error: e.to_string(),
+                }
+            })?;
+
+        let result = tokio::task::block_in_place(move || {
+            tokio::runtime::Handle::current()
+                .block_on((linter.load_plugin)(resolved.full_path().to_str().unwrap().to_string()))
+        })
+        .map_err(|e| ConfigBuilderError::PluginLoadFailed {
+            plugin_name: plugin_name.into(),
+            error: e.to_string(),
+        })?;
+
+        match result {
+            PluginLoadResult::Success => Ok(()),
+            PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
+                plugin_name: plugin_name.into(),
+                error: e,
+            }),
+        }
+    }
 }
 
 fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
@@ -418,7 +471,11 @@ pub enum ConfigBuilderError {
         file: String,
         reason: String,
     },
-    UnknownPlugin(String),
+    PluginLoadFailed {
+        plugin_name: String,
+        error: String,
+    },
+    NoExternalLinterConfigured,
 }
 
 impl Display for ConfigBuilderError {
@@ -438,8 +495,13 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::InvalidConfigFile { file, reason } => {
                 write!(f, "invalid config file {file}: {reason}")
             }
-            ConfigBuilderError::UnknownPlugin(plugin_name) => {
-                write!(f, "unknown plugin: {plugin_name}")
+            ConfigBuilderError::PluginLoadFailed { plugin_name, error } => {
+                write!(f, "Failed to load external plugin: {plugin_name}\n  {error}")?;
+                Ok(())
+            }
+            ConfigBuilderError::NoExternalLinterConfigured => {
+                f.write_str("Failed to load external plugin because no external linter was configured. This means the Oxlint binary was executed directly rather than via napi bindings.")?;
+                Ok(())
             }
         }
     }

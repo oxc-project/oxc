@@ -4,3 +4,16 @@ exports[`cli options for bundling > should lint a directory 1`] = `
 "Found 0 warnings and 0 errors.
 Finished in Xms on 0 files with 1 rules using X threads."
 `;
+
+exports[`cli options for bundling > should load a custom plugin 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`cli options for bundling > should report an error if a custom plugin cannot be loaded 1`] = `
+"Failed to parse configuration file.
+
+  x Failed to load external plugin: ./test_plugin
+  |   Cannot find module './test_plugin'
+"
+`;

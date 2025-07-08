@@ -27,4 +27,22 @@ describe('cli options for bundling', () => {
     expect(exitCode).toBe(0);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('should load a custom plugin', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/basic_custom_plugin',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should report an error if a custom plugin cannot be loaded', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/missing_custom_plugin',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });
