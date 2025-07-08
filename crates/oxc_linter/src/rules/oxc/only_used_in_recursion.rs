@@ -275,26 +275,27 @@ fn is_argument_only_used_in_recursion<'a>(
     let function_symbol_id = function_id.symbol_id();
 
     for reference in references {
-        let AstKind::Argument(argument) = ctx.nodes().parent_kind(reference.node_id()) else {
-            return false;
-        };
-        let AstKind::CallExpression(call_expr) =
-            ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).id())
-        else {
-            return false;
-        };
+        // TODO:
+        // let AstKind::Argument(argument) = ctx.nodes().parent_kind(reference.node_id()) else {
+        //     return false;
+        // };
+        // let AstKind::CallExpression(call_expr) =
+        //     ctx.nodes().parent_kind(ctx.nodes().parent_node(reference.node_id()).id())
+        // else {
+        //     return false;
+        // };
 
-        let Some(call_arg) = call_expr.arguments.get(arg_index) else {
-            return false;
-        };
+        // let Some(call_arg) = call_expr.arguments.get(arg_index) else {
+        //     return false;
+        // };
 
-        if argument.span() != call_arg.span() {
-            return false;
-        }
+        // if argument.span() != call_arg.span() {
+        //     return false;
+        // }
 
-        if !is_recursive_call(call_expr, function_symbol_id, ctx) {
-            return false;
-        }
+        // if !is_recursive_call(call_expr, function_symbol_id, ctx) {
+        //     return false;
+        // }
     }
 
     true

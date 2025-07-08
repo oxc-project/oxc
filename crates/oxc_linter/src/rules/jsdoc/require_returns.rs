@@ -287,9 +287,10 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                                 }
                             }
                             // `foo(resolve)`
-                            AstKind::Argument(_) => {
-                                return Some(true);
-                            }
+                            // TODO:
+                            // AstKind::Argument(_) => {
+                            //     return Some(true);
+                            // }
                             _ => {}
                         }
                     }

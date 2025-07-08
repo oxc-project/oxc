@@ -124,7 +124,8 @@ impl Rule for NoCallbackInPromise {
 impl NoCallbackInPromise {
     fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-            || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
+        // TODO: Fix argument handling
+            // || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
         {
             return false;
         }

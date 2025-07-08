@@ -520,7 +520,8 @@ fn get_parent_node<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let parent = outermost_paren_parent(node, ctx)?;
     match parent.kind() {
-        AstKind::Argument(_) => outermost_paren_parent(parent, ctx),
+        // TODO:
+        // AstKind::Argument(_) => outermost_paren_parent(parent, ctx),
         _ => Some(parent),
     }
 }

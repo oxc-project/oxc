@@ -211,23 +211,24 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                 true
             }
             // foo(...[ ])
-            AstKind::Argument(_) => {
-                ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
-                    let replacer = if let Some(first) = array_expr.elements.first() {
-                        let mut span = first.span();
-                        if array_expr.elements.len() != 1 {
-                            let last = array_expr.elements.last().unwrap();
-                            span = Span::new(first.span().start, last.span().end);
-                        }
-                        ctx.source_range(span)
-                    } else {
-                        ""
-                    };
+            // TODO:
+            // AstKind::Argument(_) => {
+            //     ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
+            //         let replacer = if let Some(first) = array_expr.elements.first() {
+            //             let mut span = first.span();
+            //             if array_expr.elements.len() != 1 {
+            //                 let last = array_expr.elements.last().unwrap();
+            //                 span = Span::new(first.span().start, last.span().end);
+            //             }
+            //             ctx.source_range(span)
+            //         } else {
+            //             ""
+            //         };
 
-                    fixer.replace(spread_elem.span(), replacer)
-                });
-                true
-            }
+            //         fixer.replace(spread_elem.span(), replacer)
+            //     });
+            //     true
+            // }
             _ => false,
         },
         _ => {
@@ -309,14 +310,15 @@ fn check_useless_iterable_to_array<'a>(
 
     let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
-    let parent = if let AstKind::Argument(_) = parent.kind() {
-        let Some(parent) = outermost_paren_parent(parent, ctx) else {
-            return false;
-        };
-        parent
-    } else {
-        parent
-    };
+    // TODO: Fix argument handling
+    // let parent = if let AstKind::Argument(_) = parent.kind() {
+    //     let Some(parent) = outermost_paren_parent(parent, ctx) else {
+    //         return false;
+    //     };
+    //     parent
+    // } else {
+    //     parent
+    // };
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {

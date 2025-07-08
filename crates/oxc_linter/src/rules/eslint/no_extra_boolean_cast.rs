@@ -212,9 +212,9 @@ fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&
     ctx.nodes().ancestors(node.id()).find(|parent| {
         !matches!(
             parent.kind(),
-            AstKind::Argument(_)
-                | AstKind::ParenthesizedExpression(_)
-                | AstKind::ChainExpression(_)
+            /* TODO: AstKind::Argument(_)
+            | */
+            AstKind::ParenthesizedExpression(_) | AstKind::ChainExpression(_)
         )
     })
 }
