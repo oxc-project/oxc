@@ -2073,9 +2073,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSTypeQuery(_)
-            // Clear the reference flags that are set in AstKind::PropertySignature
-            | AstKind::PropertyKey(_) => {
+            AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
+                // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),

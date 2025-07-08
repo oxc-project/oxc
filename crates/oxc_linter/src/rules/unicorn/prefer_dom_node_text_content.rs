@@ -61,30 +61,19 @@ impl Rule for PreferDomNodeTextContent {
                     return;
                 }
 
-                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
-                let (Some(parent_node_kind), Some(mut grand_parent_node_kind)) =
-                    (ancestor_kinds.next(), ancestor_kinds.next())
-                else {
-                    return;
-                };
-                if matches!(
-                    grand_parent_node_kind,
-                    AstKind::BindingProperty(_) | AstKind::AssignmentTargetPropertyProperty(_)
-                ) {
-                    grand_parent_node_kind = match ancestor_kinds.next() {
-                        Some(kind) => kind,
-                        None => return,
-                    };
-                }
+                let parent_node = ctx.nodes().parent_node(node.id());
+                let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
 
-                if matches!(parent_node_kind, AstKind::PropertyKey(_))
-                    && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
-                        || matches!(
-                            grand_parent_node_kind,
-                            AstKind::ObjectAssignmentTarget(_)
-                                | AstKind::SimpleAssignmentTarget(_)
-                                | AstKind::AssignmentTarget(_)
-                        ))
+                if matches!(
+                    parent_node.kind(),
+                    AstKind::BindingProperty(_) | AstKind::AssignmentTargetPropertyProperty(_)
+                ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
+                    || matches!(
+                        grand_parent_node.kind(),
+                        AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::SimpleAssignmentTarget(_)
+                            | AstKind::AssignmentTarget(_)
+                    ))
                 {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
                 }

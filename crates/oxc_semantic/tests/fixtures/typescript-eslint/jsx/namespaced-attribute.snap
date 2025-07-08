@@ -28,7 +28,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
                 "flags": "ReferenceFlags(Read)",
                 "id": 3,
                 "name": "props",
-                "node_id": 50
+                "node_id": 49
               }
             ]
           }
@@ -70,7 +70,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "FooProps",
-            "node_id": 42
+            "node_id": 41
           }
         ]
       },

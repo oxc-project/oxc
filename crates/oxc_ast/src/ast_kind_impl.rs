@@ -123,6 +123,18 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    pub fn is_property_key(&self) -> bool {
+        self.as_property_key_kind().is_some()
+    }
+
+    pub fn as_property_key_kind(&self) -> Option<PropertyKeyKind<'a>> {
+        match self {
+            Self::IdentifierName(ident) => Some(PropertyKeyKind::Static(ident)),
+            Self::PrivateIdentifier(ident) => Some(PropertyKeyKind::Private(ident)),
+            _ => None,
+        }
+    }
+
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -291,7 +303,6 @@ impl AstKind<'_> {
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
-            Self::PropertyKey(p) => format!("PropertyKey({})", p.name().unwrap_or(COMPUTED)).into(),
             Self::Argument(_) => "Argument".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
@@ -556,6 +567,22 @@ impl GetSpan for ModuleDeclarationKind<'_> {
             Self::ExportDefault(decl) => decl.span,
             Self::TSExportAssignment(decl) => decl.span,
             Self::TSNamespaceExport(decl) => decl.span,
+        }
+    }
+}
+
+pub enum PropertyKeyKind<'a> {
+    /// A static identifier property key, like `a` in `{ a: 1 }`.
+    Static(&'a IdentifierName<'a>),
+    /// A private identifier property key, like `#a` in `class C { #a = 1 }`.
+    Private(&'a PrivateIdentifier<'a>),
+}
+
+impl GetSpan for PropertyKeyKind<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Static(ident) => ident.span,
+            Self::Private(ident) => ident.span,
         }
     }
 }

@@ -1531,14 +1531,12 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_property_key<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut PropertyKey<'a>) {
-        let kind = AstType::PropertyKey;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
             match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression_mut()),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

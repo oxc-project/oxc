@@ -422,7 +422,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, PropertyKey<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::PropertyKey(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             PropertyKey::StaticIdentifier(inner) => allocator
                 .alloc(AstNode::<IdentifierName> {

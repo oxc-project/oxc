@@ -297,7 +297,8 @@ impl IdLength {
                     return;
                 }
             }
-            AstKind::PropertyKey(property_key) => {
+            property_key if property_key.is_property_key() => {
+                let property_key = property_key.as_property_key_kind().unwrap();
                 if self.properties == PropertyKind::Never {
                     return;
                 }
@@ -313,7 +314,7 @@ impl IdLength {
                         let binding_property_option = object_pattern
                             .properties
                             .iter()
-                            .find(|x| x.key.content_eq(property_key));
+                            .find(|x| x.key.span().contains_inclusive(property_key.span()));
 
                         if IdLength::is_binding_identifier_or_object_pattern(
                             binding_property_option,
@@ -326,6 +327,35 @@ impl IdLength {
                         return;
                     }
                     _ => {}
+                }
+            }
+            AstKind::BindingProperty(binding_prop) => {
+                if self.properties == PropertyKind::Never {
+                    return;
+                }
+                // If this node is the original identifier in a binding property, we can skip it
+                //
+                // let {a: foo} = bar;
+                //      ^
+                if IdLength::is_binding_identifier_or_object_pattern(Some(binding_prop)) {
+                    return;
+                }
+            }
+            AstKind::ObjectProperty(_) => {
+                if self.properties == PropertyKind::Never {
+                    return;
+                }
+            }
+            AstKind::AssignmentTargetPropertyProperty(assignment_target) => {
+                if self.properties == PropertyKind::Never {
+                    return;
+                }
+                // Skip node when it is the original identifier in an assignment target property
+                //
+                // ({x: a}) = {};
+                //   ^
+                if assignment_target.name.span() == ident.span {
+                    return;
                 }
             }
             _ => {}

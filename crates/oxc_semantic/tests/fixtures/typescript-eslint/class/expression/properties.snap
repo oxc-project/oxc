@@ -27,7 +27,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
-            "node_id": 17
+            "node_id": 15
           }
         ]
       },

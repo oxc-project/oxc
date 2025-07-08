@@ -320,8 +320,20 @@ fn is_default_value(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::AssignmentTargetWithDefault(_) | AstKind::AssignmentPattern(_))
 }
 
-fn is_class_field_initial_value(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::PropertyDefinition(_))
+fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKind<'_>) -> bool {
+    let Some(prop_def) = parent_kind.as_property_definition() else {
+        return false;
+    };
+    // Allow this (literal is part of key):
+    //
+    // class C { 2; }
+    //           ^
+    //
+    // But do not allow this (literal is part of value):
+    //
+    // class C { x = 2 }
+    //               ^
+    prop_def.key.span() != current_kind.span()
 }
 
 fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
@@ -444,7 +456,9 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_class_field_initial_values && is_class_field_initial_value(&parent_kind) {
+        if self.ignore_class_field_initial_values
+            && is_class_field_initial_value(&config.node.kind(), &parent_kind)
+        {
             return true;
         }
 

@@ -49,7 +49,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "StyledPaymentProps",
-            "node_id": 29
+            "node_id": 28
           }
         ]
       },
@@ -63,7 +63,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "div",
-            "node_id": 26
+            "node_id": 25
           }
         ]
       },

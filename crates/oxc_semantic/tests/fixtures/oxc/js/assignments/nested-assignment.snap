@@ -25,19 +25,19 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/nested-assignm
             "flags": "ReferenceFlags(Write)",
             "id": 1,
             "name": "y",
-            "node_id": 23
+            "node_id": 22
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "y",
-            "node_id": 39
+            "node_id": 37
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "y",
-            "node_id": 48
+            "node_id": 46
           }
         ]
       }

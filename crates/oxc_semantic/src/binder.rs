@@ -5,6 +5,7 @@ use std::ptr;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -192,6 +193,13 @@ impl<'a> Binder<'a> for Function<'a> {
 
         // Bind scope flags: GetAccessor | SetAccessor
         if let AstKind::ObjectProperty(prop) = builder.nodes.parent_kind(builder.current_node_id) {
+            // Do not bind scope flags when function is inside of the object property key:
+            //
+            // { set [function() {}](val) {} }
+            //        ^^^^^^^^^^^^^
+            if prop.key.span() == self.span {
+                return;
+            }
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
