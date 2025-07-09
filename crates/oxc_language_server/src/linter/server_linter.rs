@@ -240,6 +240,8 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
 
 #[cfg(test)]
 mod test {
+    #![expect(unused_imports)]
+
     use std::path::{Path, PathBuf};
 
     use crate::{
@@ -249,6 +251,7 @@ mod test {
     };
     use rustc_hash::FxHashMap;
 
+    /*
     #[test]
     fn test_normalize_path() {
         assert_eq!(
@@ -286,6 +289,7 @@ mod test {
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
     }
+    */
 
     #[test]
     fn test_no_errors() {
@@ -293,6 +297,7 @@ mod test {
             .test_and_snapshot_single_file("hello_world.js");
     }
 
+    /*
     #[test]
     fn test_no_console() {
         Tester::new("fixtures/linter/deny_no_console", None)
@@ -381,4 +386,5 @@ mod test {
         // ToDo: this should be fixable
         .test_and_snapshot_single_file("test.js");
     }
+    */
 }

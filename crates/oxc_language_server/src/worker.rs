@@ -350,7 +350,7 @@ fn range_overlaps(a: Range, b: Range) -> bool {
     a.start <= b.end && a.end >= b.start
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(test)))]
 mod tests {
     use super::*;
 

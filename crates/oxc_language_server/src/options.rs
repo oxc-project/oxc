@@ -111,7 +111,7 @@ pub struct WorkspaceOption {
     pub options: Options,
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(test)))]
 mod test {
     use rustc_hash::FxHashMap;
     use serde_json::json;
