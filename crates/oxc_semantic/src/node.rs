@@ -3,7 +3,7 @@ use std::iter::FusedIterator;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, ast::Program};
 use oxc_cfg::BlockNodeId;
-use oxc_index::IndexVec;
+use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
@@ -256,25 +256,25 @@ impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
 ///
 /// Yields `NodeId` of each AST node. The last node yielded is `Program`.
 #[derive(Debug, Clone)]
-pub struct AstNodeIdAncestorsIter<'s, 'a> {
+pub struct AstNodeIdAncestorsIter<'n> {
     next_node_id: Option<NodeId>,
-    nodes: &'s AstNodes<'a>,
+    parent_ids: &'n IndexSlice<NodeId, [NodeId]>,
 }
 
-impl<'s, 'a> AstNodeIdAncestorsIter<'s, 'a> {
-    fn new(node_id: NodeId, nodes: &'s AstNodes<'a>) -> Self {
-        Self { next_node_id: Some(node_id), nodes }
+impl<'n> AstNodeIdAncestorsIter<'n> {
+    fn new(node_id: NodeId, nodes: &'n AstNodes<'_>) -> Self {
+        Self { next_node_id: Some(node_id), parent_ids: nodes.parent_ids.as_slice() }
     }
 }
 
-impl Iterator for AstNodeIdAncestorsIter<'_, '_> {
+impl Iterator for AstNodeIdAncestorsIter<'_> {
     type Item = NodeId;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(node_id) = self.next_node_id {
             // `Program`'s parent is itself, so next node is `None` if this node is `Program`
             self.next_node_id =
-                if node_id == NodeId::ROOT { None } else { Some(self.nodes.parent_ids[node_id]) };
+                if node_id == NodeId::ROOT { None } else { Some(self.parent_ids[node_id]) };
             Some(node_id)
         } else {
             None
@@ -282,4 +282,4 @@ impl Iterator for AstNodeIdAncestorsIter<'_, '_> {
     }
 }
 
-impl FusedIterator for AstNodeIdAncestorsIter<'_, '_> {}
+impl FusedIterator for AstNodeIdAncestorsIter<'_> {}
