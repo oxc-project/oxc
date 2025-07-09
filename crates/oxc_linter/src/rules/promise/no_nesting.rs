@@ -71,7 +71,7 @@ declare_oxc_lint!(
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-       // TODO: || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
+    // TODO: || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
     {
         return false;
     }
