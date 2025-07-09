@@ -257,11 +257,8 @@ impl Runner for LintRunner {
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
-        let use_cross_module = if nested_configs.is_empty() {
-            config_builder.plugins().has_import()
-        } else {
-            nested_configs.values().any(|config| config.plugins().has_import())
-        };
+        let use_cross_module = config_builder.plugins().has_import()
+            || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
