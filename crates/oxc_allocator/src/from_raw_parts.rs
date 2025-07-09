@@ -1,4 +1,9 @@
-//! Define additional [`Allocator::from_raw_parts`] method, used only by raw transfer.
+//! Define additional methods, used only by raw transfer:
+//!
+//! * [`Allocator::from_raw_parts`]
+//! * [`Allocator::alloc_bytes_start`]
+//! * [`Allocator::data_ptr`]
+//! * [`Allocator::set_data_ptr`]
 
 use std::{
     alloc::Layout,
@@ -8,6 +13,8 @@ use std::{
 };
 
 use bumpalo::Bump;
+
+use oxc_data_structures::pointer_ext::PointerExt;
 
 use crate::Allocator;
 
@@ -116,6 +123,164 @@ impl Allocator {
         current_chunk_footer_field.set(chunk_footer_ptr);
 
         Self::from_bump(bump)
+    }
+
+    /// Allocate space for `bytes` bytes at start of [`Allocator`]'s current chunk.
+    ///
+    /// Returns a pointer to the start of an uninitialized section of `bytes` bytes.
+    ///
+    /// Note: [`alloc_layout`] allocates at *end* of the current chunk, because `bumpalo` bumps downwards,
+    /// hence the need for this method, to allocate at *start* of current chunk.
+    ///
+    /// This method is dangerous, and should not ordinarily be used.
+    ///
+    /// This method moves the pointer to start of the current chunk forwards, so it no longer correctly
+    /// describes the start of the allocation obtained from system allocator.
+    ///
+    /// The `Allocator` **must not be allowed to be dropped** or it would be UB.
+    /// Only use this method if you prevent that possibililty. e.g.:
+    ///
+    /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
+    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and taking care of deallocating it manually
+    ///    with the correct pointer.
+    ///
+    /// # Panics
+    ///
+    /// Panics if insufficient capacity for `bytes`
+    /// (after rounding up to nearest multiple of [`RAW_MIN_ALIGN`]).
+    ///
+    /// # SAFETY
+    ///
+    /// `Allocator` must not be dropped after calling this method (see above).
+    ///
+    /// [`alloc_layout`]: Self::alloc_layout
+    /// [`set_data_ptr`]: Self::set_data_ptr
+    /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
+    pub unsafe fn alloc_bytes_start(&self, bytes: usize) -> NonNull<u8> {
+        // Round up number of bytes to reserve to multiple of `MIN_ALIGN`,
+        // so data pointer remains aligned on `MIN_ALIGN`
+        let alloc_bytes = (bytes + MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
+
+        let data_ptr = self.data_ptr();
+        let cursor_ptr = self.cursor_ptr();
+        // SAFETY: Cursor pointer is always `>=` data pointer.
+        // Both pointers are within same allocation, and derived from the same original pointer.
+        let free_capacity = unsafe { cursor_ptr.offset_from_usize(data_ptr) };
+
+        // Check sufficient capacity to write `alloc_bytes` bytes, without overwriting data already
+        // stored in allocator.
+        // Could use `>=` here and it would be sufficient capacity, but use `>` instead so this assertion
+        // fails if current chunk is the empty chunk and `bytes` is 0.
+        assert!(free_capacity > alloc_bytes);
+
+        // Calculate new data pointer.
+        // SAFETY: We checked above that distance between data pointer and cursor is `>= alloc_bytes`,
+        // so moving data pointer forwards by `alloc_bytes` cannot place it after cursor pointer.
+        let new_data_ptr = unsafe { data_ptr.add(alloc_bytes) };
+
+        // Set new data pointer.
+        // SAFETY: `Allocator` must have at least 1 allocated chunk or check for sufficient capacity
+        // above would have failed.
+        // Data pointer is always aligned on `MIN_ALIGN`, and we rounded `alloc_bytes` up to a multiple
+        // of `MIN_ALIGN`, so that remains the case.
+        unsafe { self.set_data_ptr(new_data_ptr) };
+
+        // Return original data pointer
+        data_ptr
+    }
+
+    /// Get data pointer for this [`Allocator`]'s current chunk.
+    pub fn data_ptr(&self) -> NonNull<u8> {
+        // SAFETY: We don't take any action with the `Allocator` while the `&ChunkFooter`
+        // reference is alive
+        let chunk_footer = unsafe { self.chunk_footer() };
+        chunk_footer.data
+    }
+
+    /// Set data pointer for this [`Allocator`]'s current chunk.
+    ///
+    /// This is dangerous, and this method should not ordinarily be used.
+    /// It is only here for manually writing data to start of the allocator chunk,
+    /// and then adjusting the start pointer to after it.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * `ptr` must point to within the allocation underlying this allocator.
+    /// * `ptr` must be aligned on [`RAW_MIN_ALIGN`].
+    ///
+    /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
+    pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
+        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
+
+        // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
+        // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
+        // is alive, beyond setting the data pointer.
+        let chunk_footer = unsafe { self.chunk_footer_mut() };
+        chunk_footer.data = ptr;
+    }
+
+    /// Get cursor pointer for this [`Allocator`]'s current chunk.
+    fn cursor_ptr(&self) -> NonNull<u8> {
+        // SAFETY: We don't take any action with the `Allocator` while the `&ChunkFooter`
+        // reference is alive
+        let chunk_footer = unsafe { self.chunk_footer() };
+        chunk_footer.ptr.get()
+    }
+
+    /// Get reference to current [`ChunkFooter`].
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must not allocate into this `Allocator`, or perform any other action which would create
+    /// a `&mut ChunkFooter` reference, while the `&ChunkFooter` reference returned by this method is alive.
+    unsafe fn chunk_footer(&self) -> &ChunkFooter {
+        let chunk_footer_ptr = self.chunk_footer_ptr();
+        // SAFETY: Caller promises not to take any other action which would generate a mutable reference
+        // to the `ChunkFooter` while this reference is alive.
+        unsafe { chunk_footer_ptr.as_ref() }
+    }
+
+    /// Get mutable reference to current [`ChunkFooter`].
+    ///
+    /// It would be safer if this method took a `&mut self`, but that would preclude using this method
+    /// while any references to data in the arena exist, which is too restrictive.
+    /// So we just need to be careful how we use this method.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * Caller must not allocate into this `Allocator`, or perform any other action which would
+    ///   read or alter the `ChunkFooter`, or create another reference to it, while the `&mut ChunkFooter`
+    ///   reference returned by this method is alive.
+    #[expect(clippy::mut_from_ref)]
+    unsafe fn chunk_footer_mut(&self) -> &mut ChunkFooter {
+        let mut chunk_footer_ptr = self.chunk_footer_ptr();
+        // SAFETY: Caller guarantees `Allocator` has an allocated chunk, so this isn't `EmptyChunkFooter`,
+        // which it'd be UB to obtain a mutable reference to.
+        // Caller promises not to take any other action which would generate another reference to the
+        // `ChunkFooter` while this reference is alive.
+        unsafe { chunk_footer_ptr.as_mut() }
+    }
+
+    /// Get pointer to current chunk's [`ChunkFooter`].
+    fn chunk_footer_ptr(&self) -> NonNull<ChunkFooter> {
+        let current_chunk_footer_field_offset = get_current_chunk_footer_field_offset();
+
+        // Get pointer to current `ChunkFooter`.
+        // SAFETY: We've established the offset of the `current_chunk_footer` field above.
+        let current_chunk_footer_field = unsafe {
+            let bump = self.bump();
+            let field_ptr = ptr::from_ref(bump)
+                .cast::<Cell<NonNull<ChunkFooter>>>()
+                .add(current_chunk_footer_field_offset);
+            &*field_ptr
+        };
+        current_chunk_footer_field.get()
     }
 }
 
