@@ -34,7 +34,7 @@ const FOUR_GIB: usize = 1 << (IS_SUPPORTED_PLATFORM as usize * 32);
 const ALLOC_SIZE: usize = FOUR_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
 const CHUNK_SIZE: usize = TWO_GIB;
-const CHUNK_ALIGN: usize = FOUR_GIB;
+pub const CHUNK_ALIGN: usize = FOUR_GIB;
 
 const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
     Ok(layout) => layout,

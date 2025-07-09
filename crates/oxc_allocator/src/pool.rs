@@ -107,7 +107,10 @@ mod wrapper {
 
 #[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
 mod wrapper {
-    use crate::{Allocator, fixed_size::FixedSizeAllocator};
+    use crate::{
+        Allocator,
+        fixed_size::{CHUNK_ALIGN, FixedSizeAllocator},
+    };
 
     /// Structure which wraps an [`Allocator`] with fixed size of 2 GiB, and aligned on 4 GiB.
     ///
@@ -127,7 +130,19 @@ mod wrapper {
 
         /// Reset the [`Allocator`] in this [`AllocatorWrapper`].
         pub fn reset(&mut self) {
+            // Set cursor back to end
             self.0.reset();
+
+            // Set data pointer back to start.
+            // SAFETY: Fixed-size allocators have data pointer originally aligned on `CHUNK_ALIGN`,
+            // and size less than `CHUNK_ALIGN`. So we can restore original data pointer by rounding down
+            // to next multiple of `CHUNK_ALIGN`.
+            unsafe {
+                let data_ptr = self.0.data_ptr();
+                let offset = data_ptr.as_ptr() as usize % CHUNK_ALIGN;
+                let data_ptr = data_ptr.sub(offset);
+                self.0.set_data_ptr(data_ptr);
+            }
         }
 
         /// Create a `Vec` of [`AllocatorWrapper`]s.

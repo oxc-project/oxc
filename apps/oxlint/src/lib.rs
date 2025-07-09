@@ -14,6 +14,9 @@ pub use oxc_linter::{
     ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
 };
 
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+mod raw_fs;
+
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
