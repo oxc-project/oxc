@@ -149,6 +149,7 @@ impl GetterReturn {
     /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
         let parent = ctx.nodes().parent_node(node.id());
+        dbg!(parent);
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
                 if matches!(mdef.kind, MethodDefinitionKind::Get) {
@@ -165,9 +166,8 @@ impl GetterReturn {
 
                 let parent_2 = ctx.nodes().parent_node(parent.id());
                 let parent_3 = ctx.nodes().parent_node(parent_2.id());
-                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 // handle (X())
-                match parent_4.kind() {
+                match parent_3.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {
                             return true;
@@ -181,9 +181,9 @@ impl GetterReturn {
                     _ => {}
                 }
 
+                let parent_4 = ctx.nodes().parent_node(parent_3.id());
                 let parent_5 = ctx.nodes().parent_node(parent_4.id());
-                let parent_6 = ctx.nodes().parent_node(parent_5.id());
-                match parent_6.kind() {
+                match parent_5.kind() {
                     AstKind::ParenthesizedExpression(p) => {
                         if Self::handle_paren_expr(&p.expression) {
                             return true;
