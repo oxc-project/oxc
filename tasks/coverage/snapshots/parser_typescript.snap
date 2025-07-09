@@ -1,9 +1,9 @@
 commit: 81c95189
 
 parser_typescript Summary:
-AST Parsed     : 6693/6700 (99.90%)
-Positive Passed: 6682/6700 (99.73%)
-Negative Passed: 1418/5598 (25.33%)
+AST Parsed     : 6698/6700 (99.97%)
+Positive Passed: 6687/6700 (99.81%)
+Negative Passed: 1415/5597 (25.28%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -1577,6 +1577,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendNonCla
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendPrivateConstructorClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendsUntypedModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
 
@@ -6696,6 +6698,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleRes
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash5.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_withAugmentation.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsConditionalPackageExports.ts
@@ -8471,35 +8475,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
  24 │     const enum H {}
     ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts:3:5]
- 2 │ 
- 3 │ This file is not read.
-   ·     ▲
-   ╰────
-  help: Try insert a semicolon here
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot.ts:1:4]
- 1 │ not read
-   ·    ▲
-   ╰────
-  help: Try insert a semicolon here
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeScopedPackage.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeScopedPackage.ts:3:4]
- 2 │ 
- 3 │ not read
-   ·    ▲
-   ╰────
-  help: Try insert a semicolon here
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -8629,26 +8604,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
     · ────
  65 │     var y = _;
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts:4:5]
- 3 │ 
- 4 │ This file is not processed.
-   ·     ▲
-   ╰────
-  help: Try insert a semicolon here
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts:3:5]
- 2 │ 
- 3 │ This file is not processed.
-   ·     ▲
-   ╰────
-  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 
@@ -8901,19 +8856,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·              ─────────────
  5 │ }
    ╰────
-
-  × Invalid Character `؆`
-   ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:387]
- 1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
-   ·                                                                                                                                                                                                     ─
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:387]
- 1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
-   ·                                                                                                                                                                                                     ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Getters and setters must have an implementation.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
@@ -12276,14 +12218,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                              ───────
  5 │     baz() { }
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/extendsUntypedModule.ts:3:5]
- 2 │ 
- 3 │ This file is not read.
-   ·     ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/extension.ts:16:12]
@@ -25760,14 +25694,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·    ──           ───
  23 │ ; <Comp\u{0061} x={12} />
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_withAugmentation.ts:3:5]
- 2 │ 
- 3 │ This file is not processed.
-   ·     ▲
-   ╰────
-  help: Try insert a semicolon here
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
     ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:50:1]

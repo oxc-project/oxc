@@ -55,6 +55,8 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             "privateNamesIncompatibleModifiersJs.ts",
             // Exporting JSDoc types from `.js`
             "importingExportingTypes.ts",
+            // This is just a binary file
+            "TransportStream.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
