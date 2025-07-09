@@ -414,7 +414,7 @@ impl ConfigStoreBuilder {
 
         let resolved = resolver.resolve(oxlintrc_dir_path, plugin_name).map_err(|e| {
             ConfigBuilderError::PluginLoadFailed {
-                plugin_name: plugin_name.into(),
+                plugin_name: plugin_name.to_string(),
                 error: e.to_string(),
             }
         })?;
@@ -425,14 +425,14 @@ impl ConfigStoreBuilder {
             tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(plugin_path))
         })
         .map_err(|e| ConfigBuilderError::PluginLoadFailed {
-            plugin_name: plugin_name.into(),
+            plugin_name: plugin_name.to_string(),
             error: e.to_string(),
         })?;
 
         match result {
             PluginLoadResult::Success => Ok(()),
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
-                plugin_name: plugin_name.into(),
+                plugin_name: plugin_name.to_string(),
                 error: e,
             }),
         }
