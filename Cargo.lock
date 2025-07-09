@@ -1989,7 +1989,6 @@ dependencies = [
 name = "oxc_linter_napi"
 version = "0.1.0"
 dependencies = [
- "mimalloc-safe",
  "napi",
  "napi-build",
  "napi-derive",
