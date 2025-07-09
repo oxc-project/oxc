@@ -411,17 +411,18 @@ impl ConfigStoreBuilder {
         resolver: &Resolver,
     ) -> Result<(), ConfigBuilderError> {
         use crate::PluginLoadResult;
+
         let resolved = resolver.resolve(oxlintrc_dir_path, plugin_name).map_err(|e| {
             ConfigBuilderError::PluginLoadFailed {
                 plugin_name: plugin_name.into(),
                 error: e.to_string(),
             }
         })?;
+        // TODO: We should support paths which are not valid UTF-8. How?
+        let plugin_path = resolved.full_path().to_str().unwrap().to_string();
 
         let result = tokio::task::block_in_place(move || {
-            tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(
-                resolved.full_path().to_str().unwrap().to_string(),
-            ))
+            tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(plugin_path))
         })
         .map_err(|e| ConfigBuilderError::PluginLoadFailed {
             plugin_name: plugin_name.into(),
