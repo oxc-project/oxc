@@ -73,13 +73,13 @@ impl Drop for AllocatorGuard<'_> {
     }
 }
 
+#[cfg(any(not(feature = "fixed_size"), feature = "disable_fixed_size"))]
 mod wrapper {
     use crate::Allocator;
 
     /// Structure which wraps an [`Allocator`].
     ///
-    /// This implementation adds no value to `Allocator`, but we can add support for fixed-size allocators
-    /// by providing a different implementation of `AllocatorWrapper` behind a feature flag.
+    /// Default implementation which is just a wrapper around an [`Allocator`].
     pub struct AllocatorWrapper(Allocator);
 
     impl AllocatorWrapper {
@@ -101,6 +101,39 @@ mod wrapper {
         /// Create a `Vec` of [`AllocatorWrapper`]s.
         pub fn new_vec(size: usize) -> Vec<Self> {
             std::iter::repeat_with(Self::new).take(size).collect()
+        }
+    }
+}
+
+#[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+mod wrapper {
+    use crate::{Allocator, fixed_size::FixedSizeAllocator};
+
+    /// Structure which wraps an [`Allocator`] with fixed size of 2 GiB, and aligned on 4 GiB.
+    ///
+    /// See [`FixedSizeAllocator`] for more details.
+    pub struct AllocatorWrapper(FixedSizeAllocator);
+
+    impl AllocatorWrapper {
+        /// Create a new [`AllocatorWrapper`].
+        pub fn new() -> Self {
+            Self(FixedSizeAllocator::new())
+        }
+
+        /// Get reference to underlying [`Allocator`].
+        pub fn get(&self) -> &Allocator {
+            &self.0
+        }
+
+        /// Reset the [`Allocator`] in this [`AllocatorWrapper`].
+        pub fn reset(&mut self) {
+            self.0.reset();
+        }
+
+        /// Create a `Vec` of [`AllocatorWrapper`]s.
+        pub fn new_vec(size: usize) -> Vec<Self> {
+            // Each allocator consumes a large block of memory, so create them on demand instead of upfront
+            Vec::with_capacity(size)
         }
     }
 }
