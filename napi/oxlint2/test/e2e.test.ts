@@ -21,10 +21,17 @@ function normalizeOutput(output: string): string {
 }
 
 describe('cli options for bundling', () => {
-  it('should lint a directory', async () => {
-    const { stdout, exitCode } = await runOxlint('test/fixtures/basic');
+  it('should lint a directory without errors', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_no_errors');
 
     expect(exitCode).toBe(0);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should lint a directory with errors', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_errors');
+
+    expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
