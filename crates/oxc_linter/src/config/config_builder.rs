@@ -385,7 +385,7 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(not(feature = "oxlint2"))]
+    #[cfg(any(not(feature = "oxlint2"), feature = "disable_oxlint2"))]
     fn load_external_plugin(
         _oxlintrc_path: &Path,
         _plugin_name: &str,
@@ -395,7 +395,7 @@ impl ConfigStoreBuilder {
         Err(ConfigBuilderError::NoExternalLinterConfigured)
     }
 
-    #[cfg(feature = "oxlint2")]
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     fn load_external_plugin(
         oxlintrc_path: &Path,
         plugin_name: &str,
