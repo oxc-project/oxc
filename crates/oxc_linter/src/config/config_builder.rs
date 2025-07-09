@@ -140,10 +140,16 @@ impl ConfigStoreBuilder {
 
         if let Some(plugins) = oxlintrc.plugins.as_ref() {
             if !plugins.external.is_empty() {
+                let Some(external_linter) = external_linter else {
+                    return Err(ConfigBuilderError::NoExternalLinterConfigured);
+                };
                 let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let oxlintrc_dir_path = oxlintrc.path.parent().unwrap();
+
                 for plugin_name in &plugins.external {
                     Self::load_external_plugin(
-                        &oxlintrc.path,
+                        oxlintrc_dir_path,
                         plugin_name,
                         external_linter,
                         &resolver,
@@ -389,36 +395,33 @@ impl ConfigStoreBuilder {
 
     #[cfg(any(not(feature = "oxlint2"), feature = "disable_oxlint2"))]
     fn load_external_plugin(
-        _oxlintrc_path: &Path,
+        _oxlintrc_dir_path: &Path,
         _plugin_name: &str,
-        _external_linter: Option<&ExternalLinter>,
+        _external_linter: &ExternalLinter,
         _resolver: &Resolver,
     ) -> Result<(), ConfigBuilderError> {
-        Err(ConfigBuilderError::NoExternalLinterConfigured)
+        unreachable!()
     }
 
     #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     fn load_external_plugin(
-        oxlintrc_path: &Path,
+        oxlintrc_dir_path: &Path,
         plugin_name: &str,
-        external_linter: Option<&ExternalLinter>,
+        external_linter: &ExternalLinter,
         resolver: &Resolver,
     ) -> Result<(), ConfigBuilderError> {
         use crate::PluginLoadResult;
-        let Some(linter) = external_linter else {
-            return Err(ConfigBuilderError::NoExternalLinterConfigured);
-        };
-        let resolved =
-            resolver.resolve(oxlintrc_path.parent().unwrap(), plugin_name).map_err(|e| {
-                ConfigBuilderError::PluginLoadFailed {
-                    plugin_name: plugin_name.into(),
-                    error: e.to_string(),
-                }
-            })?;
+        let resolved = resolver.resolve(oxlintrc_dir_path, plugin_name).map_err(|e| {
+            ConfigBuilderError::PluginLoadFailed {
+                plugin_name: plugin_name.into(),
+                error: e.to_string(),
+            }
+        })?;
 
         let result = tokio::task::block_in_place(move || {
-            tokio::runtime::Handle::current()
-                .block_on((linter.load_plugin)(resolved.full_path().to_str().unwrap().to_string()))
+            tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(
+                resolved.full_path().to_str().unwrap().to_string(),
+            ))
         })
         .map_err(|e| ConfigBuilderError::PluginLoadFailed {
             plugin_name: plugin_name.into(),
