@@ -40,9 +40,14 @@ impl RuleTable {
     #[expect(clippy::allow_attributes)]
     #[allow(unused, unused_mut)]
     pub fn new(mut generator: Option<&mut schemars::SchemaGenerator>) -> Self {
+        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+
         let default_rules = RULES
             .iter()
-            .filter(|rule| rule.category() == RuleCategory::Correctness)
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness
+                    && default_plugin_names.contains(&rule.plugin_name())
+            })
             .map(super::rules::RuleEnum::name)
             .collect::<FxHashSet<&str>>();
 
@@ -94,7 +99,7 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: 123 }
+        RuleTable { total, sections, turned_on_by_default_count: default_rules.len() }
     }
 }
 
