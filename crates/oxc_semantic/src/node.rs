@@ -128,7 +128,7 @@ impl<'a> AstNodes<'a> {
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestor_ids(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + Clone + '_ {
-        AstNodeIdParentIter { next_node_id: Some(node_id), nodes: self }
+        AstNodeIdAncestorsIter::new(node_id, self)
     }
 
     /// Walk up the AST, iterating over each parent [`AstKind`].
@@ -252,17 +252,27 @@ impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
     }
 }
 
+/// Iterator over ancestors of an AST node, starting with the node itself.
+///
+/// Yields `NodeId` of each AST node. The last node yielded is `Program`.
 #[derive(Debug, Clone)]
-pub struct AstNodeIdParentIter<'s, 'a> {
+pub struct AstNodeIdAncestorsIter<'s, 'a> {
     next_node_id: Option<NodeId>,
     nodes: &'s AstNodes<'a>,
 }
 
-impl Iterator for AstNodeIdParentIter<'_, '_> {
+impl<'s, 'a> AstNodeIdAncestorsIter<'s, 'a> {
+    fn new(node_id: NodeId, nodes: &'s AstNodes<'a>) -> Self {
+        Self { next_node_id: Some(node_id), nodes }
+    }
+}
+
+impl Iterator for AstNodeIdAncestorsIter<'_, '_> {
     type Item = NodeId;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(node_id) = self.next_node_id {
+            // `Program`'s parent is itself, so next node is `None` if this node is `Program`
             self.next_node_id =
                 if node_id == NodeId::ROOT { None } else { Some(self.nodes.parent_ids[node_id]) };
             Some(node_id)
@@ -272,4 +282,4 @@ impl Iterator for AstNodeIdParentIter<'_, '_> {
     }
 }
 
-impl FusedIterator for AstNodeIdParentIter<'_, '_> {}
+impl FusedIterator for AstNodeIdAncestorsIter<'_, '_> {}
