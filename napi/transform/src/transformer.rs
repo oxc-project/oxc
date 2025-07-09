@@ -86,8 +86,8 @@ pub struct TransformResult {
 #[napi(object)]
 #[derive(Default)]
 pub struct TransformOptions {
-    /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
-    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, or `dts`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.

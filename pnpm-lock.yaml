@@ -146,8 +146,6 @@ importers:
 
   npm/runtime: {}
 
-  npm/wasm-web: {}
-
   tasks/compat_data:
     devDependencies:
       degit:

@@ -68,6 +68,7 @@ pub fn get_source_type(
         Some("jsx") => SourceType::jsx(),
         Some("ts") => SourceType::ts(),
         Some("tsx") => SourceType::tsx(),
+        Some("dts") => SourceType::d_ts(),
         _ => SourceType::from_path(filename).unwrap_or_default(),
     };
     match source_type {
