@@ -84,7 +84,7 @@ impl Rule for PreferDomNodeTextContent {
                     return;
                 }
 
-                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
+                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id());
 
                 let Some(mut parent_node_kind) = ancestor_kinds.next() else { return };
                 if matches!(parent_node_kind, AstKind::AssignmentTargetPropertyIdentifier(_)) {

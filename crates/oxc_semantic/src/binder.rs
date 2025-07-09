@@ -662,7 +662,7 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some(node) = builder.nodes.ancestors(current_node_id).skip(1).find(|node| {
+        let Some(node) = builder.nodes.ancestors(current_node_id).find(|node| {
             matches!(
                 node.kind(),
                 AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)

@@ -116,8 +116,7 @@ impl Rule for NoUselessConstructor {
             return;
         }
 
-        let class =
-            ctx.nodes().ancestors(node.id()).skip(1).find_map(|parent| parent.kind().as_class());
+        let class = ctx.nodes().ancestors(node.id()).find_map(|parent| parent.kind().as_class());
         debug_assert!(class.is_some(), "Found a constructor outside of a class definition");
         let Some(class) = class else {
             return;

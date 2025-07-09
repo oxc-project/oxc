@@ -191,8 +191,7 @@ impl NoLabels {
         stmt_node_id: NodeId,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let nodes = ctx.nodes();
-        for ancestor_kind in nodes.ancestor_kinds(stmt_node_id) {
+        for ancestor_kind in ctx.nodes().ancestor_kinds(stmt_node_id) {
             if let AstKind::LabeledStatement(labeled_stmt) = ancestor_kind {
                 if label.name == labeled_stmt.label.name {
                     return self.is_allowed(&labeled_stmt.body);

@@ -245,7 +245,7 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
-        for parent in self.nodes().ancestors(reference.node_id()).map(AstNode::kind) {
+        for parent in self.nodes().ancestor_kinds(reference.node_id()) {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
@@ -405,7 +405,7 @@ impl<'a> Symbol<'_, 'a> {
         let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
-        for node in self.nodes().ancestors(reference.node_id()).skip(1) {
+        for node in self.nodes().ancestors(reference.node_id()) {
             match node.kind() {
                 // references used in declaration of another variable are definitely
                 // used by others
