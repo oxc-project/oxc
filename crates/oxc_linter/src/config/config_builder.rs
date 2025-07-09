@@ -139,14 +139,16 @@ impl ConfigStoreBuilder {
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
         if let Some(plugins) = oxlintrc.plugins.as_ref() {
-            let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
-            for plugin_name in &plugins.external {
-                Self::load_external_plugin(
-                    &oxlintrc.path,
-                    plugin_name,
-                    external_linter,
-                    &resolver,
-                )?;
+            if !plugins.external.is_empty() {
+                let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
+                for plugin_name in &plugins.external {
+                    Self::load_external_plugin(
+                        &oxlintrc.path,
+                        plugin_name,
+                        external_linter,
+                        &resolver,
+                    )?;
+                }
             }
         }
         let plugins = oxlintrc.plugins.unwrap_or_default();
