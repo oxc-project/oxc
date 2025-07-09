@@ -106,7 +106,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: s390x-unknown-linux-gnu
           tools: cross
-      - run: cross test --target s390x-unknown-linux-gnu
+      - run: cross test --all-features --target s390x-unknown-linux-gnu
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
