@@ -20929,9 +20929,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["jsx"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_withAmbientPresent.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["x"]
@@ -21076,10 +21073,14 @@ after transform: ScopeId(0): ["x"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
+Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeScopedPackage.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
+Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolution_packageJson_yesAtPackageRoot_mainFieldInSubDirectory.ts
 Bindings mismatch:
@@ -47409,12 +47410,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResoluti
 Bindings mismatch:
 after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmit.ts
 Scope children mismatch:
