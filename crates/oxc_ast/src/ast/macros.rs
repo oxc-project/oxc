@@ -703,6 +703,8 @@ macro_rules! inherit_variants {
                 IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
                 /// Inherited from [`TSTypeName`]
                 QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
+                /// Inherited from [`TSTypeName`]
+                ThisExpression(Box<'a, ThisExpression>) = 2,
 
                 $($rest)*
             }
@@ -717,7 +719,7 @@ macro_rules! inherit_variants {
             as_ts_type_name_mut,
             to_ts_type_name,
             to_ts_type_name_mut,
-            [IdentifierReference, QualifiedName]
+            [IdentifierReference, QualifiedName, ThisExpression]
         );
     };
 
