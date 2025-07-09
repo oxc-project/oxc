@@ -97,7 +97,7 @@ impl From<Capabilities> for ServerCapabilities {
     }
 }
 
-#[cfg(all(test, not(test)))]
+#[cfg(test)]
 mod test {
     use tower_lsp_server::lsp_types::{
         ClientCapabilities, CodeActionClientCapabilities, CodeActionKindLiteralSupport,
