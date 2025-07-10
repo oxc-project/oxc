@@ -532,7 +532,7 @@ impl LintRunner {
             ignore_patterns
                 .into_iter()
                 .map(|pattern| {
-                    let prefix_len = pattern.chars().take_while(|&c| c == '!').count();
+                    let prefix_len = pattern.bytes().take_while(|&c| c == b'!').count();
                     let (prefix, pattern) = pattern.split_at(prefix_len);
 
                     let adjusted_path = relative_ignore_path.join(pattern);
