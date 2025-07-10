@@ -277,6 +277,17 @@ impl Runtime {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
+                if self
+                    .linter
+                    .config
+                    .get_related_config(Path::new(path))
+                    .ignore_patterns()
+                    .is_some_and(|ignore_patterns| {
+                        ignore_patterns.matched(Path::new(path), false).is_ignore()
+                    })
+                {
+                    return;
+                }
                 let output = self.process_path(path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
@@ -368,6 +379,18 @@ impl Runtime {
             while pending_module_count < group_size && group_start < me.paths.len() {
                 let path = &me.paths[group_start];
                 group_start += 1;
+
+                if me
+                    .linter
+                    .config
+                    .get_related_config(Path::new(path))
+                    .ignore_patterns()
+                    .is_some_and(|ignore_patterns| {
+                        ignore_patterns.matched(Path::new(path), false).is_ignore()
+                    })
+                {
+                    continue;
+                }
 
                 // Check if this module to be linted is already processed as a dependency in former groups
                 if encountered_paths.insert(Arc::clone(path)) {
