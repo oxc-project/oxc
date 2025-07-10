@@ -126,7 +126,7 @@ Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the spee
 <details>
   <summary>How is it so fast?</summary>
   <ul>
-    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation.</li>
+    <li>AST is allocated in a <a href="https://crates.io/crates/oxc_allocator">memory arena</a> for fast AST memory allocation and deallocation.</li>
     <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a>.</li>
     <li>No other heap allocations are done except the above two.</li>
     <li>Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer.</li>

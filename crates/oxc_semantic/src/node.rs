@@ -14,7 +14,7 @@ use oxc_syntax::{
 #[derive(Debug, Clone, Copy)]
 pub struct AstNode<'a> {
     id: NodeId,
-    /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
+    /// A pointer to the ast node, which resides in the memory arena.
     kind: AstKind<'a>,
 
     /// Associated Scope (initialized by binding)
