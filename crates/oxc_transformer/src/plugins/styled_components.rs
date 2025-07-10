@@ -326,7 +326,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
             // or a callee of another call expression.
             && !matches!(
                 ctx.parent(),
-                Ancestor::CallExpressionCallee(_) | Ancestor::StaticMemberExpressionObject(_)
+                Ancestor::CallExpressionCallee(_) | Ancestor::StaticMemberExpressionObject(_) | Ancestor::ComputedMemberExpressionObject(_)
             )
         {
             self.add_display_name_and_component_id(&mut call.callee, ctx);
