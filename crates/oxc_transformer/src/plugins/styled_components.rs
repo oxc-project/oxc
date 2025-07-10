@@ -513,20 +513,14 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     fn get_with_config<'b>(expr: &'b mut Expression<'a>) -> Option<&'b mut CallExpression<'a>> {
-        let is_with_config = |call: &CallExpression<'a>| {
-            if let Expression::StaticMemberExpression(member) = &call.callee {
-                member.property.name == "withConfig"
-            } else {
-                false
-            }
-        };
-
         let mut current = expr;
         loop {
             match current {
                 Expression::CallExpression(call) => {
-                    if is_with_config(call) {
-                        return Some(call);
+                    if let Expression::StaticMemberExpression(member) = &call.callee {
+                        if member.property.name == "withConfig" {
+                            return Some(call);
+                        }
                     }
                     current = &mut call.callee;
                 }
