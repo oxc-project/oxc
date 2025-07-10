@@ -18,6 +18,13 @@
 //!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
+//!
+//! * `fixed_size` - Makes [`AllocatorPool`] create large fixed-size allocators, instead of
+//!   flexibly-sized ones.
+//!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
+//!
+//! * `disable_fixed_size` - Disables `fixed_size` feature.
+//!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
 
 #![warn(missing_docs)]
 
@@ -29,6 +36,8 @@ mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
+#[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;

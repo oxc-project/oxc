@@ -139,14 +139,22 @@ impl ConfigStoreBuilder {
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
         if let Some(plugins) = oxlintrc.plugins.as_ref() {
-            let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
-            for plugin_name in &plugins.external {
-                Self::load_external_plugin(
-                    &oxlintrc.path,
-                    plugin_name,
-                    external_linter,
-                    &resolver,
-                )?;
+            if !plugins.external.is_empty() {
+                let Some(external_linter) = external_linter else {
+                    return Err(ConfigBuilderError::NoExternalLinterConfigured);
+                };
+                let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let oxlintrc_dir_path = oxlintrc.path.parent().unwrap();
+
+                for plugin_specifier in &plugins.external {
+                    Self::load_external_plugin(
+                        oxlintrc_dir_path,
+                        plugin_specifier,
+                        external_linter,
+                        &resolver,
+                    )?;
+                }
             }
         }
         let plugins = oxlintrc.plugins.unwrap_or_default();
@@ -385,48 +393,46 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(not(feature = "oxlint2"))]
+    #[cfg(any(not(feature = "oxlint2"), feature = "disable_oxlint2"))]
     fn load_external_plugin(
-        _oxlintrc_path: &Path,
-        _plugin_name: &str,
-        _external_linter: Option<&ExternalLinter>,
+        _oxlintrc_dir_path: &Path,
+        _plugin_specifier: &str,
+        _external_linter: &ExternalLinter,
         _resolver: &Resolver,
     ) -> Result<(), ConfigBuilderError> {
-        Err(ConfigBuilderError::NoExternalLinterConfigured)
+        unreachable!()
     }
 
-    #[cfg(feature = "oxlint2")]
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     fn load_external_plugin(
-        oxlintrc_path: &Path,
-        plugin_name: &str,
-        external_linter: Option<&ExternalLinter>,
+        oxlintrc_dir_path: &Path,
+        plugin_specifier: &str,
+        external_linter: &ExternalLinter,
         resolver: &Resolver,
     ) -> Result<(), ConfigBuilderError> {
         use crate::PluginLoadResult;
-        let Some(linter) = external_linter else {
-            return Err(ConfigBuilderError::NoExternalLinterConfigured);
-        };
-        let resolved =
-            resolver.resolve(oxlintrc_path.parent().unwrap(), plugin_name).map_err(|e| {
-                ConfigBuilderError::PluginLoadFailed {
-                    plugin_name: plugin_name.into(),
-                    error: e.to_string(),
-                }
-            })?;
+
+        let resolved = resolver.resolve(oxlintrc_dir_path, plugin_specifier).map_err(|e| {
+            ConfigBuilderError::PluginLoadFailed {
+                plugin_specifier: plugin_specifier.to_string(),
+                error: e.to_string(),
+            }
+        })?;
+        // TODO: We should support paths which are not valid UTF-8. How?
+        let plugin_path = resolved.full_path().to_str().unwrap().to_string();
 
         let result = tokio::task::block_in_place(move || {
-            tokio::runtime::Handle::current()
-                .block_on((linter.load_plugin)(resolved.full_path().to_str().unwrap().to_string()))
+            tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(plugin_path))
         })
         .map_err(|e| ConfigBuilderError::PluginLoadFailed {
-            plugin_name: plugin_name.into(),
+            plugin_specifier: plugin_specifier.to_string(),
             error: e.to_string(),
         })?;
 
         match result {
             PluginLoadResult::Success => Ok(()),
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
-                plugin_name: plugin_name.into(),
+                plugin_specifier: plugin_specifier.to_string(),
                 error: e,
             }),
         }
@@ -472,7 +478,7 @@ pub enum ConfigBuilderError {
         reason: String,
     },
     PluginLoadFailed {
-        plugin_name: String,
+        plugin_specifier: String,
         error: String,
     },
     NoExternalLinterConfigured,
@@ -495,8 +501,8 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::InvalidConfigFile { file, reason } => {
                 write!(f, "invalid config file {file}: {reason}")
             }
-            ConfigBuilderError::PluginLoadFailed { plugin_name, error } => {
-                write!(f, "Failed to load external plugin: {plugin_name}\n  {error}")?;
+            ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
+                write!(f, "Failed to load external plugin: {plugin_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured => {

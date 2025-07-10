@@ -2,7 +2,7 @@ import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
-import type { ExpressionStatement, ParserOptions, TSTypeAliasDeclaration } from '../index.js';
+import type { ExpressionStatement, ParserOptions, TSTypeAliasDeclaration, VariableDeclaration } from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -54,6 +54,12 @@ describe('parse', () => {
       expect(ret.errors.length).toBe(0);
       // Parsed as `await 1`
       expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('AwaitExpression');
+    });
+    test('sets lang as dts', () => {
+      const code = 'declare const foo';
+      const ret = parseSync('test', code, { lang: 'dts' });
+      expect(ret.errors.length).toBe(0);
+      expect((ret.program.body[0] as VariableDeclaration).declare).toBe(true);
     });
   });
 

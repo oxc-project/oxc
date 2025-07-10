@@ -59,11 +59,9 @@ impl ServerLinter {
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
 
-        let use_cross_module = if use_nested_config {
-            nested_configs.pin().values().any(|config| config.plugins().has_import())
-        } else {
-            config_builder.plugins().has_import()
-        };
+        let use_cross_module = config_builder.plugins().has_import()
+            || (use_nested_config
+                && nested_configs.pin().values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build();

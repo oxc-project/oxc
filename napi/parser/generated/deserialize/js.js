@@ -1627,9 +1627,10 @@ function deserializeTSTypeAliasDeclaration(pos) {
 function deserializeTSClassImplements(pos) {
   let expression = deserializeTSTypeName(pos + 8);
   if (expression.type === 'TSQualifiedName') {
+    let object = expression.left;
     let parent = expression = {
       type: 'MemberExpression',
-      object: expression.left,
+      object,
       property: expression.right,
       optional: false,
       computed: false,
@@ -1637,17 +1638,18 @@ function deserializeTSClassImplements(pos) {
       end: expression.end,
     };
 
-    while (parent.object.type === 'TSQualifiedName') {
-      const object = parent.object;
+    while (object.type === 'TSQualifiedName') {
+      const { left } = object;
       parent = parent.object = {
         type: 'MemberExpression',
-        object: object.left,
+        object: left,
         property: object.right,
         optional: false,
         computed: false,
         start: object.start,
         end: object.end,
       };
+      object = left;
     }
   }
   return {
