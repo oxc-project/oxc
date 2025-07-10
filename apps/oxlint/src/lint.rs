@@ -257,11 +257,8 @@ impl Runner for LintRunner {
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
-        let use_cross_module = if nested_configs.is_empty() {
-            config_builder.plugins().has_import()
-        } else {
-            nested_configs.values().any(|config| config.plugins().has_import())
-        };
+        let use_cross_module = config_builder.plugins().has_import()
+            || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
@@ -308,6 +305,15 @@ impl Runner for LintRunner {
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
             let mut lint_service = LintService::new(&linter, allocator_pool, options);
+
+            // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
+            // This reads the source text into start of allocator, instead of the end.
+            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            {
+                use crate::raw_fs::RawTransferFileSystem;
+                lint_service = lint_service.with_file_system(Box::new(RawTransferFileSystem));
+            }
+
             lint_service.run(&tx_error);
         });
 

@@ -323,6 +323,10 @@ export interface ModuleRunnerTransformResult {
   errors: Array<OxcError>
 }
 
+export interface PluginsOptions {
+  styledComponents?: StyledComponentsOptions
+}
+
 export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
@@ -337,6 +341,85 @@ export interface ReactRefreshOptions {
    */
   refreshSig?: string
   emitFullSignatures?: boolean
+}
+
+/**
+ * Configure how styled-components are transformed.
+ *
+ * @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+ */
+export interface StyledComponentsOptions {
+  /**
+   * Enhances the attached CSS class name on each component with richer output to help
+   * identify your components in the DOM without React DevTools.
+   *
+   * @default true
+   */
+  displayName?: boolean
+  /**
+   * Controls whether the `displayName` of a component will be prefixed with the filename
+   * to make the component name as unique as possible.
+   *
+   * @default true
+   */
+  fileName?: boolean
+  /**
+   * Adds a unique identifier to every styled component to avoid checksum mismatches
+   * due to different class generation on the client and server during server-side rendering.
+   *
+   * @default true
+   */
+  ssr?: boolean
+  /**
+   * Transpiles styled-components tagged template literals to a smaller representation
+   * than what Babel normally creates, helping to reduce bundle size.
+   *
+   * @default true
+   */
+  transpileTemplateLiterals?: boolean
+  /**
+   * Minifies CSS content by removing all whitespace and comments from your CSS,
+   * keeping valuable bytes out of your bundles.
+   *
+   * @default true
+   */
+  minify?: boolean
+  /**
+   * Enables transformation of JSX `css` prop when using styled-components.
+   *
+   * **Note: This feature is not yet implemented in oxc.**
+   *
+   * @default true
+   */
+  cssProp?: boolean
+  /**
+   * Enables "pure annotation" to aid dead code elimination by bundlers.
+   *
+   * @default false
+   */
+  pure?: boolean
+  /**
+   * Adds a namespace prefix to component identifiers to ensure class names are unique.
+   *
+   * Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-3rfj0a-1"`
+   */
+  namespace?: string
+  /**
+   * List of file names that are considered meaningless for component naming purposes.
+   *
+   * When the `fileName` option is enabled and a component is in a file with a name
+   * from this list, the directory name will be used instead of the file name for
+   * the component's display name.
+   *
+   * @default ["index"]
+   */
+  meaninglessFileNames?: Array<string>
+  /**
+   * Import paths to be considered as styled-components imports at the top level.
+   *
+   * **Note: This feature is not yet implemented in oxc.**
+   */
+  topLevelImportPaths?: Array<string>
 }
 
 /**
@@ -359,8 +442,8 @@ export declare function transform(filename: string, sourceText: string, options?
  * @see {@link transform}
  */
 export interface TransformOptions {
-  /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /** Treat the source text as `js`, `jsx`, `ts`, `tsx`, or `dts`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
   /** Treat the source text as `script` or `module` code. */
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /**
@@ -407,6 +490,8 @@ export interface TransformOptions {
   inject?: Record<string, string | [string, string]>
   /** Decorator plugin */
   decorator?: DecoratorOptions
+  /** Third-party plugins to use. */
+  plugins?: PluginsOptions
 }
 
 export interface TransformResult {

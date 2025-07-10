@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 156/260
+Passed: 176/294
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1419,5 +1419,49 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
+
+
+# plugin-styled-components (20/34)
+* styled-components/add-identifier-with-top-level-import-paths/input.js
+x Output mismatch
+
+* styled-components/add-identifier-with-top-level-import-paths-and-named-import/input.js
+x Output mismatch
+
+* styled-components/annotate-create-global-style-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-css-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-styled-calls-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/css-declared-after-component/input.jsx
+x Output mismatch
+
+* styled-components/does-not-replace-native-with-no-tags/input.js
+x Output mismatch
+
+* styled-components/pre-transpiled/input.js
+x Output mismatch
+
+* styled-components/transformed-imports-with-jsx-member-expressions/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-add-import/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-add-require/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-all-options-on/input.jsx
+x Output mismatch
+
+* styled-components/transpile-require-default/input.js
+x Output mismatch
 
 

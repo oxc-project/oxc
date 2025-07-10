@@ -297,9 +297,10 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
     raw_deser = "
         let expression = DESER[TSTypeName](POS_OFFSET.expression);
         if (expression.type === 'TSQualifiedName') {
+            let object = expression.left;
             let parent = expression = {
                 type: 'MemberExpression',
-                object: expression.left,
+                object,
                 property: expression.right,
                 optional: false,
                 computed: false,
@@ -307,17 +308,18 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
                 end: expression.end,
             };
 
-            while (parent.object.type === 'TSQualifiedName') {
-                const object = parent.object;
+            while (object.type === 'TSQualifiedName') {
+                const { left } = object;
                 parent = parent.object = {
                     type: 'MemberExpression',
-                    object: object.left,
+                    object: left,
                     property: object.right,
                     optional: false,
                     computed: false,
                     start: object.start,
                     end: object.end,
                 };
+                object = left;
             }
         }
         expression
