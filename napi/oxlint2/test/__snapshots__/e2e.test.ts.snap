@@ -34,7 +34,7 @@ exports[`cli options for bundling > should load a custom plugin 1`] = `
    \`----
 
 Found 1 warning and 1 error.
-Finished in Xms on 1 file using X threads."
+Finished in Xms on 2 files using X threads."
 `;
 
 exports[`cli options for bundling > should report an error if a custom plugin cannot be loaded 1`] = `

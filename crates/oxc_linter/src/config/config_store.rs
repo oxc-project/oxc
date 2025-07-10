@@ -10,6 +10,7 @@ use super::{
 };
 use crate::{
     AllowWarnDeny, LintPlugins,
+    config::ResolvedIgnorePatterns,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -89,6 +90,10 @@ impl Config {
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
+    }
+
+    pub fn ignore_patterns(&self) -> Option<&ResolvedIgnorePatterns> {
+        self.base.config.ignore_patterns.as_ref()
     }
 
     pub fn number_of_rules(&self) -> usize {
@@ -259,16 +264,18 @@ impl ConfigStore {
         &self.base.base.config.plugins
     }
 
-    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
-        let resolved_config = if self.nested_configs.is_empty() {
+    pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
+        if self.nested_configs.is_empty() {
             &self.base
         } else if let Some(config) = self.get_nearest_config(path) {
             config
         } else {
             &self.base
-        };
+        }
+    }
 
-        Config::apply_overrides(resolved_config, path, &self.external_plugin_store)
+    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
+        Config::apply_overrides(self.get_related_config(path), path, &self.external_plugin_store)
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
@@ -296,10 +303,7 @@ mod test {
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
         AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore, LintPlugins, RuleEnum,
-        config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, categories::OxlintCategories,
-            config_store::Config,
-        },
+        config::{LintConfig, OxlintEnv, categories::OxlintCategories, config_store::Config},
     };
 
     macro_rules! from_json {
@@ -466,10 +470,7 @@ mod test {
     fn test_add_plugins() {
         let base_config = LintConfig {
             plugins: LintPlugins::new(BuiltinLintPlugins::IMPORT, FxHashSet::default()),
-            env: OxlintEnv::default(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
+            ..Default::default()
         };
         let overrides = from_json!([{
             "files": ["*.jsx", "*.tsx"],
@@ -508,13 +509,8 @@ mod test {
 
     #[test]
     fn test_add_env() {
-        let base_config = LintConfig {
-            env: OxlintEnv::default(),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { plugins: BuiltinLintPlugins::ESLINT.into(), ..Default::default() };
 
         let overrides = from_json!([{
             "files": ["*.tsx"],
@@ -536,13 +532,8 @@ mod test {
 
     #[test]
     fn test_replace_env() {
-        let base_config = LintConfig {
-            env: OxlintEnv::from_iter(["es2024".into()]),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { env: OxlintEnv::from_iter(["es2024".into()]), ..Default::default() };
 
         let overrides = from_json!([{
             "files": ["*.tsx"],
@@ -564,13 +555,8 @@ mod test {
 
     #[test]
     fn test_add_globals() {
-        let base_config = LintConfig {
-            env: OxlintEnv::default(),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { plugins: BuiltinLintPlugins::ESLINT.into(), ..Default::default() };
 
         let overrides = from_json!([{
             "files": ["*.tsx"],
@@ -596,14 +582,12 @@ mod test {
     #[test]
     fn test_replace_globals() {
         let base_config = LintConfig {
-            env: OxlintEnv::default(),
             plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
             globals: from_json!({
                 "React": "readonly",
                 "Secret": "writeable"
             }),
-            path: None,
+            ..Default::default()
         };
 
         let overrides = from_json!([{
