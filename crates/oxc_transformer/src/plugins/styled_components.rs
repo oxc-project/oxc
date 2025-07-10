@@ -290,7 +290,7 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Counter for generating unique component IDs
     component_count: usize,
     /// Hash of the current file for component ID generation
-    file_hash: Option<&'a str>,
+    component_id_prefix: Option<String>,
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
@@ -299,7 +299,7 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
             options,
             ctx,
             styled_bindings: StyledComponentsBinding::default(),
-            file_hash: None,
+            component_id_prefix: None,
             component_count: 0,
         }
     }
@@ -621,24 +621,37 @@ impl<'a> StyledComponents<'a, '_> {
 
     /// `<namespace__>sc-<file_hash>-<component_count>`
     fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
-        let namespace = self.options.namespace.as_ref().map_or("", |namespace| {
-            ctx.ast.allocator.alloc_concat_strs_array([namespace.as_str(), "__"])
-        });
+        // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
+        let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
+            prefix
+        } else {
+            const HASH_LEN: usize = 6;
+            const PREFIX_LEN: usize = "sc-".len() + HASH_LEN + "-".len();
+            const NAMESPACED_PREFIX_LEN: usize = "__".len() + PREFIX_LEN;
 
-        let file_hash = self.get_file_hash(ctx);
-        let id = ctx.ast.allocator.alloc_concat_strs_array([
-            namespace,
-            "sc-",
-            file_hash,
-            "-",
-            itoa::Buffer::new().format(self.component_count),
-        ]);
+            let mut prefix = if let Some(namespace) = &self.options.namespace {
+                let mut prefix = String::with_capacity(namespace.len() + NAMESPACED_PREFIX_LEN);
+                prefix.extend([namespace, "__"]);
+                prefix
+            } else {
+                String::with_capacity(PREFIX_LEN)
+            };
+
+            prefix.extend(["sc-", self.get_file_hash(ctx), "-"]);
+
+            self.component_id_prefix = Some(prefix);
+            self.component_id_prefix.as_deref().unwrap()
+        };
+
+        // Add component count to end
+        let mut buffer = itoa::Buffer::new();
+        let count = buffer.format(self.component_count);
         self.component_count += 1;
-        id
+        ctx.ast.allocator.alloc_concat_strs_array([prefix, count])
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
+    fn get_file_hash(&self, ctx: &TraverseCtx<'a>) -> &'a str {
         use rustc_hash::FxHasher;
         use std::hash::{Hash, Hasher};
 
@@ -661,16 +674,14 @@ impl<'a> StyledComponents<'a, '_> {
             )
         }
 
-        self.file_hash.get_or_insert_with(|| {
-            let mut hasher = FxHasher::default();
-            if self.ctx.source_path.is_relative() {
-                self.ctx.source_path.hash(&mut hasher);
-            } else {
-                self.ctx.source_text.hash(&mut hasher);
-            }
+        let mut hasher = FxHasher::default();
+        if self.ctx.source_path.is_relative() {
+            self.ctx.source_path.hash(&mut hasher);
+        } else {
+            self.ctx.source_text.hash(&mut hasher);
+        }
 
-            base36_encode(hasher.finish(), ctx)
-        })
+        base36_encode(hasher.finish(), ctx)
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
