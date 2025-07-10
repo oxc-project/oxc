@@ -108,7 +108,14 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
     let strict_mode = ctx.strict_mode();
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
-    if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
+    if strict_mode
+        && matches!(ident.name.as_str(), "eval" | "arguments")
+        && ctx
+            .nodes
+            .parent_kind(ctx.current_node_id)
+            .as_function()
+            .is_none_or(|function| !matches!(function.r#type, FunctionType::TSDeclareFunction))
+    {
         return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
     }
 
