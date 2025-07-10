@@ -1256,8 +1256,8 @@ mod tests {
 
         #[test]
         fn returns_indices_of_removed_placeholders() {
-            let allocator = Box::leak(Box::new(Allocator::default()));
-            let ast = AstBuilder::new(allocator);
+            let allocator = Allocator::default();
+            let ast = AstBuilder::new(&allocator);
 
             // Create raw values that will generate placeholders
             let css = "this is some\ninput with __PLACEHOLDER_0__ and // ignored __PLACEHOLDER_1__";
