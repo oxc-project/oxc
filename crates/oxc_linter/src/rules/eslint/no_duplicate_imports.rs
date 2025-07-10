@@ -272,7 +272,11 @@ impl Rule for NoDuplicateImports {
                         continue;
                     }
 
-                    if existing.iter().any(|(t, _, module_type)| {
+                    if existing.iter().any(|(t, import_span, module_type)| {
+                        // import { a } from 'foo'; export { a as t };
+                        if matches!(t, ImportType::Named) && module_request.span != *import_span {
+                            return true;
+                        }
                         (matches!(
                             t,
                             ImportType::Named | ImportType::SideEffect | ImportType::Default
@@ -429,9 +433,23 @@ fn test() {
         export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
+        (
+            "
+                import { a } from 'f';
+                export { b as r };
+            ",
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
     ];
 
     let fail = vec![
+        (
+            "
+                export { a } from 'foo';
+                import { f } from 'foo';
+            ",
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
         (
             r#"import "fs";
         import "fs""#,
