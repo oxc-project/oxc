@@ -576,6 +576,18 @@ impl<'a> ObjectRestSpread<'a, '_> {
         }
         if replaced && arrow.expression {
             arrow.expression = false;
+            let expr_stmt = arrow
+                .body
+                .statements
+                .iter_mut()
+                .rev()
+                .find(|s| matches!(s, Statement::ExpressionStatement(_)));
+            if let Some(expr_stmt) = expr_stmt {
+                if let Statement::ExpressionStatement(inner_expr_stmt) = expr_stmt {
+                    let expression = Some(inner_expr_stmt.expression.take_in(ctx.ast));
+                    *expr_stmt = ctx.ast.statement_return(SPAN, expression);
+                }
+            }
         }
     }
 
