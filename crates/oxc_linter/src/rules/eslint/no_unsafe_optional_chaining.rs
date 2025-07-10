@@ -145,6 +145,10 @@ impl Rule for NoUnsafeOptionalChaining {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::ChainExpression])
+    }
 }
 
 #[derive(Clone, Copy)]

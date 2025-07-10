@@ -221,6 +221,13 @@ impl Rule for ArrayType {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::TSArrayType,
+                oxc_ast::AstType::TSTypeAnnotation,
+                oxc_ast::AstType::TSTypeAliasDeclaration,
+                oxc_ast::AstType::TSTypeReference,
+                oxc_ast::AstType::TSAsExpression,
+            ])
     }
 }
 

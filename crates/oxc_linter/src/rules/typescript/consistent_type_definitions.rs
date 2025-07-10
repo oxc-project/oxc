@@ -245,6 +245,11 @@ impl Rule for ConsistentTypeDefinitions {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::TSTypeAliasDeclaration,
+                oxc_ast::AstType::ExportDefaultDeclaration,
+                oxc_ast::AstType::TSInterfaceDeclaration,
+            ])
     }
 }
 

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Argument, Expression, MethodDefinitionKind},
 };
 use oxc_cfg::{
@@ -131,6 +131,10 @@ impl Rule for NoThisBeforeSuper {
                 ctx.diagnostic(no_this_before_super_diagnostic(parent_span));
             }
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[AstType::Super, AstType::ThisExpression])
     }
 }
 

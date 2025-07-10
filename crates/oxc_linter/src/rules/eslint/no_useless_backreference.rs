@@ -87,6 +87,14 @@ impl Rule for NoUselessBackreference {
             }
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::CallExpression,
+            oxc_ast::AstType::RegExpLiteral,
+            oxc_ast::AstType::NewExpression,
+        ])
+    }
 }
 
 enum Problem {

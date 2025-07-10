@@ -1942,6 +1942,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
+ "fixedbitset",
  "globset",
  "icu_segmenter",
  "indexmap",
@@ -2219,6 +2220,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.76.0"
 dependencies = [
+ "fixedbitset",
  "insta",
  "itertools",
  "oxc_allocator",

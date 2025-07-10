@@ -149,6 +149,13 @@ impl Rule for NoConstantBinaryExpression {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::LogicalExpression,
+            oxc_ast::AstType::BinaryExpression,
+        ])
+    }
 }
 
 impl NoConstantBinaryExpression {

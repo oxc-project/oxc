@@ -118,6 +118,7 @@ impl Rule for NoExplicitAny {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::TSAnyKeyword])
     }
 }
 

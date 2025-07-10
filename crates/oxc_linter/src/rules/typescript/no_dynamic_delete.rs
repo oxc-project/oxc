@@ -64,6 +64,10 @@ impl Rule for NoDynamicDelete {
         }
         ctx.diagnostic(no_dynamic_delete_diagnostic(expr.span));
     }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::UnaryExpression])
+    }
 }
 
 #[test]

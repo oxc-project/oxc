@@ -1,6 +1,6 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Expression, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -101,6 +101,11 @@ impl Rule for NoWrapperObjectTypes {
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                AstType::TSTypeReference,
+                AstType::TSClassImplements,
+                AstType::TSInterfaceHeritage,
+            ])
     }
 }
 

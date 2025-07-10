@@ -92,6 +92,10 @@ impl Rule for BadObjectLiteralComparison {
             ));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::BinaryExpression])
+    }
 }
 
 fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {

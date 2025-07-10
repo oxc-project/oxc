@@ -118,6 +118,11 @@ impl Rule for ConsistentGenericConstructors {
 
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::VariableDeclarator,
+                oxc_ast::AstType::AssignmentPattern,
+                oxc_ast::AstType::PropertyDefinition,
+            ])
     }
 }
 

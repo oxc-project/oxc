@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -82,6 +82,10 @@ impl Rule for NoEmptyPattern {
             _ => return,
         };
         ctx.diagnostic(no_empty_pattern_diagnostic(pattern_type, span));
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[AstType::ArrayPattern, AstType::ObjectPattern])
     }
 }
 

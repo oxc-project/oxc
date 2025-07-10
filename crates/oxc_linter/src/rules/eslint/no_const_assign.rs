@@ -64,6 +64,10 @@ impl Rule for NoConstAssign {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::VariableDeclaration])
+    }
 }
 
 #[test]

@@ -1,7 +1,8 @@
 use std::iter::FusedIterator;
 
+use fixedbitset::FixedBitSet;
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
+use oxc_ast::{AstKind, AstType, ast::Program};
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -96,12 +97,24 @@ impl GetAddress for AstNode<'_> {
 }
 
 /// Untyped AST nodes flattened into an vec
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct AstNodes<'a> {
     program: Option<&'a Program<'a>>,
     nodes: IndexVec<NodeId, AstNode<'a>>,
+    node_kinds: FixedBitSet,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
+}
+
+impl Default for AstNodes<'_> {
+    fn default() -> Self {
+        Self {
+            program: None,
+            nodes: IndexVec::new(),
+            node_kinds: FixedBitSet::with_capacity(256), // TODO: Derive this based on AstKind size
+            parent_ids: IndexVec::new(),
+        }
+    }
 }
 
 impl<'a> AstNodes<'a> {
@@ -210,6 +223,7 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(parent_node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_kinds.insert(kind.ty() as usize);
         node_id
     }
 
@@ -233,6 +247,7 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(NodeId::ROOT);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_kinds.insert(kind.ty() as usize);
         node_id
     }
 
@@ -240,6 +255,17 @@ impl<'a> AstNodes<'a> {
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+    }
+
+    pub fn contains_any(&self, kinds: &[AstType]) -> bool {
+        let types = kinds
+            .iter()
+            .map(|kind| *kind as usize)
+            .filter(|ty| *ty < self.node_kinds.len())
+            .collect::<Vec<_>>();
+        // SAFETY: We just checked that `ty` is less than `self.node_kinds.len()` above, so
+        // we can skip the bounds check here to save a bounds check for each AstKind.
+        types.iter().any(|ty| unsafe { self.node_kinds.contains_unchecked(*ty) })
     }
 }
 

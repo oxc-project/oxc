@@ -54,6 +54,10 @@ impl Rule for BadComparisonSequence {
             ctx.diagnostic(bad_comparison_sequence_diagnostic(expr.span));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::BinaryExpression])
+    }
 }
 
 fn has_no_bad_comparison_in_parents<'a, 'b>(

@@ -129,6 +129,11 @@ impl Rule for NoConfusingNonNullAssertion {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::BinaryExpression,
+                oxc_ast::AstType::AssignmentExpression,
+                oxc_ast::AstType::TSNonNullExpression,
+            ])
     }
 }
 

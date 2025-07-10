@@ -170,6 +170,10 @@ impl Rule for NoUselessLengthCheck {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::LogicalExpression])
+    }
 }
 
 fn make_flat_logical_expression<'a>(

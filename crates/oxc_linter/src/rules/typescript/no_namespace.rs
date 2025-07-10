@@ -182,6 +182,7 @@ impl Rule for NoNamespace {
             return false;
         }
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::TSModuleDeclaration])
     }
 }
 

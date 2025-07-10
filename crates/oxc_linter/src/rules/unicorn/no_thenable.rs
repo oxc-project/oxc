@@ -150,6 +150,17 @@ impl Rule for NoThenable {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::ObjectExpression,
+            oxc_ast::AstType::PropertyDefinition,
+            oxc_ast::AstType::MethodDefinition,
+            oxc_ast::AstType::ExportNamedDeclaration,
+            oxc_ast::AstType::CallExpression,
+            oxc_ast::AstType::AssignmentExpression,
+        ])
+    }
 }
 
 fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {

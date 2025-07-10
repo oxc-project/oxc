@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Expression, IdentifierReference, MemberExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -156,6 +156,10 @@ impl Rule for NoObjCalls {
                 // noop
             }
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[AstType::CallExpression, AstType::NewExpression])
     }
 }
 

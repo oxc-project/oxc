@@ -276,6 +276,11 @@ impl Rule for ConsistentIndexedObjectStyle {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::TSInterfaceDeclaration,
+                oxc_ast::AstType::TSTypeLiteral,
+                oxc_ast::AstType::TSTypeReference,
+            ])
     }
 }
 

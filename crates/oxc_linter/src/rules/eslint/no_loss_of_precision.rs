@@ -88,6 +88,10 @@ impl Rule for NoLossOfPrecision {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[oxc_ast::AstType::NumericLiteral])
+    }
 }
 
 pub struct RawNum<'a> {
