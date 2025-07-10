@@ -92,6 +92,10 @@ impl IsolatedLintHandler {
             return None;
         }
 
+        if self.service.should_ignore(&path) {
+            return None;
+        }
+
         let allocator = Allocator::default();
 
         Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
