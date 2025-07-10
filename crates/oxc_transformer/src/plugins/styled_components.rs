@@ -693,11 +693,11 @@ impl<'a> StyledComponents<'a, '_> {
                 if block_name == component_name {
                     return Some(ctx.ast.str(component_name.as_str()));
                 }
-                return Some(
-                    ctx.ast
-                        .atom_from_strs_array([block_name, "__", component_name.as_str()])
-                        .as_str(),
-                );
+                return Some(ctx.ast.allocator.alloc_concat_strs_array([
+                    block_name,
+                    "__",
+                    component_name.as_str(),
+                ]));
             }
             return Some(ctx.ast.str(block_name));
         }
