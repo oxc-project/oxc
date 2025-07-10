@@ -365,6 +365,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Handles the pure annotation for pure helper calls
     fn handle_pure_annotation(
         &self,
         declarator: &mut VariableDeclarator<'a>,
@@ -406,7 +407,7 @@ impl<'a> StyledComponents<'a, '_> {
             quais.value.raw = new_raw;
         }
 
-        // SAFETY:
+        // SAFETY: `expressions` is always one less than `quasis`.
         unsafe {
             quasis.set_len(expressions.len() + 1);
         }
@@ -437,6 +438,9 @@ impl<'a> StyledComponents<'a, '_> {
         ctx.ast.expression_call(span, tag, type_arguments, arguments, false)
     }
 
+    /// Add `displayName` and `componentId` to `withConfig({})`
+    ///
+    /// If the call doesn't exist, then will create a new `withConfig` call expression
     fn add_display_name_and_component_id(
         &mut self,
         expr: &mut Expression<'a>,
@@ -477,6 +481,7 @@ impl<'a> StyledComponents<'a, '_> {
         true
     }
 
+    /// Collects import bindings which imports from `styled-components`
     fn collect_styled_bindings(&mut self, program: &Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
@@ -512,6 +517,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Traverses the expression tree to find the `withConfig` call.
     fn get_with_config<'b>(expr: &'b mut Expression<'a>) -> Option<&'b mut CallExpression<'a>> {
         let mut current = expr;
         loop {
@@ -547,6 +553,8 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    // Infers the component name from the parent variable declarator, assignment expression,
+    // or object property.
     fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
         let mut assignment_name = None;
 
@@ -606,6 +614,7 @@ impl<'a> StyledComponents<'a, '_> {
         unreachable!()
     }
 
+    /// `<namespace__>sc-<file_hash>-<component_count>`
     fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
         let namespace = self.options.namespace.as_ref().map_or("", |namespace| {
             ctx.ast.allocator.alloc_concat_strs_array([namespace.as_str(), "__"])
@@ -623,6 +632,7 @@ impl<'a> StyledComponents<'a, '_> {
         id
     }
 
+    /// Generates a unique file hash based on the source path or source code.
     fn get_file_hash(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
         use rustc_hash::FxHasher;
         use std::hash::{Hash, Hasher};
@@ -658,12 +668,15 @@ impl<'a> StyledComponents<'a, '_> {
         })
     }
 
+    /// Returns the display name which infers the component name or gets from the file name.
     fn get_display_name(&self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
         let component_name = Self::get_component_name(ctx);
 
         if self.options.file_name
             && let Some(file_stem) = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())
         {
+            // Should be a name, but if the file stem is in the meaningless file names list,
+            // we will use the parent directory name instead.
             let block_name = if self.options.meaningless_file_names.contains(&file_stem.to_string())
             {
                 self.ctx
@@ -737,6 +750,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Checks if the identifier is a helper function of styled-components
     fn is_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         StyledComponentsHelper::from_str(&ident.name)
             .and_then(|helper| self.styled_bindings.helper_symbol_id(helper))
@@ -749,10 +763,12 @@ impl<'a> StyledComponents<'a, '_> {
             })
     }
 
+    /// Checks if the identifier is a pure helper function of styled-components
     fn is_pure_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         ident.name != "injectGlobal" && self.is_helper(ident, ctx)
     }
 
+    /// Checks if the identifier is a reference to a styled binding.
     fn is_reference_of_styled(
         styled_binding: Option<SymbolId>,
         ident: &IdentifierReference<'a>,
@@ -767,6 +783,8 @@ impl<'a> StyledComponents<'a, '_> {
         })
     }
 
+    /// `{ key: value }`
+    //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
         value: Option<&'a str>,
