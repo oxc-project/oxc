@@ -13,26 +13,23 @@ use crate::{
 };
 
 pub struct Plugins<'a, 'ctx> {
-    styled_components: StyledComponents<'a, 'ctx>,
-    options: PluginsOptions,
+    styled_components: Option<StyledComponents<'a, 'ctx>>,
 }
 
 impl<'a, 'ctx> Plugins<'a, 'ctx> {
     pub fn new(options: PluginsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
-            styled_components: StyledComponents::new(
-                options.styled_components.clone().unwrap_or_default(),
-                ctx,
-            ),
-            options,
+            styled_components: options
+                .styled_components
+                .map(|options| StyledComponents::new(options, ctx)),
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.styled_components.is_some() {
-            self.styled_components.enter_program(node, ctx);
+        if let Some(styled_components) = &mut self.styled_components {
+            styled_components.enter_program(node, ctx);
         }
     }
 
@@ -41,8 +38,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
         node: &mut VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.styled_components.is_some() {
-            self.styled_components.enter_variable_declarator(node, ctx);
+        if let Some(styled_components) = &mut self.styled_components {
+            styled_components.enter_variable_declarator(node, ctx);
         }
     }
 
@@ -51,12 +48,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
         node: &mut Expression<'a>,
         ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
     ) {
-        self.styled_components.enter_expression(node, ctx);
+        if let Some(styled_components) = &mut self.styled_components {
+            styled_components.enter_expression(node, ctx);
+        }
     }
 
     fn enter_call_expression(&mut self, node: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.styled_components.is_some() {
-            self.styled_components.enter_call_expression(node, ctx);
+        if let Some(styled_components) = &mut self.styled_components {
+            styled_components.enter_call_expression(node, ctx);
         }
     }
 }
