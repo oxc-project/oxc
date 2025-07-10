@@ -1,0 +1,18 @@
+{
+  "plugins": [
+    [
+      "styled-components",
+      {
+        "ssr": false,
+        "fileName": false,
+        "transpileTemplateLiterals": false
+      }
+    ],
+    [
+      "transform-class-properties",
+      {
+        "loose": true
+      }
+    ]
+  ]
+}
