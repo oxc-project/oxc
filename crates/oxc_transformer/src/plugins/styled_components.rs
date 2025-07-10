@@ -55,13 +55,17 @@
 //! - Babel plugin: <https://github.com/styled-components/babel-plugin-styled-components>
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
 
-use rustc_hash::FxHashSet;
-use serde::Deserialize;
+use std::{
+    hash::{Hash, Hasher},
+    iter::once,
+};
 
-use std::iter::once;
+use rustc_hash::{FxHashSet, FxHasher};
+use serde::Deserialize;
 
 use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
@@ -637,7 +641,7 @@ impl<'a> StyledComponents<'a, '_> {
                 String::with_capacity(PREFIX_LEN)
             };
 
-            prefix.extend(["sc-", self.get_file_hash(ctx), "-"]);
+            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
 
             self.component_id_prefix = Some(prefix);
             self.component_id_prefix.as_deref().unwrap()
@@ -651,27 +655,22 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&self, ctx: &TraverseCtx<'a>) -> &'a str {
-        use rustc_hash::FxHasher;
-        use std::hash::{Hash, Hasher};
-
+    fn get_file_hash(&self) -> InlineString<7, u8> {
         #[inline]
-        fn base36_encode<'a>(mut num: u64, ctx: &TraverseCtx<'a>) -> &'a str {
-            const BASE36_BYTES: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
+        fn base36_encode(mut num: u64) -> InlineString<7, u8> {
+            const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 
             num %= 36_u64.pow(6); // 36^6, to ensure the result is <= 6 characters long.
 
-            let mut result = Vec::with_capacity(6);
-
+            let mut str = InlineString::new();
             while num != 0 {
-                result.push(BASE36_BYTES[(num % 36) as usize]);
+                // SAFETY: `num < 36.pow(6)` to start with, is and divided by 36 on each turn of loop,
+                // so we cannot push more than 6 bytes. Capacity of `InlineString` is 7.
+                // All bytes in `BASE36_BYTES` are ASCII.
+                unsafe { str.push_unchecked(BASE36_BYTES[(num % 36) as usize]) };
                 num /= 36;
             }
-
-            ctx.ast.allocator.alloc_str(
-                // SAFETY: the bytes are valid UTF-8 as they are ASCII characters.
-                unsafe { std::str::from_utf8_unchecked(&result) },
-            )
+            str
         }
 
         let mut hasher = FxHasher::default();
@@ -681,7 +680,7 @@ impl<'a> StyledComponents<'a, '_> {
             self.ctx.source_text.hash(&mut hasher);
         }
 
-        base36_encode(hasher.finish(), ctx)
+        base36_encode(hasher.finish())
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
