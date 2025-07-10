@@ -23,7 +23,6 @@ oxc_data_structures = { workspace = true, features = ["assert_unchecked", "point
 oxc_estree = { workspace = true, optional = true }
 
 allocator-api2 = { workspace = true }
-bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more", "allocator-api2"] }
 rustc-hash = { workspace = true }
 

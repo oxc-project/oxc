@@ -105,9 +105,6 @@ use core::slice;
 // #[cfg(feature = "std")]
 // use std::io;
 
-#[expect(unused_imports)]
-use bumpalo::Bump;
-
 use oxc_data_structures::assert_unchecked;
 
 use crate::alloc::Alloc;
