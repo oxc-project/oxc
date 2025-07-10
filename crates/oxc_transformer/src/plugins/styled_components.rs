@@ -313,6 +313,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
         self.handle_pure_annotation(variable_declarator, ctx);
     }
 
+    #[inline] // Because it's a hot path, and most `Expression`s are not `TaggedTemplateExpression`s
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if matches!(expr, Expression::TaggedTemplateExpression(_)) {
             self.transform_tagged_template_expression(expr, ctx);
