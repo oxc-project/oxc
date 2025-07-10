@@ -416,8 +416,15 @@ impl<'a> StyledComponents<'a, '_> {
             quais.value.raw = new_raw;
         }
 
-        // SAFETY: `expressions` is always one less than `quasis`.
+        // SAFETY:
+        // This is safe because template literal has ensured that `quasis` always
+        // has one more element than `expressions`, and the `CSSMinifier` guarantees that
+        // once a expression is removed, the corresponding quasi will also be removed.
+        // Therefore, the length of `quasis` will always be one more than `expressions`.
+        // So we can safely set the length of `quasis` to `expressions.len() + 1`.
         unsafe {
+            // Set the length of `quasis` to `expressions.len() + 1` to truncate the quasis that
+            // have been minified out.
             quasis.set_len(expressions.len() + 1);
         }
     }
@@ -838,6 +845,8 @@ fn is_valid_styled_component_source(source: &str) -> bool {
     )
 }
 
+/// A CSS minifier that is specifically designed to minify CSS code within
+/// styled-components template literals.
 pub struct CssMinifier<'a> {
     ast: AstBuilder<'a>,
 }
@@ -850,6 +859,17 @@ impl<'a> CssMinifier<'a> {
         Self { ast }
     }
 
+    /// Minifies the CSS code within a series of template literal `quasis`.
+    ///
+    /// This function takes an array of `TemplateElement` (quasis) and
+    /// first injects unique placeholders for the expressions between them.
+    /// Then, passes the processed CSS string to the [CssMinifier::minify_css].
+    ///
+    /// ### Returns:
+    ///
+    /// A tuple containing:
+    /// First: A vector of `Atom` containing the minified CSS strings.
+    /// Second: A set of indices representing which expressions were kept.
     pub fn minify_quasis(
         quasis: &[TemplateElement<'a>],
         ast: AstBuilder<'a>,
@@ -865,6 +885,19 @@ impl<'a> CssMinifier<'a> {
         minifier.minify_css(css)
     }
 
+    /// Injects unique placeholders into a series of `quasis` to represent expressions.
+    ///
+    /// This is a key step for minification. By replacing expressions with placeholders,
+    /// we can treat the entire template literal as a single block of CSS, which simplifies
+    /// the minification process. The placeholders are designed to be unique and unlikely
+    /// to appear in regular CSS.
+    ///
+    /// # Example
+    ///
+    /// Given quasis from `` `width: ${width}px; color: ${color};` ``, which are
+    /// `["width: ", "px; color: ", ";"]`, and expressions `[width, color]`,
+    /// this function will produce the string:
+    /// `"width: __PLACEHOLDER_0__px; color: __PLACEHOLDER_1__;"`
     fn inject_unique_placeholders(&self, quasis: &[TemplateElement]) -> &str {
         let estimated_capacity: usize = quasis.iter().map(|s| s.value.raw.len()).sum::<usize>()
             + (quasis.len() - 1)
@@ -884,6 +917,10 @@ impl<'a> CssMinifier<'a> {
         result.into_str()
     }
 
+    /// Tries to parse a placeholder like `__PLACEHOLDER_0__` from a byte slice.
+    ///
+    /// This function is used by the minifier to detect where expressions were
+    /// in the original template literal.
     #[inline]
     fn try_parse_placeholder(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
         let mut i = pos + Self::PLACEHOLDER_PREFIX.len();
@@ -913,6 +950,59 @@ impl<'a> CssMinifier<'a> {
         Some((number, i + Self::PLACEHOLDER_SUFFIX.len()))
     }
 
+    /// The core CSS minification logic.
+    ///
+    /// This function iterates through the CSS string (as bytes) and applies minification
+    /// rules. It handles strings, comments, and whitespace, and splits the output
+    /// by the placeholders it finds.
+    ///
+    /// ### Steps:
+    ///
+    /// 1. It initializes state variables to track whether it's inside a string,
+    ///    the current string character, and the depth of parentheses.
+    /// 2. It iterates through each byte of the CSS string:
+    ///   - If it encounters a string quote (`"` or `'`), it toggles the `in_string` state.
+    ///   - If it finds a placeholder (starting with `_` and followed by
+    ///     [CssMinifier::PLACEHOLDER_PREFIX]), it tries to parse the placeholder and
+    ///     keeps track of its index.
+    ///   - It skips comments (both block and line comments) and whitespace, compressing them
+    ///     as needed.
+    ///   - It handles escaped newlines by replacing them with a space.
+    /// 3. It collects the minified CSS parts into `new_raws` and tracks which
+    ///    expressions were kept in a `remaining_expression_indexes`.
+    /// 4. Finally, it returns the minified CSS parts and the set of kept expression indices.
+    ///
+    /// The step 2 is the key part of the minification process, it tries to split the CSS which
+    /// joins by the placeholders that is injected by [CssMinifier::inject_unique_placeholders].
+    ///
+    /// ### Example:
+    ///
+    /// For a case like:
+    /// ```js
+    /// styled.div`
+    ///   width: ${width}px;
+    ///   color: red; // color: ${color};
+    ///   height: 100px;
+    /// `
+    /// // quasis: ["width: ", "px;\n   color: red; // color:", ";\n   height: 100px;"]
+    /// // expressions: [width, color]
+    /// ```
+    ///
+    /// We will receive a CSS string which produced by [CssMinifier::inject_unique_placeholders] like:
+    /// ```js
+    /// "width: __PLACEHOLDER_0__px;
+    /// // color: __PLACEHOLDER_1__;
+    /// height: 100px;"
+    /// ```
+    ///
+    /// The result of quasis and expressions will be:
+    ///
+    /// ```rust
+    /// (vec!["width:", "px;color:red;height:100px;"], { 0 })
+    /// ```
+    ///
+    /// Only the first expression (`width`) is kept, and the second one (`color`) is removed
+    /// because it was inside a comment.
     pub(super) fn minify_css(&self, css: &str) -> (Vec<Atom<'a>>, FxHashSet<usize>) {
         if css.trim().is_empty() {
             return (Vec::new(), FxHashSet::default());
@@ -942,6 +1032,7 @@ impl<'a> CssMinifier<'a> {
                     in_string = false;
                 }
                 // Handle placeholders
+                // This is where we detect the placeholders we injected earlier.
                 b'_' if bytes[i..].starts_with(Self::PLACEHOLDER_PREFIX.as_bytes()) => {
                     if let Some((number, new_index)) = Self::try_parse_placeholder(bytes, i) {
                         remaining_expression_indexes.insert(number);
@@ -982,7 +1073,7 @@ impl<'a> CssMinifier<'a> {
                             }
                             continue;
                         }
-                        // Skip line comments, avoid `https://`
+                        // Skip line comments, but be careful not to break URLs like `https://...`
                         b'/' if paren_depth == 0 && (i == 0 || bytes[i - 1] != b':') => {
                             i = Self::skip_line_comment(bytes, i);
                             continue;
@@ -1002,7 +1093,7 @@ impl<'a> CssMinifier<'a> {
                     }
                 }
 
-                // Skip whitespace
+                // Skip and compress whitespace.
                 c if c.is_ascii_whitespace() => {
                     i += 1;
                     // Compress symbols, remove spaces around these symbols,
@@ -1022,7 +1113,7 @@ impl<'a> CssMinifier<'a> {
             i += 1;
         }
 
-        // Handle remaining output
+        // Add any remaining text after no more placeholders.
         new_raws.push(self.ast.atom(
             // SAFETY: Output is all picked from the original `raw_values` and is guaranteed
             // to be valid UTF-8.
@@ -1049,6 +1140,7 @@ impl<'a> CssMinifier<'a> {
         backslash_count % 2 == 1
     }
 
+    /// Skips a multiline comment `/* ... */`.
     #[inline]
     fn skip_multiline_comment(bytes: &[u8], start: usize) -> usize {
         let mut i = start + 2; // Skip /*
@@ -1063,6 +1155,7 @@ impl<'a> CssMinifier<'a> {
         i
     }
 
+    /// Skips a line comment `// ...`
     #[inline]
     fn skip_line_comment(bytes: &[u8], start: usize) -> usize {
         let mut i = start;
