@@ -340,7 +340,7 @@ impl<'a> StyledComponents<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) {
         let Expression::TaggedTemplateExpression(tagged) = expr else {
-            return;
+            unreachable!();
         };
 
         let is_styled = if self.options.display_name || self.options.ssr {
