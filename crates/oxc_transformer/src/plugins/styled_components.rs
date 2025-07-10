@@ -255,18 +255,23 @@ impl StyledComponentsBinding {
 enum StyledComponentsHelper {
     CreateGlobalStyle = 0,
     Css = 1,
-    InjectGlobal = 2,
-    Keyframes = 3,
-    UseTheme = 4,
-    WithTheme = 5,
+    Keyframes = 2,
+    UseTheme = 3,
+    WithTheme = 4,
+    InjectGlobal = 5,
 }
 
 impl StyledComponentsHelper {
+    /// Convert string to [`StyledComponentsHelper`].
     fn from_str(name: &str) -> Option<Self> {
+        if name == "injectGlobal" { Some(Self::InjectGlobal) } else { Self::pure_from_str(name) }
+    }
+
+    /// Convert string to [`StyledComponentsHelper`], excluding `injectGlobal`.
+    fn pure_from_str(name: &str) -> Option<Self> {
         match name {
             "createGlobalStyle" => Some(Self::CreateGlobalStyle),
             "css" => Some(Self::Css),
-            "injectGlobal" => Some(Self::InjectGlobal),
             "keyframes" => Some(Self::Keyframes),
             "useTheme" => Some(Self::UseTheme),
             "withTheme" => Some(Self::WithTheme),
@@ -753,19 +758,28 @@ impl<'a> StyledComponents<'a, '_> {
     /// Checks if the identifier is a helper function of styled-components
     fn is_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         StyledComponentsHelper::from_str(&ident.name)
-            .and_then(|helper| self.styled_bindings.helper_symbol_id(helper))
-            .is_some_and(|symbol_id| {
-                let reference_id = ident.reference_id();
-                ctx.scoping()
-                    .get_reference(reference_id)
-                    .symbol_id()
-                    .is_some_and(|reference_symbol_id| reference_symbol_id == symbol_id)
-            })
+            .is_some_and(|helper| self.is_specific_helper(ident, helper, ctx))
     }
 
     /// Checks if the identifier is a pure helper function of styled-components
     fn is_pure_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        ident.name != "injectGlobal" && self.is_helper(ident, ctx)
+        StyledComponentsHelper::pure_from_str(&ident.name)
+            .is_some_and(|helper| self.is_specific_helper(ident, helper, ctx))
+    }
+
+    fn is_specific_helper(
+        &self,
+        ident: &IdentifierReference<'a>,
+        helper: StyledComponentsHelper,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        self.styled_bindings.helper_symbol_id(helper).is_some_and(|symbol_id| {
+            let reference_id = ident.reference_id();
+            ctx.scoping()
+                .get_reference(reference_id)
+                .symbol_id()
+                .is_some_and(|reference_symbol_id| reference_symbol_id == symbol_id)
+        })
     }
 
     /// Checks if the identifier is a reference to a styled binding.
