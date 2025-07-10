@@ -418,3 +418,30 @@ describe('typescript', () => {
     });
   });
 });
+
+describe('styled-components', () => {
+  test('matches output', () => {
+    const code = `
+      import styled, { css } from 'styled-components';
+
+      styled.div\`color: red;\`;
+      const v = css(["color: red;"]);
+    `;
+    const ret = transform('test.js', code, {
+      plugins: {
+        styledComponents: {
+          pure: true,
+        },
+      },
+    });
+    expect(ret.code).toMatchInlineSnapshot(`
+			"import styled, { css } from "styled-components";
+			styled.div.withConfig({
+				displayName: "test",
+				componentId: "sc-ziiqn7-0"
+			})(["color:red;"]);
+			const v = /* @__PURE__ */ css(["color: red;"]);
+			"
+		`);
+  });
+});
