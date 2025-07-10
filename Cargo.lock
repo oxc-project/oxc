@@ -1942,7 +1942,6 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
- "fixedbitset",
  "globset",
  "icu_segmenter",
  "indexmap",
