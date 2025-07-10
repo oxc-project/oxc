@@ -480,35 +480,32 @@ impl<'a> StyledComponents<'a, '_> {
     fn collect_styled_bindings(&mut self, program: &Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
+            let Some(specifiers) = &import.specifiers else { continue };
+            if !is_valid_styled_component_source(&import.source.value) {
+                continue;
+            }
 
-            if let Some(specifiers) = &import.specifiers {
-                if !is_valid_styled_component_source(&import.source.value) {
-                    continue;
-                }
-
-                for specifier in specifiers {
-                    match specifier {
-                        ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                            let symbol_id = specifier.local.symbol_id();
-                            let imported_name = specifier.imported.name();
-                            match imported_name.as_str() {
-                                "default" => {
-                                    self.styled_bindings.styled = Some(symbol_id);
-                                }
-                                name => {
-                                    if let Some(helper) = StyledComponentsHelper::from_str(name) {
-                                        self.styled_bindings
-                                            .set_helper_symbol_id(helper, symbol_id);
-                                    }
+            for specifier in specifiers {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        let symbol_id = specifier.local.symbol_id();
+                        let imported_name = specifier.imported.name();
+                        match imported_name.as_str() {
+                            "default" => {
+                                self.styled_bindings.styled = Some(symbol_id);
+                            }
+                            name => {
+                                if let Some(helper) = StyledComponentsHelper::from_str(name) {
+                                    self.styled_bindings.set_helper_symbol_id(helper, symbol_id);
                                 }
                             }
                         }
-                        ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                            self.styled_bindings.styled = Some(specifier.local.symbol_id());
-                        }
-                        ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                            self.styled_bindings.namespace = Some(specifier.local.symbol_id());
-                        }
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        self.styled_bindings.styled = Some(specifier.local.symbol_id());
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        self.styled_bindings.namespace = Some(specifier.local.symbol_id());
                     }
                 }
             }
