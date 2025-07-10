@@ -55,7 +55,7 @@
 //! - Babel plugin: <https://github.com/styled-components/babel-plugin-styled-components>
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use std::iter::once;
@@ -234,7 +234,45 @@ struct StyledComponentsBinding {
     /// `import styled from 'styled-components'` or `import { default as styled } from 'styled-components'`
     styled: Option<SymbolId>,
     /// Named imports like `import { createGlobalStyle, css, keyframes } from 'styled-components'`
-    helpers: FxHashMap<String, SymbolId>,
+    helpers: [Option<SymbolId>; 6],
+}
+
+impl StyledComponentsBinding {
+    fn helper_symbol_id(&self, helper: StyledComponentsHelper) -> Option<SymbolId> {
+        self.helpers[helper as usize]
+    }
+
+    fn set_helper_symbol_id(&mut self, helper: StyledComponentsHelper, symbol_id: SymbolId) {
+        self.helpers[helper as usize] = Some(symbol_id);
+    }
+}
+
+/// Helper functions.
+///
+/// Used as index into `StyledComponentsBinding::helpers` array.
+#[derive(Copy, Clone)]
+#[repr(u8)]
+enum StyledComponentsHelper {
+    CreateGlobalStyle = 0,
+    Css = 1,
+    InjectGlobal = 2,
+    Keyframes = 3,
+    UseTheme = 4,
+    WithTheme = 5,
+}
+
+impl StyledComponentsHelper {
+    fn from_str(name: &str) -> Option<Self> {
+        match name {
+            "createGlobalStyle" => Some(Self::CreateGlobalStyle),
+            "css" => Some(Self::Css),
+            "injectGlobal" => Some(Self::InjectGlobal),
+            "keyframes" => Some(Self::Keyframes),
+            "useTheme" => Some(Self::UseTheme),
+            "withTheme" => Some(Self::WithTheme),
+            _ => None,
+        }
+    }
 }
 
 pub struct StyledComponents<'a, 'ctx> {
@@ -456,12 +494,12 @@ impl<'a> StyledComponents<'a, '_> {
                                 "default" => {
                                     self.styled_bindings.styled = Some(symbol_id);
                                 }
-                                name if Self::is_helper_name(name) => {
-                                    self.styled_bindings
-                                        .helpers
-                                        .insert(name.to_string(), symbol_id);
+                                name => {
+                                    if let Some(helper) = StyledComponentsHelper::from_str(name) {
+                                        self.styled_bindings
+                                            .set_helper_symbol_id(helper, symbol_id);
+                                    }
                                 }
-                                _ => {}
                             }
                         }
                         ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
@@ -668,7 +706,7 @@ impl<'a> StyledComponents<'a, '_> {
         match callee.without_parentheses() {
             Expression::StaticMemberExpression(member) => {
                 if let Expression::Identifier(ident) = &member.object {
-                    !Self::is_helper_name(&member.property.name)
+                    StyledComponentsHelper::from_str(&member.property.name).is_none()
                         && Self::is_reference_of_styled(self.styled_bindings.styled, ident, ctx)
                 } else if let Expression::StaticMemberExpression(static_member) = &member.object {
                     // Handle `styled.default`
@@ -707,21 +745,16 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
-    fn is_helper_name(name: &str) -> bool {
-        matches!(
-            name,
-            "createGlobalStyle" | "css" | "injectGlobal" | "keyframes" | "withTheme" | "useTheme"
-        )
-    }
-
     fn is_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        self.styled_bindings.helpers.get(ident.name.as_str()).is_some_and(|symbol_id| {
-            let reference_id = ident.reference_id();
-            ctx.scoping()
-                .get_reference(reference_id)
-                .symbol_id()
-                .is_some_and(|reference_symbol_id| reference_symbol_id == *symbol_id)
-        })
+        StyledComponentsHelper::from_str(&ident.name)
+            .and_then(|helper| self.styled_bindings.helper_symbol_id(helper))
+            .is_some_and(|symbol_id| {
+                let reference_id = ident.reference_id();
+                ctx.scoping()
+                    .get_reference(reference_id)
+                    .symbol_id()
+                    .is_some_and(|reference_symbol_id| reference_symbol_id == symbol_id)
+            })
     }
 
     fn is_pure_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
