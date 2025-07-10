@@ -54,7 +54,7 @@
 //!
 //! - Babel plugin: <https://github.com/styled-components/babel-plugin-styled-components>
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
-#![expect(clippy::doc_link_with_quotes)]
+
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
@@ -114,6 +114,7 @@ pub struct StyledComponentsOptions {
     /// more compact than the standard Babel template literal transformation.
     ///
     /// Default: `true`
+    #[expect(clippy::doc_link_with_quotes)]
     #[serde(default = "default_as_true")]
     pub transpile_template_literals: bool,
 
