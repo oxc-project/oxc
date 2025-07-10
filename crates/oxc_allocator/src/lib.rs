@@ -65,4 +65,5 @@ pub use vec::Vec;
 pub mod __private {
     pub use super::alloc::Alloc;
     pub use super::arena::*;
+    pub use super::vec2::Vec;
 }
