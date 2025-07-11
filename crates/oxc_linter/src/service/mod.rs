@@ -61,13 +61,13 @@ impl LintServiceOptions {
     }
 }
 
-pub struct LintService<'l> {
-    runtime: Runtime<'l>,
+pub struct LintService {
+    runtime: Runtime,
 }
 
-impl<'l> LintService<'l> {
+impl LintService {
     pub fn new(
-        linter: &'l Linter,
+        linter: Linter,
         allocator_pool: oxc_allocator::AllocatorPool,
         options: LintServiceOptions,
     ) -> Self {
@@ -77,16 +77,16 @@ impl<'l> LintService<'l> {
 
     #[must_use]
     pub fn with_file_system(
-        mut self,
+        &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> Self {
-        self.runtime = self.runtime.with_file_system(file_system);
+    ) -> &mut Self {
+        self.runtime.with_file_system(file_system);
         self
     }
 
     #[must_use]
-    pub fn with_paths(mut self, paths: Vec<Arc<OsStr>>) -> Self {
-        self.runtime = self.runtime.with_paths(paths);
+    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
+        self.runtime.with_paths(paths);
         self
     }
 
