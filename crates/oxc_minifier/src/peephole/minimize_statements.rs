@@ -8,7 +8,7 @@ use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::{CompressOptionsUnused, ctx::Ctx, keep_var::KeepVar};
 
 use super::{PeepholeOptimizations, State};
 
@@ -407,6 +407,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_declarator_unused(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+            return false;
+        }
         if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
             if let Some(symbol_id) = ident.symbol_id.get() {
                 return ctx.scoping().symbol_is_unused(symbol_id);

@@ -1275,11 +1275,11 @@ mod test {
     use crate::{
         CompressOptions,
         options::CompressOptionsKeepNames,
-        tester::{run, test, test_same},
+        tester::{default_options, run, test, test_same},
     };
 
     fn test_same_keep_names(keep_names: CompressOptionsKeepNames, code: &str) {
-        let result = run(code, Some(CompressOptions { keep_names, ..CompressOptions::smallest() }));
+        let result = run(code, Some(CompressOptions { keep_names, ..default_options() }));
         let expected = run(code, None);
         assert_eq!(result, expected, "\nfor source\n{code}\ngot\n{result}");
     }

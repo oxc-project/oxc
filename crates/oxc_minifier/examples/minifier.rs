@@ -50,7 +50,10 @@ fn minify(
     let mut program = ret.program;
     let options = MinifierOptions {
         mangle: mangle.then(MangleOptions::default),
-        compress: Some(CompressOptions::default()),
+        compress: Some(CompressOptions {
+            unused: oxc_minifier::CompressOptionsUnused::Keep,
+            ..CompressOptions::default()
+        }),
     };
     let ret = Minifier::new(options).build(allocator, &mut program);
     Codegen::new()
