@@ -203,6 +203,9 @@ pub enum AstType {
     JSDocUnknownType = 186,
 }
 
+/// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
+pub const AST_TYPE_MAX: u16 = 187;
+
 /// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy)]
 #[repr(C, u8)]

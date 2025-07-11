@@ -132,6 +132,8 @@ impl Generator for AstKindGenerator {
             next_index += 1;
         }
 
+        let ast_type_max = number_lit(next_index);
+
         let output = quote! {
             #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
@@ -151,6 +153,10 @@ impl Generator for AstKindGenerator {
             pub enum AstType {
                 #type_variants
             }
+
+            ///@@line_break
+            /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
+            pub const AST_TYPE_MAX: u16 = #ast_type_max;
 
             ///@@line_break
             /// Untyped AST Node Kind
