@@ -143,14 +143,11 @@ impl NoDuplicateHooks {
         }
 
         let hook_name = jest_fn_call.name.to_string();
-        let parent_node_id =
-            match ctx.nodes().ancestor_ids(node.id()).find(|n| hook_contexts.contains_key(n)) {
-                Some(n) => Some(n),
-                _ => Some(root_node_id),
-            };
-        let Some(parent_id) = parent_node_id else {
-            return;
-        };
+        let parent_id = ctx
+            .nodes()
+            .ancestor_ids(node.id())
+            .find(|n| hook_contexts.contains_key(n))
+            .unwrap_or(root_node_id);
 
         let Some(contexts) = hook_contexts.get_mut(&parent_id) else {
             return;

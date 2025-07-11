@@ -133,7 +133,7 @@ impl PreferAwaitToCallbacks {
     }
 
     fn is_inside_yield_or_await(id: NodeId, ctx: &LintContext) -> bool {
-        ctx.nodes().ancestors(id).skip(1).any(|parent| {
+        ctx.nodes().ancestors(id).any(|parent| {
             matches!(parent.kind(), AstKind::AwaitExpression(_) | AstKind::YieldExpression(_))
         })
     }

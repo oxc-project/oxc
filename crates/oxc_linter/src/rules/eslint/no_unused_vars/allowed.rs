@@ -204,7 +204,7 @@ impl NoUnusedVars {
         param: &FormalParameter<'a>,
         params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id).skip(1);
+        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id);
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

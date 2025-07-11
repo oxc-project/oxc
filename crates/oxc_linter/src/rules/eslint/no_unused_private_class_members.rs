@@ -113,9 +113,8 @@ impl Rule for NoUnusedPrivateClassMembers {
 }
 
 fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
-    for (curr, parent) in nodes
-        .ancestors(nodes.parent_id(current_node_id))
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+    for (curr, parent) in
+        nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
             (member_expr, AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_))

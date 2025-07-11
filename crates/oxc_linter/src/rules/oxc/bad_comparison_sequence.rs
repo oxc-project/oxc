@@ -60,19 +60,17 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {
-    for node_id in ctx.nodes().ancestor_ids(node.id()).skip(1) {
-        let kind = ctx.nodes().kind(node_id);
-
+    for ancestor_kind in ctx.nodes().ancestor_kinds(node.id()) {
         // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors.
         // So we should treat Parenthesized Expression as a boundary.
-        if matches!(kind, AstKind::ParenthesizedExpression(_))
-            || kind.is_declaration()
-            || kind.is_statement()
+        if matches!(ancestor_kind, AstKind::ParenthesizedExpression(_))
+            || ancestor_kind.is_declaration()
+            || ancestor_kind.is_statement()
         {
             return true;
         }
 
-        if matches!(kind, AstKind::BinaryExpression(expr) if is_bad_comparison(expr)) {
+        if matches!(ancestor_kind, AstKind::BinaryExpression(expr) if is_bad_comparison(expr)) {
             return false;
         }
     }
