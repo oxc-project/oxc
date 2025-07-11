@@ -110,7 +110,7 @@ impl Rule for NoHtmlLinkForPages {
         };
 
         // Check if href value indicates an internal link
-        let is_internal_link = href_attr.value.as_ref().map_or(false, |value| {
+        let is_internal_link = href_attr.value.as_ref().is_some_and(|value| {
             match value {
                 // String literal href
                 oxc_ast::ast::JSXAttributeValue::StringLiteral(str_lit) => {
