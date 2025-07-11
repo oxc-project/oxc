@@ -83,6 +83,12 @@ impl Rule for NoEmptyPattern {
         };
         ctx.diagnostic(no_empty_pattern_diagnostic(pattern_type, span));
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_any(&[oxc_ast::AstType::ObjectPattern, oxc_ast::AstType::ArrayPattern])
+    }
 }
 
 #[test]

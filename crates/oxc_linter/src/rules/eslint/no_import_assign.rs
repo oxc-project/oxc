@@ -99,6 +99,10 @@ impl Rule for NoImportAssign {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::ImportDeclaration)
+    }
 }
 
 /// Check if a given node is at the first argument of a well-known mutation function.

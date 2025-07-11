@@ -132,6 +132,14 @@ impl Rule for NoThisBeforeSuper {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::Class)
+            && ctx
+                .semantic()
+                .nodes()
+                .contains_any(&[oxc_ast::AstType::Super, oxc_ast::AstType::ThisExpression])
+    }
 }
 
 impl NoThisBeforeSuper {

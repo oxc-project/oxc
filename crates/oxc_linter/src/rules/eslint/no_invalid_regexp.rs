@@ -160,6 +160,12 @@ impl Rule for NoInvalidRegexp {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_any(&[oxc_ast::AstType::NewExpression, oxc_ast::AstType::CallExpression])
+    }
 }
 
 fn parse_arguments_to_check<'a>(

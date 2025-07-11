@@ -56,6 +56,14 @@ impl Rule for NoSetterReturn {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::ReturnStatement)
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::ObjectProperty,
+                oxc_ast::AstType::MethodDefinition,
+            ])
+    }
 }
 
 #[test]
