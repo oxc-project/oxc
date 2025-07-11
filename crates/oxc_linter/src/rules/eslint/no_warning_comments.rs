@@ -1,11 +1,6 @@
 use oxc_macros::declare_oxc_lint;
 
-use crate::{
-    context::LintContext,
-    rule::Rule
-    ,
-    AstNode,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoWarningComments;
