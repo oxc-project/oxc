@@ -1,20 +1,11 @@
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{
-    AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::Rule
+    ,
+    AstNode,
 };
-
-fn no_warning_comments_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoWarningComments;
@@ -50,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWarningComments {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {
         // ctx.diagnostic(
         //     OxcDiagnostic::warn("Warning comments should be avoided")
         //         .with_help("Use a command-like statement that tells the user how to fix the issue")
