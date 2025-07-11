@@ -297,7 +297,7 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
     /// Filename or directory name is used for `displayName`
-    block_name: Option<&'a str>,
+    block_name: Option<Atom<'a>>,
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
@@ -638,7 +638,7 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// `<namespace__>sc-<file_hash>-<component_count>`
-    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
+    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
         let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
             prefix
@@ -665,7 +665,7 @@ impl<'a> StyledComponents<'a, '_> {
         let mut buffer = itoa::Buffer::new();
         let count = buffer.format(self.component_count);
         self.component_count += 1;
-        ctx.ast.allocator.alloc_concat_strs_array([prefix, count])
+        ctx.ast.atom_from_strs_array([prefix, count])
     }
 
     /// Generates a unique file hash based on the source path or source code.
@@ -698,14 +698,14 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// Returns the block name based on the file stem or parent directory name.
-    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
         if !self.options.file_name {
             return None;
         }
 
         let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
 
-        Some(self.block_name.get_or_insert_with(|| {
+        Some(*self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
             let block_name =
@@ -720,13 +720,13 @@ impl<'a> StyledComponents<'a, '_> {
                     file_stem
                 };
 
-            ctx.ast.str(block_name)
+            ctx.ast.atom(block_name)
         }))
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
-        let component_name = Self::get_component_name(ctx).map(|name| name.as_str());
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+        let component_name = Self::get_component_name(ctx);
 
         let Some(block_name) = self.get_block_name(ctx) else { return component_name };
 
@@ -734,7 +734,7 @@ impl<'a> StyledComponents<'a, '_> {
             if block_name == component_name {
                 component_name
             } else {
-                ctx.ast.allocator.alloc_concat_strs_array([block_name, "__", component_name])
+                ctx.ast.atom_from_strs_array([&block_name, "__", &component_name])
             }
         } else {
             block_name
@@ -833,11 +833,11 @@ impl<'a> StyledComponents<'a, '_> {
     //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Option<&'a str>,
+        value: Option<Atom<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
-        let value = ctx.ast.expression_string_literal(SPAN, value.unwrap_or(""), None);
+        let value = ctx.ast.expression_string_literal(SPAN, value.unwrap_or(Atom::from("")), None);
         ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
