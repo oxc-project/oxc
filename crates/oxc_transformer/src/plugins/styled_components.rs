@@ -56,6 +56,7 @@
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
 
 use std::{
+    borrow::Cow,
     hash::{Hash, Hasher},
     iter::once,
 };
@@ -63,7 +64,7 @@ use std::{
 use rustc_hash::{FxHashSet, FxHasher};
 use serde::Deserialize;
 
-use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::SymbolId;
@@ -894,12 +895,12 @@ impl<'a> CssMinifier<'a> {
         let minifier = Self::new(ast);
 
         let css = if quasis.len() == 1 {
-            &quasis[0].value.raw
+            Cow::Borrowed(quasis[0].value.raw.as_str())
         } else {
-            minifier.inject_unique_placeholders(quasis)
+            Cow::Owned(Self::inject_unique_placeholders(quasis))
         };
 
-        minifier.minify_css(css)
+        minifier.minify_css(&css)
     }
 
     /// Injects unique placeholders into a series of `quasis` to represent expressions.
@@ -915,23 +916,25 @@ impl<'a> CssMinifier<'a> {
     /// `["width: ", "px; color: ", ";"]`, and expressions `[width, color]`,
     /// this function will produce the string:
     /// `"width: __PLACEHOLDER_0__px; color: __PLACEHOLDER_1__;"`
-    fn inject_unique_placeholders(&self, quasis: &[TemplateElement]) -> &str {
+    fn inject_unique_placeholders(quasis: &[TemplateElement]) -> String {
         let estimated_capacity: usize = quasis.iter().map(|s| s.value.raw.len()).sum::<usize>()
             + (quasis.len() - 1)
                 * (Self::PLACEHOLDER_PREFIX.len() + Self::PLACEHOLDER_SUFFIX.len() + 2); // 2 for digits
 
-        let mut result = StringBuilder::with_capacity_in(estimated_capacity, self.ast.allocator);
+        let mut result = String::with_capacity(estimated_capacity);
 
         for (index, val) in quasis.iter().enumerate() {
             result.push_str(&val.value.raw);
             if index < quasis.len() - 1 {
-                result.push_str(Self::PLACEHOLDER_PREFIX);
-                result.push_str(itoa::Buffer::new().format(index));
-                result.push_str(Self::PLACEHOLDER_SUFFIX);
+                result.extend([
+                    Self::PLACEHOLDER_PREFIX,
+                    itoa::Buffer::new().format(index),
+                    Self::PLACEHOLDER_SUFFIX,
+                ]);
             }
         }
 
-        result.into_str()
+        result
     }
 
     /// Tries to parse a placeholder like `__PLACEHOLDER_0__` from a byte slice.
