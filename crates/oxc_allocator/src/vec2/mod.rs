@@ -124,14 +124,12 @@ use core::slice;
 // #[cfg(feature = "std")]
 // use std::io;
 
-use bumpalo::collections::CollectionAllocErr;
-
 use oxc_data_structures::assert_unchecked;
 
 use crate::alloc::Alloc;
 
 mod raw_vec;
-use raw_vec::RawVec;
+use raw_vec::{AllocError, RawVec};
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -921,7 +919,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.try_reserve(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
+    pub fn try_reserve(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve(self.len_u32(), additional)
     }
 
@@ -948,7 +946,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.try_reserve_exact(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
+    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve_exact(self.len_u32(), additional)
     }
 
