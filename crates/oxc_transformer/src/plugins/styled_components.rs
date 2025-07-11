@@ -571,7 +571,7 @@ impl<'a> StyledComponents<'a, '_> {
             properties.push(Self::create_object_property("displayName", value, ctx));
         }
         if self.options.ssr {
-            let value = Some(self.get_component_id(ctx));
+            let value = self.get_component_id(ctx);
             properties.push(Self::create_object_property("componentId", value, ctx));
         }
     }
@@ -725,12 +725,14 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         let component_name = Self::get_component_name(ctx);
 
-        let Some(block_name) = self.get_block_name(ctx) else { return component_name };
+        let Some(block_name) = self.get_block_name(ctx) else {
+            return component_name.unwrap_or(Atom::from(""));
+        };
 
-        let name = if let Some(component_name) = component_name {
+        if let Some(component_name) = component_name {
             if block_name == component_name {
                 component_name
             } else {
@@ -738,8 +740,7 @@ impl<'a> StyledComponents<'a, '_> {
             }
         } else {
             block_name
-        };
-        Some(name)
+        }
     }
 
     /// Returns true if the given callee is a styled-components binding.
@@ -833,11 +834,11 @@ impl<'a> StyledComponents<'a, '_> {
     //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Option<Atom<'a>>,
+        value: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
-        let value = ctx.ast.expression_string_literal(SPAN, value.unwrap_or(Atom::from("")), None);
+        let value = ctx.ast.expression_string_literal(SPAN, value, None);
         ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
