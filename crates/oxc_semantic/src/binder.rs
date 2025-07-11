@@ -155,6 +155,11 @@ impl<'a> Binder<'a> for Function<'a> {
 
             let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
+
+            // Save `@__NO_SIDE_EFFECTS__`
+            if self.pure {
+                builder.scoping.no_side_effects.insert(symbol_id);
+            }
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
@@ -171,13 +176,6 @@ impl<'a> Binder<'a> for Function<'a> {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
-            }
-        }
-
-        // Save `@__NO_SIDE_EFFECTS__`
-        if self.pure {
-            if let Some(symbol_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
-                builder.scoping.no_side_effects.insert(symbol_id);
             }
         }
     }
