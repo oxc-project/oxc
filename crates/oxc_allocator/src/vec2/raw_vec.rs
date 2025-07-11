@@ -28,7 +28,6 @@ use core::cmp;
 use core::mem;
 use core::ptr::{self, NonNull};
 
-use allocator_api2::alloc::AllocError;
 use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow};
 
 use crate::alloc::Alloc;
@@ -789,13 +788,6 @@ fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
 // only one location which panics rather than a bunch throughout the module.
 fn capacity_overflow() -> ! {
     panic!("capacity overflow")
-}
-
-// Copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L482-L486
-/// Wrapper around `Layout::from_size_align` that adds debug assertions.
-#[inline]
-fn layout_from_size_align(size: usize, align: usize) -> Result<Layout, AllocError> {
-    Layout::from_size_align(size, align).map_err(|_| AllocError)
 }
 
 /// Handle collection allocation errors
