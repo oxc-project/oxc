@@ -46,6 +46,10 @@ impl Rule for RequireYield {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::Function)
+    }
 }
 
 #[test]

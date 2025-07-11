@@ -86,6 +86,10 @@ impl Rule for NoStandaloneExpect {
             self.run(possible_jest_node, &id_nodes_mapping, ctx);
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::CallExpression)
+    }
 }
 
 impl NoStandaloneExpect {

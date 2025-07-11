@@ -152,6 +152,15 @@ impl Rule for UseIsnan {
 
         Self { enforce_for_switch_case, enforce_for_index_of }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::BinaryExpression,
+            oxc_ast::AstType::SwitchCase,
+            oxc_ast::AstType::SwitchStatement,
+            oxc_ast::AstType::CallExpression,
+        ])
+    }
 }
 
 fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {

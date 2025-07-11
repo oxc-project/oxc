@@ -83,6 +83,12 @@ impl Rule for NoUselessCatch {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_all(&[oxc_ast::AstType::TryStatement, oxc_ast::AstType::CatchClause])
+    }
 }
 
 #[test]

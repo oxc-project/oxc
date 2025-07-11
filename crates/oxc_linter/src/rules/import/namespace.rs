@@ -218,6 +218,10 @@ impl Rule for Namespace {
             });
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::ImportDeclaration)
+    }
 }
 
 /// If the name is a namespace object in imported module, return the module request name.

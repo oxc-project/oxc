@@ -42,6 +42,10 @@ impl Rule for NoWith {
             ctx.diagnostic(no_with_diagnostic(Span::sized(with_statement.span.start, 4)));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::WithStatement)
+    }
 }
 
 #[test]

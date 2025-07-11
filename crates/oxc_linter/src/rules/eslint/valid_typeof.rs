@@ -171,6 +171,12 @@ impl Rule for ValidTypeof {
 
         Self { require_string_literals }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_all(&[oxc_ast::AstType::UnaryExpression, oxc_ast::AstType::BinaryExpression])
+    }
 }
 
 const VALID_TYPES: [&str; 8] =

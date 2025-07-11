@@ -150,6 +150,14 @@ impl Rule for NoUselessEscape {
 
         Self(Box::new(NoUselessEscapeConfig { allow_regex_characters }))
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::RegExpLiteral,
+            oxc_ast::AstType::StringLiteral,
+            oxc_ast::AstType::TemplateLiteral,
+        ])
+    }
 }
 
 fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {

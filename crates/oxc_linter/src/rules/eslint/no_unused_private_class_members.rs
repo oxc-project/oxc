@@ -110,6 +110,12 @@ impl Rule for NoUnusedPrivateClassMembers {
             }
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_all(&[oxc_ast::AstType::Class, oxc_ast::AstType::PrivateIdentifier])
+    }
 }
 
 fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {

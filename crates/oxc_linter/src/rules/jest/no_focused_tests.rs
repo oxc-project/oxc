@@ -76,6 +76,10 @@ impl Rule for NoFocusedTests {
     ) {
         run(jest_node, ctx);
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::CallExpression)
+    }
 }
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
