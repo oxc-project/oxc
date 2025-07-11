@@ -297,7 +297,7 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
     /// Filename or directory name is used for `displayName`
-    block_name: Option<String>,
+    block_name: Option<&'a str>,
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
@@ -698,7 +698,7 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// Returns the block name based on the file stem or parent directory name.
-    fn get_block_name(&mut self) -> Option<&str> {
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
         if !self.options.file_name {
             return None;
         }
@@ -720,7 +720,7 @@ impl<'a> StyledComponents<'a, '_> {
                     file_stem
                 };
 
-            block_name.to_string()
+            ctx.ast.str(block_name)
         }))
     }
 
@@ -728,7 +728,7 @@ impl<'a> StyledComponents<'a, '_> {
     fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
         let component_name = Self::get_component_name(ctx).map(|name| name.as_str());
 
-        let Some(block_name) = self.get_block_name() else { return component_name };
+        let Some(block_name) = self.get_block_name(ctx) else { return component_name };
 
         let name = if let Some(component_name) = component_name {
             if block_name == component_name {
@@ -737,7 +737,7 @@ impl<'a> StyledComponents<'a, '_> {
                 ctx.ast.allocator.alloc_concat_strs_array([block_name, "__", component_name])
             }
         } else {
-            ctx.ast.str(block_name)
+            block_name
         };
         Some(name)
     }
