@@ -80,6 +80,10 @@ impl Rule for NoDupeClassMembers {
             }
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::Class)
+    }
 }
 
 #[test]

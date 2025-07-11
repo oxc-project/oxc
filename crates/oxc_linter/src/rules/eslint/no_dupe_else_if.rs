@@ -170,6 +170,10 @@ impl Rule for NoDupeElseIf {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::IfStatement)
+    }
 }
 
 fn split_by_or<'a, 'b>(expr: &'a Expression<'b>) -> Vec<&'a Expression<'b>> {
