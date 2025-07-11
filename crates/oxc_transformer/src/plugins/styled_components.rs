@@ -295,6 +295,8 @@ pub struct StyledComponents<'a, 'ctx> {
     component_count: usize,
     /// Hash of the current file for component ID generation
     component_id_prefix: Option<String>,
+    /// Filename or directory name is used for `displayName`
+    block_name: Option<String>,
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
@@ -305,6 +307,7 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
             styled_bindings: StyledComponentsBinding::default(),
             component_id_prefix: None,
             component_count: 0,
+            block_name: None,
         }
     }
 }
@@ -690,27 +693,38 @@ impl<'a> StyledComponents<'a, '_> {
         base36_encode(hasher.finish())
     }
 
-    /// Returns the display name which infers the component name or gets from the file name.
-    fn get_display_name(&self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
-        let component_name = Self::get_component_name(ctx);
+    /// Returns the block name based on the file stem or parent directory name.
+    fn get_block_name(&mut self) -> Option<&str> {
+        if !self.options.file_name {
+            return None;
+        }
 
-        if self.options.file_name
-            && let Some(file_stem) = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())
-        {
+        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+
+        Some(self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
-            let block_name = if self.options.meaningless_file_names.contains(&file_stem.to_string())
-            {
-                self.ctx
-                    .source_path
-                    .parent()
-                    .and_then(|parent| parent.file_name())
-                    .and_then(|name| name.to_str())
-                    .unwrap_or(file_stem)
-            } else {
-                file_stem
-            };
+            let block_name =
+                if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
+                    self.ctx
+                        .source_path
+                        .parent()
+                        .and_then(|parent| parent.file_name())
+                        .and_then(|name| name.to_str())
+                        .unwrap_or(file_stem)
+                } else {
+                    file_stem
+                };
 
+            block_name.to_string()
+        }))
+    }
+
+    /// Returns the display name which infers the component name or gets from the file name.
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
+        let component_name = Self::get_component_name(ctx);
+
+        if let Some(block_name) = self.get_block_name() {
             if let Some(component_name) = component_name {
                 if block_name == component_name {
                     return Some(ctx.ast.str(component_name.as_str()));
