@@ -38,3 +38,10 @@ const Test7 = styled.div`
   ${'green'} // color: ${'red'}${'blue'};
   height: ${p => p.props.height};
 `
+
+const Test8 = styled.div`
+  width: 100%;
+  // color: ${'red'};
+  color: ${'blue'};
+  height: ${123};
+`

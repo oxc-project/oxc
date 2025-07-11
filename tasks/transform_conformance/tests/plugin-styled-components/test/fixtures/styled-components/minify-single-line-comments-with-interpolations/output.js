@@ -15,3 +15,8 @@ const Test7 = styled.div.withConfig({ displayName: "input__Test7", componentId: 
   'green',
   p => p.props.height,
 );
+const Test8 = styled.div.withConfig({ displayName: "input__Test8", componentId: "sc-clieju-7" })(
+  ["width:100%;color:", ";height:", ";"],
+  "blue",
+  123,
+);
