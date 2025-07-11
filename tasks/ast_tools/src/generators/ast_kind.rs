@@ -26,11 +26,24 @@ use super::define_generator;
 /// Structs to omit creating an `AstKind` for.
 ///
 /// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "TSFunctionType", "Span"];
+///
+/// Ideally we want all visited structs to have `AstKind`s.
+/// We are working towards removing all the items from this list (except `Span`).
+/// <https://github.com/oxc-project/oxc/issues/11490>
+const STRUCTS_BLACK_LIST: &[&str] = &[
+    "BindingPattern",
+    "TSFunctionType",
+    // This one should not be removed
+    "Span",
+];
 
 /// Enums to create an `AstKind` for.
 ///
 /// Apart from this list, enums don't have `AstKind`s.
+///
+/// Ideally we don't want any enums to have `AstKind`s.
+/// We are working towards removing all the items from this list.
+/// <https://github.com/oxc-project/oxc/issues/11490>
 const ENUMS_WHITE_LIST: &[&str] = &["Argument", "AssignmentTarget", "SimpleAssignmentTarget"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
