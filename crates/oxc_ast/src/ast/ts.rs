@@ -769,7 +769,7 @@ pub struct TSTypeReference<'a> {
 
 /// TSTypeName:
 ///     IdentifierReference
-///     this . TSTypeName
+///     this
 ///     TSTypeName . IdentifierName
 #[ast(visit)]
 #[derive(Debug)]

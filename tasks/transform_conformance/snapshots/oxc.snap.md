@@ -1,10 +1,6 @@
 commit: 1d4546bc
 
-<<<<<<< HEAD
-Passed: 176/293
-=======
-Passed: 156/260
->>>>>>> 35090dc87 (add a test for `this`)
+Passed: 176/294
 
 # All Passed:
 * babel-plugin-transform-class-static-block
