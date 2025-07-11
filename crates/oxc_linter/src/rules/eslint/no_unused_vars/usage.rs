@@ -409,9 +409,8 @@ impl<'a> Symbol<'_, 'a> {
             match node.kind() {
                 // references used in declaration of another variable are definitely
                 // used by others
-                AstKind::VariableDeclarator(_)
-                | AstKind::JSXExpressionContainer(_)
-                | AstKind::Argument(_) => {
+                AstKind::VariableDeclarator(_) | AstKind::JSXExpressionContainer(_) => {
+                    // TODO: | AstKind::Argument(_) => {
                     // definitely used, short-circuit
                     return false;
                 }
