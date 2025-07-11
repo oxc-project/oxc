@@ -409,8 +409,8 @@ impl<'a> StyledComponents<'a, '_> {
         let (new_raws, remained_expression_indices) = CssMinifier::minify_quasis(quasis, ctx.ast);
 
         // Update the quasis with the new raw values.
-        for (new_raw, quais) in new_raws.into_iter().zip(quasis.iter_mut()) {
-            quais.value.raw = new_raw;
+        for (new_raw, quasis) in new_raws.into_iter().zip(quasis.iter_mut()) {
+            quasis.value.raw = new_raw;
         }
 
         // Keep expressions that are still present after minification.
