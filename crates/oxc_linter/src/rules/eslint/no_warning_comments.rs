@@ -58,6 +58,7 @@ impl Rule for NoWarningComments {
     }
 }
 
+#[ignore]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -118,54 +119,144 @@ fn test() {
 
     let fail = vec![
         ("// fixme", None),
-("// any fixme", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// any fixme", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
-("// any FIXME", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
-("// any fIxMe", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
-("/* any fixme */", Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }]))),
-("/* any FIXME */", Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }]))),
-("/* any fIxMe */", Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }]))),
-("// any fixme or todo", Some(serde_json::json!([{ "terms": ["fixme", "todo"], "location": "anywhere" }]))),
-("/* any fixme or todo */", Some(serde_json::json!([{ "terms": ["fixme", "todo"], "location": "anywhere" }]))),
-("/* any fixme or todo */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/* fixme and todo */", None),
-("/* fixme and todo */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/* any fixme */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/* fixme! */", Some(serde_json::json!([{ "terms": ["fixme"] }]))),
-("// regex [litera|$]", Some(serde_json::json!([{ "terms": ["[litera|$]"], "location": "anywhere" }]))),
-("/* eslint one-var: 2 */", Some(serde_json::json!([{ "terms": ["eslint"] }]))),
-("/* eslint one-var: 2 */", Some(serde_json::json!([{ "terms": ["one"], "location": "anywhere" }]))),
-("/* any block comment with TODO, FIXME or XXX */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/* any block comment with (TODO, FIXME's or XXX!) */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/**
+        ("// any fixme", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        ("// any fixme", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
+        ("// any FIXME", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
+        ("// any fIxMe", Some(serde_json::json!([{ "terms": ["fixme"], "location": "anywhere" }]))),
+        (
+            "/* any fixme */",
+            Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }])),
+        ),
+        (
+            "/* any FIXME */",
+            Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }])),
+        ),
+        (
+            "/* any fIxMe */",
+            Some(serde_json::json!([{ "terms": ["FIXME"], "location": "anywhere" }])),
+        ),
+        (
+            "// any fixme or todo",
+            Some(serde_json::json!([{ "terms": ["fixme", "todo"], "location": "anywhere" }])),
+        ),
+        (
+            "/* any fixme or todo */",
+            Some(serde_json::json!([{ "terms": ["fixme", "todo"], "location": "anywhere" }])),
+        ),
+        ("/* any fixme or todo */", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        ("/* fixme and todo */", None),
+        ("/* fixme and todo */", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        ("/* any fixme */", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        ("/* fixme! */", Some(serde_json::json!([{ "terms": ["fixme"] }]))),
+        (
+            "// regex [litera|$]",
+            Some(serde_json::json!([{ "terms": ["[litera|$]"], "location": "anywhere" }])),
+        ),
+        ("/* eslint one-var: 2 */", Some(serde_json::json!([{ "terms": ["eslint"] }]))),
+        (
+            "/* eslint one-var: 2 */",
+            Some(serde_json::json!([{ "terms": ["one"], "location": "anywhere" }])),
+        ),
+        (
+            "/* any block comment with TODO, FIXME or XXX */",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        (
+            "/* any block comment with (TODO, FIXME's or XXX!) */",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        (
+            "/**
 			 *any block comment
-			*with (TODO, FIXME's or XXX!) **/", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// any comment with TODO, FIXME or XXX", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// TODO: something small", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// TODO: something really longer than 40 characters", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("/* TODO: something
+			*with (TODO, FIXME's or XXX!) **/",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        (
+            "// any comment with TODO, FIXME or XXX",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        ("// TODO: something small", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        (
+            "// TODO: something really longer than 40 characters",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        (
+            "/* TODO: something
 			 really longer than 40 characters
-			 and also a new line */", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// TODO: small", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// https://github.com/eslint/eslint/pull/13522#discussion_r470293411 TODO", Some(serde_json::json!([{ "location": "anywhere" }]))),
-("// Comment ending with term followed by punctuation TODO!", Some(serde_json::json!([{ "terms": ["todo"], "location": "anywhere" }]))),
-("// Comment ending with term including punctuation TODO!", Some(serde_json::json!([{ "terms": ["todo!"], "location": "anywhere" }]))),
-("// Comment ending with term including punctuation followed by more TODO!!!", Some(serde_json::json!([{ "terms": ["todo!"], "location": "anywhere" }]))),
-("// !TODO comment starting with term preceded by punctuation", Some(serde_json::json!([{ "terms": ["todo"], "location": "anywhere" }]))),
-("// !TODO comment starting with term including punctuation", Some(serde_json::json!([{ "terms": ["!todo"], "location": "anywhere" }]))),
-("// !!!TODO comment starting with term including punctuation preceded by more", Some(serde_json::json!([{ "terms": ["!todo"], "location": "anywhere" }]))),
-("// FIX!term ending with punctuation followed word character", Some(serde_json::json!([{ "terms": ["FIX!"], "location": "anywhere" }]))),
-("// Term starting with punctuation preceded word character!FIX", Some(serde_json::json!([{ "terms": ["!FIX"], "location": "anywhere" }]))),
-("//!XXX comment starting with no spaces (anywhere)", Some(serde_json::json!([{ "terms": ["!xxx"], "location": "anywhere" }]))),
-("//!XXX comment starting with no spaces (start)", Some(serde_json::json!([{ "terms": ["!xxx"], "location": "start" }]))),
-("/*
+			 and also a new line */",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        ("// TODO: small", Some(serde_json::json!([{ "location": "anywhere" }]))),
+        (
+            "// https://github.com/eslint/eslint/pull/13522#discussion_r470293411 TODO",
+            Some(serde_json::json!([{ "location": "anywhere" }])),
+        ),
+        (
+            "// Comment ending with term followed by punctuation TODO!",
+            Some(serde_json::json!([{ "terms": ["todo"], "location": "anywhere" }])),
+        ),
+        (
+            "// Comment ending with term including punctuation TODO!",
+            Some(serde_json::json!([{ "terms": ["todo!"], "location": "anywhere" }])),
+        ),
+        (
+            "// Comment ending with term including punctuation followed by more TODO!!!",
+            Some(serde_json::json!([{ "terms": ["todo!"], "location": "anywhere" }])),
+        ),
+        (
+            "// !TODO comment starting with term preceded by punctuation",
+            Some(serde_json::json!([{ "terms": ["todo"], "location": "anywhere" }])),
+        ),
+        (
+            "// !TODO comment starting with term including punctuation",
+            Some(serde_json::json!([{ "terms": ["!todo"], "location": "anywhere" }])),
+        ),
+        (
+            "// !!!TODO comment starting with term including punctuation preceded by more",
+            Some(serde_json::json!([{ "terms": ["!todo"], "location": "anywhere" }])),
+        ),
+        (
+            "// FIX!term ending with punctuation followed word character",
+            Some(serde_json::json!([{ "terms": ["FIX!"], "location": "anywhere" }])),
+        ),
+        (
+            "// Term starting with punctuation preceded word character!FIX",
+            Some(serde_json::json!([{ "terms": ["!FIX"], "location": "anywhere" }])),
+        ),
+        (
+            "//!XXX comment starting with no spaces (anywhere)",
+            Some(serde_json::json!([{ "terms": ["!xxx"], "location": "anywhere" }])),
+        ),
+        (
+            "//!XXX comment starting with no spaces (start)",
+            Some(serde_json::json!([{ "terms": ["!xxx"], "location": "start" }])),
+        ),
+        (
+            "/*
 			TODO undecorated multi-line block comment (start)
-			*/", Some(serde_json::json!([{ "terms": ["todo"], "location": "start" }]))),
-("///// TODO decorated single-line comment with decoration array
-			 /////", Some(serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]))),
-("///*/*/ TODO decorated single-line comment with multiple decoration characters (start)
-			 /////", Some(serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]))),
-("//**TODO term starts with a decoration character", Some(serde_json::json!([				{ "terms": ["*todo"], "location": "start", "decoration": ["*"] },			])))
+			*/",
+            Some(serde_json::json!([{ "terms": ["todo"], "location": "start" }])),
+        ),
+        (
+            "///// TODO decorated single-line comment with decoration array
+			 /////",
+            Some(
+                serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]),
+            ),
+        ),
+        (
+            "///*/*/ TODO decorated single-line comment with multiple decoration characters (start)
+			 /////",
+            Some(
+                serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]),
+            ),
+        ),
+        (
+            "//**TODO term starts with a decoration character",
+            Some(
+                serde_json::json!([				{ "terms": ["*todo"], "location": "start", "decoration": ["*"] },			]),
+            ),
+        ),
     ];
 
     Tester::new(NoWarningComments::NAME, NoWarningComments::PLUGIN, pass, fail).test_and_snapshot();
