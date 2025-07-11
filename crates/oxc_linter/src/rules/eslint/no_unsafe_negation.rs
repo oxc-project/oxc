@@ -108,6 +108,12 @@ impl Rule for NoUnsafeNegation {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_all(&[oxc_ast::AstType::BinaryExpression, oxc_ast::AstType::UnaryExpression])
+    }
 }
 
 #[test]

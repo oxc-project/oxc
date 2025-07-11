@@ -127,6 +127,10 @@ impl Rule for NoSelfAssign {
             self.each_self_assignment(&assignment.left, &assignment.right, ctx);
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::AssignmentExpression)
+    }
 }
 
 impl NoSelfAssign {

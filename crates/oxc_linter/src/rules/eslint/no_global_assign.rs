@@ -81,6 +81,13 @@ impl Rule for NoGlobalAssign {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::AssignmentExpression,
+            oxc_ast::AstType::UpdateExpression,
+        ])
+    }
 }
 
 #[test]

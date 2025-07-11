@@ -66,6 +66,10 @@ impl Rule for NoEmptyCharacterClass {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::RegExpLiteral)
+    }
 }
 
 struct EmptyClassFinder {

@@ -55,6 +55,10 @@ impl Rule for NoNonoctalDecimalEscape {
             check_string(ctx, literal.span.source_text(ctx.source_text()));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::StringLiteral)
+    }
 }
 trait StickyRegex {
     fn sticky_captures<'h>(&self, haystack: &'h str, start: usize)

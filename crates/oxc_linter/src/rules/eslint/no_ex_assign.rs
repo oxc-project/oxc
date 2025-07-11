@@ -62,6 +62,12 @@ impl Rule for NoExAssign {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic()
+            .nodes()
+            .contains_any(&[oxc_ast::AstType::TryStatement, oxc_ast::AstType::CatchClause])
+    }
 }
 
 #[test]
