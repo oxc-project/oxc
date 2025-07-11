@@ -85,6 +85,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
 
     /// Like `with_capacity` but parameterized over the choice of
     /// allocator for the returned RawVec.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `cap` is too large.
     #[inline]
     pub fn with_capacity_in(cap: usize, alloc: &'a A) -> Self {
         unsafe {
@@ -358,6 +362,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     */
 
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocError)` if unable to reserve requested space in the `RawVec`.
     pub fn try_reserve_exact(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
         if self.needs_to_grow(len, additional) {
             self.grow_exact(len, additional)?
@@ -394,6 +402,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     }
 
     /// The same as `reserve`, but returns on errors instead of panicking or aborting.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocError)` if unable to reserve requested space in the `RawVec`.
     pub fn try_reserve(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
         if self.needs_to_grow(len, additional) {
             self.grow_amortized(len, additional)?;
@@ -756,6 +768,10 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
 impl<T, A: Alloc> RawVec<'_, T, A> {
     /// Frees the memory owned by the RawVec *without* trying to Drop its contents.
+    ///
+    /// # SAFETY
+    ///
+    /// Not sure what safety invariants of this method are! TODO
     pub unsafe fn dealloc_buffer(&mut self) {
         let elem_size = mem::size_of::<T>();
         if elem_size != 0 {

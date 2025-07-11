@@ -905,9 +905,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// greater than or equal to `self.len() + additional`. Does nothing if
     /// capacity is already sufficient.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the new capacity overflows `u32`.
+    /// Returns `Err(AllocError)` if unable to reserve requested space in the `Vec`.
     ///
     /// # Examples
     ///
@@ -932,9 +932,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// requests. Therefore capacity can not be relied upon to be precisely
     /// minimal. Prefer `try_reserve` if future insertions are expected.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the new capacity overflows `u32`.
+    /// Returns `Err(AllocError)` if unable to reserve requested space in the `Vec`.
     ///
     /// # Examples
     ///
@@ -1834,6 +1834,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec2, [2, 3]);
     /// ```
     #[inline]
+    #[must_use]
     pub fn split_off(&mut self, at: usize) -> Self {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
@@ -2034,6 +2035,10 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// This method is equivalent to calling [`extend_from_slice_copy`] in a loop, but is able
     /// to precompute the total amount of space to reserve in advance. This reduces the potential
     /// maximum number of reallocations needed from one-per-slice to just one.
+    ///
+    /// # Panics
+    ///
+    /// Panics if unable to reserve sufficient capacity in the `Vec` for the slices.
     ///
     /// # Examples
     ///
