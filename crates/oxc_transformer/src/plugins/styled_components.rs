@@ -726,23 +726,20 @@ impl<'a> StyledComponents<'a, '_> {
 
     /// Returns the display name which infers the component name or gets from the file name.
     fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
-        let component_name = Self::get_component_name(ctx);
+        let component_name = Self::get_component_name(ctx).map(|name| name.as_str());
 
-        if let Some(block_name) = self.get_block_name() {
-            if let Some(component_name) = component_name {
-                if block_name == component_name {
-                    return Some(ctx.ast.str(component_name.as_str()));
-                }
-                return Some(ctx.ast.allocator.alloc_concat_strs_array([
-                    block_name,
-                    "__",
-                    component_name.as_str(),
-                ]));
+        let Some(block_name) = self.get_block_name() else { return component_name };
+
+        let name = if let Some(component_name) = component_name {
+            if block_name == component_name {
+                component_name
+            } else {
+                ctx.ast.allocator.alloc_concat_strs_array([block_name, "__", component_name])
             }
-            return Some(ctx.ast.str(block_name));
-        }
-
-        component_name.map(|name| name.as_str())
+        } else {
+            ctx.ast.str(block_name)
+        };
+        Some(name)
     }
 
     /// Returns true if the given callee is a styled-components binding.
