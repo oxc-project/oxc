@@ -387,8 +387,9 @@ pub fn is_multiline_template_starting_on_same_line(
     template: &TemplateLiteral,
     source_text: &str,
 ) -> bool {
-    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
-        && !has_new_line_backward(&source_text[..start as usize])
+    template.lead.iter().any(|pair| pair.quasi.value.raw.contains('\n'))
+        || template.tail.value.raw.contains('\n')
+            && !has_new_line_backward(&source_text[..start as usize])
 }
 
 struct ArrowChain<'a, 'b> {

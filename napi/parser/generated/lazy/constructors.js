@@ -837,7 +837,7 @@ class TemplateLiteral {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $quasis: void 0, $expressions: void 0 };
+    this.#internal = { pos, ast, $lead: void 0 };
     nodes.set(pos, this);
   }
 
@@ -851,18 +851,16 @@ class TemplateLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get quasis() {
+  get lead() {
     const internal = this.#internal,
-      cached = internal.$quasis;
+      cached = internal.$lead;
     if (cached !== void 0) return cached;
-    return internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast);
+    return internal.$lead = constructVecTemplateLiteralPair(internal.pos + 8, internal.ast);
   }
 
-  get expressions() {
-    const internal = this.#internal,
-      cached = internal.$expressions;
-    if (cached !== void 0) return cached;
-    return internal.$expressions = constructVecExpression(internal.pos + 32, internal.ast);
+  get tail() {
+    const internal = this.#internal;
+    return new TemplateElement(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -870,8 +868,8 @@ class TemplateLiteral {
       type: 'TemplateLiteral',
       start: this.start,
       end: this.end,
-      quasis: this.quasis,
-      expressions: this.expressions,
+      lead: this.lead,
+      tail: this.tail,
     };
   }
 
@@ -970,18 +968,12 @@ class TemplateElement {
     return new TemplateElementValue(internal.pos + 8, internal.ast);
   }
 
-  get tail() {
-    const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TemplateElement',
       start: this.start,
       end: this.end,
       value: this.value,
-      tail: this.tail,
     };
   }
 
@@ -12750,34 +12742,6 @@ function constructBoxPrivateIdentifier(pos, ast) {
   return new PrivateIdentifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function constructVecTemplateElement(pos, ast) {
-  const { uint32 } = ast.buffer,
-    pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    48,
-    constructTemplateElement,
-    ast,
-  );
-}
-
-function constructTemplateElement(pos, ast) {
-  return new TemplateElement(pos, ast);
-}
-
-function constructVecExpression(pos, ast) {
-  const { uint32 } = ast.buffer,
-    pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructExpression,
-    ast,
-  );
-}
-
 function constructBoxTSTypeParameterInstantiation(pos, ast) {
   return new TSTypeParameterInstantiation(ast.buffer.uint32[pos >> 2], ast);
 }
@@ -12873,6 +12837,18 @@ function constructBoxAssignmentTargetPropertyProperty(pos, ast) {
 function constructOptionExpression(pos, ast) {
   if (ast.buffer[pos] === 51) return null;
   return constructExpression(pos, ast);
+}
+
+function constructVecExpression(pos, ast) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructExpression,
+    ast,
+  );
 }
 
 function constructBoxBlockStatement(pos, ast) {
@@ -13736,6 +13712,22 @@ function constructOptionTSTypeName(pos, ast) {
 function constructOptionTSMappedTypeModifierOperator(pos, ast) {
   if (ast.buffer[pos] === 3) return null;
   return constructTSMappedTypeModifierOperator(pos, ast);
+}
+
+function constructVecTemplateElement(pos, ast) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    48,
+    constructTemplateElement,
+    ast,
+  );
+}
+
+function constructTemplateElement(pos, ast) {
+  return new TemplateElement(pos, ast);
 }
 
 function constructBoxTSExternalModuleReference(pos, ast) {

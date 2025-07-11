@@ -78,15 +78,17 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
         is_global_reference: &impl IsGlobalReference<'a>,
     ) -> Option<Cow<'a, str>> {
         let mut str = String::new();
-        for (i, quasi) in self.quasis.iter().enumerate() {
-            str.push_str(quasi.value.cooked.as_ref()?);
 
-            if i < self.expressions.len() {
-                let expr = &self.expressions[i];
-                let value = expr.to_js_string(is_global_reference)?;
-                str.push_str(&value);
-            }
+        // Process lead pairs
+        for pair in &self.lead {
+            str.push_str(pair.quasi.value.cooked.as_ref()?);
+            let value = pair.expression.to_js_string(is_global_reference)?;
+            str.push_str(&value);
         }
+
+        // Process tail
+        str.push_str(self.tail.value.cooked.as_ref()?);
+
         Some(Cow::Owned(str))
     }
 }

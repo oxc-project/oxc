@@ -235,11 +235,9 @@ fn is_invalid_fetch_options<'a>(
 fn extract_method_name_from_template_literal<'a>(
     template_lit: &'a TemplateLiteral<'a>,
 ) -> Cow<'a, str> {
-    if let Some(template_element_value) = template_lit.quasis.first() {
-        // only one template element
-        if template_element_value.tail {
-            return template_element_value.value.raw.cow_to_ascii_uppercase();
-        }
+    // Only handle no-substitution templates
+    if template_lit.lead.is_empty() {
+        return template_lit.tail.value.raw.cow_to_ascii_uppercase();
     }
     UNKNOWN_METHOD_NAME
 }

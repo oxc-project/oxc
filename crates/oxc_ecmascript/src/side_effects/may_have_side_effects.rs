@@ -82,11 +82,12 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for TemplateLiteral<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        self.expressions.iter().any(|e| {
+        self.lead.iter().any(|pair| {
             // ToString is called for each expression.
             // If the expression is a Symbol or ToPrimitive returns a Symbol, an error is thrown.
             // ToPrimitive returns the value as-is for non-Object values, so we can use it instead of ToString here.
-            e.to_primitive(ctx).is_symbol() != Some(false) || e.may_have_side_effects(ctx)
+            pair.expression.to_primitive(ctx).is_symbol() != Some(false)
+                || pair.expression.may_have_side_effects(ctx)
         })
     }
 }

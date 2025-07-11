@@ -295,7 +295,7 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
 }
 
 fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
-    template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
+    template_literal.lead.is_empty()
 }
 
 pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {

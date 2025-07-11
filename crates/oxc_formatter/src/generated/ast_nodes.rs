@@ -229,6 +229,7 @@ pub enum SiblingNode<'a> {
     ObjectExpression(&'a ObjectExpression<'a>),
     ObjectProperty(&'a ObjectProperty<'a>),
     TemplateLiteral(&'a TemplateLiteral<'a>),
+    TemplateLiteralPair(&'a TemplateLiteralPair<'a>),
     TaggedTemplateExpression(&'a TaggedTemplateExpression<'a>),
     TemplateElement(&'a TemplateElement<'a>),
     ComputedMemberExpression(&'a ComputedMemberExpression<'a>),
@@ -469,6 +470,12 @@ impl<'a> From<&'a ObjectProperty<'a>> for SiblingNode<'a> {
 impl<'a> From<&'a TemplateLiteral<'a>> for SiblingNode<'a> {
     fn from(node: &'a TemplateLiteral<'a>) -> Self {
         SiblingNode::TemplateLiteral(node)
+    }
+}
+
+impl<'a> From<&'a TemplateLiteralPair<'a>> for SiblingNode<'a> {
+    fn from(node: &'a TemplateLiteralPair<'a>) -> Self {
+        SiblingNode::TemplateLiteralPair(node)
     }
 }
 
@@ -2131,6 +2138,7 @@ impl SiblingNode<'_> {
             Self::ObjectExpression(n) => n.span(),
             Self::ObjectProperty(n) => n.span(),
             Self::TemplateLiteral(n) => n.span(),
+            Self::TemplateLiteralPair(n) => n.quasi.span.merge(n.expression.span()),
             Self::TaggedTemplateExpression(n) => n.span(),
             Self::TemplateElement(n) => n.span(),
             Self::ComputedMemberExpression(n) => n.span(),
@@ -3945,17 +3953,10 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
-        let following_node = self
-            .inner
-            .expressions
-            .first()
-            .as_ref()
-            .copied()
-            .map(SiblingNode::from)
-            .or(self.following_node);
+    pub fn lead(&self) -> &AstNode<'a, Vec<'a, TemplateLiteralPair<'a>>> {
+        let following_node = Some(SiblingNode::from(&self.inner.tail));
         self.allocator.alloc(AstNode {
-            inner: &self.inner.quasis,
+            inner: &self.inner.lead,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
             following_node,
@@ -3963,14 +3964,54 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn tail(&self) -> &AstNode<'a, TemplateElement<'a>> {
         let following_node = self.following_node;
         self.allocator.alloc(AstNode {
-            inner: &self.inner.expressions,
+            inner: &self.inner.tail,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
+}
+
+impl<'a> AstNode<'a, TemplateLiteralPair<'a>> {
+    #[inline]
+    pub fn quasi(&self) -> &AstNode<'a, TemplateElement<'a>> {
+        let following_node = Some(SiblingNode::from(&self.inner.expression));
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.quasi,
+            allocator: self.allocator,
+            parent: self.parent,
+            following_node,
+        })
+    }
+
+    #[inline]
+    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.expression,
+            allocator: self.allocator,
+            parent: self.parent,
+            following_node,
+        })
+    }
+    pub fn span(&self) -> Span {
+        self.inner.quasi.span.merge(self.inner.expression.span())
     }
 
     pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
@@ -4057,11 +4098,6 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn value(&self) -> &TemplateElementValue<'a> {
         &self.inner.value
-    }
-
-    #[inline]
-    pub fn tail(&self) -> bool {
-        self.inner.tail
     }
 
     #[inline]
@@ -13850,6 +13886,64 @@ impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
     type IntoIter = AstNodeIterator<'a, ObjectPropertyKind<'a>>;
     fn into_iter(self) -> Self::IntoIter {
         AstNodeIterator::<ObjectPropertyKind<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            allocator: self.allocator,
+        }
+    }
+}
+
+impl<'a> AstNode<'a, Vec<'a, TemplateLiteralPair<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TemplateLiteralPair<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            allocator: self.allocator,
+        }
+    }
+
+    pub fn first(&self) -> Option<&'a AstNode<'a, TemplateLiteralPair<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: inner_iter.next().map(SiblingNode::from),
+            }))
+            .as_ref()
+    }
+
+    pub fn last(&self) -> Option<&'a AstNode<'a, TemplateLiteralPair<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: None,
+            }))
+            .as_ref()
+    }
+}
+
+impl<'a> Iterator for AstNodeIterator<'a, TemplateLiteralPair<'a>> {
+    type Item = &'a AstNode<'a, TemplateLiteralPair<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                let following_node = self.inner.peek().copied().map(SiblingNode::from);
+                AstNode { parent: self.parent, inner, allocator, following_node }
+            }))
+            .as_ref()
+    }
+}
+
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TemplateLiteralPair<'a>>> {
+    type Item = &'a AstNode<'a, TemplateLiteralPair<'a>>;
+    type IntoIter = AstNodeIterator<'a, TemplateLiteralPair<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TemplateLiteralPair<'a>> {
             inner: self.inner.iter().peekable(),
             parent: self.parent,
             allocator: self.allocator,

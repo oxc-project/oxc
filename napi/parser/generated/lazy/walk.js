@@ -716,8 +716,7 @@ function walkTemplateLiteral(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkVecTemplateElement(pos + 8, ast, visitors);
-  walkVecExpression(pos + 32, ast, visitors);
+  walkTemplateElement(pos + 32, ast, visitors);
 
   if (exit) exit(node);
 }
@@ -4593,28 +4592,6 @@ function walkBoxPrivateIdentifier(pos, ast, visitors) {
   return walkPrivateIdentifier(ast.buffer.uint32[pos >> 2], ast, visitors);
 }
 
-function walkVecTemplateElement(pos, ast, visitors) {
-  const { uint32 } = ast.buffer,
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 48;
-  while (pos < endPos) {
-    walkTemplateElement(pos, ast, visitors);
-    pos += 48;
-  }
-}
-
-function walkVecExpression(pos, ast, visitors) {
-  const { uint32 } = ast.buffer,
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 16;
-  while (pos < endPos) {
-    walkExpression(pos, ast, visitors);
-    pos += 16;
-  }
-}
-
 function walkBoxTSTypeParameterInstantiation(pos, ast, visitors) {
   return walkTSTypeParameterInstantiation(ast.buffer.uint32[pos >> 2], ast, visitors);
 }
@@ -4696,6 +4673,17 @@ function walkBoxAssignmentTargetPropertyProperty(pos, ast, visitors) {
 
 function walkOptionExpression(pos, ast, visitors) {
   if (!(ast.buffer[pos] === 51)) walkExpression(pos, ast, visitors);
+}
+
+function walkVecExpression(pos, ast, visitors) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  const endPos = pos + uint32[pos32 + 2] * 16;
+  while (pos < endPos) {
+    walkExpression(pos, ast, visitors);
+    pos += 16;
+  }
 }
 
 function walkBoxBlockStatement(pos, ast, visitors) {
@@ -5450,6 +5438,17 @@ function walkOptionBoxObjectExpression(pos, ast, visitors) {
 
 function walkOptionTSTypeName(pos, ast, visitors) {
   if (!(ast.buffer[pos] === 2)) walkTSTypeName(pos, ast, visitors);
+}
+
+function walkVecTemplateElement(pos, ast, visitors) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  const endPos = pos + uint32[pos32 + 2] * 48;
+  while (pos < endPos) {
+    walkTemplateElement(pos, ast, visitors);
+    pos += 48;
+  }
 }
 
 function walkBoxTSExternalModuleReference(pos, ast, visitors) {

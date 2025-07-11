@@ -438,7 +438,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
 
 fn is_simple_template_literal(expr: &Expression) -> bool {
     match expr {
-        Expression::TemplateLiteral(template) => template.quasis.len() == 1,
+        Expression::TemplateLiteral(template) => template.lead.is_empty(),
         _ => false,
     }
 }
@@ -455,11 +455,11 @@ fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
     match expr {
         Expression::StringLiteral(string) => Some(&string.value),
         Expression::TemplateLiteral(template) => {
-            if template.quasis.len() != 1 {
+            if !template.lead.is_empty() {
                 return None;
             }
 
-            template.quasis.first().map(|e| e.value.raw.as_str())
+            Some(template.tail.value.raw.as_str())
         }
         _ => None,
     }

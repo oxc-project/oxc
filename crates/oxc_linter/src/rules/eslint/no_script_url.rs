@@ -53,15 +53,8 @@ impl Rule for NoScriptUrl {
             AstKind::TemplateLiteral(literal)
                 if !is_tagged_template_expression(ctx, node, literal.span) =>
             {
-                if literal.quasis.len() == 1
-                    && literal
-                        .quasis
-                        .first()
-                        .unwrap()
-                        .value
-                        .raw
-                        .cow_to_ascii_lowercase()
-                        .starts_with("javascript:")
+                if literal.lead.is_empty()
+                    && literal.tail.value.raw.cow_to_ascii_lowercase().starts_with("javascript:")
                 {
                     ctx.diagnostic(no_script_url_diagnostic(literal.span));
                 }

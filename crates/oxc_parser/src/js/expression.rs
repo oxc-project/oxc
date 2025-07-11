@@ -458,47 +458,52 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> TemplateLiteral<'a> {
         let span = self.start_span();
 
-        let (quasis, expressions) = match self.cur_kind() {
+        match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                let quasis = self.ast.vec1(self.parse_template_element(tagged));
-                (quasis, self.ast.vec())
+                let tail = self.parse_template_element(tagged);
+                let lead = self.ast.vec();
+                self.ast.template_literal(self.end_span(span), lead, tail)
             }
             Kind::TemplateHead => {
-                let mut expressions = self.ast.vec_with_capacity(1);
-                let mut quasis = self.ast.vec_with_capacity(2);
+                let mut lead = self.ast.vec_with_capacity(1);
 
-                quasis.push(self.parse_template_element(tagged));
+                let first_quasi = self.parse_template_element(tagged);
                 // TemplateHead Expression[+In, ?Yield, ?Await]
-                let expr = self.context(Context::In, Context::empty(), Self::parse_expr);
-                expressions.push(expr);
+                let first_expr = self.context(Context::In, Context::empty(), Self::parse_expr);
+                lead.push(TemplateLiteralPair { quasi: first_quasi, expression: first_expr });
+
                 self.re_lex_template_substitution_tail();
-                while self.fatal_error.is_none() {
+                let tail = loop {
                     match self.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
-                            break;
+                            break self.parse_template_element(tagged);
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            let quasi = self.parse_template_element(tagged);
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr =
                                 self.context(Context::In, Context::empty(), Self::parse_expr);
-                            expressions.push(expr);
+                            lead.push(TemplateLiteralPair { quasi, expression: expr });
                             self.re_lex_template_substitution_tail();
                         }
                         _ => {
                             self.expect(Kind::TemplateTail);
-                            break;
+                            // Create a dummy tail in case of error
+                            break self.ast.template_element(
+                                self.cur_token().span(),
+                                TemplateElementValue {
+                                    raw: self.ast.atom(""),
+                                    cooked: Some(self.ast.atom("")),
+                                },
+                            );
                         }
                     }
-                }
+                };
 
-                (quasis, expressions)
+                self.ast.template_literal(self.end_span(span), lead, tail)
             }
             _ => unreachable!("parse_template_literal"),
-        };
-
-        self.ast.template_literal(self.end_span(span), quasis, expressions)
+        }
     }
 
     pub(crate) fn parse_template_literal_expression(&mut self, tagged: bool) -> Expression<'a> {
@@ -566,11 +571,9 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::template_literal(span));
         }
 
-        let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
-            tail,
             lone_surrogates,
         )
     }

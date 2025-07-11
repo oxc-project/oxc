@@ -108,6 +108,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_template_literal_pair(&mut self, it: &mut TemplateLiteralPair<'a>) {
+        walk_template_literal_pair(self, it);
+    }
+
+    #[inline]
     fn visit_tagged_template_expression(&mut self, it: &mut TaggedTemplateExpression<'a>) {
         walk_tagged_template_expression(self, it);
     }
@@ -1202,13 +1207,8 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_template_elements(&mut self, it: &mut Vec<'a, TemplateElement<'a>>) {
-        walk_template_elements(self, it);
-    }
-
-    #[inline]
-    fn visit_expressions(&mut self, it: &mut Vec<'a, Expression<'a>>) {
-        walk_expressions(self, it);
+    fn visit_template_literal_pairs(&mut self, it: &mut Vec<'a, TemplateLiteralPair<'a>>) {
+        walk_template_literal_pairs(self, it);
     }
 
     #[inline]
@@ -1222,6 +1222,11 @@ pub trait VisitMut<'a>: Sized {
         it: &mut Vec<'a, AssignmentTargetProperty<'a>>,
     ) {
         walk_assignment_target_properties(self, it);
+    }
+
+    #[inline]
+    fn visit_expressions(&mut self, it: &mut Vec<'a, Expression<'a>>) {
+        walk_expressions(self, it);
     }
 
     #[inline]
@@ -1320,6 +1325,11 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_ts_index_signature_names(&mut self, it: &mut Vec<'a, TSIndexSignatureName<'a>>) {
         walk_ts_index_signature_names(self, it);
+    }
+
+    #[inline]
+    fn visit_template_elements(&mut self, it: &mut Vec<'a, TemplateElement<'a>>) {
+        walk_template_elements(self, it);
     }
 
     #[inline]
@@ -1547,9 +1557,19 @@ pub mod walk_mut {
         let kind = AstType::TemplateLiteral;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_template_elements(&mut it.quasis);
-        visitor.visit_expressions(&mut it.expressions);
+        visitor.visit_template_literal_pairs(&mut it.lead);
+        visitor.visit_template_element(&mut it.tail);
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_template_literal_pair<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TemplateLiteralPair<'a>,
+    ) {
+        // No `AstType` for this type
+        visitor.visit_template_element(&mut it.quasi);
+        visitor.visit_expression(&mut it.expression);
     }
 
     #[inline]
@@ -4427,22 +4447,12 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_template_elements<'a, V: VisitMut<'a>>(
+    pub fn walk_template_literal_pairs<'a, V: VisitMut<'a>>(
         visitor: &mut V,
-        it: &mut Vec<'a, TemplateElement<'a>>,
+        it: &mut Vec<'a, TemplateLiteralPair<'a>>,
     ) {
         for el in it {
-            visitor.visit_template_element(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_expressions<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, Expression<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_expression(el);
+            visitor.visit_template_literal_pair(el);
         }
     }
 
@@ -4460,6 +4470,16 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_assignment_target_property(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_expressions<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, Expression<'a>>,
+    ) {
+        for el in it {
+            visitor.visit_expression(el);
         }
     }
 
@@ -4641,6 +4661,16 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_ts_index_signature_name(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_template_elements<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, TemplateElement<'a>>,
+    ) {
+        for el in it {
+            visitor.visit_template_element(el);
         }
     }
 

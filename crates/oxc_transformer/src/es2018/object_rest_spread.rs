@@ -987,9 +987,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
             }
             // `let { [`a`], ... rest }`
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
-                let quasis = ctx.ast.vec1(lit.quasis[0].clone());
-                let expressions = ctx.ast.vec();
-                let expr = ctx.ast.expression_template_literal(lit.span, quasis, expressions);
+                let lead = ctx.ast.vec(); // Empty lead for no-substitution template
+                let tail = lit.tail.clone();
+                let expr = ctx.ast.expression_template_literal(lit.span, lead, tail);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {

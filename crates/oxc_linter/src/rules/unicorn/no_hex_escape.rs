@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{StringLiteral, TemplateLiteral},
-};
+use oxc_ast::{AstKind, ast::StringLiteral};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
@@ -85,14 +82,27 @@ impl Rule for NoHexEscape {
                     });
                 }
             }
-            AstKind::TemplateLiteral(TemplateLiteral { quasis, .. }) => {
-                quasis.iter().for_each(|quasi| {
-                    if let Some(fixed) = check_escape(quasi.span.source_text(ctx.source_text())) {
-                        ctx.diagnostic_with_fix(no_hex_escape_diagnostic(quasi.span), |fixer| {
-                            fixer.replace(quasi.span, fixed)
-                        });
+            AstKind::TemplateLiteral(template_lit) => {
+                // Check all quasis in lead pairs
+                for pair in &template_lit.lead {
+                    if let Some(fixed) =
+                        check_escape(pair.quasi.span.source_text(ctx.source_text()))
+                    {
+                        ctx.diagnostic_with_fix(
+                            no_hex_escape_diagnostic(pair.quasi.span),
+                            |fixer| fixer.replace(pair.quasi.span, fixed),
+                        );
                     }
-                });
+                }
+                // Check tail quasi
+                if let Some(fixed) =
+                    check_escape(template_lit.tail.span.source_text(ctx.source_text()))
+                {
+                    ctx.diagnostic_with_fix(
+                        no_hex_escape_diagnostic(template_lit.tail.span),
+                        |fixer| fixer.replace(template_lit.tail.span, fixed),
+                    );
+                }
             }
             AstKind::RegExpLiteral(regex) => {
                 let Some(pattern) = &regex.regex.pattern.pattern else {

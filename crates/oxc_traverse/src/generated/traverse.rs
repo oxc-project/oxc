@@ -196,6 +196,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_template_literal_pair(
+        &mut self,
+        node: &mut TemplateLiteralPair<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_template_literal_pair(
+        &mut self,
+        node: &mut TemplateLiteralPair<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_tagged_template_expression(
         &mut self,
         node: &mut TaggedTemplateExpression<'a>,

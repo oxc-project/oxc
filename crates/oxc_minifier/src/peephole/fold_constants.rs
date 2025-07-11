@@ -434,12 +434,15 @@ impl<'a> PeepholeOptimizations {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
             if let Expression::TemplateLiteral(right) = right_expr {
                 left.span = Span::new(left.span.start, right.span.end);
-                let left_last_quasi =
-                    left.quasis.last_mut().expect("template literal must have at least one quasi");
-                let right_first_quasi = right
-                    .quasis
-                    .first_mut()
-                    .expect("template literal must have at least one quasi");
+
+                // Get the last quasi from left (which is the tail)
+                let left_last_quasi = &mut left.tail;
+
+                // Get the first quasi from right
+                let right_first_quasi =
+                    if right.lead.is_empty() { &mut right.tail } else { &mut right.lead[0].quasi };
+
+                // Merge the quasis
                 let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
                 left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
@@ -450,19 +453,31 @@ impl<'a> PeepholeOptimizations {
                     None
                 };
                 left_last_quasi.value.cooked = new_cooked;
-                if !right.quasis.is_empty() {
-                    left_last_quasi.tail = false;
+
+                // If right has pairs, we need to move them to left
+                if !right.lead.is_empty() {
+                    // The first quasi of right was merged with left's tail,
+                    // so we need to create a new pair with left's old tail and right's first expression
+                    let new_pair = TemplateLiteralPair {
+                        quasi: left.tail.take_in(ctx.ast),
+                        expression: right.lead[0].expression.take_in(ctx.ast),
+                    };
+                    left.lead.push(new_pair);
+
+                    // Add remaining pairs from right (skipping the first one)
+                    left.lead.extend(right.lead.drain(1..));
                 }
-                left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
-                left.expressions.extend(right.expressions.drain(..));
+
+                // Update left's tail with right's tail
+                left.tail = right.tail.take_in(ctx.ast);
+
                 return Some(left_expr.take_in(ctx.ast));
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
                 left.span = Span::new(left.span.start, right_expr.span().end);
-                let last_quasi =
-                    left.quasis.last_mut().expect("template literal must have at least one quasi");
+                let last_quasi = &mut left.tail;
                 let new_raw = last_quasi.value.raw.to_string()
                     + &Self::escape_string_for_template_literal(&right_str);
                 last_quasi.value.raw = ctx.ast.atom(&new_raw);
@@ -477,10 +492,11 @@ impl<'a> PeepholeOptimizations {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
                 right.span = Span::new(left_expr.span().start, right.span.end);
-                let first_quasi = right
-                    .quasis
-                    .first_mut()
-                    .expect("template literal must have at least one quasi");
+
+                // Get the first quasi from right
+                let first_quasi =
+                    if right.lead.is_empty() { &mut right.tail } else { &mut right.lead[0].quasi };
+
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
                 first_quasi.value.raw = ctx.ast.atom(&new_raw);
@@ -771,58 +787,94 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let has_expr_to_inline = t
-            .expressions
-            .iter()
-            .any(|expr| !expr.may_have_side_effects(ctx) && expr.to_js_string(ctx).is_some());
-        if !has_expr_to_inline {
-            return;
-        }
-
         let mut inline_exprs = Vec::new();
-        let new_exprs =
-            ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
-                if expr.may_have_side_effects(ctx) {
-                    Some(expr)
-                } else if let Some(str) = expr.to_js_string(ctx) {
-                    inline_exprs.push((idx, str));
-                    None
-                } else {
-                    Some(expr)
-                }
-            }));
-        t.expressions = new_exprs;
 
-        // inline the extracted inline-able expressions into quasis
-        // "current_quasis + extracted_value + next_quasis"
-        for (i, (idx, str)) in inline_exprs.into_iter().enumerate() {
-            let idx = idx - i;
-            let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
-            let quasi = &mut t.quasis[idx];
-            let new_raw = quasi.value.raw.into_string()
-                + &Self::escape_string_for_template_literal(&str)
-                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw = ctx.ast.atom(&new_raw);
-            let new_cooked = if let (Some(cooked1), Some(cooked2)) =
-                (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
-            {
-                let v =
-                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(ctx.ast.atom(&v))
-            } else {
-                None
-            };
-            quasi.value.cooked = new_cooked;
-            if next_quasi.is_some_and(|q| q.tail) {
-                quasi.tail = true;
+        // Collect expressions that can be inlined, keeping track of their index
+        for (idx, pair) in t.lead.iter().enumerate() {
+            if !pair.expression.may_have_side_effects(ctx) {
+                if let Some(str) = pair.expression.to_js_string(ctx) {
+                    inline_exprs.push((idx, str));
+                }
             }
         }
 
-        state.changed = true;
+        // If there are expressions to inline, we need to rebuild the template literal
+        if !inline_exprs.is_empty() {
+            let mut new_lead = ctx.ast.vec();
+            let mut current_quasi = if t.lead.is_empty() {
+                t.tail.take_in(ctx.ast)
+            } else {
+                t.lead[0].quasi.take_in(ctx.ast)
+            };
+
+            let mut lead_idx = 0;
+
+            for (inline_idx, inline_str) in inline_exprs {
+                // Process pairs up to the one we're inlining
+                while lead_idx < inline_idx {
+                    new_lead.push(ctx.ast.template_literal_pair(
+                        current_quasi,
+                        t.lead[lead_idx].expression.take_in(ctx.ast),
+                    ));
+                    lead_idx += 1;
+                    current_quasi = t.lead[lead_idx].quasi.take_in(ctx.ast);
+                }
+
+                // Inline the expression by merging it into the current quasi
+                let next_quasi =
+                    if lead_idx + 1 < t.lead.len() { &t.lead[lead_idx + 1].quasi } else { &t.tail };
+
+                let new_raw = current_quasi.value.raw.into_string()
+                    + &Self::escape_string_for_template_literal(&inline_str)
+                    + next_quasi.value.raw.as_str();
+                current_quasi.value.raw = ctx.ast.atom(&new_raw);
+
+                let new_cooked = if let (Some(cooked1), Some(cooked2)) =
+                    (current_quasi.value.cooked, next_quasi.value.cooked)
+                {
+                    let v = cooked1.into_string() + &inline_str + cooked2.as_str();
+                    Some(ctx.ast.atom(&v))
+                } else {
+                    None
+                };
+                current_quasi.value.cooked = new_cooked;
+
+                // Skip the inlined expression
+                lead_idx += 1;
+
+                // If there's another pair after this, use its quasi as the new current
+                if lead_idx < t.lead.len() {
+                    current_quasi = if lead_idx + 1 < t.lead.len() {
+                        t.lead[lead_idx + 1].quasi.take_in(ctx.ast)
+                    } else {
+                        t.tail.take_in(ctx.ast)
+                    };
+                    lead_idx += 1;
+                }
+            }
+
+            // Process any remaining pairs that weren't inlined
+            while lead_idx < t.lead.len() {
+                new_lead.push(ctx.ast.template_literal_pair(
+                    current_quasi,
+                    t.lead[lead_idx].expression.take_in(ctx.ast),
+                ));
+                lead_idx += 1;
+                current_quasi = if lead_idx < t.lead.len() {
+                    t.lead[lead_idx].quasi.take_in(ctx.ast)
+                } else {
+                    t.tail.take_in(ctx.ast)
+                };
+            }
+
+            // Update the template literal
+            t.lead = new_lead;
+            t.tail = current_quasi;
+            state.changed = true;
+        }
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 #[cfg(test)]
 mod test {
     static MAX_SAFE_FLOAT: f64 = 9_007_199_254_740_991_f64;

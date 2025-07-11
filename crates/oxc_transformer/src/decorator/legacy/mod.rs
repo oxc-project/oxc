@@ -962,9 +962,10 @@ impl<'a> LegacyDecorator<'a, '_> {
             PropertyKey::StringLiteral(literal) => {
                 Expression::StringLiteral(ctx.ast.alloc(literal.clone()))
             }
-            PropertyKey::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-                let quasis = ctx.ast.vec_from_iter(literal.quasis.iter().cloned());
-                ctx.ast.expression_template_literal(SPAN, quasis, ctx.ast.vec())
+            PropertyKey::TemplateLiteral(literal) if literal.lead.is_empty() => {
+                let lead = ctx.ast.vec(); // Empty lead for no-substitution template
+                let tail = literal.tail.clone();
+                ctx.ast.expression_template_literal(SPAN, lead, tail)
             }
             PropertyKey::NullLiteral(_) => ctx.ast.expression_null_literal(SPAN),
             _ => {

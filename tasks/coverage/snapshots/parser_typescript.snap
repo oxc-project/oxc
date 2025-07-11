@@ -17386,13 +17386,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:18]
- 4 │ // Incomplete call, enough parameters.
- 5 │ f `123qdawdrqw${ }${
-   ·                  ─
-   ╰────
-
-  × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
@@ -17403,13 +17396,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ // Incomplete call, but too many parameters.
  5 │ f `123qdawdrqw${ 1 }${ }${ 
    ·                           ─
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions4.ts:5:24]
- 4 │ // Incomplete call, but too many parameters.
- 5 │ f `123qdawdrqw${ 1 }${ }${ 
-   ·                        ─
    ╰────
 
   × Unexpected token

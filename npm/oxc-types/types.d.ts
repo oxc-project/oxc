@@ -118,8 +118,8 @@ export type PropertyKind = 'init' | 'get' | 'set';
 
 export interface TemplateLiteral extends Span {
   type: 'TemplateLiteral';
-  quasis: Array<TemplateElement>;
-  expressions: Array<Expression>;
+  lead: Array<TemplateLiteralPair>;
+  tail: TemplateElement;
 }
 
 export interface TaggedTemplateExpression extends Span {
@@ -132,7 +132,6 @@ export interface TaggedTemplateExpression extends Span {
 export interface TemplateElement extends Span {
   type: 'TemplateElement';
   value: TemplateElementValue;
-  tail: boolean;
 }
 
 export interface TemplateElementValue {

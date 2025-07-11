@@ -91,9 +91,12 @@ impl Rule for IframeHasTitle {
                         }
                     }
                     JSXExpression::TemplateLiteral(tmpl) => {
-                        if !tmpl.quasis.is_empty()
-                            & !tmpl.expressions.is_empty()
-                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty())
+                        if !tmpl.lead.is_empty()
+                            || tmpl
+                                .lead
+                                .iter()
+                                .any(|pair| !pair.quasi.value.raw.as_str().is_empty())
+                            || !tmpl.tail.value.raw.as_str().is_empty()
                         {
                             return;
                         }

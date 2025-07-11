@@ -583,8 +583,8 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
 
     match &expression {
         Expression::StringLiteral(lit) => Some(lit.value.as_ref().into()),
-        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(lit.quasis[0].value.raw.as_ref().into())
+        Expression::TemplateLiteral(lit) if lit.lead.is_empty() && lit.lead.is_empty() => {
+            Some(lit.tail.value.raw.as_ref().into())
         }
         Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|&x| x.into_compact_str()),
         _ => None,

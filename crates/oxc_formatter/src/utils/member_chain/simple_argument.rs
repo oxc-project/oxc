@@ -262,14 +262,19 @@ impl<'a, 'b> From<&'b Expression<'a>> for SimpleArgument<'a, 'b> {
 /// - the expressions contained in the template are considered as [`Argument`]. Check
 ///   [`SimpleArgument`].
 pub fn is_simple_template_literal(template: &TemplateLiteral<'_>, depth: u8) -> bool {
-    for quasi in &template.quasis {
-        if quasi.value.raw.contains('\n') {
+    // Check all quasis for newlines
+    for pair in &template.lead {
+        if pair.quasi.value.raw.contains('\n') {
             return false;
         }
     }
+    if template.tail.value.raw.contains('\n') {
+        return false;
+    }
 
-    for expr in &template.expressions {
-        if !SimpleArgument::Expression(expr).is_simple_impl(depth) {
+    // Check all expressions for simplicity
+    for pair in &template.lead {
+        if !SimpleArgument::Expression(&pair.expression).is_simple_impl(depth) {
             return false;
         }
     }

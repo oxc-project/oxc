@@ -2088,23 +2088,21 @@ impl Gen for TemplateLiteral<'_> {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'`');
 
-        debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
+        // Process lead pairs
+        for pair in &self.lead {
+            p.add_source_mapping(pair.quasi.span);
+            p.print_str_escaping_script_close_tag(pair.quasi.value.raw.as_str());
+            p.add_source_mapping_end(pair.quasi.span);
 
-        let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
-
-        p.add_source_mapping(first_quasi.span);
-        p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
-        p.add_source_mapping_end(first_quasi.span);
-
-        for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
-            p.print_expression(expr);
+            p.print_expression(&pair.expression);
             p.print_ascii_byte(b'}');
-
-            p.add_source_mapping(quasi.span);
-            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
-            p.add_source_mapping_end(quasi.span);
         }
+
+        // Process tail
+        p.add_source_mapping(self.tail.span);
+        p.print_str_escaping_script_close_tag(self.tail.value.raw.as_str());
+        p.add_source_mapping_end(self.tail.span);
 
         p.print_ascii_byte(b'`');
         p.add_source_mapping_end(self.span);
@@ -3690,11 +3688,12 @@ impl Gen for TSEnumMember<'_> {
                 p.print_ascii_byte(b']');
             }
             TSEnumMemberName::ComputedTemplateString(decl) => {
-                let quasi = decl.quasis.first().unwrap();
-                p.add_source_mapping(quasi.span);
+                // For computed template strings, we expect a no-substitution template
+                debug_assert!(decl.lead.is_empty());
+                p.add_source_mapping(decl.tail.span);
 
                 p.print_str("[`");
-                p.print_str(quasi.value.raw.as_str());
+                p.print_str(decl.tail.value.raw.as_str());
                 p.print_str("`]");
             }
         }

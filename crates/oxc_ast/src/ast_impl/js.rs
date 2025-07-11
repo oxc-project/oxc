@@ -460,7 +460,7 @@ impl<'a> PropertyKey<'a> {
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => {
-                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
+                lit.lead.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
             }
             _ => None,
         }
@@ -544,12 +544,12 @@ impl<'a> TemplateLiteral<'a> {
     /// - `` `foo` `` => `true`
     /// - `` `foo${bar}qux` `` => `false`
     pub fn is_no_substitution_template(&self) -> bool {
-        self.expressions.is_empty() && self.quasis.len() == 1
+        self.lead.is_empty()
     }
 
     /// Get single quasi from `template`
     pub fn quasi(&self) -> Option<Atom<'a>> {
-        self.quasis.first().and_then(|quasi| quasi.value.cooked)
+        if self.lead.is_empty() { self.tail.value.cooked } else { None }
     }
 }
 
@@ -617,8 +617,8 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                    if lit.lead.is_empty() {
+                        lit.tail.value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
                         None
                     }
@@ -662,7 +662,7 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::TemplateLiteral(lit) if lit.lead.is_empty() => lit.tail.value.cooked,
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -674,8 +674,8 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+            Expression::TemplateLiteral(lit) if lit.lead.is_empty() => {
+                lit.tail.value.cooked.map(|cooked| (lit.span, cooked.as_str()))
             }
             Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,

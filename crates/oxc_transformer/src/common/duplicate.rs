@@ -126,12 +126,12 @@ impl<'a> TransformCtx<'a> {
             // but don't bother checking for that as it shouldn't occur in real world code.
             // Why would you write "`x${9}z`" when you can just write "`x9z`"?
             // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
-            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+            Expression::TemplateLiteral(lit) if lit.lead.is_empty() => {
                 let references = create_array(|| {
                     ctx.ast.expression_template_literal(
                         lit.span,
-                        ctx.ast.vec_from_iter(lit.quasis.iter().cloned()),
-                        ctx.ast.vec(),
+                        ctx.ast.vec(), // Empty lead for no-substitution template
+                        lit.tail.clone(),
                     )
                 });
                 return (expr, references);

@@ -145,7 +145,7 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)
             | Expression::StringLiteral(_) => false,
-            Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+            Expression::TemplateLiteral(lit) => !lit.lead.is_empty(),
             Expression::UnaryExpression(expr) => !Self::can_infer_unary_expression(expr),
             _ => true,
         }

@@ -178,9 +178,18 @@ impl<'a> Dummy<'a> for TemplateLiteral<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            quasis: Dummy::dummy(allocator),
-            expressions: Dummy::dummy(allocator),
+            lead: Dummy::dummy(allocator),
+            tail: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for TemplateLiteralPair<'a> {
+    /// Create a dummy [`TemplateLiteralPair`].
+    ///
+    /// Has cost of making 1 allocation (8 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { quasi: Dummy::dummy(allocator), expression: Dummy::dummy(allocator) }
     }
 }
 
@@ -206,7 +215,6 @@ impl<'a> Dummy<'a> for TemplateElement<'a> {
         Self {
             span: Dummy::dummy(allocator),
             value: Dummy::dummy(allocator),
-            tail: Dummy::dummy(allocator),
             lone_surrogates: Dummy::dummy(allocator),
         }
     }

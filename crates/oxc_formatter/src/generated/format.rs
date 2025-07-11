@@ -153,6 +153,12 @@ impl<'a> Format<'a> for AstNode<'a, TemplateLiteral<'a>> {
     }
 }
 
+impl<'a> Format<'a> for AstNode<'a, TemplateLiteralPair<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
 impl<'a> Format<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
