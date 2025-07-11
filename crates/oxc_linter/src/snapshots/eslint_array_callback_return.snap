@@ -790,3 +790,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ────────────────────────
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.map"
+    ╭─[array_callback_return.tsx:2:27]
+  1 │     
+  2 │ ╭─▶         [1, 2].map((x) => {
+  3 │ │     if (x % 2) {
+  4 │ │       return x * 2;
+  5 │ │     } else {
+  6 │ │      try {
+  7 │ │       throw new Error("x is even");
+  8 │ │      } catch {}
+  9 │ │     }
+ 10 │ ╰─▶ });
+    ╰────
+  help: Array method "Array.prototype.map" needs to have valid return on all code paths

@@ -425,6 +425,18 @@ fn test() {
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
         ("return function() {}", None),
+        // oxc-project/oxc#12176
+        (
+            r#"
+        [1, 2].map((x) => {
+  if (x % 2) {
+    return x * 2;
+  } else {
+    throw new Error("x is even");
+  }
+});"#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -594,6 +606,19 @@ fn test() {
         ("Array?.from([], () => { console.log('hello') })", None),
         ("(Array?.from)([], () => { console.log('hello') })", None),
         ("foo?.filter((function() { return () => { console.log('hello') } })?.())", None),
+        (
+            r#"
+        [1, 2].map((x) => {
+  if (x % 2) {
+    return x * 2;
+  } else {
+   try {
+    throw new Error("x is even");
+   } catch {}
+  }
+});"#,
+            None,
+        ),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)
