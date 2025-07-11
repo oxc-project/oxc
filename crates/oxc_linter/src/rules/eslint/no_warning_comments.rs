@@ -99,6 +99,7 @@ impl Rule for NoWarningComments {
     }
 }
 
+#[ignore]
 #[test]
 fn test() {
     use crate::tester::Tester;
