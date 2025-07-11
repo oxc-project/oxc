@@ -1,7 +1,8 @@
 use std::iter::FusedIterator;
 
+use fixedbitset::FixedBitSet;
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
+use oxc_ast::{AstKind, ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -96,12 +97,27 @@ impl GetAddress for AstNode<'_> {
 }
 
 /// Untyped AST nodes flattened into an vec
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct AstNodes<'a> {
     program: Option<&'a Program<'a>>,
     nodes: IndexVec<NodeId, AstNode<'a>>,
+    /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
+    /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
+    /// any nodes of that kind.
+    node_kinds_set: FixedBitSet,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
+}
+
+impl Default for AstNodes<'_> {
+    fn default() -> Self {
+        Self {
+            program: None,
+            nodes: IndexVec::new(),
+            node_kinds_set: FixedBitSet::with_capacity(AST_TYPE_MAX + 1),
+            parent_ids: IndexVec::new(),
+        }
+    }
 }
 
 impl<'a> AstNodes<'a> {
@@ -210,6 +226,12 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(parent_node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        debug_assert!((kind.ty() as usize) < self.node_kinds_set.len());
+        // SAFETY: `AstKind` maps exactly to `AstType`, and there should be exactly
+        // enough bits to insert it into `node_kinds`, so we can skip a bounds check here.
+        unsafe {
+            self.node_kinds_set.insert_unchecked(kind.ty() as usize);
+        }
         node_id
     }
 
@@ -233,6 +255,12 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(NodeId::ROOT);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        debug_assert!((kind.ty() as usize) < self.node_kinds_set.len());
+        // SAFETY: `AstKind` maps exactly to `AstType`, and there should be exactly
+        // enough bits to insert it into `node_kinds`, so we can skip a bounds check here.
+        unsafe {
+            self.node_kinds_set.insert_unchecked(kind.ty() as usize);
+        }
         node_id
     }
 
