@@ -681,7 +681,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         let mut hasher = FxHasher::default();
-        if self.ctx.source_path.is_relative() {
+        if self.ctx.source_path.is_absolute() {
             self.ctx.source_path.hash(&mut hasher);
         } else {
             self.ctx.source_text.hash(&mut hasher);
