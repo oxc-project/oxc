@@ -885,8 +885,8 @@ impl<'a> LegacyDecorator<'a, '_> {
                             PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
                     }
                 }
-                ClassElement::PropertyDefinition(prop) if !prop.declare => {
-                    class_element_is_decorated |= !prop.decorators.is_empty();
+                ClassElement::PropertyDefinition(prop) if !prop.decorators.is_empty() => {
+                    class_element_is_decorated = true;
 
                     if class_element_is_decorated && !has_private_in_expression_in_decorator {
                         has_private_in_expression_in_decorator =
@@ -895,8 +895,8 @@ impl<'a> LegacyDecorator<'a, '_> {
                             );
                     }
                 }
-                ClassElement::AccessorProperty(accessor) => {
-                    class_element_is_decorated |= !accessor.decorators.is_empty();
+                ClassElement::AccessorProperty(accessor) if !accessor.decorators.is_empty() => {
+                    class_element_is_decorated = true;
 
                     if class_element_is_decorated && !has_private_in_expression_in_decorator {
                         has_private_in_expression_in_decorator =

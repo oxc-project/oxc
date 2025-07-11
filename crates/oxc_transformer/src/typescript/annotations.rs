@@ -223,9 +223,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         class.r#abstract = false;
     }
 
-    fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_class(&mut self, class: &mut Class<'a>, _: &mut TraverseCtx<'a>) {
         // Remove type only members
-        body.body.retain(|elem| match elem {
+        class.body.body.retain(|elem| match elem {
             ClassElement::MethodDefinition(method) => {
                 matches!(method.r#type, MethodDefinitionType::MethodDefinition)
                     && !method.value.is_typescript_syntax()
@@ -346,7 +346,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         );
 
         def.accessibility = None;
-        def.declare = false;
         def.definite = false;
         def.r#override = false;
         def.optional = false;
