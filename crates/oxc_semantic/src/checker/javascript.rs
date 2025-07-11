@@ -1,3 +1,5 @@
+use std::ptr;
+
 use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
@@ -475,12 +477,38 @@ pub fn check_variable_declarator_redeclaration(
     });
 }
 
+/// Check for Annex B `if (foo) function a() {} else function b() {}`
+pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+    if builder.current_scope_flags().is_strict_mode() {
+        return false;
+    }
+    let AstKind::IfStatement(stmt) = builder.nodes.parent_kind(builder.current_node_id) else {
+        return false;
+    };
+    if let Statement::FunctionDeclaration(func) = &stmt.consequent {
+        if ptr::eq(func.as_ref(), function) {
+            return true;
+        }
+    }
+    if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate {
+        if ptr::eq(func.as_ref(), function) {
+            return true;
+        }
+    }
+    false
+}
+
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
 pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
     let Some(id) = &func.id else { return };
+
+    if is_function_part_of_if_statement(func, ctx) {
+        return;
+    }
+
     let symbol_id = id.symbol_id();
 
     let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
