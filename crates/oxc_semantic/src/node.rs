@@ -2,7 +2,7 @@ use std::iter::FusedIterator;
 
 use fixedbitset::FixedBitSet;
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program, ast_kind::AST_TYPE_MAX};
+use oxc_ast::{AstKind, AstType, ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -268,6 +268,39 @@ impl<'a> AstNodes<'a> {
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+    }
+
+    /// Checks if the AST contains any nodes of the given types.
+    ///
+    /// Example:
+    /// - `.contains_any(&[AstType::ForStatement])` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains_any(&[AstType::ImportDeclaration, AstType::ExportDeclaration])` returns `true` if there are any imports OR exports in the AST.
+    pub fn contains_any(&self, types: &[AstType]) -> bool {
+        // SAFETY: We already check that every `AstType` is within the bounds when inserting, so it should
+        // be safe to access the bitset without bounds checking.
+        types.iter().any(|ty| unsafe { self.node_kinds_set.contains_unchecked(*ty as usize) })
+    }
+
+    /// Checks if the AST contains all of the given types.
+    ///
+    /// Example:
+    /// - `.contains_all(&[AstType::ForStatement])` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains_all(&[AstType::ImportDeclaration, AstType::ExportDeclaration])` returns `true` only if there is at least one import AND one export in the AST.
+    pub fn contains_all(&self, types: &[AstType]) -> bool {
+        // SAFETY: We already check that every `AstType` is within the bounds when inserting, so it should
+        // be safe to access the bitset without bounds checking.
+        types.iter().all(|ty| unsafe { self.node_kinds_set.contains_unchecked(*ty as usize) })
+    }
+
+    /// Checks if the AST contains a node of the given type.
+    ///
+    /// Example:
+    /// - `.contains(AstType::ForStatement)` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains(AstType::ImportDeclaration)` returns `true` if there is an import in the AST.
+    pub fn contains(&self, ty: AstType) -> bool {
+        // SAFETY: We already check that every `AstType` is within the bounds when inserting, so it should
+        // be safe to access the bitset without bounds checking.
+        unsafe { self.node_kinds_set.contains_unchecked(ty as usize) }
     }
 }
 
