@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+
+use lazy_regex::regex;
 use oxc_macros::declare_oxc_lint;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -35,16 +38,67 @@ declare_oxc_lint!(
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
+const WARNING_TERMS: [&str; 3] = ["FIXME", "TODO", "xxx"];
+
+fn convert_to_regexp(term: &str) -> regex::Regex {
+    // Decorators are hard-coded here. Read them from config.
+    let escaped_decoration = regex::escape(&["*", "/"].join(""));
+    let escaped = regex::escape(term);
+    let word_boundary = "\\b";
+
+    // "location": optional string that configures where in your comments to
+    // check for matches. Defaults to "start".
+    // The start is from the first non-decorative character, ignoring whitespace,
+    // new lines and characters specified in decoration.
+    // The other value is match anywhere in comments.
+    // TODO: We need to check the location here and assign the prefix conditionally. I've omitted it here for now.
+
+    let prefix = format!("^[\\s{escaped_decoration}]*");
+    // The regex crate does not support inline flags like /u, so we use RegexBuilder below.
+    let re = regex::RegexBuilder::new(r"/\\w$/").unicode(true).build().unwrap();
+    let suffix = if re.is_match(term) { word_boundary } else { "" };
+    /*
+     * For location "start", the typical regex is:
+     *   /^[\s]*ESCAPED_TERM\b/iu.
+     * Or if decoration characters are specified (e.g. "*"), then any of
+     * those characters may appear in any order at the start:
+     *   /^[\s\*]*ESCAPED_TERM\b/iu.
+     *
+     * For location "anywhere" the typical regex is
+     *   /\bESCAPED_TERM\b/iu
+     *
+     * If it starts or ends with non-word character, the prefix and suffix are empty, respectively.
+     */
+    regex::RegexBuilder::new(&format!("{prefix}{escaped}{suffix}"))
+        .case_insensitive(true) // for 'i'
+        .unicode(true) // for 'u'
+        .build()
+        .unwrap()
+}
+
+fn _comment_contains_warning_term(comment: &str) -> Vec<&str> {
+    let mut matches: Vec<&str> = vec![];
+    for (index, term) in WARNING_TERMS.iter().enumerate() {
+        let re = convert_to_regexp(term);
+        if re.is_match(comment) {
+            matches.push(WARNING_TERMS[index]);
+        }
+    }
+    matches
+}
+
 impl Rule for NoWarningComments {
     fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {
+        // ctx.comments().iter().for_each(|comment| {
+        //     println!("{comment:?}");
+        // })
         // ctx.diagnostic(
-        //     OxcDiagnostic::warn("Warning comments should be avoided")
+        //     OxcDiagnostic::warn("Warning comments shou`ld be avoided")
         //         .with_help("Use a command-like statement that tells the user how to fix the issue")
         // )
     }
 }
 
-#[ignore]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -80,24 +134,24 @@ fn test() {
         (
             r#"/*eslint no-warning-comments: [2, { "terms": ["todo", "fixme", "any other term"], "location": "anywhere" }]*/
 
-			var x = 10;
-			"#,
+        	var x = 10;
+        	"#,
             None,
         ),
         (
             r#"/*eslint no-warning-comments: [2, { "terms": ["todo", "fixme", "any other term"], "location": "anywhere" }]*/
 
-			var x = 10;
-			"#,
+        	var x = 10;
+        	"#,
             Some(serde_json::json!([{ "location": "anywhere" }])),
         ),
         ("// foo", Some(serde_json::json!([{ "terms": ["foo-bar"] }]))),
         (
             "/** multi-line block comment with lines starting with
-			TODO
-			FIXME or
-			XXX
-			*/",
+        	TODO
+        	FIXME or
+        	XXX
+        	*/",
             None,
         ),
         ("//!TODO ", Some(serde_json::json!([{ "decoration": ["*"] }]))),
@@ -153,8 +207,8 @@ fn test() {
         ),
         (
             "/**
-			 *any block comment
-			*with (TODO, FIXME's or XXX!) **/",
+        	 *any block comment
+        	*with (TODO, FIXME's or XXX!) **/",
             Some(serde_json::json!([{ "location": "anywhere" }])),
         ),
         (
@@ -168,8 +222,8 @@ fn test() {
         ),
         (
             "/* TODO: something
-			 really longer than 40 characters
-			 and also a new line */",
+        	 really longer than 40 characters
+        	 and also a new line */",
             Some(serde_json::json!([{ "location": "anywhere" }])),
         ),
         ("// TODO: small", Some(serde_json::json!([{ "location": "anywhere" }]))),
@@ -219,20 +273,20 @@ fn test() {
         ),
         (
             "/*
-			TODO undecorated multi-line block comment (start)
-			*/",
+        	TODO undecorated multi-line block comment (start)
+        	*/",
             Some(serde_json::json!([{ "terms": ["todo"], "location": "start" }])),
         ),
         (
             "///// TODO decorated single-line comment with decoration array
-			 /////",
+        	 /////",
             Some(
                 serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]),
             ),
         ),
         (
             "///*/*/ TODO decorated single-line comment with multiple decoration characters (start)
-			 /////",
+        	 /////",
             Some(
                 serde_json::json!([				{ "terms": ["todo"], "location": "start", "decoration": ["*", "/"] },			]),
             ),
