@@ -205,7 +205,7 @@ impl Rule for NoNull {
                 ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
-                    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
+                    for parent in ctx.nodes().ancestors(node.id()) {
                         let parent = parent.kind();
                         if matches!(
                             parent,

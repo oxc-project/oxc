@@ -259,8 +259,7 @@ impl Runner for LintRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options =
-            LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
+        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
         let lint_config = config_builder.build();
 
@@ -304,14 +303,15 @@ impl Runner for LintRunner {
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, allocator_pool, options);
+            let mut lint_service = LintService::new(linter, allocator_pool, options);
+            let _ = lint_service.with_paths(paths);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
             // This reads the source text into start of allocator, instead of the end.
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
             {
                 use crate::raw_fs::RawTransferFileSystem;
-                lint_service = lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                let _ = lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
 
             lint_service.run(&tx_error);
@@ -532,7 +532,7 @@ impl LintRunner {
             ignore_patterns
                 .into_iter()
                 .map(|pattern| {
-                    let prefix_len = pattern.chars().take_while(|&c| c == '!').count();
+                    let prefix_len = pattern.bytes().take_while(|&c| c == b'!').count();
                     let (prefix, pattern) = pattern.split_at(prefix_len);
 
                     let adjusted_path = relative_ignore_path.join(pattern);

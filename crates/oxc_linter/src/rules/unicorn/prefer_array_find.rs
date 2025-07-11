@@ -123,7 +123,7 @@ impl Rule for PreferArrayFind {
             if let Some(Expression::CallExpression(call_expr)) = &var_decl.init {
                 if is_filter_call(call_expr)
                     && !matches!(
-                        ctx.nodes().ancestor_kinds(node.id()).nth(2),
+                        ctx.nodes().ancestor_kinds(node.id()).nth(1),
                         Some(
                             AstKind::ExportDefaultDeclaration(_)
                                 | AstKind::ExportNamedDeclaration(_)

@@ -2,15 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1945/2362 (82.35%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
-Symbol scope ID mismatch for "g":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
-
+Positive Passed: 1948/2362 (82.47%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -36,11 +28,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 Unexpected new.target expression
 Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -117,11 +104,6 @@ Identifier `x` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
 Scope children mismatch:

@@ -65,7 +65,7 @@ impl Rule for NoAccessorRecursion {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;
         };
-        let Some(target) = ctx.nodes().ancestors(node.id()).skip(1).find(|n| match n.kind() {
+        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return false;

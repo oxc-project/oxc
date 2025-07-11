@@ -243,7 +243,7 @@ impl NoEval {
         node: &'a AstNode<'b>,
         semantic: &'a LintContext<'b>,
     ) -> Option<&'a AstNode<'b>> {
-        semantic.nodes().ancestors(node.id()).skip(1).find(|parent| {
+        semantic.nodes().ancestors(node.id()).find(|parent| {
             !matches!(
                 parent.kind(),
                 AstKind::ParenthesizedExpression(_) | AstKind::ChainExpression(_)

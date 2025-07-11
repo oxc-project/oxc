@@ -12,6 +12,7 @@ use javascript as js;
 use typescript as ts;
 
 use crate::builder::SemanticBuilder;
+pub use javascript::is_function_part_of_if_statement;
 
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {

@@ -124,7 +124,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`NodeId`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestor_ids(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + Clone + '_ {
@@ -133,7 +133,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`AstKind`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestor_kinds(
@@ -145,7 +145,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`AstNode`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
@@ -257,13 +257,13 @@ impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
 /// Yields `NodeId` of each AST node. The last node yielded is `Program`.
 #[derive(Debug, Clone)]
 pub struct AstNodeIdAncestorsIter<'n> {
-    next_node_id: Option<NodeId>,
+    current_node_id: NodeId,
     parent_ids: &'n IndexSlice<NodeId, [NodeId]>,
 }
 
 impl<'n> AstNodeIdAncestorsIter<'n> {
     fn new(node_id: NodeId, nodes: &'n AstNodes<'_>) -> Self {
-        Self { next_node_id: Some(node_id), parent_ids: nodes.parent_ids.as_slice() }
+        Self { current_node_id: node_id, parent_ids: nodes.parent_ids.as_slice() }
     }
 }
 
@@ -271,14 +271,13 @@ impl Iterator for AstNodeIdAncestorsIter<'_> {
     type Item = NodeId;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(node_id) = self.next_node_id {
+        if self.current_node_id == NodeId::ROOT {
             // `Program`'s parent is itself, so next node is `None` if this node is `Program`
-            self.next_node_id =
-                if node_id == NodeId::ROOT { None } else { Some(self.parent_ids[node_id]) };
-            Some(node_id)
-        } else {
-            None
+            return None;
         }
+
+        self.current_node_id = self.parent_ids[self.current_node_id];
+        Some(self.current_node_id)
     }
 }
 

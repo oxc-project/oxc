@@ -1,21 +1,21 @@
 import styled from 'styled-components';
 const Test = styled.div.withConfig({
-  componentId: "sc-80sor8-0"
+  componentId: "sc-yv1qfe-0"
 })`width:100%;`;
 const Test2 = true ? styled.div.withConfig({
-  componentId: "sc-80sor8-1"
+  componentId: "sc-yv1qfe-1"
 })`` : styled.div.withConfig({
-  componentId: "sc-80sor8-2"
+  componentId: "sc-yv1qfe-2"
 })``;
 const styles = {
   One: styled.div.withConfig({
-    componentId: "sc-80sor8-3"
+    componentId: "sc-yv1qfe-3"
   })``
 };
 let Component;
 Component = styled.div.withConfig({
-  componentId: "sc-80sor8-4"
+  componentId: "sc-yv1qfe-4"
 })``;
 const WrappedComponent = styled(Inner).withConfig({
-  componentId: "sc-80sor8-5"
+  componentId: "sc-yv1qfe-5"
 })``;

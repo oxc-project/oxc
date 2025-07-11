@@ -1,0 +1,5 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/root_ignore_patterns/ignored-file.ts
+---
+File is ignored

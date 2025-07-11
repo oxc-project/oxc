@@ -1,6 +1,19 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+  ⚠ eslint(no-duplicate-imports): 'foo' export is duplicated
+   ╭─[no_duplicate_imports.tsx:2:26]
+ 1 │ 
+ 2 │                 export { a } from 'foo';
+   ·                          ┬
+   ·                          ╰── This export is duplicated
+ 3 │                 import { f } from 'foo';
+   ·                                   ──┬──
+   ·                                     ╰── Can be merged with this
+ 4 │             
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
   ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
    ╭─[no_duplicate_imports.tsx:1:8]
  1 │ import "fs";

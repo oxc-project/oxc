@@ -79,8 +79,7 @@ impl Rule for NoImgElement {
             return;
         }
 
-        // first two are self, parent. third is grandparent
-        let Some(grandparent) = ctx.nodes().ancestor_kinds(node.id()).nth(2) else {
+        let Some(grandparent) = ctx.nodes().ancestor_kinds(node.id()).nth(1) else {
             return;
         };
 
