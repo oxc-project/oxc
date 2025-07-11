@@ -53,6 +53,10 @@ impl Rule for NoDeleteVar {
             ctx.diagnostic(no_delete_var_diagnostic(expr.span));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::UnaryExpression)
+    }
 }
 
 #[test]

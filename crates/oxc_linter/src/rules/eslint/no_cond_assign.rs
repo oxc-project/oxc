@@ -125,6 +125,17 @@ impl Rule for NoCondAssign {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::AssignmentExpression)
+            && ctx.semantic().nodes().contains_any(&[
+                oxc_ast::AstType::IfStatement,
+                oxc_ast::AstType::WhileStatement,
+                oxc_ast::AstType::DoWhileStatement,
+                oxc_ast::AstType::ForStatement,
+                oxc_ast::AstType::ConditionalExpression,
+            ])
+    }
 }
 
 impl NoCondAssign {

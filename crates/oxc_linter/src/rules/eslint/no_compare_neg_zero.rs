@@ -110,6 +110,14 @@ impl Rule for NoCompareNegZero {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::BinaryExpression)
+            && ctx
+                .semantic()
+                .nodes()
+                .contains_any(&[oxc_ast::AstType::NumericLiteral, oxc_ast::AstType::BigIntLiteral])
+    }
 }
 
 impl NoCompareNegZero {

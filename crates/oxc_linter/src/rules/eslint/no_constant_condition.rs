@@ -136,6 +136,16 @@ impl Rule for NoConstantCondition {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::IfStatement,
+            oxc_ast::AstType::ConditionalExpression,
+            oxc_ast::AstType::WhileStatement,
+            oxc_ast::AstType::DoWhileStatement,
+            oxc_ast::AstType::ForStatement,
+        ])
+    }
 }
 
 impl NoConstantCondition {

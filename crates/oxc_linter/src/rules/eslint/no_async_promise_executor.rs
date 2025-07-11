@@ -103,6 +103,10 @@ impl Rule for NoAsyncPromiseExecutor {
 
         ctx.diagnostic(no_async_promise_executor_diagnostic(span));
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::NewExpression)
+    }
 }
 
 #[test]
