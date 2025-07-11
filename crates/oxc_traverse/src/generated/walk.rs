@@ -4439,6 +4439,9 @@ unsafe fn walk_ts_type_name<'a, State, Tr: Traverse<'a, State>>(
         TSTypeName::QualifiedName(node) => {
             walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSTypeName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_type_name(&mut *node, ctx);
 }
@@ -5128,7 +5131,9 @@ unsafe fn walk_ts_type_query_expr_name<'a, State, Tr: Traverse<'a, State>>(
         TSTypeQueryExprName::TSImportType(node) => {
             walk_ts_import_type(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSTypeQueryExprName::IdentifierReference(_) | TSTypeQueryExprName::QualifiedName(_) => {
+        TSTypeQueryExprName::IdentifierReference(_)
+        | TSTypeQueryExprName::QualifiedName(_)
+        | TSTypeQueryExprName::ThisExpression(_) => {
             walk_ts_type_name(traverser, node as *mut _, ctx)
         }
     }
@@ -5424,9 +5429,9 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
         TSModuleReference::ExternalModuleReference(node) => {
             walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
-            walk_ts_type_name(traverser, node as *mut _, ctx)
-        }
+        TSModuleReference::IdentifierReference(_)
+        | TSModuleReference::QualifiedName(_)
+        | TSModuleReference::ThisExpression(_) => walk_ts_type_name(traverser, node as *mut _, ctx),
     }
     traverser.exit_ts_module_reference(&mut *node, ctx);
 }

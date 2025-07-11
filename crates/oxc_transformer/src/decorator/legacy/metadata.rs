@@ -419,6 +419,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
                 }
             }
+            TSTypeName::ThisExpression(_) => None,
         }
     }
 

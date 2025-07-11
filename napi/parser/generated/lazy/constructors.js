@@ -9286,6 +9286,8 @@ function constructTSTypeName(pos, ast) {
       return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
       return constructBoxTSQualifiedName(pos + 8, ast);
+    case 2:
+      return constructBoxThisExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
   }
@@ -10603,6 +10605,8 @@ function constructTSTypeQueryExprName(pos, ast) {
     case 1:
       return constructBoxTSQualifiedName(pos + 8, ast);
     case 2:
+      return constructBoxThisExpression(pos + 8, ast);
+    case 3:
       return constructBoxTSImportType(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeQueryExprName`);
@@ -11149,6 +11153,8 @@ function constructTSModuleReference(pos, ast) {
     case 1:
       return constructBoxTSQualifiedName(pos + 8, ast);
     case 2:
+      return constructBoxThisExpression(pos + 8, ast);
+    case 3:
       return constructBoxTSExternalModuleReference(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);
@@ -13729,7 +13735,7 @@ function constructOptionBoxObjectExpression(pos, ast) {
 }
 
 function constructOptionTSTypeName(pos, ast) {
-  if (ast.buffer[pos] === 2) return null;
+  if (ast.buffer[pos] === 3) return null;
   return constructTSTypeName(pos, ast);
 }
 

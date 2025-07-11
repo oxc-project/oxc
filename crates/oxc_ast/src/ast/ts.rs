@@ -769,21 +769,22 @@ pub struct TSTypeReference<'a> {
 
 /// TSTypeName:
 ///     IdentifierReference
+///     this
 ///     TSTypeName . IdentifierName
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeName<'a> {
-    #[estree(via = TSTypeNameIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
+    ThisExpression(Box<'a, ThisExpression>) = 2,
 }
 
 /// Macro for matching `TSTypeName`'s variants.
 #[macro_export]
 macro_rules! match_ts_type_name {
     ($ty:ident) => {
-        $ty::IdentifierReference(_) | $ty::QualifiedName(_)
+        $ty::IdentifierReference(_) | $ty::QualifiedName(_) | $ty::ThisExpression(_)
     };
 }
 pub use match_ts_type_name;
@@ -1335,7 +1336,7 @@ inherit_variants! {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeQueryExprName<'a> {
     /// `type foo = typeof import('foo')`
-    TSImportType(Box<'a, TSImportType<'a>>) = 2,
+    TSImportType(Box<'a, TSImportType<'a>>) = 3,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
@@ -1585,7 +1586,7 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSModuleReference<'a> {
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 3,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }

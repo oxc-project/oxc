@@ -11748,6 +11748,17 @@ impl<'a> AstBuilder<'a> {
         TSTypeName::QualifiedName(self.alloc_ts_qualified_name(span, left, right))
     }
 
+    /// Build a [`TSTypeName::ThisExpression`].
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_type_name_this_expression(self, span: Span) -> TSTypeName<'a> {
+        TSTypeName::ThisExpression(self.alloc_this_expression(span))
+    }
+
     /// Build a [`TSQualifiedName`].
     ///
     /// If you want the built node to be allocated in the memory arena,

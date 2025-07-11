@@ -143,7 +143,8 @@ impl Rule for TripleSlashReference {
                             }
                         }
                         TSModuleReference::IdentifierReference(_)
-                        | TSModuleReference::QualifiedName(_) => {}
+                        | TSModuleReference::QualifiedName(_)
+                        | TSModuleReference::ThisExpression(_) => {}
                     },
                     Statement::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
