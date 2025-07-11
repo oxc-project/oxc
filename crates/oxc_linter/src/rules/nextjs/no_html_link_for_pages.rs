@@ -161,7 +161,8 @@ fn is_internal_page_link(href: &str) -> bool {
     }
 
     // Internal links typically start with / or are relative paths
-href.starts_with('/') || (!href.split('/').next().unwrap_or("").contains(':') && !href.starts_with("//"))
+    href.starts_with('/')
+        || (!href.split('/').next().unwrap_or("").contains(':') && !href.starts_with("//"))
 }
 
 #[test]
