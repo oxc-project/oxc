@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 175/293
+Passed: 176/293
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1417,7 +1417,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (19/34)
+# plugin-styled-components (20/34)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 
@@ -1437,9 +1437,6 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/does-not-replace-native-with-no-tags/input.js
-x Output mismatch
-
-* styled-components/minify-single-line-comments-with-interpolations/input.js
 x Output mismatch
 
 * styled-components/pre-transpiled/input.js

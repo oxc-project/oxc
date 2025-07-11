@@ -407,28 +407,31 @@ impl<'a> StyledComponents<'a, '_> {
 
         let (new_raws, remained_expression_indices) = CssMinifier::minify_quasis(quasis, ctx.ast);
 
-        // Remove expressions that are not kept after minification.
-        for i in (0..expressions.len()).rev() {
-            if !remained_expression_indices.contains(&i) {
-                expressions.swap_remove(i);
-            }
-        }
-
         // Update the quasis with the new raw values.
         for (new_raw, quais) in new_raws.into_iter().zip(quasis.iter_mut()) {
             quais.value.raw = new_raw;
         }
 
-        // SAFETY:
-        // This is safe because template literal has ensured that `quasis` always
-        // has one more element than `expressions`, and the `CSSMinifier` guarantees that
-        // once a expression is removed, the corresponding quasi will also be removed.
-        // Therefore, the length of `quasis` will always be one more than `expressions`.
-        // So we can safely set the length of `quasis` to `expressions.len() + 1`.
-        unsafe {
-            // Set the length of `quasis` to `expressions.len() + 1` to truncate the quasis that
-            // have been minified out.
-            quasis.set_len(expressions.len() + 1);
+        // Keep expressions that are still present after minification.
+        if expressions.len() != remained_expression_indices.len() {
+            let mut i = 0;
+            expressions.retain(|_| {
+                let keep = remained_expression_indices.contains(&i);
+                i += 1;
+                keep
+            });
+
+            // SAFETY:
+            // This is safe because template literal has ensured that `quasis` always
+            // has one more element than `expressions`, and the `CSSMinifier` guarantees that
+            // once a expression is removed, the corresponding quasi will also be removed.
+            // Therefore, the length of `quasis` will always be one more than `expressions`.
+            // So we can safely set the length of `quasis` to `expressions.len() + 1`.
+            unsafe {
+                // Set the length of `quasis` to `expressions.len() + 1` to truncate the quasis that
+                // have been minified out.
+                quasis.set_len(expressions.len() + 1);
+            }
         }
     }
 
