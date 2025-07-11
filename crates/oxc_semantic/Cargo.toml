@@ -30,6 +30,7 @@ oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+fixedbitset = { workspace = true }
 itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
