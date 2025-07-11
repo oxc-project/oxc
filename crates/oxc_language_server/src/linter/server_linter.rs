@@ -17,7 +17,7 @@ use crate::linter::{
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
 };
 use crate::options::UnusedDisableDirectives;
-use crate::{ConcurrentHashMap, Options};
+use crate::{ConcurrentHashMap, OXC_CONFIG_FILE, Options};
 
 use super::config_walker::ConfigWalker;
 
@@ -31,24 +31,20 @@ impl ServerLinter {
     pub fn new(root_uri: &Uri, options: &Options) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
         let (nested_configs, mut extended_paths) = Self::create_nested_configs(&root_path, options);
-        let relative_config_path = options.config_path.clone();
-        let oxlintrc = if let Some(relative_config_path) = relative_config_path {
-            let config = normalize_path(root_path.join(relative_config_path));
-            if config.try_exists().is_ok_and(|exists| exists) {
-                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
-                    oxlintrc
-                } else {
-                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
-                    Oxlintrc::default()
-                }
+        let config_path = options.config_path.as_ref().map_or(OXC_CONFIG_FILE, |v| v);
+        let config = normalize_path(root_path.join(config_path));
+        let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
+            if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                oxlintrc
             } else {
-                warn!(
-                    "Config file not found: {}, fallback to default config",
-                    config.to_string_lossy()
-                );
+                warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
                 Oxlintrc::default()
             }
         } else {
+            warn!(
+                "Config file not found: {}, fallback to default config",
+                config.to_string_lossy()
+            );
             Oxlintrc::default()
         };
 
@@ -378,7 +374,12 @@ mod test {
                 ..Default::default()
             }),
         )
-        // ToDo: this should be fixable
         .test_and_snapshot_single_file("test.js");
+    }
+
+    #[test]
+    fn test_root_ignore_patterns() {
+        Tester::new("fixtures/linter/root_ignore_patterns", None)
+            .test_and_snapshot_single_file("ignored-file.ts");
     }
 }
