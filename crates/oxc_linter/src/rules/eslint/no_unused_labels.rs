@@ -65,7 +65,8 @@ impl Rule for NoUnusedLabels {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| ext != "svelte")
+        ctx.semantic().nodes().contains(oxc_ast::AstType::LabeledStatement)
+            && ctx.file_path().extension().is_some_and(|ext| ext != "svelte")
     }
 }
 

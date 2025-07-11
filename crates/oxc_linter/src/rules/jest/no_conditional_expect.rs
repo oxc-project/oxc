@@ -126,6 +126,10 @@ impl Rule for NoConditionalExpect {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::CallExpression)
+    }
 }
 
 fn check_parents<'a>(

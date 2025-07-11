@@ -131,6 +131,10 @@ impl Rule for ValidExpect {
     ) {
         self.run(jest_node, ctx);
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(oxc_ast::AstType::CallExpression)
+    }
 }
 
 impl ValidExpect {

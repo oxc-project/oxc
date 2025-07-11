@@ -164,6 +164,15 @@ impl Rule for NoUselessRename {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::ObjectPattern,
+            oxc_ast::AstType::AssignmentTarget,
+            oxc_ast::AstType::ImportSpecifier,
+            oxc_ast::AstType::ExportNamedDeclaration,
+        ])
+    }
 }
 
 #[test]

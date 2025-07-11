@@ -82,6 +82,13 @@ impl Rule for Default {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::ImportDefaultSpecifier,
+            oxc_ast::AstType::ExportDefaultDeclaration,
+        ])
+    }
 }
 
 #[test]

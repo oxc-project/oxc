@@ -53,6 +53,15 @@ impl Rule for NoExport {
             ctx.diagnostic(no_export_diagnostic(span));
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(&[
+            oxc_ast::AstType::ExportNamedDeclaration,
+            oxc_ast::AstType::ExportDefaultDeclaration,
+            oxc_ast::AstType::ExportAllDeclaration,
+            oxc_ast::AstType::ExportSpecifier,
+        ])
+    }
 }
 
 #[test]
