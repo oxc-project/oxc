@@ -87,6 +87,7 @@ impl Generator for AstKindGenerator {
         let mut span_match_arms = quote!();
         let mut address_match_arms = quote!();
         let mut as_methods = quote!();
+        let mut ast_type_max_usize: usize = 0;
 
         let mut next_index = 0u16;
         for type_def in &schema.types {
@@ -104,6 +105,7 @@ impl Generator for AstKindGenerator {
 
             assert!(u8::try_from(next_index).is_ok());
             let index = number_lit(next_index);
+            ast_type_max_usize = next_index as usize;
             type_variants.extend(quote!( #type_ident = #index, ));
             kind_variants.extend(quote!( #type_ident(&'a #type_ty) = AstType::#type_ident as u8, ));
 
@@ -151,6 +153,10 @@ impl Generator for AstKindGenerator {
             pub enum AstType {
                 #type_variants
             }
+
+            ///@@line_break
+            /// The largest `usize` value that can be mapped to an `AstType`.
+            pub const AST_TYPE_MAX: usize = #ast_type_max_usize;
 
             ///@@line_break
             /// Untyped AST Node Kind
