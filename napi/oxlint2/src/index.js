@@ -87,7 +87,7 @@ class Linter {
 
     const rules = [];
     for (const { rule, ruleId } of this.pluginRegistry.getRules(ruleIds)) {
-      rules.push(rule(createContext(ruleId)));
+      rules.push(rule.create(createContext(ruleId)));
     }
 
     // TODO: walk the AST
