@@ -1,17 +1,17 @@
 import { lint } from './bindings.js';
 
 class PluginRegistry {
-  registeredPlugins = new Set();
+  registeredPluginPaths = new Set();
 
   registeredRules = [];
 
   isPluginRegistered(path) {
-    return this.registeredPlugins.has(path);
+    return this.registeredPluginPaths.has(path);
   }
 
   registerPlugin(path, plugin) {
     // TODO: use a validation library to assert the shape of the plugin
-    this.registeredPlugins.add(path);
+    this.registeredPluginPaths.add(path);
     const ret = {
       name: plugin.meta.name,
       offset: this.registeredRules.length,
@@ -41,18 +41,18 @@ class Linter {
   }
 
   /**
-   * @param {string} pluginName The name of the plugin we're loading
+   * @param {string} path - The absolute path of the plugin we're loading
    */
-  loadPlugin = async (pluginName) => {
-    if (this.pluginRegistry.isPluginRegistered(pluginName)) {
+  loadPlugin = async (path) => {
+    if (this.pluginRegistry.isPluginRegistered(path)) {
       return JSON.stringify({
         Failure: 'This plugin has already been registered',
       });
     }
 
     try {
-      const { default: plugin } = await import(pluginName);
-      const ret = this.pluginRegistry.registerPlugin(pluginName, plugin);
+      const { default: plugin } = await import(path);
+      const ret = this.pluginRegistry.registerPlugin(path, plugin);
       return JSON.stringify({ Success: ret });
     } catch (error) {
       const errorMessage = 'message' in error && typeof error.message === 'string'
@@ -99,8 +99,8 @@ class Linter {
 async function main() {
   const linter = new Linter();
 
-  const result = await linter.run();
-  if (!result) {
+  const success = await linter.run();
+  if (!success) {
     process.exit(1);
   }
 }
