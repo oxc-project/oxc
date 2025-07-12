@@ -834,7 +834,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 /// 1. Initialize state variables to track whether currently inside a string,
 ///    the current string quote character, and the depth of parentheses.
 /// 2. Iterate through each byte of each quasi:
-///    - If encounter a string quote (`"` or `'`), toggle the `quote` state.
+///    - If encounter a string quote (`"` or `'`), toggle the `string_quote` state.
 ///    - Skip comments (both block and line comments) and whitespace, compressing them as needed.
 ///    - Handle unescaped newlines by replacing them with a space.
 /// 3. If a quasi ends with an incomplete comment:
@@ -879,7 +879,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut comment_type = None;
     // Quote character for current string we're in.
     // Either `'`, `"` or `NOT_IN_STRING`.
-    let mut quote = NOT_IN_STRING;
+    let mut string_quote = NOT_IN_STRING;
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
 
@@ -947,10 +947,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             match cur_byte {
                 // Handle string
                 b'"' | b'\'' => {
-                    if quote == NOT_IN_STRING {
-                        quote = cur_byte;
-                    } else if cur_byte == quote {
-                        quote = NOT_IN_STRING;
+                    if string_quote == NOT_IN_STRING {
+                        string_quote = cur_byte;
+                    } else if cur_byte == string_quote {
+                        string_quote = NOT_IN_STRING;
                     }
                 }
                 // Handle backslash.
@@ -965,7 +965,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 i += 2;
                                 continue;
                             }
-                            b'n' | b'r' if quote == NOT_IN_STRING => {
+                            b'n' | b'r' if string_quote == NOT_IN_STRING => {
                                 if output.last().is_some_and(|&last| last != b' ') {
                                     output.push(b' ');
                                 }
@@ -977,7 +977,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
                 }
                 // Keep characters as is if in a string
-                _ if quote != NOT_IN_STRING => {}
+                _ if string_quote != NOT_IN_STRING => {}
                 // Count parentheses
                 b'(' => paren_depth += 1,
                 b')' => paren_depth -= 1,
