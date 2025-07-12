@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🐛 Bug Fixes
+
+- e095e99 semantic: Panics when function is the part of `IfStatement` (#12190) (Dunqing)
+
+### 🚜 Refactor
+
+- 8a7c9e8 semantic: Streamline handling of no side effects for function (#12221) (Dunqing)
+- c868ee3 semantic: Rename `AstNodeIdAncestorsIter` and add comments (#12136) (overlookmotel)
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+- 228cff5 semantic,linter: Assert that Program is always the first node (#12123) (Ulrich Stark)
+
+### ⚡ Performance
+
+- c7889c3 semantic,linter: Simplify implementation and uses of ancestors iterators (#12164) (Ulrich Stark)
+- 6cfcb7e semantic: Dereference `parent_id`s to slice only once (#12137) (overlookmotel)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🚜 Refactor

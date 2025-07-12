@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🚜 Refactor

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- baa3726 tests/napi: Add `build-test` script for tests (#12132) (camc314)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🚀 Features

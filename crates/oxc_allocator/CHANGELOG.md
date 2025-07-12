@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 💥 BREAKING CHANGES
+
+- facd3cd allocator: [**BREAKING**] Remove `vec!` macro (#12206) (overlookmotel)
+
+### 🚀 Features
+
+- 152e59d napi/oxlint: Read source text into start of allocator (#12122) (overlookmotel)
+- 8d710a2 allocator: Add `Allocator::alloc_bytes_start` method (#12083) (overlookmotel)
+- 704350a allocator: Fixed size allocators (#12082) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6ff6643 allocator: Add error type to `RawVec` (#12204) (overlookmotel)
+- a9482f2 allocator: Remove dead code from `Vec` (#12203) (overlookmotel)
+- 068669f allocator: Add `AllocatorWrapper` abstraction to `AllocatorPool` (#12081) (overlookmotel)
+
+### 📚 Documentation
+
+- b3a076b allocator: Extend doc comments for `Vec` and `RawVec` (#12205) (overlookmotel)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 💥 BREAKING CHANGES
