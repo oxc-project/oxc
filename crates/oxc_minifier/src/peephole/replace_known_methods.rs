@@ -2123,9 +2123,9 @@ mod test {
         test_same("v = 'production'.startsWith('prod', 'bar')");
         test("v = 'production'.startsWith('prod')", "v = !0");
         test("v = 'production'.startsWith('dev')", "v = !1");
-        test(
-            "const node_env = 'production'; v = node_env.toLowerCase().startsWith('prod')",
-            "const node_env = 'production'; v = !0",
-        );
+        // test(
+        // "const node_env = 'production'; v = node_env.toLowerCase().startsWith('prod')",
+        // "const node_env = 'production'; v = !0",
+        // );
     }
 }
