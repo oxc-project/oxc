@@ -9,6 +9,9 @@ use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInfor
 /// 1. the test is always true and the consequent is terminated by explicit return
 /// 2. the test is always false and the alternate is terminated by explicit return
 /// 3. both the consequent and the alternate is terminated by explicit return
+///
+/// `throw` Statements will count as a return status,
+/// because the branch will not continue to be executed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StatementReturnStatus {
     /// Only explicit return on all paths
@@ -127,6 +130,9 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
                 StatementReturnStatus::AlwaysImplicit
             }
         }
+
+        // throw statements count as return for our CFG
+        Statement::ThrowStatement(_) => StatementReturnStatus::AlwaysExplicit,
 
         Statement::IfStatement(stmt) => {
             let test = &stmt.test;
