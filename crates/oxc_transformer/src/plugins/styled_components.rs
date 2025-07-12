@@ -1005,7 +1005,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         let end_index =
                                             bytes[i + 2..].windows(2).position(|q| q == b"*/");
                                         if let Some(end_index) = end_index {
-                                            i += end_index + 4;
+                                            i += end_index + 4; // After `*/`
 
                                             if i == bytes.len() {
                                                 // Comment ends at end of quasi
@@ -1033,7 +1033,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 let end_index =
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
-                                    i += end_index + 2;
+                                    i += end_index + 2; // On `\n` or `\r`
                                     continue;
                                 }
 
