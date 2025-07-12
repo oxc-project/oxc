@@ -561,9 +561,24 @@ impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
-        let mut replaced = false;
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
+                // `({ ...args }) => { args }`
+                if arrow.expression {
+                    arrow.expression = false;
+
+                    debug_assert!(arrow.body.statements.len() == 1);
+
+                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
+                    else {
+                        unreachable!(
+                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
+                        );
+                    };
+                    let return_stmt =
+                        ctx.ast.statement_return(stmt.span, Some(stmt.unbox().expression));
+                    arrow.body.statements.push(return_stmt);
+                }
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
@@ -571,11 +586,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                     scope_id,
                     ctx,
                 );
-                replaced = true;
             }
-        }
-        if replaced && arrow.expression {
-            arrow.expression = false;
         }
     }
 
