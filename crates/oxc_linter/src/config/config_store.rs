@@ -56,7 +56,7 @@ pub struct Config {
 impl Config {
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
-        external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
+        mut external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
         categories: OxlintCategories,
         config: LintConfig,
         overrides: OxlintOverrides,
@@ -72,13 +72,10 @@ impl Config {
                         .into_boxed_slice(),
                 ),
                 config: Arc::new(config),
-                external_rules: Arc::from(
-                    external_rules
-                        .into_iter()
-                        .filter(|(_, sev)| sev.is_warn_deny())
-                        .collect::<Vec<_>>()
-                        .into_boxed_slice(),
-                ),
+                external_rules: Arc::from({
+                    external_rules.retain(|(_, sev)| sev.is_warn_deny());
+                    external_rules.into_boxed_slice()
+                }),
             },
             base_rules: rules,
             categories,
