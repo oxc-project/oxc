@@ -134,14 +134,22 @@ impl Rule for EscapeCase {
                 }
             }
             AstKind::TemplateLiteral(lit) => {
-                lit.quasis.iter().for_each(|quasi| {
-                    let text = quasi.span.source_text(ctx.source_text());
+                // Check all quasis in lead pairs
+                for pair in &lit.lead {
+                    let text = pair.quasi.span.source_text(ctx.source_text());
                     if let Some(fixed) = check_case(text, false) {
-                        ctx.diagnostic_with_fix(escape_case_diagnostic(quasi.span), |fixer| {
-                            fixer.replace(quasi.span, fixed)
+                        ctx.diagnostic_with_fix(escape_case_diagnostic(pair.quasi.span), |fixer| {
+                            fixer.replace(pair.quasi.span, fixed)
                         });
                     }
-                });
+                }
+                // Check tail quasi
+                let text = lit.tail.span.source_text(ctx.source_text());
+                if let Some(fixed) = check_case(text, false) {
+                    ctx.diagnostic_with_fix(escape_case_diagnostic(lit.tail.span), |fixer| {
+                        fixer.replace(lit.tail.span, fixed)
+                    });
+                }
             }
             AstKind::RegExpLiteral(regex) => {
                 let text = regex.span.source_text(ctx.source_text());

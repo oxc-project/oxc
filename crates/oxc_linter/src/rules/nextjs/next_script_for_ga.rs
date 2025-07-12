@@ -116,8 +116,28 @@ impl Rule for NextScriptForGa {
             let Expression::TemplateLiteral(template_literal) = &danger_value.value else {
                 return;
             };
-            let template_literal = template_literal.quasis[0].value.raw.as_str();
-            if SUPPORTED_HTML_CONTENT_URLS.iter().any(|s| template_literal.contains(s)) {
+
+            // Check all parts of the template literal for GA URLs
+            let mut contains_ga_url = false;
+
+            // Check lead pairs
+            for pair in &template_literal.lead {
+                if SUPPORTED_HTML_CONTENT_URLS.iter().any(|s| pair.quasi.value.raw.contains(s)) {
+                    contains_ga_url = true;
+                    break;
+                }
+            }
+
+            // Check tail if not found in lead
+            if !contains_ga_url
+                && SUPPORTED_HTML_CONTENT_URLS
+                    .iter()
+                    .any(|s| template_literal.tail.value.raw.contains(s))
+            {
+                contains_ga_url = true;
+            }
+
+            if contains_ga_url {
                 ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
             }
         }

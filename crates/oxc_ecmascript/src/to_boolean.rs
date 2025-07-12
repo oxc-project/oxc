@@ -42,13 +42,12 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
             Expression::BigIntLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
             Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
             Expression::TemplateLiteral(template_literal) => {
-                // only for ``
-                template_literal
-                    .quasis
-                    .first()
-                    .filter(|quasi| quasi.tail)
-                    .and_then(|quasi| quasi.value.cooked.as_ref())
-                    .map(|cooked| !cooked.is_empty())
+                // only for no-substitution templates
+                if template_literal.lead.is_empty() {
+                    template_literal.tail.value.cooked.as_ref().map(|cooked| !cooked.is_empty())
+                } else {
+                    None
+                }
             }
             Expression::SequenceExpression(e) => {
                 e.expressions.last().and_then(|expr| expr.to_boolean(is_global_reference))

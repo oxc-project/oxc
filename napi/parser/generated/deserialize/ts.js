@@ -162,13 +162,16 @@ function deserializeObjectProperty(pos) {
 }
 
 function deserializeTemplateLiteral(pos) {
-  return {
-    type: 'TemplateLiteral',
-    quasis: deserializeVecTemplateElement(pos + 8),
-    expressions: deserializeVecExpression(pos + 32),
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
+  const quasis = [],
+    expressions = [];
+
+  for (const pair of deserializeVecTemplateLiteralPair(pos + 8)) {
+    quasis.push(pair.quasi);
+    expressions.push(pair.expression);
+  }
+  quasis.push(deserializeTemplateElement(pos + 32));
+
+  return { type: 'TemplateLiteral', quasis, expressions, start: start, end: end };
 }
 
 function deserializeTaggedTemplateExpression(pos) {
@@ -183,15 +186,14 @@ function deserializeTaggedTemplateExpression(pos) {
 }
 
 function deserializeTemplateElement(pos) {
-  const tail = deserializeBool(pos + 40),
-    start = deserializeU32(pos) - 1,
-    end = deserializeU32(pos + 4) + 2 - tail,
+  const start = deserializeU32(pos) - 1,
+    end = deserializeU32(pos + 4) + 2,
     value = deserializeTemplateElementValue(pos + 8);
-  if (value.cooked !== null && deserializeBool(pos + 41)) {
+  if (value.cooked !== null && deserializeBool(pos + 40)) {
     value.cooked = value.cooked
       .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
   }
-  return { type: 'TemplateElement', value, tail, start, end };
+  return { type: 'TemplateElement', value, tail: false, start, end };
 }
 
 function deserializeTemplateElementValue(pos) {
@@ -4428,30 +4430,6 @@ function deserializeBoxPrivateIdentifier(pos) {
   return deserializePrivateIdentifier(uint32[pos >> 2]);
 }
 
-function deserializeVecTemplateElement(pos) {
-  const arr = [],
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 48;
-  while (pos !== endPos) {
-    arr.push(deserializeTemplateElement(pos));
-    pos += 48;
-  }
-  return arr;
-}
-
-function deserializeVecExpression(pos) {
-  const arr = [],
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 16;
-  while (pos !== endPos) {
-    arr.push(deserializeExpression(pos));
-    pos += 16;
-  }
-  return arr;
-}
-
 function deserializeBoxTSTypeParameterInstantiation(pos) {
   return deserializeTSTypeParameterInstantiation(uint32[pos >> 2]);
 }
@@ -4547,6 +4525,18 @@ function deserializeBoxAssignmentTargetPropertyProperty(pos) {
 function deserializeOptionExpression(pos) {
   if (uint8[pos] === 51) return null;
   return deserializeExpression(pos);
+}
+
+function deserializeVecExpression(pos) {
+  const arr = [],
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  const endPos = pos + uint32[pos32 + 2] * 16;
+  while (pos !== endPos) {
+    arr.push(deserializeExpression(pos));
+    pos += 16;
+  }
+  return arr;
 }
 
 function deserializeBoxBlockStatement(pos) {
@@ -5362,6 +5352,18 @@ function deserializeOptionTSTypeName(pos) {
 function deserializeOptionTSMappedTypeModifierOperator(pos) {
   if (uint8[pos] === 3) return null;
   return deserializeTSMappedTypeModifierOperator(pos);
+}
+
+function deserializeVecTemplateElement(pos) {
+  const arr = [],
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  const endPos = pos + uint32[pos32 + 2] * 48;
+  while (pos !== endPos) {
+    arr.push(deserializeTemplateElement(pos));
+    pos += 48;
+  }
+  return arr;
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {

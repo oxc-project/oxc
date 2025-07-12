@@ -118,15 +118,24 @@ impl Rule for NoUselessEscape {
                 literal.span.start,
                 &check_string(literal.span.source_text(ctx.source_text())),
             ),
-            AstKind::TemplateLiteral(literal) if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TaggedTemplateExpression(expr) if expr.quasi.span == literal.span) => {
-                for template_element in &literal.quasis {
+            AstKind::TemplateLiteral(literal) if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TaggedTemplateExpression(expr) if expr.quasi.span == literal.span) =>
+            {
+                // Check all quasis in lead pairs
+                for pair in &literal.lead {
                     check(
                         ctx,
                         node.id(),
-                        template_element.span.start - 1,
-                        &check_template(template_element.span.source_text(ctx.source_text())),
+                        pair.quasi.span.start - 1,
+                        &check_template(pair.quasi.span.source_text(ctx.source_text())),
                     );
                 }
+                // Check tail quasi
+                check(
+                    ctx,
+                    node.id(),
+                    literal.tail.span.start - 1,
+                    &check_template(literal.tail.span.source_text(ctx.source_text())),
+                );
             }
             _ => {}
         }

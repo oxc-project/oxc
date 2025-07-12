@@ -1219,11 +1219,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
 
     fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
         self.convert_offset(&mut lit.span.start);
-        for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
-            self.visit_template_element(quasi);
-            self.visit_expression(expression);
+        for pair in &mut lit.lead {
+            self.visit_template_element(&mut pair.quasi);
+            self.visit_expression(&mut pair.expression);
         }
-        self.visit_template_element(lit.quasis.last_mut().unwrap());
+        self.visit_template_element(&mut lit.tail);
         self.convert_offset(&mut lit.span.end);
     }
 

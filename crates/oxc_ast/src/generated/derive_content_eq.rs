@@ -274,8 +274,15 @@ impl ContentEq for PropertyKind {
 
 impl ContentEq for TemplateLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.quasis, &other.quasis)
-            && ContentEq::content_eq(&self.expressions, &other.expressions)
+        ContentEq::content_eq(&self.lead, &other.lead)
+            && ContentEq::content_eq(&self.tail, &other.tail)
+    }
+}
+
+impl ContentEq for TemplateLiteralPair<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.quasi, &other.quasi)
+            && ContentEq::content_eq(&self.expression, &other.expression)
     }
 }
 
@@ -290,7 +297,6 @@ impl ContentEq for TaggedTemplateExpression<'_> {
 impl ContentEq for TemplateElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.tail, &other.tail)
             && ContentEq::content_eq(&self.lone_surrogates, &other.lone_surrogates)
     }
 }

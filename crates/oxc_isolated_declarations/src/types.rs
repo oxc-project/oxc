@@ -75,9 +75,9 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
-                if is_identifier_name(&literal.quasis[0].value.raw) =>
+                if literal.lead.is_empty() && is_identifier_name(&literal.tail.value.raw) =>
             {
-                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+                self.ast.property_key_static_identifier(literal.span, literal.tail.value.raw)
             }
             // [100] -> 100
             // number literal will be cloned as-is

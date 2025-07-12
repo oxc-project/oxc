@@ -40,6 +40,8 @@ impl<'a> TakeIn<'a> for PropertyKey<'a> {}
 
 impl<'a> TakeIn<'a> for TemplateLiteral<'a> {}
 
+impl<'a> TakeIn<'a> for TemplateLiteralPair<'a> {}
+
 impl<'a> TakeIn<'a> for TaggedTemplateExpression<'a> {}
 
 impl<'a> TakeIn<'a> for TemplateElement<'a> {}

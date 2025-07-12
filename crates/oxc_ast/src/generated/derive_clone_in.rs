@@ -1049,16 +1049,34 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateLiteral<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TemplateLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
-            quasis: CloneIn::clone_in(&self.quasis, allocator),
-            expressions: CloneIn::clone_in(&self.expressions, allocator),
+            lead: CloneIn::clone_in(&self.lead, allocator),
+            tail: CloneIn::clone_in(&self.tail, allocator),
         }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TemplateLiteral {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            quasis: CloneIn::clone_in_with_semantic_ids(&self.quasis, allocator),
-            expressions: CloneIn::clone_in_with_semantic_ids(&self.expressions, allocator),
+            lead: CloneIn::clone_in_with_semantic_ids(&self.lead, allocator),
+            tail: CloneIn::clone_in_with_semantic_ids(&self.tail, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TemplateLiteralPair<'_> {
+    type Cloned = TemplateLiteralPair<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TemplateLiteralPair {
+            quasi: CloneIn::clone_in(&self.quasi, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TemplateLiteralPair {
+            quasi: CloneIn::clone_in_with_semantic_ids(&self.quasi, allocator),
+            expression: CloneIn::clone_in_with_semantic_ids(&self.expression, allocator),
         }
     }
 }
@@ -1092,7 +1110,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
         TemplateElement {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
-            tail: CloneIn::clone_in(&self.tail, allocator),
             lone_surrogates: CloneIn::clone_in(&self.lone_surrogates, allocator),
         }
     }
@@ -1101,7 +1118,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
         TemplateElement {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             value: CloneIn::clone_in_with_semantic_ids(&self.value, allocator),
-            tail: CloneIn::clone_in_with_semantic_ids(&self.tail, allocator),
             lone_surrogates: CloneIn::clone_in_with_semantic_ids(&self.lone_surrogates, allocator),
         }
     }

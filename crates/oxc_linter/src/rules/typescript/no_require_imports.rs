@@ -165,15 +165,20 @@ impl Rule for NoRequireImports {
 
                     match argument {
                         Argument::TemplateLiteral(template_literal) => {
-                            let Some(quasi) = template_literal.quasis.first() else {
-                                return;
-                            };
+                            if !template_literal.lead.is_empty() {
+                                return; // Only handle no-substitution templates
+                            }
 
-                            if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
+                            if match_argument_value_with_regex(
+                                &self.allow,
+                                &template_literal.tail.value.raw,
+                            ) {
                                 return;
                             }
 
-                            ctx.diagnostic(no_require_imports_diagnostic(quasi.span));
+                            ctx.diagnostic(no_require_imports_diagnostic(
+                                template_literal.tail.span,
+                            ));
                         }
                         Argument::StringLiteral(string_literal) => {
                             if match_argument_value_with_regex(&self.allow, &string_literal.value) {

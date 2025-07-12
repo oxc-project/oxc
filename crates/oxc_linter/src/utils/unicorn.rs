@@ -185,13 +185,18 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
                 && string_lit.value == template_lit.quasi().unwrap();
         }
         (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
-            return left_str.quasis.content_eq(&right_str.quasis)
-                && left_str.expressions.len() == right_str.expressions.len()
-                && left_str
-                    .expressions
-                    .iter()
-                    .zip(right_str.expressions.iter())
-                    .all(|(left, right)| is_same_expression(left, right, ctx));
+            return left_str.lead.len() == right_str.lead.len()
+                && left_str.tail.content_eq(&right_str.tail)
+                && left_str.lead.iter().zip(right_str.lead.iter()).all(
+                    |(left_pair, right_pair)| {
+                        left_pair.quasi.content_eq(&right_pair.quasi)
+                            && is_same_expression(
+                                &left_pair.expression,
+                                &right_pair.expression,
+                                ctx,
+                            )
+                    },
+                );
         }
         (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw;

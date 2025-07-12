@@ -486,8 +486,8 @@ impl<'a> MemberExpressionKind<'a> {
             Self::Computed(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                    if lit.lead.is_empty() {
+                        lit.tail.value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
                         None
                     }

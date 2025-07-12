@@ -34,6 +34,7 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "BindingPattern",
     "TSFunctionType",
     // This one should not be removed
+    "TemplateLiteralPair",
     "Span",
 ];
 

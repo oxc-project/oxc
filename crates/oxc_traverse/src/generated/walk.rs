@@ -463,22 +463,46 @@ unsafe fn walk_template_literal<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_template_literal(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TemplateLiteralQuasis(
-        ancestor::TemplateLiteralWithoutQuasis(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TemplateLiteralLead(
+        ancestor::TemplateLiteralWithoutLead(node, PhantomData),
     ));
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_QUASIS)
-        as *mut Vec<TemplateElement>)
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_LEAD)
+        as *mut Vec<TemplateLiteralPair>)
     {
-        walk_template_element(traverser, item as *mut _, ctx);
+        walk_template_literal_pair(traverser, item as *mut _, ctx);
     }
-    ctx.retag_stack(AncestorType::TemplateLiteralExpressions);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_EXPRESSIONS)
-        as *mut Vec<Expression>)
-    {
-        walk_expression(traverser, item as *mut _, ctx);
-    }
+    ctx.retag_stack(AncestorType::TemplateLiteralTail);
+    walk_template_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_TAIL) as *mut TemplateElement,
+        ctx,
+    );
     ctx.pop_stack(pop_token);
     traverser.exit_template_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_template_literal_pair<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TemplateLiteralPair<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_template_literal_pair(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TemplateLiteralPairQuasi(
+        ancestor::TemplateLiteralPairWithoutQuasi(node, PhantomData),
+    ));
+    walk_template_element(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_PAIR_QUASI) as *mut TemplateElement,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TemplateLiteralPairExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_PAIR_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_template_literal_pair(&mut *node, ctx);
 }
 
 unsafe fn walk_tagged_template_expression<'a, State, Tr: Traverse<'a, State>>(

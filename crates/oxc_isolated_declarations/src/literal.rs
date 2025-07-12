@@ -8,14 +8,12 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         lit: &TemplateLiteral<'a>,
     ) -> Option<ArenaBox<'a, StringLiteral<'a>>> {
-        if lit.expressions.is_empty() {
-            lit.quasis.first().map(|item| {
-                self.ast.alloc_string_literal(
-                    lit.span,
-                    item.value.cooked.unwrap_or(item.value.raw),
-                    None,
-                )
-            })
+        if lit.lead.is_empty() {
+            Some(self.ast.alloc_string_literal(
+                lit.span,
+                lit.tail.value.cooked.unwrap_or(lit.tail.value.raw),
+                None,
+            ))
         } else {
             None
         }

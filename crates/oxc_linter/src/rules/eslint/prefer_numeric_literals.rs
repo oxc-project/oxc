@@ -200,10 +200,10 @@ fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
     if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
         return Some(ident.value.to_string());
     } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
-        if temp.quasis.is_empty() {
-            return None;
+        if !temp.lead.is_empty() {
+            return None; // Only handle no-substitution templates
         }
-        return Some(temp.quasis[0].value.raw.to_string());
+        return Some(temp.tail.value.raw.to_string());
     }
 
     None

@@ -253,7 +253,11 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
             JSXExpression::StringLiteral(str) => str.value.parse().or(Err(())),
             JSXExpression::TemplateLiteral(tmpl) => {
-                tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
+                if tmpl.lead.is_empty() {
+                    tmpl.tail.value.raw.parse().or(Err(()))
+                } else {
+                    Err(())
+                }
             }
             JSXExpression::NumericLiteral(num) => Ok(num.value),
             _ => Err(()),

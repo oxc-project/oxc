@@ -431,10 +431,21 @@ pub enum PropertyKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TemplateLiteralConverter)]
 pub struct TemplateLiteral<'a> {
     pub span: Span,
-    pub quasis: Vec<'a, TemplateElement<'a>>,
-    pub expressions: Vec<'a, Expression<'a>>,
+    pub lead: Vec<'a, TemplateLiteralPair<'a>>,
+    pub tail: TemplateElement<'a>,
+}
+
+/// A pair of quasi and expression in a template literal.
+/// This ensures the invariant that there's always one more quasi than expressions.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq)]
+pub struct TemplateLiteralPair<'a> {
+    pub quasi: TemplateElement<'a>,
+    pub expression: Expression<'a>,
 }
 
 /// `` tag`Hello, ${name}` `` in `` const foo = tag`Hello, ${name}`; ``.
@@ -464,7 +475,6 @@ pub struct TaggedTemplateExpression<'a> {
 pub struct TemplateElement<'a> {
     pub span: Span,
     pub value: TemplateElementValue<'a>,
-    pub tail: bool,
     /// The template element contains lone surrogates.
     ///
     /// `value.cooked` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.

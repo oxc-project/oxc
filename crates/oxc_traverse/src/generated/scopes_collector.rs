@@ -279,7 +279,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_template_literal(&mut self, it: &TemplateLiteral<'a>) {
-        self.visit_expressions(&it.expressions);
+        self.visit_template_literal_pairs(&it.lead);
+    }
+
+    #[inline]
+    fn visit_template_literal_pair(&mut self, it: &TemplateLiteralPair<'a>) {
+        self.visit_expression(&it.expression);
     }
 
     #[inline]

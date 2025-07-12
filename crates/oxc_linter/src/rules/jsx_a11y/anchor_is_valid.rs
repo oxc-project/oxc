@@ -184,7 +184,7 @@ impl AnchorIsValid {
                 JSXExpression::NullLiteral(_) => true,
                 JSXExpression::StringLiteral(str_lit) => self.is_invalid_href(&str_lit.value),
                 JSXExpression::TemplateLiteral(temp_lit) => {
-                    if !temp_lit.expressions.is_empty() {
+                    if !temp_lit.lead.is_empty() {
                         return false;
                     }
 

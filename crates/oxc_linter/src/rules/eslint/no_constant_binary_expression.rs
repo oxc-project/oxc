@@ -260,7 +260,7 @@ impl NoConstantBinaryExpression {
                 _ => false,
             },
             Expression::CallExpression(call_expr) => call_expr.is_constant(true, ctx),
-            Expression::TemplateLiteral(lit) => lit.expressions.is_empty(),
+            Expression::TemplateLiteral(lit) => lit.lead.is_empty(),
             Expression::AssignmentExpression(assignment_expr) => {
                 assignment_expr.operator == AssignmentOperator::Assign
                     && Self::has_constant_loose_boolean_comparison(&assignment_expr.right, ctx)

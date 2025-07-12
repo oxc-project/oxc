@@ -748,6 +748,7 @@ impl<'a> PeepholeOptimizations {
                     vec![Cow::Borrowed(base_str.value.as_str())];
                 let mut expressions = ctx.ast.vec();
                 let mut pushed_quasi = true;
+
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
                         if pushed_quasi {
@@ -769,6 +770,7 @@ impl<'a> PeepholeOptimizations {
                         pushed_quasi = false;
                     }
                 }
+
                 if !pushed_quasi {
                     quasi_strs.push(Cow::Borrowed(""));
                 }
@@ -782,23 +784,43 @@ impl<'a> PeepholeOptimizations {
                     ));
                 }
 
-                let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = ctx.ast.atom_from_cow(&s);
-                    ctx.ast.template_element(
+                // Build the new template literal structure
+                let mut lead = ctx.ast.vec();
+                let mut quasi_iter = quasi_strs.into_iter();
+
+                // Create pairs for each expression
+                for expression in expressions {
+                    let quasi_str =
+                        quasi_iter.next().expect("should have a quasi for each expression");
+                    let cooked = ctx.ast.atom_from_cow(&quasi_str);
+                    let quasi = ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
-                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
+                            raw: ctx
+                                .ast
+                                .atom(&Self::escape_string_for_template_literal(&quasi_str)),
                             cooked: Some(cooked),
                         },
-                        false,
-                    )
-                }));
-                if let Some(last_quasi) = quasis.last_mut() {
-                    last_quasi.tail = true;
+                    );
+
+                    lead.push(TemplateLiteralPair { quasi, expression });
                 }
 
-                debug_assert_eq!(quasis.len(), expressions.len() + 1);
-                Some(ctx.ast.expression_template_literal(span, quasis, expressions))
+                // Create the tail quasi
+                let tail_str =
+                    quasi_iter.next().expect("should have one more quasi than expressions");
+                let tail_cooked = ctx.ast.atom_from_cow(&tail_str);
+                let tail = ctx.ast.template_element(
+                    SPAN,
+                    TemplateElementValue {
+                        raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&tail_str)),
+                        cooked: Some(tail_cooked),
+                    },
+                );
+
+                debug_assert!(quasi_iter.next().is_none(), "should have consumed all quasis");
+
+                Some(ctx.ast.expression_template_literal(span, lead, tail))
             }
             _ => None,
         }

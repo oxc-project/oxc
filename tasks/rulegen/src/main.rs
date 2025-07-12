@@ -174,9 +174,19 @@ fn format_code_snippet(code: &str) -> String {
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
     if tag_expr.tag.is_specific_member_access("String", "raw") {
-        tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+        // For new structure, get the first quasi from lead or tail
+        if let Some(first_pair) = tag_expr.quasi.lead.first() {
+            Some(format!("r#\"{}\"#", first_pair.quasi.value.raw))
+        } else {
+            Some(format!("r#\"{}\"#", tag_expr.quasi.tail.value.raw))
+        }
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
-        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
+        // For new structure, get the first quasi from lead or tail
+        if let Some(first_pair) = tag_expr.quasi.lead.first() {
+            Some(util::dedent(&first_pair.quasi.value.raw))
+        } else {
+            Some(util::dedent(&tag_expr.quasi.tail.value.raw))
+        }
     } else {
         tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
     }

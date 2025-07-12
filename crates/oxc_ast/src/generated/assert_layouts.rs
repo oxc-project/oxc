@@ -96,27 +96,32 @@ const _: () = {
     assert!(align_of::<PropertyKind>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<TemplateLiteral>() == 56);
+    assert!(size_of::<TemplateLiteral>() == 80);
     assert!(align_of::<TemplateLiteral>() == 8);
     assert!(offset_of!(TemplateLiteral, span) == 0);
-    assert!(offset_of!(TemplateLiteral, quasis) == 8);
-    assert!(offset_of!(TemplateLiteral, expressions) == 32);
+    assert!(offset_of!(TemplateLiteral, lead) == 8);
+    assert!(offset_of!(TemplateLiteral, tail) == 32);
 
     // Padding: 0 bytes
-    assert!(size_of::<TaggedTemplateExpression>() == 88);
+    assert!(size_of::<TemplateLiteralPair>() == 64);
+    assert!(align_of::<TemplateLiteralPair>() == 8);
+    assert!(offset_of!(TemplateLiteralPair, quasi) == 0);
+    assert!(offset_of!(TemplateLiteralPair, expression) == 48);
+
+    // Padding: 0 bytes
+    assert!(size_of::<TaggedTemplateExpression>() == 112);
     assert!(align_of::<TaggedTemplateExpression>() == 8);
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 24);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 32);
 
-    // Padding: 6 bytes
+    // Padding: 7 bytes
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, value) == 8);
-    assert!(offset_of!(TemplateElement, tail) == 40);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 41);
+    assert!(offset_of!(TemplateElement, lone_surrogates) == 40);
 
     // Padding: 0 bytes
     assert!(size_of::<TemplateElementValue>() == 32);
@@ -1686,27 +1691,32 @@ const _: () = {
     assert!(align_of::<PropertyKind>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<TemplateLiteral>() == 40);
+    assert!(size_of::<TemplateLiteral>() == 52);
     assert!(align_of::<TemplateLiteral>() == 4);
     assert!(offset_of!(TemplateLiteral, span) == 0);
-    assert!(offset_of!(TemplateLiteral, quasis) == 8);
-    assert!(offset_of!(TemplateLiteral, expressions) == 24);
+    assert!(offset_of!(TemplateLiteral, lead) == 8);
+    assert!(offset_of!(TemplateLiteral, tail) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<TaggedTemplateExpression>() == 60);
+    assert!(size_of::<TemplateLiteralPair>() == 36);
+    assert!(align_of::<TemplateLiteralPair>() == 4);
+    assert!(offset_of!(TemplateLiteralPair, quasi) == 0);
+    assert!(offset_of!(TemplateLiteralPair, expression) == 28);
+
+    // Padding: 0 bytes
+    assert!(size_of::<TaggedTemplateExpression>() == 72);
     assert!(align_of::<TaggedTemplateExpression>() == 4);
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 16);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 20);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<TemplateElement>() == 28);
     assert!(align_of::<TemplateElement>() == 4);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, value) == 8);
-    assert!(offset_of!(TemplateElement, tail) == 24);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 25);
+    assert!(offset_of!(TemplateElement, lone_surrogates) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<TemplateElementValue>() == 16);

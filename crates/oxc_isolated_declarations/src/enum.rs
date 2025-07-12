@@ -155,11 +155,12 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
-                let mut value = String::new();
-                for part in &lit.quasis {
-                    value.push_str(&part.value.raw);
+                // Only handle no-substitution templates for enum values
+                if lit.lead.is_empty() {
+                    Some(ConstantValue::String(lit.tail.value.raw.to_string()))
+                } else {
+                    None
                 }
-                Some(ConstantValue::String(value))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.evaluate(&expr.expression, enum_name, prev_members)

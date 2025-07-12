@@ -757,13 +757,11 @@ fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
             literal.raw.is_some_and(|text| text.len() <= threshold as usize)
         }
         Argument::TemplateLiteral(literal) => {
-            let elements = &literal.expressions;
-
             // Besides checking length exceed we also need to check that the template doesn't have any expressions.
-            // It means that the elements of the template are empty or have only one `JsTemplateChunkElement` element
+            // It means that the template is a no-substitution template
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
-            literal.quasis.len() == 1 && {
-                let raw = literal.quasis[0].value.raw;
+            literal.lead.is_empty() && {
+                let raw = literal.tail.value.raw;
                 raw.len() <= threshold as usize && !raw.contains('\n')
             }
         }

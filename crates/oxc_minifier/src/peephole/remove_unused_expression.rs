@@ -1,5 +1,3 @@
-use std::iter;
-
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -271,67 +269,103 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::TemplateLiteral(temp_lit) = e else { return false };
-        if temp_lit.expressions.is_empty() {
+
+        // Check if template has no expressions
+        if temp_lit.lead.is_empty() {
             return true;
         }
-        if temp_lit.expressions.iter().all(|e| e.to_primitive(ctx).is_symbol() != Some(false))
-            && temp_lit.quasis.iter().all(|q| q.value.raw.is_empty())
-        {
+
+        // Check if all expressions require toString and all quasis are empty
+        let all_require_to_string = temp_lit
+            .lead
+            .iter()
+            .all(|pair| pair.expression.to_primitive(ctx).is_symbol() != Some(false));
+
+        let all_quasis_empty = temp_lit.lead.iter().all(|pair| pair.quasi.value.raw.is_empty())
+            && temp_lit.tail.value.raw.is_empty();
+
+        if all_require_to_string && all_quasis_empty {
             return false;
         }
 
         let mut transformed_elements = ctx.ast.vec();
         let mut pending_to_string_required_exprs = ctx.ast.vec();
 
-        for mut e in temp_lit.expressions.drain(..) {
-            if e.to_primitive(ctx).is_symbol() != Some(false) {
-                pending_to_string_required_exprs.push(e);
-            } else if !self.remove_unused_expression(&mut e, state, ctx) {
+        // Process each expression in the lead pairs
+        for pair in temp_lit.lead.drain(..) {
+            let mut expr = pair.expression;
+
+            if expr.to_primitive(ctx).is_symbol() != Some(false) {
+                pending_to_string_required_exprs.push(expr);
+            } else if !self.remove_unused_expression(&mut expr, state, ctx) {
+                // Flush pending toString required expressions
                 if !pending_to_string_required_exprs.is_empty() {
-                    // flush pending to string required expressions
                     let expressions =
                         ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-                    let mut quasis = ctx.ast.vec_from_iter(
-                        iter::repeat_with(|| {
-                            ctx.ast.template_element(
-                                e.span(),
-                                TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
-                                false,
-                            )
-                        })
-                        .take(expressions.len() + 1),
-                    );
-                    quasis
-                        .last_mut()
-                        .expect("template literal must have at least one quasi")
-                        .tail = true;
+
+                    // Create template literal with new structure
+                    let mut lead = ctx.ast.vec();
+                    let empty_element_value =
+                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) };
+
+                    // Create pairs for all but the last expression
+                    let l = expressions.len();
+                    for (i, expression) in expressions.into_iter().enumerate() {
+                        if i < l - 1 {
+                            lead.push(TemplateLiteralPair {
+                                quasi: ctx
+                                    .ast
+                                    .template_element(expr.span(), empty_element_value.clone()),
+                                expression,
+                            });
+                        } else {
+                            // Last expression - create final pair and tail
+                            lead.push(TemplateLiteralPair {
+                                quasi: ctx
+                                    .ast
+                                    .template_element(expr.span(), empty_element_value.clone()),
+                                expression,
+                            });
+                        }
+                    }
+
+                    // Create tail quasi
+                    let tail = ctx.ast.template_element(expr.span(), empty_element_value);
+
                     transformed_elements.push(ctx.ast.expression_template_literal(
-                        e.span(),
-                        quasis,
-                        expressions,
+                        expr.span(),
+                        lead,
+                        tail,
                     ));
                 }
-                transformed_elements.push(e);
+                transformed_elements.push(expr);
             }
         }
 
+        // Handle any remaining pending expressions
         if !pending_to_string_required_exprs.is_empty() {
             let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
-            let mut quasis = ctx.ast.vec_from_iter(
-                iter::repeat_with(|| {
-                    ctx.ast.template_element(
-                        temp_lit.span,
-                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
-                        false,
-                    )
-                })
-                .take(expressions.len() + 1),
-            );
-            quasis.last_mut().expect("template literal must have at least one quasi").tail = true;
+
+            // Create template literal with new structure
+            let mut lead = ctx.ast.vec();
+            let empty_element_value =
+                TemplateElementValue { raw: "".into(), cooked: Some("".into()) };
+
+            // Create pairs for all expressions
+            for expression in expressions {
+                lead.push(TemplateLiteralPair {
+                    quasi: ctx.ast.template_element(temp_lit.span, empty_element_value.clone()),
+                    expression,
+                });
+            }
+
+            // Create tail quasi
+            let tail = ctx.ast.template_element(temp_lit.span, empty_element_value);
+
             transformed_elements.push(ctx.ast.expression_template_literal(
                 temp_lit.span,
-                quasis,
-                expressions,
+                lead,
+                tail,
             ));
         }
 

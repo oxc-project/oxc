@@ -227,16 +227,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
+    /// * `lead`
+    /// * `tail`
     #[inline]
     pub fn expression_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        lead: Vec<'a, TemplateLiteralPair<'a>>,
+        tail: TemplateElement<'a>,
     ) -> Expression<'a> {
-        Expression::TemplateLiteral(self.alloc_template_literal(span, quasis, expressions))
+        Expression::TemplateLiteral(self.alloc_template_literal(span, lead, tail))
     }
 
     /// Build an [`Expression::Identifier`].
@@ -1683,16 +1683,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
+    /// * `lead`
+    /// * `tail`
     #[inline]
     pub fn template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        lead: Vec<'a, TemplateLiteralPair<'a>>,
+        tail: TemplateElement<'a>,
     ) -> TemplateLiteral<'a> {
-        TemplateLiteral { span, quasis, expressions }
+        TemplateLiteral { span, lead, tail }
     }
 
     /// Build a [`TemplateLiteral`], and store it in the memory arena.
@@ -1702,16 +1702,30 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
+    /// * `lead`
+    /// * `tail`
     #[inline]
     pub fn alloc_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        lead: Vec<'a, TemplateLiteralPair<'a>>,
+        tail: TemplateElement<'a>,
     ) -> Box<'a, TemplateLiteral<'a>> {
-        Box::new_in(self.template_literal(span, quasis, expressions), self.allocator)
+        Box::new_in(self.template_literal(span, lead, tail), self.allocator)
+    }
+
+    /// Build a [`TemplateLiteralPair`].
+    ///
+    /// ## Parameters
+    /// * `quasi`
+    /// * `expression`
+    #[inline]
+    pub fn template_literal_pair(
+        self,
+        quasi: TemplateElement<'a>,
+        expression: Expression<'a>,
+    ) -> TemplateLiteralPair<'a> {
+        TemplateLiteralPair { quasi, expression }
     }
 
     /// Build a [`TaggedTemplateExpression`].
@@ -1775,15 +1789,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `value`
-    /// * `tail`
     #[inline]
     pub fn template_element(
         self,
         span: Span,
         value: TemplateElementValue<'a>,
-        tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, value, tail, lone_surrogates: Default::default() }
+        TemplateElement { span, value, lone_surrogates: Default::default() }
     }
 
     /// Build a [`TemplateElement`] with `lone_surrogates`.
@@ -1791,17 +1803,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `value`
-    /// * `tail`
     /// * `lone_surrogates`: The template element contains lone surrogates.
     #[inline]
     pub fn template_element_with_lone_surrogates(
         self,
         span: Span,
         value: TemplateElementValue<'a>,
-        tail: bool,
         lone_surrogates: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, value, tail, lone_surrogates }
+        TemplateElement { span, value, lone_surrogates }
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].
@@ -9868,20 +9878,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
+    /// * `lead`
+    /// * `tail`
     #[inline]
     pub fn ts_enum_member_name_computed_template_string(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        lead: Vec<'a, TemplateLiteralPair<'a>>,
+        tail: TemplateElement<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(
-            span,
-            quasis,
-            expressions,
-        ))
+        TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(span, lead, tail))
     }
 
     /// Build a [`TSTypeAnnotation`].
@@ -10058,16 +10064,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `quasis`
-    /// * `expressions`
+    /// * `lead`
+    /// * `tail`
     #[inline]
     pub fn ts_literal_template_literal(
         self,
         span: Span,
-        quasis: Vec<'a, TemplateElement<'a>>,
-        expressions: Vec<'a, Expression<'a>>,
+        lead: Vec<'a, TemplateLiteralPair<'a>>,
+        tail: TemplateElement<'a>,
     ) -> TSLiteral<'a> {
-        TSLiteral::TemplateLiteral(self.alloc_template_literal(span, quasis, expressions))
+        TSLiteral::TemplateLiteral(self.alloc_template_literal(span, lead, tail))
     }
 
     /// Build a [`TSLiteral::UnaryExpression`].

@@ -6,7 +6,7 @@ use oxc_estree::{
 
 use crate::ast::*;
 
-use super::{EmptyArray, Null};
+use super::{EmptyArray, Null, literal::TemplateElementValue};
 
 // ----------------------------------------
 // Binding patterns and function params
@@ -445,5 +445,79 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         } else {
             self.0.binding.serialize(serializer);
         }
+    }
+}
+
+// ----------------------------------------
+// Template literals
+// ----------------------------------------
+
+/// Converter for [`TemplateLiteral`].
+///
+/// Converts the new structure with `lead` and `tail` back to ESTree format
+/// with separate `quasis` and `expressions` arrays.
+#[ast_meta]
+#[estree(raw_deser = "
+    const quasis = [],
+          expressions = [];
+    
+    for (const pair of DESER[Vec<TemplateLiteralPair>](POS_OFFSET.lead)) {
+        quasis.push(pair.quasi);
+        expressions.push(pair.expression);
+    }
+    quasis.push(DESER[TemplateElement](POS_OFFSET.tail));
+    
+    { type: 'TemplateLiteral', quasis, expressions, start: THIS.start, end: THIS.end }
+")]
+pub struct TemplateLiteralConverter<'a, 'b>(pub &'b TemplateLiteral<'a>);
+
+impl ESTree for TemplateLiteralConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let template = self.0;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
+
+        // Build quasis array - collect into Vec and use as slice to implement ESTree
+        let mut quasis = template
+            .lead
+            .iter()
+            .map(|pair| TemplateElementWithTail(&pair.quasi, false))
+            .collect::<std::vec::Vec<_>>();
+        quasis.push(TemplateElementWithTail(&template.tail, true));
+        state.serialize_field("quasis", &quasis.as_slice());
+
+        // Build expressions array - collect into Vec and use as slice to implement ESTree
+        let expressions =
+            template.lead.iter().map(|pair| &pair.expression).collect::<std::vec::Vec<_>>();
+        state.serialize_field("expressions", &expressions.as_slice());
+
+        state.serialize_span(template.span);
+        state.end();
+    }
+}
+
+/// Helper to serialize a TemplateElement with a specific tail value
+struct TemplateElementWithTail<'a>(&'a TemplateElement<'a>, bool);
+
+impl ESTree for TemplateElementWithTail<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let element = self.0;
+        let tail = self.1;
+
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TemplateElement"));
+
+        state.serialize_field("value", &TemplateElementValue(element));
+        state.serialize_field("tail", &tail);
+
+        let mut span = element.span;
+        if S::INCLUDE_TS_FIELDS {
+            span.start -= 1;
+            span.end += if tail { 1 } else { 2 };
+        }
+        state.serialize_span(span);
+
+        state.end();
     }
 }

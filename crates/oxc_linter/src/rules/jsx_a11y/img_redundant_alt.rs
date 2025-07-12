@@ -172,12 +172,17 @@ impl Rule for ImgRedundantAlt {
                     }
                 }
                 JSXExpression::TemplateLiteral(lit) => {
-                    for quasi in &lit.quasis {
-                        let alt_text = quasi.value.raw.as_str();
-
+                    // Check all quasis in lead pairs
+                    for pair in &lit.lead {
+                        let alt_text = pair.quasi.value.raw.as_str();
                         if self.is_redundant_alt_text(alt_text) {
                             ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                         }
+                    }
+                    // Check tail quasi
+                    let alt_text = lit.tail.value.raw.as_str();
+                    if self.is_redundant_alt_text(alt_text) {
+                        ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
                 _ => {}

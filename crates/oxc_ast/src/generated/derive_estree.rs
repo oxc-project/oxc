@@ -297,12 +297,7 @@ impl ESTree for PropertyKind {
 
 impl ESTree for TemplateLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
-        state.serialize_field("quasis", &self.quasis);
-        state.serialize_field("expressions", &self.expressions);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::js::TemplateLiteralConverter(self).serialize(serializer)
     }
 }
 

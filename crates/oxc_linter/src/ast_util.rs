@@ -78,11 +78,16 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
             | Self::ObjectExpression(_) => true,
             Self::TemplateLiteral(template) => {
                 let test_quasis = in_boolean_position
-                    && template.quasis.iter().any(|quasi| {
-                        quasi.value.cooked.as_ref().is_some_and(|cooked| !cooked.is_empty())
-                    });
+                    && (template.lead.iter().any(|pair| {
+                        pair.quasi.value.cooked.as_ref().is_some_and(|cooked| !cooked.is_empty())
+                    }) || template
+                        .tail
+                        .value
+                        .cooked
+                        .as_ref()
+                        .is_some_and(|cooked| !cooked.is_empty()));
                 let test_expressions =
-                    template.expressions.iter().all(|expr| expr.is_constant(false, semantic));
+                    template.lead.iter().all(|pair| pair.expression.is_constant(false, semantic));
                 test_quasis || test_expressions
             }
             Self::ArrayExpression(expr) => {
@@ -790,8 +795,8 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty() && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
+            if template.lead.is_empty() {
+                if let Some(cooked) = &template.tail.value.cooked {
                     return Some(Cow::Borrowed(cooked.as_str()));
                 }
             }

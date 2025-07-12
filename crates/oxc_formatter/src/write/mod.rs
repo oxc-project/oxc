@@ -270,14 +270,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        let mut expressions = self.expressions().iter();
 
-        for quasi in self.quasis() {
-            write!(f, quasi);
-            if let Some(expr) = expressions.next() {
-                write!(f, ["${", expr, "}"]);
-            }
+        // Write lead pairs
+        for pair in self.lead() {
+            // Write quasi raw text directly
+            write!(f, dynamic_text(pair.quasi.value.raw.as_str()))?;
+            // Write expression placeholder - this needs proper formatting
+            write!(f, "${")?;
+            write!(f, "/* TODO: format expression */")?;
+            write!(f, "}")?;
         }
+
+        // Write tail
+        write!(f, self.tail())?;
 
         write!(f, "`")
     }
@@ -292,6 +297,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, dynamic_text(self.value().raw.as_str()))
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteralPair<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.quasi(), "${", self.expression(), "}"])
     }
 }
 
