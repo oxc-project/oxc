@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🚀 Features
+
+- 407429a napi/parser,napi/transform: Accept `lang=dts` (#12154) (Boshen)
+
+### 🚜 Refactor
+
+- baa3726 tests/napi: Add `build-test` script for tests (#12132) (camc314)
+
+### ⚡ Performance
+
+- 4c35f4a napi/parser: Optimize raw transfer deserializer for `TSClassImplements` (#12158) (overlookmotel)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚀 Features
+
+- 407429a napi/parser,napi/transform: Accept `lang=dts` (#12154) (Boshen)
+
+### 🚜 Refactor
+
+- baa3726 tests/napi: Add `build-test` script for tests (#12132) (camc314)
+
+### ⚡ Performance
+
+- 4c35f4a napi/parser: Optimize raw transfer deserializer for `TSClassImplements` (#12158) (overlookmotel)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🐛 Bug Fixes

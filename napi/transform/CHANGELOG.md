@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🚀 Features
+
+- 75ee3a1 napi/transform: Support enabling `StyledComponent` plugin (#12155) (Dunqing)
+- 19b97c0 transformer: Support styled components plugin (#12066) (Dunqing)
+- 407429a napi/parser,napi/transform: Accept `lang=dts` (#12154) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
+
+### 🚜 Refactor
+
+- baa3726 tests/napi: Add `build-test` script for tests (#12132) (camc314)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚀 Features
+
+- 75ee3a1 napi/transform: Support enabling `StyledComponent` plugin (#12155) (Dunqing)
+- 19b97c0 transformer: Support styled components plugin (#12066) (Dunqing)
+- 407429a napi/parser,napi/transform: Accept `lang=dts` (#12154) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
+
+### 🚜 Refactor
+
+- baa3726 tests/napi: Add `build-test` script for tests (#12132) (camc314)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 💥 BREAKING CHANGES
