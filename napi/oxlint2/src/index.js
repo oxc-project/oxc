@@ -43,7 +43,7 @@ class Linter {
   /**
    * @param {string} path - The absolute path of the plugin we're loading
    */
-  loadPlugin = async (path) => {
+  async loadPlugin(path) {
     if (this.pluginRegistry.isPluginRegistered(path)) {
       return JSON.stringify({
         Failure: 'This plugin has already been registered',
@@ -60,11 +60,11 @@ class Linter {
         : 'An unknown error occurred';
       return JSON.stringify({ Failure: errorMessage });
     }
-  };
+  }
 
   // TODO(camc314): why do we have to destructure here?
   // In `./bindings.d.ts`, it doesn't indicate that we have to (typed as `(filePath: string, ruleIds: number[]))`
-  lint = ([filePath, ruleIds]) => {
+  lint([filePath, ruleIds]) {
     if (typeof filePath !== 'string' || filePath.length === 0) {
       throw new Error('expected filePath to be a non-zero length string');
     }
@@ -93,7 +93,7 @@ class Linter {
     // TODO: walk the AST
 
     return JSON.stringify(diagnostics);
-  };
+  }
 }
 
 async function main() {
