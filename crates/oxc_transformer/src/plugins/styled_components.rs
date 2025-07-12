@@ -866,7 +866,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 /// expressions = [width]
 /// ```
 fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a>) {
-    const NO_QUOTE: u8 = 0;
+    const NOT_IN_STRING: u8 = 0;
 
     let TemplateLiteral { quasis, expressions, .. } = lit;
 
@@ -878,8 +878,8 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // * `Some(true)` = in a block comment.
     let mut comment_type = None;
     // Quote character for current string we're in.
-    // `NO_QUOTE` = not in a string.
-    let mut quote: u8 = NO_QUOTE;
+    // Either `'`, `"` or `NOT_IN_STRING`.
+    let mut quote = NOT_IN_STRING;
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
 
@@ -947,10 +947,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             match cur_byte {
                 // Handle string
                 b'"' | b'\'' => {
-                    if quote == NO_QUOTE {
+                    if quote == NOT_IN_STRING {
                         quote = cur_byte;
                     } else if cur_byte == quote {
-                        quote = NO_QUOTE;
+                        quote = NOT_IN_STRING;
                     }
                 }
                 // Handle backslash.
@@ -965,7 +965,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 i += 2;
                                 continue;
                             }
-                            b'n' | b'r' if quote == NO_QUOTE => {
+                            b'n' | b'r' if quote == NOT_IN_STRING => {
                                 if output.last().is_some_and(|&last| last != b' ') {
                                     output.push(b' ');
                                 }
@@ -977,7 +977,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
                 }
                 // Keep characters as is if in a string
-                _ if quote != NO_QUOTE => {}
+                _ if quote != NOT_IN_STRING => {}
                 // Count parentheses
                 b'(' => paren_depth += 1,
                 b')' => paren_depth -= 1,
