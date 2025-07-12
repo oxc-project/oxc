@@ -67,13 +67,12 @@ impl Rule for NoNewFunc {
                     return;
                 };
 
-                let parent: Option<AstKind<'a>> =
-                    ctx.nodes().ancestor_kinds(node.id()).skip(1).find(|node| {
-                        !matches!(
-                            node,
-                            AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_)
-                        )
-                    });
+                let parent = ctx.nodes().ancestor_kinds(node.id()).find(|node| {
+                    !matches!(
+                        node,
+                        AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_)
+                    )
+                });
 
                 let Some(AstKind::CallExpression(parent_call_expr)) = parent else {
                     return;

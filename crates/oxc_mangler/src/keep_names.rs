@@ -116,7 +116,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         match parent_node.kind() {
             AstKind::SimpleAssignmentTarget(_) => {
                 let Some((grand_parent_node_kind, grand_grand_parent_node_kind)) =
-                    self.ast_nodes.ancestor_kinds(parent_node.id()).skip(1).take(2).collect_tuple()
+                    self.ast_nodes.ancestor_kinds(parent_node.id()).take(2).collect_tuple()
                 else {
                     return false;
                 };

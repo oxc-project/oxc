@@ -303,9 +303,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_class_body(body, ctx);
-        }
         self.x2_es2022.enter_class_body(body, ctx);
     }
 

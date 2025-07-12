@@ -297,7 +297,6 @@ impl Rule for FuncStyle {
                     let arrow_func_ancestor = semantic
                         .nodes()
                         .ancestors(node.id())
-                        .skip(1)
                         .find(|v| matches!(v.kind(), AstKind::FunctionBody(_)))
                         .map(|el| semantic.nodes().parent_node(el.id()));
                     if let Some(ret) = arrow_func_ancestor {

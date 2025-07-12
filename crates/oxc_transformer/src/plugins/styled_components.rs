@@ -55,13 +55,18 @@
 //! - Babel plugin: <https://github.com/styled-components/babel-plugin-styled-components>
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
 
-use rustc_hash::FxHashSet;
+use std::{
+    borrow::Cow,
+    hash::{Hash, Hasher},
+    iter::once,
+};
+
+use rustc_hash::{FxHashSet, FxHasher};
 use serde::Deserialize;
 
-use std::iter::once;
-
-use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
@@ -255,18 +260,23 @@ impl StyledComponentsBinding {
 enum StyledComponentsHelper {
     CreateGlobalStyle = 0,
     Css = 1,
-    InjectGlobal = 2,
-    Keyframes = 3,
-    UseTheme = 4,
-    WithTheme = 5,
+    Keyframes = 2,
+    UseTheme = 3,
+    WithTheme = 4,
+    InjectGlobal = 5,
 }
 
 impl StyledComponentsHelper {
+    /// Convert string to [`StyledComponentsHelper`].
     fn from_str(name: &str) -> Option<Self> {
+        if name == "injectGlobal" { Some(Self::InjectGlobal) } else { Self::pure_from_str(name) }
+    }
+
+    /// Convert string to [`StyledComponentsHelper`], excluding `injectGlobal`.
+    fn pure_from_str(name: &str) -> Option<Self> {
         match name {
             "createGlobalStyle" => Some(Self::CreateGlobalStyle),
             "css" => Some(Self::Css),
-            "injectGlobal" => Some(Self::InjectGlobal),
             "keyframes" => Some(Self::Keyframes),
             "useTheme" => Some(Self::UseTheme),
             "withTheme" => Some(Self::WithTheme),
@@ -285,7 +295,9 @@ pub struct StyledComponents<'a, 'ctx> {
     /// Counter for generating unique component IDs
     component_count: usize,
     /// Hash of the current file for component ID generation
-    file_hash: Option<&'a str>,
+    component_id_prefix: Option<String>,
+    /// Filename or directory name is used for `displayName`
+    block_name: Option<Atom<'a>>,
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
@@ -294,8 +306,9 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
             options,
             ctx,
             styled_bindings: StyledComponentsBinding::default(),
-            file_hash: None,
+            component_id_prefix: None,
             component_count: 0,
+            block_name: None,
         }
     }
 }
@@ -326,7 +339,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
             // or a callee of another call expression.
             && !matches!(
                 ctx.parent(),
-                Ancestor::CallExpressionCallee(_) | Ancestor::StaticMemberExpressionObject(_)
+                Ancestor::CallExpressionCallee(_) | Ancestor::StaticMemberExpressionObject(_) | Ancestor::ComputedMemberExpressionObject(_)
             )
         {
             self.add_display_name_and_component_id(&mut call.callee, ctx);
@@ -365,6 +378,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Handles the pure annotation for pure helper calls
     fn handle_pure_annotation(
         &self,
         declarator: &mut VariableDeclarator<'a>,
@@ -394,21 +408,31 @@ impl<'a> StyledComponents<'a, '_> {
 
         let (new_raws, remained_expression_indices) = CssMinifier::minify_quasis(quasis, ctx.ast);
 
-        // Remove expressions that are not kept after minification.
-        for i in (0..expressions.len()).rev() {
-            if !remained_expression_indices.contains(&i) {
-                expressions.swap_remove(i);
-            }
-        }
-
         // Update the quasis with the new raw values.
-        for (new_raw, quais) in new_raws.into_iter().zip(quasis.iter_mut()) {
-            quais.value.raw = new_raw;
+        for (new_raw, quasis) in new_raws.into_iter().zip(quasis.iter_mut()) {
+            quasis.value.raw = new_raw;
         }
 
-        // SAFETY:
-        unsafe {
-            quasis.set_len(expressions.len() + 1);
+        // Keep expressions that are still present after minification.
+        if expressions.len() != remained_expression_indices.len() {
+            let mut i = 0;
+            expressions.retain(|_| {
+                let keep = remained_expression_indices.contains(&i);
+                i += 1;
+                keep
+            });
+
+            // SAFETY:
+            // This is safe because template literal has ensured that `quasis` always
+            // has one more element than `expressions`, and the `CSSMinifier` guarantees that
+            // once a expression is removed, the corresponding quasi will also be removed.
+            // Therefore, the length of `quasis` will always be one more than `expressions`.
+            // So we can safely set the length of `quasis` to `expressions.len() + 1`.
+            unsafe {
+                // Set the length of `quasis` to `expressions.len() + 1` to truncate the quasis that
+                // have been minified out.
+                quasis.set_len(expressions.len() + 1);
+            }
         }
     }
 
@@ -437,6 +461,9 @@ impl<'a> StyledComponents<'a, '_> {
         ctx.ast.expression_call(span, tag, type_arguments, arguments, false)
     }
 
+    /// Add `displayName` and `componentId` to `withConfig({})`
+    ///
+    /// If the call doesn't exist, then will create a new `withConfig` call expression
     fn add_display_name_and_component_id(
         &mut self,
         expr: &mut Expression<'a>,
@@ -477,6 +504,7 @@ impl<'a> StyledComponents<'a, '_> {
         true
     }
 
+    /// Collects import bindings which imports from `styled-components`
     fn collect_styled_bindings(&mut self, program: &Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
@@ -512,6 +540,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Traverses the expression tree to find the `withConfig` call.
     fn get_with_config<'b>(expr: &'b mut Expression<'a>) -> Option<&'b mut CallExpression<'a>> {
         let mut current = expr;
         loop {
@@ -542,11 +571,13 @@ impl<'a> StyledComponents<'a, '_> {
             properties.push(Self::create_object_property("displayName", value, ctx));
         }
         if self.options.ssr {
-            let value = Some(self.get_component_id(ctx));
+            let value = self.get_component_id(ctx);
             properties.push(Self::create_object_property("componentId", value, ctx));
         }
     }
 
+    // Infers the component name from the parent variable declarator, assignment expression,
+    // or object property.
     fn get_component_name(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
         let mut assignment_name = None;
 
@@ -606,90 +637,110 @@ impl<'a> StyledComponents<'a, '_> {
         unreachable!()
     }
 
-    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
-        let namespace = self.options.namespace.as_ref().map_or("", |namespace| {
-            ctx.ast.allocator.alloc_concat_strs_array([namespace.as_str(), "__"])
-        });
+    /// `<namespace__>sc-<file_hash>-<component_count>`
+    fn get_component_id(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        // Cache `<namespace__>sc-<file_hash>-` part as it's the same each time
+        let prefix = if let Some(prefix) = self.component_id_prefix.as_deref() {
+            prefix
+        } else {
+            const HASH_LEN: usize = 6;
+            const PREFIX_LEN: usize = "sc-".len() + HASH_LEN + "-".len();
+            const NAMESPACED_PREFIX_LEN: usize = "__".len() + PREFIX_LEN;
 
-        let file_hash = self.get_file_hash(ctx);
-        let id = ctx.ast.allocator.alloc_concat_strs_array([
-            namespace,
-            "sc-",
-            file_hash,
-            "-",
-            itoa::Buffer::new().format(self.component_count),
-        ]);
+            let mut prefix = if let Some(namespace) = &self.options.namespace {
+                let mut prefix = String::with_capacity(namespace.len() + NAMESPACED_PREFIX_LEN);
+                prefix.extend([namespace, "__"]);
+                prefix
+            } else {
+                String::with_capacity(PREFIX_LEN)
+            };
+
+            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
+
+            self.component_id_prefix = Some(prefix);
+            self.component_id_prefix.as_deref().unwrap()
+        };
+
+        // Add component count to end
+        let mut buffer = itoa::Buffer::new();
+        let count = buffer.format(self.component_count);
         self.component_count += 1;
-        id
+        ctx.ast.atom_from_strs_array([prefix, count])
     }
 
-    fn get_file_hash(&mut self, ctx: &TraverseCtx<'a>) -> &'a str {
-        use rustc_hash::FxHasher;
-        use std::hash::{Hash, Hasher};
-
+    /// Generates a unique file hash based on the source path or source code.
+    fn get_file_hash(&self) -> InlineString<7, u8> {
         #[inline]
-        fn base36_encode<'a>(mut num: u64, ctx: &TraverseCtx<'a>) -> &'a str {
-            const BASE36_BYTES: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
+        fn base36_encode(mut num: u64) -> InlineString<7, u8> {
+            const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 
             num %= 36_u64.pow(6); // 36^6, to ensure the result is <= 6 characters long.
 
-            let mut result = Vec::with_capacity(6);
-
+            let mut str = InlineString::new();
             while num != 0 {
-                result.push(BASE36_BYTES[(num % 36) as usize]);
+                // SAFETY: `num < 36.pow(6)` to start with, is and divided by 36 on each turn of loop,
+                // so we cannot push more than 6 bytes. Capacity of `InlineString` is 7.
+                // All bytes in `BASE36_BYTES` are ASCII.
+                unsafe { str.push_unchecked(BASE36_BYTES[(num % 36) as usize]) };
                 num /= 36;
             }
-
-            ctx.ast.allocator.alloc_str(
-                // SAFETY: the bytes are valid UTF-8 as they are ASCII characters.
-                unsafe { std::str::from_utf8_unchecked(&result) },
-            )
+            str
         }
 
-        self.file_hash.get_or_insert_with(|| {
-            let mut hasher = FxHasher::default();
-            if self.ctx.source_path.is_relative() {
-                self.ctx.source_path.hash(&mut hasher);
-            } else {
-                self.ctx.source_text.hash(&mut hasher);
-            }
+        let mut hasher = FxHasher::default();
+        if self.ctx.source_path.is_absolute() {
+            self.ctx.source_path.hash(&mut hasher);
+        } else {
+            self.ctx.source_text.hash(&mut hasher);
+        }
 
-            base36_encode(hasher.finish(), ctx)
-        })
+        base36_encode(hasher.finish())
     }
 
-    fn get_display_name(&self, ctx: &TraverseCtx<'a>) -> Option<&'a str> {
-        let component_name = Self::get_component_name(ctx);
-
-        if self.options.file_name
-            && let Some(file_stem) = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())
-        {
-            let block_name = if self.options.meaningless_file_names.contains(&file_stem.to_string())
-            {
-                self.ctx
-                    .source_path
-                    .parent()
-                    .and_then(|parent| parent.file_name())
-                    .and_then(|name| name.to_str())
-                    .unwrap_or(file_stem)
-            } else {
-                file_stem
-            };
-
-            if let Some(component_name) = component_name {
-                if block_name == component_name {
-                    return Some(ctx.ast.str(component_name.as_str()));
-                }
-                return Some(
-                    ctx.ast
-                        .atom_from_strs_array([block_name, "__", component_name.as_str()])
-                        .as_str(),
-                );
-            }
-            return Some(ctx.ast.str(block_name));
+    /// Returns the block name based on the file stem or parent directory name.
+    fn get_block_name(&mut self, ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
+        if !self.options.file_name {
+            return None;
         }
 
-        component_name.map(|name| name.as_str())
+        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+
+        Some(*self.block_name.get_or_insert_with(|| {
+            // Should be a name, but if the file stem is in the meaningless file names list,
+            // we will use the parent directory name instead.
+            let block_name =
+                if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
+                    self.ctx
+                        .source_path
+                        .parent()
+                        .and_then(|parent| parent.file_name())
+                        .and_then(|name| name.to_str())
+                        .unwrap_or(file_stem)
+                } else {
+                    file_stem
+                };
+
+            ctx.ast.atom(block_name)
+        }))
+    }
+
+    /// Returns the display name which infers the component name or gets from the file name.
+    fn get_display_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        let component_name = Self::get_component_name(ctx);
+
+        let Some(block_name) = self.get_block_name(ctx) else {
+            return component_name.unwrap_or(Atom::from(""));
+        };
+
+        if let Some(component_name) = component_name {
+            if block_name == component_name {
+                component_name
+            } else {
+                ctx.ast.atom_from_strs_array([&block_name, "__", &component_name])
+            }
+        } else {
+            block_name
+        }
     }
 
     /// Returns true if the given callee is a styled-components binding.
@@ -737,22 +788,34 @@ impl<'a> StyledComponents<'a, '_> {
         }
     }
 
+    /// Checks if the identifier is a helper function of styled-components
     fn is_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         StyledComponentsHelper::from_str(&ident.name)
-            .and_then(|helper| self.styled_bindings.helper_symbol_id(helper))
-            .is_some_and(|symbol_id| {
-                let reference_id = ident.reference_id();
-                ctx.scoping()
-                    .get_reference(reference_id)
-                    .symbol_id()
-                    .is_some_and(|reference_symbol_id| reference_symbol_id == symbol_id)
-            })
+            .is_some_and(|helper| self.is_specific_helper(ident, helper, ctx))
     }
 
+    /// Checks if the identifier is a pure helper function of styled-components
     fn is_pure_helper(&self, ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        ident.name != "injectGlobal" && self.is_helper(ident, ctx)
+        StyledComponentsHelper::pure_from_str(&ident.name)
+            .is_some_and(|helper| self.is_specific_helper(ident, helper, ctx))
     }
 
+    fn is_specific_helper(
+        &self,
+        ident: &IdentifierReference<'a>,
+        helper: StyledComponentsHelper,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        self.styled_bindings.helper_symbol_id(helper).is_some_and(|symbol_id| {
+            let reference_id = ident.reference_id();
+            ctx.scoping()
+                .get_reference(reference_id)
+                .symbol_id()
+                .is_some_and(|reference_symbol_id| reference_symbol_id == symbol_id)
+        })
+    }
+
+    /// Checks if the identifier is a reference to a styled binding.
     fn is_reference_of_styled(
         styled_binding: Option<SymbolId>,
         ident: &IdentifierReference<'a>,
@@ -767,13 +830,15 @@ impl<'a> StyledComponents<'a, '_> {
         })
     }
 
+    /// `{ key: value }`
+    //     ^^^^^^^^^^
     fn create_object_property(
         key: &'static str,
-        value: Option<&'a str>,
+        value: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let key = ctx.ast.property_key_static_identifier(SPAN, key);
-        let value = ctx.ast.expression_string_literal(SPAN, value.unwrap_or(""), None);
+        let value = ctx.ast.expression_string_literal(SPAN, value, None);
         ctx.ast.object_property_kind_object_property(
             SPAN,
             PropertyKind::Init,
@@ -796,6 +861,8 @@ fn is_valid_styled_component_source(source: &str) -> bool {
     )
 }
 
+/// A CSS minifier that is specifically designed to minify CSS code within
+/// styled-components template literals.
 pub struct CssMinifier<'a> {
     ast: AstBuilder<'a>,
 }
@@ -808,6 +875,17 @@ impl<'a> CssMinifier<'a> {
         Self { ast }
     }
 
+    /// Minifies the CSS code within a series of template literal `quasis`.
+    ///
+    /// This function takes an array of `TemplateElement` (quasis) and
+    /// first injects unique placeholders for the expressions between them.
+    /// Then, passes the processed CSS string to the [CssMinifier::minify_css].
+    ///
+    /// ### Returns:
+    ///
+    /// A tuple containing:
+    /// First: A vector of `Atom` containing the minified CSS strings.
+    /// Second: A set of indices representing which expressions were kept.
     pub fn minify_quasis(
         quasis: &[TemplateElement<'a>],
         ast: AstBuilder<'a>,
@@ -815,33 +893,52 @@ impl<'a> CssMinifier<'a> {
         let minifier = Self::new(ast);
 
         let css = if quasis.len() == 1 {
-            &quasis[0].value.raw
+            Cow::Borrowed(quasis[0].value.raw.as_str())
         } else {
-            minifier.inject_unique_placeholders(quasis)
+            Cow::Owned(Self::inject_unique_placeholders(quasis))
         };
 
-        minifier.minify_css(css)
+        minifier.minify_css(&css)
     }
 
-    fn inject_unique_placeholders(&self, quasis: &[TemplateElement]) -> &str {
+    /// Injects unique placeholders into a series of `quasis` to represent expressions.
+    ///
+    /// This is a key step for minification. By replacing expressions with placeholders,
+    /// we can treat the entire template literal as a single block of CSS, which simplifies
+    /// the minification process. The placeholders are designed to be unique and unlikely
+    /// to appear in regular CSS.
+    ///
+    /// # Example
+    ///
+    /// Given quasis from `` `width: ${width}px; color: ${color};` ``, which are
+    /// `["width: ", "px; color: ", ";"]`, and expressions `[width, color]`,
+    /// this function will produce the string:
+    /// `"width: __PLACEHOLDER_0__px; color: __PLACEHOLDER_1__;"`
+    fn inject_unique_placeholders(quasis: &[TemplateElement]) -> String {
         let estimated_capacity: usize = quasis.iter().map(|s| s.value.raw.len()).sum::<usize>()
             + (quasis.len() - 1)
                 * (Self::PLACEHOLDER_PREFIX.len() + Self::PLACEHOLDER_SUFFIX.len() + 2); // 2 for digits
 
-        let mut result = StringBuilder::with_capacity_in(estimated_capacity, self.ast.allocator);
+        let mut result = String::with_capacity(estimated_capacity);
 
         for (index, val) in quasis.iter().enumerate() {
             result.push_str(&val.value.raw);
             if index < quasis.len() - 1 {
-                result.push_str(Self::PLACEHOLDER_PREFIX);
-                result.push_str(itoa::Buffer::new().format(index));
-                result.push_str(Self::PLACEHOLDER_SUFFIX);
+                result.extend([
+                    Self::PLACEHOLDER_PREFIX,
+                    itoa::Buffer::new().format(index),
+                    Self::PLACEHOLDER_SUFFIX,
+                ]);
             }
         }
 
-        result.into_str()
+        result
     }
 
+    /// Tries to parse a placeholder like `__PLACEHOLDER_0__` from a byte slice.
+    ///
+    /// This function is used by the minifier to detect where expressions were
+    /// in the original template literal.
     #[inline]
     fn try_parse_placeholder(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
         let mut i = pos + Self::PLACEHOLDER_PREFIX.len();
@@ -871,6 +968,59 @@ impl<'a> CssMinifier<'a> {
         Some((number, i + Self::PLACEHOLDER_SUFFIX.len()))
     }
 
+    /// The core CSS minification logic.
+    ///
+    /// This function iterates through the CSS string (as bytes) and applies minification
+    /// rules. It handles strings, comments, and whitespace, and splits the output
+    /// by the placeholders it finds.
+    ///
+    /// ### Steps:
+    ///
+    /// 1. It initializes state variables to track whether it's inside a string,
+    ///    the current string character, and the depth of parentheses.
+    /// 2. It iterates through each byte of the CSS string:
+    ///   - If it encounters a string quote (`"` or `'`), it toggles the `in_string` state.
+    ///   - If it finds a placeholder (starting with `_` and followed by
+    ///     [CssMinifier::PLACEHOLDER_PREFIX]), it tries to parse the placeholder and
+    ///     keeps track of its index.
+    ///   - It skips comments (both block and line comments) and whitespace, compressing them
+    ///     as needed.
+    ///   - It handles escaped newlines by replacing them with a space.
+    /// 3. It collects the minified CSS parts into `new_raws` and tracks which
+    ///    expressions were kept in a `remaining_expression_indexes`.
+    /// 4. Finally, it returns the minified CSS parts and the set of kept expression indices.
+    ///
+    /// The step 2 is the key part of the minification process, it tries to split the CSS which
+    /// joins by the placeholders that is injected by [CssMinifier::inject_unique_placeholders].
+    ///
+    /// ### Example:
+    ///
+    /// For a case like:
+    /// ```js
+    /// styled.div`
+    ///   width: ${width}px;
+    ///   color: red; // color: ${color};
+    ///   height: 100px;
+    /// `
+    /// // quasis: ["width: ", "px;\n   color: red; // color:", ";\n   height: 100px;"]
+    /// // expressions: [width, color]
+    /// ```
+    ///
+    /// We will receive a CSS string which produced by [CssMinifier::inject_unique_placeholders] like:
+    /// ```js
+    /// "width: __PLACEHOLDER_0__px;
+    /// // color: __PLACEHOLDER_1__;
+    /// height: 100px;"
+    /// ```
+    ///
+    /// The result of quasis and expressions will be:
+    ///
+    /// ```rust
+    /// (vec!["width:", "px;color:red;height:100px;"], { 0 })
+    /// ```
+    ///
+    /// Only the first expression (`width`) is kept, and the second one (`color`) is removed
+    /// because it was inside a comment.
     pub(super) fn minify_css(&self, css: &str) -> (Vec<Atom<'a>>, FxHashSet<usize>) {
         if css.trim().is_empty() {
             return (Vec::new(), FxHashSet::default());
@@ -900,6 +1050,7 @@ impl<'a> CssMinifier<'a> {
                     in_string = false;
                 }
                 // Handle placeholders
+                // This is where we detect the placeholders we injected earlier.
                 b'_' if bytes[i..].starts_with(Self::PLACEHOLDER_PREFIX.as_bytes()) => {
                     if let Some((number, new_index)) = Self::try_parse_placeholder(bytes, i) {
                         remaining_expression_indexes.insert(number);
@@ -940,7 +1091,7 @@ impl<'a> CssMinifier<'a> {
                             }
                             continue;
                         }
-                        // Skip line comments, avoid `https://`
+                        // Skip line comments, but be careful not to break URLs like `https://...`
                         b'/' if paren_depth == 0 && (i == 0 || bytes[i - 1] != b':') => {
                             i = Self::skip_line_comment(bytes, i);
                             continue;
@@ -960,7 +1111,7 @@ impl<'a> CssMinifier<'a> {
                     }
                 }
 
-                // Skip whitespace
+                // Skip and compress whitespace.
                 c if c.is_ascii_whitespace() => {
                     i += 1;
                     // Compress symbols, remove spaces around these symbols,
@@ -980,7 +1131,7 @@ impl<'a> CssMinifier<'a> {
             i += 1;
         }
 
-        // Handle remaining output
+        // Add any remaining text after no more placeholders.
         new_raws.push(self.ast.atom(
             // SAFETY: Output is all picked from the original `raw_values` and is guaranteed
             // to be valid UTF-8.
@@ -1007,6 +1158,7 @@ impl<'a> CssMinifier<'a> {
         backslash_count % 2 == 1
     }
 
+    /// Skips a multiline comment `/* ... */`.
     #[inline]
     fn skip_multiline_comment(bytes: &[u8], start: usize) -> usize {
         let mut i = start + 2; // Skip /*
@@ -1021,6 +1173,7 @@ impl<'a> CssMinifier<'a> {
         i
     }
 
+    /// Skips a line comment `// ...`
     #[inline]
     fn skip_line_comment(bytes: &[u8], start: usize) -> usize {
         let mut i = start;
@@ -1121,8 +1274,8 @@ mod tests {
 
         #[test]
         fn returns_indices_of_removed_placeholders() {
-            let allocator = Box::leak(Box::new(Allocator::default()));
-            let ast = AstBuilder::new(allocator);
+            let allocator = Allocator::default();
+            let ast = AstBuilder::new(&allocator);
 
             // Create raw values that will generate placeholders
             let css = "this is some\ninput with __PLACEHOLDER_0__ and // ignored __PLACEHOLDER_1__";

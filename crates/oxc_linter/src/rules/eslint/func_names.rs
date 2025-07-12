@@ -272,7 +272,7 @@ impl Rule for FuncNames {
 
                         // a function which is calling itself inside is always valid
                         let ast_span =
-                            ctx.nodes().ancestors(node.id()).skip(1).find_map(|p| match p.kind() {
+                            ctx.nodes().ancestors(node.id()).find_map(|p| match p.kind() {
                                 AstKind::Function(func) => {
                                     let func_name = func.name()?;
 
@@ -314,7 +314,7 @@ impl Rule for FuncNames {
                 ctx.diagnostic_with_fix(
                     unnamed_diagnostic(&func_name_complete, report_span),
                     |fixer| {
-                        guess_function_name(ctx, parent_node.id()).map_or_else(
+                        guess_function_name(ctx, node.id()).map_or_else(
                             || fixer.noop(),
                             |name| {
                                 // if this name shadows a variable in the outer scope **and** that name is referenced
@@ -346,8 +346,8 @@ impl Rule for FuncNames {
     }
 }
 
-fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
-    for parent_kind in ctx.nodes().ancestor_kinds(parent_id) {
+fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
+    for parent_kind in ctx.nodes().ancestor_kinds(node_id) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)
             | AstKind::TSAsExpression(_)

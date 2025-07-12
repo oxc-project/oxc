@@ -2,15 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1945/2362 (82.35%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
-Symbol scope ID mismatch for "g":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
-
+Positive Passed: 1949/2362 (82.51%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -36,11 +28,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 Unexpected new.target expression
 Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -118,11 +105,6 @@ Identifier `x` has already been declared
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
@@ -134,14 +116,20 @@ after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["TSAbstractClass", "_TSAbstractClass_brand", "_classPrivateMethodInitSpec", "_foo"]
+rebuilt        : ScopeId(0): ["TSAbstractClass", "_TSAbstractClass_brand", "_classPrivateMethodInitSpec"]
 Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract-babel-7/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["TSAbstractClass", "_TSAbstractClass_brand", "_classPrivateMethodInitSpec", "_foo"]
+rebuilt        : ScopeId(0): ["TSAbstractClass", "_TSAbstractClass_brand", "_classPrivateMethodInitSpec"]
 Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 Unresolved references mismatch:
@@ -419,11 +407,6 @@ Multiple constructor implementations are not allowed.
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 Identifier `x` has already been declared
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-extends/input.ts
 Unresolved references mismatch:
 after transform: ["T", "f"]
@@ -546,6 +529,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 A required parameter cannot follow an optional parameter.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Test", "_Test_brand", "_classPrivateMethodInitSpec", "_f", "_f2", "_f3"]
+rebuilt        : ScopeId(0): ["Test", "_Test_brand", "_classPrivateMethodInitSpec", "_f"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2)]

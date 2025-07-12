@@ -225,7 +225,7 @@ impl NoEmptyFunction {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> ViolationInfo<'a> {
-        for parent in ctx.nodes().ancestor_kinds(node.id()).skip(1) {
+        for parent in ctx.nodes().ancestor_kinds(node.id()) {
             match parent {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {

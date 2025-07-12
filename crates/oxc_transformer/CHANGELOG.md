@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.0] - 2025-07-12
+
+### 🚀 Features
+
+- 19b97c0 transformer: Support styled components plugin (#12066) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 23c5951 transformer/legacy-decorator: Decorated fields with the `declare` modifier are not transformed (#12212) (Dunqing)
+- e93e4c8 transformer/styled-components: Template literal expressions order is wrong after minification (#12211) (Dunqing)
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
+
+### 🚜 Refactor
+
+- 836bf9d transformer/styled-components: Use `Atom` everywhere (#12217) (overlookmotel)
+- 0c08c37 transformer/styled-components: Store block name in arena (#12216) (overlookmotel)
+- 5fffa96 transformer/styled-components: Shorten code (#12215) (overlookmotel)
+- eaf1c42 transformer/styled-components: Fix typo (#12214) (overlookmotel)
+- 5ad62cd transformer/styled-components: Do not allocate temp data into arena (#12198) (overlookmotel)
+- 94796a0 transformer/styled-components: Simplify concating strs (#12183) (Dunqing)
+- 046f8d5 transformer/plugins: Short-circuit early when a call expressions is part of `ComputedMemberExpression` (#12181) (Dunqing)
+- a6ee13a transformer/plugins: Don't store `PluginOptions` (#12180) (Dunqing)
+- 466241d transformer/styled_components: Simplify code (#12175) (overlookmotel)
+- 4e58a2a transformer/styled_components: Make unreachable branch `unreachable!` (#12172) (overlookmotel)
+- e222e26 transformer/styled_components: Move clippy attr (#12169) (overlookmotel)
+
+### 📚 Documentation
+
+- 86eb108 transformer/styled-components: Add comments about `CSSMinifier` (#12197) (Dunqing)
+- 59616ca transformer/styled-components: Add some comments (#12182) (Dunqing)
+
+### ⚡ Performance
+
+- 242e721 transformer/styled-components: Pass `Atom` instead of `Option<Atom>` (#12218) (overlookmotel)
+- 9a20cde transformer/styled-components: Cache block name (#12200) (Dunqing)
+- daf6087 transformer/styled-components: Generate file path hash in `InlineString` (#12196) (overlookmotel)
+- c35fe73 transformer/styled-components: Cache more of component IDs (#12195) (overlookmotel)
+- 4118b96 transformer/styled-components: Reduce string comparisons (#12191) (overlookmotel)
+- 2b479fc transformer/styled_components: Mark `enter_expression` as `#[inline]` (#12173) (overlookmotel)
+- bcd5094 transformer/styled_components: Replace hashmap with array (#12170) (overlookmotel)
+
+### 🎨 Styling
+
+- a45d749 transformer/styled_components: Reduce indentation (#12174) (overlookmotel)
+
+### 🧪 Testing
+
+- 2951645 transformer/styled-components: Fix memory leak (#12207) (overlookmotel)
+
+
 
 
 ## [0.75.0] - 2025-06-25

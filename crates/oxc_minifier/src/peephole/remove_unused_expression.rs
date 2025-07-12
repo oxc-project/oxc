@@ -58,7 +58,7 @@ impl<'a> PeepholeOptimizations {
                     self.remove_unused_expression(e, state, ctx)
                 }
             }
-            _ => false,
+            _ => !e.may_have_side_effects(ctx),
         }
     }
 
@@ -768,6 +768,8 @@ mod test {
         test_same("delete x.y");
         test_same("delete x.y.z()");
         test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
+        test("-0n", "");
+        test("-1n", "");
     }
 
     #[test]

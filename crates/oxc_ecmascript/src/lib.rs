@@ -8,6 +8,7 @@ mod prop_name;
 
 // Abstract Operations
 mod array_join;
+mod is_less_than;
 mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;

@@ -151,7 +151,7 @@ impl Rule for NoReturnWrap {
             return;
         };
 
-        if !inside_promise_cb(node, ctx) {
+        if is_promise(call_expr).is_none() && !inside_promise_cb(node, ctx) {
             return;
         }
 

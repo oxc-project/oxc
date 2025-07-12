@@ -246,14 +246,13 @@ impl<'a> TypeScript<'a, '_> {
         constructor: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !constructor.kind.is_constructor() {
+        if !constructor.kind.is_constructor() || constructor.value.body.is_none() {
             return;
         }
 
         let params = &constructor.value.params.items;
         let assignments = Self::convert_constructor_params(params, ctx).collect::<Vec<_>>();
 
-        // `constructor {}` is guaranteed that it is `Some`.
         let constructor_body_statements = &mut constructor.value.body.as_mut().unwrap().statements;
         let super_call_position = Self::get_super_call_position(constructor_body_statements);
 

@@ -85,7 +85,7 @@ impl Rule for PreferGlobalThis {
                         "addEventListener" | "removeEventListener" | "dispatchEvent"
                     ) {
                         if let Some(AstKind::CallExpression(call_expr)) =
-                            ctx.nodes().ancestor_kinds(node.id()).nth(2)
+                            ctx.nodes().ancestor_kinds(node.id()).nth(1)
                         {
                             if let Some(Expression::StringLiteral(lit)) =
                                 call_expr.arguments.first().and_then(|arg| arg.as_expression())

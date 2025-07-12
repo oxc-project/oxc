@@ -1,11 +1,9 @@
 #![allow(clippy::unused_self)]
 
-mod collapse_variable_declarations;
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod minimize_conditional_expression;
 mod minimize_conditions;
-mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
@@ -16,7 +14,6 @@ mod normalize;
 mod remove_dead_code;
 mod remove_unused_expression;
 mod replace_known_methods;
-mod statement_fusion;
 mod substitute_alternate_syntax;
 
 use rustc_hash::FxHashSet;
