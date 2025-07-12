@@ -893,58 +893,59 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     while quasi_index < quasis.len() {
         let mut bytes = quasis[quasi_index].value.raw.as_str().as_bytes();
 
-        if let Some(is_block_comment) = comment_type {
-            // Remove this quasi and the preceding expression.
-            // Note: This branch cannot be taken on first iteration.
-            // TODO: Remove scopes, symbols, and references for removed `Expression`.
-            quasis.remove(quasi_index);
-            expressions.remove(quasi_index - 1);
+        if quasi_index > 0 {
+            if let Some(is_block_comment) = comment_type {
+                // Remove this quasi and the preceding expression.
+                // TODO: Remove scopes, symbols, and references for removed `Expression`.
+                quasis.remove(quasi_index);
+                expressions.remove(quasi_index - 1);
 
-            // Find end of comment
-            let start_index = if is_block_comment {
-                let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
-                    // Comment contains whole of this quasi
-                    continue;
+                // Find end of comment
+                let start_index = if is_block_comment {
+                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                        // Comment contains whole of this quasi
+                        continue;
+                    };
+
+                    pos += 2;
+                    if pos == bytes.len() {
+                        // Comment ends at end of quasi
+                        continue;
+                    }
+
+                    // Add a space when this is a own line block comment
+                    if !bytes[pos].is_ascii_whitespace()
+                        && output.last().is_some_and(|&last| last != b' ')
+                    {
+                        output.push(b' ');
+                    }
+
+                    pos
+                } else {
+                    let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
+                        // Comment contains whole of this quasi
+                        continue;
+                    };
+                    pos
                 };
 
-                pos += 2;
-                if pos == bytes.len() {
-                    // Comment ends at end of quasi
-                    continue;
-                }
+                // Trim off to end of comment
+                bytes = &bytes[start_index..];
 
-                // Add a space when this is a own line block comment
-                if !bytes[pos].is_ascii_whitespace()
-                    && output.last().is_some_and(|&last| last != b' ')
-                {
-                    output.push(b' ');
-                }
+                comment_type = None;
 
-                pos
+                // Don't touch `output`. This quasi continues appending to existing `output`.
             } else {
-                let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
-                    // Comment contains whole of this quasi
-                    continue;
-                };
-                pos
-            };
-
-            // Trim off to end of comment
-            bytes = &bytes[start_index..];
-
-            comment_type = None;
-
-            // Don't touch `output`. This quasi continues appending to existing `output`.
-        } else {
-            // If not on first quasi, set `raw` for previous quasi to `output`
-            if quasi_index > 0 {
+                // Set `raw` for previous quasi to `output`
                 // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
                 quasis[quasi_index - 1].value.raw = ast.atom(output_str);
                 output.clear();
-            }
 
-            quasi_index += 1;
+                quasi_index += 1;
+            }
+        } else {
+            quasi_index = 1;
         }
 
         // Process bytes of quasi
