@@ -831,12 +831,15 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 ///
 /// # Steps
 ///
-/// 1. Initialize state variables to track whether currently inside a string,
-///    the current string quote character, and the depth of parentheses.
-/// 2. Iterate through each byte of each quasi:
+/// 1. Initialize state variables to track whether:
+///    - Currently inside a string.
+///    - Current string quote character.
+///    - Depth of parentheses.
+///    This state is carried over across different quasis.
+/// 2. Iterate through each quasi, and each byte of each quasi:
 ///    - If encounter a string quote (`"` or `'`), toggle the `string_quote` state.
 ///    - Skip comments (both block and line comments) and whitespace, compressing them as needed.
-///    - Handle unescaped newlines by replacing them with a space.
+///    - Handle escaped newlines (`\n`, `\r`) by replacing them with a space.
 /// 3. If a quasi ends with an incomplete comment:
 ///    - Remove next expression from `expressions`.
 ///    - Remove next quasi from `quasis`.
@@ -893,17 +896,19 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut push_output = false;
 
     // TODO: Update span end of `TemplateElement` when it has next one appended to end of it.
-    // TODO: Remove scopes, symbols, and references when removing an `Expression`.
     // TODO: What about `cooked`? Shouldn't we alter that too?
     quasis.retain_mut(|quasi| {
         let mut bytes = quasi.value.raw.as_str().as_bytes();
 
         let mut retain_quasi = true;
         if let Some(is_block_comment) = comment_type {
-            // Remove this quasi and the preceding expression
+            // Remove this quasi and the preceding expression.
+            // Note: This branch cannot be taken on first iteration.
+            // TODO: Remove scopes, symbols, and references for removed `Expression`.
             retain_quasi = false;
             expressions.remove(new_raws.len());
 
+            // Find end of comment
             let start_index = if is_block_comment {
                 bytes.windows(2).position(|q| q == b"*/").map(|mut pos| {
                     pos += 2;
@@ -941,6 +946,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             push_output = true;
         }
 
+        // Process bytes of quasi
         let mut i = 0;
         while i < bytes.len() {
             let cur_byte = bytes[i];
