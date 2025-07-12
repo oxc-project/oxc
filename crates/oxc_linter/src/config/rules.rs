@@ -1,5 +1,6 @@
 use std::{borrow::Cow, fmt};
 
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
@@ -66,9 +67,7 @@ impl OxlintRules {
         all_rules: &[RuleEnum],
         external_plugin_store: &ExternalPluginStore,
     ) -> Result<(), ExternalRuleLookupError> {
-        use itertools::Itertools;
         let mut rules_to_replace = vec![];
-        let mut external_rules_to_replace = vec![];
 
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
 
@@ -100,7 +99,10 @@ impl OxlintRules {
                 } else {
                     let external_rule_id =
                         external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
-                    external_rules_to_replace.push((external_rule_id, severity));
+                    external_rules_for_override
+                        .entry(external_rule_id)
+                        .and_modify(|sev| *sev = severity)
+                        .or_insert(severity);
                 }
             }
         }
@@ -108,10 +110,6 @@ impl OxlintRules {
         for (rule, severity) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
             rules_for_override.insert(rule, severity);
-        }
-        for (external_rule_id, severity) in external_rules_to_replace {
-            let _ = external_rules_for_override.remove(&external_rule_id);
-            external_rules_for_override.insert(external_rule_id, severity);
         }
 
         Ok(())
