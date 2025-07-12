@@ -336,6 +336,12 @@ impl<'a> PeepholeOptimizations {
                         || *right == 0.0
                         || right.is_nan()
                         || right.is_infinite()
+                        // Small number multiplication.
+                        || (e.operator == BinaryOperator::Multiplication
+                            && left.abs() <= 255.0
+                            && left.fract() == 0.0
+                            && right.abs() <= 255.0
+                            && right.fract() == 0.0)
                 })
                 .and_then(|_| ctx.eval_binary(e)),
             BinaryOperator::Division => Self::extract_numeric_values(e)
@@ -1751,6 +1757,12 @@ mod test {
         // test("x = (null + 1) * 2", "x = 2");
         // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
         fold("x = y + (z & 24 & 60 & 60 & 1000)", "x = y + (z & 8)");
+        fold("x = -1 * -1", "x = 1");
+        fold("x = 1 * -1", "x = -1");
+        fold("x = 255 * 255", "x = 65025");
+        fold("x = -255 * 255", "x = -65025");
+        fold("x = -255 * -255", "x = 65025");
+        fold_same("x = 256 * 255");
     }
 
     #[test]

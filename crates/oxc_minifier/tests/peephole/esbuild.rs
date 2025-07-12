@@ -901,7 +901,7 @@ fn constant_evaluation_test() {
     test("x = +{valueOf:()=>1}", "x = +{ valueOf: () => 1 };");
     test("x = 3 + 6", "x = 9;");
     test("x = 3 - 6", "x = -3;");
-    test("x = 3 * 6", "x = 3 * 6;");
+    test("x = 3 * 6", "x = 18;");
     test("x = 3 / 6", "x = 3 / 6;");
     test("x = 3 % 6", "x = 3 % 6;");
     test("x = 3 ** 6", "x = 3 ** 6;");
