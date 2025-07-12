@@ -2,46 +2,14 @@ use std::fmt;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use nonmax::NonMaxU32;
-use oxc_index::{Idx, IndexVec};
+use oxc_index::{IndexVec, define_index_type};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ExternalPluginId(NonMaxU32);
-
-impl Idx for ExternalPluginId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
+define_index_type! {
+    pub struct ExternalPluginId = u32;
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ExternalRuleId(NonMaxU32);
-
-impl Idx for ExternalRuleId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
-}
-
-impl ExternalRuleId {
-    #[inline]
-    pub fn as_u32(self) -> u32 {
-        self.0.get()
-    }
+define_index_type! {
+    pub struct ExternalRuleId = u32;
 }
 
 #[derive(Debug, Default)]
@@ -112,8 +80,7 @@ impl ExternalPluginStore {
     }
 
     pub fn resolve_plugin_rule_names(&self, external_rule_id: u32) -> Option<(&str, &str)> {
-        let external_rule =
-            self.rules.get(NonMaxU32::new(external_rule_id).map(ExternalRuleId)?)?;
+        let external_rule = self.rules.get(ExternalRuleId::from_raw(external_rule_id))?;
         let plugin = &self.plugins[external_rule.plugin_id];
 
         Some((&plugin.name, &external_rule.name))

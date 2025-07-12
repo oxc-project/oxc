@@ -203,7 +203,7 @@ impl Linter {
                 let result = (external_linter.run)(
                     #[expect(clippy::missing_panics_doc)]
                     path.to_str().unwrap().to_string(),
-                    external_rules.iter().map(|(rule_id, _)| rule_id.as_u32()).collect(),
+                    external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
                 );
                 match result {
                     Ok(diagnostics) => {
