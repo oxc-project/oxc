@@ -64,13 +64,10 @@ impl<'a> PeepholeOptimizations {
             if ctx.state.constant_values.contains_key(&symbol_id) {
                 return;
             }
-            // Using symbol flag because previous step changed `const` to `let`.
-            if ctx.scoping().symbol_flags(symbol_id).is_const_variable()
-                || ctx
-                    .scoping()
-                    .get_resolved_references(symbol_id)
-                    .all(|r| r.flags().is_read_only())
-            {
+            // Not using `const` to check constant values, because:
+            // * assigning to const value is a runtime error
+            // * `for (const foo = 0; ; foo++);` is valid
+            if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
                 if let Some(value) = expr.evaluate_value(ctx) {
                     ctx.state.constant_values.insert(symbol_id, value);
                 }
