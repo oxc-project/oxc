@@ -11,12 +11,18 @@ use napi::{
 use napi_derive::napi;
 
 use oxlint::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     lint as oxlint_lint,
 };
 
 #[napi]
-pub type JsRunCb = ThreadsafeFunction<(String, Vec<u32>), (), (String, Vec<u32>), Status, false>;
+pub type JsRunCb = ThreadsafeFunction<
+    (String, Vec<u32>),
+    String, /* Vec<LintResult> */
+    (String, Vec<u32>),
+    Status,
+    false,
+>;
 
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -39,11 +45,14 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {
-                    Ok(()) => tx.send(Ok(())),
+                    Ok(r) => match serde_json::from_str::<Vec<LintResult>>(r) {
+                        Ok(v) => tx.send(Ok(v)),
+                        Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
+                    },
                     Err(e) => tx.send(Err(e.to_string())),
                 };
 
-                result
+                result.map(|_| ())
             },
         );
 
@@ -52,7 +61,7 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
         }
 
         match rx.recv() {
-            Ok(Ok(())) => Ok(()),
+            Ok(Ok(x)) => Ok(x),
             Ok(Err(e)) => Err(format!("Callback reported error: {e}").into()),
             Err(e) => Err(format!("Callback did not respond: {e}").into()),
         }

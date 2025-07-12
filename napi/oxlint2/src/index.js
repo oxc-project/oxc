@@ -28,7 +28,7 @@ class PluginRegistry {
 
   *getRules(ruleIds) {
     for (const ruleId of ruleIds) {
-      yield this.registeredRules[ruleId];
+      yield { rule: this.registeredRules[ruleId], ruleId };
     }
   }
 }
@@ -71,6 +71,28 @@ class Linter {
     if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
       throw new Error('Expected `ruleIds` to be a non-zero len array');
     }
+
+    const diagnostics = [];
+
+    const createContext = (ruleId) => ({
+      physicalFilename: filePath,
+      report: (diagnostic) => {
+        diagnostics.push({
+          message: diagnostic.message,
+          loc: { start: diagnostic.node.start, end: diagnostic.node.end },
+          externalRuleId: ruleId,
+        });
+      },
+    });
+
+    const rules = [];
+    for (const { rule, ruleId } of this.pluginRegistry.getRules(ruleIds)) {
+      rules.push(rule(createContext(ruleId)));
+    }
+
+    // TODO: walk the AST
+
+    return JSON.stringify(diagnostics);
   };
 }
 

@@ -286,6 +286,10 @@ impl ConfigStore {
         }
         None
     }
+
+    pub(crate) fn resolve_plugin_rule_names(&self, external_rule_id: u32) -> Option<(&str, &str)> {
+        self.external_plugin_store.resolve_plugin_rule_names(external_rule_id)
+    }
 }
 
 #[cfg(test)]

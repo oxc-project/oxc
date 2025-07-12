@@ -107,6 +107,14 @@ impl ExternalPluginStore {
             }
         })
     }
+
+    pub fn resolve_plugin_rule_names(&self, external_rule_id: u32) -> Option<(&str, &str)> {
+        let external_rule =
+            self.rules.get(NonMaxU32::new(external_rule_id).map(ExternalRuleId)?)?;
+        let plugin = &self.plugins[external_rule.plugin_id];
+
+        Some((&plugin.name, &external_rule.name))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -131,7 +139,6 @@ impl fmt::Display for ExternalRuleLookupError {
 impl std::error::Error for ExternalRuleLookupError {}
 
 #[derive(Debug, Default)]
-#[expect(dead_code)]
 struct ExternalPlugin {
     name: String,
     rules: FxHashMap<String, ExternalRuleId>,

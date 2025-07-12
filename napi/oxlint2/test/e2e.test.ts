@@ -44,7 +44,7 @@ describe('cli options for bundling', () => {
       'test/fixtures/basic_custom_plugin',
     );
 
-    expect(exitCode).toBe(0);
+    expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 

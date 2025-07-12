@@ -3,11 +3,14 @@ export default {
     name: "basic-custom-plugin",
   },
   rules: {
-    "no-debugger": (_context) => {
+    "no-debugger": (context) => {
+      // TODO: move this call into `DebuggerStatement`, once we are walking the ast.
+      context.report({
+        message: "Unexpected Debugger Statement",
+        node: { start: 0, end: 0 },
+      });
       return {
-        DebuggerStatement(_debuggerStatement) {
-          throw new Error("unimplemented");
-        },
+        DebuggerStatement(_debuggerStatement) {},
       };
     },
   },

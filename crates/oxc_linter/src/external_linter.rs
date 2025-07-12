@@ -17,13 +17,29 @@ pub type ExternalLinterLoadPluginCb = Arc<
 >;
 
 pub type ExternalLinterCb = Arc<
-    dyn Fn(String, Vec<u32>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> + Sync + Send,
+    dyn Fn(String, Vec<u32>) -> Result<Vec<LintResult>, Box<dyn std::error::Error + Send + Sync>>
+        + Sync
+        + Send,
 >;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum PluginLoadResult {
     Success { name: String, offset: usize, rules: Vec<String> },
     Failure(String),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintResult {
+    pub external_rule_id: u32,
+    pub message: String,
+    pub loc: Loc,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Loc {
+    pub start: u32,
+    pub end: u32,
 }
 
 #[derive(Clone)]

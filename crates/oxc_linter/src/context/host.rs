@@ -138,7 +138,7 @@ impl<'a> ContextHost<'a> {
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(super) fn push_diagnostic(&self, diagnostic: Message<'a>) {
+    pub(crate) fn push_diagnostic(&self, diagnostic: Message<'a>) {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 

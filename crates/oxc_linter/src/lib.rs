@@ -26,7 +26,9 @@ pub mod table;
 
 use std::{path::Path, rc::Rc, sync::Arc};
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, Semantic};
+use oxc_span::Span;
 
 pub use crate::{
     config::{
@@ -35,7 +37,7 @@ pub use crate::{
     },
     context::LintContext,
     external_linter::{
-        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     },
     external_plugin_store::ExternalPluginStore,
     fixer::FixKind,
@@ -52,7 +54,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
-    fixer::{Fixer, Message},
+    fixer::{Fixer, Message, PossibleFixes},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
@@ -204,8 +206,31 @@ impl Linter {
                     external_rules.iter().map(|(rule_id, _)| rule_id.as_u32()).collect(),
                 );
                 match result {
-                    Ok(()) => {
-                        // TODO: report diagnostics
+                    Ok(diagnostics) => {
+                        for diagnostic in diagnostics {
+                            match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id)
+                            {
+                                Some((plugin_name, rule_name)) => {
+                                    ctx_host.push_diagnostic(Message::new(
+                                        // TODO: `error` isn't right, we need to get the severity from `external_rules`
+                                        OxcDiagnostic::error(diagnostic.message)
+                                            .with_label(Span::new(
+                                                diagnostic.loc.start,
+                                                diagnostic.loc.end,
+                                            ))
+                                            .with_error_code(
+                                                plugin_name.to_string(),
+                                                rule_name.to_string(),
+                                            ),
+                                        PossibleFixes::None,
+                                    ));
+                                }
+                                None => {
+                                    // TODO: report diagnostic, this should be unreachable
+                                    debug_assert!(false);
+                                }
+                            }
+                        }
                     }
                     Err(_err) => {
                         // TODO: report diagnostic
