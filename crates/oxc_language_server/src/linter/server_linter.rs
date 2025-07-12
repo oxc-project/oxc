@@ -47,9 +47,8 @@ impl ServerLinter {
             Oxlintrc::default()
         };
 
-        // clone because we are returning it for ignore builder
         let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None).unwrap_or_default();
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None).unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -92,7 +91,7 @@ impl ServerLinter {
 
         Self {
             isolated_linter: Arc::new(Mutex::new(isolated_linter)),
-            gitignore_glob: Self::create_ignore_glob(&root_path, &oxlintrc),
+            gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
         }
     }
@@ -135,7 +134,7 @@ impl ServerLinter {
         (nested_configs, extended_paths)
     }
 
-    fn create_ignore_glob(root_path: &Path, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
+    fn create_ignore_glob(root_path: &Path) -> Vec<Gitignore> {
         let mut builder = globset::GlobSetBuilder::new();
         // Collecting all ignore files
         builder.add(Glob::new("**/.eslintignore").unwrap());
@@ -166,20 +165,6 @@ impl ServerLinter {
             }
         }
 
-        if oxlintrc.ignore_patterns.is_empty() {
-            return gitignore_globs;
-        }
-
-        let Some(oxlintrc_dir) = oxlintrc.path.parent() else {
-            warn!("Oxlintrc path has no parent, skipping inline ignore patterns");
-            return gitignore_globs;
-        };
-
-        let mut builder = ignore::gitignore::GitignoreBuilder::new(oxlintrc_dir);
-        for entry in &oxlintrc.ignore_patterns {
-            builder.add_line(None, entry).expect("Failed to add ignore line");
-        }
-        gitignore_globs.push(builder.build().unwrap());
         gitignore_globs
     }
 
