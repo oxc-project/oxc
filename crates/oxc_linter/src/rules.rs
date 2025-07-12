@@ -302,6 +302,7 @@ mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod no_array_index_key;
     pub mod no_children_prop;
@@ -912,6 +913,7 @@ oxc_macros::declare_all_lint_rules! {
     react::forbid_elements,
     react::forward_ref_uses_ref,
     react::iframe_missing_sandbox,
+    react::jsx_pascal_case,
     react::jsx_filename_extension,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
