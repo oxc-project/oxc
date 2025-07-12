@@ -22,14 +22,18 @@ function normalizeOutput(output: string): string {
 
 describe('cli options for bundling', () => {
   it('should lint a directory without errors', async () => {
-    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_no_errors');
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/built_in_no_errors',
+    );
 
     expect(exitCode).toBe(0);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should lint a directory with errors', async () => {
-    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_errors');
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/built_in_errors',
+    );
 
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
@@ -47,6 +51,15 @@ describe('cli options for bundling', () => {
   it('should report an error if a custom plugin cannot be loaded', async () => {
     const { stdout, exitCode } = await runOxlint(
       'test/fixtures/missing_custom_plugin',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should report an error if a rule is not found within a custom plugin', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/custom_plugin_missing_rule',
     );
 
     expect(exitCode).toBe(1);

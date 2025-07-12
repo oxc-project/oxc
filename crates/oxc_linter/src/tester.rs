@@ -16,6 +16,7 @@ use serde_json::{Value, json};
 use crate::{
     AllowWarnDeny, BuiltinLintPlugins, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService,
     LintServiceOptions, Linter, Oxlintrc, RuleEnum,
+    external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
     options::LintOptions,
     rules::RULES,
@@ -501,6 +502,7 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
+        let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
             self.lint_options,
             ConfigStore::new(
@@ -511,6 +513,7 @@ impl Tester {
                             true,
                             Oxlintrc::deserialize(v).unwrap(),
                             None,
+                            &mut external_plugin_store,
                         )
                         .unwrap()
                     })
@@ -520,7 +523,9 @@ impl Tester {
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(),
                 FxHashMap::default(),
+                external_plugin_store,
             ),
+            None,
         )
         .with_fix(fix_kind.into());
 

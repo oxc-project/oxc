@@ -8,7 +8,10 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 use tokio::sync::Mutex;
 use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Oxlintrc};
+use oxc_linter::{
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions,
+    Oxlintrc,
+};
 use tower_lsp_server::UriExt;
 
 use crate::linter::{
@@ -48,8 +51,13 @@ impl ServerLinter {
         };
 
         // clone because we are returning it for ignore builder
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone(), None).unwrap_or_default();
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            None,
+            &mut ExternalPluginStore::default(),
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -82,6 +90,7 @@ impl ServerLinter {
             } else {
                 FxHashMap::default()
             },
+            ExternalPluginStore::default(),
         );
 
         let isolated_linter = IsolatedLintHandler::new(
@@ -123,8 +132,12 @@ impl ServerLinter {
                 warn!("Skipping invalid config file: {}", file_path.display());
                 continue;
             };
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None)
-            else {
+            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut ExternalPluginStore::default(),
+            ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };

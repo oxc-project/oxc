@@ -11,7 +11,8 @@ use serde::{
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    AllowWarnDeny,
+    AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore,
+    external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
@@ -58,9 +59,16 @@ pub struct ESLintRule {
 }
 
 impl OxlintRules {
-    pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
+    pub(crate) fn override_rules(
+        &self,
+        rules_for_override: &mut RuleSet,
+        external_rules_for_override: &mut FxHashMap<ExternalRuleId, AllowWarnDeny>,
+        all_rules: &[RuleEnum],
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Result<(), ExternalRuleLookupError> {
         use itertools::Itertools;
         let mut rules_to_replace = vec![];
+        let mut external_rules_to_replace = vec![];
 
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
 
@@ -79,14 +87,20 @@ impl OxlintRules {
                 let config = rule_config.config.clone().unwrap_or_default();
                 let severity = rule_config.severity;
 
-                let rule = rules_map.get(&plugin_name).copied().or_else(|| {
-                    all_rules
-                        .iter()
-                        .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                });
-
-                if let Some(rule) = rule {
-                    rules_to_replace.push((rule.read_json(config), severity));
+                // TODO(camc314): remove the `plugin_name == "eslint"`
+                if plugin_name == "eslint" || !BuiltinLintPlugins::from(plugin_name).is_empty() {
+                    let rule = rules_map.get(&plugin_name).copied().or_else(|| {
+                        all_rules
+                            .iter()
+                            .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                    });
+                    if let Some(rule) = rule {
+                        rules_to_replace.push((rule.read_json(config), severity));
+                    }
+                } else {
+                    let external_rule_id =
+                        external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
+                    external_rules_to_replace.push((external_rule_id, severity));
                 }
             }
         }
@@ -95,6 +109,12 @@ impl OxlintRules {
             let _ = rules_for_override.remove(&rule);
             rules_for_override.insert(rule, severity);
         }
+        for (external_rule_id, severity) in external_rules_to_replace {
+            let _ = external_rules_for_override.remove(&external_rule_id);
+            external_rules_for_override.insert(external_rule_id, severity);
+        }
+
+        Ok(())
     }
 }
 
@@ -290,11 +310,12 @@ impl ESLintRule {
 #[cfg(test)]
 #[expect(clippy::default_trait_access)]
 mod test {
+    use rustc_hash::FxHashMap;
     use serde::Deserialize;
     use serde_json::{Value, json};
 
     use crate::{
-        AllowWarnDeny,
+        AllowWarnDeny, ExternalPluginStore,
         rules::{RULES, RuleEnum},
     };
 
@@ -344,7 +365,11 @@ mod test {
 
     fn r#override(rules: &mut RuleSet, rules_rc: &Value) {
         let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
-        rules_config.override_rules(rules, &RULES);
+        let mut external_rules_for_override = FxHashMap::default();
+        let external_linter_store = ExternalPluginStore::default();
+        rules_config
+            .override_rules(rules, &mut external_rules_for_override, &RULES, &external_linter_store)
+            .unwrap();
     }
 
     #[test]

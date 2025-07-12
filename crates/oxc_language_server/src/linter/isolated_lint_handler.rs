@@ -67,7 +67,7 @@ impl IsolatedLintHandler {
         config_store: ConfigStore,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
-        let linter = Linter::new(lint_options, config_store);
+        let linter = Linter::new(lint_options, config_store, None);
         let lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 

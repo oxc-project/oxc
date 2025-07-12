@@ -30,3 +30,10 @@ exports[`cli options for bundling > should report an error if a custom plugin ca
   |   Cannot find module './test_plugin'
 "
 `;
+
+exports[`cli options for bundling > should report an error if a rule is not found within a custom plugin 1`] = `
+"Failed to parse configuration file.
+
+  x Rule 'unknown-rule' not found in plugin 'basic-custom-plugin'
+"
+`;

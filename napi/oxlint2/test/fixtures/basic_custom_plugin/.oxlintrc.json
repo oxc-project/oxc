@@ -1,5 +1,8 @@
 {
     "plugins": [
         "./test_plugin"
-    ]
+    ],
+    "rules": {
+        "basic-custom-plugin/no-debugger": "error"
+    }
 }

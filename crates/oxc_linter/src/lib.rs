@@ -9,6 +9,7 @@ mod config;
 mod context;
 mod disable_directives;
 mod external_linter;
+mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
@@ -36,6 +37,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
     },
+    external_plugin_store::ExternalPluginStore,
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -68,15 +70,20 @@ fn size_asserts() {
 }
 
 #[derive(Debug, Clone)]
+#[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
-    // config: Arc<LintConfig>,
     config: ConfigStore,
+    external_linter: Option<ExternalLinter>,
 }
 
 impl Linter {
-    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+    pub fn new(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+    ) -> Self {
+        Self { options, config, external_linter }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -109,7 +116,7 @@ impl Linter {
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
-        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
@@ -184,6 +191,24 @@ impl Linter {
                 if should_run_on_jest_node {
                     for jest_node in iter_possible_jest_call_node(semantic) {
                         rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        }
+
+        if !external_rules.is_empty() {
+            if let Some(external_linter) = self.external_linter.as_ref() {
+                let result = (external_linter.run)(
+                    #[expect(clippy::missing_panics_doc)]
+                    path.to_str().unwrap().to_string(),
+                    external_rules.iter().map(|(rule_id, _)| rule_id.as_u32()).collect(),
+                );
+                match result {
+                    Ok(()) => {
+                        // TODO: report diagnostics
+                    }
+                    Err(_err) => {
+                        // TODO: report diagnostic
                     }
                 }
             }
