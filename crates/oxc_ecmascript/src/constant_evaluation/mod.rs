@@ -111,10 +111,7 @@ impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
             "Infinity" if ctx.is_global_reference(self)? => {
                 Some(ConstantValue::Number(f64::INFINITY))
             }
-            _ => self
-                .reference_id
-                .get()
-                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id)),
+            _ => None,
         }
     }
 }

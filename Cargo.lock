@@ -2029,6 +2029,7 @@ version = "0.77.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "num-bigint",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
@@ -2079,6 +2080,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer_plugins",
+ "pico-args",
  "rustc-hash",
  "similar-asserts",
 ]
