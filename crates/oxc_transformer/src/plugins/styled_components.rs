@@ -844,8 +844,6 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 ///    - Remove next expression from `expressions`.
 ///    - Remove next quasi from `quasis`.
 ///    - Append the next quasi onto end of current one.
-/// 4. Collect the remaining minified quasis into `new_raws`.
-/// 5. Finally, set `raw` for each remaining quasi to the `Atom`s in `new_raws`.
 ///
 /// # Example
 ///
@@ -886,27 +884,21 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
 
-    // New `raw` values for quasis.
-    // Note: May end up shorter than original `quasis`, because some quasis may be discarded.
-    let mut new_raws = Vec::with_capacity(quasis.len());
-
     // Current minified quasi being built
     let mut output = Vec::new();
-    // `true` if `output` needs to be pushed to `new_raws`
-    let mut push_output = false;
 
     // TODO: Update span end of `TemplateElement` when it has next one appended to end of it.
     // TODO: What about `cooked`? Shouldn't we alter that too?
-    quasis.retain_mut(|quasi| {
-        let mut bytes = quasi.value.raw.as_str().as_bytes();
+    let mut quasi_index = 0;
+    while quasi_index < quasis.len() {
+        let mut bytes = quasis[quasi_index].value.raw.as_str().as_bytes();
 
-        let mut retain_quasi = true;
         if let Some(is_block_comment) = comment_type {
             // Remove this quasi and the preceding expression.
             // Note: This branch cannot be taken on first iteration.
             // TODO: Remove scopes, symbols, and references for removed `Expression`.
-            retain_quasi = false;
-            expressions.remove(new_raws.len());
+            quasis.remove(quasi_index);
+            expressions.remove(quasi_index - 1);
 
             // Find end of comment
             let start_index = if is_block_comment {
@@ -935,15 +927,17 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
             comment_type = None;
 
-            // Don't push `output` to `new_raws` and clear it. Keep appending to existing `output`.
-        } else if push_output {
-            // `if push_output` check to avoid pushing empty `output` on first iteration.
-            // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8
-            let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-            new_raws.push(ast.atom(output_str));
-            output.clear();
+            // Don't touch `output`. This quasi continues appending to existing `output`.
         } else {
-            push_output = true;
+            // If not on first quasi, set `raw` for previous quasi to `output`
+            if quasi_index > 0 {
+                // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
+                let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
+                quasis[quasi_index - 1].value.raw = ast.atom(output_str);
+                output.clear();
+            }
+
+            quasi_index += 1;
         }
 
         // Process bytes of quasi
@@ -1058,20 +1052,12 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             output.push(cur_byte);
             i += 1;
         }
-
-        retain_quasi
-    });
-
-    // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8
-    let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
-    new_raws.push(ast.atom(output_str));
-
-    debug_assert!(new_raws.len() == quasis.len());
-    debug_assert!(quasis.len() == expressions.len() + 1);
-
-    for (quasi, new_raw) in quasis.iter_mut().zip(new_raws) {
-        quasi.value.raw = new_raw;
     }
+
+    // Update last quasi.
+    // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
+    let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
+    quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
 }
 
 #[cfg(test)]
