@@ -1915,9 +1915,9 @@ mod test {
         test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
-        test_same("try { foo } catch(e) { var e = 2; bar(e) }");
+        test_same("try { foo } catch(e) { var e = 2; bar(e), e = 1 }");
         test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
-        test_same("try { foo } catch(e) { var e = 2 } bar(e)");
+        test_same("try { foo } catch(e) { var e = 2 } bar(e), e = 3");
 
         let target = ESTarget::ES2018;
         let code = "try { foo } catch(e) {}";

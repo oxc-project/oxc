@@ -104,31 +104,37 @@ mod join_vars {
     #[test]
     fn test_redeclaration_let_in_function() {
         test(
-            "function f() { let x = 1; let y = 2; let z = 3; x + y + z; }",
-            "function f() { let x = 1, y = 2, z = 3; x + y + z; } ",
+            "function f() { let x = 1; let y = 2; let z = 3; foo(x + y + z); }",
+            "function f() { let x = 1, y = 2, z = 3; foo(6); } ",
         );
 
         // recognize local scope version of x
         test(
-            "var x = 1; function f() { let x = 1; let y = 2; x + y; }",
-            "var x = 1; function f() { let x = 1, y = 2; x + y } ",
+            "var x = 1; function f() { let x = 1; let y = 2; foo(x + y); }",
+            "var x = 1; function f() { let x = 1, y = 2; foo(3) } ",
         );
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("function f(x) { let y = 3; x = 4, x + y; }");
+        test(
+            "function f(x) { let y = 3; x = 4, foo(x + y); }",
+            "function f(x) { let y = 3; x = 4, foo(x + 3); }",
+        );
     }
 
     #[test]
     fn test_arrow_function() {
         test(
-            "(() => { let x = 1; let y = 2; x + y; })()",
-            "(() => { let x = 1, y = 2; x + y; })()",
+            "(() => { let x = 1; let y = 2; foo(x + y); })()",
+            "(() => { let x = 1, y = 2; foo(3); })()",
         );
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("((x) => { x = 4; let y = 2; x + y; })()");
+        test(
+            "((x) => { x = 4; let y = 2; foo(x + y); })()",
+            "((x) => { x = 4; let y = 2; foo(x + 2); })()",
+        );
     }
 
     #[test]
@@ -158,7 +164,7 @@ mod collapse_for {
         test("var a = 0; for(; c < b ; c++) foo()", "for(var a = 0; c < b ; c++) foo()");
         test(
             "var a = 0; var b = 0; for(; c < b ; c++) foo()",
-            "for(var a = 0, b = 0; c < b ; c++) foo()",
+            "for(var a = 0, b = 0; c < 0 ; c++) foo()",
         );
 
         // We don't handle labels yet.
