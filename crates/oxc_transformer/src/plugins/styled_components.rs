@@ -891,10 +891,27 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // TODO: What about `cooked`? Shouldn't we alter that too?
     let mut quasi_index = 0;
     while quasi_index < quasis.len() {
-        let mut bytes = quasis[quasi_index].value.raw.as_str().as_bytes();
+        let quasi = &quasis[quasi_index];
+        let mut bytes = quasi.value.raw.as_str().as_bytes();
 
         if quasi_index > 0 {
             if let Some(is_block_comment) = comment_type {
+                // This quasi is being merged into previous.
+                // Extend span end of previous quasi to this quasi's span end, as previous quasi now covers both.
+                //
+                // ```
+                // // Input:
+                // styled.div`color: /* ${c} */ blue`
+                // //         ^^^^^^^^^^    ^^^^^^^^ spans of `quasis[0]` and `quasis[1]`
+                //
+                // // Transformed:
+                // styled.div`color:blue`
+                // // `quasis[0]` in transformed `TemplateLiteral` has span of:
+                // styled.div`color: /* ${c} */ blue`
+                // //         ^^^^^^^^^^^^^^^^^^^^^^
+                // ```
+                quasis[quasi_index - 1].span.end = quasi.span.end;
+
                 // Remove this quasi and the preceding expression.
                 // TODO: Remove scopes, symbols, and references for removed `Expression`.
                 quasis.remove(quasi_index);
