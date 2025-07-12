@@ -3,7 +3,11 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
-use crate::{CompressOptions, Compressor};
+use crate::{CompressOptions, CompressOptionsUnused, Compressor};
+
+pub fn default_options() -> CompressOptions {
+    CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() }
+}
 
 #[track_caller]
 pub fn test_same(source_text: &str) {
@@ -17,7 +21,7 @@ pub fn test_same_options(source_text: &str, options: &CompressOptions) {
 
 #[track_caller]
 pub fn test(source_text: &str, expected: &str) {
-    test_options(source_text, expected, &CompressOptions::smallest());
+    test_options(source_text, expected, &default_options());
 }
 
 #[track_caller]

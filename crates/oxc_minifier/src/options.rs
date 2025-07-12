@@ -24,6 +24,9 @@ pub struct CompressOptions {
     /// Default `false`
     pub drop_console: bool,
 
+    /// Drop unreferenced functions and variables.
+    pub unused: CompressOptionsUnused,
+
     /// Keep function / class names.
     pub keep_names: CompressOptionsKeepNames,
 
@@ -46,6 +49,7 @@ impl CompressOptions {
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
             drop_console: true,
+            unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
         }
     }
@@ -56,9 +60,18 @@ impl CompressOptions {
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
+            unused: CompressOptionsUnused::Keep,
             treeshake: TreeShakeOptions::default(),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+pub enum CompressOptionsUnused {
+    #[default]
+    Remove,
+    KeepAssign,
+    Keep,
 }
 
 #[derive(Debug, Clone, Copy, Default)]

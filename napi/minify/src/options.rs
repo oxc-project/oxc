@@ -23,9 +23,6 @@ pub struct CompressOptions {
     )]
     pub target: Option<String>,
 
-    /// Keep function / class names.
-    pub keep_names: Option<CompressOptionsKeepNames>,
-
     /// Pass true to discard calls to `console.*`.
     ///
     /// @default false
@@ -35,12 +32,15 @@ pub struct CompressOptions {
     ///
     /// @default true
     pub drop_debugger: Option<bool>,
-}
 
-impl Default for CompressOptions {
-    fn default() -> Self {
-        Self { target: None, keep_names: None, drop_console: None, drop_debugger: Some(true) }
-    }
+    /// Drop unreferenced functions and variables.
+    ///
+    /// Simple direct variable assignments do not count as references unless set to "keep_assign".
+    #[napi(ts_type = "true | false | 'keep_assign'")]
+    pub unused: Option<String>,
+
+    /// Keep function / class names.
+    pub keep_names: Option<CompressOptionsKeepNames>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -56,6 +56,8 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 .unwrap_or(default.target),
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
+            // TODO
+            unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
         })

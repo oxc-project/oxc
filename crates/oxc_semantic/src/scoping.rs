@@ -370,6 +370,12 @@ impl Scoping {
         });
     }
 
+    /// Delete a reference.
+    pub fn delete_reference(&mut self, reference_id: ReferenceId) {
+        let Some(symbol_id) = self.get_reference(reference_id).symbol_id() else { return };
+        self.delete_resolved_reference(symbol_id, reference_id);
+    }
+
     /// Delete a reference to a symbol.
     ///
     /// # Panics
