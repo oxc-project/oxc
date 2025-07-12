@@ -21,6 +21,12 @@ working directory:
     ]
   },
   "settings": {
+    "import": {
+      "external-module-folders": [
+        "node_modules"
+      ],
+      "internal-regex": ""
+    },
     "jsx-a11y": {
       "polymorphicPropName": null,
       "components": {}
