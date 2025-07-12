@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 176/293
+Passed: 178/295
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -494,7 +494,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (4/76)
+# legacy-decorators (6/78)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
