@@ -1007,9 +1007,13 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         if let Some(end_index) = end_index {
                                             i += end_index + 4;
 
+                                            if i == bytes.len() {
+                                                // Comment ends at end of quasi
+                                                break;
+                                            }
+
                                             // Add a space when this is a own line block comment
-                                            if i < bytes.len()
-                                                && !bytes[i].is_ascii_whitespace()
+                                            if !bytes[i].is_ascii_whitespace()
                                                 && output.last().is_some_and(|&last| last != b' ')
                                             {
                                                 output.push(b' ');
