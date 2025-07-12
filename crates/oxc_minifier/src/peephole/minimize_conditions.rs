@@ -1364,7 +1364,7 @@ mod test {
         test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
         test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
         test_same("v = foo === void 0 || bar === null");
-        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test_same("var undefined = 1; v = foo === null || foo === undefined; undefined = 2");
         test_same("v = foo !== 1 && foo === void 0 || foo === null");
         test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
