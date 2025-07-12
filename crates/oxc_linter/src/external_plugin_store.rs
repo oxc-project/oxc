@@ -58,8 +58,12 @@ impl ExternalPluginStore {
         self.registered_plugin_paths.contains(plugin_path)
     }
 
+    /// Register plugin.
+    ///
     /// # Panics
-    /// Panics if you use it wrong
+    /// Panics if:
+    /// - Plugin at `plugin_path` is already registered.
+    /// - `offset` does not equal the number of registered rules.
     pub fn register_plugin(
         &mut self,
         plugin_path: String,
@@ -68,16 +72,16 @@ impl ExternalPluginStore {
         rules: Vec<String>,
     ) {
         let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
-        assert!(newly_inserted);
+        assert!(newly_inserted, "register_plugin: plugin already registered");
 
-        let plugin_id: ExternalPluginId = self
+        let plugin_id = self
             .plugins
             .push(ExternalPlugin { name: plugin_name.clone(), rules: FxHashMap::default() });
         self.plugin_names.insert(plugin_name, plugin_id);
 
         assert!(
             offset == self.rules.len(),
-            "register_plugin: expected offset {}, but rule table is currently {} long",
+            "register_plugin: received offset {}, but rule table is currently {} long",
             offset,
             self.rules.len()
         );
@@ -95,11 +99,11 @@ impl ExternalPluginStore {
         plugin_name: &str,
         rule_name: &str,
     ) -> Result<ExternalRuleId, ExternalRuleLookupError> {
-        let plugin_id: &ExternalPluginId = self.plugin_names.get(plugin_name).ok_or_else(|| {
+        let plugin_id = *self.plugin_names.get(plugin_name).ok_or_else(|| {
             ExternalRuleLookupError::PluginNotFound { plugin: plugin_name.to_string() }
         })?;
 
-        self.plugins[*plugin_id].rules.get(rule_name).copied().ok_or_else(|| {
+        self.plugins[plugin_id].rules.get(rule_name).copied().ok_or_else(|| {
             ExternalRuleLookupError::RuleNotFound {
                 plugin: plugin_name.to_string(),
                 rule: rule_name.to_string(),
@@ -137,13 +141,13 @@ impl fmt::Display for ExternalRuleLookupError {
 
 impl std::error::Error for ExternalRuleLookupError {}
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct ExternalPlugin {
     name: String,
     rules: FxHashMap<String, ExternalRuleId>,
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug)]
 struct ExternalRule {
     name: String,
     plugin_id: ExternalPluginId,
