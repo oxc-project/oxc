@@ -2079,6 +2079,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer_plugins",
+ "pico-args",
  "rustc-hash",
  "similar-asserts",
 ]

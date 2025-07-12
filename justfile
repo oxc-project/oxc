@@ -222,3 +222,15 @@ website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
+
+minifier-diff:
+  #!/usr/bin/env bash
+  cargo minsize --compress-only pr
+  git checkout main
+  cargo minsize --compress-only main
+  for file in antd bundle.min d3 echarts jquery lodash moment react.development three typescript victory vue
+  do
+      echo $file.js >> diff
+      diff target/minifier/main/$file.js target/minifier/pr/$file.js >> diff
+  done
+  git checkout -
