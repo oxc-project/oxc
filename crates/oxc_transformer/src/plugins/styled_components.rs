@@ -902,24 +902,31 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
             // Find end of comment
             let start_index = if is_block_comment {
-                bytes.windows(2).position(|q| q == b"*/").map(|mut pos| {
-                    pos += 2;
-                    // Add a space when this is a own line block comment
-                    if pos < bytes.len()
-                        && !bytes[pos].is_ascii_whitespace()
-                        && output.last().is_some_and(|&last| last != b' ')
-                    {
-                        output.push(b' ');
-                    }
-                    pos
-                })
-            } else {
-                bytes.iter().position(|&b| matches!(b, b'\n' | b'\r'))
-            };
+                let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    // Comment contains whole of this quasi
+                    continue;
+                };
 
-            let Some(start_index) = start_index else {
-                // Comment contains whole of this quasi. Remove it.
-                return false;
+                pos += 2;
+                if pos == bytes.len() {
+                    // Comment ends at end of quasi
+                    continue;
+                }
+
+                // Add a space when this is a own line block comment
+                if !bytes[pos].is_ascii_whitespace()
+                    && output.last().is_some_and(|&last| last != b' ')
+                {
+                    output.push(b' ');
+                }
+
+                pos
+            } else {
+                let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
+                    // Comment contains whole of this quasi
+                    continue;
+                };
+                pos
             };
 
             // Trim off to end of comment
