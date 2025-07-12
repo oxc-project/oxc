@@ -46,7 +46,7 @@ impl ExternalRuleId {
 
 #[derive(Debug, Default)]
 pub struct ExternalPluginStore {
-    registered_plugin_specifiers: FxHashSet<String>,
+    registered_plugin_paths: FxHashSet<String>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -54,22 +54,21 @@ pub struct ExternalPluginStore {
 }
 
 impl ExternalPluginStore {
-    pub fn is_plugin_registered(&self, plugin_specifier: &str) -> bool {
-        self.registered_plugin_specifiers.contains(plugin_specifier)
+    pub fn is_plugin_registered(&self, plugin_path: &str) -> bool {
+        self.registered_plugin_paths.contains(plugin_path)
     }
 
     /// # Panics
     /// Panics if you use it wrong
     pub fn register_plugin(
         &mut self,
-        plugin_specifier: String,
+        plugin_path: String,
         plugin_name: String,
         offset: usize,
         rules: Vec<String>,
     ) {
-        let registered_plugin_specifier_newly_inserted =
-            self.registered_plugin_specifiers.insert(plugin_specifier);
-        assert!(registered_plugin_specifier_newly_inserted);
+        let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
+        assert!(newly_inserted);
 
         let plugin_id: ExternalPluginId = self
             .plugins
