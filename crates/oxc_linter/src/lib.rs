@@ -142,7 +142,7 @@ impl Linter {
         // don't thrash the cache too much. Feel free to tweak based on benchmarking.
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-        if semantic.stats().nodes > 200_000 {
+        if semantic.nodes().len() > 200_000 {
             // Collect rules into a Vec so that we can iterate over the rules multiple times
             let rules = rules.collect::<Vec<_>>();
 
