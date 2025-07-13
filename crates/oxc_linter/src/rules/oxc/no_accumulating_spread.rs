@@ -222,7 +222,12 @@ fn check_loop_usage<'a>(
     let AstKind::SimpleAssignmentTarget(_) = assignment_target.kind() else { return };
 
     let assignment_expr = ctx.nodes().parent_node(assignment_target.id());
-    if !matches!(assignment_expr.kind(), AstKind::AssignmentTarget(_)) {
+    if !matches!(
+        assignment_expr.kind(),
+        AstKind::AssignmentTargetPropertyIdentifier(_)
+            | AstKind::ArrayAssignmentTarget(_)
+            | AstKind::ObjectAssignmentTarget(_)
+    ) {
         return;
     }
     let AstKind::AssignmentExpression(assignment_expression) =
