@@ -196,9 +196,7 @@ fn get_property_assignment<'a>(
             }
             AstKind::ComputedMemberExpression(computed_expr)
                 if computed_expr.object.span().contains_inclusive(node.span()) => {}
-            AstKind::StaticMemberExpression(_)
-            | AstKind::SimpleAssignmentTarget(_)
-            | AstKind::AssignmentTarget(_) => {}
+            AstKind::StaticMemberExpression(_) | AstKind::SimpleAssignmentTarget(_) => {}
             _ => return None,
         }
     }
