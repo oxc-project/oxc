@@ -43,7 +43,9 @@ impl Symbol<'_, '_> {
                 | AstKind::VariableDeclaration(_)
                 | AstKind::BindingIdentifier(_)
                 | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => {}
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
