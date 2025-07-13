@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::AssignmentTarget};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -72,7 +72,8 @@ impl Rule for PreferDomNodeTextContent {
                         grand_parent_node.kind(),
                         AstKind::ObjectAssignmentTarget(_)
                             | AstKind::SimpleAssignmentTarget(_)
-                            | AstKind::AssignmentTarget(_)
+                            | AstKind::AssignmentTargetPropertyIdentifier(_)
+                            | AstKind::ArrayAssignmentTarget(_)
                     ))
                 {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
@@ -96,12 +97,11 @@ impl Rule for PreferDomNodeTextContent {
                 if matches!(
                     parent_node_kind,
                     AstKind::ObjectAssignmentTarget(_)
-                        | AstKind::AssignmentTarget(_)
+                        | AstKind::AssignmentTargetPropertyIdentifier(_)
+                        | AstKind::ArrayAssignmentTarget(_)
                         | AstKind::SimpleAssignmentTarget(_)
-                ) && matches!(
-                    grand_parent_node_kind,
-                    AstKind::AssignmentTarget(AssignmentTarget::ObjectAssignmentTarget(_))
-                ) {
+                ) && matches!(grand_parent_node_kind, AstKind::ObjectAssignmentTarget(_))
+                {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
                 }
             }
