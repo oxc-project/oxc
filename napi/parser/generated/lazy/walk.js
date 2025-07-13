@@ -3707,6 +3707,9 @@ function walkTSTypeName(pos, ast, visitors) {
     case 1:
       walkBoxTSQualifiedName(pos + 8, ast, visitors);
       return;
+    case 2:
+      walkBoxThisExpression(pos + 8, ast, visitors);
+      return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
   }
@@ -4098,6 +4101,9 @@ function walkTSTypeQueryExprName(pos, ast, visitors) {
       walkBoxTSQualifiedName(pos + 8, ast, visitors);
       return;
     case 2:
+      walkBoxThisExpression(pos + 8, ast, visitors);
+      return;
+    case 3:
       walkBoxTSImportType(pos + 8, ast, visitors);
       return;
     default:
@@ -4253,6 +4259,9 @@ function walkTSModuleReference(pos, ast, visitors) {
       walkBoxTSQualifiedName(pos + 8, ast, visitors);
       return;
     case 2:
+      walkBoxThisExpression(pos + 8, ast, visitors);
+      return;
+    case 3:
       walkBoxTSExternalModuleReference(pos + 8, ast, visitors);
       return;
     default:
@@ -5449,7 +5458,7 @@ function walkOptionBoxObjectExpression(pos, ast, visitors) {
 }
 
 function walkOptionTSTypeName(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 2)) walkTSTypeName(pos, ast, visitors);
+  if (!(ast.buffer[pos] === 3)) walkTSTypeName(pos, ast, visitors);
 }
 
 function walkBoxTSExternalModuleReference(pos, ast, visitors) {

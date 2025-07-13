@@ -2,7 +2,7 @@ commit: 81c95189
 
 semantic_typescript Summary:
 AST Parsed     : 6537/6537 (100.00%)
-Positive Passed: 2848/6537 (43.57%)
+Positive Passed: 2851/6537 (43.61%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1900,9 +1900,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularInstantiationExpression.ts
 Bindings mismatch:
@@ -8320,11 +8317,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTy
 Symbol reference IDs mismatch for "a":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofThisInClass.ts
-Unresolved references mismatch:
-after transform: ["require", "this"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnnessesaryTypeReferenceNotAdded.ts
 Symbol reference IDs mismatch for "minimist":
@@ -30118,9 +30110,6 @@ rebuilt        : ScopeId(5): []
 Scope children mismatch:
 after transform: ScopeId(8): [ScopeId(9)]
 rebuilt        : ScopeId(8): []
-Unresolved references mismatch:
-after transform: ["Error", "require", "this"]
-rebuilt        : ["Error", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/thisIndexOnExistingReadonlyFieldIsNotNever.ts
 Bindings mismatch:
@@ -31482,11 +31471,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Collection"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeofThisInMethodSignature.ts
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeofUndefined.ts
 Unresolved references mismatch:
@@ -51107,11 +51091,6 @@ Symbol reference IDs mismatch for "M":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(3)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofThisWithImplicitThis.ts
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpread.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
@@ -51567,7 +51546,7 @@ Reference symbol mismatch for "callsCallback":
 after transform: SymbolId(4) "callsCallback"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["this"]
+after transform: []
 rebuilt        : ["callsCallback", "isCorrect"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInInterfaces.ts

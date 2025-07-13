@@ -727,6 +727,7 @@ impl GetAddress for TSTypeName<'_> {
         match self {
             Self::IdentifierReference(it) => GetAddress::address(it),
             Self::QualifiedName(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
         }
     }
 }
@@ -764,6 +765,7 @@ impl GetAddress for TSTypeQueryExprName<'_> {
             Self::TSImportType(it) => GetAddress::address(it),
             Self::IdentifierReference(it) => GetAddress::address(it),
             Self::QualifiedName(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
         }
     }
 }
@@ -776,6 +778,7 @@ impl GetAddress for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetAddress::address(it),
             Self::IdentifierReference(it) => GetAddress::address(it),
             Self::QualifiedName(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
         }
     }
 }

@@ -2046,6 +2046,7 @@ impl<'a> From<&'a TSTypeName<'a>> for SiblingNode<'a> {
         match node {
             TSTypeName::IdentifierReference(inner) => SiblingNode::IdentifierReference(inner),
             TSTypeName::QualifiedName(inner) => SiblingNode::TSQualifiedName(inner),
+            TSTypeName::ThisExpression(inner) => SiblingNode::ThisExpression(inner),
         }
     }
 }
@@ -11495,6 +11496,14 @@ impl<'a> AstNode<'a, TSTypeName<'a>> {
             }
             TSTypeName::QualifiedName(s) => {
                 AstNodes::TSQualifiedName(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_node: self.following_node,
+                }))
+            }
+            TSTypeName::ThisExpression(s) => {
+                AstNodes::ThisExpression(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,

@@ -3240,6 +3240,9 @@ impl Gen for TSTypeName<'_> {
                 p.print_str(".");
                 decl.right.print(p, ctx);
             }
+            Self::ThisExpression(e) => {
+                e.print(p, ctx);
+            }
         }
     }
 }

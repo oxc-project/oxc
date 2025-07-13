@@ -2,7 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1949/2362 (82.51%)
+Positive Passed: 1953/2362 (82.68%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -177,16 +177,6 @@ after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
 after transform: ["foo"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-dot-this/input.js
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-dot-this-babel-7/input.js
-Unresolved references mismatch:
-after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-with-options/input.js
@@ -1409,9 +1399,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
 Scope children mismatch:
@@ -1425,9 +1412,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 Expected `,` but found `extends`
@@ -2904,16 +2888,6 @@ rebuilt        : []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof/input.ts
 Unresolved references mismatch:
 after transform: ["y"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-this/input.ts
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-this-babel-7/input.ts
-Unresolved references mismatch:
-after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-type-asi-false-parameters/input.ts

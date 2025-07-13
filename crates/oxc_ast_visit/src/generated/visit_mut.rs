@@ -3741,6 +3741,7 @@ pub mod walk_mut {
         match it {
             TSTypeName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             TSTypeName::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
+            TSTypeName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
     }
 
