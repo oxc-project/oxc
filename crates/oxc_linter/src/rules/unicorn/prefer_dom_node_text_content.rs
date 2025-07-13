@@ -70,12 +70,13 @@ impl Rule for PreferDomNodeTextContent {
                 ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
                     || matches!(
                         grand_parent_node.kind(),
-                                                    AstKind::SimpleAssignmentTarget(_)
-|
-                        AstKind::ObjectAssignmentTarget(_)
+                        AstKind::SimpleAssignmentTarget(_)
+                            | AstKind::ObjectAssignmentTarget(_)
                             | AstKind::AssignmentTargetPropertyIdentifier(_)
                             | AstKind::ArrayAssignmentTarget(_)
-                         | AstKind::ComputedMemberExpression(_) | AstKind::StaticMemberExpression(_) | AstKind::PrivateFieldExpression(_)
+                            | AstKind::ComputedMemberExpression(_)
+                            | AstKind::StaticMemberExpression(_)
+                            | AstKind::PrivateFieldExpression(_)
                     ))
                 {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
@@ -99,9 +100,11 @@ impl Rule for PreferDomNodeTextContent {
                 if matches!(
                     parent_node_kind,
                     AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::AssignmentTargetPropertyIdentifier(_)
-                            | AstKind::ArrayAssignmentTarget(_)
-                         | AstKind::ComputedMemberExpression(_) | AstKind::StaticMemberExpression(_) | AstKind::PrivateFieldExpression(_)
+                        | AstKind::AssignmentTargetPropertyIdentifier(_)
+                        | AstKind::ArrayAssignmentTarget(_)
+                        | AstKind::ComputedMemberExpression(_)
+                        | AstKind::StaticMemberExpression(_)
+                        | AstKind::PrivateFieldExpression(_)
                         | AstKind::SimpleAssignmentTarget(_)
                 ) && matches!(grand_parent_node_kind, AstKind::ObjectAssignmentTarget(_))
                 {
