@@ -1,7 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
-        Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind
-    }, AstKind
+        Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement,
+        ForStatement, VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -239,15 +241,18 @@ fn check_loop_usage<'a>(
             // if we have an expression statement wrapping an inner assignment expression, return the inner assignment expression's right property.
             if let Expression::AssignmentExpression(x) = &expr.expression {
                 Some(&x.right)
-            }
-            else {
+            } else {
                 None
             }
         }
         _ => None,
     };
 
-    let Some(assignment_expression_right_inner_expr) = assignment_expression_right_inner_expr_option else { return ;};
+    let Some(assignment_expression_right_inner_expr) =
+        assignment_expression_right_inner_expr_option
+    else {
+        return;
+    };
 
     match assignment_expression_right_inner_expr {
         Expression::ArrayExpression(array_expr)
