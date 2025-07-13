@@ -1,9 +1,7 @@
 use oxc_ast::{
-    AstKind,
     ast::{
-        Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement,
-        ForStatement, VariableDeclarationKind,
-    },
+        Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement, ForStatement, VariableDeclarationKind
+    }, AstKind
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -222,21 +220,35 @@ fn check_loop_usage<'a>(
     let AstKind::SimpleAssignmentTarget(_) = assignment_target.kind() else { return };
 
     let assignment_expr = ctx.nodes().parent_node(assignment_target.id());
+
     if !matches!(
         assignment_expr.kind(),
         AstKind::AssignmentTargetPropertyIdentifier(_)
             | AstKind::ArrayAssignmentTarget(_)
             | AstKind::ObjectAssignmentTarget(_)
+            | AstKind::AssignmentExpression(_)
     ) {
         return;
     }
-    let AstKind::AssignmentExpression(assignment_expression) =
-        ctx.nodes().parent_kind(assignment_expr.id())
-    else {
-        return;
+
+    let parent_kind = ctx.nodes().parent_kind(assignment_expr.id());
+
+    let assignment_expression_right_inner_expr_option = match parent_kind {
+        AstKind::AssignmentExpression(expr) => Some(&expr.right),
+        AstKind::ExpressionStatement(expr) => {
+            // if we have an expression statement wrapping an inner assignment expression, return the inner assignment expression's right property.
+            if let Expression::AssignmentExpression(x) = &expr.expression {
+                Some(&x.right)
+            }
+            else {
+                None
+            }
+        }
+        _ => None,
     };
 
-    let assignment_expression_right_inner_expr = assignment_expression.right.get_inner_expression();
+    let Some(assignment_expression_right_inner_expr) = assignment_expression_right_inner_expr_option else { return ;};
+
     match assignment_expression_right_inner_expr {
         Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) => {}
