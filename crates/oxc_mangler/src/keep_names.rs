@@ -125,7 +125,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                     grand_parent_node_kind,
                     AstKind::AssignmentTargetPropertyIdentifier(_)
                         | AstKind::ArrayAssignmentTarget(_)
-                        | AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::ObjectAssignmentTarget(_) | AstKind::ComputedMemberExpression(_) | AstKind::StaticMemberExpression(_) | AstKind::PrivateFieldExpression(_)
                 ));
 
                 match grand_grand_parent_node_kind {
