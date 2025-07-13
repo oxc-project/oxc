@@ -171,26 +171,26 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // r"class Foo {}",
-        // r"class Foo {
-        // 	    publicMember = 42;
-        // 	}",
-        // r"class Foo {
-        // 	    #usedMember = 42;
-        // 	    method() {
-        // 	        return this.#usedMember;
-        // 	    }
-        // 	}",
-        // r"class Foo {
-        // 	    #usedMember = 42;
-        // 	    anotherMember = this.#usedMember;
-        // 	}",
-        // r"class Foo {
-        // 	    #usedMember = 42;
-        // 	    foo() {
-        // 	        anotherMember = this.#usedMember;
-        // 	    }
-        // 	}",
+        r"class Foo {}",
+        r"class Foo {
+        	    publicMember = 42;
+        	}",
+        r"class Foo {
+        	    #usedMember = 42;
+        	    method() {
+        	        return this.#usedMember;
+        	    }
+        	}",
+        r"class Foo {
+        	    #usedMember = 42;
+        	    anotherMember = this.#usedMember;
+        	}",
+        r"class Foo {
+        	    #usedMember = 42;
+        	    foo() {
+        	        anotherMember = this.#usedMember;
+        	    }
+        	}",
         r"class C {
 			    #usedMember;
 
