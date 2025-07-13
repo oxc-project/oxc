@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
@@ -96,20 +96,8 @@ impl Rule for NoUnusedPrivateClassMembers {
                     continue;
                 }
 
-                println!("element: {element:?}");
-                                println!("element_id: {element_id:?}");
-
-
                 if element.is_private
                     && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
-                        println!("ident: {ident:?}");
-                                                println!("ident.element_ids: {:?}", ident.element_ids);
-
-                        println!("element.kind.is_property(): {:?}", element.kind.is_property());
-                        let result = is_read(ident.id, ctx.nodes());
-                        println!("is_read: {:?}", result);
-
-
                         // If the element is a property, it must be read.
                         (!element.kind.is_property() || is_read(ident.id, ctx.nodes()))
                             && ident.element_ids.contains(&element_id)
@@ -129,15 +117,9 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
     for (curr, parent) in
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
-        println!("curr.kind(): {:?}", curr.kind());
-        println!("parent.kind(): {:?}", parent.kind());
         match (curr.kind(), parent.kind()) {
-            (
-                AstKind::ComputedMemberExpression(_) | AstKind::StaticMemberExpression(_),
-                AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_),
-            ) => {}
+            (member_expr, AstKind::SimpleAssignmentTarget(_))
+                if member_expr.is_member_expression_kind() => {}
             (
                 AstKind::SimpleAssignmentTarget(_),
                 AstKind::ArrayAssignmentTarget(_)
@@ -146,7 +128,8 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
             ) => {}
             (
                 AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_),
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
@@ -155,13 +138,22 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyProperty(_),
-            )
-            | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                return false;
+            ) => return false,
+            (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(assign_expr)) => {
+                if matches!(assign_expr.operator, AssignmentOperator::Assign) {
+                    return false;
+                }
+
+                // if an assignment expression is inside a call expression, it should be considered a read.
+                let is_parent_inside_call_expression =
+                    nodes.ancestors(parent.id()).any(|grand_parent_node| {
+                        matches!(grand_parent_node.kind(), AstKind::CallExpression(_))
+                    });
+
+                return is_parent_inside_call_expression;
             }
             (
-                AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_),
+                AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_),
                 AstKind::AssignmentExpression(_),
             )
             | (_, AstKind::UpdateExpression(_)) => {
@@ -181,24 +173,24 @@ fn test() {
     let pass = vec![
         // r"class Foo {}",
         // r"class Foo {
-		// 	    publicMember = 42;
-		// 	}",
+        // 	    publicMember = 42;
+        // 	}",
         // r"class Foo {
-		// 	    #usedMember = 42;
-		// 	    method() {
-		// 	        return this.#usedMember;
-		// 	    }
-		// 	}",
+        // 	    #usedMember = 42;
+        // 	    method() {
+        // 	        return this.#usedMember;
+        // 	    }
+        // 	}",
         // r"class Foo {
-		// 	    #usedMember = 42;
-		// 	    anotherMember = this.#usedMember;
-		// 	}",
+        // 	    #usedMember = 42;
+        // 	    anotherMember = this.#usedMember;
+        // 	}",
         // r"class Foo {
-		// 	    #usedMember = 42;
-		// 	    foo() {
-		// 	        anotherMember = this.#usedMember;
-		// 	    }
-		// 	}",
+        // 	    #usedMember = 42;
+        // 	    foo() {
+        // 	        anotherMember = this.#usedMember;
+        // 	    }
+        // 	}",
         r"class C {
 			    #usedMember;
 
