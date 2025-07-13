@@ -121,7 +121,6 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                     return false;
                 };
 
-                // TODO: figure out which AstKind to use here
                 debug_assert!(matches!(
                     grand_parent_node_kind,
                     AstKind::AssignmentTargetPropertyIdentifier(_)

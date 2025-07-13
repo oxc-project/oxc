@@ -207,7 +207,6 @@ impl AstKind<'_> {
             Self::Program(_) => "Program".into(),
             Self::Directive(d) => d.directive.as_ref().into(),
             Self::Hashbang(_) => "Hashbang".into(),
-
             Self::BlockStatement(_) => "BlockStatement".into(),
             Self::BreakStatement(_) => "BreakStatement".into(),
             Self::ContinueStatement(_) => "ContinueStatement".into(),

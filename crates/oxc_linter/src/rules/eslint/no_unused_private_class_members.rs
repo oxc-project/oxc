@@ -117,28 +117,42 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
-            (member_expr, AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_))
-                if member_expr.is_member_expression_kind() => {}
+            (
+                member_expr,
+                AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
+            ) if member_expr.is_member_expression_kind() => {}
             (
                 AstKind::SimpleAssignmentTarget(_),
-                AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_),
+                AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
             ) => {}
             (
-                AstKind::AssignmentTarget(_),
+                AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_),
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyProperty(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                 return false;
             }
-            (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_))
+            (
+                AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_),
+                AstKind::AssignmentExpression(_),
+            )
             | (_, AstKind::UpdateExpression(_)) => {
                 return !matches!(nodes.parent_kind(parent.id()), AstKind::ExpressionStatement(_));
             }
