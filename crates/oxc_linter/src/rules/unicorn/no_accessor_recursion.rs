@@ -190,8 +190,14 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
             argument.span() == node.span()
         }
-        // e.g. "this.bar = 1" or "[this.bar] = array"
-        AstKind::AssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        // e.g. "this.bar = 1"
+        AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+            assign_target.span() == node.span()
+        }
+        // e.g. "[this.bar] = array"
+        AstKind::ArrayAssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        // e.g. "({property: this.bar} = object)"
+        AstKind::ObjectAssignmentTarget(assign_target) => assign_target.span() == node.span(),
         _ => false,
     }
 }
