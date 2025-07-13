@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::ObjectAssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -45,6 +45,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferDomNodeTextContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        println!("node.kind(): {:?}", node.kind());
         match node.kind() {
             AstKind::StaticMemberExpression(member_expr) => {
                 let (span, name) = member_expr.static_property_info();
@@ -97,16 +98,13 @@ impl Rule for PreferDomNodeTextContent {
                 }
                 let Some(grand_parent_node_kind) = ancestor_kinds.next() else { return };
 
-                if matches!(
-                    parent_node_kind,
-                    AstKind::ObjectAssignmentTarget(_)
-                        | AstKind::AssignmentTargetPropertyIdentifier(_)
-                        | AstKind::ArrayAssignmentTarget(_)
-                        | AstKind::ComputedMemberExpression(_)
-                        | AstKind::StaticMemberExpression(_)
-                        | AstKind::PrivateFieldExpression(_)
-                        | AstKind::SimpleAssignmentTarget(_)
-                ) && matches!(grand_parent_node_kind, AstKind::ObjectAssignmentTarget(_))
+                if matches!(parent_node_kind, AstKind::ObjectAssignmentTarget(_))
+                    && matches!(
+                        grand_parent_node_kind,
+                        AstKind::ExpressionStatement(_)
+                            | AstKind::AssignmentExpression(_)
+                            | AstKind::ObjectAssignmentTarget(_)
+                    )
                 {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
                 }
