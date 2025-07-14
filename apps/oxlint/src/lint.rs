@@ -486,39 +486,43 @@ impl LintRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
-        if let Some(config_path) = config {
-            let full_path = match absolute(cwd.join(config_path)) {
-                Ok(path) => path,
-                Err(e) => {
-                    let handler = GraphicalReportHandler::new();
-                    let mut err = String::new();
-                    handler
-                        .render_report(
-                            &mut err,
-                            &OxcDiagnostic::error(format!(
-                                "Failed to resolve config path {}: {e}",
-                                config_path.display()
-                            )),
-                        )
-                        .unwrap();
-                    return Err(err);
-                }
-            };
-            return match Oxlintrc::from_file(&full_path) {
+        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
+        match (absolute(cwd.join(path)), config) {
+            // Config file exists, either explicitly provided or the default file name
+            // Parse the config file and return it, or report an error if parsing fails
+            (Ok(full_path), _) => match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
                     let handler = GraphicalReportHandler::new();
                     let mut err = String::new();
                     handler.render_report(&mut err, &diagnostic).unwrap();
-                    return Err(err);
+                    // normalize the config path in the error message for simpler snapshot testing
+                    let err = err.replace(
+                        full_path.to_string_lossy().as_ref(),
+                        &full_path.to_string_lossy().cow_replace('\\', "/"),
+                    );
+                    Err(err)
                 }
-            };
+            },
+            // Failed to resolve config, and it was explicitly provided
+            // Return that the config file could not be found
+            (Err(e), Some(config_path)) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler
+                    .render_report(
+                        &mut err,
+                        &OxcDiagnostic::error(format!(
+                            "Failed to resolve config path {}: {e}",
+                            config_path.display()
+                        )),
+                    )
+                    .unwrap();
+                Err(err)
+            }
+            // Failed to resolve implicit path, return default config
+            _ => Ok(Oxlintrc::default()),
         }
-        // no config argument is provided,
-        // auto detect default config file from current work directory
-        // or return the default configuration, when no valid file is found
-        let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
-        Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 
     /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
@@ -713,6 +717,12 @@ mod test {
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
         Tester::new().with_cwd("fixtures/auto_config_detection".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn oxlint_config_auto_detection_parse_error() {
+        let args = &["debugger.js"];
+        Tester::new().with_cwd("fixtures/auto_config_parse_error".into()).test_and_snapshot(args);
     }
 
     #[test]
