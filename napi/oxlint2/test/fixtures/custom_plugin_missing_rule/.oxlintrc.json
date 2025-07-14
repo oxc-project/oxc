@@ -1,0 +1,7 @@
+{
+  "plugins": ["./test_plugin"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "basic-custom-plugin/unknown-rule": "error"
+  }
+}

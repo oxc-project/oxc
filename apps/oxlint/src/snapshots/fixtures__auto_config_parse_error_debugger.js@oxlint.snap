@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: debugger.js
+working directory: fixtures/auto_config_parse_error
+----------
+Failed to parse configuration file.
+
+  x Failed to parse eslint config <cwd>/fixtures/auto_config_parse_error/.oxlintrc.json.
+  | expected `:` at line 2 column 11
+
+----------
+CLI result: InvalidOptionConfig
+----------

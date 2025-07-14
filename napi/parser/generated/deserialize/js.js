@@ -3639,11 +3639,11 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
+    case 2:
+      return deserializeBoxThisExpression(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSTypeName`);
   }
@@ -3741,12 +3741,12 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
+      return deserializeBoxThisExpression(pos + 8);
+    case 3:
       return deserializeBoxTSImportType(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSTypeQueryExprName`);
@@ -3769,12 +3769,12 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
+      return deserializeBoxThisExpression(pos + 8);
+    case 3:
       return deserializeBoxTSExternalModuleReference(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSModuleReference`);
@@ -5224,7 +5224,7 @@ function deserializeOptionBoxObjectExpression(pos) {
 }
 
 function deserializeOptionTSTypeName(pos) {
-  if (uint8[pos] === 2) return null;
+  if (uint8[pos] === 3) return null;
   return deserializeTSTypeName(pos);
 }
 

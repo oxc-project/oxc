@@ -1,3 +1,5 @@
+#![cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
+
 use std::sync::Arc;
 
 use rustc_hash::FxHashMap;

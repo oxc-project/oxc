@@ -4,6 +4,6 @@ export type JsLoadPluginCb =
   ((arg: string) => Promise<string>)
 
 export type JsRunCb =
-  (() => void)
+  ((arg0: string, arg1: Array<number>) => string)
 
 export declare function lint(loadPlugin: JsLoadPluginCb, run: JsRunCb): Promise<boolean>

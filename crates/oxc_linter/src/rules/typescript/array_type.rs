@@ -477,24 +477,25 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSUndefinedKeyword(_)
         | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
-            let type_name = TSTypeName::get_identifier_reference(&node.type_name);
-            if type_name.name.as_str() == "Array" {
-                if node.type_arguments.is_none() {
-                    return true;
-                }
-                if node.type_arguments.as_ref().unwrap().params.len() == 1 {
-                    return is_simple_type(
-                        node.type_arguments.as_ref().unwrap().params.first().unwrap(),
-                    );
-                }
-            } else {
-                if node.type_arguments.is_some() {
+            if let Some(type_name) = TSTypeName::get_identifier_reference(&node.type_name) {
+                if type_name.name.as_str() == "Array" {
+                    if node.type_arguments.is_none() {
+                        return true;
+                    }
+                    if node.type_arguments.as_ref().unwrap().params.len() == 1 {
+                        return is_simple_type(
+                            node.type_arguments.as_ref().unwrap().params.first().unwrap(),
+                        );
+                    }
+                } else {
+                    if node.type_arguments.is_some() {
+                        return false;
+                    }
+                    if let TSTypeName::IdentifierReference(_) = &node.type_name {
+                        return true;
+                    }
                     return false;
                 }
-                if let TSTypeName::IdentifierReference(_) = &node.type_name {
-                    return true;
-                }
-                return false;
             }
             false
         }

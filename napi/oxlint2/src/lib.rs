@@ -1,18 +1,28 @@
 use std::{
     process::{ExitCode, Termination},
-    sync::Arc,
+    sync::{Arc, mpsc::channel},
 };
 
-use napi::{Status, bindgen_prelude::Promise, threadsafe_function::ThreadsafeFunction};
+use napi::{
+    Status,
+    bindgen_prelude::Promise,
+    threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
+};
 use napi_derive::napi;
 
 use oxlint::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     lint as oxlint_lint,
 };
 
 #[napi]
-pub type JsRunCb = ThreadsafeFunction<(), /* no input */ (), (), Status, false>;
+pub type JsRunCb = ThreadsafeFunction<
+    (String, Vec<u32>),
+    String, /* Vec<LintResult> */
+    (String, Vec<u32>),
+    Status,
+    false,
+>;
 
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -25,11 +35,36 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
 
 fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
     let cb = Arc::new(cb);
-    Arc::new(move || {
-        Box::pin({
-            let cb = Arc::clone(&cb);
-            async move { cb.call_async(()).await.map_err(Into::into) }
-        })
+    Arc::new(move |file_path: String, rule_ids: Vec<u32>| {
+        let cb = Arc::clone(&cb);
+
+        let (tx, rx) = channel();
+
+        let status = cb.call_with_return_value(
+            (file_path, rule_ids),
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                let _ = match &result {
+                    Ok(r) => match serde_json::from_str::<Vec<LintResult>>(r) {
+                        Ok(v) => tx.send(Ok(v)),
+                        Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
+                    },
+                    Err(e) => tx.send(Err(e.to_string())),
+                };
+
+                result.map(|_| ())
+            },
+        );
+
+        if status != Status::Ok {
+            return Err(format!("Failed to schedule callback: {status:?}").into());
+        }
+
+        match rx.recv() {
+            Ok(Ok(x)) => Ok(x),
+            Ok(Err(e)) => Err(format!("Callback reported error: {e}").into()),
+            Err(e) => Err(format!("Callback did not respond: {e}").into()),
+        }
     })
 }
 
@@ -40,9 +75,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             let cb = Arc::clone(&cb);
             async move {
                 let result = cb.call_async(plugin_name).await?.into_future().await?;
-
                 let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
-
                 Ok(plugin_load_result)
             }
         })

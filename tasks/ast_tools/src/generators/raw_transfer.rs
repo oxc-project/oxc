@@ -811,12 +811,12 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
 
         let mut field_names = caps.get(2).unwrap().as_str().split('.');
         let field_name = field_names.next().unwrap();
-        let field = struct_def.fields.iter().find(|field| field.name() == field_name).unwrap();
+        let field = struct_def.field_by_name(field_name);
         let mut offset = self.struct_offset + field.offset_64();
         let mut type_def = field.type_def(self.schema);
         for field_name in field_names {
             let struct_def = type_def.as_struct().unwrap();
-            let field = struct_def.fields.iter().find(|field| field.name() == field_name).unwrap();
+            let field = struct_def.field_by_name(field_name);
             offset += field.offset_64();
             type_def = field.type_def(self.schema);
         }

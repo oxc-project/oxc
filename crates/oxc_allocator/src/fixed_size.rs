@@ -7,14 +7,8 @@ use std::{
 
 use crate::Allocator;
 
-// Only 64-bit little-endian platforms are supported at present
-const IS_SUPPORTED_PLATFORM: bool =
-    cfg!(all(target_pointer_width = "64", target_endian = "little"));
-
 const TWO_GIB: usize = 1 << 31;
-// `1 << 32`.
-// We use `IS_SUPPORTED_PLATFORM as usize * 32` to avoid compilation failure on 32-bit platforms.
-const FOUR_GIB: usize = 1 << (IS_SUPPORTED_PLATFORM as usize * 32);
+const FOUR_GIB: usize = 1 << 32;
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
 // But system allocator on Mac OS refuses allocations with 4 GiB alignment.
@@ -61,15 +55,7 @@ pub struct FixedSizeAllocator {
 
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
-    ///
-    /// # Panics
-    /// Panics if not a 64-bit little-endian platform.
     pub fn new() -> Self {
-        assert!(
-            IS_SUPPORTED_PLATFORM,
-            "Fixed size allocators are only supported on 64-bit little-endian platforms"
-        );
-
         // Allocate block of memory.
         // SAFETY: Layout does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };

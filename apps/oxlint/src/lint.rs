@@ -13,8 +13,8 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, InvalidFilterKind,
-    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -82,6 +82,12 @@ impl Runner for LintRunner {
             }
         };
 
+        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
+            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+        } else {
+            GraphicalReportHandler::new()
+        };
+
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
@@ -90,8 +96,12 @@ impl Runner for LintRunner {
             Err(err) => {
                 print_and_flush_stdout(
                     stdout,
-                    &format!("Failed to parse configuration file.\n{err}\n"),
+                    &format!(
+                        "Failed to parse configuration file.\n{}\n",
+                        render_report(&handler, &err)
+                    ),
                 );
+
                 return CliRunResult::InvalidOptionConfig;
             }
         };
@@ -172,11 +182,7 @@ impl Runner for LintRunner {
         let paths = walker.paths();
         let number_of_files = paths.len();
 
-        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
-        } else {
-            GraphicalReportHandler::new()
-        };
+        let mut external_plugin_store = ExternalPluginStore::default();
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -184,7 +190,14 @@ impl Runner for LintRunner {
             basic_options.config.is_none();
 
         let nested_configs = if search_for_nested_configs {
-            match Self::get_nested_configs(stdout, &handler, &filters, &paths, external_linter) {
+            match Self::get_nested_configs(
+                stdout,
+                &handler,
+                &filters,
+                &paths,
+                external_linter,
+                &mut external_plugin_store,
+            ) {
                 Ok(v) => v,
                 Err(v) => return v,
             }
@@ -203,21 +216,25 @@ impl Runner for LintRunner {
         } else {
             None
         };
-        let config_builder =
-            match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, external_linter) {
-                Ok(builder) => builder,
-                Err(e) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to parse configuration file.\n{}\n",
-                            render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                        ),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            external_linter,
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse configuration file.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
             }
-            .with_filters(&filters);
+        }
+        .with_filters(&filters);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -269,10 +286,13 @@ impl Runner for LintRunner {
             _ => None,
         };
 
-        let linter =
-            Linter::new(LintOptions::default(), ConfigStore::new(lint_config, nested_configs))
-                .with_fix(fix_options.fix_kind())
-                .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new(
+            LintOptions::default(),
+            ConfigStore::new(lint_config, nested_configs, external_plugin_store),
+            self.external_linter,
+        )
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -406,6 +426,7 @@ impl LintRunner {
         filters: &Vec<LintFilter>,
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
@@ -436,8 +457,12 @@ impl LintRunner {
         // iterate over each config and build the ConfigStore
         for (dir, oxlintrc) in nested_oxlintrc {
             // TODO(refactor): clean up all of the error handling in this function
-            let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, external_linter)
-            {
+            let builder = match ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                external_linter,
+                external_plugin_store,
+            ) {
                 Ok(builder) => builder,
                 Err(e) => {
                     print_and_flush_stdout(
@@ -464,40 +489,14 @@ impl LintRunner {
     // when config is provided, but not found, an String with the formatted error is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
-        if let Some(config_path) = config {
-            let full_path = match absolute(cwd.join(config_path)) {
-                Ok(path) => path,
-                Err(e) => {
-                    let handler = GraphicalReportHandler::new();
-                    let mut err = String::new();
-                    handler
-                        .render_report(
-                            &mut err,
-                            &OxcDiagnostic::error(format!(
-                                "Failed to resolve config path {}: {e}",
-                                config_path.display()
-                            )),
-                        )
-                        .unwrap();
-                    return Err(err);
-                }
-            };
-            return match Oxlintrc::from_file(&full_path) {
-                Ok(config) => Ok(config),
-                Err(diagnostic) => {
-                    let handler = GraphicalReportHandler::new();
-                    let mut err = String::new();
-                    handler.render_report(&mut err, &diagnostic).unwrap();
-                    return Err(err);
-                }
-            };
+    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
+        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
+        let full_path = cwd.join(path);
+
+        if config.is_some() || full_path.exists() {
+            return Oxlintrc::from_file(&full_path);
         }
-        // no config argument is provided,
-        // auto detect default config file from current work directory
-        // or return the default configuration, when no valid file is found
-        let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
-        Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
+        Ok(Oxlintrc::default())
     }
 
     /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
@@ -692,6 +691,13 @@ mod test {
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
         Tester::new().with_cwd("fixtures/auto_config_detection".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_os = "windows"))] // Skipped on Windows due to snapshot diffs from path separators (`/` vs `\`)
+    fn oxlint_config_auto_detection_parse_error() {
+        let args = &["debugger.js"];
+        Tester::new().with_cwd("fixtures/auto_config_parse_error".into()).test_and_snapshot(args);
     }
 
     #[test]

@@ -56,12 +56,11 @@
 //! - Documentation: <https://styled-components.com/docs/tooling#babel-plugin>
 
 use std::{
-    borrow::Cow,
     hash::{Hash, Hasher},
     iter::once,
 };
 
-use rustc_hash::{FxHashSet, FxHasher};
+use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
@@ -370,7 +369,7 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         if self.options.minify {
-            Self::minify_tagged_template_expression(tagged, ctx);
+            minify_template_literal(&mut tagged.quasi, ctx.ast);
         }
 
         if self.options.transpile_template_literals {
@@ -396,42 +395,6 @@ impl<'a> StyledComponents<'a, '_> {
                 || self.is_styled(&call.callee, ctx)
             {
                 call.pure = true;
-            }
-        }
-    }
-
-    fn minify_tagged_template_expression(
-        expr: &mut TaggedTemplateExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        let TemplateLiteral { quasis, expressions, .. } = &mut expr.quasi;
-
-        let (new_raws, remained_expression_indices) = CssMinifier::minify_quasis(quasis, ctx.ast);
-
-        // Update the quasis with the new raw values.
-        for (new_raw, quasis) in new_raws.into_iter().zip(quasis.iter_mut()) {
-            quasis.value.raw = new_raw;
-        }
-
-        // Keep expressions that are still present after minification.
-        if expressions.len() != remained_expression_indices.len() {
-            let mut i = 0;
-            expressions.retain(|_| {
-                let keep = remained_expression_indices.contains(&i);
-                i += 1;
-                keep
-            });
-
-            // SAFETY:
-            // This is safe because template literal has ensured that `quasis` always
-            // has one more element than `expressions`, and the `CSSMinifier` guarantees that
-            // once a expression is removed, the corresponding quasi will also be removed.
-            // Therefore, the length of `quasis` will always be one more than `expressions`.
-            // So we can safely set the length of `quasis` to `expressions.len() + 1`.
-            unsafe {
-                // Set the length of `quasis` to `expressions.len() + 1` to truncate the quasis that
-                // have been minified out.
-                quasis.set_len(expressions.len() + 1);
             }
         }
     }
@@ -861,258 +824,245 @@ fn is_valid_styled_component_source(source: &str) -> bool {
     )
 }
 
-/// A CSS minifier that is specifically designed to minify CSS code within
-/// styled-components template literals.
-pub struct CssMinifier<'a> {
-    ast: AstBuilder<'a>,
-}
+/// Minify a styled-components [`TemplateLiteral`].
+///
+/// This function iterates through the `TemplateElement`s of a `TemplateLiteral`, and applies CSS
+/// minification rules. It handles strings, comments, and whitespace.
+///
+/// # Steps
+///
+/// 1. Initialize state variables to track whether:
+///    - Currently inside a string.
+///    - Current string quote character.
+///    - Depth of parentheses.
+///    This state is carried over across different quasis.
+/// 2. Iterate through each quasi, and each byte of each quasi:
+///    - If encounter a string quote (`"` or `'`), toggle the `string_quote` state.
+///    - Skip comments (both block and line comments) and whitespace, compressing them as needed.
+///    - Handle escaped newlines (`\n`, `\r`) by replacing them with a space.
+/// 3. If a quasi ends with an incomplete comment:
+///    - Remove next expression from `expressions`.
+///    - Remove next quasi from `quasis`.
+///    - Append the next quasi onto end of current one.
+///
+/// # Example
+///
+/// For a case like:
+///
+/// ```js
+/// styled.div`
+///   width: ${width}px;
+///   color: red; // color: ${color};
+///   height: 100px;
+/// `
+/// // quasis = ["width: ", "px;\n  color: red; // color: ", ";\n  height: 100px;"]
+/// // expressions = [width, color]
+/// ```
+///
+/// Only the first expression (`width`) is kept, and the second one (`color`) is removed
+/// because it was inside a comment. After minification:
+///
+/// ```js
+/// quasis = ["width:", "px;color:red;height:100px;"]
+/// expressions = [width]
+/// ```
+fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a>) {
+    const NOT_IN_STRING: u8 = 0;
 
-impl<'a> CssMinifier<'a> {
-    const PLACEHOLDER_PREFIX: &'static str = "__PLACEHOLDER_";
-    const PLACEHOLDER_SUFFIX: &'static str = "__";
+    let TemplateLiteral { quasis, expressions, .. } = lit;
 
-    pub fn new(ast: AstBuilder<'a>) -> Self {
-        Self { ast }
-    }
+    debug_assert!(quasis.len() == expressions.len() + 1);
 
-    /// Minifies the CSS code within a series of template literal `quasis`.
-    ///
-    /// This function takes an array of `TemplateElement` (quasis) and
-    /// first injects unique placeholders for the expressions between them.
-    /// Then, passes the processed CSS string to the [CssMinifier::minify_css].
-    ///
-    /// ### Returns:
-    ///
-    /// A tuple containing:
-    /// First: A vector of `Atom` containing the minified CSS strings.
-    /// Second: A set of indices representing which expressions were kept.
-    pub fn minify_quasis(
-        quasis: &[TemplateElement<'a>],
-        ast: AstBuilder<'a>,
-    ) -> (Vec<Atom<'a>>, FxHashSet<usize>) {
-        let minifier = Self::new(ast);
+    // Type of comment currently in.
+    // * `None` = not in a comment.
+    // * `Some(false)` = in a single line comment.
+    // * `Some(true)` = in a block comment.
+    let mut comment_type = None;
+    // Quote character for current string we're in.
+    // Either `'`, `"` or `NOT_IN_STRING`.
+    let mut string_quote = NOT_IN_STRING;
+    // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
+    let mut paren_depth: isize = 0;
 
-        let css = if quasis.len() == 1 {
-            Cow::Borrowed(quasis[0].value.raw.as_str())
+    // Current minified quasi being built
+    let mut output = Vec::new();
+
+    // TODO: What about `cooked`? Shouldn't we alter that too?
+    let mut quasi_index = 0;
+    while quasi_index < quasis.len() {
+        let quasi = &quasis[quasi_index];
+        let mut bytes = quasi.value.raw.as_str().as_bytes();
+
+        if quasi_index > 0 {
+            if let Some(is_block_comment) = comment_type {
+                // This quasi is being merged into previous.
+                // Extend span end of previous quasi to this quasi's span end, as previous quasi now covers both.
+                //
+                // ```
+                // // Input:
+                // styled.div`color: /* ${c} */ blue`
+                // //         ^^^^^^^^^^    ^^^^^^^^ spans of `quasis[0]` and `quasis[1]`
+                //
+                // // Transformed:
+                // styled.div`color:blue`
+                // // `quasis[0]` in transformed `TemplateLiteral` has span of:
+                // styled.div`color: /* ${c} */ blue`
+                // //         ^^^^^^^^^^^^^^^^^^^^^^
+                // ```
+                quasis[quasi_index - 1].span.end = quasi.span.end;
+
+                // Remove this quasi and the preceding expression.
+                // TODO: Remove scopes, symbols, and references for removed `Expression`.
+                quasis.remove(quasi_index);
+                expressions.remove(quasi_index - 1);
+
+                // Find end of comment
+                let start_index = if is_block_comment {
+                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                        // Comment contains whole of this quasi
+                        continue;
+                    };
+
+                    pos += 2;
+                    if pos == bytes.len() {
+                        // Comment ends at end of quasi
+                        continue;
+                    }
+
+                    // Add a space when this is a own line block comment
+                    if !bytes[pos].is_ascii_whitespace()
+                        && output.last().is_some_and(|&last| last != b' ')
+                    {
+                        output.push(b' ');
+                    }
+
+                    pos
+                } else {
+                    let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
+                        // Comment contains whole of this quasi
+                        continue;
+                    };
+                    pos
+                };
+
+                // Trim off to end of comment
+                bytes = &bytes[start_index..];
+
+                comment_type = None;
+
+                // Don't touch `output`. This quasi continues appending to existing `output`.
+            } else {
+                // Set `raw` for previous quasi to `output`
+                // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
+                let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
+                quasis[quasi_index - 1].value.raw = ast.atom(output_str);
+                output.clear();
+
+                quasi_index += 1;
+            }
         } else {
-            Cow::Owned(Self::inject_unique_placeholders(quasis))
-        };
-
-        minifier.minify_css(&css)
-    }
-
-    /// Injects unique placeholders into a series of `quasis` to represent expressions.
-    ///
-    /// This is a key step for minification. By replacing expressions with placeholders,
-    /// we can treat the entire template literal as a single block of CSS, which simplifies
-    /// the minification process. The placeholders are designed to be unique and unlikely
-    /// to appear in regular CSS.
-    ///
-    /// # Example
-    ///
-    /// Given quasis from `` `width: ${width}px; color: ${color};` ``, which are
-    /// `["width: ", "px; color: ", ";"]`, and expressions `[width, color]`,
-    /// this function will produce the string:
-    /// `"width: __PLACEHOLDER_0__px; color: __PLACEHOLDER_1__;"`
-    fn inject_unique_placeholders(quasis: &[TemplateElement]) -> String {
-        let estimated_capacity: usize = quasis.iter().map(|s| s.value.raw.len()).sum::<usize>()
-            + (quasis.len() - 1)
-                * (Self::PLACEHOLDER_PREFIX.len() + Self::PLACEHOLDER_SUFFIX.len() + 2); // 2 for digits
-
-        let mut result = String::with_capacity(estimated_capacity);
-
-        for (index, val) in quasis.iter().enumerate() {
-            result.push_str(&val.value.raw);
-            if index < quasis.len() - 1 {
-                result.extend([
-                    Self::PLACEHOLDER_PREFIX,
-                    itoa::Buffer::new().format(index),
-                    Self::PLACEHOLDER_SUFFIX,
-                ]);
-            }
+            quasi_index = 1;
         }
 
-        result
-    }
-
-    /// Tries to parse a placeholder like `__PLACEHOLDER_0__` from a byte slice.
-    ///
-    /// This function is used by the minifier to detect where expressions were
-    /// in the original template literal.
-    #[inline]
-    fn try_parse_placeholder(bytes: &[u8], pos: usize) -> Option<(usize, usize)> {
-        let mut i = pos + Self::PLACEHOLDER_PREFIX.len();
-
-        let mut number = 0usize;
-        let mut has_digits = false;
-
-        while i < bytes.len() {
-            let cur_byte = bytes[i];
-
-            if !cur_byte.is_ascii_digit() {
-                break;
-            }
-
-            number = number * 10 + (cur_byte - b'0') as usize;
-            has_digits = true;
-            i += 1;
-        }
-
-        if !has_digits ||
-            // Checking suffix `__`
-            !bytes[i..].starts_with(Self::PLACEHOLDER_SUFFIX.as_bytes())
-        {
-            return None;
-        }
-
-        Some((number, i + Self::PLACEHOLDER_SUFFIX.len()))
-    }
-
-    /// The core CSS minification logic.
-    ///
-    /// This function iterates through the CSS string (as bytes) and applies minification
-    /// rules. It handles strings, comments, and whitespace, and splits the output
-    /// by the placeholders it finds.
-    ///
-    /// ### Steps:
-    ///
-    /// 1. It initializes state variables to track whether it's inside a string,
-    ///    the current string character, and the depth of parentheses.
-    /// 2. It iterates through each byte of the CSS string:
-    ///   - If it encounters a string quote (`"` or `'`), it toggles the `in_string` state.
-    ///   - If it finds a placeholder (starting with `_` and followed by
-    ///     [CssMinifier::PLACEHOLDER_PREFIX]), it tries to parse the placeholder and
-    ///     keeps track of its index.
-    ///   - It skips comments (both block and line comments) and whitespace, compressing them
-    ///     as needed.
-    ///   - It handles escaped newlines by replacing them with a space.
-    /// 3. It collects the minified CSS parts into `new_raws` and tracks which
-    ///    expressions were kept in a `remaining_expression_indexes`.
-    /// 4. Finally, it returns the minified CSS parts and the set of kept expression indices.
-    ///
-    /// The step 2 is the key part of the minification process, it tries to split the CSS which
-    /// joins by the placeholders that is injected by [CssMinifier::inject_unique_placeholders].
-    ///
-    /// ### Example:
-    ///
-    /// For a case like:
-    /// ```js
-    /// styled.div`
-    ///   width: ${width}px;
-    ///   color: red; // color: ${color};
-    ///   height: 100px;
-    /// `
-    /// // quasis: ["width: ", "px;\n   color: red; // color:", ";\n   height: 100px;"]
-    /// // expressions: [width, color]
-    /// ```
-    ///
-    /// We will receive a CSS string which produced by [CssMinifier::inject_unique_placeholders] like:
-    /// ```js
-    /// "width: __PLACEHOLDER_0__px;
-    /// // color: __PLACEHOLDER_1__;
-    /// height: 100px;"
-    /// ```
-    ///
-    /// The result of quasis and expressions will be:
-    ///
-    /// ```rust
-    /// (vec!["width:", "px;color:red;height:100px;"], { 0 })
-    /// ```
-    ///
-    /// Only the first expression (`width`) is kept, and the second one (`color`) is removed
-    /// because it was inside a comment.
-    pub(super) fn minify_css(&self, css: &str) -> (Vec<Atom<'a>>, FxHashSet<usize>) {
-        if css.trim().is_empty() {
-            return (Vec::new(), FxHashSet::default());
-        }
-
+        // Process bytes of quasi
         let mut i = 0;
-        let bytes = css.as_bytes();
-
-        let mut output = Vec::new();
-        let mut new_raws = Vec::new();
-        let mut remaining_expression_indexes = FxHashSet::default();
-
-        // Context state;
-        let mut in_string: bool = false;
-        let mut string_char: u8 = 0;
-        let mut paren_depth: i32 = 0;
-
         while i < bytes.len() {
             let cur_byte = bytes[i];
             match cur_byte {
                 // Handle string
-                b'"' | b'\'' if !in_string => {
-                    in_string = true;
-                    string_char = cur_byte;
-                }
-                c if in_string && c == string_char && !Self::is_escaped(bytes, i) => {
-                    in_string = false;
-                }
-                // Handle placeholders
-                // This is where we detect the placeholders we injected earlier.
-                b'_' if bytes[i..].starts_with(Self::PLACEHOLDER_PREFIX.as_bytes()) => {
-                    if let Some((number, new_index)) = Self::try_parse_placeholder(bytes, i) {
-                        remaining_expression_indexes.insert(number);
-
-                        new_raws.push(self.ast.atom(
-                            // SAFETY: Output is all picked from the original `raw_values` and is guaranteed
-                            // to be valid UTF-8.
-                            unsafe { std::str::from_utf8_unchecked(&output) },
-                        ));
-
-                        // Clear output buffer, this is efficient as we reuse the same allocation.
-                        output.clear();
-
-                        i = new_index;
-                        continue;
+                b'"' | b'\'' => {
+                    if string_quote == NOT_IN_STRING {
+                        string_quote = cur_byte;
+                    } else if cur_byte == string_quote {
+                        string_quote = NOT_IN_STRING;
                     }
                 }
-                // Keep characters as-is if it's a part of a string
-                _ if in_string => {}
-                b'(' => {
-                    paren_depth += 1;
-                }
-                b')' => {
-                    paren_depth -= 1;
-                }
-                // Handle comments
-                b'/' if i + 1 < bytes.len() => {
-                    match bytes[i + 1] {
-                        // Skip multiline comments except for `/*! ... */`
-                        b'*' if i + 2 < bytes.len() && bytes[i + 2] != b'!' => {
-                            i = Self::skip_multiline_comment(bytes, i);
-                            // Adding a space when this is a own line block comment
-                            if i < bytes.len()
-                                && !bytes[i].is_ascii_whitespace()
-                                && output.last().is_some_and(|&last| last != b' ')
-                            {
-                                output.push(b' ');
+                // Handle backslash.
+                // Skip `\\`, so we don't misidentify `\\n` or `\\"` as `\n` or `\"`.
+                // Skip `\"` and `\'`, to avoid previous match arm mistaking them for end of string.
+                // Replace `\n` and `\r` with space, unless in a string.
+                b'\\' => {
+                    if let Some(&next_byte) = bytes.get(i + 1) {
+                        match next_byte {
+                            b'\\' | b'"' | b'\'' => {
+                                output.extend([b'\\', next_byte]);
+                                i += 2;
+                                continue;
                             }
-                            continue;
+                            b'n' | b'r' if string_quote == NOT_IN_STRING => {
+                                if output.last().is_some_and(|&last| last != b' ') {
+                                    output.push(b' ');
+                                }
+                                i += 2;
+                                continue;
+                            }
+                            _ => {}
                         }
-                        // Skip line comments, but be careful not to break URLs like `https://...`
-                        b'/' if paren_depth == 0 && (i == 0 || bytes[i - 1] != b':') => {
-                            i = Self::skip_line_comment(bytes, i);
-                            continue;
-                        }
-                        _ => {}
                     }
                 }
-                // Skip escaped newlines
-                b'\\' if i + 1 < bytes.len() => {
-                    let next_byte = bytes[i + 1];
-                    if matches!(next_byte, b'n' | b'r') {
-                        i += 2;
-                        if output.last().is_some_and(|&last| last != b' ') {
-                            output.push(b' ');
-                        }
-                        continue;
-                    }
-                }
+                // Keep characters as is if in a string
+                _ if string_quote != NOT_IN_STRING => {}
+                // Count parentheses
+                b'(' => paren_depth += 1,
+                b')' => paren_depth -= 1,
+                // Handle comments
+                b'/' => {
+                    if let Some(&next_byte) = bytes.get(i + 1) {
+                        match next_byte {
+                            // Skip multiline comments except for `/*! ... */`
+                            b'*' => {
+                                match bytes.get(i + 2) {
+                                    None => {
+                                        // Quasi ends with `/*`
+                                        comment_type = Some(true);
+                                        break;
+                                    }
+                                    Some(&b) if b != b'!' => {
+                                        let end_index =
+                                            bytes[i + 2..].windows(2).position(|q| q == b"*/");
+                                        if let Some(end_index) = end_index {
+                                            i += end_index + 4; // After `*/`
 
+                                            if i == bytes.len() {
+                                                // Comment ends at end of quasi
+                                                break;
+                                            }
+
+                                            // Add a space when this is a own line block comment
+                                            if !bytes[i].is_ascii_whitespace()
+                                                && output.last().is_some_and(|&last| last != b' ')
+                                            {
+                                                output.push(b' ');
+                                            }
+                                            continue;
+                                        }
+
+                                        // Comment is not complete at end of quasi
+                                        comment_type = Some(true);
+                                        break;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            // Skip line comments, but be careful not to break URLs like `https://...`
+                            b'/' if paren_depth == 0 && (i == 0 || bytes[i - 1] != b':') => {
+                                let end_index =
+                                    bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
+                                if let Some(end_index) = end_index {
+                                    i += end_index + 2; // On `\n` or `\r`
+                                    continue;
+                                }
+
+                                // Comment is not complete at end of quasi
+                                comment_type = Some(false);
+                                break;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
                 // Skip and compress whitespace.
-                c if c.is_ascii_whitespace() => {
+                _ if cur_byte.is_ascii_whitespace() => {
                     i += 1;
                     // Compress symbols, remove spaces around these symbols,
                     // but preserve whitespace preceding colon, to avoid joining selectors.
@@ -1130,72 +1080,40 @@ impl<'a> CssMinifier<'a> {
             output.push(cur_byte);
             i += 1;
         }
-
-        // Add any remaining text after no more placeholders.
-        new_raws.push(self.ast.atom(
-            // SAFETY: Output is all picked from the original `raw_values` and is guaranteed
-            // to be valid UTF-8.
-            unsafe { std::str::from_utf8_unchecked(&output) },
-        ));
-
-        (new_raws, remaining_expression_indexes)
     }
 
-    // Returns `true` if the character is escaped, `false` otherwise.
-    fn is_escaped(bytes: &[u8], pos: usize) -> bool {
-        if pos == 0 {
-            return false;
-        }
-
-        let mut backslash_count = 0;
-        let mut i = pos;
-
-        while i > 0 && bytes[i - 1] == b'\\' {
-            backslash_count += 1;
-            i -= 1;
-        }
-
-        backslash_count % 2 == 1
-    }
-
-    /// Skips a multiline comment `/* ... */`.
-    #[inline]
-    fn skip_multiline_comment(bytes: &[u8], start: usize) -> usize {
-        let mut i = start + 2; // Skip /*
-
-        while i + 1 < bytes.len() {
-            if bytes[i] == b'*' && bytes[i + 1] == b'/' {
-                return i + 2;
-            }
-            i += 1;
-        }
-
-        i
-    }
-
-    /// Skips a line comment `// ...`
-    #[inline]
-    fn skip_line_comment(bytes: &[u8], start: usize) -> usize {
-        let mut i = start;
-        while i < bytes.len() && !matches!(bytes[i], b'\n' | b'\r') {
-            i += 1;
-        }
-        i
-    }
+    // Update last quasi.
+    // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
+    let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
+    quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use oxc_allocator::Allocator;
-    use oxc_ast::AstBuilder;
+    use oxc_ast::{AstBuilder, ast::TemplateElementValue};
+    use oxc_span::SPAN;
 
     fn minify_raw(input: &str) -> String {
         let allocator = Allocator::default();
         let ast = AstBuilder::new(&allocator);
-        let (parts, _) = CssMinifier::new(ast).minify_css(input);
 
-        if parts.is_empty() { String::new() } else { parts[0].to_string() }
+        let mut lit = ast.template_literal(
+            SPAN,
+            ast.vec1(ast.template_element(
+                SPAN,
+                TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
+                true,
+            )),
+            ast.vec(),
+        );
+
+        minify_template_literal(&mut lit, ast);
+
+        assert!(lit.quasis.len() == 1);
+
+        lit.quasis[0].value.raw.to_string()
     }
 
     mod strip_line_comment {
@@ -1270,24 +1188,6 @@ mod tests {
             let expected = "this is a /*! dont ignore me please */ test";
             let actual = minify_raw(input);
             debug_assert_eq!(actual, expected);
-        }
-
-        #[test]
-        fn returns_indices_of_removed_placeholders() {
-            let allocator = Allocator::default();
-            let ast = AstBuilder::new(&allocator);
-
-            // Create raw values that will generate placeholders
-            let css = "this is some\ninput with __PLACEHOLDER_0__ and // ignored __PLACEHOLDER_1__";
-            let (parts, remaining_indices) = CssMinifier::new(ast).minify_css(css);
-
-            // Verify the content is properly minified
-            debug_assert!(!parts.is_empty());
-            let combined = parts.join("");
-            debug_assert!(combined.contains("this is some input with"));
-            debug_assert!(!combined.contains("// ignored"));
-
-            debug_assert!(remaining_indices.contains(&0));
         }
 
         mod minify_raw_specific {

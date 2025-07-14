@@ -2048,6 +2048,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeName<'a>> {
                     following_node: self.following_node,
                 })
                 .fmt(f),
+            TSTypeName::ThisExpression(inner) => allocator
+                .alloc(AstNode::<ThisExpression> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                })
+                .fmt(f),
         }
     }
 }

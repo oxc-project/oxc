@@ -9,6 +9,7 @@ mod config;
 mod context;
 mod disable_directives;
 mod external_linter;
+mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
@@ -25,7 +26,9 @@ pub mod table;
 
 use std::{path::Path, rc::Rc, sync::Arc};
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, Semantic};
+use oxc_span::Span;
 
 pub use crate::{
     config::{
@@ -34,8 +37,9 @@ pub use crate::{
     },
     context::LintContext,
     external_linter::{
-        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, PluginLoadResult,
+        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     },
+    external_plugin_store::ExternalPluginStore,
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -50,7 +54,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
-    fixer::{Fixer, Message},
+    fixer::{Fixer, Message, PossibleFixes},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
@@ -68,15 +72,20 @@ fn size_asserts() {
 }
 
 #[derive(Debug, Clone)]
+#[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
-    // config: Arc<LintConfig>,
     config: ConfigStore,
+    external_linter: Option<ExternalLinter>,
 }
 
 impl Linter {
-    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+    pub fn new(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+    ) -> Self {
+        Self { options, config, external_linter }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -109,7 +118,7 @@ impl Linter {
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
-        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
@@ -142,7 +151,7 @@ impl Linter {
         // don't thrash the cache too much. Feel free to tweak based on benchmarking.
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-        if semantic.stats().nodes > 200_000 {
+        if semantic.nodes().len() > 200_000 {
             // Collect rules into a Vec so that we can iterate over the rules multiple times
             let rules = rules.collect::<Vec<_>>();
 
@@ -184,6 +193,47 @@ impl Linter {
                 if should_run_on_jest_node {
                     for jest_node in iter_possible_jest_call_node(semantic) {
                         rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        }
+
+        if !external_rules.is_empty() {
+            if let Some(external_linter) = self.external_linter.as_ref() {
+                let result = (external_linter.run)(
+                    #[expect(clippy::missing_panics_doc)]
+                    path.to_str().unwrap().to_string(),
+                    external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+                );
+                match result {
+                    Ok(diagnostics) => {
+                        for diagnostic in diagnostics {
+                            match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id)
+                            {
+                                Some((plugin_name, rule_name)) => {
+                                    ctx_host.push_diagnostic(Message::new(
+                                        // TODO: `error` isn't right, we need to get the severity from `external_rules`
+                                        OxcDiagnostic::error(diagnostic.message)
+                                            .with_label(Span::new(
+                                                diagnostic.loc.start,
+                                                diagnostic.loc.end,
+                                            ))
+                                            .with_error_code(
+                                                plugin_name.to_string(),
+                                                rule_name.to_string(),
+                                            ),
+                                        PossibleFixes::None,
+                                    ));
+                                }
+                                None => {
+                                    // TODO: report diagnostic, this should be unreachable
+                                    debug_assert!(false);
+                                }
+                            }
+                        }
+                    }
+                    Err(_err) => {
+                        // TODO: report diagnostic
                     }
                 }
             }

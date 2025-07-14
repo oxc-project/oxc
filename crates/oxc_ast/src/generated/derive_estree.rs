@@ -2628,10 +2628,9 @@ impl ESTree for TSTypeReference<'_> {
 impl ESTree for TSTypeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2965,10 +2964,9 @@ impl ESTree for TSTypeQueryExprName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::TSImportType(it) => it.serialize(serializer),
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -3096,10 +3094,9 @@ impl ESTree for TSModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::ExternalModuleReference(it) => it.serialize(serializer),
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }

@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 179/296
+Passed: 179/297
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -494,7 +494,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (6/78)
+# legacy-decorators (6/79)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -539,6 +539,14 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
+
+* oxc/metadata/this/input.ts
+Symbol span mismatch for "Example":
+after transform: SymbolId(0): Span { start: 6, end: 13 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol span mismatch for "Example":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
 
 * oxc/metadata/typescript-syntax/input.ts
 

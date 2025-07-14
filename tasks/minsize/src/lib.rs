@@ -10,15 +10,17 @@ use std::{
 use cow_utils::CowUtils;
 use flate2::{Compression, write::GzEncoder};
 use humansize::{DECIMAL, format_size};
+use pico_args::Arguments;
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
-use rustc_hash::FxHashMap;
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -26,10 +28,20 @@ fn test() {
     run().unwrap();
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Options {
+    compress_only: bool,
+}
+
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
-    let marker = std::env::args().nth(1).unwrap_or_else(|| String::from("default"));
+    let mut args = Arguments::from_env();
+
+    let options = Options { compress_only: args.contains("--compress-only") };
+
+    let marker = args.free_from_str().unwrap_or_else(|_| "default".to_string());
+
     let files = TestFiles::minifier();
 
     let path = project_root().join("tasks/minsize/minsize.snap");
@@ -104,7 +116,7 @@ pub fn run() -> Result<(), io::Error> {
     let save_path = Path::new("./target/minifier").join(marker);
 
     for file in files.files() {
-        let minified = minify_twice(file);
+        let minified = minify_twice(file, options);
 
         fs::create_dir_all(&save_path).unwrap();
         fs::write(save_path.join(&file.file_name), &minified).unwrap();
@@ -124,21 +136,23 @@ pub fn run() -> Result<(), io::Error> {
 
     println!("{out}");
 
-    let mut snapshot = File::create(path)?;
-    snapshot.write_all(out.as_bytes())?;
-    snapshot.flush()?;
+    if !options.compress_only {
+        let mut snapshot = File::create(path)?;
+        snapshot.write_all(out.as_bytes())?;
+        snapshot.flush()?;
+    }
     Ok(())
 }
 
-fn minify_twice(file: &TestFile) -> String {
+fn minify_twice(file: &TestFile, options: Options) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let code1 = minify(&file.source_text, source_type);
-    let code2 = minify(&code1, source_type);
+    let code1 = minify(&file.source_text, source_type, options);
+    let code2 = minify(&code1, source_type, options);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
     code2
 }
 
-fn minify(source_text: &str, source_type: SourceType) -> String {
+fn minify(source_text: &str, source_type: SourceType, options: Options) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
@@ -148,9 +162,13 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
     .build(scoping, &mut program);
-    let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
+    let ret = Minifier::new(MinifierOptions {
+        mangle: (!options.compress_only).then(MangleOptions::default),
+        compress: Some(CompressOptions::default()),
+    })
+    .build(&allocator, &mut program);
     Codegen::new()
-        .with_options(CodegenOptions::minify())
+        .with_options(CodegenOptions { minify: !options.compress_only, ..CodegenOptions::minify() })
         .with_scoping(ret.scoping)
         .build(&program)
         .code
