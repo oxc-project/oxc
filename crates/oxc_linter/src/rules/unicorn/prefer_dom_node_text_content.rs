@@ -45,7 +45,6 @@ declare_oxc_lint!(
 
 impl Rule for PreferDomNodeTextContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        println!("node.kind(): {:?}", node.kind());
         match node.kind() {
             AstKind::StaticMemberExpression(member_expr) => {
                 let (span, name) = member_expr.static_property_info();

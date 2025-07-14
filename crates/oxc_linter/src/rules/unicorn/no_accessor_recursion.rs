@@ -66,24 +66,16 @@ impl Rule for NoAccessorRecursion {
             return;
         };
 
-        println!("this_expr: {:?}", this_expr);
-
         let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| {
-            println!("n.kind(): {:?}", n.kind());
-            return match n.kind() {
+            match n.kind() {
                 member_expr if member_expr.is_member_expression_kind() => {
                     let Some(member_expr) = member_expr.as_member_expression_kind() else {
                         return false;
                     };
 
-                    println!("member_expr: {:?}", member_expr);
-
                     let member_expr_obj_span = member_expr.object().without_parentheses().span();
 
                     let this_expr_span = this_expr.span();
-
-                    println!("member_expr_obj_span: {:?}", member_expr_obj_span);
-                    println!("this_expr_span: {:?}", this_expr_span);
 
                     this_expr_span.start <= member_expr_obj_span.start
                         && this_expr_span.end >= member_expr_obj_span.end
@@ -93,7 +85,7 @@ impl Rule for NoAccessorRecursion {
                     .as_ref()
                     .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
                 _ => false,
-            };
+            }
         }) else {
             return;
         };
@@ -105,8 +97,6 @@ impl Rule for NoAccessorRecursion {
         if !is_property_or_method_def(func_parent) {
             return;
         }
-
-        println!("target.kind(): {:?}", target.kind());
 
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
@@ -153,9 +143,6 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
-                        println!("DEBUG line 149");
-
-                        println!("property.kind: {:?}", property.kind);
 
                         if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
@@ -186,8 +173,6 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
-
-                        println!("DEBUG line 180");
 
                         if method_def.kind == MethodDefinitionKind::Set
                             && is_property_write(target, ctx)
@@ -224,10 +209,8 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         }
         // e.g. "[this.bar] = array"
         AstKind::ArrayAssignmentTarget(assign_target) => {
-            let result = assign_target.span().start <= node.span().start
-                && assign_target.span().end >= node.span().end;
-
-            result
+            assign_target.span().start <= node.span().start
+                && assign_target.span().end >= node.span().end
         }
         AstKind::AssignmentTargetWithDefault(assign_target) => {
             assign_target.span().start <= node.span().start
