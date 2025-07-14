@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
 use rustc_hash::FxHashSet;
@@ -62,15 +61,19 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             return FxHashSet::default();
         }
 
-        self.scoping
+        let symbols: FxHashSet<SymbolId> = self
+            .scoping
             .symbol_ids()
             .filter(|symbol_id| {
                 let decl_node =
                     self.ast_nodes.get_node(self.scoping.symbol_declaration(*symbol_id));
-                self.is_name_set_declare_node(decl_node, *symbol_id)
-                    || self.has_name_set_reference_node(*symbol_id)
+                let is_declare = self.is_name_set_declare_node(decl_node, *symbol_id);
+                let has_reference = self.has_name_set_reference_node(*symbol_id);
+                is_declare || has_reference
             })
-            .collect()
+            .collect();
+
+        symbols
     }
 
     fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
@@ -112,47 +115,138 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
-        let parent_node = self.ast_nodes.parent_node(node.id());
-        match parent_node.kind() {
-            AstKind::SimpleAssignmentTarget(_) => {
-                let Some((grand_parent_node_kind, grand_grand_parent_node_kind)) =
-                    self.ast_nodes.ancestor_kinds(parent_node.id()).take(2).collect_tuple()
-                else {
-                    return false;
-                };
+        // Walk up the parent chain to find an AssignmentExpression
+        let mut current_node = *node;
+        loop {
+            let parent = self.ast_nodes.parent_node(current_node.id());
+            // Break if we reach the root or cycle
+            if parent.id() == current_node.id() {
+                break;
+            }
+            if let AstKind::AssignmentExpression(assign_expr) = parent.kind() {
+                let left_contains_reference = Self::is_assignment_target_id_of_specific_reference(
+                    &assign_expr.left,
+                    reference_id,
+                ) || self
+                    .is_assignment_target_contains_reference(&assign_expr.left, reference_id);
 
-                debug_assert!(matches!(
-                    grand_parent_node_kind,
-                    AstKind::AssignmentTargetPropertyIdentifier(_)
-                        | AstKind::ArrayAssignmentTarget(_)
-                        | AstKind::ObjectAssignmentTarget(_)
-                        | AstKind::ComputedMemberExpression(_)
-                        | AstKind::StaticMemberExpression(_)
-                        | AstKind::PrivateFieldExpression(_)
-                ));
+                if left_contains_reference {
+                    // For simple assignments: check if right side is anonymous function/class
+                    let right_is_anonymous =
+                        self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right);
+                    // For destructuring assignments: check if left side contains anonymous function/class in default values
+                    let left_contains_anonymous =
+                        self.is_assignment_target_contains_anonymous_function(&assign_expr.left);
 
-                match grand_grand_parent_node_kind {
-                    AstKind::AssignmentExpression(assign_expr) => {
-                        Self::is_assignment_target_id_of_specific_reference(
-                            &assign_expr.left,
-                            reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+                    if right_is_anonymous || left_contains_anonymous {
+                        return true;
                     }
-                    AstKind::AssignmentTargetWithDefault(assign_target) => {
-                        Self::is_assignment_target_id_of_specific_reference(
-                            &assign_target.binding,
-                            reference_id,
-                        ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
-                    }
-                    _ => false,
                 }
             }
-            AstKind::AssignmentTargetPropertyIdentifier(ident) => {
-                if ident.binding.reference_id() == reference_id {
-                    return ident
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
+
+            current_node = *parent;
+        }
+        false
+    }
+
+    fn is_assignment_target_maybe_default_contains_reference(
+        &self,
+        target: &AssignmentTargetMaybeDefault,
+        reference_id: ReferenceId,
+    ) -> bool {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(assign_target) => {
+                self.is_assignment_target_contains_reference(&assign_target.binding, reference_id)
+            }
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => {
+                id.reference_id() == reference_id
+            }
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(inner_array) => {
+                for element in &inner_array.elements {
+                    let Some(binding) = element else { continue };
+                    if self.is_assignment_target_maybe_default_contains_reference(
+                        binding,
+                        reference_id,
+                    ) {
+                        return true;
+                    }
+                }
+                false
+            }
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(inner_obj) => {
+                for property in &inner_obj.properties {
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) =
+                        property
+                    {
+                        if ident.binding.reference_id() == reference_id {
+                            return true;
+                        }
+                        if let Some(init) = &ident.init {
+                            if self.is_expression_whose_name_needs_to_be_kept(init) {
+                                return true;
+                            }
+                        }
+                    }
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) =
+                        property
+                    {
+                        if self.is_assignment_target_maybe_default_contains_reference(
+                            &prop.binding,
+                            reference_id,
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+                false
+            }
+            _ => false,
+        }
+    }
+
+    fn is_assignment_target_contains_reference(
+        &self,
+        target: &AssignmentTarget,
+        reference_id: ReferenceId,
+    ) -> bool {
+        match target {
+            AssignmentTarget::AssignmentTargetIdentifier(id) => id.reference_id() == reference_id,
+            AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+                for element in &array_target.elements {
+                    let Some(binding) = element else { continue };
+                    if self.is_assignment_target_maybe_default_contains_reference(
+                        binding,
+                        reference_id,
+                    ) {
+                        return true;
+                    }
+                }
+                false
+            }
+            AssignmentTarget::ObjectAssignmentTarget(object_target) => {
+                for property in &object_target.properties {
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) =
+                        property
+                    {
+                        if ident.binding.reference_id() == reference_id {
+                            return true;
+                        }
+                        if let Some(init) = &ident.init {
+                            if self.is_expression_whose_name_needs_to_be_kept(init) {
+                                return true;
+                            }
+                        }
+                    }
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) =
+                        property
+                    {
+                        if self.is_assignment_target_maybe_default_contains_reference(
+                            &prop.binding,
+                            reference_id,
+                        ) {
+                            return true;
+                        }
+                    }
                 }
                 false
             }
@@ -236,6 +330,90 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
 
         let is_class = matches!(expr, Expression::ClassExpression(_));
         (self.options.class && is_class) || (self.options.function && !is_class)
+    }
+
+    fn is_assignment_target_maybe_default_contains_anonymous_function(
+        &self,
+        target: &AssignmentTargetMaybeDefault,
+    ) -> bool {
+        match target {
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(assign_target) => {
+                self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+            }
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(inner_array) => {
+                for element in &inner_array.elements {
+                    let Some(binding) = element else { continue };
+                    if self.is_assignment_target_maybe_default_contains_anonymous_function(binding)
+                    {
+                        return true;
+                    }
+                }
+                false
+            }
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(inner_obj) => {
+                for property in &inner_obj.properties {
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) =
+                        property
+                    {
+                        if ident.init.as_ref().is_some_and(|init| {
+                            self.is_expression_whose_name_needs_to_be_kept(init)
+                        }) {
+                            return true;
+                        }
+                    }
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) =
+                        property
+                    {
+                        if self.is_assignment_target_maybe_default_contains_anonymous_function(
+                            &prop.binding,
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+                false
+            }
+            _ => false,
+        }
+    }
+
+    fn is_assignment_target_contains_anonymous_function(&self, target: &AssignmentTarget) -> bool {
+        match target {
+            AssignmentTarget::ArrayAssignmentTarget(array_target) => {
+                for element in &array_target.elements {
+                    let Some(binding) = element else { continue };
+                    if self.is_assignment_target_maybe_default_contains_anonymous_function(binding)
+                    {
+                        return true;
+                    }
+                }
+                false
+            }
+            AssignmentTarget::ObjectAssignmentTarget(object_target) => {
+                for property in &object_target.properties {
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) =
+                        property
+                    {
+                        if ident.init.as_ref().is_some_and(|init| {
+                            self.is_expression_whose_name_needs_to_be_kept(init)
+                        }) {
+                            return true;
+                        }
+                    }
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) =
+                        property
+                    {
+                        if self.is_assignment_target_maybe_default_contains_anonymous_function(
+                            &prop.binding,
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+                false
+            }
+            _ => false,
+        }
     }
 }
 
