@@ -20,7 +20,7 @@ use oxc_napi::get_source_type;
 use crate::{
     AstType, ParserOptions, get_ast_type, parse,
     raw_transfer_constants::{BUFFER_ALIGN, BUFFER_SIZE},
-    raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
+    raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 
 // For raw transfer, use a buffer 2 GiB in size, with 4 GiB alignment.
@@ -179,10 +179,10 @@ unsafe fn parse_raw_impl(
     assert!(is_multiple_of(buffer_ptr as usize, BUFFER_ALIGN));
 
     // Get offsets and size of data region to be managed by arena allocator.
-    // Leave space for source before it, and 16 bytes for metadata after it.
+    // Leave space for source before it, and space for metadata after it.
     // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
     // as `bumpalo` requires that alignment.
-    const METADATA_SIZE: usize = 16;
+    const METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
         assert!(METADATA_SIZE >= BUMP_ALIGN);
         assert!(is_multiple_of(METADATA_SIZE, BUMP_ALIGN));
@@ -271,15 +271,16 @@ unsafe fn parse_raw_impl(
         ptr::from_ref(data).cast::<u8>()
     };
 
-    // Write offset of `RawTransferData` and `bool` representing AST type into end of buffer
+    // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let data_offset = data_ptr as u32;
+    let metadata = RawTransferMetadata::new(data_ptr as u32, ast_type == AstType::TypeScript);
     const METADATA_OFFSET: usize = BUFFER_SIZE - METADATA_SIZE;
-    // SAFETY: `METADATA_OFFSET` is less than length of `buffer`
+    const _: () = assert!(is_multiple_of(METADATA_OFFSET, BUMP_ALIGN));
+    // SAFETY: `METADATA_OFFSET` is less than length of `buffer`.
+    // `METADATA_OFFSET` is aligned on 16.
     #[expect(clippy::cast_ptr_alignment)]
     unsafe {
-        buffer_ptr.add(METADATA_OFFSET).cast::<u32>().write(data_offset);
-        buffer_ptr.add(METADATA_OFFSET + 4).cast::<bool>().write(ast_type == AstType::TypeScript);
+        buffer_ptr.add(METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }
 }
 

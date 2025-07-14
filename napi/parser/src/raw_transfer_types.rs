@@ -25,6 +25,23 @@ pub struct RawTransferData<'a> {
     pub errors: Vec<'a, Error<'a>>,
 }
 
+/// Metadata written to end of buffer.
+#[ast]
+pub struct RawTransferMetadata {
+    /// Offset of `RawTransferData` within buffer.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u64,
+}
+
+impl RawTransferMetadata {
+    pub fn new(data_offset: u32, is_ts: bool) -> Self {
+        Self { data_offset, is_ts, _padding: 0 }
+    }
+}
+
 // Errors.
 //
 // These types and the `From` / `FromIn` impls mirror the implementation in `types.rs`

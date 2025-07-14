@@ -32,10 +32,6 @@ const BUFFER_SIZE: u32 = 1 << 31; // 2 GiB
 const _: () = assert!(BUFFER_SIZE % 16 == 0);
 /// Alignment of raw transfer buffer.
 const BUFFER_ALIGN: u64 = 1 << 32; // 4 GiB
-/// Size of metadata written to end of buffer.
-const METADATA_SIZE: u32 = 16;
-/// Offset of flag for whether AST is TypeScript or not, relative to start of metadata.
-const IS_TS_FLAG_OFFSET: u32 = 4;
 
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
@@ -1020,9 +1016,11 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
 /// Calculate constants.
 fn get_constants(schema: &Schema) -> Constants {
-    let metadata_pos = BUFFER_SIZE - METADATA_SIZE;
-    let data_pointer_pos_32 = metadata_pos / 4;
-    let is_ts_pos = metadata_pos + IS_TS_FLAG_OFFSET;
+    let metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
+    let metadata_pos = BUFFER_SIZE - metadata_struct.layout_64().size;
+    let data_pointer_pos = metadata_pos + metadata_struct.field_by_name("data_offset").offset_64();
+    let data_pointer_pos_32 = data_pointer_pos / 4;
+    let is_ts_pos = metadata_pos + metadata_struct.field_by_name("is_ts").offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
