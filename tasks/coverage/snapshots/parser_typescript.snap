@@ -2,7 +2,7 @@ commit: 81c95189
 
 parser_typescript Summary:
 AST Parsed     : 6693/6700 (99.90%)
-Positive Passed: 6680/6700 (99.70%)
+Positive Passed: 6681/6700 (99.72%)
 Negative Passed: 1422/5598 (25.40%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
@@ -8461,40 +8461,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
  23 │ with (window)
     · ────
  24 │     const enum H {}
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts
-
-  × Cannot assign to 'eval' in strict mode
-   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:3:25]
- 2 │     export namespace ns {
- 3 │         export function eval(): void;
-   ·                         ────
- 4 │         export function arguments(): void;
-   ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:4:25]
- 3 │         export function eval(): void;
- 4 │         export function arguments(): void;
-   ·                         ─────────
- 5 │     }
-   ╰────
-
-  × Cannot assign to 'eval' in strict mode
-   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:8:18]
- 7 │ 
- 8 │ declare function eval(): void;
-   ·                  ────
- 9 │ declare function arguments(): void;
-   ╰────
-
-  × Cannot assign to 'arguments' in strict mode
-    ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:9:18]
-  8 │ declare function eval(): void;
-  9 │ declare function arguments(): void;
-    ·                  ─────────
- 10 │ 
     ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts

@@ -2,7 +2,7 @@ commit: 81c95189
 
 semantic_typescript Summary:
 AST Parsed     : 6537/6537 (100.00%)
-Positive Passed: 2824/6537 (43.20%)
+Positive Passed: 2825/6537 (43.22%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -13005,12 +13005,6 @@ rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(9)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/eventEmitterPatternWithRecordOfFunction.ts
 Scope children mismatch:

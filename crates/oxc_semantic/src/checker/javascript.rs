@@ -107,9 +107,37 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
     let strict_mode = ctx.strict_mode();
-    // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
+    // In strict mode, `eval` and `arguments` are banned as identifiers.
     if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
-        return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
+        // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
+        //
+        // declare function eval(): void; // OK
+        // declare function arguments(): void; // OK
+        // declare function f(eval: number, arguments: number): number; // OK
+        // declare function f(...eval): number; // OK
+        // declare function f(...arguments): number; // OK
+        // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
+        // declare function h([eval, arguments]: [number, number]): number; // Error
+        let is_declare_function = |kind: &AstKind| {
+            kind.as_function()
+                .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
+        };
+
+        let parent = ctx.nodes.parent_node(ctx.current_node_id);
+        let is_ok = match parent.kind() {
+            AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
+            AstKind::FormalParameter(_) => is_declare_function(&ctx.nodes.parent_kind(parent.id())),
+            AstKind::BindingRestElement(_) => {
+                let grand_parent = ctx.nodes.parent_node(parent.id());
+                matches!(grand_parent.kind(), AstKind::FormalParameters(_))
+                    && is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+            }
+            _ => false,
+        };
+
+        if !is_ok {
+            return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
+        }
     }
 
     // LexicalDeclaration : LetOrConst BindingList ;

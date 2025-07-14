@@ -2,7 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1951/2362 (82.60%)
+Positive Passed: 1953/2362 (82.68%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -563,28 +563,20 @@ after transform: ScopeId(0): ["x", "y"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
+Bindings mismatch:
+after transform: ScopeId(0): ["arguments", "eval"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-dts/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-dts-babel-7/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
+Bindings mismatch:
+after transform: ScopeId(0): ["arguments", "eval"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function-rest-trailing-comma/input.ts
 Bindings mismatch:
