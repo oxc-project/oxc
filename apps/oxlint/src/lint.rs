@@ -82,6 +82,12 @@ impl Runner for LintRunner {
             }
         };
 
+        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
+            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+        } else {
+            GraphicalReportHandler::new()
+        };
+
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
@@ -90,8 +96,12 @@ impl Runner for LintRunner {
             Err(err) => {
                 print_and_flush_stdout(
                     stdout,
-                    &format!("Failed to parse configuration file.\n{err}\n"),
+                    &format!(
+                        "Failed to parse configuration file.\n{}\n",
+                        render_report(&handler, &err)
+                    ),
                 );
+
                 return CliRunResult::InvalidOptionConfig;
             }
         };
@@ -171,12 +181,6 @@ impl Runner for LintRunner {
         let walker = Walk::new(&paths, &ignore_options, override_builder);
         let paths = walker.paths();
         let number_of_files = paths.len();
-
-        let handler = if cfg!(any(test, feature = "force_test_reporter")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
-        } else {
-            GraphicalReportHandler::new()
-        };
 
         let mut external_plugin_store = ExternalPluginStore::default();
 
@@ -485,41 +489,18 @@ impl LintRunner {
     // when config is provided, but not found, an String with the formatted error is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
+    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
         let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
         match (absolute(cwd.join(path)), config) {
             // Config file exists, either explicitly provided or the default file name
             // Parse the config file and return it, or report an error if parsing fails
-            (Ok(full_path), _) => match Oxlintrc::from_file(&full_path) {
-                Ok(config) => Ok(config),
-                Err(diagnostic) => {
-                    let handler = GraphicalReportHandler::new();
-                    let mut err = String::new();
-                    handler.render_report(&mut err, &diagnostic).unwrap();
-                    // normalize the config path in the error message for simpler snapshot testing
-                    let err = err.replace(
-                        full_path.to_string_lossy().as_ref(),
-                        &full_path.to_string_lossy().cow_replace('\\', "/"),
-                    );
-                    Err(err)
-                }
-            },
+            (Ok(full_path), _) => Oxlintrc::from_file(&full_path),
             // Failed to resolve config, and it was explicitly provided
             // Return that the config file could not be found
-            (Err(e), Some(config_path)) => {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler
-                    .render_report(
-                        &mut err,
-                        &OxcDiagnostic::error(format!(
-                            "Failed to resolve config path {}: {e}",
-                            config_path.display()
-                        )),
-                    )
-                    .unwrap();
-                Err(err)
-            }
+            (Err(e), Some(config_path)) => Err(OxcDiagnostic::error(format!(
+                "Failed to resolve config path {}: {e}",
+                config_path.display()
+            ))),
             // Failed to resolve implicit path, return default config
             _ => Ok(Oxlintrc::default()),
         }
