@@ -1,9 +1,9 @@
 commit: 81c95189
 
 parser_typescript Summary:
-AST Parsed     : 6698/6700 (99.97%)
-Positive Passed: 6687/6700 (99.81%)
-Negative Passed: 1415/5597 (25.28%)
+AST Parsed     : 6718/6720 (99.97%)
+Positive Passed: 6707/6720 (99.81%)
+Negative Passed: 1415/5577 (25.37%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -461,8 +461,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/capturedLetC
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/capturedParametersInInitializers1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/capturedParametersInInitializers2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cf.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/chainedAssignment1.ts
 
@@ -1478,8 +1476,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/excessivelyL
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exhaustiveSwitchCheckCircularity.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exhaustiveSwitchImplicitReturn.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionContextualTypesNoValue.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/expandoFunctionNestedAssigments.ts
@@ -1593,8 +1589,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModu
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extractInferenceImprovement.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts
 
@@ -2314,8 +2308,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileClassP
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationBindDeepExportsAssignment.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationBindReachabilityErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
@@ -2812,16 +2804,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitAn
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitAnyStringIndexerOnObject.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsExclusions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsInAsync2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsWithProtectedBlocks2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsWithProtectedBlocks3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitReturnsWithoutReturnExpression.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitSymbolToString.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/noImplicitThisFunctions.ts
@@ -3240,21 +3222,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reExportGlob
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reExportUndefined1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks4.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks6.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reachabilityChecks8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reactDefaultPropsInferenceSuccess.tsx
 
@@ -3961,12 +3931,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unmetTypeCon
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unmetTypeConstraintInJSDocImportCall.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unqualifiedCallToClassStatic1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unreachableJavascriptChecked.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unreachableSwitchTypeofAny.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unreachableSwitchTypeofUnknown.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unresolvableSelfReferencingAwaitedUnion.ts
 
@@ -4765,8 +4729,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/dependentDestructuredVariables.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/exhaustiveSwitchStatements1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/neverReturningFunctions1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/typeGuardsAsAssertions.ts
 
@@ -6283,8 +6245,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/InvalidNonInstantiatedModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/invalidNestedModules.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/assertionsAndNonReturningFunctions.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/callOfPropertylessConstructorFunction.ts
 
