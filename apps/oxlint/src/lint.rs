@@ -491,19 +491,12 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
         let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
-        match (absolute(cwd.join(path)), config) {
-            // Config file exists, either explicitly provided or the default file name
-            // Parse the config file and return it, or report an error if parsing fails
-            (Ok(full_path), _) => Oxlintrc::from_file(&full_path),
-            // Failed to resolve config, and it was explicitly provided
-            // Return that the config file could not be found
-            (Err(e), Some(config_path)) => Err(OxcDiagnostic::error(format!(
-                "Failed to resolve config path {}: {e}",
-                config_path.display()
-            ))),
-            // Failed to resolve implicit path, return default config
-            _ => Ok(Oxlintrc::default()),
+        let full_path = cwd.join(path);
+
+        if config.is_some() || full_path.exists() {
+            return Oxlintrc::from_file(&full_path);
         }
+        Ok(Oxlintrc::default())
     }
 
     /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
