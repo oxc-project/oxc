@@ -16,6 +16,18 @@ module.exports = {
   returnBufferToCache,
 };
 
+// Throw an error if running on a platform which raw transfer doesn't support.
+//
+// Note: This module is lazy-loaded only when user calls `parseSync` or `parseAsync` with
+// `experimentalRawTransfer` or `experimentalLazy` options, or calls `experimentalGetLazyVisitor`.
+if (!rawTransferSupported()) {
+  throw new Error(
+    '`experimentalRawTransfer` and `experimentalLazy` options are not supported ' +
+      'on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, ' +
+      'versions of Deno prior to v2.0.0, or other runtimes',
+  );
+}
+
 /**
  * Parse JS/TS source synchronously on current thread using raw transfer.
  *
@@ -28,7 +40,6 @@ module.exports = {
  * @param {Object|undefined} options - Parsing options
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncRawImpl(filename, sourceText, options, convert) {
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
@@ -88,7 +99,6 @@ const queue = [];
  * @param {Object|undefined} options - Parsing options
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 async function parseAsyncRawImpl(filename, sourceText, options, convert) {
   // Wait for a free CPU core if all CPUs are currently busy.
@@ -177,17 +187,8 @@ const textEncoder = new TextEncoder();
  *   - `buffer`: `Uint8Array` containing the AST in raw form.
  *   - `sourceByteLen`: Length of source text in UTF-8 bytes
  *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function prepareRaw(sourceText) {
-  if (!rawTransferSupported()) {
-    throw new Error(
-      '`experimentalRawTransfer` and `experimentalLazy` options are not supported ' +
-        'on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, ' +
-        'versions of Deno prior to v2.0.0, or other runtimes',
-    );
-  }
-
   // Cancel timeout for clearing buffers
   if (clearBuffersTimeout !== null) {
     clearTimeout(clearBuffersTimeout);

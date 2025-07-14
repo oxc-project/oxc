@@ -11,7 +11,6 @@ module.exports = { parseSyncRaw, parseAsyncRaw };
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncRaw(filename, sourceText, options) {
   let _;
@@ -36,7 +35,6 @@ function parseSyncRaw(filename, sourceText, options) {
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseAsyncRaw(filename, sourceText, options) {
   let _;

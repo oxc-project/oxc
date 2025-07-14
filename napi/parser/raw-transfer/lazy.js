@@ -30,7 +30,6 @@ module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncLazy(filename, sourceText, options) {
   let _;
@@ -64,7 +63,6 @@ function parseSyncLazy(filename, sourceText, options) {
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
- * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseAsyncLazy(filename, sourceText, options) {
   let _;
