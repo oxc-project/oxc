@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     Allocator,
-    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE},
+    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE, METADATA_SIZE},
 };
 
 const TWO_GIB: usize = 1 << 31;
@@ -55,6 +55,7 @@ pub struct FixedSizeAllocator {
 
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
+    #[expect(clippy::items_after_statements)]
     pub fn new() -> Self {
         // Allocate block of memory.
         // SAFETY: Layout does not have zero size.
@@ -73,10 +74,13 @@ impl FixedSizeAllocator {
 
         debug_assert!(chunk_ptr.as_ptr() as usize % BUFFER_ALIGN == 0);
 
-        // SAFETY: Memory region starting at `chunk_ptr` with `BUFFER_SIZE` bytes is within
+        const CHUNK_SIZE: usize = BUFFER_SIZE - METADATA_SIZE;
+        const _: () = assert!(CHUNK_SIZE % Allocator::RAW_MIN_ALIGN == 0);
+
+        // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
         // the allocation we just made.
-        // `chunk_ptr` has high alignment (4 GiB). `size` is large and a high power of 2 (2 GiB).
-        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, BUFFER_SIZE) };
+        // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
+        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
 
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
         Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }

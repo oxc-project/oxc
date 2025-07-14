@@ -979,11 +979,12 @@ struct Constants {
     data_pointer_pos_32: u32,
     is_ts_pos: u32,
     program_offset: u32,
+    metadata_size: u32,
 }
 
 /// Generate constants file.
 fn generate_constants(consts: Constants) -> (String, TokenStream) {
-    let Constants { data_pointer_pos_32, is_ts_pos, program_offset } = consts;
+    let Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size } = consts;
 
     #[rustfmt::skip]
     let js_output = format!("
@@ -1004,12 +1005,15 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     let buffer_size = number_lit(BUFFER_SIZE);
     let buffer_align = number_lit(BUFFER_ALIGN);
+    let metadata_size = number_lit(metadata_size);
     let rust_output = quote! {
         #![expect(clippy::unreadable_literal)]
+        #![allow(dead_code)]
 
         ///@@line_break
         pub const BUFFER_SIZE: usize = #buffer_size;
         pub const BUFFER_ALIGN: usize = #buffer_align;
+        pub const METADATA_SIZE: usize = #metadata_size;
     };
 
     (js_output, rust_output)
@@ -1018,7 +1022,8 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 /// Calculate constants.
 fn get_constants(schema: &Schema) -> Constants {
     let metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
-    let metadata_pos = BUFFER_SIZE - metadata_struct.layout_64().size;
+    let metadata_size = metadata_struct.layout_64().size;
+    let metadata_pos = BUFFER_SIZE - metadata_size;
     let data_pointer_pos = metadata_pos + metadata_struct.field_by_name("data_offset").offset_64();
     let data_pointer_pos_32 = data_pointer_pos / 4;
     let is_ts_pos = metadata_pos + metadata_struct.field_by_name("is_ts").offset_64();
@@ -1030,5 +1035,5 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    Constants { data_pointer_pos_32, is_ts_pos, program_offset }
+    Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size }
 }
