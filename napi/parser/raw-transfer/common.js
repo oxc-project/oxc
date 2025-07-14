@@ -7,6 +7,7 @@ const {
   parseAsyncRaw: parseAsyncRawBinding,
   getBufferOffset,
 } = require('../bindings.js');
+const { IS_TS_FLAG_POS } = require('../generated/constants.js');
 
 module.exports = {
   parseSyncRawImpl,
@@ -227,9 +228,7 @@ function prepareRaw(sourceText) {
  * @returns {boolean} - `true` if AST is JS, `false` if TS
  */
 function isJsAst(buffer) {
-  // 2147483636 = (2 * 1024 * 1024 * 1024) - 12
-  // i.e. 12 bytes from end of 2 GiB buffer
-  return buffer[2147483636] === 0;
+  return buffer[IS_TS_FLAG_POS] === 0;
 }
 
 /**

@@ -8,6 +8,7 @@ import { experimentalGetLazyVisitor, parseAsync, parseSync } from './index.js';
 // Use `require` not `import` to load these internal modules, to avoid evaluating the modules
 // twice as ESM and CJS
 const require = createRequire(import.meta.filename);
+const { DATA_POINTER_POS_32, PROGRAM_OFFSET } = require('./generated/constants.js');
 const deserializeJS = require('./generated/deserialize/js.js');
 const deserializeTS = require('./generated/deserialize/ts.js');
 const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
@@ -180,9 +181,7 @@ for (const { filename, code } of fixtures) {
       token: TOKEN,
     };
 
-    // (2 * 1024 * 1024 * 1024 - 16) >> 2
-    const metadataPos32 = 536870908;
-    const programPos = buffer.uint32[metadataPos32];
+    const programPos = buffer.uint32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
 
     benchRaw('parser_napi_raw_lazy_visit_only(debugger)', () => {
       ast.nodes = new Map();

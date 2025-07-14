@@ -24,6 +24,13 @@ use crate::{
 
 use super::define_generator;
 
+/// Size of raw transfer buffer
+const BUFFER_SIZE: u32 = 1 << 31; // 2 GiB
+/// Size of metadata written to end of buffer.
+const METADATA_SIZE: u32 = 16;
+/// Offset of flag for whether AST is TypeScript or not, relative to start of metadata.
+const IS_TS_FLAG_OFFSET: u32 = 4;
+
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
 pub(super) const VEC_PTR_FIELD_OFFSET: usize = 0;
@@ -36,7 +43,11 @@ define_generator!(RawTransferGenerator);
 
 impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let Codes { js, ts, .. } = generate_deserializers(schema, codegen);
+        let consts = get_constants(schema);
+
+        let Codes { js, ts, .. } = generate_deserializers(consts, schema, codegen);
+        let constants = generate_constants(consts);
+
         vec![
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.js"),
@@ -46,42 +57,13 @@ impl Generator for RawTransferGenerator {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
                 code: ts,
             },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
+                code: constants,
+            },
         ]
     }
 }
-
-/// Prelude to generated deserializer.
-/// Defines the main `deserialize` function.
-static PRELUDE: &str = "
-    'use strict';
-
-    module.exports = deserialize;
-
-    let uint8, uint32, float64, sourceText, sourceIsAscii, sourceLen;
-
-    const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
-        decodeStr = textDecoder.decode.bind(textDecoder),
-        { fromCodePoint } = String;
-
-    function deserialize(buffer, sourceTextInput, sourceLenInput) {
-        uint8 = buffer;
-        uint32 = buffer.uint32;
-        float64 = buffer.float64;
-
-        sourceText = sourceTextInput;
-        sourceLen = sourceLenInput;
-        sourceIsAscii = sourceText.length === sourceLen;
-
-        // (2 * 1024 * 1024 * 1024 - 16) >> 2
-        const metadataPos32 = 536870908;
-
-        const data = deserializeRawTransferData(uint32[metadataPos32]);
-
-        uint8 = uint32 = float64 = sourceText = undefined;
-
-        return data;
-    }
-";
 
 /// Container for generated code.
 struct Codes {
@@ -94,10 +76,43 @@ struct Codes {
 }
 
 /// Generate deserializer functions for all types.
-fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> Codes {
+fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen) -> Codes {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
-    let mut codes = Codes { js: PRELUDE.to_string(), ts: PRELUDE.to_string(), both: String::new() };
+    // Prelude to generated deserializer.
+    // Defines the main `deserialize` function.
+    let Constants { data_pointer_pos_32, .. } = consts;
+
+    #[rustfmt::skip]
+    let prelude = format!("
+        'use strict';
+
+        module.exports = deserialize;
+
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceLen;
+
+        const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
+            decodeStr = textDecoder.decode.bind(textDecoder),
+            {{ fromCodePoint }} = String;
+
+        function deserialize(buffer, sourceTextInput, sourceLenInput) {{
+            uint8 = buffer;
+            uint32 = buffer.uint32;
+            float64 = buffer.float64;
+
+            sourceText = sourceTextInput;
+            sourceLen = sourceLenInput;
+            sourceIsAscii = sourceText.length === sourceLen;
+
+            const data = deserializeRawTransferData(uint32[{data_pointer_pos_32}]);
+
+            uint8 = uint32 = float64 = sourceText = undefined;
+
+            return data;
+        }}
+    ");
+
+    let mut codes = Codes { js: prelude.clone(), ts: prelude, both: String::new() };
 
     for type_def in &schema.types {
         match type_def {
@@ -945,4 +960,43 @@ impl DeserializeFunctionName for CellDef {
         // `Cell`s use same deserializer as inner type, as layout is identical
         self.inner_type(schema).plain_name(schema)
     }
+}
+
+/// Constants for position of fields in buffer which deserialization starts from.
+#[derive(Clone, Copy)]
+struct Constants {
+    data_pointer_pos_32: u32,
+    is_ts_pos: u32,
+    program_offset: u32,
+}
+
+/// Generate constants file.
+fn generate_constants(consts: Constants) -> String {
+    let Constants { data_pointer_pos_32, is_ts_pos, program_offset } = consts;
+
+    #[rustfmt::skip]
+    let output = format!("
+        const DATA_POINTER_POS_32 = {data_pointer_pos_32},
+            IS_TS_FLAG_POS = {is_ts_pos},
+            PROGRAM_OFFSET = {program_offset};
+
+        module.exports = {{ DATA_POINTER_POS_32, IS_TS_FLAG_POS, PROGRAM_OFFSET }};
+    ");
+    output
+}
+
+/// Calculate constants.
+fn get_constants(schema: &Schema) -> Constants {
+    let metadata_pos = BUFFER_SIZE - METADATA_SIZE;
+    let data_pointer_pos_32 = metadata_pos / 4;
+    let is_ts_pos = metadata_pos + IS_TS_FLAG_OFFSET;
+
+    let program_offset = schema
+        .type_by_name("RawTransferData")
+        .as_struct()
+        .unwrap()
+        .field_by_name("program")
+        .offset_64();
+
+    Constants { data_pointer_pos_32, is_ts_pos, program_offset }
 }

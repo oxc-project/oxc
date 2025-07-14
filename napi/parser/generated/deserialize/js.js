@@ -20,10 +20,7 @@ function deserialize(buffer, sourceTextInput, sourceLenInput) {
   sourceLen = sourceLenInput;
   sourceIsAscii = sourceText.length === sourceLen;
 
-  // (2 * 1024 * 1024 * 1024 - 16) >> 2
-  const metadataPos32 = 536870908;
-
-  const data = deserializeRawTransferData(uint32[metadataPos32]);
+  const data = deserializeRawTransferData(uint32[536870908]);
 
   uint8 =
     uint32 =

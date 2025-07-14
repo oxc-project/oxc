@@ -60,6 +60,7 @@ src:
   - 'crates/oxc_syntax/src/serialize.rs'
   - 'crates/oxc_syntax/src/symbol.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
+  - 'napi/parser/generated/constants.js'
   - 'napi/parser/generated/deserialize/js.js'
   - 'napi/parser/generated/deserialize/ts.js'
   - 'napi/parser/generated/lazy/constructors.js'

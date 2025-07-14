@@ -2,6 +2,7 @@
 
 const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./common.js'),
   { TOKEN } = require('./lazy-common.js'),
+  { DATA_POINTER_POS_32, PROGRAM_OFFSET } = require('../generated/constants.js'),
   { RawTransferData } = require('../generated/lazy/constructors.js'),
   walkProgram = require('../generated/lazy/walk.js'),
   { Visitor, getVisitorsArr } = require('./visitor.js');
@@ -102,9 +103,7 @@ function construct(buffer, sourceText, sourceLen) {
   bufferRecycleRegistry.register(ast, buffer, ast);
 
   // Get root data class instance
-  // (2 * 1024 * 1024 * 1024 - 16) >> 2
-  const metadataPos32 = 536870908;
-  const rawDataPos = buffer.uint32[metadataPos32];
+  const rawDataPos = buffer.uint32[DATA_POINTER_POS_32];
   const data = new RawTransferData(rawDataPos, ast);
 
   return {
@@ -122,7 +121,7 @@ function construct(buffer, sourceText, sourceLen) {
     },
     dispose: dispose.bind(null, ast),
     visit(visitor) {
-      walkProgram(rawDataPos, ast, getVisitorsArr(visitor));
+      walkProgram(rawDataPos + PROGRAM_OFFSET, ast, getVisitorsArr(visitor));
     },
   };
 }
