@@ -3,5 +3,5 @@
 
 #![expect(clippy::unreadable_literal)]
 
-pub const BUFFER_SIZE: usize = 2147483648;
+pub const BUFFER_SIZE: usize = 2147483632;
 pub const BUFFER_ALIGN: usize = 4294967296;

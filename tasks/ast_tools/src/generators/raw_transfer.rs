@@ -28,7 +28,8 @@ use super::define_generator;
 
 /// Size of raw transfer buffer.
 /// Must be a multiple of 16.
-const BUFFER_SIZE: u32 = 1 << 31; // 2 GiB
+/// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata (like Bumpalo does).
+const BUFFER_SIZE: u32 = (1 << 31) - 16; // 2 GiB - 16 bytes
 const _: () = assert!(BUFFER_SIZE % 16 == 0);
 /// Alignment of raw transfer buffer.
 const BUFFER_ALIGN: u64 = 1 << 32; // 4 GiB
