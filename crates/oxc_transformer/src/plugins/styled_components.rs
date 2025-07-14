@@ -887,7 +887,6 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Current minified quasi being built
     let mut output = Vec::new();
 
-    // TODO: Update span end of `TemplateElement` when it has next one appended to end of it.
     // TODO: What about `cooked`? Shouldn't we alter that too?
     let mut quasi_index = 0;
     while quasi_index < quasis.len() {
