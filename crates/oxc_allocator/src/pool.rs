@@ -73,7 +73,12 @@ impl Drop for AllocatorGuard<'_> {
     }
 }
 
-#[cfg(any(not(feature = "fixed_size"), feature = "disable_fixed_size"))]
+#[cfg(not(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+)))]
 mod wrapper {
     use crate::Allocator;
 
@@ -105,7 +110,12 @@ mod wrapper {
     }
 }
 
-#[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
 mod wrapper {
     use crate::{
         Allocator,

@@ -21,6 +21,7 @@
 //!
 //! * `fixed_size` - Makes [`AllocatorPool`] create large fixed-size allocators, instead of
 //!   flexibly-sized ones.
+//!   Only supported on 64-bit little-endian platforms at present.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
 //! * `disable_fixed_size` - Disables `fixed_size` feature.
@@ -36,7 +37,13 @@ mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
-#[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+// Fixed size allocators are only supported on 64-bit little-endian platforms at present
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
 mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
