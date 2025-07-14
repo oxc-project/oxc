@@ -694,6 +694,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))] // Skipped on Windows due to snapshot diffs from path separators (`/` vs `\`)
     fn oxlint_config_auto_detection_parse_error() {
         let args = &["debugger.js"];
         Tester::new().with_cwd("fixtures/auto_config_parse_error".into()).test_and_snapshot(args);
