@@ -233,6 +233,9 @@ static SOURCE_PATHS: &[&str] = &[
     "napi/parser/src/raw_transfer_types.rs",
 ];
 
+/// Path to `oxc_allocator` crate
+const ALLOCATOR_CRATE_PATH: &str = "crates/oxc_allocator";
+
 /// Path to `oxc_ast` crate
 const AST_CRATE_PATH: &str = "crates/oxc_ast";
 

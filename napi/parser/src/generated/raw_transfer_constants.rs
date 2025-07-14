@@ -1,0 +1,7 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
+
+#![expect(clippy::unreadable_literal)]
+
+pub const BUFFER_SIZE: usize = 2147483648;
+pub const BUFFER_ALIGN: usize = 4294967296;

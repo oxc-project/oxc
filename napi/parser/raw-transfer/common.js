@@ -7,7 +7,7 @@ const {
   parseAsyncRaw: parseAsyncRawBinding,
   getBufferOffset,
 } = require('../bindings.js');
-const { IS_TS_FLAG_POS } = require('../generated/constants.js');
+const { BUFFER_SIZE, BUFFER_ALIGN, IS_TS_FLAG_POS } = require('../generated/constants.js');
 
 module.exports = {
   parseSyncRawImpl,
@@ -141,9 +141,8 @@ async function parseAsyncRawImpl(filename, sourceText, options, convert) {
   return data;
 }
 
-const ONE_GIB = 1 << 30,
-  TWO_GIB = ONE_GIB * 2,
-  SIX_GIB = ONE_GIB * 6;
+const ARRAY_BUFFER_SIZE = BUFFER_SIZE + BUFFER_ALIGN;
+const ONE_GIB = 1 << 30;
 
 // We keep a cache of buffers for raw transfer, so we can reuse them as much as possible.
 //
@@ -277,10 +276,10 @@ function clearBuffersCache() {
  * @returns {Uint8Array} - Buffer
  */
 function createBuffer() {
-  const arrayBuffer = new ArrayBuffer(SIX_GIB);
+  const arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
   const offset = getBufferOffset(new Uint8Array(arrayBuffer));
-  const buffer = new Uint8Array(arrayBuffer, offset, TWO_GIB);
-  buffer.uint32 = new Uint32Array(arrayBuffer, offset, TWO_GIB / 4);
-  buffer.float64 = new Float64Array(arrayBuffer, offset, TWO_GIB / 8);
+  const buffer = new Uint8Array(arrayBuffer, offset, BUFFER_SIZE);
+  buffer.uint32 = new Uint32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
+  buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
   return buffer;
 }

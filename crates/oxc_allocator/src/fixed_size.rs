@@ -5,10 +5,12 @@ use std::{
     ptr::NonNull,
 };
 
-use crate::Allocator;
+use crate::{
+    Allocator,
+    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE},
+};
 
 const TWO_GIB: usize = 1 << 31;
-const FOUR_GIB: usize = 1 << 32;
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
 // But system allocator on Mac OS refuses allocations with 4 GiB alignment.
@@ -25,10 +27,8 @@ const FOUR_GIB: usize = 1 << 32;
 // Could just use that built-in workaround, rather than implementing our own, or allocate a 6 GiB chunk
 // with alignment 16, to skip Rust's built-in workaround.
 // Note: Rust's workaround will likely commit a whole page of memory, just to store the real pointer.
-const ALLOC_SIZE: usize = FOUR_GIB;
+const ALLOC_SIZE: usize = BUFFER_SIZE + TWO_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
-const CHUNK_SIZE: usize = TWO_GIB;
-pub const CHUNK_ALIGN: usize = FOUR_GIB;
 
 const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
     Ok(layout) => layout,
@@ -71,12 +71,12 @@ impl FixedSizeAllocator {
             alloc_ptr.add(offset)
         };
 
-        debug_assert!(chunk_ptr.as_ptr() as usize % CHUNK_ALIGN == 0);
+        debug_assert!(chunk_ptr.as_ptr() as usize % BUFFER_ALIGN == 0);
 
-        // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
+        // SAFETY: Memory region starting at `chunk_ptr` with `BUFFER_SIZE` bytes is within
         // the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `size` is large and a high power of 2 (2 GiB).
-        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, BUFFER_SIZE) };
 
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
         Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }

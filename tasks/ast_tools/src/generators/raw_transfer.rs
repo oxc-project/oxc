@@ -4,10 +4,12 @@ use std::{borrow::Cow, fmt::Debug, str};
 
 use cow_utils::CowUtils;
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
+use proc_macro2::TokenStream;
+use quote::quote;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    Generator, NAPI_PARSER_PACKAGE_PATH,
+    ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
@@ -19,13 +21,17 @@ use crate::{
         StructDef, TypeDef, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
-    utils::{FxIndexMap, format_cow, upper_case_first, write_it},
+    utils::{FxIndexMap, format_cow, number_lit, upper_case_first, write_it},
 };
 
 use super::define_generator;
 
-/// Size of raw transfer buffer
+/// Size of raw transfer buffer.
+/// Must be a multiple of 16.
 const BUFFER_SIZE: u32 = 1 << 31; // 2 GiB
+const _: () = assert!(BUFFER_SIZE % 16 == 0);
+/// Alignment of raw transfer buffer.
+const BUFFER_ALIGN: u64 = 1 << 32; // 4 GiB
 /// Size of metadata written to end of buffer.
 const METADATA_SIZE: u32 = 16;
 /// Offset of flag for whether AST is TypeScript or not, relative to start of metadata.
@@ -46,7 +52,7 @@ impl Generator for RawTransferGenerator {
         let consts = get_constants(schema);
 
         let Codes { js, ts, .. } = generate_deserializers(consts, schema, codegen);
-        let constants = generate_constants(consts);
+        let (constants_js, constants_rust) = generate_constants(consts);
 
         vec![
             Output::Javascript {
@@ -59,7 +65,15 @@ impl Generator for RawTransferGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
-                code: constants,
+                code: constants_js,
+            },
+            Output::Rust {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/src/generated/raw_transfer_constants.rs"),
+                tokens: constants_rust.clone(),
+            },
+            Output::Rust {
+                path: format!("{ALLOCATOR_CRATE_PATH}/src/generated/fixed_size_constants.rs"),
+                tokens: constants_rust,
             },
         ]
     }
@@ -971,18 +985,37 @@ struct Constants {
 }
 
 /// Generate constants file.
-fn generate_constants(consts: Constants) -> String {
+fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let Constants { data_pointer_pos_32, is_ts_pos, program_offset } = consts;
 
     #[rustfmt::skip]
-    let output = format!("
-        const DATA_POINTER_POS_32 = {data_pointer_pos_32},
+    let js_output = format!("
+        const BUFFER_SIZE = {BUFFER_SIZE},
+            BUFFER_ALIGN = {BUFFER_ALIGN},
+            DATA_POINTER_POS_32 = {data_pointer_pos_32},
             IS_TS_FLAG_POS = {is_ts_pos},
             PROGRAM_OFFSET = {program_offset};
 
-        module.exports = {{ DATA_POINTER_POS_32, IS_TS_FLAG_POS, PROGRAM_OFFSET }};
+        module.exports = {{
+            BUFFER_SIZE,
+            BUFFER_ALIGN,
+            DATA_POINTER_POS_32,
+            IS_TS_FLAG_POS,
+            PROGRAM_OFFSET
+        }};
     ");
-    output
+
+    let buffer_size = number_lit(BUFFER_SIZE);
+    let buffer_align = number_lit(BUFFER_ALIGN);
+    let rust_output = quote! {
+        #![expect(clippy::unreadable_literal)]
+
+        ///@@line_break
+        pub const BUFFER_SIZE: usize = #buffer_size;
+        pub const BUFFER_ALIGN: usize = #buffer_align;
+    };
+
+    (js_output, rust_output)
 }
 
 /// Calculate constants.

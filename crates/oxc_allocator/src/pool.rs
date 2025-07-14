@@ -117,10 +117,7 @@ mod wrapper {
     target_endian = "little"
 ))]
 mod wrapper {
-    use crate::{
-        Allocator,
-        fixed_size::{CHUNK_ALIGN, FixedSizeAllocator},
-    };
+    use crate::{Allocator, fixed_size::FixedSizeAllocator, fixed_size_constants::BUFFER_ALIGN};
 
     /// Structure which wraps an [`Allocator`] with fixed size of 2 GiB, and aligned on 4 GiB.
     ///
@@ -144,12 +141,12 @@ mod wrapper {
             self.0.reset();
 
             // Set data pointer back to start.
-            // SAFETY: Fixed-size allocators have data pointer originally aligned on `CHUNK_ALIGN`,
-            // and size less than `CHUNK_ALIGN`. So we can restore original data pointer by rounding down
-            // to next multiple of `CHUNK_ALIGN`.
+            // SAFETY: Fixed-size allocators have data pointer originally aligned on `BUFFER_ALIGN`,
+            // and size less than `BUFFER_ALIGN`. So we can restore original data pointer by rounding down
+            // to next multiple of `BUFFER_ALIGN`.
             unsafe {
                 let data_ptr = self.0.data_ptr();
-                let offset = data_ptr.as_ptr() as usize % CHUNK_ALIGN;
+                let offset = data_ptr.as_ptr() as usize % BUFFER_ALIGN;
                 let data_ptr = data_ptr.sub(offset);
                 self.0.set_data_ptr(data_ptr);
             }

@@ -65,3 +65,20 @@ pub use pool::{AllocatorGuard, AllocatorPool};
 pub use string_builder::StringBuilder;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+
+mod generated {
+    #[cfg(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))]
+    pub mod fixed_size_constants;
+}
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
+use generated::fixed_size_constants;

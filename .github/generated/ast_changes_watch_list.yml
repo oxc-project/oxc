@@ -3,6 +3,7 @@
 
 src:
   - '.github/generated/ast_changes_watch_list.yml'
+  - 'crates/oxc_allocator/src/generated/fixed_size_constants.rs'
   - 'crates/oxc_ast/src/ast/comment.rs'
   - 'crates/oxc_ast/src/ast/js.rs'
   - 'crates/oxc_ast/src/ast/jsx.rs'
@@ -68,6 +69,7 @@ src:
   - 'napi/parser/generated/lazy/walk.js'
   - 'napi/parser/src/generated/assert_layouts.rs'
   - 'napi/parser/src/generated/derive_estree.rs'
+  - 'napi/parser/src/generated/raw_transfer_constants.rs'
   - 'napi/parser/src/raw_transfer_types.rs'
   - 'npm/oxc-types/types.d.ts'
   - 'tasks/ast_tools/src/**'

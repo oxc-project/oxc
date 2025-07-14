@@ -19,6 +19,7 @@ use oxc_napi::get_source_type;
 
 use crate::{
     AstType, ParserOptions, get_ast_type, parse,
+    raw_transfer_constants::{BUFFER_ALIGN, BUFFER_SIZE},
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
@@ -35,22 +36,19 @@ use crate::{
 // 2. JS bitwise operators work only on signed 32-bit integers, with 32nd bit as sign bit.
 //    So avoiding the 32nd bit being set enables using `>>` bitshift operator, which may be cheaper
 //    than `>>>`, without offsets being interpreted as negative.
-const TWO_GIB: usize = 1 << 31;
-const FOUR_GIB: usize = 1 << 32;
 
-const BUFFER_SIZE: usize = TWO_GIB;
-const BUFFER_ALIGN: usize = FOUR_GIB;
 const BUMP_ALIGN: usize = 16;
 
-/// Get offset within a `Uint8Array` which is aligned on 4 GiB.
+/// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
 ///
 /// Does not check that the offset is within bounds of `buffer`.
-/// To ensure it always is, provide a `Uint8Array` of at least 4 GiB size.
+/// To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE` bytes.
 #[napi(skip_typescript)]
 pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     let buffer = &*buffer;
-    let buffer_addr32 = buffer.as_ptr() as u32;
-    0u32.wrapping_sub(buffer_addr32)
+    let offset = BUFFER_ALIGN - (buffer.as_ptr() as usize % BUFFER_ALIGN);
+    #[expect(clippy::cast_possible_truncation)]
+    return offset as u32;
 }
 
 /// Parse AST into provided `Uint8Array` buffer, synchronously.
