@@ -65,18 +65,35 @@ impl Rule for NoAccessorRecursion {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;
         };
-        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
-            member_expr if member_expr.is_member_expression_kind() => {
-                let Some(member_expr) = member_expr.as_member_expression_kind() else {
-                    return false;
-                };
-                member_expr.object().without_parentheses().span() == this_expr.span()
-            }
-            AstKind::VariableDeclarator(decl) => decl
-                .init
-                .as_ref()
-                .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
-            _ => false,
+
+        println!("this_expr: {:?}", this_expr);
+
+        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| {
+            println!("n.kind(): {:?}", n.kind());
+            return match n.kind() {
+                member_expr if member_expr.is_member_expression_kind() => {
+                    let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                        return false;
+                    };
+
+                    println!("member_expr: {:?}", member_expr);
+
+                    let member_expr_obj_span = member_expr.object().without_parentheses().span();
+
+                    let this_expr_span = this_expr.span();
+
+                    println!("member_expr_obj_span: {:?}", member_expr_obj_span);
+                    println!("this_expr_span: {:?}", this_expr_span);
+
+                    this_expr_span.start <= member_expr_obj_span.start
+                        && this_expr_span.end >= member_expr_obj_span.end
+                }
+                AstKind::VariableDeclarator(decl) => decl
+                    .init
+                    .as_ref()
+                    .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
+                _ => false,
+            };
         }) else {
             return;
         };
@@ -88,6 +105,9 @@ impl Rule for NoAccessorRecursion {
         if !is_property_or_method_def(func_parent) {
             return;
         }
+
+        println!("target.kind(): {:?}", target.kind());
+
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(key_name) = get_property_or_method_def_name(func_parent) else {
@@ -133,6 +153,10 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+                        println!("DEBUG line 149");
+
+                        println!("property.kind: {:?}", property.kind);
+
                         if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
@@ -162,6 +186,9 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
+                        println!("DEBUG line 180");
+
                         if method_def.kind == MethodDefinitionKind::Set
                             && is_property_write(target, ctx)
                         {
@@ -185,6 +212,7 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = nth_outermost_paren_parent(node, ctx, 1) else {
         return false;
     };
+
     match parent.kind() {
         // e.g. "++this.bar"
         AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
@@ -195,9 +223,23 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             assign_target.span() == node.span()
         }
         // e.g. "[this.bar] = array"
-        AstKind::ArrayAssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        AstKind::ArrayAssignmentTarget(assign_target) => {
+            let result = assign_target.span().start <= node.span().start
+                && assign_target.span().end >= node.span().end;
+
+            result
+        }
+        AstKind::AssignmentTargetWithDefault(assign_target) => {
+            assign_target.span().start <= node.span().start
+                && assign_target.span().end >= node.span().end
+        }
         // e.g. "({property: this.bar} = object)"
         AstKind::ObjectAssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+            assign_target.span().start <= node.span().start
+                && assign_target.span().end >= node.span().end
+        }
+        AstKind::AssignmentExpression(_) => true,
         _ => false,
     }
 }
@@ -427,17 +469,17 @@ fn test() {
         ",
         r"
             class Foo {
-				get bar() {
-					return this.bar;
-				}
-			}
+        		get bar() {
+        			return this.bar;
+        		}
+        	}
         ",
         r"
             const foo = {
-				get bar() {
-					return this.bar.baz;
-				}
-			};
+        		get bar() {
+        			return this.bar.baz;
+        		}
+        	};
         ",
         r"
             const foo = {
