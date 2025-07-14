@@ -13,7 +13,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_pure_string},
+    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
     utils::valid_vitest_fn::is_valid_vitest_call,
 };
 
@@ -554,7 +554,9 @@ fn recurse_extend_node_chain<'a>(
                 span: string_literal.span,
             });
         }
-        Expression::TemplateLiteral(template_literal) if is_pure_string(template_literal) => {
+        Expression::TemplateLiteral(template_literal)
+            if template_literal.is_no_substitution_template() =>
+        {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
                 parent: *parent,

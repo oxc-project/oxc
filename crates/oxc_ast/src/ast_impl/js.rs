@@ -544,12 +544,12 @@ impl<'a> TemplateLiteral<'a> {
     /// - `` `foo` `` => `true`
     /// - `` `foo${bar}qux` `` => `false`
     pub fn is_no_substitution_template(&self) -> bool {
-        self.expressions.is_empty() && self.quasis.len() == 1
+        self.quasis.len() == 1
     }
 
     /// Get single quasi from `template`
     pub fn quasi(&self) -> Option<Atom<'a>> {
-        self.quasis.first().and_then(|quasi| quasi.value.cooked)
+        if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
 

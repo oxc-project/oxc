@@ -417,13 +417,9 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
             Expression::StringLiteral(s) => {
                 property_access_may_have_side_effects(&self.object, &s.value, ctx)
             }
-            Expression::TemplateLiteral(t) if t.is_no_substitution_template() => {
-                property_access_may_have_side_effects(
-                    &self.object,
-                    &t.quasi().expect("template literal must have at least one quasi"),
-                    ctx,
-                )
-            }
+            Expression::TemplateLiteral(t) => t.quasi().is_some_and(|quasi| {
+                property_access_may_have_side_effects(&self.object, &quasi, ctx)
+            }),
             Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
                 !integer_index_property_access_may_have_side_effects(&self.object, n, ctx)
             }),

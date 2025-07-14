@@ -93,10 +93,7 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
                 matches!(str.value.as_str(), "toString" | "valueOf")
             }
             PropertyKey::TemplateLiteral(temp) => {
-                !temp.is_no_substitution_template()
-                    || temp
-                        .quasi()
-                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
+                temp.quasi().is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
             }
             _ => true,
         },

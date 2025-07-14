@@ -462,8 +462,9 @@ impl JsxCurlyBracePresence {
                 }
             }
             Expression::TemplateLiteral(template) => {
-                if allowed.is_never() && template.is_no_substitution_template() {
-                    let string = template.quasi().unwrap();
+                if allowed.is_never()
+                    && let Some(string) = template.quasi()
+                {
                     if contains_quote_characters(string.as_str())
                         || is_allowed_string_like(
                             ctx,

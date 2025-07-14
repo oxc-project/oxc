@@ -124,8 +124,8 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::TemplateLiteral(template) = sibling {
-            if template.expressions.is_empty() {
-                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(&value.as_str())) {
+            if let Some(quasi) = template.quasi() {
+                if !VALID_TYPES.contains(&quasi.as_str()) {
                     ctx.diagnostic(invalid_value(None, sibling.span()));
                 }
                 return;
