@@ -295,7 +295,7 @@ impl<'a> PeepholeOptimizations {
                         iter::repeat_with(|| {
                             ctx.ast.template_element(
                                 e.span(),
-                                TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                                TemplateElementValue { raw: Atom::empty(), cooked: None },
                                 false,
                             )
                         })
@@ -321,7 +321,7 @@ impl<'a> PeepholeOptimizations {
                 iter::repeat_with(|| {
                     ctx.ast.template_element(
                         temp_lit.span,
-                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                        TemplateElementValue { raw: Atom::empty(), cooked: None },
                         false,
                     )
                 })

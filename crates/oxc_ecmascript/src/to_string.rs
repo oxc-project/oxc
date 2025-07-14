@@ -79,7 +79,7 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     ) -> Option<Cow<'a, str>> {
         let mut str = String::new();
         for (i, quasi) in self.quasis.iter().enumerate() {
-            str.push_str(quasi.value.cooked.as_ref()?);
+            str.push_str(quasi.value.raw.as_str());
 
             if i < self.expressions.len() {
                 let expr = &self.expressions[i];

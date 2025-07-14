@@ -783,12 +783,11 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = ctx.ast.atom_from_cow(&s);
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
                             raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
-                            cooked: Some(cooked),
+                            cooked: None,
                         },
                         false,
                     )
