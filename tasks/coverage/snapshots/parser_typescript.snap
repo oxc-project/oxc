@@ -2,8 +2,8 @@ commit: 81c95189
 
 parser_typescript Summary:
 AST Parsed     : 6693/6700 (99.90%)
-Positive Passed: 6682/6700 (99.73%)
-Negative Passed: 1418/5598 (25.33%)
+Positive Passed: 6680/6700 (99.70%)
+Negative Passed: 1422/5598 (25.40%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -4362,8 +4362,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
@@ -7114,10 +7112,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBlockStatement1.d.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts
@@ -7179,8 +7173,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserVariableStatement2.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWithStatement1.d.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode1.ts
 
@@ -8471,6 +8463,40 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
  24 │     const enum H {}
     ╰────
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:3:25]
+ 2 │     export namespace ns {
+ 3 │         export function eval(): void;
+   ·                         ────
+ 4 │         export function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:4:25]
+ 3 │         export function eval(): void;
+ 4 │         export function arguments(): void;
+   ·                         ─────────
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:8:18]
+ 7 │ 
+ 8 │ declare function eval(): void;
+   ·                  ────
+ 9 │ declare function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/evalOrArgumentsInDeclarationFunctions.ts:9:18]
+  8 │ declare function eval(): void;
+  9 │ declare function arguments(): void;
+    ·                  ─────────
+ 10 │ 
+    ╰────
+
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8629,6 +8655,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExp
     · ────
  65 │     var y = _;
     ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.3.ts
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.3.ts:3:15]
+ 2 │ export {};
+ 3 │ declare const await: any;
+   ·               ──────────
+ 4 │ declare class C extends await {}
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.3.ts:4:25]
+ 3 │ declare const await: any;
+ 4 │ declare class C extends await {}
+   ·                         ─────
+   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
 
@@ -18590,6 +18633,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:14]
+ 1 │ declare abstract class A {
+ 2 │     abstract constructor() {}
+   ·              ───────────
+ 3 │ }
+   ╰────
+
   × Function implementation is missing or not immediately following the declaration.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:46:5]
  45 │     abstract nom(): boolean;
@@ -28110,6 +28161,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × Illegal break statement
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
+ 1 │ break;
+   · ──────
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
+ 1 │ continue;
+   · ─────────
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement2.ts:1:13]
  1 │ for (var of X) {
@@ -28260,6 +28325,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
  1 │ return;
    · ──────
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
+ 1 │ with (foo) {
+   · ────
+ 2 │ }
    ╰────
 
   × TS(1108): A 'return' statement can only be used within a function body.
