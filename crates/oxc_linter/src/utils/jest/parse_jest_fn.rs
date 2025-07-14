@@ -418,7 +418,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
                     Some(Cow::Borrowed(string_literal.value.as_str()))
                 }
                 Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
-                    template_literal.quasi().expect("get string content").as_str(),
+                    template_literal.single_quasi().expect("get string content").as_str(),
                 )),
                 _ => None,
             },

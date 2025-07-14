@@ -181,7 +181,7 @@ impl ButtonHasType {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }
             Expression::TemplateLiteral(template_literal) => template_literal
-                .quasi()
+                .single_quasi()
                 .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),
             Expression::ConditionalExpression(conditional_expr) => {
                 self.is_valid_button_type_prop_expression(&conditional_expr.consequent)

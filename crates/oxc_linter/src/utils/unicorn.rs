@@ -181,7 +181,7 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
         (Expression::StringLiteral(string_lit), Expression::TemplateLiteral(template_lit))
         | (Expression::TemplateLiteral(template_lit), Expression::StringLiteral(string_lit)) => {
-            return template_lit.quasi().is_some_and(|val| val.as_str() == string_lit.value);
+            return template_lit.single_quasi().is_some_and(|val| val.as_str() == string_lit.value);
         }
         (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
             return left_str.quasis.content_eq(&right_str.quasis)
@@ -303,7 +303,10 @@ pub fn is_same_member_expression(
             // ex) x[/regex/] === x[`/regex/`]
             (Expression::TemplateLiteral(template_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::TemplateLiteral(template_lit)) => {
-                if !template_lit.quasi().is_some_and(|val| val == regex_lit.raw.as_ref().unwrap()) {
+                if !template_lit
+                    .single_quasi()
+                    .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap())
+                {
                     return false;
                 }
             }

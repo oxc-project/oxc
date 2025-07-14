@@ -459,9 +459,7 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => {
-                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
-            }
+            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
             _ => None,
         }
     }
@@ -548,7 +546,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn quasi(&self) -> Option<Atom<'a>> {
+    pub fn single_quasi(&self) -> Option<Atom<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }

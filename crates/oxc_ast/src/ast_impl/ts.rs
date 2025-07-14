@@ -19,7 +19,7 @@ impl<'a> TSEnumMemberName<'a> {
             Self::Identifier(ident) => ident.name,
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
-                .quasi()
+                .single_quasi()
                 .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
     }

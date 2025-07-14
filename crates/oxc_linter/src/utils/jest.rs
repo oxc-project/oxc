@@ -272,7 +272,7 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
             chain.push(Cow::Borrowed(&string_literal.value));
         }
         Expression::TemplateLiteral(template_literal) => {
-            if let Some(quasi) = template_literal.quasi() {
+            if let Some(quasi) = template_literal.single_quasi() {
                 chain.push(Cow::Borrowed(quasi.as_str()));
             }
         }

@@ -35,7 +35,7 @@ pub fn as_endpoint_registration<'a, 'n>(
             Some((Some(path.value), &call.arguments.as_slice()[1..]))
         }
         Expression::TemplateLiteral(template) => {
-            template.quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))
+            template.single_quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))
         }
         _ => Some((None, call.arguments.as_slice())),
     }

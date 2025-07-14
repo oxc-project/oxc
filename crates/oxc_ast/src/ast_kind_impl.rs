@@ -251,7 +251,7 @@ impl AstKind<'_> {
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),

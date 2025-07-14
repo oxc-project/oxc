@@ -238,7 +238,7 @@ impl Rule for PreferLowercaseTitle {
         if let Argument::StringLiteral(string_expr) = arg {
             self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
         } else if let Argument::TemplateLiteral(template_expr) = arg {
-            let Some(template_string) = template_expr.quasi() else {
+            let Some(template_string) = template_expr.single_quasi() else {
                 return;
             };
             self.lint_string(ctx, template_string.as_str(), template_expr.span);

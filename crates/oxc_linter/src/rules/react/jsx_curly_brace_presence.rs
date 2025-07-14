@@ -463,7 +463,7 @@ impl JsxCurlyBracePresence {
             }
             Expression::TemplateLiteral(template) => {
                 if allowed.is_never()
-                    && let Some(string) = template.quasi()
+                    && let Some(string) = template.single_quasi()
                 {
                     if contains_quote_characters(string.as_str())
                         || is_allowed_string_like(
@@ -803,7 +803,7 @@ fn test() {
         (
             r#"
 			        import React from "react";
-			
+
 			        const Component = () => {
 			          return <span>{"/*"}</span>;
 			        };
