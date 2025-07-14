@@ -22,13 +22,19 @@ use crate::{
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
-// For raw transfer, use a buffer 4 GiB in size, with 4 GiB alignment.
+// For raw transfer, use a buffer 2 GiB in size, with 4 GiB alignment.
 // This ensures that all 64-bit pointers have the same value in upper 32 bits,
 // so JS only needs to read the lower 32 bits to get an offset into the buffer.
-// However, only use first half of buffer (2 GiB) for the arena, so 32-bit offsets
-// don't have the highest bit set. JS bitwise operators interpret the highest bit as sign bit,
-// so this enables using `>>` bitshift operator in JS, rather than the more expensive `>>>`,
-// without offsets being interpreted as negative.
+//
+// Buffer size only 2 GiB so 32-bit offsets don't have the highest bit set.
+// This is advantageous for 2 reasons:
+//
+// 1. V8 stores small integers ("SMI"s) inline, rather than on heap, which is more performant.
+//    But when V8 pointer compression is enabled, 31 bits is the max integer considered an SMI.
+//    So using 32 bits for offsets would be a large perf hit when pointer compression is enabled.
+// 2. JS bitwise operators work only on signed 32-bit integers, with 32nd bit as sign bit.
+//    So avoiding the 32nd bit being set enables using `>>` bitshift operator, which may be cheaper
+//    than `>>>`, without offsets being interpreted as negative.
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
 
