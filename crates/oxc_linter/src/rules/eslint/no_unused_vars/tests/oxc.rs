@@ -1313,7 +1313,7 @@ fn test_report_vars_only_used_as_types() {
 }
 
 #[test]
-fn test_should_run() {
+fn test_should_run_ignored() {
     let pass = vec![
         (
             r#"<script setup lang="ts"> import * as vue from 'vue' </script>"#,
@@ -1345,6 +1345,55 @@ import Layout from '../layouts/Layout.astro';
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_should_run_vue_jsx() {
+    let fail = vec![
+        (
+            r#"<script setup lang="tsx"> import * as vue from 'vue' </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="jsx"> import * as vue from 'vue' </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+    ];
+
+    let pass = vec![
+        (
+            r#"<script setup lang="tsx"> import * as vue from 'vue'; console.log(vue) </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="tsx"> const a = 1; console.log(a) </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="jsx"> import * as vue from 'vue'; console.log(vue) </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r#"<script setup lang="jsx"> const a = 1; console.log(a) </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .test();
 }
