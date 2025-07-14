@@ -66,26 +66,24 @@ impl Rule for NoAccessorRecursion {
             return;
         };
 
-        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| {
-            match n.kind() {
-                member_expr if member_expr.is_member_expression_kind() => {
-                    let Some(member_expr) = member_expr.as_member_expression_kind() else {
-                        return false;
-                    };
+        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return false;
+                };
 
-                    let member_expr_obj_span = member_expr.object().without_parentheses().span();
+                let member_expr_obj_span = member_expr.object().without_parentheses().span();
 
-                    let this_expr_span = this_expr.span();
+                let this_expr_span = this_expr.span();
 
-                    this_expr_span.start <= member_expr_obj_span.start
-                        && this_expr_span.end >= member_expr_obj_span.end
-                }
-                AstKind::VariableDeclarator(decl) => decl
-                    .init
-                    .as_ref()
-                    .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
-                _ => false,
+                this_expr_span.start <= member_expr_obj_span.start
+                    && this_expr_span.end >= member_expr_obj_span.end
             }
+            AstKind::VariableDeclarator(decl) => decl
+                .init
+                .as_ref()
+                .is_some_and(|init| init.without_parentheses().span() == this_expr.span()),
+            _ => false,
         }) else {
             return;
         };
