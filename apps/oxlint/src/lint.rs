@@ -15,13 +15,16 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    read_to_string,
 };
+use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    tsgolint::{TsGoLintInput, TsGoLintInputFile, parse_tsgolint_output},
     walk::Walk,
 };
 
@@ -276,9 +279,24 @@ impl Runner for LintRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
+        // TODO(perf): avoid cloning here?
+        let tsgolint_cwd = self.cwd.clone();
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
         let lint_config = config_builder.build();
+
+        let tsgolint_paths = paths.clone();
+        let tsgolint_rules: Vec<String> = lint_config
+            .rules()
+            .iter()
+            .filter_map(|(rule, rule_status)| {
+                if rule.is_tsgolint_rule() && rule_status.is_warn_deny() {
+                    Some(rule.name().to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -316,6 +334,7 @@ impl Runner for LintRunner {
         let mut diagnostic_service =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
         let tx_error = diagnostic_service.sender().clone();
+        let tsgolint_error = diagnostic_service.sender().clone();
 
         let number_of_rules = linter.number_of_rules();
 
@@ -336,6 +355,120 @@ impl Runner for LintRunner {
 
             lint_service.run(&tx_error);
         });
+
+        let tsgolint_enabled = true; // TODO
+        if tsgolint_enabled && let Some(tsconfig) = tsconfig {
+            // Feed JSON into STDIN of tsgolint in this format:
+            // ```
+            // {
+            //   "files": [
+            //     {
+            //       "file_path": "/absolute/path/to/file.ts",
+            //       "rules": ["rule-1", "another-rule"]
+            //     }
+            //   ]
+            // }
+            // ```
+            //
+            let json_input = TsGoLintInput {
+                files: tsgolint_paths
+                    .iter()
+                    .map(|path| TsGoLintInputFile {
+                        file_path: path.to_string_lossy().to_string(),
+                        // TODO(perf): adjust tsgolint to be grouped by rules, so we don't need to clone?
+                        rules: tsgolint_rules.clone(),
+                    })
+                    .collect(),
+            };
+            let handler = std::thread::spawn(move || {
+                // `./tsgolint headless --tsconfig $(pwd)/tsconfig.json --cwd $(pwd)`
+                let mut child = std::process::Command::new("tsgolint")
+                    .arg("headless")
+                    .arg("--tsconfig")
+                    .arg(tsconfig)
+                    .arg("--cwd")
+                    .arg(tsgolint_cwd.clone())
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()
+                    .expect("Failed to spawn tsgolint process");
+
+                let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+                std::thread::spawn(move || {
+                    let json =
+                        serde_json::to_string(&json_input).expect("Failed to serialize JSON");
+                    stdin.write_all(json.as_bytes()).expect("Failed to write to tsgolint stdin");
+                });
+
+                let output = child.wait_with_output().expect("Failed to wait for tsgolint process");
+
+                match parse_tsgolint_output(&output.stdout) {
+                    Ok(parsed) => {
+                        let oxc_diagnostics = parsed
+                            .into_iter()
+                            .map(|diagnostic| {
+                                (
+                                    diagnostic.file_path,
+                                    OxcDiagnostic::error(diagnostic.message.description)
+                                        .with_label(Span::new(
+                                            diagnostic.range.pos,
+                                            diagnostic.range.end,
+                                        ))
+                                        .with_error_code_scope("tsgolint")
+                                        .with_error_code_num(diagnostic.rule),
+                                )
+                            })
+                            // group diagnostics by file path
+                            .fold(FxHashMap::default(), |mut acc, (file_path, diagnostic)| {
+                                acc.entry(file_path).or_insert_with(Vec::new).push(diagnostic);
+                                acc
+                            })
+                            .into_iter()
+                            .map(|(file_path, diagnostics)| {
+                                (
+                                    file_path.clone(),
+                                    DiagnosticService::wrap_diagnostics(
+                                        tsgolint_cwd.clone(),
+                                        file_path.clone(),
+                                        &read_to_string(&file_path)
+                                            .unwrap_or_else(|_| String::new()),
+                                        0,
+                                        diagnostics,
+                                    ),
+                                )
+                            })
+                            .collect::<FxHashMap<_, _>>();
+                        for (file_path, diagnostics) in oxc_diagnostics {
+                            (&tsgolint_error)
+                                .send(Some((file_path, diagnostics)))
+                                .expect("Failed to send diagnostic");
+                        }
+                        tsgolint_error.send(None).unwrap(); // Done linting
+
+                        return Ok(());
+                    }
+                    Err(err) => {
+                        tsgolint_error.send(None).unwrap(); // Done linting
+                        return Err(format!("Failed to parse tsgolint output: {}", err));
+                    }
+                }
+            });
+
+            match handler.join() {
+                Ok(Ok(())) => {
+                    // Successfully handled tsgolint diagnostics
+                }
+                Ok(Err(err)) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {}", err));
+                    return CliRunResult::TsGoLintError;
+                }
+                Err(_) => {
+                    print_and_flush_stdout(stdout, "Error joining tsgolint thread");
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+        }
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
@@ -1191,5 +1324,13 @@ mod test {
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsgolint() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint/no-floating-promises".into())
+            .test_and_snapshot(args);
     }
 }

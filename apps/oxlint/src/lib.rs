@@ -4,6 +4,7 @@ mod output_formatter;
 mod result;
 mod runner;
 mod tester;
+mod tsgolint;
 mod walk;
 
 pub mod cli {
