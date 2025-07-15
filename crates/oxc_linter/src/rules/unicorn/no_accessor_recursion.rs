@@ -71,13 +71,7 @@ impl Rule for NoAccessorRecursion {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return false;
                 };
-
-                let member_expr_obj_span = member_expr.object().without_parentheses().span();
-
-                let this_expr_span = this_expr.span();
-
-                this_expr_span.start <= member_expr_obj_span.start
-                    && this_expr_span.end >= member_expr_obj_span.end
+                member_expr.object().without_parentheses().span() == this_expr.span()
             }
             AstKind::VariableDeclarator(decl) => decl
                 .init
@@ -195,7 +189,6 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = nth_outermost_paren_parent(node, ctx, 1) else {
         return false;
     };
-
     match parent.kind() {
         // e.g. "++this.bar"
         AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
@@ -207,18 +200,17 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         }
         // e.g. "[this.bar] = array"
         AstKind::ArrayAssignmentTarget(assign_target) => {
-            assign_target.span().start <= node.span().start
-                && assign_target.span().end >= node.span().end
+            assign_target.span.contains_inclusive(node.span())
         }
         AstKind::AssignmentTargetWithDefault(assign_target) => {
-            assign_target.span().start <= node.span().start
-                && assign_target.span().end >= node.span().end
+            assign_target.span.contains_inclusive(node.span())
         }
         // e.g. "({property: this.bar} = object)"
-        AstKind::ObjectAssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        AstKind::ObjectAssignmentTarget(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
         AstKind::AssignmentTargetPropertyProperty(assign_target) => {
-            assign_target.span().start <= node.span().start
-                && assign_target.span().end >= node.span().end
+            assign_target.span.contains_inclusive(node.span())
         }
         AstKind::AssignmentExpression(_) => true,
         _ => false,
