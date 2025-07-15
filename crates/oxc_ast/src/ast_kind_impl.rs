@@ -394,6 +394,7 @@ impl AstKind<'_> {
             Self::TSArrayType(_) => "TSArrayType".into(),
             Self::TSOptionalType(_) => "TSOptionalType".into(),
             Self::TSTypeOperator(_) => "TSTypeOperator".into(),
+            Self::TSFunctionType(_) => "TSFunctionType".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 

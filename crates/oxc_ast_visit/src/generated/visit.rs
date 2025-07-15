@@ -3943,7 +3943,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSFunctionType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSFunctionType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
@@ -3955,6 +3956,7 @@ pub mod walk {
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_ts_type_annotation(&it.return_type);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]

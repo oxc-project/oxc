@@ -11,7 +11,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "children": [],
             "flags": "ScopeFlags(StrictMode)",
             "id": 2,
-            "node": "TSTypeAnnotation",
+            "node": "TSFunctionType",
             "symbols": []
           }
         ],
@@ -50,7 +50,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "deco",
-            "node_id": 19
+            "node_id": 20
           }
         ]
       },

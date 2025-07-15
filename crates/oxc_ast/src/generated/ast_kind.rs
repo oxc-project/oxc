@@ -185,22 +185,23 @@ pub enum AstType {
     TSInferType = 168,
     TSTypeQuery = 169,
     TSImportType = 170,
-    TSConstructorType = 171,
-    TSMappedType = 172,
-    TSTemplateLiteralType = 173,
-    TSAsExpression = 174,
-    TSSatisfiesExpression = 175,
-    TSTypeAssertion = 176,
-    TSImportEqualsDeclaration = 177,
-    TSExternalModuleReference = 178,
-    TSNonNullExpression = 179,
-    Decorator = 180,
-    TSExportAssignment = 181,
-    TSNamespaceExportDeclaration = 182,
-    TSInstantiationExpression = 183,
-    JSDocNullableType = 184,
-    JSDocNonNullableType = 185,
-    JSDocUnknownType = 186,
+    TSFunctionType = 171,
+    TSConstructorType = 172,
+    TSMappedType = 173,
+    TSTemplateLiteralType = 174,
+    TSAsExpression = 175,
+    TSSatisfiesExpression = 176,
+    TSTypeAssertion = 177,
+    TSImportEqualsDeclaration = 178,
+    TSExternalModuleReference = 179,
+    TSNonNullExpression = 180,
+    Decorator = 181,
+    TSExportAssignment = 182,
+    TSNamespaceExportDeclaration = 183,
+    TSInstantiationExpression = 184,
+    JSDocNullableType = 185,
+    JSDocNonNullableType = 186,
+    JSDocUnknownType = 187,
 }
 
 /// Untyped AST Node Kind
@@ -391,6 +392,7 @@ pub enum AstKind<'a> {
     TSInferType(&'a TSInferType<'a>) = AstType::TSInferType as u8,
     TSTypeQuery(&'a TSTypeQuery<'a>) = AstType::TSTypeQuery as u8,
     TSImportType(&'a TSImportType<'a>) = AstType::TSImportType as u8,
+    TSFunctionType(&'a TSFunctionType<'a>) = AstType::TSFunctionType as u8,
     TSConstructorType(&'a TSConstructorType<'a>) = AstType::TSConstructorType as u8,
     TSMappedType(&'a TSMappedType<'a>) = AstType::TSMappedType as u8,
     TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>) = AstType::TSTemplateLiteralType as u8,
@@ -599,6 +601,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSInferType(it) => it.span(),
             Self::TSTypeQuery(it) => it.span(),
             Self::TSImportType(it) => it.span(),
+            Self::TSFunctionType(it) => it.span(),
             Self::TSConstructorType(it) => it.span(),
             Self::TSMappedType(it) => it.span(),
             Self::TSTemplateLiteralType(it) => it.span(),
@@ -793,6 +796,7 @@ impl GetAddress for AstKind<'_> {
             Self::TSInferType(it) => Address::from_ptr(it),
             Self::TSTypeQuery(it) => Address::from_ptr(it),
             Self::TSImportType(it) => Address::from_ptr(it),
+            Self::TSFunctionType(it) => Address::from_ptr(it),
             Self::TSConstructorType(it) => Address::from_ptr(it),
             Self::TSMappedType(it) => Address::from_ptr(it),
             Self::TSTemplateLiteralType(it) => Address::from_ptr(it),
@@ -1675,6 +1679,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_import_type(self) -> Option<&'a TSImportType<'a>> {
         if let Self::TSImportType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_function_type(self) -> Option<&'a TSFunctionType<'a>> {
+        if let Self::TSFunctionType(v) = self { Some(v) } else { None }
     }
 
     #[inline]

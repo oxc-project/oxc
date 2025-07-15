@@ -32,7 +32,6 @@ use super::define_generator;
 /// <https://github.com/oxc-project/oxc/issues/11490>
 const STRUCTS_BLACK_LIST: &[&str] = &[
     "BindingPattern",
-    "TSFunctionType",
     // This one should not be removed
     "Span",
 ];

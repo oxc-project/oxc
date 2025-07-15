@@ -198,6 +198,7 @@ pub enum AstNodes<'a> {
     TSInferType(&'a AstNode<'a, TSInferType<'a>>),
     TSTypeQuery(&'a AstNode<'a, TSTypeQuery<'a>>),
     TSImportType(&'a AstNode<'a, TSImportType<'a>>),
+    TSFunctionType(&'a AstNode<'a, TSFunctionType<'a>>),
     TSConstructorType(&'a AstNode<'a, TSConstructorType<'a>>),
     TSMappedType(&'a AstNode<'a, TSMappedType<'a>>),
     TSTemplateLiteralType(&'a AstNode<'a, TSTemplateLiteralType<'a>>),
@@ -2486,6 +2487,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInferType(n) => n.span(),
             Self::TSTypeQuery(n) => n.span(),
             Self::TSImportType(n) => n.span(),
+            Self::TSFunctionType(n) => n.span(),
             Self::TSConstructorType(n) => n.span(),
             Self::TSMappedType(n) => n.span(),
             Self::TSTemplateLiteralType(n) => n.span(),
@@ -2679,6 +2681,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInferType(n) => n.parent,
             Self::TSTypeQuery(n) => n.parent,
             Self::TSImportType(n) => n.parent,
+            Self::TSFunctionType(n) => n.parent,
             Self::TSConstructorType(n) => n.parent,
             Self::TSMappedType(n) => n.parent,
             Self::TSTemplateLiteralType(n) => n.parent,
@@ -2872,6 +2875,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInferType(n) => SiblingNode::from(n.inner),
             Self::TSTypeQuery(n) => SiblingNode::from(n.inner),
             Self::TSImportType(n) => SiblingNode::from(n.inner),
+            Self::TSFunctionType(n) => SiblingNode::from(n.inner),
             Self::TSConstructorType(n) => SiblingNode::from(n.inner),
             Self::TSMappedType(n) => SiblingNode::from(n.inner),
             Self::TSTemplateLiteralType(n) => SiblingNode::from(n.inner),
@@ -3065,6 +3069,7 @@ impl<'a> AstNodes<'a> {
             Self::TSInferType(_) => "TSInferType",
             Self::TSTypeQuery(_) => "TSTypeQuery",
             Self::TSImportType(_) => "TSImportType",
+            Self::TSFunctionType(_) => "TSFunctionType",
             Self::TSConstructorType(_) => "TSConstructorType",
             Self::TSMappedType(_) => "TSMappedType",
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType",
@@ -10549,11 +10554,12 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     following_node: self.following_node,
                 }))
             }
-            TSType::TSFunctionType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSType::TSFunctionType(s) => AstNodes::TSFunctionType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+                following_node: self.following_node,
+            })),
             TSType::TSImportType(s) => AstNodes::TSImportType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -12948,7 +12954,7 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::TSFunctionType(transmute_self(self))),
                 following_node,
             }))
             .as_ref()
@@ -12961,7 +12967,7 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::TSFunctionType(transmute_self(self))),
                 following_node,
             }))
             .as_ref()
@@ -12973,7 +12979,7 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSFunctionType(transmute_self(self))),
             following_node,
         })
     }
@@ -12984,7 +12990,7 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSFunctionType(transmute_self(self))),
             following_node,
         })
     }
