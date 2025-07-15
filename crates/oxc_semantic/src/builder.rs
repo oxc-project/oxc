@@ -313,6 +313,7 @@ impl<'a> SemanticBuilder<'a> {
         self.record_ast_node();
     }
 
+    #[inline]
     fn pop_ast_node(&mut self) {
         self.current_node_id = self.nodes.parent_id(self.current_node_id);
     }
@@ -353,6 +354,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Is the current scope in strict mode?
+    #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
     }
