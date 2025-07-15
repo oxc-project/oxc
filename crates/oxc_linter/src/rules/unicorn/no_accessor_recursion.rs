@@ -65,6 +65,7 @@ impl Rule for NoAccessorRecursion {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;
         };
+
         let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
@@ -88,6 +89,7 @@ impl Rule for NoAccessorRecursion {
         if !is_property_or_method_def(func_parent) {
             return;
         }
+
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(key_name) = get_property_or_method_def_name(func_parent) else {
@@ -133,6 +135,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
@@ -162,6 +165,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if method_def.kind == MethodDefinitionKind::Set
                             && is_property_write(target, ctx)
                         {
@@ -190,8 +194,25 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
             argument.span() == node.span()
         }
-        // e.g. "this.bar = 1" or "[this.bar] = array"
-        AstKind::AssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        // e.g. "this.bar = 1"
+        AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+            assign_target.span() == node.span()
+        }
+        // e.g. "[this.bar] = array"
+        AstKind::ArrayAssignmentTarget(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentTargetWithDefault(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        // e.g. "({property: this.bar} = object)"
+        AstKind::ObjectAssignmentTarget(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentExpression(_) => true,
         _ => false,
     }
 }
@@ -421,17 +442,17 @@ fn test() {
         ",
         r"
             class Foo {
-				get bar() {
-					return this.bar;
-				}
-			}
+        		get bar() {
+        			return this.bar;
+        		}
+        	}
         ",
         r"
             const foo = {
-				get bar() {
-					return this.bar.baz;
-				}
-			};
+        		get bar() {
+        			return this.bar.baz;
+        		}
+        	};
         ",
         r"
             const foo = {

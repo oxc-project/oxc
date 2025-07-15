@@ -1757,8 +1757,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_assignment_target<'a, V: Visit<'a>>(visitor: &mut V, it: &AssignmentTarget<'a>) {
-        let kind = AstKind::AssignmentTarget(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             match_simple_assignment_target!(AssignmentTarget) => {
                 visitor.visit_simple_assignment_target(it.to_simple_assignment_target())
@@ -1767,7 +1766,6 @@ pub mod walk {
                 visitor.visit_assignment_target_pattern(it.to_assignment_target_pattern())
             }
         }
-        visitor.leave_node(kind);
     }
 
     pub fn walk_simple_assignment_target<'a, V: Visit<'a>>(

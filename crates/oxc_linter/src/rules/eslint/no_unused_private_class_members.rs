@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
@@ -95,6 +95,7 @@ impl Rule for NoUnusedPrivateClassMembers {
                 if !element.kind.intersects(ElementKind::Property | ElementKind::Method) {
                     continue;
                 }
+
                 if element.is_private
                     && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
                         // If the element is a property, it must be read.
@@ -117,28 +118,44 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
-            (member_expr, AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_))
+            (member_expr, AstKind::SimpleAssignmentTarget(_))
                 if member_expr.is_member_expression_kind() => {}
             (
                 AstKind::SimpleAssignmentTarget(_),
-                AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
             ) => {}
             (
-                AstKind::AssignmentTarget(_),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyProperty(_),
-            )
-            | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                return false;
+            ) => return false,
+            (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(assign_expr)) => {
+                if matches!(assign_expr.operator, AssignmentOperator::Assign) {
+                    return false;
+                }
+
+                // if an assignment expression is inside a call expression, it should be considered a read.
+                let is_parent_inside_call_expression =
+                    nodes.ancestors(parent.id()).any(|grand_parent_node| {
+                        matches!(grand_parent_node.kind(), AstKind::CallExpression(_))
+                    });
+
+                return is_parent_inside_call_expression;
             }
-            (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_))
+            (
+                AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_),
+                AstKind::AssignmentExpression(_),
+            )
             | (_, AstKind::UpdateExpression(_)) => {
                 return !matches!(nodes.parent_kind(parent.id()), AstKind::ExpressionStatement(_));
             }
@@ -156,24 +173,24 @@ fn test() {
     let pass = vec![
         r"class Foo {}",
         r"class Foo {
-			    publicMember = 42;
-			}",
+        	    publicMember = 42;
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    method() {
-			        return this.#usedMember;
-			    }
-			}",
+        	    #usedMember = 42;
+        	    method() {
+        	        return this.#usedMember;
+        	    }
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    anotherMember = this.#usedMember;
-			}",
+        	    #usedMember = 42;
+        	    anotherMember = this.#usedMember;
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    foo() {
-			        anotherMember = this.#usedMember;
-			    }
-			}",
+        	    #usedMember = 42;
+        	    foo() {
+        	        anotherMember = this.#usedMember;
+        	    }
+        	}",
         r"class C {
 			    #usedMember;
 

@@ -20,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this property access, or remove `get` from the method
 
   ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
-   ╭─[no_accessor_recursion.tsx:4:13]
+   ╭─[no_accessor_recursion.tsx:4:19]
  3 │                 get bar() {
  4 │                     return this.bar;
    ·                            ────────
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this property access, or remove `get` from the method
 
   ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
-   ╭─[no_accessor_recursion.tsx:4:13]
+   ╭─[no_accessor_recursion.tsx:4:19]
  3 │                 get bar() {
  4 │                     return this.bar.baz;
    ·                            ────────

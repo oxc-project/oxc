@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
 use rustc_hash::FxHashSet;
@@ -115,14 +114,9 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         let parent_node = self.ast_nodes.parent_node(node.id());
         match parent_node.kind() {
             AstKind::SimpleAssignmentTarget(_) => {
-                let Some((grand_parent_node_kind, grand_grand_parent_node_kind)) =
-                    self.ast_nodes.ancestor_kinds(parent_node.id()).take(2).collect_tuple()
-                else {
-                    return false;
-                };
-                debug_assert!(matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)));
+                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node.id());
 
-                match grand_grand_parent_node_kind {
+                match grand_parent_node_kind {
                     AstKind::AssignmentExpression(assign_expr) => {
                         Self::is_assignment_target_id_of_specific_reference(
                             &assign_expr.left,

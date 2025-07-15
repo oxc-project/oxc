@@ -43,7 +43,7 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
 /// Ideally we don't want any enums to have `AstKind`s.
 /// We are working towards removing all the items from this list.
 /// <https://github.com/oxc-project/oxc/issues/11490>
-const ENUMS_WHITE_LIST: &[&str] = &["Argument", "AssignmentTarget", "SimpleAssignmentTarget"];
+const ENUMS_WHITE_LIST: &[&str] = &["Argument", "SimpleAssignmentTarget"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;
