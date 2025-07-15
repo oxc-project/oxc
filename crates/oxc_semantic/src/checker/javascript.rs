@@ -105,6 +105,13 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
     .with_label(span1)
 }
 
+fn invalid_let_catch_param(span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "`let` cannot be declared as a variable name inside of a destructured catch parameter",
+    )
+    .with_label(span1)
+}
+
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
     if ctx.strict_mode() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
@@ -161,6 +168,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         // LexicalDeclaration : LetOrConst BindingList ;
         // * It is a Syntax Error if the BoundNames of BindingList contains "let".
         if ident.name == "let" {
+            let mut is_grandparent_or_above = false;
             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
                 match node_kind {
                     AstKind::VariableDeclarator(decl) => {
@@ -171,8 +179,17 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                     }
                     // `let` is permitted as function name or function param (including arrow functions)
                     AstKind::Function(_) | AstKind::FormalParameter(_) => break,
+                    // `try {} catch (let) {}` is permitted.
+                    // `try {} catch ({let}) {}` and `try {} catch ([let]) {}` are not.
+                    AstKind::CatchParameter(_) => {
+                        if is_grandparent_or_above {
+                            ctx.error(invalid_let_catch_param(ident.span));
+                        }
+                        break;
+                    }
                     _ => {}
                 }
+                is_grandparent_or_above = true;
             }
         }
     }
