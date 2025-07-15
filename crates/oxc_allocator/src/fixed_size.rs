@@ -66,12 +66,18 @@ impl FixedSizeAllocator {
         };
 
         // Get pointer to use for allocator chunk, aligned to 4 GiB.
-        // SAFETY: `offset` is either 0 or `TWO_GIB`.
-        // We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds.
-        let chunk_ptr = unsafe {
-            let offset = alloc_ptr.as_ptr() as usize % FOUR_GIB;
-            alloc_ptr.add(offset)
-        };
+        // `alloc_ptr` is aligned on 2 GiB, so `alloc_ptr % FOUR_GIB` is either 0 or `TWO_GIB`.
+        //
+        // * If allocation is already aligned on 4 GiB, `offset == 0`.
+        //   Chunk occupies 1st half of the allocation.
+        // * If allocation is not aligned on 4 GiB, `offset == TWO_GIB`.
+        //   Adding `offset` to `alloc_ptr` brings it up to 4 GiB alignment.
+        //   Chunk occupies 2nd half of the allocation.
+        //
+        // Either way, `chunk_ptr` is aligned on 4 GiB.
+        let offset = alloc_ptr.as_ptr() as usize % FOUR_GIB;
+        // SAFETY: We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds
+        let chunk_ptr = unsafe { alloc_ptr.add(offset) };
 
         debug_assert!(chunk_ptr.as_ptr() as usize % BUFFER_ALIGN == 0);
 
