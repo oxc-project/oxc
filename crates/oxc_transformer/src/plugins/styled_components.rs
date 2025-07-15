@@ -868,6 +868,10 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 /// ```
 fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a>) {
     const NOT_IN_STRING: u8 = 0;
+    /// `Span` used as a sentinel indicating quasi should be removed.
+    /// Source text is limited to max `u32::MAX` bytes, so it's impossible for a `TemplateElement`
+    /// to have this span, because it's always followed by (at minimum) a '`'.
+    const REMOVE_SENTINEL: Span = Span::new(u32::MAX, u32::MAX);
 
     let TemplateLiteral { quasis, expressions, .. } = lit;
 
@@ -883,6 +887,8 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut string_quote = NOT_IN_STRING;
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
+    // A state that indicates whether we should delete quasi and expression.
+    let mut has_remove_sentinel = false;
 
     // Current minified quasi being built
     let mut output = Vec::new();
@@ -890,8 +896,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // TODO: What about `cooked`? Shouldn't we alter that too?
     let mut quasi_index = 0;
     while quasi_index < quasis.len() {
-        let quasi = &quasis[quasi_index];
-        let mut bytes = quasi.value.raw.as_str().as_bytes();
+        let mut bytes = quasis[quasi_index].value.raw.as_str().as_bytes();
 
         if quasi_index > 0 {
             if let Some(is_block_comment) = comment_type {
@@ -909,12 +914,12 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // styled.div`color: /* ${c} */ blue`
                 // //         ^^^^^^^^^^^^^^^^^^^^^^
                 // ```
-                quasis[quasi_index - 1].span.end = quasi.span.end;
+                quasis[quasi_index].span.start = quasis[quasi_index - 1].span.start;
+                // Mark previous quasi's span as `REMOVE_SENTINEL`, so that it can be removed after all quasis are processed.
+                quasis[quasi_index - 1].span = REMOVE_SENTINEL;
+                quasi_index += 1;
 
-                // Remove this quasi and the preceding expression.
-                // TODO: Remove scopes, symbols, and references for removed `Expression`.
-                quasis.remove(quasi_index);
-                expressions.remove(quasi_index - 1);
+                has_remove_sentinel = true;
 
                 // Find end of comment
                 let start_index = if is_block_comment {
@@ -1086,6 +1091,14 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // SAFETY: Output is all picked from the original `raw` values and is guaranteed to be valid UTF-8.
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
     quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
+
+    // Remove quasis that that have their span marked as `REMOVE_SENTINEL`, and as well as their following expressions.
+    if has_remove_sentinel {
+        let mut quasis_iter = quasis.iter();
+        // TODO: Remove scopes, symbols, and references for removed `Expression`.
+        expressions.retain(|_| quasis_iter.next().unwrap().span != REMOVE_SENTINEL);
+        quasis.retain(|quasi| quasi.span != REMOVE_SENTINEL);
+    }
 }
 
 #[cfg(test)]
