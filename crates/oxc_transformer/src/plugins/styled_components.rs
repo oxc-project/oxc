@@ -887,7 +887,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut string_quote = NOT_IN_STRING;
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
-    // A state that indicates whether we should delete quasi and expression.
+    // `true` if some quasis and expressions need to be deleted.
     let mut has_remove_sentinel = false;
 
     // Current minified quasi being built
@@ -900,8 +900,9 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
         if quasi_index > 0 {
             if let Some(is_block_comment) = comment_type {
-                // This quasi is being merged into previous.
-                // Extend span end of previous quasi to this quasi's span end, as previous quasi now covers both.
+                // This quasi is being merged with previous.
+                // Extend span start of this quasi to previous quasi's span start, as this quasi now covers both.
+                // Previous quasi will be deleted.
                 //
                 // ```
                 // // Input:
@@ -915,7 +916,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // //         ^^^^^^^^^^^^^^^^^^^^^^
                 // ```
                 quasis[quasi_index].span.start = quasis[quasi_index - 1].span.start;
-                // Mark previous quasi's span as `REMOVE_SENTINEL`, so that it can be removed after all quasis are processed.
+                // Mark previous quasi as to be removed. It will be removed after all quasis are processed.
                 quasis[quasi_index - 1].span = REMOVE_SENTINEL;
                 quasi_index += 1;
 
@@ -1092,7 +1093,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
     quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
 
-    // Remove quasis that that have their span marked as `REMOVE_SENTINEL`, and as well as their following expressions.
+    // Remove quasis that are marked for removal, and the expressions following them
     if has_remove_sentinel {
         let mut quasis_iter = quasis.iter();
         // TODO: Remove scopes, symbols, and references for removed `Expression`.
