@@ -225,7 +225,9 @@ fn parse_rule_key(name: &str) -> (String, String) {
             RULES
                 .iter()
                 .find(|r| r.name() == name)
-                .map_or("unknown_plugin", RuleEnum::plugin_name)
+                // plugins under the `eslint` scope are the only rules that are supported
+                // to exist in the config file under just the rule name (no plugin)
+                .map_or("eslint", RuleEnum::plugin_name)
                 .to_string(),
             name.to_string(),
         );
@@ -344,7 +346,7 @@ mod test {
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
-        assert_eq!(r3.plugin_name, "unknown_plugin");
+        assert_eq!(r3.plugin_name, "eslint");
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
 
