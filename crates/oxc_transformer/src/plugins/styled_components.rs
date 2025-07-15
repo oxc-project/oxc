@@ -888,7 +888,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Parentheses depth. `((x)` -> 1, `(x))` -> -1.
     let mut paren_depth: isize = 0;
     // `true` if some quasis and expressions need to be deleted.
-    let mut has_remove_sentinel = false;
+    let mut delete_some = false;
 
     // Current minified quasi being built
     let mut output = Vec::new();
@@ -920,7 +920,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 quasis[quasi_index - 1].span = REMOVE_SENTINEL;
                 quasi_index += 1;
 
-                has_remove_sentinel = true;
+                delete_some = true;
 
                 // Find end of comment
                 let start_index = if is_block_comment {
@@ -1094,7 +1094,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     quasis.last_mut().unwrap().value.raw = ast.atom(output_str);
 
     // Remove quasis that are marked for removal, and the expressions following them
-    if has_remove_sentinel {
+    if delete_some {
         let mut quasis_iter = quasis.iter();
         // TODO: Remove scopes, symbols, and references for removed `Expression`.
         expressions.retain(|_| quasis_iter.next().unwrap().span != REMOVE_SENTINEL);
