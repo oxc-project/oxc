@@ -42,11 +42,11 @@ const BUMP_ALIGN: usize = 16;
 /// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
 ///
 /// Does not check that the offset is within bounds of `buffer`.
-/// To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE` bytes.
+/// To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE + BUFFER_ALIGN` bytes.
 #[napi(skip_typescript)]
 pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     let buffer = &*buffer;
-    let offset = BUFFER_ALIGN - (buffer.as_ptr() as usize % BUFFER_ALIGN);
+    let offset = (BUFFER_ALIGN - (buffer.as_ptr() as usize % BUFFER_ALIGN)) % BUFFER_ALIGN;
     #[expect(clippy::cast_possible_truncation)]
     return offset as u32;
 }
