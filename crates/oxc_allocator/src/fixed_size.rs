@@ -11,6 +11,7 @@ use crate::{
 };
 
 const TWO_GIB: usize = 1 << 31;
+const FOUR_GIB: usize = 1 << 32;
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
 // But system allocator on Mac OS refuses allocations with 4 GiB alignment.
@@ -68,7 +69,7 @@ impl FixedSizeAllocator {
         // SAFETY: `offset` is either 0 or `TWO_GIB`.
         // We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds.
         let chunk_ptr = unsafe {
-            let offset = alloc_ptr.as_ptr() as usize % ALLOC_SIZE;
+            let offset = alloc_ptr.as_ptr() as usize % FOUR_GIB;
             alloc_ptr.add(offset)
         };
 
