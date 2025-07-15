@@ -249,7 +249,7 @@ fn check_loop_usage<'a>(
     };
 
     let Some(assignment_expression_right_inner_expr) =
-        assignment_expression_right_inner_expr_option
+        assignment_expression_right_inner_expr_option.map(Expression::get_inner_expression)
     else {
         return;
     };
