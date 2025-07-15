@@ -17,7 +17,7 @@ pub struct CodegenOptions {
     ///
     /// At present, only some leading comments are preserved.
     ///
-    /// Default is [CodegenOptions::default].
+    /// Default is [CommentOptions::default].
     pub comments: CommentOptions,
 
     /// Enable sourcemap.
