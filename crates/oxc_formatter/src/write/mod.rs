@@ -19,6 +19,7 @@ pub use arrow_function_expression::{
     ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
+pub use function::FormatFunctionOptions;
 
 use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
 use cow_utils::CowUtils;

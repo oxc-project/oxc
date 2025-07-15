@@ -23,6 +23,7 @@ use crate::{
     },
     write,
     write::{
+        FormatFunctionOptions,
         arrow_function_expression::is_multiline_template_starting_on_same_line,
         parameter_list::has_only_simple_parameters,
     },
@@ -218,13 +219,12 @@ impl<'a> FormatCallArgument<'a, '_> {
             Self::Default { element, is_last, .. } => {
                 match element.as_ast_nodes() {
                     AstNodes::Function(function) => {
-                        write!(
+                        function.fmt_with_options(
+                            FormatFunctionOptions {
+                                body_cache_mode: cache_mode,
+                                ..Default::default()
+                            },
                             f,
-                            // [function.format().with_options(FormatFunctionOptions {
-                            //     body_cache_mode: cache_mode,
-                            //     ..FormatFunctionOptions::default()
-                            // })]
-                            function
                         )?;
                     }
                     AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
@@ -931,18 +931,15 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
                 with_token_tracking_disabled(f, |f| {
-                    write!(
+                    function.fmt_with_options(
+                        FormatFunctionOptions {
+                            body_cache_mode: FunctionBodyCacheMode::Cached,
+                            call_argument_layout: Some(
+                                GroupedCallArgumentLayout::GroupedLastArgument,
+                            ),
+                        },
                         f,
-                        // [function.format().with_options(FormatFunctionOptions {
-                        //     body_cache_mode: FunctionBodyCacheMode::Cached,
-                        //     call_argument_layout: Some(
-                        //         GroupedCallArgumentLayout::GroupedLastArgument
-                        //     ),
-                        // })]
-                        function
-                    )?;
-
-                    Ok(())
+                    )
                 })
             }
 

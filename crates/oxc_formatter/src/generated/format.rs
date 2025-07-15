@@ -7,7 +7,7 @@ use crate::{
     formatter::{Buffer, Format, FormatResult, Formatter, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, SiblingNode},
     parentheses::NeedsParentheses,
-    write::{FormatJsArrowFunctionExpressionOptions, FormatWrite},
+    write::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
@@ -877,7 +877,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, Function<'a>> {
+impl<'a> Format<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -885,6 +885,24 @@ impl<'a> Format<'a> for AstNode<'a, Function<'a>> {
             "(".fmt(f)?;
         }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        self.format_trailing_comments(f)?;
+        result
+    }
+
+    fn fmt_with_options(
+        &self,
+        options: FormatFunctionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write_with_options(options, f);
         if needs_parentheses {
             ")".fmt(f)?;
         }

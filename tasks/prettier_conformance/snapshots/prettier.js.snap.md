@@ -1,4 +1,4 @@
-js compatibility: 387/699 (55.36%)
+js compatibility: 389/699 (55.65%)
 
 # Failed
 
@@ -165,15 +165,13 @@ js compatibility: 387/699 (55.36%)
 | js/last-argument-expansion/arrow.js | 💥 | 16.67% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
-| js/last-argument-expansion/edge_case.js | 💥 | 41.74% |
+| js/last-argument-expansion/edge_case.js | 💥 | 83.97% |
 | js/last-argument-expansion/empty-object.js | 💥 | 86.67% |
-| js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 0.00% |
-| js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
 | js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
 | js/last-argument-expansion/issue-7518.js | 💥 | 85.71% |
 | js/last-argument-expansion/jsx.js | 💥 | 25.00% |
 | js/last-argument-expansion/object.js | 💥 | 94.74% |
-| js/last-argument-expansion/overflow.js | 💥 | 71.22% |
+| js/last-argument-expansion/overflow.js | 💥 | 60.87% |
 | js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/member/conditional.js | 💥 | 0.00% |
@@ -226,7 +224,7 @@ js compatibility: 387/699 (55.36%)
 | js/require/require.js | 💥 | 90.67% |
 | js/rest/trailing-commas.js | 💥 | 84.75% |
 | js/return/binaryish.js | 💥 | 25.00% |
-| js/return/comment.js | 💥 | 63.89% |
+| js/return/comment.js | 💥 | 63.01% |
 | js/return-outside-function/return-outside-function.js | 💥 | 0.00% |
 | js/sequence-break/break.js | 💥 | 38.53% |
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
@@ -259,10 +257,10 @@ js compatibility: 387/699 (55.36%)
 | js/test-declarations/optional.js | 💥💥 | 0.00% |
 | js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
 | js/throw_statement/binaryish.js | 💥 | 25.00% |
-| js/throw_statement/comment.js | 💥 | 35.29% |
+| js/throw_statement/comment.js | 💥 | 34.29% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
-| js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 88.64% |
+| js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 90.91% |
 | js/try/catch.js | 💥 | 52.63% |
 | js/try/try.js | 💥 | 50.00% |
 | js/unary-expression/comments.js | 💥 | 75.93% |

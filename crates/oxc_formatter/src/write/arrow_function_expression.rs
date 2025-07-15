@@ -37,7 +37,7 @@ pub enum GroupedCallArgumentLayout {
     GroupedLastArgument,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub enum FunctionBodyCacheMode {
     /// Format the body without caching it or retrieving it from the cache.
     #[default]
