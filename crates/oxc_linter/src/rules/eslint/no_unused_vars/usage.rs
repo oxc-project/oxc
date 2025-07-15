@@ -411,8 +411,22 @@ impl<'a> Symbol<'_, 'a> {
                 // references used in declaration of another variable are definitely
                 // used by others
                 AstKind::VariableDeclarator(_) | AstKind::JSXExpressionContainer(_) => {
-                    // TODO: | AstKind::Argument(_) => {
                     // definitely used, short-circuit
+                    return false;
+                }
+                AstKind::CallExpression(call_expr)
+                    if call_expr
+                        .arguments
+                        .first()
+                        .map(|arg| arg.span().start)
+                        .zip(call_expr.arguments.last())
+                        .map(|(start, arg)| Span::new(start, arg.span().end))
+                        .is_some_and(|args_span| {
+                            args_span.contains_inclusive(
+                                self.nodes().get_node(reference.node_id()).span(),
+                            )
+                        }) =>
+                {
                     return false;
                 }
                 // When symbol is being assigned a new value, we flag the reference

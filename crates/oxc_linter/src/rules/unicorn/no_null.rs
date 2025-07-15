@@ -190,12 +190,11 @@ impl Rule for NoNull {
 
         let grandparent_kind = parents.next();
         match (parent_kind, grandparent_kind) {
-            // TODO:
-            // (AstKind::Argument(_), Some(AstKind::CallExpression(call_expr)))
-            //     if match_call_expression_pass_case(null_literal, call_expr) =>
-            // {
-            //     // no violation
-            // }
+            (AstKind::CallExpression(call_expr), _)
+                if match_call_expression_pass_case(null_literal, call_expr) =>
+            {
+                // no violation
+            }
             (AstKind::BinaryExpression(binary_expr), _) => {
                 self.diagnose_binary_expression(ctx, null_literal, binary_expr);
             }
