@@ -20,7 +20,7 @@ function deserialize(buffer, sourceTextInput, sourceByteLenInput) {
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
 
-  const data = deserializeRawTransferData(uint32[536870906]);
+  const data = deserializeRawTransferData(uint32[536870904]);
 
   uint8 =
     uint32 =
@@ -4020,6 +4020,14 @@ function deserializeErrorSeverity(pos) {
   }
 }
 
+function deserializeU32(pos) {
+  return uint32[pos >> 2];
+}
+
+function deserializeBool(pos) {
+  return uint8[pos] === 1;
+}
+
 function deserializeStr(pos) {
   const pos32 = pos >> 2,
     len = uint32[pos32 + 2];
@@ -4280,10 +4288,6 @@ function deserializeVecObjectPropertyKind(pos) {
 
 function deserializeBoxObjectProperty(pos) {
   return deserializeObjectProperty(uint32[pos >> 2]);
-}
-
-function deserializeBool(pos) {
-  return uint8[pos] === 1;
 }
 
 function deserializeBoxIdentifierName(pos) {
@@ -5232,10 +5236,6 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(uint32[pos >> 2]);
-}
-
-function deserializeU32(pos) {
-  return uint32[pos >> 2];
 }
 
 function deserializeOptionNameSpan(pos) {

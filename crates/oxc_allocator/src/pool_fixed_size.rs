@@ -3,12 +3,17 @@ use std::{
     mem::ManuallyDrop,
     ops::Deref,
     ptr::NonNull,
-    sync::Mutex,
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, AtomicU32, Ordering},
+    },
 };
+
+use oxc_ast_macros::ast;
 
 use crate::{
     Allocator,
-    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE, METADATA_SIZE},
+    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE},
 };
 
 const TWO_GIB: usize = 1 << 31;
@@ -19,7 +24,10 @@ const FOUR_GIB: usize = 1 << 32;
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
 #[derive(Default)]
 pub struct AllocatorPool {
+    /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
+    /// ID to assign to next `Allocator` that's created
+    next_id: AtomicU32,
 }
 
 impl AllocatorPool {
@@ -27,7 +35,7 @@ impl AllocatorPool {
     pub fn new(size: usize) -> AllocatorPool {
         // Each allocator consumes a large block of memory, so create them on demand instead of upfront
         let allocators = Vec::with_capacity(size);
-        AllocatorPool { allocators: Mutex::new(allocators) }
+        AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
     }
 
     /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
@@ -42,7 +50,15 @@ impl AllocatorPool {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
         };
-        let allocator = allocator.unwrap_or_else(FixedSizeAllocator::new);
+
+        let allocator = allocator.unwrap_or_else(|| {
+            // Each allocator needs to have a unique ID, but the order those IDs are assigned in
+            // doesn't matter, so `Ordering::Relaxed` is fine
+            let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+            // Protect against IDs wrapping around
+            assert!(id < u32::MAX, "Created too many allocators");
+            FixedSizeAllocator::new(id)
+        });
 
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
     }
@@ -83,6 +99,42 @@ impl Drop for AllocatorGuard<'_> {
         let mut allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
         allocator.reset();
         self.pool.add(allocator);
+    }
+}
+
+/// Metadata written to end of buffer.
+///
+/// This is a copy of `RawTransferMetadata` in `napi/parser/src/raw_transfer_types.rs`.
+/// `oxc_ast_tools` checks it has same fields as this copy.
+/// Any changes to this type must also be made in `napi/parser`.
+#[ast]
+pub struct RawTransferMetadata2 {
+    /// Offset of `RawTransferData` within buffer.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+    /// Unique ID of this allocator.
+    pub(crate) id: u32,
+    /// `true` if memory allocation backing the `FixedSizeAllocator` can be freed.
+    /// Is `true` if allocator is currently owned by only Rust or JS, but not both.
+    ///
+    /// * `true` initially.
+    /// * Set to `false` when buffer is shared with JS.
+    /// * When JS garbage collector collects the buffer, set back to `true` again.
+    ///   Memory will be freed when the `FixedSizeAllocator` is dropped on Rust side.
+    /// * Also be set to `true` if `FixedSizeAllocator` is dropped on Rust side.
+    ///   Memory will be freed in finalizer when JS garbage collector collects the buffer.
+    pub(crate) can_be_freed: AtomicBool,
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u32,
+}
+use RawTransferMetadata2 as RawTransferMetadata;
+
+const METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
+
+impl RawTransferMetadata {
+    fn new(id: u32) -> Self {
+        Self { data_offset: 0, is_ts: false, id, can_be_freed: AtomicBool::new(true), _padding: 0 }
     }
 }
 
@@ -130,7 +182,7 @@ pub struct FixedSizeAllocator {
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
-    pub fn new() -> Self {
+    pub fn new(id: u32) -> Self {
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
@@ -161,6 +213,13 @@ impl FixedSizeAllocator {
         // the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
         let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+
+        // Store metadata after allocator chunk
+        let metadata = RawTransferMetadata::new(id);
+        // SAFETY: `chunk_ptr` is at least `BUFFER_SIZE` bytes from the end of the allocation.
+        // `CHUNK_SIZE` had the size of `RawTransferMetadata` subtracted from it.
+        // So there is space within the allocation for `RawTransferMetadata` after the `Allocator`'s chunk.
+        unsafe { chunk_ptr.add(CHUNK_SIZE).cast::<RawTransferMetadata>().write(metadata) };
 
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
         Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }

@@ -995,12 +995,11 @@ struct Constants {
     data_pointer_pos_32: u32,
     is_ts_pos: u32,
     program_offset: u32,
-    metadata_size: u32,
 }
 
 /// Generate constants file.
 fn generate_constants(consts: Constants) -> (String, TokenStream) {
-    let Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size } = consts;
+    let Constants { data_pointer_pos_32, is_ts_pos, program_offset } = consts;
 
     #[rustfmt::skip]
     let js_output = format!("
@@ -1021,15 +1020,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     let buffer_size = number_lit(BUFFER_SIZE);
     let buffer_align = number_lit(BUFFER_ALIGN);
-    let metadata_size = number_lit(metadata_size);
     let rust_output = quote! {
         #![expect(clippy::unreadable_literal)]
-        #![allow(dead_code)]
 
         ///@@line_break
         pub const BUFFER_SIZE: usize = #buffer_size;
         pub const BUFFER_ALIGN: usize = #buffer_align;
-        pub const METADATA_SIZE: usize = #metadata_size;
     };
 
     (js_output, rust_output)
@@ -1037,12 +1033,32 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
 /// Calculate constants.
 fn get_constants(schema: &Schema) -> Constants {
+    // Check `RawTransferMetadata` (in `napi/parser`) and `RawTransferMetadata2` (in `oxc_allocator`)
+    // have same fields and layout
     let metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
-    let metadata_size = metadata_struct.layout_64().size;
-    let metadata_pos = BUFFER_SIZE - metadata_size;
-    let data_pointer_pos = metadata_pos + metadata_struct.field_by_name("data_offset").offset_64();
+    let metadata2_struct = schema.type_by_name("RawTransferMetadata2").as_struct().unwrap();
+
+    assert_eq!(metadata_struct.fields.len(), metadata2_struct.fields.len());
+    let mut data_offset_field = None;
+    let mut is_ts_field = None;
+    for (field1, field2) in metadata_struct.fields.iter().zip(&metadata2_struct.fields) {
+        assert_eq!(field1.name(), field2.name());
+        assert_eq!(field1.type_id, field2.type_id);
+        assert_eq!(field1.offset_64(), field2.offset_64());
+        match field1.name() {
+            "data_offset" => data_offset_field = Some(field1),
+            "is_ts" => is_ts_field = Some(field1),
+            _ => {}
+        }
+    }
+    let data_offset_field = data_offset_field.unwrap();
+    let is_ts_field = is_ts_field.unwrap();
+
+    // Get offsets of data within buffer
+    let metadata_pos = BUFFER_SIZE - metadata_struct.layout_64().size;
+    let data_pointer_pos = metadata_pos + data_offset_field.offset_64();
     let data_pointer_pos_32 = data_pointer_pos / 4;
-    let is_ts_pos = metadata_pos + metadata_struct.field_by_name("is_ts").offset_64();
+    let is_ts_pos = metadata_pos + is_ts_field.offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
@@ -1051,5 +1067,5 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size }
+    Constants { data_pointer_pos_32, is_ts_pos, program_offset }
 }

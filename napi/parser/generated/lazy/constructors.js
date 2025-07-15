@@ -12472,6 +12472,14 @@ class StaticExport {
 
 const DebugStaticExport = class StaticExport {};
 
+function constructU32(pos, ast) {
+  return ast.buffer.uint32[pos >> 2];
+}
+
+function constructBool(pos, ast) {
+  return ast.buffer[pos] === 1;
+}
+
 function constructStr(pos, ast) {
   const pos32 = pos >> 2,
     { buffer } = ast,
@@ -12742,10 +12750,6 @@ function constructVecObjectPropertyKind(pos, ast) {
 
 function constructBoxObjectProperty(pos, ast) {
   return new ObjectProperty(ast.buffer.uint32[pos >> 2], ast);
-}
-
-function constructBool(pos, ast) {
-  return ast.buffer[pos] === 1;
 }
 
 function constructBoxIdentifierName(pos, ast) {
@@ -13746,10 +13750,6 @@ function constructOptionTSMappedTypeModifierOperator(pos, ast) {
 
 function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.uint32[pos >> 2], ast);
-}
-
-function constructU32(pos, ast) {
-  return ast.buffer.uint32[pos >> 2];
 }
 
 function constructOptionNameSpan(pos, ast) {

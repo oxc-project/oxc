@@ -1,6 +1,6 @@
 #![cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
 
-use std::sync::Arc;
+use std::sync::{Arc, atomic::AtomicBool};
 
 use rustc_hash::FxHashMap;
 
@@ -26,19 +26,27 @@ pub struct RawTransferData<'a> {
 }
 
 /// Metadata written to end of buffer.
+///
+/// There is a copy of this type in `crates/oxc_allocator/src/pool_fixed_size.rs`.
+/// `oxc_ast_tools` checks it has same fields as this copy.
+/// Any changes to this type must also be made in `oxc_allocator`.
 #[ast]
 pub struct RawTransferMetadata {
     /// Offset of `RawTransferData` within buffer.
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
+    /// Not used in this implementation. Only used by `oxc_allocator`.
+    pub(crate) id: u32,
+    /// Not used in this implementation. Only used by `oxc_allocator`.
+    pub(crate) can_be_freed: AtomicBool,
     /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    pub(crate) _padding: u32,
 }
 
 impl RawTransferMetadata {
     pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, _padding: 0 }
+        Self { data_offset, is_ts, id: 0, can_be_freed: AtomicBool::new(false), _padding: 0 }
     }
 }
 
