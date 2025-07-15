@@ -74,7 +74,9 @@ fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
             continue;
         }
         let text = ctx.source_range(comment.content_span());
-        if text.starts_with("///") {
+
+        // `comment.content_span` doesn't include the leading `//` of the comment
+        if text.starts_with('/') {
             return true;
         }
     }
@@ -110,6 +112,7 @@ fn test() {
         r"(() => {})()",
         "(() => {})();",
         "/* eslint-disable no-empty-file */",
+        r#"/// <reference types="vite/client" />"#,
     ];
 
     let fail = vec![
