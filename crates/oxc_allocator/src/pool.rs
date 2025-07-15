@@ -1,4 +1,4 @@
-use std::{mem::ManuallyDrop, ops::Deref, sync::Mutex};
+use std::{iter, mem::ManuallyDrop, ops::Deref, sync::Mutex};
 
 use crate::Allocator;
 
@@ -7,13 +7,13 @@ use crate::Allocator;
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
 #[derive(Default)]
 pub struct AllocatorPool {
-    allocators: Mutex<Vec<AllocatorWrapper>>,
+    allocators: Mutex<Vec<Allocator>>,
 }
 
 impl AllocatorPool {
-    /// Creates a new [`AllocatorPool`] pre-filled with the given number of default `AllocatorWrapper` instances.
+    /// Creates a new [`AllocatorPool`] pre-filled with the given number of default [`Allocator`] instances.
     pub fn new(size: usize) -> AllocatorPool {
-        let allocators = AllocatorWrapper::new_vec(size);
+        let allocators = iter::repeat_with(Allocator::new).take(size).collect();
         AllocatorPool { allocators: Mutex::new(allocators) }
     }
 
@@ -29,19 +29,19 @@ impl AllocatorPool {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
         };
-        let allocator = allocator.unwrap_or_else(AllocatorWrapper::new);
+        let allocator = allocator.unwrap_or_else(Allocator::new);
 
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
     }
 
-    /// Add an [`AllocatorWrapper`] to the pool.
+    /// Add an [`Allocator`] to the pool.
     ///
     /// The `Allocator` should be empty, ready to be re-used.
     ///
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    fn add(&self, allocator: AllocatorWrapper) {
+    fn add(&self, allocator: Allocator) {
         let mut allocators = self.allocators.lock().unwrap();
         allocators.push(allocator);
     }
@@ -51,7 +51,7 @@ impl AllocatorPool {
 ///
 /// On drop, the `Allocator` is reset and returned to the pool.
 pub struct AllocatorGuard<'alloc_pool> {
-    allocator: ManuallyDrop<AllocatorWrapper>,
+    allocator: ManuallyDrop<Allocator>,
     pool: &'alloc_pool AllocatorPool,
 }
 
@@ -59,105 +59,16 @@ impl Deref for AllocatorGuard<'_> {
     type Target = Allocator;
 
     fn deref(&self) -> &Self::Target {
-        self.allocator.get()
+        &self.allocator
     }
 }
 
 impl Drop for AllocatorGuard<'_> {
     /// Return [`Allocator`] back to the pool.
     fn drop(&mut self) {
-        // SAFETY: After taking ownership of the `AllocatorWrapper`, we do not touch the `ManuallyDrop` again
+        // SAFETY: After taking ownership of the `Allocator`, we do not touch the `ManuallyDrop` again
         let mut allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
         allocator.reset();
         self.pool.add(allocator);
     }
 }
-
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
-mod wrapper {
-    use crate::Allocator;
-
-    /// Structure which wraps an [`Allocator`].
-    ///
-    /// Default implementation which is just a wrapper around an [`Allocator`].
-    pub struct AllocatorWrapper(Allocator);
-
-    impl AllocatorWrapper {
-        /// Create a new [`AllocatorWrapper`].
-        pub fn new() -> Self {
-            Self(Allocator::default())
-        }
-
-        /// Get reference to underlying [`Allocator`].
-        pub fn get(&self) -> &Allocator {
-            &self.0
-        }
-
-        /// Reset the [`Allocator`] in this [`AllocatorWrapper`].
-        pub fn reset(&mut self) {
-            self.0.reset();
-        }
-
-        /// Create a `Vec` of [`AllocatorWrapper`]s.
-        pub fn new_vec(size: usize) -> Vec<Self> {
-            std::iter::repeat_with(Self::new).take(size).collect()
-        }
-    }
-}
-
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-mod wrapper {
-    use crate::{Allocator, fixed_size::FixedSizeAllocator, fixed_size_constants::BUFFER_ALIGN};
-
-    /// Structure which wraps an [`Allocator`] with fixed size of 2 GiB, and aligned on 4 GiB.
-    ///
-    /// See [`FixedSizeAllocator`] for more details.
-    pub struct AllocatorWrapper(FixedSizeAllocator);
-
-    impl AllocatorWrapper {
-        /// Create a new [`AllocatorWrapper`].
-        pub fn new() -> Self {
-            Self(FixedSizeAllocator::new())
-        }
-
-        /// Get reference to underlying [`Allocator`].
-        pub fn get(&self) -> &Allocator {
-            &self.0
-        }
-
-        /// Reset the [`Allocator`] in this [`AllocatorWrapper`].
-        pub fn reset(&mut self) {
-            // Set cursor back to end
-            self.0.reset();
-
-            // Set data pointer back to start.
-            // SAFETY: Fixed-size allocators have data pointer originally aligned on `BUFFER_ALIGN`,
-            // and size less than `BUFFER_ALIGN`. So we can restore original data pointer by rounding down
-            // to next multiple of `BUFFER_ALIGN`.
-            unsafe {
-                let data_ptr = self.0.data_ptr();
-                let offset = data_ptr.as_ptr() as usize % BUFFER_ALIGN;
-                let data_ptr = data_ptr.sub(offset);
-                self.0.set_data_ptr(data_ptr);
-            }
-        }
-
-        /// Create a `Vec` of [`AllocatorWrapper`]s.
-        pub fn new_vec(size: usize) -> Vec<Self> {
-            // Each allocator consumes a large block of memory, so create them on demand instead of upfront
-            Vec::with_capacity(size)
-        }
-    }
-}
-
-use wrapper::AllocatorWrapper;

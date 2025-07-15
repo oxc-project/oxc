@@ -1,8 +1,9 @@
 use std::{
     alloc::{self, GlobalAlloc, Layout, System},
     mem::ManuallyDrop,
-    ops::{Deref, DerefMut},
+    ops::Deref,
     ptr::NonNull,
+    sync::Mutex,
 };
 
 use crate::{
@@ -12,6 +13,78 @@ use crate::{
 
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
+
+/// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
+///
+/// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
+#[derive(Default)]
+pub struct AllocatorPool {
+    allocators: Mutex<Vec<FixedSizeAllocator>>,
+}
+
+impl AllocatorPool {
+    /// Creates a new [`AllocatorPool`] with capacity for the given number of `FixedSizeAllocator` instances.
+    pub fn new(size: usize) -> AllocatorPool {
+        // Each allocator consumes a large block of memory, so create them on demand instead of upfront
+        let allocators = Vec::with_capacity(size);
+        AllocatorPool { allocators: Mutex::new(allocators) }
+    }
+
+    /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
+    ///
+    /// Returns an [`AllocatorGuard`] that gives access to the allocator.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the underlying mutex is poisoned.
+    pub fn get(&self) -> AllocatorGuard {
+        let allocator = {
+            let mut allocators = self.allocators.lock().unwrap();
+            allocators.pop()
+        };
+        let allocator = allocator.unwrap_or_else(FixedSizeAllocator::new);
+
+        AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
+    }
+
+    /// Add a [`FixedSizeAllocator`] to the pool.
+    ///
+    /// The `Allocator` should be empty, ready to be re-used.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the underlying mutex is poisoned.
+    fn add(&self, allocator: FixedSizeAllocator) {
+        let mut allocators = self.allocators.lock().unwrap();
+        allocators.push(allocator);
+    }
+}
+
+/// A guard object representing exclusive access to an [`Allocator`] from the pool.
+///
+/// On drop, the `Allocator` is reset and returned to the pool.
+pub struct AllocatorGuard<'alloc_pool> {
+    allocator: ManuallyDrop<FixedSizeAllocator>,
+    pool: &'alloc_pool AllocatorPool,
+}
+
+impl Deref for AllocatorGuard<'_> {
+    type Target = Allocator;
+
+    fn deref(&self) -> &Self::Target {
+        &self.allocator.allocator
+    }
+}
+
+impl Drop for AllocatorGuard<'_> {
+    /// Return [`Allocator`] back to the pool.
+    fn drop(&mut self) {
+        // SAFETY: After taking ownership of the `FixedSizeAllocator`, we do not touch the `ManuallyDrop` again
+        let mut allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
+        allocator.reset();
+        self.pool.add(allocator);
+    }
+}
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
 // But system allocator on Mac OS refuses allocations with 4 GiB alignment.
@@ -41,7 +114,7 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 /// To achieve this, we manually allocate memory to back the `Allocator`'s single chunk.
 /// We over-allocate 4 GiB, and then use a part of that allocation to back the `Allocator`.
 /// Inner `Allocator` is wrapped in `ManuallyDrop` to prevent it freeing the memory itself,
-/// and `AllocatorWrapper` has a custom `Drop` impl which frees the whole of the original allocation.
+/// and `FixedSizeAllocator` has a custom `Drop` impl which frees the whole of the original allocation.
 ///
 /// We allocate via `System` allocator, bypassing any registered alternative global allocator
 /// (e.g. Mimalloc in linter). Mimalloc complains that it cannot serve allocations with high alignment,
@@ -59,7 +132,7 @@ impl FixedSizeAllocator {
     #[expect(clippy::items_after_statements)]
     pub fn new() -> Self {
         // Allocate block of memory.
-        // SAFETY: Layout does not have zero size.
+        // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
         let Some(alloc_ptr) = NonNull::new(alloc_ptr) else {
             alloc::handle_alloc_error(ALLOC_LAYOUT);
@@ -92,26 +165,29 @@ impl FixedSizeAllocator {
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
         Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }
     }
+
+    /// Reset this [`FixedSizeAllocator`].
+    fn reset(&mut self) {
+        // Set cursor back to end
+        self.allocator.reset();
+
+        // Set data pointer back to start.
+        // SAFETY: Fixed-size allocators have data pointer originally aligned on `BUFFER_ALIGN`,
+        // and size less than `BUFFER_ALIGN`. So we can restore original data pointer by rounding down
+        // to next multiple of `BUFFER_ALIGN`.
+        unsafe {
+            let data_ptr = self.allocator.data_ptr();
+            let offset = data_ptr.as_ptr() as usize % BUFFER_ALIGN;
+            let data_ptr = data_ptr.sub(offset);
+            self.allocator.set_data_ptr(data_ptr);
+        }
+    }
 }
 
 impl Drop for FixedSizeAllocator {
     fn drop(&mut self) {
         // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`
         unsafe { System.dealloc(self.alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
-    }
-}
-
-impl Deref for FixedSizeAllocator {
-    type Target = Allocator;
-
-    fn deref(&self) -> &Self::Target {
-        &self.allocator
-    }
-}
-
-impl DerefMut for FixedSizeAllocator {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.allocator
     }
 }
 

@@ -37,18 +37,9 @@ mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
-// Fixed size allocators are only supported on 64-bit little-endian platforms at present
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-mod fixed_size;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
-mod pool;
 mod string_builder;
 mod take_in;
 mod vec;
@@ -61,10 +52,36 @@ pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
-pub use pool::{AllocatorGuard, AllocatorPool};
 pub use string_builder::StringBuilder;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
+
+// Fixed size allocators are only supported on 64-bit little-endian platforms at present
+
+#[cfg(not(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+)))]
+mod pool;
+
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
+mod pool_fixed_size;
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
+use pool_fixed_size as pool;
+
+pub use pool::{AllocatorGuard, AllocatorPool};
 
 mod generated {
     #[cfg(all(
