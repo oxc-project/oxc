@@ -1,7 +1,54 @@
 parser_misc Summary:
 AST Parsed     : 44/44 (100.00%)
 Positive Passed: 44/44 (100.00%)
-Negative Passed: 47/47 (100.00%)
+Negative Passed: 48/48 (100.00%)
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:1:10]
+ 1 │ function arguments() {}
+   ·          ─────────
+ 2 │ function eval() {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:2:10]
+ 1 │ function arguments() {}
+ 2 │ function eval() {}
+   ·          ────
+ 3 │ 
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:4:16]
+ 3 │ 
+ 4 │ function foo({ arguments }) {}
+   ·                ─────────
+ 5 │ function foo2([arguments]) {}
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:5:16]
+ 4 │ function foo({ arguments }) {}
+ 5 │ function foo2([arguments]) {}
+   ·                ─────────
+ 6 │ function foo3({ eval }) {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:6:17]
+ 5 │ function foo2([arguments]) {}
+ 6 │ function foo3({ eval }) {}
+   ·                 ────
+ 7 │ function foo4([eval]) {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:7:16]
+ 6 │ function foo3({ eval }) {}
+ 7 │ function foo4([eval]) {}
+   ·                ────
+ 8 │ 
+   ╰────
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
