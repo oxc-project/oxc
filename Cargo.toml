@@ -226,7 +226,7 @@ sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.7.0"
 similar-asserts = "1.7.0"
-smallvec = "1.15.1"
+smallvec = { version = "1.15.1", features = ["union"] }
 tempfile = "3.20.0"
 tokio = { version = "1.45.1", default-features = false }
 tower-lsp-server = "0.22.0"
