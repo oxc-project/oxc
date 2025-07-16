@@ -3,7 +3,10 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useCallback(() => {
  3 │             console.log(props.foo?.toString());
+   ·                         ────┬────
+   ·                             ╰── useCallback uses `props.foo` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -12,7 +15,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar.baz);
+   ·                         ───────┬──────
+   ·                                ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -21,7 +27,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar?.baz);
+   ·                         ───────┬──────
+   ·                                ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -30,7 +39,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar.toString());
+   ·                         ───────┬──────
+   ·                                ╰── useCallback uses `props.foo.bar` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -39,7 +51,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, []);
    ·              ──
  6 │         }
@@ -48,6 +63,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'setCount'
     ╭─[exhaustive_deps.tsx:9:14]
+  5 │             let id = setInterval(() => {
+  6 │               setCount(c => c + 1);
+    ·               ────┬───
+    ·                   ╰── useEffect uses `setCount` here
+  7 │             }, 1000);
   8 │             return () => clearInterval(id);
   9 │           }, []);
     ·              ──
@@ -57,7 +77,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, []);
    ·              ──
  6 │         }
@@ -66,7 +89,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, []);
    ·              ──
  6 │         }
@@ -147,6 +173,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:7:14]
+ 4 │             if (true) {
+ 5 │               console.log(local);
+   ·                           ──┬──
+   ·                             ╰── useEffect uses `local` here
  6 │             }
  7 │           }, []);
    ·              ──
@@ -156,6 +186,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:7:14]
+ 4 │             try {
+ 5 │               console.log(local);
+   ·                           ──┬──
+   ·                             ╰── useEffect uses `local` here
  6 │             } finally {}
  7 │           }, []);
    ·              ──
@@ -165,6 +199,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:8:14]
+ 4 │             function inner() {
+ 5 │               console.log(local);
+   ·                           ──┬──
+   ·                             ╰── useEffect uses `local` here
+ 6 │             }
  7 │             inner();
  8 │           }, []);
    ·              ──
@@ -174,6 +213,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local1'
    ╭─[exhaustive_deps.tsx:8:16]
+ 5 │             useEffect(() => {
+ 6 │               console.log(local1);
+   ·                           ───┬──
+   ·                              ╰── useEffect uses `local1` here
  7 │               console.log(local2);
  8 │             }, []);
    ·                ──
@@ -183,7 +226,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local2'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │             console.log(local1);
  6 │             console.log(local2);
+   ·                         ───┬──
+   ·                            ╰── useEffect uses `local2` here
  7 │           }, [local1]);
    ·              ────────
  8 │         }
@@ -237,7 +283,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'local2'
    ╭─[exhaustive_deps.tsx:8:16]
+ 6 │               console.log(local1);
  7 │               console.log(local2);
+   ·                           ───┬──
+   ·                              ╰── useCallback uses `local2` here
  8 │             }, [local1]);
    ·                ────────
  9 │           }
@@ -246,6 +295,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useEffect(() => {
+ 4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │             console.log(local);
  6 │           }, []);
    ·              ──
@@ -300,7 +353,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             return history.listen();
+   ·                    ───┬───
+   ·                       ╰── useEffect uses `history` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -309,6 +365,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'history.foo', and 'history.foo.bar'
    ╭─[exhaustive_deps.tsx:7:14]
+ 3 │             return [
+ 4 │               history.foo.bar[2].dobedo.listen(),
+   ·               ───────────
+ 5 │               history.foo.bar().dobedo.listen[2]
+   ·               ───────────
  6 │             ];
  7 │           }, []);
    ·              ──
@@ -318,6 +379,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │             return [
+ 4 │               history?.foo
+   ·               ───┬───
+   ·                  ╰── useEffect uses `history.foo` here
  5 │             ];
  6 │           }, []);
    ·              ──
@@ -354,7 +419,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'foo', and 'baz'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(foo, bar, baz);
+   ·                         ───  ───  ───
  4 │           }, ['foo', 'bar']);
    ·              ──────────────
  5 │         }
@@ -390,7 +457,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'bar', 'foo', and 'baz'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(foo, bar, baz);
+   ·                         ───  ───  ───
  4 │           }, [42, false, null]);
    ·              ─────────────────
  5 │         }
@@ -426,7 +495,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:14]
+ 4 │           useEffect(() => {
  5 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  6 │           }, [...dependencies]);
    ·              ─────────────────
  7 │         }
@@ -453,7 +525,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, [computeCacheKey(local)]);
    ·              ────────────────────────
  6 │         }
@@ -471,7 +546,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.items'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(props.items[0]);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `props.items` here
  4 │           }, [props.items[0]]);
    ·              ────────────────
  5 │         }
@@ -498,7 +576,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'items'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(items[0]);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `items` here
  4 │           }, [items[0]]);
    ·              ──────────
  5 │         }
@@ -534,7 +615,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.foo', and 'props.bar'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useCallback(() => {
+ 4 │             console.log(props.foo);
+   ·                         ─────
  5 │             console.log(props.bar);
+   ·                         ─────
  6 │           }, []);
    ·              ──
  7 │         }
@@ -543,6 +628,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useCallback(() => {
+ 3 │             const { foo } = props;
+   ·                             ──┬──
+   ·                               ╰── useCallback uses `props.foo` here
  4 │             console.log(foo);
  5 │           }, [props.bar]);
    ·              ───────────
@@ -561,6 +650,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useCallback(() => {
+ 3 │             const { foo: { bar } } = props;
+   ·                                      ──┬──
+   ·                                        ╰── useCallback uses `props.foo` here
  4 │             console.log(bar);
  5 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -579,6 +672,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo.bar'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useEffect(() => {
+ 4 │             const { bar } = foo();
+   ·                             ─┬─
+   ·                              ╰── useEffect uses `foo.bar` here
  5 │             console.log(bar);
  6 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -588,7 +685,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, [local.id]);
    ·              ──────────
  6 │         }
@@ -597,7 +697,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           const fn = useCallback(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useCallback uses `local` here
  5 │           }, [local.id]);
    ·              ──────────
  6 │         }
@@ -642,7 +745,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.baz'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           const fn = useCallback(() => {
  3 │             console.log(props.foo.bar.baz);
+   ·                         ──────┬──────
+   ·                               ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -651,7 +757,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'color'
    ╭─[exhaustive_deps.tsx:6:14]
+ 4 │             console.log(props.foo.bar.baz);
  5 │             console.log(color);
+   ·                         ──┬──
+   ·                           ╰── useCallback uses `color` here
  6 │           }, [props.foo, props.foo.bar.baz]);
    ·              ──────────────────────────────
  7 │         }
@@ -678,7 +787,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.foo.fizz.bizz', and 'props.foo.bar.baz'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           const fn = useCallback(() => {
+ 3 │             console.log(props.foo.bar.baz);
+   ·                         ─────────────
  4 │             console.log(props.foo.fizz.bizz);
+   ·                         ──────────────
  5 │           }, []);
    ·              ──
  6 │         }
@@ -687,7 +800,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           const fn = useCallback(() => {
  3 │             console.log(props.foo.bar);
+   ·                         ────┬────
+   ·                             ╰── useCallback uses `props.foo.bar` here
  4 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  5 │         }
@@ -705,7 +821,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.hello', and 'props'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           const fn = useCallback(() => {
+ 3 │             console.log(props);
+   ·                         ─────
  4 │             console.log(props.hello);
+   ·                         ─────
  5 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  6 │         }
@@ -768,7 +888,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(props.foo);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `props.foo` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -777,7 +900,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', and 'props.bar'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             console.log(props.foo);
+   ·                         ─────
  4 │             console.log(props.bar);
+   ·                         ─────
  5 │           }, []);
    ·              ──
  6 │         }
@@ -786,7 +913,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'f', 'd', and 'e'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(b, e, d, c, a, g, f);
+   ·                         ─  ─  ─           ─
  5 │           }, [c, a, g]);
    ·              ─────────
  6 │         }
@@ -795,7 +924,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'f', 'd', and 'e'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(b, e, d, c, a, g, f);
+   ·                         ─  ─  ─           ─
  5 │           }, [a, c, g]);
    ·              ─────────
  6 │         }
@@ -804,7 +935,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'b', 'a', 'g', 'f', 'd', 'c', and 'e'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(b, e, d, c, a, g, f);
+   ·                         ─  ─  ─  ─  ─  ─  ─
  5 │           }, []);
    ·              ──
  6 │         }
@@ -813,7 +946,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'local', 'props.foo', and 'props.bar'
    ╭─[exhaustive_deps.tsx:7:14]
+ 3 │           useEffect(() => {
+ 4 │             console.log(props.foo);
+   ·                         ─────
+ 5 │             console.log(props.bar);
+   ·                         ─────
  6 │             console.log(local);
+   ·                         ─────
  7 │           }, []);
    ·              ──
  8 │         }
@@ -822,7 +961,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │             console.log(props.bar);
  6 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  7 │           }, [props]);
    ·              ───────
  8 │         }
@@ -831,7 +973,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             console.log(props.foo);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `props.foo` here
  4 │           }, []);
    ·              ──
  5 │           useCallback(() => {
@@ -840,7 +985,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │           useCallback(() => {
  6 │             console.log(props.foo);
+   ·                         ──┬──
+   ·                           ╰── useCallback uses `props.foo` here
  7 │           }, []);
    ·              ──
  8 │           useMemo(() => {
@@ -849,7 +997,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.foo'
     ╭─[exhaustive_deps.tsx:10:14]
+  8 │           useMemo(() => {
   9 │             console.log(props.foo);
+    ·                         ──┬──
+    ·                           ╰── useMemo uses `props.foo` here
  10 │           }, []);
     ·              ──
  11 │           React.useEffect(() => {
@@ -858,7 +1009,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
     ╭─[exhaustive_deps.tsx:13:14]
+ 11 │           React.useEffect(() => {
  12 │             console.log(props.foo);
+    ·                         ──┬──
+    ·                           ╰── useEffect uses `props.foo` here
  13 │           }, []);
     ·              ──
  14 │           React.useCallback(() => {
@@ -867,7 +1021,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
     ╭─[exhaustive_deps.tsx:16:14]
+ 14 │           React.useCallback(() => {
  15 │             console.log(props.foo);
+    ·                         ──┬──
+    ·                           ╰── useCallback uses `props.foo` here
  16 │           }, []);
     ·              ──
  17 │           React.useMemo(() => {
@@ -876,7 +1033,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.foo'
     ╭─[exhaustive_deps.tsx:19:14]
+ 17 │           React.useMemo(() => {
  18 │             console.log(props.foo);
+    ·                         ──┬──
+    ·                           ╰── useMemo uses `props.foo` here
  19 │           }, []);
     ·              ──
  20 │           React.notReactiveHook(() => {
@@ -885,7 +1045,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │           useEffect(() => {
  6 │             console.log(props.foo);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `props.foo` here
  7 │           }, []);
    ·              ──
  8 │           React.useEffect(() => {
@@ -894,7 +1057,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo'
     ╭─[exhaustive_deps.tsx:10:14]
+  8 │           React.useEffect(() => {
   9 │             console.log(props.foo);
+    ·                         ──┬──
+    ·                           ╰── useEffect uses `props.foo` here
  10 │           }, []);
     ·              ──
  11 │           React.useCustomEffect(() => {
@@ -912,7 +1078,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, [a ? local : b]);
    ·              ───────────────
  6 │         }
@@ -930,7 +1099,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, [a && local]);
    ·              ────────────
  6 │         }
@@ -957,7 +1129,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │             ref.current = {};
  6 │             setState(state + 1);
+   ·                      ──┬──
+   ·                        ╰── useEffect uses `state` here
  7 │           }, []);
    ·              ──
  8 │         }
@@ -966,7 +1141,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │             ref.current = {};
  6 │             setState(state + 1);
+   ·                      ──┬──
+   ·                        ╰── useEffect uses `state` here
  7 │           }, [ref]);
    ·              ─────
  8 │         }
@@ -975,7 +1153,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.current.innerHTML'
     ╭─[exhaustive_deps.tsx:9:14]
+  6 │             console.log(ref2.current.textContent);
+  7 │             alert(props.someOtherRefs.current.innerHTML);
+    ·                   ───────────────────────────
   8 │             fetch(props.color);
+    ·                   ─────
   9 │           }, []);
     ·              ──
  10 │         }
@@ -1083,6 +1265,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
    ╭─[exhaustive_deps.tsx:6:15]
+ 3 │             focus() {
+ 4 │               alert(props.hello);
+   ·                     ──┬──
+   ·                       ╰── useImperativeHandle uses `props.hello` here
  5 │             }
  6 │           }), [])
    ·               ──
@@ -1092,6 +1278,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
    ╭─[exhaustive_deps.tsx:6:14]
+ 2 │           useEffect(() => {
+ 3 │             if (props.onChange) {
+   ·                 ─────
+ 4 │               props.onChange();
+   ·               ─────
  5 │             }
  6 │           }, []);
    ·              ──
@@ -1101,6 +1292,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
    ╭─[exhaustive_deps.tsx:6:14]
+ 2 │           useEffect(() => {
+ 3 │             if (props?.onChange) {
+   ·                 ─────
+ 4 │               props?.onChange();
+   ·               ─────
  5 │             }
  6 │           }, []);
    ·              ──
@@ -1110,6 +1306,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
     ╭─[exhaustive_deps.tsx:9:14]
+  3 │             function play() {
+  4 │               props.onPlay();
+    ·               ──┬──
+    ·                 ╰── useEffect uses `props` here
+  5 │             }
+  6 │             function pause() {
+  7 │               props.onPause();
   8 │             }
   9 │           }, []);
     ·              ──
@@ -1119,6 +1322,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', and 'props.foo.onChange'
    ╭─[exhaustive_deps.tsx:6:14]
+ 2 │           useEffect(() => {
+ 3 │             if (props.foo.onChange) {
+   ·                 ─────────
+ 4 │               props.foo.onChange();
+   ·               ─────────
  5 │             }
  6 │           }, []);
    ·              ──
@@ -1128,6 +1336,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', 'props.foo.onChange', and 'props'
    ╭─[exhaustive_deps.tsx:7:14]
+ 2 │           useEffect(() => {
+ 3 │             props.onChange();
+   ·             ─────
+ 4 │             if (props.foo.onChange) {
+   ·                 ─────────
+ 5 │               props.foo.onChange();
+   ·               ─────────
  6 │             }
  7 │           }, []);
    ·              ──
@@ -1137,6 +1352,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:7:14]
+ 4 │             if (skillsCount === 0 && !props.isEditMode) {
+ 5 │               props.toggleEditMode();
+   ·               ──┬──
+   ·                 ╰── useEffect uses `props` here
  6 │             }
  7 │           }, [skillsCount, props.isEditMode, props.toggleEditMode]);
    ·              ─────────────────────────────────────────────────────
@@ -1146,6 +1365,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.isEditMode', 'skillsCount', and 'props'
    ╭─[exhaustive_deps.tsx:7:14]
+ 3 │           useEffect(() => {
+ 4 │             if (skillsCount === 0 && !props.isEditMode) {
+   ·                 ───────────           ─────
+ 5 │               props.toggleEditMode();
+   ·               ─────
  6 │             }
  7 │           }, []);
    ·              ──
@@ -1155,6 +1379,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             externalCall(props);
+   ·                          ──┬──
+   ·                            ╰── useEffect uses `props` here
  4 │             props.onChange();
  5 │           }, []);
    ·              ──
@@ -1164,6 +1392,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
+ 2 │           useEffect(() => {
+ 3 │             props.onChange();
+   ·             ──┬──
+   ·               ╰── useEffect uses `props` here
  4 │             externalCall(props);
  5 │           }, []);
    ·              ──
@@ -1173,6 +1405,22 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'value3', 'asyncValue', 'value', 'value2', and 'value4'
     ╭─[exhaustive_deps.tsx:19:14]
+  7 │           useEffect(() => {
+  8 │             if (value4) {
+    ·                 ──────
+  9 │               value = {};
+    ·               ─────
+ 10 │             }
+ 11 │             value2 = 100;
+    ·             ──────
+ 12 │             value = 43;
+ 13 │             value4 = true;
+ 14 │             console.log(value2);
+ 15 │             console.log(value3);
+    ·                         ──────
+ 16 │             setTimeout(() => {
+ 17 │               asyncValue = 100;
+    ·               ──────────
  18 │             });
  19 │           }, []);
     ·              ──
@@ -1182,6 +1430,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'asyncValue'
     ╭─[exhaustive_deps.tsx:15:14]
+ 12 │             setTimeout(() => {
+ 13 │               asyncValue = 100;
+    ·               ─────┬────
+    ·                    ╰── useEffect uses `asyncValue` here
  14 │             });
  15 │           }, [value, value2, value3]);
     ·              ───────────────────────
@@ -1254,7 +1506,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local4'
     ╭─[exhaustive_deps.tsx:11:14]
+  9 │             console.log(local3);
  10 │             console.log(local4);
+    ·                         ───┬──
+    ·                            ╰── useEffect uses `local4` here
  11 │           }, [local1, local3]);
     ·              ────────────────
  12 │         }
@@ -1533,7 +1788,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
     ╭─[exhaustive_deps.tsx:21:14]
+ 19 │           useEffect(() => {
  20 │             return Store.subscribe(handleNext1);
+    ·                                    ─────┬─────
+    ·                                         ╰── useEffect uses `handleNext1` here
  21 │           }, []);
     ·              ──
  22 │           useLayoutEffect(() => {
@@ -1542,7 +1800,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
     ╭─[exhaustive_deps.tsx:24:14]
+ 22 │           useLayoutEffect(() => {
  23 │             return Store.subscribe(handleNext2);
+    ·                                    ─────┬─────
+    ·                                         ╰── useLayoutEffect uses `handleNext2` here
  24 │           }, []);
     ·              ──
  25 │           useMemo(() => {
@@ -1551,7 +1812,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
     ╭─[exhaustive_deps.tsx:27:14]
+ 25 │           useMemo(() => {
  26 │             return Store.subscribe(handleNext3);
+    ·                                    ─────┬─────
+    ·                                         ╰── useMemo uses `handleNext3` here
  27 │           }, []);
     ·              ──
  28 │         }
@@ -1560,7 +1824,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
     ╭─[exhaustive_deps.tsx:24:14]
+ 22 │           useEffect(() => {
  23 │             return Store.subscribe(handleNext1);
+    ·                                    ─────┬─────
+    ·                                         ╰── useEffect uses `handleNext1` here
  24 │           }, []);
     ·              ──
  25 │           useLayoutEffect(() => {
@@ -1569,7 +1836,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
     ╭─[exhaustive_deps.tsx:27:14]
+ 25 │           useLayoutEffect(() => {
  26 │             return Store.subscribe(handleNext2);
+    ·                                    ─────┬─────
+    ·                                         ╰── useLayoutEffect uses `handleNext2` here
  27 │           }, []);
     ·              ──
  28 │           useMemo(() => {
@@ -1578,7 +1848,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
     ╭─[exhaustive_deps.tsx:30:14]
+ 28 │           useMemo(() => {
  29 │             return Store.subscribe(handleNext3);
+    ·                                    ─────┬─────
+    ·                                         ╰── useMemo uses `handleNext3` here
  30 │           }, []);
     ·              ──
  31 │         }
@@ -1587,7 +1860,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleNext1'
     ╭─[exhaustive_deps.tsx:24:14]
+ 22 │           useEffect(() => {
  23 │             return Store.subscribe(handleNext1);
+    ·                                    ─────┬─────
+    ·                                         ╰── useEffect uses `handleNext1` here
  24 │           }, []);
     ·              ──
  25 │           useLayoutEffect(() => {
@@ -1596,7 +1872,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'handleNext2'
     ╭─[exhaustive_deps.tsx:27:14]
+ 25 │           useLayoutEffect(() => {
  26 │             return Store.subscribe(handleNext2);
+    ·                                    ─────┬─────
+    ·                                         ╰── useLayoutEffect uses `handleNext2` here
  27 │           }, []);
     ·              ──
  28 │           useMemo(() => {
@@ -1605,7 +1884,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'handleNext3'
     ╭─[exhaustive_deps.tsx:30:14]
+ 28 │           useMemo(() => {
  29 │             return Store.subscribe(handleNext3);
+    ·                                    ─────┬─────
+    ·                                         ╰── useMemo uses `handleNext3` here
  30 │           }, []);
     ·              ──
  31 │         }
@@ -1776,6 +2058,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'count'
     ╭─[exhaustive_deps.tsx:9:14]
+  5 │             let id = setInterval(() => {
+  6 │               setCount(count + 1);
+    ·                        ──┬──
+    ·                          ╰── useEffect uses `count` here
+  7 │             }, 1000);
   8 │             return () => clearInterval(id);
   9 │           }, []);
     ·              ──
@@ -1785,6 +2072,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'count', and 'increment'
     ╭─[exhaustive_deps.tsx:10:14]
+  6 │             let id = setInterval(() => {
+  7 │               setCount(count + increment);
+    ·                        ─────   ─────────
+  8 │             }, 1000);
   9 │             return () => clearInterval(id);
  10 │           }, []);
     ·              ──
@@ -1794,6 +2085,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
     ╭─[exhaustive_deps.tsx:10:14]
+  6 │             let id = setInterval(() => {
+  7 │               setCount(count => count + increment);
+    ·                                         ────┬────
+    ·                                             ╰── useEffect uses `increment` here
+  8 │             }, 1000);
   9 │             return () => clearInterval(id);
  10 │           }, []);
     ·              ──
@@ -1803,6 +2099,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
     ╭─[exhaustive_deps.tsx:10:14]
+  6 │             let id = setInterval(() => {
+  7 │               setCount(count => count + increment);
+    ·                                         ────┬────
+    ·                                             ╰── useEffect uses `increment` here
+  8 │             }, 1000);
   9 │             return () => clearInterval(id);
  10 │           }, []);
     ·              ──
@@ -1812,6 +2113,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
     ╭─[exhaustive_deps.tsx:13:14]
+  9 │             let id = setInterval(() => {
+ 10 │               setCount(count => increment(count));
+    ·                                 ────┬────
+    ·                                     ╰── useEffect uses `increment` here
+ 11 │             }, 1000);
  12 │             return () => clearInterval(id);
  13 │           }, []);
     ·              ──
@@ -1830,6 +2136,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'increment'
     ╭─[exhaustive_deps.tsx:9:14]
+  5 │             let id = setInterval(() => {
+  6 │               setCount(count => count + increment);
+    ·                                         ────┬────
+    ·                                             ╰── useEffect uses `increment` here
+  7 │             }, 1000);
   8 │             return () => clearInterval(id);
   9 │           }, []);
     ·              ──
@@ -1839,6 +2150,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'tick'
     ╭─[exhaustive_deps.tsx:13:14]
+  9 │             let id = setInterval(() => {
+ 10 │               tick();
+    ·               ──┬─
+    ·                 ╰── useEffect uses `tick` here
+ 11 │             }, 1000);
  12 │             return () => clearInterval(id);
  13 │           }, []);
     ·              ──
@@ -1848,7 +2164,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'podcasts'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           useEffect(() => {
  3 │             alert(podcasts);
+   ·                   ────┬───
+   ·                       ╰── useEffect uses `podcasts` here
  4 │           }, []);
    ·              ──
  5 │           let [podcasts, setPodcasts] = useState(null);
@@ -1857,7 +2176,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             fetchPodcasts(id).then(setPodcasts);
+   ·             ──────┬──────
+   ·                   ╰── useEffect uses `fetchPodcasts` here
  5 │           }, [id]);
    ·              ────
  6 │         }
@@ -1866,7 +2188,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             fetchPodcasts(id).then(setPodcasts);
+   ·             ──────┬──────
+   ·                   ╰── useEffect uses `fetchPodcasts` here
  5 │           }, [id]);
    ·              ────
  6 │         }
@@ -1875,6 +2200,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'fetchPodcasts2', and 'fetchPodcasts'
     ╭─[exhaustive_deps.tsx:9:14]
+  5 │               console.log(id);
+  6 │               fetchPodcasts(id).then(setPodcasts);
+    ·               ─────────────
+  7 │               fetchPodcasts2(id).then(setPodcasts);
+    ·               ──────────────
   8 │             });
   9 │           }, [id]);
     ·              ────
@@ -1884,6 +2214,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useEffect(() => {
+ 4 │             console.log(fetchPodcasts);
+   ·                         ──────┬──────
+   ·                               ╰── useEffect uses `fetchPodcasts` here
  5 │             fetchPodcasts(id).then(setPodcasts);
  6 │           }, [id]);
    ·              ────
@@ -1893,6 +2227,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'fetchPodcasts'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useEffect(() => {
+ 4 │             console.log(fetchPodcasts);
+   ·                         ──────┬──────
+   ·                               ╰── useEffect uses `fetchPodcasts` here
  5 │             fetchPodcasts?.(id).then(setPodcasts);
  6 │           }, [id]);
    ·              ────
@@ -1956,7 +2294,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'prop'
    ╭─[exhaustive_deps.tsx:4:14]
+ 2 │           const foo = useCallback(() => {
  3 │             prop.hello(foo);
+   ·             ──┬─
+   ·               ╰── useCallback uses `prop` here
  4 │           }, [foo]);
    ·              ─────
  5 │           const bar = useCallback(() => {
@@ -1965,6 +2306,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:31]
+ 3 │           function myEffect() {
+ 4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }
  6 │           useEffect(myEffect, []);
    ·                               ──
@@ -1974,6 +2319,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:31]
+ 3 │           const myEffect = () => {
+ 4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           };
  6 │           useEffect(myEffect, []);
    ·                               ──
@@ -1983,6 +2332,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:6:31]
+ 3 │           const myEffect = function() {
+ 4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           };
  6 │           useEffect(myEffect, []);
    ·                               ──
@@ -1992,6 +2345,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'otherThing'
     ╭─[exhaustive_deps.tsx:9:31]
+  3 │           const myEffect = () => {
+  4 │             otherThing();
+    ·             ─────┬────
+    ·                  ╰── useEffect uses `otherThing` here
+  5 │           };
+  6 │           const otherThing = () => {
+  7 │             console.log(local);
   8 │           };
   9 │           useEffect(myEffect, []);
     ·                               ──
@@ -2003,7 +2363,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:7:31]
  6 │ 
  7 │           useEffect(myEffect, []);
-   ·                               ──
+   ·                     ────┬───  ──
+   ·                         ╰── useEffect uses `myEffect` here
  8 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -2012,7 +2373,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:31]
  5 │           }, delay);
  6 │           useEffect(myEffect, [local]);
-   ·                               ───────
+   ·                     ────┬───  ───────
+   ·                         ╰── useEffect uses `myEffect` here
  7 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -2021,7 +2383,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:2:31]
  1 │ function MyComponent({myEffect}) {
  2 │           useEffect(myEffect, []);
-   ·                               ──
+   ·                     ────┬───  ──
+   ·                         ╰── useEffect uses `myEffect` here
  3 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -2037,7 +2400,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
+ 3 │           useEffect(() => {
  4 │             console.log(local);
+   ·                         ──┬──
+   ·                           ╰── useEffect uses `local` here
  5 │           }, []);
    ·              ──
  6 │         }
@@ -2046,7 +2412,11 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'foo.bar.baz', and 'props.foo.bar.baz'
    ╭─[exhaustive_deps.tsx:6:14]
+ 3 │           useEffect(() => {
+ 4 │             foo.bar.baz = 43;
+   ·             ───────
  5 │             props.foo.bar.baz = 1;
+   ·             ─────────────
  6 │           }, []);
    ·              ──
  7 │         }
@@ -2298,7 +2668,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'handleFrame'
     ╭─[exhaustive_deps.tsx:10:14]
+  8 │           useEffect(() => {
   9 │             setTimeout(handleFrame)
+    ·                        ─────┬─────
+    ·                             ╰── useEffect uses `handleFrame` here
  10 │           }, [])
     ·              ──
  11 │ 
@@ -2307,7 +2680,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'log'
     ╭─[exhaustive_deps.tsx:9:12]
+  7 │         useEffect(() => {
   8 │           log();
+    ·           ─┬─
+    ·            ╰── useEffect uses `log` here
   9 │         }, []);
     ·            ──
  10 │         }
@@ -2316,7 +2692,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
+ 5 │             const someNumber: typeof state = 2;
  6 │             setState(prevState => prevState + someNumber + state);
+   ·                                                            ──┬──
+   ·                                                              ╰── useSpecialEffect uses `state` here
  7 │           }, [])
    ·              ──
  8 │         }
