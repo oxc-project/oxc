@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+- c995fe2 semantic: Build semantic for `.d.ts` files (#12193) (camc314)
+
+### 🐛 Bug Fixes
+
+- 089f7b1 semantic: Allow `arguments`/`eval` as name of `TSTypeAliasDeclaration`, `TSInterfaceDeclaration` (#12291) (camc314)
+- 1bfd44f semantic: Allow `arguments`/`eval` as spread argument name inside `TSMethodSignature`, `TSFunctionType` (#12290) (camc314)
+- a740f3f semantic: Allow `arguments`/`eval` as argument name inside `TSMethodSignature` (#12289) (camc314)
+- cd98426 semantic: Handle var hoisting in catch block with same catch parameter name (#12313) (Dunqing)
+- e82f758 semantic: Allow `arguments`/`eval` as argument name inside `TSFunctionType` (#12288) (camc314)
+- 2a1e805 semantic: Allow assigning to `eval` and `arguments` in ambient context (#12208) (camc314)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c025868 ast: Remove `AstKind` for `TSFunctionType` (#12287) (camc314)
+
+### ⚡ Performance
+
+- 6f58abc semantic: Inline `SemanticBuilder::pop_ast_node` (#12280) (Boshen)
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 🐛 Bug Fixes

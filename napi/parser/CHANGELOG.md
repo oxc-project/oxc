@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🚜 Refactor
+
+- a2da682 napi/parser: Clarify pointer maths (#12300) (overlookmotel)
+- 2f9bd11 allocator: Fixed size allocator leave space for metadata after arena (#12278) (overlookmotel)
+- 5fba91c napi/parser: Raw transfer: introduce metadata struct (#12269) (overlookmotel)
+- 39ef911 napi/parser, allocator: Raw transfer: store buffer size and align as consts (#12275) (overlookmotel)
+- d009bdb napi/parser: Raw transfer: store offsets as consts (#12268) (overlookmotel)
+- 43f61ed napi/parser: Correct comment about raw transfer buffer size (#12273) (overlookmotel)
+- 28ed99b napi/parser: Do not compile raw transfer code on WASM (#12271) (overlookmotel)
+
+### ⚡ Performance
+
+- cc1e9fc napi/parser: Raw transfer: reduce size of buffer by 16 bytes (#12277) (overlookmotel)
+- 28be5de napi/parser: Raw transfer: move check for supported platform (#12274) (overlookmotel)
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🚜 Refactor
+
+- a2da682 napi/parser: Clarify pointer maths (#12300) (overlookmotel)
+- 2f9bd11 allocator: Fixed size allocator leave space for metadata after arena (#12278) (overlookmotel)
+- 5fba91c napi/parser: Raw transfer: introduce metadata struct (#12269) (overlookmotel)
+- 39ef911 napi/parser, allocator: Raw transfer: store buffer size and align as consts (#12275) (overlookmotel)
+- d009bdb napi/parser: Raw transfer: store offsets as consts (#12268) (overlookmotel)
+- 43f61ed napi/parser: Correct comment about raw transfer buffer size (#12273) (overlookmotel)
+- 28ed99b napi/parser: Do not compile raw transfer code on WASM (#12271) (overlookmotel)
+
+### ⚡ Performance
+
+- cc1e9fc napi/parser: Raw transfer: reduce size of buffer by 16 bytes (#12277) (overlookmotel)
+- 28be5de napi/parser: Raw transfer: move check for supported platform (#12274) (overlookmotel)
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 🚀 Features

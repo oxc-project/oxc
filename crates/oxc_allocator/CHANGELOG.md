@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🐛 Bug Fixes
+
+- 13c5783 allocator: Fix `FixedSizeAllocator` pointer maths (#12299) (overlookmotel)
+
+### 🚜 Refactor
+
+- 04e6a2f allocator: Improve documentation on pointer alignment (#12307) (overlookmotel)
+- 2f9bd11 allocator: Fixed size allocator leave space for metadata after arena (#12278) (overlookmotel)
+- 39ef911 napi/parser, allocator: Raw transfer: store buffer size and align as consts (#12275) (overlookmotel)
+- f130a0c allocator: Disable fixed size allocators on unsupported platforms (#12272) (overlookmotel)
+
+### ⚡ Performance
+
+- cc1e9fc napi/parser: Raw transfer: reduce size of buffer by 16 bytes (#12277) (overlookmotel)
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 💥 BREAKING CHANGES

@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c7b1056 transformer/object-rest-spread: Arrow function expressions with object rest patterns (#12185) (Jason Ho)
+- fb76e3c transform/styled-components: Fix spans of quasis when some quasis removed (#12240) (overlookmotel)
+
+### 🚜 Refactor
+
+- 9e1acc2 transform/styled-components: Use `SliceIterExt` (#12295) (overlookmotel)
+- 97e5f9c transform/styled-components: Rename var (#12283) (overlookmotel)
+- 6094099 transform/styled-components: Update comments (#12282) (overlookmotel)
+- ab9d91c transform/styled-components: Remove outdated comment (#12261) (overlookmotel)
+
+### ⚡ Performance
+
+- 5ecf5c4 transform/styled-components: Optimize removal loop (#12284) (overlookmotel)
+- a8d1e22 transformer/styled-components: Remove quasis and expressions in batch (#12256) (Dunqing)
+- 8e13e2a transformer/styled-components: Simplify CSS minification (#12224) (overlookmotel)
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 🚀 Features
