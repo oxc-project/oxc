@@ -1,8 +1,10 @@
 use memchr::memmem::Finder;
+
 use oxc_span::SourceType;
 
-use super::{SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 use crate::loader::JavaScriptSource;
+
+use super::{SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
 pub struct SveltePartialLoader<'a> {
     source_text: &'a str,

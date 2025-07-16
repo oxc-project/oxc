@@ -1,5 +1,6 @@
-use oxc_data_structures::rope::{Rope, get_line_column};
 use std::borrow::Cow;
+
+use oxc_data_structures::rope::{Rope, get_line_column};
 
 #[derive(Clone, Debug)]
 pub struct SpanPositionMessage<'a> {

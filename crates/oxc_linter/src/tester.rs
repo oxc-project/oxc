@@ -7,11 +7,12 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Allocator, AllocatorPool};
-use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
+
+use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 
 use crate::{
     AllowWarnDeny, BuiltinLintPlugins, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService,

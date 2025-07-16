@@ -22,7 +22,6 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-use super::LintServiceOptions;
 use crate::{
     Fixer, Linter, Message,
     fixer::PossibleFixes,
@@ -33,6 +32,8 @@ use crate::{
 
 #[cfg(feature = "language_server")]
 use crate::fixer::MessageWithPosition;
+
+use super::LintServiceOptions;
 
 pub struct Runtime {
     cwd: Box<Path>,

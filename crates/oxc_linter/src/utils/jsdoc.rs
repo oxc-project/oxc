@@ -1,10 +1,11 @@
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
 };
 use oxc_semantic::{JSDoc, JSDocTag, Semantic};
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
 
 use crate::{AstNode, config::JSDocPluginSettings};
 

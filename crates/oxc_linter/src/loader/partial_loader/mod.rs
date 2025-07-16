@@ -1,11 +1,13 @@
+use oxc_span::VALID_EXTENSIONS;
+
+use crate::loader::JavaScriptSource;
+
 mod astro;
 mod svelte;
 mod vue;
-
-use oxc_span::VALID_EXTENSIONS;
-
-pub use self::{astro::AstroPartialLoader, svelte::SveltePartialLoader, vue::VuePartialLoader};
-use crate::loader::JavaScriptSource;
+pub use astro::AstroPartialLoader;
+pub use svelte::SveltePartialLoader;
+pub use vue::VuePartialLoader;
 
 const SCRIPT_START: &str = "<script";
 const SCRIPT_END: &str = "</script>";

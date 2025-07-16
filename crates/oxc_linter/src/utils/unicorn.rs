@@ -1,4 +1,3 @@
-mod boolean;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -10,8 +9,10 @@ use oxc_semantic::AstNode;
 use oxc_span::{ContentEq, Span};
 use oxc_syntax::operator::LogicalOperator;
 
-pub use self::boolean::*;
 use crate::LintContext;
+
+mod boolean;
+pub use boolean::*;
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(

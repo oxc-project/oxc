@@ -12,13 +12,13 @@ use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
 
 use crate::LintContext;
-
-mod parse_jest_fn;
 pub use crate::utils::jest::parse_jest_fn::{
     ExpectError, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
     MemberExpressionElement, ParsedExpectFnCall, ParsedGeneralJestFnCall,
     ParsedJestFnCall as ParsedJestFnCallNew, parse_jest_fn_call,
 };
+
+mod parse_jest_fn;
 
 const JEST_METHOD_NAMES: [&str; 18] = [
     "afterAll",

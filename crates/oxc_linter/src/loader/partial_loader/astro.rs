@@ -1,8 +1,10 @@
 use memchr::memmem::Finder;
+
 use oxc_span::{SourceType, Span};
 
-use super::{SCRIPT_END, SCRIPT_START};
 use crate::loader::JavaScriptSource;
+
+use super::{SCRIPT_END, SCRIPT_START};
 
 const ASTRO_SPLIT: &str = "---";
 

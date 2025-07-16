@@ -1,6 +1,12 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
 #![allow(clippy::literal_string_with_formatting_args)]
 
+use std::{path::Path, rc::Rc, sync::Arc};
+
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{AstNode, Semantic};
+use oxc_span::Span;
+
 #[cfg(test)]
 mod tester;
 
@@ -23,12 +29,6 @@ mod utils;
 pub mod loader;
 pub mod rules;
 pub mod table;
-
-use std::{path::Path, rc::Rc, sync::Arc};
-
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{AstNode, Semantic};
-use oxc_span::Span;
 
 pub use crate::{
     config::{

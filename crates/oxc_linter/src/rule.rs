@@ -2,9 +2,10 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
-use oxc_semantic::SymbolId;
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
+
+use oxc_semantic::SymbolId;
 
 use crate::{
     AstNode, FixKind,

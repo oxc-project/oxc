@@ -5,12 +5,12 @@ use std::{
 };
 
 use oxc_diagnostics::DiagnosticSender;
-use runtime::Runtime;
-pub use runtime::RuntimeFileSystem;
 
 use crate::Linter;
 
 mod runtime;
+use runtime::Runtime;
+pub use runtime::RuntimeFileSystem;
 
 #[cfg(feature = "language_server")]
 pub mod offset_to_position;

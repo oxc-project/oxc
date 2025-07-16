@@ -5,13 +5,14 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use super::{
-    BuiltinLintPlugins, LintConfig, categories::OxlintCategories, overrides::OxlintOverrides,
-};
 use crate::{
     AllowWarnDeny, LintPlugins,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
+};
+
+use super::{
+    BuiltinLintPlugins, LintConfig, categories::OxlintCategories, overrides::OxlintOverrides,
 };
 
 // TODO: support `categories` et. al. in overrides.
