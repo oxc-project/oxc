@@ -7,6 +7,8 @@ use oxc_minifier::Compressor;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+use super::default_options;
+
 #[track_caller]
 fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
@@ -26,7 +28,7 @@ fn test(source_text: &str, expected: &str) {
     let source_text = source_text.cow_replace("false", f);
 
     let source_type = SourceType::default();
-    let result = run(&source_text, source_type, Some(CompressOptions::default()));
+    let result = run(&source_text, source_type, Some(default_options()));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
@@ -229,6 +231,7 @@ fn dce_from_terser() {
         "#,
         r#"function f() {
             g();
+            x = 10;
             throw new Error("foo");
             var x;
         }

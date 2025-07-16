@@ -7,15 +7,17 @@ mod statement_fusion;
 
 use oxc_minifier::{CompressOptions, CompressOptionsUnused};
 
-#[track_caller]
-fn test(source_text: &str, expected: &str) {
-    let options = CompressOptions {
+pub fn default_options() -> CompressOptions {
+    CompressOptions {
         drop_debugger: false,
-        drop_console: false,
         unused: CompressOptionsUnused::Keep,
         ..CompressOptions::smallest()
-    };
-    crate::test(source_text, expected, options);
+    }
+}
+
+#[track_caller]
+fn test(source_text: &str, expected: &str) {
+    crate::test(source_text, expected, default_options());
 }
 
 #[track_caller]

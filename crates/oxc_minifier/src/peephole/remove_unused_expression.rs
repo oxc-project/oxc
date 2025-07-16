@@ -665,7 +665,7 @@ impl<'a> PeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions, TreeShakeOptions,
-        tester::{test, test_options, test_same, test_same_options},
+        tester::{default_options, test, test_options, test_same, test_same_options},
     };
 
     #[test]
@@ -948,14 +948,14 @@ mod test {
     fn treeshake_options_annotations_false() {
         let options = CompressOptions {
             treeshake: TreeShakeOptions { annotations: false, ..TreeShakeOptions::default() },
-            ..CompressOptions::smallest()
+            ..default_options()
         };
         test_same_options("function test() {} /* @__PURE__ */ test()", &options);
         test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
 
         let options = CompressOptions {
             treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },
-            ..CompressOptions::smallest()
+            ..default_options()
         };
         test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
         test_options(

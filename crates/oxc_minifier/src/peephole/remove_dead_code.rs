@@ -28,6 +28,7 @@ impl<'a> PeepholeOptimizations {
             Statement::ForStatement(s) => self.try_fold_for(s, state, ctx),
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
+            Statement::FunctionDeclaration(f) => Self::remove_unused_function_declaration(f, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
@@ -565,6 +566,21 @@ impl<'a> PeepholeOptimizations {
             _ => false,
         }
     }
+
+    fn remove_unused_function_declaration(
+        f: &Function<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Statement<'a>> {
+        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+            return None;
+        }
+        let id = f.id.as_ref()?;
+        let symbol_id = id.symbol_id.get()?;
+        if ctx.scoping().symbol_is_unused(symbol_id) {
+            return Some(ctx.ast.statement_empty(f.span));
+        }
+        None
+    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -587,7 +603,10 @@ impl<'a> LatePeepholeOptimizations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions,
+        tester::{test, test_options, test_same},
+    };
 
     #[test]
     fn test_fold_block() {
@@ -793,5 +812,11 @@ mod test {
     #[test]
     fn remove_constant_value() {
         test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
+    }
+
+    #[test]
+    fn remove_unused_function_declaration() {
+        let options = CompressOptions::smallest();
+        test_options("function foo() {}", "", &options);
     }
 }
