@@ -138,7 +138,26 @@ impl Case for TypeScriptCase {
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2315",  // Type 'U' is not generic.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
-    "6133", // 'Bar' is declared but its value is never read.
+    "6053", // File 'invalid.ts' not found.
+    "6054", // File 'b.js.map' has an unsupported extension. The only supported extensions are '.ts', '.tsx', '.d.ts', '.js', '.jsx', '.cts', '.d.cts', '.cjs', '.mts', '.d.mts', '.mjs'.
+    "6082", // Only 'amd' and 'system' modules are supported alongside --outFile.
+    "6131", // Cannot compile modules using option 'outFile' unless the '--module' flag is 'amd' or 'system'.
+    "6133", // 'f1' is declared but its value is never read.
+    "6137", // Cannot import type declaration files. Consider importing 'foo-bar' instead of '@types/foo-bar'.
+    "6138", // Property 'used' is declared but its value is never read.
+    "6142", // Module '/foo' was resolved to '/foo.jsx', but '--jsx' is not set.
+    "6192", // All imports in import declaration are unused.
+    "6196", // 'i1' is declared but never used.
+    "6198", // All destructured elements are unused.
+    "6199", // All variables are unused.
+    "6200", // Definitions of the following identifiers conflict with those in another file: A, B, C, D, E, F, G, H, I
+    "6205", // All type parameters are unused.
+    "6229", // Tag 'MyComp4' expects at least '4' arguments, but the JSX factory 'React.createElement' provides at most '2'.
+    "6231", // Could not resolve the path 'invalid' with the extensions: '.ts', '.tsx', '.d.ts', '.js', '.jsx', '.cts', '.d.cts', '.cjs', '.mts', '.d.mts', '.mjs'.
+    "6232", // Declaration augments declaration in another file. This cannot be serialized.
+    "6234", // This expression is not callable because it is a 'get' accessor. Did you mean to use it without '()'?
+    "6263", // Module './dir/native.node' was resolved to 'dir/native.d.node.ts', but '--allowArbitraryExtensions' is not set.
+    "6379", // Composite projects may not disable incremental compilation.
     "7005", // Variable 'x' implicitly has an 'any' type.
     "7006", // Parameter 'x' implicitly has an 'any' type.
     "7008", // Member 'v' implicitly has an 'any' type.
