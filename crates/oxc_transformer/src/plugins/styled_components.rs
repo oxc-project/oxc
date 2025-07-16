@@ -65,7 +65,7 @@ use serde::Deserialize;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_data_structures::{assert_unchecked, inline_string::InlineString};
+use oxc_data_structures::{inline_string::InlineString, slice_iter_ext::SliceIterExt};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
@@ -1096,20 +1096,18 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     // Remove quasis that are marked for removal, and the expressions following them.
     // TODO: Remove scopes, symbols, and references for removed `Expression`s.
     if delete_some {
-        // We assert the lengths of `quasis` and `expressions` here so that we can safely remove
-        // the bounds check in the `retain` loop.
+        // We assert the lengths of `quasis` and `expressions` here so that we can safely
+        // use `next_unchecked` to skip bounds checks in the `retain` loop.
         // It should always be true that `quasis.len() == expressions.len() + 1`
-        // but `quasis.len() >= expressions.len()` is all we need to ensure safety of `assert_unchecked!`
+        // but `quasis.len() >= expressions.len()` is all we need to ensure safety of `next_unchecked`
         // below, and it's a cheaper check.
         assert!(quasis.len() >= expressions.len());
 
         let mut quasis_iter = quasis.iter();
         expressions.retain(|_| {
-            // This unchecked assertion removes bounds check in `unwrap`.
             // SAFETY: We asserted above that there are at least as many quasis as expressions,
-            // so `quasis_iter` cannot be exhausted in this loop.
-            unsafe { assert_unchecked!(!quasis_iter.as_slice().is_empty()) };
-            let quasi = quasis_iter.next().unwrap();
+            // so `quasis_iter` cannot be exhausted in this loop
+            let quasi = unsafe { quasis_iter.next_unchecked() };
             quasi.span != REMOVE_SENTINEL
         });
 
