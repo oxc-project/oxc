@@ -494,16 +494,6 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
-impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
-    type Error = ConfigBuilderError;
-
-    #[inline]
-    fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        let mut external_plugin_store = ExternalPluginStore::default();
-        Self::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-    }
-}
-
 impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
