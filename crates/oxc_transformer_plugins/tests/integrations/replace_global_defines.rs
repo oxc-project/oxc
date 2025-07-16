@@ -10,9 +10,10 @@ use crate::codegen;
 
 #[track_caller]
 pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
-    let source_type = SourceType::default();
+    let source_type = SourceType::ts();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
@@ -33,20 +34,20 @@ fn test_same(source_text: &str, config: ReplaceGlobalDefinesConfig) {
     test(source_text, source_text, config);
 }
 
+fn config<S: AsRef<str>>(defines: &[(S, S)]) -> ReplaceGlobalDefinesConfig {
+    ReplaceGlobalDefinesConfig::new(defines).unwrap()
+}
+
 #[test]
 fn simple() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("id", "text"), ("str", "'text'")]).unwrap();
+    let config = config(&[("id", "text"), ("str", "'text'")]);
     test("const _ = [id, str]", "const _ = [text, 'text']", config);
 }
 
 #[test]
 fn shadowed() {
-    let config = ReplaceGlobalDefinesConfig::new(&[
-        ("undefined", "text"),
-        ("NaN", "'text'"),
-        ("process.env.NODE_ENV", "'test'"),
-    ])
-    .unwrap();
+    let config =
+        config(&[("undefined", "text"), ("NaN", "'text'"), ("process.env.NODE_ENV", "'test'")]);
     test_same("(function (undefined) { let x = typeof undefined })()", config.clone());
     test_same("(function (NaN) { let x = typeof NaN })()", config.clone());
     test_same("(function (process) { let x = process.env.NODE_ENV })()", config);
@@ -54,8 +55,7 @@ fn shadowed() {
 
 #[test]
 fn dot() {
-    let config =
-        ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "production")]).unwrap();
+    let config = config(&[("process.env.NODE_ENV", "production")]);
     test("const _ = process.env.NODE_ENV", "const _ = production", config.clone());
     test("const _ = process.env", "const _ = process.env", config.clone());
     test("const _ = process.env.foo.bar", "const _ = process.env.foo.bar", config.clone());
@@ -67,11 +67,8 @@ fn dot() {
 
 #[test]
 fn dot_with_overlap() {
-    let config = ReplaceGlobalDefinesConfig::new(&[
-        ("import.meta.env.FOO", "import.meta.env.FOO"),
-        ("import.meta.env", "__foo__"),
-    ])
-    .unwrap();
+    let config =
+        config(&[("import.meta.env.FOO", "import.meta.env.FOO"), ("import.meta.env", "__foo__")]);
     test("const _ = import.meta.env", "const _ = __foo__", config.clone());
     test("const _ = import.meta.env.FOO", "const _ = import.meta.env.FOO", config.clone());
     test("const _ = import.meta.env.NODE_ENV", "const _ = __foo__.NODE_ENV", config.clone());
@@ -83,11 +80,10 @@ fn dot_with_overlap() {
 
 #[test]
 fn dot_define_is_member_expr_postfix() {
-    let config = ReplaceGlobalDefinesConfig::new(&[
+    let config = config(&[
         ("__OBJ__", r#"{"process":{"env":{"SOMEVAR":"foo"}}}"#),
         ("process.env.SOMEVAR", "\"SOMEVAR\""),
-    ])
-    .unwrap();
+    ]);
     test(
         "console.log(__OBJ__.process.env.SOMEVAR)",
         "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
@@ -97,7 +93,7 @@ fn dot_define_is_member_expr_postfix() {
 
 #[test]
 fn dot_nested() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
+    let config = config(&[("process", "production")]);
     test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config.clone());
     // computed member expression
     test("foo['process'].NODE_ENV", "foo['process'].NODE_ENV", config);
@@ -105,20 +101,19 @@ fn dot_nested() {
 
 #[test]
 fn dot_with_postfix_wildcard() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("import.meta.env.*", "undefined")]).unwrap();
+    let config = config(&[("import.meta.env.*", "undefined")]);
     test("const _ = import.meta.env.result", "const _ = void 0", config.clone());
     test("const _ = import.meta.env", "const _ = import.meta.env", config);
 }
 
 #[test]
 fn dot_with_postfix_mixed() {
-    let config = ReplaceGlobalDefinesConfig::new(&[
+    let config = config(&[
         ("import.meta.env.*", "undefined"),
         ("import.meta.env", "env"),
         ("import.meta.*", "metaProperty"),
         ("import.meta", "1"),
-    ])
-    .unwrap();
+    ]);
     test("const _ = import.meta.env.result", "const _ = void 0", config.clone());
     test("const _ = import.meta.env.result.many.nested", "const _ = void 0", config.clone());
     test("const _ = import.meta.env", "const _ = env", config.clone());
@@ -128,7 +123,7 @@ fn dot_with_postfix_mixed() {
 
 #[test]
 fn optional_chain() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("a.b.c", "1")]).unwrap();
+    let config = config(&[("a.b.c", "1")]);
     test("const _ = a.b.c", "const _ = 1", config.clone());
     test("const _ = a?.b.c", "const _ = 1", config.clone());
     test("const _ = a.b?.c", "const _ = 1", config.clone());
@@ -143,45 +138,31 @@ fn optional_chain() {
 
 #[test]
 fn dot_define_with_destruct() {
-    let config = ReplaceGlobalDefinesConfig::new(&[(
-        "process.env.NODE_ENV",
-        "{'a': 1, b: 2, c: true, d: {a: b}}",
-    )])
-    .unwrap();
+    let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true, d: {a: b}}")]);
     test(
         "const {a, c} = process.env.NODE_ENV",
         "const { a, c } = {\n\t'a': 1,\n\tc: true};",
-        config.clone(),
+        c.clone(),
     );
     // bailout
     test(
         "const {[any]: alias} = process.env.NODE_ENV",
         "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
-        config,
+        c,
     );
 
     // should filterout unused key even rhs objectExpr has SpreadElement
 
-    let config = ReplaceGlobalDefinesConfig::new(&[(
-        "process.env.NODE_ENV",
-        "{'a': 1, b: 2, c: true, ...unknown}",
-    )])
-    .unwrap();
-    test(
-        "const {a} = process.env.NODE_ENV",
-        "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
-        config,
-    );
+    let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true, ...unknown}")]);
+    test("const {a} = process.env.NODE_ENV", "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n", c);
 }
 
 #[test]
 fn this_expr() {
-    let config =
-        ReplaceGlobalDefinesConfig::new(&[("this", "1"), ("this.foo", "2"), ("this.foo.bar", "3")])
-            .unwrap();
+    let config = config(&[("this", "1"), ("this.foo", "2"), ("this.foo.bar", "3")]);
     test(
-        "const _ = this, this.foo, this.foo.bar, this.foo.baz, this.bar",
-        "const _ = 1, 2, 3, 2 .baz, 1 .bar;\n",
+        "const _ = this; this.foo, this.foo.bar, this.foo.baz, this.bar",
+        "const _ = 1; 2 .baz, 1 .bar;",
         config.clone(),
     );
 
@@ -215,13 +196,8 @@ fn this_expr() {
 
 #[test]
 fn assignment_target() {
-    let config = ReplaceGlobalDefinesConfig::new(&[
-        ("d", "ident"),
-        ("e.f", "ident"),
-        ("g", "dot.chain"),
-        ("h.i", "dot.chain"),
-    ])
-    .unwrap();
+    let config =
+        config(&[("d", "ident"), ("e.f", "ident"), ("g", "dot.chain"), ("h.i", "dot.chain")]);
 
     test(
         r"
@@ -238,11 +214,21 @@ console.log(
 
 #[test]
 fn replace_with_undefined() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("Foo", "undefined")]).unwrap();
-    test("new Foo()", "new (void 0)()", config);
+    let c = config(&[("Foo", "undefined")]);
+    test("new Foo()", "new (void 0)()", c);
 
-    let config = ReplaceGlobalDefinesConfig::new(&[("Foo", "Bar")]).unwrap();
-    test("Foo = 0", "Bar = 0", config);
+    let c = config(&[("Foo", "Bar")]);
+    test("Foo = 0", "Bar = 0", c);
+}
+
+#[test]
+fn declare_const() {
+    let config = config(&[("IS_PROD", "true")]);
+    test(
+        "declare const IS_PROD: boolean; if (IS_PROD) {}",
+        "declare const IS_PROD: boolean; {}",
+        config,
+    );
 }
 
 #[cfg(not(miri))]
@@ -250,12 +236,11 @@ fn replace_with_undefined() {
 fn test_sourcemap() {
     use oxc_sourcemap::SourcemapVisualizer;
 
-    let config = ReplaceGlobalDefinesConfig::new(&[
+    let c = config(&[
         ("__OBJECT__", r#"{"hello": "test"}"#),
         ("__STRING__", r#""development""#),
         ("__MEMBER__", r"xx.yy.zz"),
-    ])
-    .unwrap();
+    ]);
     let source_text = r"
 1;
 __OBJECT__;
@@ -278,7 +263,7 @@ log(__MEMBER__);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
+    let _ = ReplaceGlobalDefines::new(&allocator, c).build(scoping, &mut program);
     let result = Codegen::new()
         .with_options(CodegenOptions {
             single_quote: true,
