@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚜 Refactor
+
+- 42abcd2 estree: Use `SliceIterExt` in string serializer (#12297) (overlookmotel)
+
+
 
 
 ## [0.75.1] - 2025-07-03

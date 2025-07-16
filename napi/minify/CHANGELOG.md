@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 1b80633 minifier: Remove unused function declaration (#12318) (Boshen)
+- 3f33e8c minifier: Remove unused assignment expression (#12314) (Boshen)
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+
+### 🐛 Bug Fixes
+
+- cd98426 semantic: Handle var hoisting in catch block with same catch parameter name (#12313) (Dunqing)
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 🚜 Refactor

@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 1b80633 minifier: Remove unused function declaration (#12318) (Boshen)
+- 3f33e8c minifier: Remove unused assignment expression (#12314) (Boshen)
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+- 2cdf722 minifier: Constant fold small integer multiplication (n <= 255) (#12236) (Boshen)
+- 314f970 minifier: Remove unused `-1n` (#12235) (Boshen)
+
+### 🚜 Refactor
+
+- 30e8690 minifier: Move tests around (#12237) (Boshen)
+
+
 
 ## [0.76.0] - 2025-07-08
 
