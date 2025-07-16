@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::Resolver;
 use rustc_hash::FxHashMap;
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -144,17 +144,29 @@ impl ConfigStoreBuilder {
 
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
-        if let Some(plugins) = oxlintrc.plugins.as_ref() {
-            if !plugins.external.is_empty() {
-                let Some(external_linter) = external_linter else {
-                    return Err(ConfigBuilderError::NoExternalLinterConfigured);
-                };
-                let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
-                #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let oxlintrc_dir_path = oxlintrc.path.parent().unwrap();
-                for plugin_specifier in &plugins.external {
+        if let Some(base_plugins) = oxlintrc.plugins.as_ref() {
+            let mut external_plugins = base_plugins.external.clone();
+            for r#override in &oxlintrc.overrides {
+                if let Some(override_plugins) = &r#override.plugins {
+                    external_plugins.extend(override_plugins.external.iter().cloned());
+                }
+            }
+
+            if !external_plugins.is_empty() {
+                let external_linter =
+                    external_linter.ok_or(ConfigBuilderError::NoExternalLinterConfigured)?;
+
+                let resolver = Resolver::default();
+
+                #[expect(
+                    clippy::missing_panics_doc,
+                    reason = "oxlintrc.path is always a file path"
+                )]
+                let oxlintrc_dir = oxlintrc.path.parent().unwrap();
+
+                for plugin_specifier in &external_plugins {
                     Self::load_external_plugin(
-                        oxlintrc_dir_path,
+                        oxlintrc_dir,
                         plugin_specifier,
                         external_linter,
                         &resolver,

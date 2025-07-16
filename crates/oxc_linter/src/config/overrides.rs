@@ -36,6 +36,15 @@ impl IntoIterator for OxlintOverrides {
     }
 }
 
+impl<'a> IntoIterator for &'a OxlintOverrides {
+    type Item = &'a OxlintOverride;
+    type IntoIter = std::slice::Iter<'a, OxlintOverride>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 impl OxlintOverrides {
     #[inline]
     pub fn empty() -> Self {

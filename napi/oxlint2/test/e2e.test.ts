@@ -48,6 +48,15 @@ describe('cli options for bundling', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should load a custom plugin when configured in overrides', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/custom_plugin_via_overrides',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should report an error if a custom plugin cannot be loaded', async () => {
     const { stdout, exitCode } = await runOxlint(
       'test/fixtures/missing_custom_plugin',
