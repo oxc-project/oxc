@@ -35,6 +35,7 @@ oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
 
 cow-utils = { workspace = true }
+num-bigint = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]

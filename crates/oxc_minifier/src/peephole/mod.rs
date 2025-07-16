@@ -2,6 +2,7 @@
 
 mod convert_to_dotted_properties;
 mod fold_constants;
+mod inline_const;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
@@ -239,11 +240,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         }
         let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
+
         self.fold_constants_exit_expression(expr, &mut state, &mut ctx);
         self.minimize_conditions_exit_expression(expr, &mut state, &mut ctx);
         self.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
         self.replace_known_methods_exit_expression(expr, &mut state, &mut ctx);
         self.substitute_exit_expression(expr, &mut state, &mut ctx);
+        self.inline_const(expr, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }

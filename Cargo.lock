@@ -2029,6 +2029,7 @@ version = "0.77.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "num-bigint",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",

@@ -24,6 +24,13 @@ pub struct CompressOptions {
     /// Default `false`
     pub drop_console: bool,
 
+    /// Inline constant variables.
+    ///
+    /// Same as Terser `compress.reduce_vars`
+    ///
+    /// Default `true`
+    pub inline_const: bool,
+
     /// Keep function / class names.
     pub keep_names: CompressOptionsKeepNames,
 
@@ -46,6 +53,7 @@ impl CompressOptions {
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
             drop_console: true,
+            inline_const: true,
             treeshake: TreeShakeOptions::default(),
         }
     }
@@ -56,6 +64,7 @@ impl CompressOptions {
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
+            inline_const: false,
             treeshake: TreeShakeOptions::default(),
         }
     }

@@ -668,8 +668,8 @@ mod test {
         );
         test("v = a != null ? a.b.c[d](e) : undefined", "v = a == null ? void 0 : a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
         test(
-            "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
-            "var a, undefined = 1; v = a == null ? undefined : a.b.c[d](e)",
+            "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined; undefined = 2",
+            "var a, undefined = 1; v = a == null ? undefined : a.b.c[d](e), undefined = 2",
         );
         test_es2019(
             "var a; v = a != null ? a.b.c[d](e) : undefined",

@@ -46,16 +46,30 @@ impl<'a> PeepholeOptimizations {
             state.changed = true;
         }
 
-        // Save `const value = false` into constant values.
+        self.save_constant_value(expr, ctx);
+    }
+
+    /// Save `const literal_value = false` as constant values.
+    fn save_constant_value(&self, expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Ancestor::VariableDeclaratorInit(decl) = ctx.parent() {
-            // TODO: Check for no write references.
-            if decl.kind().is_const() {
-                if let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind {
-                    // TODO: refactor all the above code to return value instead of expression, to avoid calling `evaluate_value` again.
-                    if let Some(value) = expr.evaluate_value(ctx) {
-                        let symbol_id = ident.symbol_id();
-                        ctx.state.constant_values.insert(symbol_id, value);
-                    }
+            // Skip if its not folded into a literal.
+            if !expr.is_literal() && !expr.is_no_substitution_template() {
+                return;
+            }
+            let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind else { return };
+            let Some(symbol_id) = ident.symbol_id.get() else {
+                return;
+            };
+            // Skip if value is already saved.
+            if ctx.state.constant_values.contains_key(&symbol_id) {
+                return;
+            }
+            // Not using `const` to check constant values, because:
+            // * assigning to const value is a runtime error
+            // * `for (const foo = 0; ; foo++);` is valid
+            if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
+                if let Some(value) = expr.evaluate_value(ctx) {
+                    ctx.state.constant_values.insert(symbol_id, value);
                 }
             }
         }
