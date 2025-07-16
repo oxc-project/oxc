@@ -563,12 +563,12 @@ fn can_group_expression_argument(
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
-                || f.comments().has_comments(previous_end, object_expression.span, following_start)
+                || f.comments().has_comments_in_span(object_expression.span)
         }
 
         Expression::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
-                || f.comments().has_comments(previous_end, array_expression.span, following_start)
+                || f.comments().has_comments_in_span(array_expression.span)
         }
         Expression::TSTypeAssertion(assertion_expression) => can_group_expression_argument(
             previous_end,

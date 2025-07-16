@@ -1,4 +1,4 @@
-ts compatibility: 228/573 (39.79%)
+ts compatibility: 229/573 (39.97%)
 
 # Failed
 
@@ -337,7 +337,6 @@ ts compatibility: 228/573 (39.79%)
 | typescript/typeparams/long-function-arg.ts | 💥 | 66.67% |
 | typescript/typeparams/tagged-template-expression.ts | 💥 | 75.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
-| typescript/typeparams/print-width-120/issue-7542.tsx | 💥 | 80.00% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
 | typescript/union/inlining.ts | 💥 | 29.92% |

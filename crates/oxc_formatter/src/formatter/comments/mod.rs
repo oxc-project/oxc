@@ -65,7 +65,7 @@ impl<'a> Comments<'a> {
             }
         }
 
-        &self.comments[index..]
+        if self.comments[index].span.end < start { &[] } else { &self.comments[index..] }
     }
 
     #[inline]
