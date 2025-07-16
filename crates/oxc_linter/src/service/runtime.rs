@@ -88,7 +88,7 @@ struct ResolvedModuleRecord {
 
 self_cell! {
     struct ModuleContent<'alloc_pool> {
-        owner: ModuleContentOwner<'alloc_pool>,
+        owner: AllocatorGuard<'alloc_pool>,
         #[not_covariant]
         dependent: ModuleContentDependent,
     }
@@ -100,10 +100,6 @@ struct ModuleContentDependent<'a> {
 
 // Safety: dependent borrows from owner. They're safe to be sent together.
 unsafe impl Send for ModuleContent<'_> {}
-
-struct ModuleContentOwner<'alloc_pool> {
-    allocator: AllocatorGuard<'alloc_pool>,
-}
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
 type SectionContents<'a> = SmallVec<[SectionContent<'a>; 1]>;
@@ -812,9 +808,8 @@ impl Runtime {
         if self.paths.contains(path) {
             let allocator = self.allocator_pool.get();
 
-            let build = ModuleContent::try_new(ModuleContentOwner { allocator }, |owner| {
-                let Some(stt) =
-                    self.get_source_type_and_text(Path::new(path), ext, &owner.allocator)
+            let build = ModuleContent::try_new(allocator, |allocator| {
+                let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -834,7 +829,7 @@ impl Runtime {
                     check_syntax_errors,
                     source_type,
                     source_text,
-                    &owner.allocator,
+                    allocator,
                     Some(&mut section_contents),
                 );
 
