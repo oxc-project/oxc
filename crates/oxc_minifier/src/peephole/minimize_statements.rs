@@ -416,7 +416,10 @@ impl<'a> PeepholeOptimizations {
         }
         if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                return ctx.scoping().symbol_is_unused(symbol_id);
+                return ctx
+                    .scoping()
+                    .get_resolved_references(symbol_id)
+                    .all(|r| !r.flags().is_read());
             }
         }
         false

@@ -210,7 +210,6 @@ fn dce_from_terser() {
         }",
     );
 
-    // NOTE: `if (x)` is changed to `if (true)` because const inlining is not implemented yet.
     test(
         r#"function f() {
             g();
@@ -230,7 +229,6 @@ fn dce_from_terser() {
         "#,
         r#"function f() {
             g();
-            x = 10;
             throw new Error("foo");
             var x;
         }

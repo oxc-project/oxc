@@ -48,7 +48,7 @@ impl CompressOptions {
             target: ESTarget::ESNext,
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
-            drop_console: true,
+            drop_console: false,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
         }

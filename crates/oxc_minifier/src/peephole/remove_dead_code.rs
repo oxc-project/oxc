@@ -5,7 +5,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayH
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::{CompressOptionsUnused, ctx::Ctx, keep_var::KeepVar};
 
 use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
@@ -47,14 +47,41 @@ impl<'a> PeepholeOptimizations {
             Expression::ConditionalExpression(e) => {
                 self.try_fold_conditional_expression(e, state, ctx)
             }
-            Expression::SequenceExpression(sequence_expression) => {
-                self.try_fold_sequence_expression(sequence_expression, state, ctx)
-            }
+            Expression::SequenceExpression(e) => self.try_fold_sequence_expression(e, state, ctx),
+            Expression::AssignmentExpression(e) => self.remove_dead_assignment_expression(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
             state.changed = true;
         }
+    }
+
+    fn remove_dead_assignment_expression(
+        &self,
+        e: &mut AssignmentExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if matches!(
+            ctx.state.options.unused,
+            CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
+        ) {
+            return None;
+        }
+        let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
+            e.left.as_simple_assignment_target()?
+        else {
+            return None;
+        };
+        let reference_id = ident.reference_id.get()?;
+        let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
+        // Keep error for assigning to `const foo = 1; foo = 2`.
+        if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
+            return None;
+        }
+        if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
+            return None;
+        }
+        Some(e.right.take_in(ctx.ast))
     }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.

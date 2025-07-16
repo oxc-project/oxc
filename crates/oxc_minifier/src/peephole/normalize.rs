@@ -391,7 +391,10 @@ impl<'a> Normalize {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions,
+        tester::{default_options, test, test_options, test_same},
+    };
 
     #[test]
     fn test_while() {
@@ -430,11 +433,13 @@ mod test {
 
     #[test]
     fn drop_console() {
-        test("console.log()", "");
-        test("(() => console.log())()", "");
-        test(
+        let options = CompressOptions { drop_console: true, ..default_options() };
+        test_options("console.log()", "", &options);
+        test_options("(() => console.log())()", "", &options);
+        test_options(
             "(() => { try { return console.log() } catch {} })()",
             "(() => { try { return } catch {} })()",
+            &options,
         );
     }
 

@@ -154,17 +154,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        let refs_before =
-            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-
         self.exit_program_or_function();
 
+        let refs_before =
+            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
         let mut counter = ReferencesCounter::default();
         counter.visit_program(program);
-        let refs_after = counter.refs;
-
-        let removed_refs = refs_before.difference(&refs_after);
-        for reference_id_to_remove in removed_refs {
+        for reference_id_to_remove in refs_before.difference(&counter.refs) {
             ctx.scoping_mut().delete_reference(*reference_id_to_remove);
         }
     }

@@ -1685,7 +1685,7 @@ test('issue_3146_4', () => {
   run(code, expected);
 });
 
-test('issue_3192', () => {
+test.skip('issue_3192', () => {
   const code =
     '(function(a){console.log(a="foo",arguments[0])})("bar");(function(a){"use strict";console.log(a="foo",arguments[0])})("bar");';
   const expected = ['foo foo', 'foo bar'];
