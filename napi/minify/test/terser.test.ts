@@ -3224,31 +3224,31 @@ test('mangle_catch_var_ie8_toplevel', () => {
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1', () => {
+test('mangle_catch_redef_1', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_ie8', () => {
+test('mangle_catch_redef_1_ie8', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_toplevel', () => {
+test('mangle_catch_redef_1_toplevel', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_ie8_toplevel', () => {
+test('mangle_catch_redef_1_ie8_toplevel', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_2', () => {
+test('mangle_catch_redef_2', () => {
   const code = 'try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['undefined'];
   run(code, expected);
@@ -5313,25 +5313,25 @@ test('mangle_catch_var_ie8_toplevel', () => {
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1', () => {
+test('mangle_catch_redef_1', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_ie8', () => {
+test('mangle_catch_redef_1_ie8', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_toplevel', () => {
+test('mangle_catch_redef_1_toplevel', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);
 });
 
-test.skip('mangle_catch_redef_1_ie8_toplevel', () => {
+test('mangle_catch_redef_1_ie8_toplevel', () => {
   const code = 'var a="PASS";try{throw"FAIL1"}catch(a){var a="FAIL2"}console.log(a);';
   const expected = ['PASS'];
   run(code, expected);

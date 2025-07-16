@@ -71,11 +71,15 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
-                        // remove current scope binding and add to target scope
-                        // avoid same symbols appear in multi-scopes
-                        builder.scoping.remove_binding(scope_id, &name);
-                        builder.scoping.add_binding(target_scope_id, &name, symbol_id);
-                        builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                        // Hoist current symbol to target scope when it is not already declared
+                        // in the target scope.
+                        if !builder.scoping.scope_has_binding(target_scope_id, &name) {
+                            // remove current scope binding and add to target scope
+                            // avoid same symbols appear in multi-scopes
+                            builder.scoping.remove_binding(scope_id, &name);
+                            builder.scoping.add_binding(target_scope_id, &name, symbol_id);
+                            builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                        }
                         break;
                     }
                 }
