@@ -150,7 +150,23 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                         matches!(grand_parent_node.kind(), AstKind::CallExpression(_))
                     });
 
-                return is_parent_inside_call_expression;
+                if is_parent_inside_call_expression {
+                    return true;
+                }
+
+                if matches!(
+                    assign_expr.operator,
+                    AssignmentOperator::LogicalOr
+                        | AssignmentOperator::LogicalAnd
+                        | AssignmentOperator::LogicalNullish
+                ) {
+                    return !matches!(
+                        nodes.parent_kind(parent.id()),
+                        AstKind::ExpressionStatement(_)
+                    );
+                }
+
+                return false;
             }
             (
                 AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_),
@@ -325,6 +341,7 @@ fn test() {
                 callback;
             }
          }",
+        r"class ChildProcess extends EventEmitter { #stdioObject; #createStdioObject() {} get stdio() { return (this.#stdioObject ??= this.#createStdioObject()); } }",
     ];
 
     let fail = vec![
