@@ -873,9 +873,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     /// to have this span, because it's always followed by (at minimum) a '`'.
     const REMOVE_SENTINEL: Span = Span::new(u32::MAX, u32::MAX);
 
-    let TemplateLiteral { quasis, expressions, .. } = lit;
-
-    debug_assert!(quasis.len() == expressions.len() + 1);
+    debug_assert!(lit.quasis.len() == lit.expressions.len() + 1);
 
     // Type of comment currently in.
     // * `None` = not in a comment.
@@ -894,8 +892,8 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut output = Vec::new();
 
     // TODO: What about `cooked`? Shouldn't we alter that too?
-    let mut quasi_index = 0;
-    while quasi_index < quasis.len() {
+    let quasis = &mut lit.quasis[..];
+    for quasi_index in 0..quasis.len() {
         let mut bytes = quasis[quasi_index].value.raw.as_str().as_bytes();
 
         if quasi_index > 0 {
@@ -918,7 +916,6 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 quasis[quasi_index].span.start = quasis[quasi_index - 1].span.start;
                 // Mark previous quasi as to be removed. It will be removed after all quasis are processed.
                 quasis[quasi_index - 1].span = REMOVE_SENTINEL;
-                quasi_index += 1;
 
                 delete_some = true;
 
@@ -963,11 +960,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
                 quasis[quasi_index - 1].value.raw = ast.atom(output_str);
                 output.clear();
-
-                quasi_index += 1;
             }
-        } else {
-            quasi_index = 1;
         }
 
         // Process bytes of quasi
@@ -1101,17 +1094,17 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
         // It should always be true that `quasis.len() == expressions.len() + 1`
         // but `quasis.len() >= expressions.len()` is all we need to ensure safety of `next_unchecked`
         // below, and it's a cheaper check.
-        assert!(quasis.len() >= expressions.len());
+        assert!(quasis.len() >= lit.expressions.len());
 
         let mut quasis_iter = quasis.iter();
-        expressions.retain(|_| {
+        lit.expressions.retain(|_| {
             // SAFETY: We asserted above that there are at least as many quasis as expressions,
             // so `quasis_iter` cannot be exhausted in this loop
             let quasi = unsafe { quasis_iter.next_unchecked() };
             quasi.span != REMOVE_SENTINEL
         });
 
-        quasis.retain(|quasi| quasi.span != REMOVE_SENTINEL);
+        lit.quasis.retain(|quasi| quasi.span != REMOVE_SENTINEL);
     }
 }
 
