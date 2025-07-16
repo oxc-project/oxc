@@ -125,16 +125,25 @@ pub struct RawTransferMetadata2 {
     /// * Also be set to `true` if `FixedSizeAllocator` is dropped on Rust side.
     ///   Memory will be freed in finalizer when JS garbage collector collects the buffer.
     pub(crate) can_be_freed: AtomicBool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u32,
+    /// Pointer to start of original allocation backing the `Allocator`.
+    pub(crate) alloc_ptr: NonNull<u8>,
+    /// Padding to pad struct to size 32.
+    pub(crate) _padding: u64,
 }
 use RawTransferMetadata2 as RawTransferMetadata;
 
 const METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
 
 impl RawTransferMetadata {
-    fn new(id: u32) -> Self {
-        Self { data_offset: 0, is_ts: false, id, can_be_freed: AtomicBool::new(true), _padding: 0 }
+    fn new(id: u32, alloc_ptr: NonNull<u8>) -> Self {
+        Self {
+            data_offset: 0,
+            is_ts: false,
+            id,
+            can_be_freed: AtomicBool::new(true),
+            alloc_ptr,
+            _padding: 0,
+        }
     }
 }
 
@@ -175,8 +184,6 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 pub struct FixedSizeAllocator {
     /// `Allocator` which utilizes part of the original allocation
     allocator: ManuallyDrop<Allocator>,
-    /// Pointer to start of original allocation
-    alloc_ptr: NonNull<u8>,
 }
 
 impl FixedSizeAllocator {
@@ -215,14 +222,14 @@ impl FixedSizeAllocator {
         let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
 
         // Store metadata after allocator chunk
-        let metadata = RawTransferMetadata::new(id);
+        let metadata = RawTransferMetadata::new(id, alloc_ptr);
         // SAFETY: `chunk_ptr` is at least `BUFFER_SIZE` bytes from the end of the allocation.
         // `CHUNK_SIZE` had the size of `RawTransferMetadata` subtracted from it.
         // So there is space within the allocation for `RawTransferMetadata` after the `Allocator`'s chunk.
         unsafe { chunk_ptr.add(CHUNK_SIZE).cast::<RawTransferMetadata>().write(metadata) };
 
         // Store pointer to original allocation, so it can be used to deallocate in `drop`
-        Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }
+        Self { allocator: ManuallyDrop::new(allocator) }
     }
 
     /// Reset this [`FixedSizeAllocator`].
@@ -245,8 +252,17 @@ impl FixedSizeAllocator {
 
 impl Drop for FixedSizeAllocator {
     fn drop(&mut self) {
+        // Get pointer to start of allocation backing this `FixedSizeAllocator`
+        let alloc_ptr = {
+            let metadata_ptr = self.allocator.end_ptr().cast::<RawTransferMetadata>();
+            // SAFETY: `FixedSizeAllocator` is being dropped, so no other references to data in it may exist.
+            // `FixedSizeAllocator::new` wrote `RawTransferMetadata` to the location pointed to by `end_ptr`.
+            let metadata = unsafe { metadata_ptr.as_ref() };
+            metadata.alloc_ptr
+        };
+
         // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`
-        unsafe { System.dealloc(self.alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
+        unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
     }
 }
 

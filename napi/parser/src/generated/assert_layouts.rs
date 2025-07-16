@@ -17,14 +17,15 @@ const _: () = {
     assert!(offset_of!(RawTransferData, module) == 152);
     assert!(offset_of!(RawTransferData, errors) == 256);
 
-    // Padding: 2 bytes
-    assert!(size_of::<RawTransferMetadata>() == 16);
-    assert!(align_of::<RawTransferMetadata>() == 4);
-    assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
-    assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
-    assert!(offset_of!(RawTransferMetadata, id) == 4);
-    assert!(offset_of!(RawTransferMetadata, can_be_freed) == 13);
-    assert!(offset_of!(RawTransferMetadata, _padding) == 8);
+    // Padding: 6 bytes
+    assert!(size_of::<RawTransferMetadata>() == 32);
+    assert!(align_of::<RawTransferMetadata>() == 8);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 16);
+    assert!(offset_of!(RawTransferMetadata, is_ts) == 24);
+    assert!(offset_of!(RawTransferMetadata, id) == 20);
+    assert!(offset_of!(RawTransferMetadata, can_be_freed) == 25);
+    assert!(offset_of!(RawTransferMetadata, alloc_ptr) == 8);
+    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
 
     // Padding: 7 bytes
     assert!(size_of::<Error>() == 80);
@@ -78,13 +79,14 @@ const _: () = {
     assert!(offset_of!(RawTransferData, errors) == 172);
 
     // Padding: 2 bytes
-    assert!(size_of::<RawTransferMetadata>() == 16);
-    assert!(align_of::<RawTransferMetadata>() == 4);
-    assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
-    assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
-    assert!(offset_of!(RawTransferMetadata, id) == 4);
-    assert!(offset_of!(RawTransferMetadata, can_be_freed) == 13);
-    assert!(offset_of!(RawTransferMetadata, _padding) == 8);
+    assert!(size_of::<RawTransferMetadata>() == 24);
+    assert!(align_of::<RawTransferMetadata>() == 8);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 12);
+    assert!(offset_of!(RawTransferMetadata, is_ts) == 20);
+    assert!(offset_of!(RawTransferMetadata, id) == 16);
+    assert!(offset_of!(RawTransferMetadata, can_be_freed) == 21);
+    assert!(offset_of!(RawTransferMetadata, alloc_ptr) == 8);
+    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
 
     // Padding: 3 bytes
     assert!(size_of::<Error>() == 44);

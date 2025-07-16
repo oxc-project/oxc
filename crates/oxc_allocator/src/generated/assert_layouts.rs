@@ -9,26 +9,28 @@ use crate::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
-    // Padding: 2 bytes
-    assert!(size_of::<RawTransferMetadata2>() == 16);
-    assert!(align_of::<RawTransferMetadata2>() == 4);
-    assert!(offset_of!(RawTransferMetadata2, data_offset) == 0);
-    assert!(offset_of!(RawTransferMetadata2, is_ts) == 12);
-    assert!(offset_of!(RawTransferMetadata2, id) == 4);
-    assert!(offset_of!(RawTransferMetadata2, can_be_freed) == 13);
-    assert!(offset_of!(RawTransferMetadata2, _padding) == 8);
+    // Padding: 6 bytes
+    assert!(size_of::<RawTransferMetadata2>() == 32);
+    assert!(align_of::<RawTransferMetadata2>() == 8);
+    assert!(offset_of!(RawTransferMetadata2, data_offset) == 16);
+    assert!(offset_of!(RawTransferMetadata2, is_ts) == 24);
+    assert!(offset_of!(RawTransferMetadata2, id) == 20);
+    assert!(offset_of!(RawTransferMetadata2, can_be_freed) == 25);
+    assert!(offset_of!(RawTransferMetadata2, alloc_ptr) == 8);
+    assert!(offset_of!(RawTransferMetadata2, _padding) == 0);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
     // Padding: 2 bytes
-    assert!(size_of::<RawTransferMetadata2>() == 16);
-    assert!(align_of::<RawTransferMetadata2>() == 4);
-    assert!(offset_of!(RawTransferMetadata2, data_offset) == 0);
-    assert!(offset_of!(RawTransferMetadata2, is_ts) == 12);
-    assert!(offset_of!(RawTransferMetadata2, id) == 4);
-    assert!(offset_of!(RawTransferMetadata2, can_be_freed) == 13);
-    assert!(offset_of!(RawTransferMetadata2, _padding) == 8);
+    assert!(size_of::<RawTransferMetadata2>() == 24);
+    assert!(align_of::<RawTransferMetadata2>() == 8);
+    assert!(offset_of!(RawTransferMetadata2, data_offset) == 12);
+    assert!(offset_of!(RawTransferMetadata2, is_ts) == 20);
+    assert!(offset_of!(RawTransferMetadata2, id) == 16);
+    assert!(offset_of!(RawTransferMetadata2, can_be_freed) == 21);
+    assert!(offset_of!(RawTransferMetadata2, alloc_ptr) == 8);
+    assert!(offset_of!(RawTransferMetadata2, _padding) == 0);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

@@ -1,6 +1,9 @@
 #![cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
 
-use std::sync::{Arc, atomic::AtomicBool};
+use std::{
+    ptr::NonNull,
+    sync::{Arc, atomic::AtomicBool},
+};
 
 use rustc_hash::FxHashMap;
 
@@ -40,13 +43,22 @@ pub struct RawTransferMetadata {
     pub(crate) id: u32,
     /// Not used in this implementation. Only used by `oxc_allocator`.
     pub(crate) can_be_freed: AtomicBool,
-    /// Padding to pad struct to size 16.
-    pub(crate) _padding: u32,
+    /// Not used in this implementation. Only used by `oxc_allocator`.
+    pub(crate) alloc_ptr: NonNull<u8>,
+    /// Padding to pad struct to size 32.
+    pub(crate) _padding: u64,
 }
 
 impl RawTransferMetadata {
     pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, id: 0, can_be_freed: AtomicBool::new(false), _padding: 0 }
+        Self {
+            data_offset,
+            is_ts,
+            id: 0,
+            can_be_freed: AtomicBool::new(false),
+            alloc_ptr: NonNull::dangling(),
+            _padding: 0,
+        }
     }
 }
 

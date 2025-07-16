@@ -4159,6 +4159,15 @@ function deserializeBool(pos) {
   return uint8[pos] === 1;
 }
 
+function deserializeU8(pos) {
+  return uint8[pos];
+}
+
+function deserializeU64(pos) {
+  const pos32 = pos >> 2;
+  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
+}
+
 function deserializeStr(pos) {
   const pos32 = pos >> 2,
     len = uint32[pos32 + 2];
@@ -4990,10 +4999,6 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
-function deserializeU8(pos) {
-  return uint8[pos];
-}
-
 function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(uint32[pos >> 2]);
 }
@@ -5372,11 +5377,6 @@ function deserializeBoxTSExternalModuleReference(pos) {
 function deserializeOptionNameSpan(pos) {
   if (uint32[(pos + 8) >> 2] === 0 && uint32[(pos + 12) >> 2] === 0) return null;
   return deserializeNameSpan(pos);
-}
-
-function deserializeU64(pos) {
-  const pos32 = pos >> 2;
-  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
 }
 
 function deserializeOptionU64(pos) {
