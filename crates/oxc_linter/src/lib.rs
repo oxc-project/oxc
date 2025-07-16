@@ -3,6 +3,7 @@
 
 use std::{path::Path, rc::Rc, sync::Arc};
 
+use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, Semantic};
 use oxc_span::Span;
@@ -117,6 +118,7 @@ impl Linter {
         path: &Path,
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
+        _allocator: &Allocator,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 

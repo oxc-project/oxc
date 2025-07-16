@@ -38,7 +38,9 @@ fn bench_linter(criterion: &mut Criterion) {
         )
         .with_fix(FixKind::All);
         group.bench_function(id, |b| {
-            b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
+            b.iter(|| {
+                linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record), &allocator)
+            });
         });
     }
     group.finish();
