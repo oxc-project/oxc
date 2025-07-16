@@ -221,7 +221,6 @@ impl<'a> ParserImpl<'a> {
         let params = {
             let ident = match ident {
                 Expression::Identifier(ident) => {
-                    let ident = ident.unbox();
                     self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
                 _ => return self.unexpected(),
