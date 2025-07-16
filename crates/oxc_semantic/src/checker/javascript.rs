@@ -117,7 +117,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         // declare function f(...eval): number; // OK
         // declare function f(...arguments): number; // OK
         // type K = (arguments: any[]) => void; // OK
-        // interface Foo { bar(arguments: any[]): void; } // OK
+        // interface Foo { bar(arguments: any[]): void; baz(...arguments: any[]): void; } // OK
         // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
         // declare function h([eval, arguments]: [number, number]): number; // Error
         let is_declare_function = |kind: &AstKind| {
@@ -136,8 +136,15 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             }
             AstKind::BindingRestElement(_) => {
                 let grand_parent = ctx.nodes.parent_node(parent.id());
-                matches!(grand_parent.kind(), AstKind::FormalParameters(_))
-                    && is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+                matches!(grand_parent.kind(), AstKind::FormalParameters(_)) && {
+                    let great_grand_parent = ctx.nodes.parent_kind(grand_parent.id());
+
+                    is_declare_function(&great_grand_parent)
+                        || matches!(
+                            great_grand_parent,
+                            AstKind::TSMethodSignature(_) | AstKind::TSFunctionType(_)
+                        )
+                }
             }
             _ => false,
         };
