@@ -106,67 +106,73 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
-    let strict_mode = ctx.strict_mode();
-    // In strict mode, `eval` and `arguments` are banned as identifiers.
-    if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
-        // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
-        //
-        // declare function eval(): void; // OK
-        // declare function arguments(): void; // OK
-        // declare function f(eval: number, arguments: number): number; // OK
-        // declare function f(...eval): number; // OK
-        // declare function f(...arguments): number; // OK
-        // type K = (arguments: any[]) => void; // OK
-        // interface Foo { bar(arguments: any[]): void; baz(...arguments: any[]): void; } // OK
-        // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
-        // declare function h([eval, arguments]: [number, number]): number; // Error
-        let is_declare_function = |kind: &AstKind| {
-            kind.as_function()
-                .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
-        };
+    if ctx.strict_mode() {
+        // In strict mode, `eval` and `arguments` are banned as identifiers.
+        if matches!(ident.name.as_str(), "eval" | "arguments") {
+            // `eval` and `arguments` are allowed as the names of declare functions as well as their arguments.
+            //
+            // declare function eval(): void; // OK
+            // declare function arguments(): void; // OK
+            // declare function f(eval: number, arguments: number): number; // OK
+            // declare function f(...eval): number; // OK
+            // declare function f(...arguments): number; // OK
+            // type K = (arguments: any[]) => void; // OK
+            // interface Foo { bar(arguments: any[]): void; baz(...arguments: any[]): void; } // OK
+            // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
+            // declare function h([eval, arguments]: [number, number]): number; // Error
+            let is_declare_function = |kind: &AstKind| {
+                kind.as_function()
+                    .is_some_and(|func| matches!(func.r#type, FunctionType::TSDeclareFunction))
+            };
 
-        let parent = ctx.nodes.parent_node(ctx.current_node_id);
-        let is_ok = match parent.kind() {
-            AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
-            AstKind::FormalParameter(_) => {
-                is_declare_function(&ctx.nodes.parent_kind(parent.id()))
-                    || ctx.nodes.ancestor_kinds(parent.id()).nth(1).is_some_and(|node| {
-                        matches!(node, AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_))
-                    })
-            }
-            AstKind::BindingRestElement(_) => {
-                let grand_parent = ctx.nodes.parent_node(parent.id());
-                matches!(grand_parent.kind(), AstKind::FormalParameters(_)) && {
-                    let great_grand_parent = ctx.nodes.parent_kind(grand_parent.id());
-
-                    is_declare_function(&great_grand_parent)
-                        || matches!(
-                            great_grand_parent,
-                            AstKind::TSMethodSignature(_) | AstKind::TSFunctionType(_)
-                        )
+            let parent = ctx.nodes.parent_node(ctx.current_node_id);
+            let is_ok = match parent.kind() {
+                AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
+                AstKind::FormalParameter(_) => {
+                    is_declare_function(&ctx.nodes.parent_kind(parent.id()))
+                        || ctx.nodes.ancestor_kinds(parent.id()).nth(1).is_some_and(|node| {
+                            matches!(
+                                node,
+                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
+                            )
+                        })
                 }
-            }
-            AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_) => true,
-            _ => false,
-        };
+                AstKind::BindingRestElement(_) => {
+                    let grand_parent = ctx.nodes.parent_node(parent.id());
+                    matches!(grand_parent.kind(), AstKind::FormalParameters(_)) && {
+                        let great_grand_parent = ctx.nodes.parent_kind(grand_parent.id());
 
-        if !is_ok {
-            return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
+                        is_declare_function(&great_grand_parent)
+                            || matches!(
+                                great_grand_parent,
+                                AstKind::TSMethodSignature(_) | AstKind::TSFunctionType(_)
+                            )
+                    }
+                }
+                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_) => true,
+                _ => false,
+            };
+
+            if !is_ok {
+                ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
+            }
         }
-    }
-
-    // LexicalDeclaration : LetOrConst BindingList ;
-    // * It is a Syntax Error if the BoundNames of BindingList contains "let".
-    if !strict_mode && ident.name == "let" {
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-            match node_kind {
-                AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
-                    return ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
+    } else {
+        // LexicalDeclaration : LetOrConst BindingList ;
+        // * It is a Syntax Error if the BoundNames of BindingList contains "let".
+        if ident.name == "let" {
+            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                match node_kind {
+                    AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
+                        return ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
+                    }
+                    AstKind::VariableDeclaration(_)
+                    | AstKind::Function(_)
+                    | AstKind::Program(_) => {
+                        break;
+                    }
+                    _ => {}
                 }
-                AstKind::VariableDeclaration(_) | AstKind::Function(_) | AstKind::Program(_) => {
-                    break;
-                }
-                _ => {}
             }
         }
     }
