@@ -27,10 +27,11 @@ rustversion = { workspace = true, optional = true }
 
 [features]
 default = []
-all = ["assert_unchecked", "code_buffer", "inline_string", "pointer_ext", "rope", "stack"]
+all = ["assert_unchecked", "code_buffer", "inline_string", "pointer_ext", "rope", "slice_iter_ext", "stack"]
 assert_unchecked = []
 code_buffer = ["assert_unchecked"]
 inline_string = ["assert_unchecked"]
 pointer_ext = ["dep:rustversion"]
 rope = ["dep:ropey"]
+slice_iter_ext = ["assert_unchecked"]
 stack = ["pointer_ext"]
