@@ -514,8 +514,9 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
-        // Reuse deserializers for zeroed types
+        // Reuse deserializers for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
+        type_name if type_name.starts_with("Atomic") => return,
         type_name => panic!("Cannot generate deserializer for primitive `{type_name}`"),
     };
 
@@ -959,6 +960,9 @@ impl DeserializeFunctionName for PrimitiveDef {
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's deserializer for `NonZero*` types
+            Cow::Borrowed(type_name)
+        } else if let Some(type_name) = type_name.strip_prefix("Atomic") {
+            // Use standard type's deserializer for `Atomic*` types
             Cow::Borrowed(type_name)
         } else {
             upper_case_first(type_name)

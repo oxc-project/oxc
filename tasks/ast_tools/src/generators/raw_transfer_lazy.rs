@@ -925,8 +925,9 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
-        // Reuse constructors for zeroed types
+        // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
+        type_name if type_name.starts_with("Atomic") => return,
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
@@ -1247,6 +1248,9 @@ impl FunctionNames for PrimitiveDef {
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's constructor for `NonZero*` types
+            Cow::Borrowed(type_name)
+        } else if let Some(type_name) = type_name.strip_prefix("Atomic") {
+            // Use standard type's constructor for `Atomic*` types
             Cow::Borrowed(type_name)
         } else {
             upper_case_first(type_name)

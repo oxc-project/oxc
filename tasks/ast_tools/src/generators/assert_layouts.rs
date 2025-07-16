@@ -8,6 +8,7 @@ use std::{
     borrow::Cow,
     cmp::{Ordering, max, min},
     num,
+    sync::atomic,
 };
 
 use phf_codegen::Map as PhfMapGen;
@@ -472,6 +473,20 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             )
         }
         "NonZeroIsize" => non_zero_usize_layout,
+        // Unlike `bool`, `AtomicBool` does not have any niches
+        "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),
+        "AtomicU8" => Layout::from_type::<atomic::AtomicU8>(),
+        "AtomicU16" => Layout::from_type::<atomic::AtomicU16>(),
+        "AtomicU32" => Layout::from_type::<atomic::AtomicU32>(),
+        "AtomicU64" => Layout::from_type::<atomic::AtomicU64>(),
+        "AtomicUsize" => usize_layout,
+        "AtomicI8" => Layout::from_type::<atomic::AtomicI8>(),
+        "AtomicI16" => Layout::from_type::<atomic::AtomicI16>(),
+        "AtomicI32" => Layout::from_type::<atomic::AtomicI32>(),
+        "AtomicI64" => Layout::from_type::<atomic::AtomicI64>(),
+        "AtomicIsize" => usize_layout,
+        // `AtomicPtr` has no niche - like `*mut T`, not `NonNull<T>`
+        "AtomicPtr" => usize_layout,
         "PointerAlign" => Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
