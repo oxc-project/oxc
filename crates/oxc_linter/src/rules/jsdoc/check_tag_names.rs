@@ -1094,7 +1094,7 @@ fn test() {
         ),
     ];
 
-    let dts_pass = vec![
+    let _dts_pass: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
         (
             "
         			        /** @default 0 */
@@ -1158,18 +1158,20 @@ fn test() {
             None,
         ),
     ];
-    let dts_fail = vec![(
-        "
+    let _dts_fail: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> =
+        vec![(
+            "
         			        /** @typoo {string} (fail: invalid name) */
         			        let a;
         			      ",
-        None,
-        None,
-    )];
+            None,
+            None,
+        )];
 
     Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test_and_snapshot();
+    // TODO: re-enable here when we officially support linting `.d.ts` files
     // Currently only 1 snapshot can be saved under a rule name
-    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, dts_pass, dts_fail)
-        .change_rule_path("test.d.ts")
-        .test();
+    // Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, dts_pass, dts_fail)
+    //     .change_rule_path("test.d.ts")
+    //     .test();
 }

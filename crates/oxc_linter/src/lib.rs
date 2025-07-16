@@ -133,7 +133,7 @@ impl Linter {
         let should_run_on_jest_node =
             ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-        if path.ends_with(".d.ts") {
+        if path.to_str().is_some_and(|str| str.ends_with(".d.ts")) {
             return ctx_host.take_diagnostics();
         }
 
