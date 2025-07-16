@@ -4,6 +4,63 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- 5e428a4 linter/eslint-plugin-next: No-html-link-for-pages rule addition (#12194) (Gabriel Díaz Aguilera)
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+- c551b8f linter: Report diagnostics from custom plugins (#12219) (camc314)
+- d387729 linter: JS custom rules config (#12160) (camc314)
+- bde1ef1 linter: Load custom JS plugins (#11980) (camc314)
+- d4ebd14 linter: Add `oxlint2`/`disable_oxlint2` feature flags (#12130) (camc314)
+- a4dae73 linter: Introduce `LintPlugins` to store builtin + custom plugins (#12117) (camc314)
+
+### 🐛 Bug Fixes
+
+- 3f9a1f0 linter/no-unused-private-class-members: Fix false positive with nullish coalescing assignments (#12317) (camc314)
+- 47fad0e linter/no-empty-file: False positive with empty file with triple slash directive (#12293) (camc314)
+- 633ba30 linter: False positive with unknown plugins when unmatched eslint rule (#12285) (camc314)
+- 98708eb linter: Fix inconsistent behavior in `no-duplicate-imports` rule (#12192) (yefan)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c68b607 ast: Rename `TemplateLiteral::quasi` to `TemplateLiteral::single_quasi` (#12266) (Dunqing)
+- 32c32af ast: Check whether there is a single `quasi` in `TemplateLiteral::quasi` (#12265) (Dunqing)
+- 8f6a1da linter/js-plugins: Use `u32` for IDs (#12243) (overlookmotel)
+- 36cd364 linter/js-plugins: Clean up code (#12242) (overlookmotel)
+- 8c02ebd linter/js-plugins: Rename `specifiers` to `paths` (#12241) (overlookmotel)
+- 3adaf98 linter: Simplify getting nodes count (#12239) (overlookmotel)
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+- 729b82b linter: Rename `plugin_name` to `plugin_specifier` (#12148) (overlookmotel)
+- 532b816 linter: Use `to_string` instead of `into` (#12147) (overlookmotel)
+- 89f2a69 linter: TODO comment (#12146) (overlookmotel)
+- f90d3e1 linter: Feature gate `load_external_plugin` by both `oxlint2` and `disable_oxlint2` features (#12141) (overlookmotel)
+- 12e4ec7 linter: Make `tokio` dependency optional (#12140) (overlookmotel)
+- 1d2eaca oxlint2: Introduce `force_test_reporter` feature for consistent graphical outputs (#12133) (camc314)
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+- 228cff5 semantic,linter: Assert that Program is always the first node (#12123) (Ulrich Stark)
+- e8e2a25 ast: Remove `AstKind` for `AssignmentTargetPattern` (#12105) (camchenry)
+- f7c675d linter: Rename `LintPlugins` to `BuiltinLintPlugins` (#12116) (camc314)
+- a9e5ec0 linter: Access plugins through config instead of storing directly (#12115) (camc314)
+- 9736a7f linter: Simplify `unicorn/require-post-message-target-origin` (#12110) (shulaoda)
+
+### 📚 Documentation
+
+- 2e3db46 linter: Add missing backtick preventing website from building (#12113) (camc314)
+
+### ⚡ Performance
+
+- d0f8b88 linter/js-plugins: Do not copy `Vec` (#12248) (overlookmotel)
+- 4284d19 linter/js-plugins: Use hashmap `Entry` API + remove temp `Vec` (#12247) (overlookmotel)
+- c7889c3 semantic,linter: Simplify implementation and uses of ancestors iterators (#12164) (Ulrich Stark)
+- f99959c linter: Move work out of loop (#12145) (overlookmotel)
+- 514d40c linter: Do not create `Resolver` unless required (#12142) (overlookmotel)
+- 7103527 linter/no-constructor-return: Optimize loop (#12138) (overlookmotel)
+
+
 ## [1.6.0] - 2025-07-07
 
 ### 🚀 Features

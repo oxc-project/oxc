@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- 5e428a4 linter/eslint-plugin-next: No-html-link-for-pages rule addition (#12194) (Gabriel Díaz Aguilera)
+- c551b8f linter: Report diagnostics from custom plugins (#12219) (camc314)
+- d387729 linter: JS custom rules config (#12160) (camc314)
+- 152e59d napi/oxlint: Read source text into start of allocator (#12122) (overlookmotel)
+- d4ebd14 linter: Add `oxlint2`/`disable_oxlint2` feature flags (#12130) (camc314)
+- a4dae73 linter: Introduce `LintPlugins` to store builtin + custom plugins (#12117) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9720774 linter: Report implicit config parse errors (#12260) (Simon Buchan)
+- 853d2bc linter, language_server: Correctly identify usage of `import` plugin (#12157) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+- acfac68 oxlint: Adjust ignore patterns by counting bytes instead of chars (#12209) (Sysix)
+- 1d2eaca oxlint2: Introduce `force_test_reporter` feature for consistent graphical outputs (#12133) (camc314)
+- f7c675d linter: Rename `LintPlugins` to `BuiltinLintPlugins` (#12116) (camc314)
+
+### 🧪 Testing
+
+- d1194e8 oxlint: Ignore test on windows (#12262) (camc314)
+
+
 ## [1.6.0] - 2025-07-07
 
 ### 🚀 Features

@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- d387729 linter: JS custom rules config (#12160) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1920c6b language_server: Respect the root `.oxlintrc.json` file for `ignorePatterns` (#12171) (Sysix)
+- 853d2bc linter, language_server: Correctly identify usage of `import` plugin (#12157) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+
+
 ## [1.6.0] - 2025-07-07
 
 ### 🚀 Features
