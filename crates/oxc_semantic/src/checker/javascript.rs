@@ -163,14 +163,13 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         if ident.name == "let" {
             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
                 match node_kind {
-                    AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
-                        return ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
-                    }
-                    AstKind::VariableDeclaration(_)
-                    | AstKind::Function(_)
-                    | AstKind::Program(_) => {
+                    AstKind::VariableDeclarator(decl) => {
+                        if decl.kind.is_lexical() {
+                            ctx.error(invalid_let_declaration(decl.kind.as_str(), ident.span));
+                        }
                         break;
                     }
+                    AstKind::Function(_) => break,
                     _ => {}
                 }
             }
