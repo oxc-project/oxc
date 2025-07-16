@@ -6,7 +6,10 @@ use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::ctx::{Ctx, MinifierState, TraverseCtx};
+use crate::{
+    ctx::{Ctx, TraverseCtx},
+    state::MinifierState,
+};
 
 #[derive(Default)]
 pub struct NormalizeOptions {

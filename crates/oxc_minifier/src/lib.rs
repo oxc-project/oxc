@@ -7,6 +7,7 @@ mod ctx;
 mod keep_var;
 mod options;
 mod peephole;
+mod state;
 
 #[cfg(test)]
 mod tester;

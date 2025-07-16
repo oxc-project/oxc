@@ -27,8 +27,9 @@ use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 use crate::{
-    ctx::{Ctx, MinifierState, TraverseCtx},
+    ctx::{Ctx, TraverseCtx},
     options::CompressOptionsKeepNames,
+    state::MinifierState,
 };
 
 pub use self::normalize::{Normalize, NormalizeOptions};

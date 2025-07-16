@@ -1,9 +1,4 @@
-use std::{
-    ops::{Deref, DerefMut},
-    rc::Rc,
-};
-
-use rustc_hash::FxHashMap;
+use std::ops::{Deref, DerefMut};
 
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::{
@@ -12,27 +7,11 @@ use oxc_ecmascript::{
     },
     side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
 };
-use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::format_atom;
 use oxc_syntax::reference::ReferenceId;
 
-use crate::CompressOptions;
-
-pub struct MinifierState<'a> {
-    pub options: Rc<CompressOptions>,
-
-    /// Constant values evaluated from expressions.
-    ///
-    /// Values are saved during constant evaluation phase.
-    /// Values are read during [oxc_ecmascript::is_global_reference::IsGlobalReference::get_constant_value_for_reference_id].
-    pub constant_values: FxHashMap<SymbolId, ConstantValue<'a>>,
-}
-
-impl MinifierState<'_> {
-    pub fn new(options: Rc<CompressOptions>) -> Self {
-        Self { options, constant_values: FxHashMap::default() }
-    }
-}
+use crate::state::MinifierState;
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
