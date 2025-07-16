@@ -45,6 +45,7 @@ fn dependency_array_required_diagnostic(hook_name: &str, span: Span) -> OxcDiagn
     ))
     .with_label(span)
     .with_help("Did you forget to pass an array of dependencies?")
+    .with_error_code_scope(SCOPE)
 }
 
 fn unknown_dependencies_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -106,6 +107,7 @@ fn unnecessary_dependency_diagnostic(hook_name: &str, dep_name: &str, span: Span
     OxcDiagnostic::warn(format!("React Hook {hook_name} has unnecessary dependency: {dep_name}"))
         .with_label(span)
         .with_help("Either include it or remove the dependency array.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn dependency_array_not_array_literal_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -133,11 +135,19 @@ fn complex_expression_in_dependency_array_diagnostic(hook_name: &str, span: Span
     .with_error_code_scope(SCOPE)
 }
 
-fn dependency_changes_on_every_render_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
+fn dependency_changes_on_every_render_diagnostic(
+    hook_name: &str,
+    span: Span,
+    dep_name: &str,
+    dep_decl_span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "React Hook {hook_name} has a dependency array that changes every render."
+        "React hook {hook_name} depends on `{dep_name}`, which changes every render"
     ))
-    .with_label(span)
+    .with_labels([
+        span.primary_label("it will always cause this hook to re-evaluate"),
+        dep_decl_span.label(format!("`{dep_name}` is declared here")),
+    ])
     .with_help("Try memoizing this variable with `useRef` or `useCallback`.")
     .with_error_code_scope(SCOPE)
 }
@@ -618,9 +628,10 @@ impl Rule for ExhaustiveDeps {
             let Some(symbol_id) = dep.symbol_id else { continue };
 
             if dep.chain.is_empty() && is_symbol_declaration_referentially_unique(symbol_id, ctx) {
+                let name = ctx.scoping().symbol_name(symbol_id);
+                let decl_span = ctx.scoping().symbol_span(symbol_id);
                 ctx.diagnostic(dependency_changes_on_every_render_diagnostic(
-                    hook_name,
-                    dependencies_node.span,
+                    hook_name, dep.span, name, decl_span,
                 ));
             }
         }
@@ -1434,6 +1445,21 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
     false
 }
+
+// #[test]
+// fn test_debug() {
+//     use crate::tester::Tester;
+//     let pass = vec![
+//         r"function Example(props) {
+//           const { form } = useForm()
+//           useEffect(() => {
+//             form.setValue({ some: 'initial value' });
+//           }, [form.setValue]);
+//         }",
+//     ];
+//     let fail = vec![];
+//     Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test();
+// }
 
 #[test]
 fn test() {
@@ -2393,6 +2419,7 @@ fn test() {
             bar();
           }, [])
         }",
+        // check various forms of member expressions
         r"function Example(props) {
           useEffect(() => {
             let topHeight = 0;
