@@ -788,12 +788,10 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let left = if self.at(Kind::This) {
             self.bump_any();
-            let this_expr = self.ast.alloc_this_expression(self.end_span(span));
-            TSTypeName::ThisExpression(this_expr)
+            self.ast.ts_type_name_this_expression(self.end_span(span))
         } else {
             let ident = self.parse_identifier_name();
-            let ident = self.ast.alloc_identifier_reference(ident.span, ident.name);
-            TSTypeName::IdentifierReference(ident)
+            self.ast.ts_type_name_identifier_reference(ident.span, ident.name)
         };
         if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(span, left) } else { left }
     }

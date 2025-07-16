@@ -377,14 +377,14 @@ impl<'a> ParserImpl<'a> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
-                ModuleDeclaration::ExportNamedDeclaration(self.ast.alloc_export_named_declaration(
+                self.ast.module_declaration_export_named_declaration(
                     self.end_span(span),
                     Some(decl),
                     self.ast.vec(),
                     None,
                     ImportOrExportKind::Value,
                     NONE,
-                ))
+                )
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
