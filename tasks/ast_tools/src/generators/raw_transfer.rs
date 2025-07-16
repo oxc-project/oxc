@@ -17,8 +17,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PointerDef, PrimitiveDef,
+        Schema, StructDef, TypeDef, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{FxIndexMap, format_cow, number_lit, upper_case_first, write_it},
@@ -148,6 +148,10 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
+            }
+            TypeDef::Pointer(_pointer_def) => {
+                // No deserializers for pointers - use `Box`'s deserializer.
+                // TODO: Need to make sure deserializer for `Box<T>` is generated.
             }
         }
     }
@@ -921,6 +925,7 @@ impl DeserializeFunctionName for TypeDef {
             TypeDef::Box(def) => def.plain_name(schema),
             TypeDef::Vec(def) => def.plain_name(schema),
             TypeDef::Cell(def) => def.plain_name(schema),
+            TypeDef::Pointer(def) => def.plain_name(schema),
         }
     }
 }
@@ -974,6 +979,13 @@ impl DeserializeFunctionName for CellDef {
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
         // `Cell`s use same deserializer as inner type, as layout is identical
         self.inner_type(schema).plain_name(schema)
+    }
+}
+
+impl DeserializeFunctionName for PointerDef {
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+        // Pointers use same deserializer as `Box`, as layout is identical
+        format_cow!("Box{}", self.inner_type(schema).plain_name(schema))
     }
 }
 

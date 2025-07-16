@@ -116,6 +116,7 @@ impl<'s> ScopesCalculator<'s> {
             TypeDef::Box(box_def) => self.calculate_type(box_def.inner_type_id),
             TypeDef::Vec(vec_def) => self.calculate_type(vec_def.inner_type_id),
             TypeDef::Cell(cell_def) => self.calculate_type(cell_def.inner_type_id),
+            TypeDef::Pointer(pointer_def) => self.calculate_type(pointer_def.inner_type_id),
         };
 
         // Either `Calculated(true)`, `Calculated(false)`, or `NotCalculated`.

@@ -159,6 +159,7 @@ impl GetLayout for TypeDef {
             TypeDef::Box(def) => &def.layout,
             TypeDef::Vec(def) => &def.layout,
             TypeDef::Cell(def) => &def.layout,
+            TypeDef::Pointer(def) => &def.layout,
         }
     }
 }

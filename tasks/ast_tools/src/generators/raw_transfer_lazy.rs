@@ -13,8 +13,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, OptionDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
-        VecDef,
+        BoxDef, CellDef, Def, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
+        TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
@@ -149,6 +149,10 @@ fn generate(
             TypeDef::Cell(_cell_def) => {
                 // No constructor for `Cell`s - use inner type's constructor
             }
+            TypeDef::Pointer(_pointer_def) => {
+                // No constructor for pointers - use `Box`'s constructor.
+                // TODO: Need to make sure constructor for `Box<T>` is generated.
+            }
         }
     }
 
@@ -280,6 +284,7 @@ impl<'s> WalkStatuses<'s> {
             TypeDef::Box(box_def) => self.is_walked(box_def.inner_type(self.schema)),
             TypeDef::Vec(vec_def) => self.is_walked(vec_def.inner_type(self.schema)),
             TypeDef::Cell(cell_def) => self.is_walked(cell_def.inner_type(self.schema)),
+            TypeDef::Pointer(pointer_def) => self.is_walked(pointer_def.inner_type(self.schema)),
         };
 
         self.statuses[type_id] = if is_walked { WalkStatus::Walk } else { WalkStatus::NoWalk };
@@ -509,8 +514,8 @@ impl<'s> CacheKeyOffsets<'s> {
             }
             // Primitives don't contain structs, so all offsets are available
             TypeDef::Primitive(_) => true,
-            // `Box` and `Vec` store payload in a separate allocation, so all offsets are available
-            TypeDef::Box(_) | TypeDef::Vec(_) => true,
+            // `Box`, `Vec`, and pointers store payload in a separate allocation, so all offsets are available
+            TypeDef::Box(_) | TypeDef::Vec(_) | TypeDef::Pointer(_) => true,
         }
     }
 }
@@ -590,6 +595,9 @@ impl<'s> LocalCacheTypes<'s> {
             }
             TypeDef::Box(box_def) => self.needs_cached_prop(box_def.inner_type(self.schema)),
             TypeDef::Cell(cell_def) => self.needs_cached_prop(cell_def.inner_type(self.schema)),
+            TypeDef::Pointer(pointer_def) => {
+                self.needs_cached_prop(pointer_def.inner_type(self.schema))
+            }
         };
 
         self.state[type_id] =
@@ -1194,6 +1202,7 @@ impl FunctionNames for TypeDef {
             TypeDef::Box(def) => def.constructor_name(schema),
             TypeDef::Vec(def) => def.constructor_name(schema),
             TypeDef::Cell(def) => def.constructor_name(schema),
+            TypeDef::Pointer(def) => def.constructor_name(schema),
         }
     }
 
@@ -1206,6 +1215,7 @@ impl FunctionNames for TypeDef {
             TypeDef::Box(def) => def.plain_name(schema),
             TypeDef::Vec(def) => def.plain_name(schema),
             TypeDef::Cell(def) => def.plain_name(schema),
+            TypeDef::Pointer(def) => def.plain_name(schema),
         }
     }
 }
@@ -1266,5 +1276,12 @@ impl FunctionNames for CellDef {
 
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
         self.inner_type(schema).plain_name(schema)
+    }
+}
+
+// Pointers use same construct and walk functions as `Box`, as layout is identical
+impl FunctionNames for PointerDef {
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+        format_cow!("Box{}", self.inner_type(schema).plain_name(schema))
     }
 }

@@ -21,7 +21,8 @@ use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
-        Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
+        Def, Discriminant, EnumDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
+        Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -108,6 +109,13 @@ fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
                 schema.cell_def_mut(type_id).layout = calculate_layout_for_cell(type_id, schema);
             }
             &schema.cell_def(type_id).layout
+        }
+        TypeDef::Pointer(pointer_def) => {
+            if is_not_calculated(&pointer_def.layout) {
+                schema.pointer_def_mut(type_id).layout =
+                    calculate_layout_for_pointer(type_id, schema);
+            }
+            &schema.pointer_def(type_id).layout
         }
     }
 }
@@ -408,6 +416,24 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
     layout.layout_64.niche = None;
     layout.layout_32.niche = None;
     layout
+}
+
+/// Calculate layout for a pointer.
+///
+/// `NonNull` pointers have a niche, `*const` and `*mut` have no niche.
+fn calculate_layout_for_pointer(type_id: TypeId, schema: &Schema) -> Layout {
+    let pointer_def = schema.pointer_def(type_id);
+    if pointer_def.kind == PointerKind::NonNull {
+        Layout {
+            layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+        }
+    } else {
+        Layout {
+            layout_64: PlatformLayout::from_size_align(8, 8),
+            layout_32: PlatformLayout::from_size_align(4, 4),
+        }
+    }
 }
 
 /// Calculate layout for a primitive.

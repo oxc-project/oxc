@@ -220,8 +220,8 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                 (vec.inner_type(schema).as_struct().is_some_and(|s| !s.visit.has_visitor()), false)
             }
             TypeDef::Cell(_) => return None,
-            TypeDef::Option(_) | TypeDef::Box(_) => {
-                unreachable!("Option/Box should have been unwrapped")
+            TypeDef::Option(_) | TypeDef::Box(_) | TypeDef::Pointer(_) => {
+                unreachable!("Option/Box/pointer should have been unwrapped");
             }
         };
 

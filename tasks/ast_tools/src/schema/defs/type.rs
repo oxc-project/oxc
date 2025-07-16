@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 
 use super::{
-    BoxDef, CellDef, Def, Derives, EnumDef, OptionDef, PrimitiveDef, Schema, StructDef, TypeId,
-    VecDef,
+    BoxDef, CellDef, Def, Derives, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
+    TypeId, VecDef,
 };
 
 /// Type definition for a type.
@@ -15,6 +15,7 @@ pub enum TypeDef {
     Box(BoxDef),
     Vec(VecDef),
     Cell(CellDef),
+    Pointer(PointerDef),
 }
 
 impl Def for TypeDef {
@@ -28,6 +29,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.id(),
             TypeDef::Vec(def) => def.id(),
             TypeDef::Cell(def) => def.id(),
+            TypeDef::Pointer(def) => def.id(),
         }
     }
 
@@ -41,6 +43,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.name(),
             TypeDef::Vec(def) => def.name(),
             TypeDef::Cell(def) => def.name(),
+            TypeDef::Pointer(def) => def.name(),
         }
     }
 
@@ -54,6 +57,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.generated_derives(),
             TypeDef::Vec(def) => def.generated_derives(),
             TypeDef::Cell(def) => def.generated_derives(),
+            TypeDef::Pointer(def) => def.generated_derives(),
         }
     }
 
@@ -67,6 +71,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.has_lifetime(schema),
             TypeDef::Vec(def) => def.has_lifetime(schema),
             TypeDef::Cell(def) => def.has_lifetime(schema),
+            TypeDef::Pointer(def) => def.has_lifetime(schema),
         }
     }
 
@@ -80,6 +85,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.ty_with_lifetime(schema, anon),
             TypeDef::Vec(def) => def.ty_with_lifetime(schema, anon),
             TypeDef::Cell(def) => def.ty_with_lifetime(schema, anon),
+            TypeDef::Pointer(def) => def.ty_with_lifetime(schema, anon),
         }
     }
 
@@ -100,6 +106,7 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.maybe_inner_type(schema),
             TypeDef::Vec(def) => def.maybe_inner_type(schema),
             TypeDef::Cell(def) => def.maybe_inner_type(schema),
+            TypeDef::Pointer(def) => def.maybe_inner_type(schema),
         }
     }
 }
@@ -230,6 +237,25 @@ impl TypeDef {
     pub fn as_cell_mut(&mut self) -> Option<&mut CellDef> {
         match self {
             Self::Cell(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    #[expect(dead_code)]
+    pub fn is_pointer(&self) -> bool {
+        matches!(self, Self::Pointer(_))
+    }
+
+    pub fn as_pointer(&self) -> Option<&PointerDef> {
+        match self {
+            Self::Pointer(def) => Some(def),
+            _ => None,
+        }
+    }
+
+    pub fn as_pointer_mut(&mut self) -> Option<&mut PointerDef> {
+        match self {
+            Self::Pointer(def) => Some(def),
             _ => None,
         }
     }
