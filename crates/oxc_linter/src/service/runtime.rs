@@ -498,7 +498,7 @@ impl Runtime {
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
-                module_to_lint.content.with_dependent_mut(|_owner, dep| {
+                module_to_lint.content.with_dependent_mut(|_allocator_guard, dep| {
                     // If there are fixes, we will accumulate all of them and write to the file at the end.
                     // This means we do not write multiple times to the same file if there are multiple sources
                     // in the same file (for example, multiple scripts in an `.astro` file).
@@ -613,7 +613,7 @@ impl Runtime {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
                 module.content.with_dependent_mut(
-                    |_owner, ModuleContentDependent { source_text, section_contents }| {
+                    |_allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
                         let rope = &Rope::from_str(source_text);
@@ -750,7 +750,7 @@ impl Runtime {
         rayon::scope(|scope| {
             self.resolve_modules(scope, check_syntax_errors, tx_error, |me, mut module| {
                 module.content.with_dependent_mut(
-                    |_owner, ModuleContentDependent { source_text: _, section_contents }| {
+                    |_allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
                         for (record_result, section) in module
                             .section_module_records
@@ -806,9 +806,9 @@ impl Runtime {
         let mut module_content: Option<ModuleContent> = None;
 
         if self.paths.contains(path) {
-            let allocator = self.allocator_pool.get();
+            let allocator_guard = self.allocator_pool.get();
 
-            let build = ModuleContent::try_new(allocator, |allocator| {
+            let build = ModuleContent::try_new(allocator_guard, |allocator| {
                 let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
                 else {
                     return Err(());
@@ -841,9 +841,10 @@ impl Runtime {
                 Err(()) => return default_output(),
             };
         } else {
-            let allocator = self.allocator_pool.get();
+            let allocator_guard = self.allocator_pool.get();
+            let allocator = &*allocator_guard;
 
-            let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, &allocator) else {
+            let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator) else {
                 return default_output();
             };
 
@@ -861,7 +862,7 @@ impl Runtime {
                 check_syntax_errors,
                 source_type,
                 source_text,
-                &allocator,
+                allocator,
                 None,
             );
         }
