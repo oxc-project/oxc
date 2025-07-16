@@ -4,7 +4,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
 use crate::ast::*;
@@ -785,6 +785,27 @@ impl CallExpression<'_> {
             Argument::StringLiteral(str_literal) => Some(str_literal),
             _ => None,
         }
+    }
+
+    /// Returns the span covering **all** arguments in this call expression.
+    ///
+    /// The span starts at the beginning of the first argument and ends at the end
+    /// of the last argument (inclusive).
+    ///
+    /// # Examples
+    /// ```ts
+    /// foo(bar, baz);
+    /// //  ^^^^^^^^  <- arguments_span() covers this range
+    /// ```
+    ///
+    /// If the call expression has no arguments, [`None`] is returned.
+    pub fn arguments_span(&self) -> Option<Span> {
+        self.arguments.first().map(|first| {
+            // The below will never panic since the len of `self.arguments` must be >= 1
+            #[expect(clippy::missing_panics_doc)]
+            let last = self.arguments.last().unwrap();
+            Span::new(first.span().start, last.span().end)
+        })
     }
 }
 
