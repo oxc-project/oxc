@@ -116,6 +116,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         // declare function f(eval: number, arguments: number): number; // OK
         // declare function f(...eval): number; // OK
         // declare function f(...arguments): number; // OK
+        // type K = (arguments: any[]) => void; // OK
         // declare function g({eval, arguments}: {eval: number, arguments: number}): number; // Error
         // declare function h([eval, arguments]: [number, number]): number; // Error
         let is_declare_function = |kind: &AstKind| {
@@ -126,7 +127,14 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
         let parent = ctx.nodes.parent_node(ctx.current_node_id);
         let is_ok = match parent.kind() {
             AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
-            AstKind::FormalParameter(_) => is_declare_function(&ctx.nodes.parent_kind(parent.id())),
+            AstKind::FormalParameter(_) => {
+                is_declare_function(&ctx.nodes.parent_kind(parent.id()))
+                    || ctx
+                        .nodes
+                        .ancestor_kinds(parent.id())
+                        .nth(1)
+                        .is_some_and(|node| matches!(node, AstKind::TSFunctionType(_)))
+            }
             AstKind::BindingRestElement(_) => {
                 let grand_parent = ctx.nodes.parent_node(parent.id());
                 matches!(grand_parent.kind(), AstKind::FormalParameters(_))
