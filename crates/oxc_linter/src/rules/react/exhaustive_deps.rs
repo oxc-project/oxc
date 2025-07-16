@@ -1446,21 +1446,6 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
     false
 }
 
-// #[test]
-// fn test_debug() {
-//     use crate::tester::Tester;
-//     let pass = vec![
-//         r"function Example(props) {
-//           const { form } = useForm()
-//           useEffect(() => {
-//             form.setValue({ some: 'initial value' });
-//           }, [form.setValue]);
-//         }",
-//     ];
-//     let fail = vec![];
-//     Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test();
-// }
-
 #[test]
 fn test() {
     use crate::tester::Tester;
