@@ -63,11 +63,7 @@ fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
-fn missing_dependency_diagnostic<'a>(
-    hook_name: &str,
-    deps: &[Name<'a>],
-    span: Span,
-) -> OxcDiagnostic {
+fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span) -> OxcDiagnostic {
     let single = deps.len() == 1;
     let deps_pretty = if single {
         format!("'{}'", deps[0])
@@ -84,7 +80,7 @@ fn missing_dependency_diagnostic<'a>(
     };
 
     let labels = deps
-        .into_iter()
+        .iter()
         .map(|dep| {
             // when multiple dependencies are missing, labels can quickly get noisy,
             // so we only add labels when there's only one dependency
@@ -754,8 +750,8 @@ struct Name<'a> {
     pub span: Span,
     pub name: Cow<'a, str>,
 }
-impl<'a> std::fmt::Display for Name<'a> {
-    fn fmt(self: &Self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl std::fmt::Display for Name<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.name.fmt(f)
     }
 }
