@@ -5,11 +5,16 @@ mod minimize_exit_points;
 mod oxc;
 mod statement_fusion;
 
-use oxc_minifier::CompressOptions;
+use oxc_minifier::{CompressOptions, CompressOptionsUnused};
 
 #[track_caller]
 fn test(source_text: &str, expected: &str) {
-    let options = CompressOptions { drop_debugger: false, ..CompressOptions::default() };
+    let options = CompressOptions {
+        drop_debugger: false,
+        drop_console: false,
+        unused: CompressOptionsUnused::Keep,
+        ..CompressOptions::smallest()
+    };
     crate::test(source_text, expected, options);
 }
 
