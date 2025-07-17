@@ -69,7 +69,7 @@ impl Rule for PreferArrayFlatMap {
 
         if let Some(first_arg) = flat_call_expr.arguments.first() {
             if let Argument::NumericLiteral(number_lit) = first_arg {
-                if number_lit.raw.as_ref().unwrap() != "1" {
+                if (number_lit.value - 1.0).abs() > f64::EPSILON {
                     return;
                 }
             } else {
@@ -117,7 +117,6 @@ fn test() {
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(+1)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo.bar)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)", None),
     ];
 
     let fail = vec![
@@ -134,6 +133,7 @@ fn test() {
         ("const bar = (([1,2,3].map(i => [i]))).flat()", None),
         ("let bar = [1,2,3] . map( x => y ) . flat () // 🤪", None),
         ("const bar = [1,2,3].map(i => [i]).flat(1);", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)", None),
     ];
 
     let fix = vec![
