@@ -233,8 +233,8 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost,
     ) {
-        // TODO: Error or `unwrap` instead of `return`?
-        let Some(external_linter) = &self.external_linter else { return };
+        // `external_linter` always exists when `oxlint2` feature is enabled
+        let external_linter = self.external_linter.as_ref().unwrap();
 
         let result = (external_linter.run)(
             path.to_str().unwrap().to_string(),
