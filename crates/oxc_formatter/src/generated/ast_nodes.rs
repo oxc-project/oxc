@@ -4578,7 +4578,7 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,

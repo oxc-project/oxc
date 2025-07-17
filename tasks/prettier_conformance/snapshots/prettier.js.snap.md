@@ -1,4 +1,4 @@
-js compatibility: 395/699 (56.51%)
+js compatibility: 396/699 (56.65%)
 
 # Failed
 
@@ -7,7 +7,7 @@ js compatibility: 395/699 (56.51%)
 | js/arrays/preserve_empty_lines.js | 💥 | 97.30% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 94.85% |
 | js/arrows/call.js | 💥💥 | 75.68% |
-| js/arrows/comment.js | 💥💥 | 77.78% |
+| js/arrows/comment.js | 💥💥 | 94.55% |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
@@ -23,7 +23,7 @@ js compatibility: 395/699 (56.51%)
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
-| js/binary-expressions/comment.js | 💥 | 76.47% |
+| js/binary-expressions/comment.js | 💥 | 86.36% |
 | js/binary-expressions/in_instanceof.js | 💥 | 97.96% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
 | js/binary-expressions/inline-object-array.js | 💥 | 85.71% |
@@ -53,7 +53,7 @@ js compatibility: 395/699 (56.51%)
 | js/classes/method.js | 💥 | 71.43% |
 | js/classes/property.js | 💥 | 54.55% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 30.77% |
-| js/comments/15661.js | 💥💥 | 46.15% |
+| js/comments/15661.js | 💥💥 | 53.63% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/binary-expressions-single-comments.js | 💥💥 | 55.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
@@ -257,7 +257,6 @@ js compatibility: 395/699 (56.51%)
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
 | js/try/catch.js | 💥 | 52.63% |
 | js/try/try.js | 💥 | 50.00% |
-| js/unary-expression/comments.js | 💥 | 75.93% |
 | js/unicode/nbsp-jsx.js | 💥 | 22.22% |
 | js/variable_declarator/multiple.js | 💥 | 87.27% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |

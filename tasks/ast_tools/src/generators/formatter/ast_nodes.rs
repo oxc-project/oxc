@@ -18,6 +18,8 @@ pub fn get_node_type(ty: &TokenStream) -> TokenStream {
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: [&str; 1] = ["UnaryExpression"];
+
 pub struct FormatterAstNodesGenerator;
 
 define_generator!(FormatterAstNodesGenerator);
@@ -255,8 +257,16 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                 quote! { &self.inner.#field_name }
             };
 
-            let mut following_node = quote! {
-                self.following_node
+            let mut following_node = if index == fields.len() - 1
+                && AST_NODE_WITHOUT_FOLLOWING_NODE_LIST.contains(&struct_def.name.as_str())
+            {
+                quote! {
+                    None
+                }
+            } else {
+                quote! {
+                    self.following_node
+                }
             };
 
             let mut next_field_index = index + 1;
