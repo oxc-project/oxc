@@ -85,10 +85,13 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                             _ => write!(f, [empty_line()])?,
                         }
                     }
-                    CommentKind::Line => match get_lines_after(comment.span.end, f.source_text()) {
-                        0 | 1 => write!(f, [hard_line_break()])?,
-                        _ => write!(f, [empty_line()])?,
-                    },
+                    CommentKind::Line => {
+                        dbg!(get_lines_after(comment.span.end, f.source_text()));
+                        match get_lines_after(comment.span.end, f.source_text()) {
+                            0 | 1 => write!(f, [hard_line_break()])?,
+                            _ => write!(f, [empty_line()])?,
+                        }
+                    }
                 }
             }
 
@@ -97,13 +100,14 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let source_text = f.context().source_text();
                 let leading_comments = f
                     .context()
                     .comments()
                     .unprinted_comments()
                     .iter()
                     .take_while(|comment| comment.span.end <= span.start);
+                dbg!(f.context().comments().unprinted_comments());
+                dbg!(span);
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -193,6 +197,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                 } else {
                     let content =
                         format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()])?;
                     } else {

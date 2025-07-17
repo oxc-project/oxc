@@ -58,7 +58,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
 | typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 67.35% |
+| typescript/arrow/16067.ts | 💥💥 | 79.17% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 64.57% |
@@ -105,9 +105,9 @@ ts compatibility: 229/573 (39.97%)
 | typescript/comments/jsx.tsx | 💥 | 20.00% |
 | typescript/comments/location.ts | 💥 | 75.00% |
 | typescript/comments/mapped_types.ts | 💥 | 58.82% |
-| typescript/comments/method_types.ts | 💥 | 69.23% |
+| typescript/comments/method_types.ts | 💥 | 74.36% |
 | typescript/comments/methods.ts | 💥 | 97.96% |
-| typescript/comments/type-parameters.ts | 💥 | 39.29% |
+| typescript/comments/type-parameters.ts | 💥 | 42.86% |
 | typescript/comments/type_literals.ts | 💥 | 55.17% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/comments-2/dangling.ts | 💥💥 | 75.00% |

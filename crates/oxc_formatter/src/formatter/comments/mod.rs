@@ -55,8 +55,6 @@ impl<'a> Comments<'a> {
             index += 1;
         }
 
-        dbg!(self.printed_count, index);
-
         if self.comments[index].span.end < pos {
             &self.comments[index + 1..]
         } else {
@@ -297,8 +295,6 @@ impl<'a> Comments<'a> {
         );
 
         let Some(following_node) = following_node else {
-            dbg!("test?");
-
             let enclosing_span = enclosing_node.span();
             return comments
                 .iter()

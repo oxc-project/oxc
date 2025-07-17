@@ -13,6 +13,8 @@ use crate::{
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
+const NODES_WITHOUT_PRINTING_COMMENTS: &[&str] = &["FormalParameters"];
+
 const NEEDS_PARENTHESES: &[&str] = &[
     "Class",
     "Function",
@@ -97,7 +99,10 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let is_program = type_def.as_struct().is_some_and(|s| s.name == "Program");
 
-    let leading_comments = if type_def.is_enum() || is_program {
+    let leading_comments = if type_def.is_enum()
+        || is_program
+        || NODES_WITHOUT_PRINTING_COMMENTS.contains(&type_def.name())
+    {
         quote! {}
     } else {
         quote! {
@@ -105,7 +110,9 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    let trailing_comments = if type_def.is_enum() {
+    let trailing_comments = if type_def.is_enum()
+        || NODES_WITHOUT_PRINTING_COMMENTS.contains(&type_def.name())
+    {
         quote! {}
     } else if is_program {
         quote! {

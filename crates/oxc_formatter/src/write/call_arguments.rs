@@ -181,6 +181,19 @@ impl<'a> FormatCallArgument<'a, '_> {
         }
     }
 
+    /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
+    fn inspected(&mut self, f: &mut Formatter<'_, 'a>) {
+        match &self {
+            Self::Default { element, leading_lines, .. } => {
+                let interned = f.intern(&self);
+
+                *self =
+                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
+            }
+            _ => {}
+        }
+    }
+
     /// Formats the node of this argument and caches the function body.
     ///
     /// See [crate::FormatContext::cached_function_body]
@@ -667,16 +680,44 @@ fn write_grouped_arguments<'a, 'b>(
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
     let grouped_breaks = {
-        let (grouped_arg, other_args) = match group_layout {
+        let (grouped_arg, other_args, first) = match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
                 let (first, tail) = arguments.split_at_mut(1);
-                (&mut first[0], tail)
+                (&mut first[0], tail, true)
             }
             GroupedCallArgumentLayout::GroupedLastArgument => {
                 let end_index = arguments.len().saturating_sub(1);
                 let (head, last) = arguments.split_at_mut(end_index);
-                (&mut last[0], head)
+                (&mut last[0], head, false)
             }
+        };
+
+        let mut grouped_arg_go = |only_one_param: bool, f: &mut Formatter<'_, 'a>| {
+            match grouped_arg.element().as_ast_nodes() {
+                AstNodes::ArrowFunctionExpression(_) => {
+                    grouped_arg.cache_function_body(f);
+                }
+                AstNodes::Function(function)
+                    if !only_one_param || function_has_only_simple_parameters(&function.params) =>
+                {
+                    grouped_arg.cache_function_body(f);
+                }
+                _ => {
+                    // Node doesn't have a function body or its a function that doesn't get re-formatted.
+                }
+            };
+        };
+
+        if first {
+            grouped_arg_go(other_args.is_empty(), f);
+            for arg in other_args.iter_mut() {
+                arg.inspected(f)
+            }
+        } else {
+            for arg in other_args.iter_mut() {
+                arg.inspected(f)
+            }
+            grouped_arg_go(other_args.is_empty(), f);
         };
 
         let non_grouped_breaks = other_args.iter_mut().any(|arg| arg.will_break(f));
@@ -688,21 +729,6 @@ fn write_grouped_arguments<'a, 'b>(
                 f,
                 [FormatAllArgsBrokenOut { args: &arguments, node: call_arguments, expand: true }]
             );
-        }
-
-        match grouped_arg.element().as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(_) => {
-                grouped_arg.cache_function_body(f);
-            }
-            AstNodes::Function(function)
-                if !other_args.is_empty()
-                    || function_has_only_simple_parameters(&function.params) =>
-            {
-                grouped_arg.cache_function_body(f);
-            }
-            _ => {
-                // Node doesn't have a function body or its a function that doesn't get re-formatted.
-            }
         }
 
         grouped_arg.will_break(f)

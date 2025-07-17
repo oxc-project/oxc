@@ -177,12 +177,6 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
-    dbg!(f.comments().unprinted_comments());
-    dbg!(parameters.span);
-
-    // `(/ * */ parameter /* */)` Check whether there is a comment around the parameter.
-    dbg!(only_parameter.has_trailing_comments(f));
-    dbg!(only_parameter.span);
     if only_parameter.has_trailing_comments(f)
         || f.comments().has_comments(
             parameters.span.start,

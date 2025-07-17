@@ -7,7 +7,7 @@ js compatibility: 395/699 (56.51%)
 | js/arrays/preserve_empty_lines.js | 💥 | 97.30% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 94.85% |
 | js/arrows/call.js | 💥💥 | 75.68% |
-| js/arrows/comment.js | 💥💥 | 60.87% |
+| js/arrows/comment.js | 💥💥 | 77.78% |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
@@ -32,7 +32,6 @@ js compatibility: 395/699 (56.51%)
 | js/binary-expressions/test.js | 💥 | 95.65% |
 | js/break-calls/react.js | 💥 | 97.50% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
-| js/call/first-argument-expansion/issue-13237.js | 💥 | 63.16% |
 | js/call/first-argument-expansion/jsx.js | 💥 | 0.00% |
 | js/call/first-argument-expansion/test.js | 💥 | 96.57% |
 | js/chain-expression/call-expression.js | 💥 | 42.86% |
@@ -44,6 +43,7 @@ js compatibility: 395/699 (56.51%)
 | js/chain-expression/test-3.js | 💥 | 75.00% |
 | js/chain-expression/test.js | 💥 | 25.00% |
 | js/class-comment/class-property.js | 💥 | 30.77% |
+| js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 57.83% |
 | js/class-extends/complex.js | 💥 | 89.47% |
 | js/class-extends/extends.js | 💥 | 94.74% |
@@ -65,7 +65,7 @@ js compatibility: 395/699 (56.51%)
 | js/comments/empty-statements.js | 💥💥 | 87.88% |
 | js/comments/export-and-import.js | 💥💥 | 78.05% |
 | js/comments/export.js | 💥💥 | 84.93% |
-| js/comments/function-declaration.js | 💥💥 | 72.00% |
+| js/comments/function-declaration.js | 💥💥 | 68.29% |
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 80.82% |
 | js/comments/issues.js | 💥💥 | 73.68% |
