@@ -291,6 +291,27 @@ impl<'a> LintContext<'a> {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::Suggestion, fix);
     }
 
+    /// Report a lint rule violation and provide a suggestion for fixing it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors, but have the
+    /// potential to change the code's semantics. If your fix is completely safe
+    /// and definitely does not change semantics, use [`LintContext::diagnostic_with_fix`].
+    /// If your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
+    pub fn diagnostic_with_dangerous_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousSuggestion, fix);
+    }
+
     /// Report a lint rule violation and provide a potentially dangerous
     /// automatic fix for it.
     ///

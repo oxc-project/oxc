@@ -242,7 +242,8 @@ declare_oxc_lint!(
     /// ```
     ExhaustiveDeps,
     react,
-    correctness
+    correctness,
+    safe_fixes_and_dangerous_suggestions
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
@@ -297,10 +298,10 @@ impl Rule for ExhaustiveDeps {
 
         if dependencies_node.is_none() && !is_effect {
             if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
-                ctx.diagnostic(dependency_array_required_diagnostic(
-                    hook_name.as_str(),
-                    call_expr.span(),
-                ));
+                ctx.diagnostic_with_fix(
+                    dependency_array_required_diagnostic(hook_name.as_str(), call_expr.span()),
+                    |fixer| fixer.insert_text_after(callback_node, ", []"),
+                );
             }
             return;
         }
@@ -580,11 +581,11 @@ impl Rule for ExhaustiveDeps {
         });
 
         if undeclared_deps.clone().count() > 0 {
-            ctx.diagnostic(missing_dependency_diagnostic(
-                hook_name,
-                &undeclared_deps.map(Name::from).collect::<Vec<_>>(),
-                dependencies_node.span(),
-            ));
+            let undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+            ctx.diagnostic_with_dangerous_suggestion(
+                missing_dependency_diagnostic(hook_name, &undeclared, dependencies_node.span()),
+                |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
+            );
         }
 
         // effects are allowed to have extra dependencies
@@ -756,7 +757,7 @@ fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Op
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Name<'a> {
     pub span: Span,
     pub name: Cow<'a, str>,
@@ -1444,6 +1445,43 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
     }
 
     false
+}
+
+mod fix {
+    use super::Name;
+    use itertools::Itertools;
+    use oxc_ast::ast::ArrayExpression;
+    use oxc_span::GetSpan;
+
+    use crate::fixer::{RuleFix, RuleFixer};
+
+    pub fn append_dependencies<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        names: &[Name<'a>],
+        deps: &ArrayExpression<'a>,
+    ) -> RuleFix<'a> {
+        let names_as_deps = names.iter().map(|n| n.name.as_ref()).join(", ");
+        let Some(last) = deps.elements.last() else {
+            return fixer.replace(deps.span, format!("[{names_as_deps}]"));
+        };
+        // look for a trailing comma. we'll need to add one if its not there already
+        let mut needs_comma = true;
+        let last_span = last.span();
+        for c in fixer.source_text()[(last_span.end as usize)..].chars() {
+            match c {
+                ',' => {
+                    needs_comma = false;
+                    break;
+                }
+                ']' => break,
+                _ => {} // continue
+            }
+        }
+        fixer.insert_text_after_range(
+            last_span,
+            if needs_comma { format!(", {names_as_deps}") } else { format!(" {names_as_deps}") },
+        )
+    }
 }
 
 #[test]
@@ -3996,11 +4034,81 @@ fn test() {
         Some(serde_json::json!([{ "additionalHooks": "useSpecialEffect" }])),
     )];
 
+    let fix = vec![
+        (
+            "const useHook = x => useCallback(() => x)",
+            "const useHook = x => useCallback(() => x, [])",
+            // None,
+            // FixKind::SafeFix,
+        ),
+        (
+            "const useHook = x => useCallback(() => { return x; })",
+            "const useHook = x => useCallback(() => { return x; }, [])",
+            // None,
+            // FixKind::SafeFix,
+        ),
+        (
+            r"const useHook = () => {
+              const [state, setState] = useState(0);
+              const foo = useCallback(() => state, []);
+            }",
+            r"const useHook = () => {
+              const [state, setState] = useState(0);
+              const foo = useCallback(() => state, [state]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const foo = useCallback(() => x + y, []);
+            }",
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const foo = useCallback(() => x + y, [x, y]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [x]);
+            }",
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [x, y, z]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        // (
+        //     r#"const useHook = () => {
+        //       const [state, setState] = useState(0);
+        //       const foo = useCallback(() => state);
+        //     }"#,
+        //     r#"const useHook = () => {
+        //       const [state, setState] = useState(0);
+        //       const foo = useCallback(() => state, [state]);
+        //     }"#,
+        //     // None,
+        //     // FixKind::DangerousSuggestion,
+        // ),
+    ];
+
     Tester::new(
         ExhaustiveDeps::NAME,
         ExhaustiveDeps::PLUGIN,
         pass.iter().map(|&code| (code, None)).chain(pass_additional_hooks).collect::<Vec<_>>(),
         fail.iter().map(|&code| (code, None)).chain(fail_additional_hooks).collect::<Vec<_>>(),
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }
