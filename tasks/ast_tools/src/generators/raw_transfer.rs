@@ -100,20 +100,20 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
         module.exports = deserialize;
 
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceLen;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        function deserialize(buffer, sourceTextInput, sourceLenInput) {{
+        function deserialize(buffer, sourceTextInput, sourceByteLenInput) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
-            sourceLen = sourceLenInput;
-            sourceIsAscii = sourceText.length === sourceLen;
+            sourceByteLen = sourceByteLenInput;
+            sourceIsAscii = sourceText.length === sourceByteLen;
 
             const data = deserializeRawTransferData(uint32[{data_pointer_pos_32}]);
 
@@ -540,7 +540,7 @@ static STR_DESERIALIZER_BODY: &str = "
     if (len === 0) return '';
 
     pos = uint32[pos32];
-    if (sourceIsAscii && pos < sourceLen) return sourceText.substr(pos, len);
+    if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point

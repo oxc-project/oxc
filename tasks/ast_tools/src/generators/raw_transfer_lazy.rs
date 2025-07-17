@@ -958,7 +958,7 @@ static STR_DESERIALIZER_BODY: &str = "
     if (len === 0) return '';
 
     pos = uint32[pos32];
-    if (ast.sourceIsAscii && pos < ast.sourceLen) return ast.sourceText.substr(pos, len);
+    if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point

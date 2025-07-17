@@ -175,7 +175,7 @@ for (const { filename, code } of fixtures) {
     const ast = {
       buffer,
       sourceText: code,
-      sourceLen: sourceByteLen,
+      sourceByteLen,
       sourceIsAscii: code.length === sourceByteLen,
       nodes: null, // Initialized in bench functions
       token: TOKEN,
