@@ -100,9 +100,11 @@ async function main() {
   const linter = new Linter();
 
   const success = await linter.run();
-  if (!success) {
-    process.exit(1);
-  }
+
+  // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
+  // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
+  // https://nodejs.org/api/process.html#processexitcode
+  if (!success) process.exitCode = 1;
 }
 
 main();
