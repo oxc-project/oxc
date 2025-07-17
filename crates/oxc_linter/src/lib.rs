@@ -39,7 +39,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     },
-    external_plugin_store::ExternalPluginStore,
+    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -203,44 +203,7 @@ impl Linter {
         }
 
         if !external_rules.is_empty() {
-            if let Some(external_linter) = self.external_linter.as_ref() {
-                let result = (external_linter.run)(
-                    #[expect(clippy::missing_panics_doc)]
-                    path.to_str().unwrap().to_string(),
-                    external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
-                );
-                match result {
-                    Ok(diagnostics) => {
-                        for diagnostic in diagnostics {
-                            match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id)
-                            {
-                                Some((plugin_name, rule_name)) => {
-                                    ctx_host.push_diagnostic(Message::new(
-                                        // TODO: `error` isn't right, we need to get the severity from `external_rules`
-                                        OxcDiagnostic::error(diagnostic.message)
-                                            .with_label(Span::new(
-                                                diagnostic.loc.start,
-                                                diagnostic.loc.end,
-                                            ))
-                                            .with_error_code(
-                                                plugin_name.to_string(),
-                                                rule_name.to_string(),
-                                            ),
-                                        PossibleFixes::None,
-                                    ));
-                                }
-                                None => {
-                                    // TODO: report diagnostic, this should be unreachable
-                                    debug_assert!(false);
-                                }
-                            }
-                        }
-                    }
-                    Err(_err) => {
-                        // TODO: report diagnostic
-                    }
-                }
-            }
+            self.run_external_rules(&external_rules, path, &ctx_host);
         }
 
         if let Some(severity) = self.options.report_unused_directive {
@@ -250,6 +213,60 @@ impl Linter {
         }
 
         ctx_host.take_diagnostics()
+    }
+
+    #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+    #[expect(unused_variables, clippy::unused_self)]
+    fn run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost,
+    ) {
+        unreachable!();
+    }
+
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    fn run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost,
+    ) {
+        // TODO: Error or `unwrap` instead of `return`?
+        let Some(external_linter) = &self.external_linter else { return };
+
+        let result = (external_linter.run)(
+            path.to_str().unwrap().to_string(),
+            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+        );
+        match result {
+            Ok(diagnostics) => {
+                for diagnostic in diagnostics {
+                    match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id) {
+                        Some((plugin_name, rule_name)) => {
+                            ctx_host.push_diagnostic(Message::new(
+                                // TODO: `error` isn't right, we need to get the severity from `external_rules`
+                                OxcDiagnostic::error(diagnostic.message)
+                                    .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                                    .with_error_code(
+                                        plugin_name.to_string(),
+                                        rule_name.to_string(),
+                                    ),
+                                PossibleFixes::None,
+                            ));
+                        }
+                        None => {
+                            // TODO: report diagnostic, this should be unreachable
+                            debug_assert!(false);
+                        }
+                    }
+                }
+            }
+            Err(_err) => {
+                // TODO: report diagnostic
+            }
+        }
     }
 }
 
