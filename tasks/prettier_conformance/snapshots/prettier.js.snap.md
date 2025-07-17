@@ -1,4 +1,4 @@
-js compatibility: 393/699 (56.22%)
+js compatibility: 395/699 (56.51%)
 
 # Failed
 
@@ -7,7 +7,7 @@ js compatibility: 393/699 (56.22%)
 | js/arrays/preserve_empty_lines.js | 💥 | 97.30% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 94.85% |
 | js/arrows/call.js | 💥💥 | 75.68% |
-| js/arrows/comment.js | 💥💥 | 60.38% |
+| js/arrows/comment.js | 💥💥 | 60.87% |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
@@ -55,8 +55,7 @@ js compatibility: 393/699 (56.22%)
 | js/classes-private-fields/with_comments.js | 💥💥 | 30.77% |
 | js/comments/15661.js | 💥💥 | 46.15% |
 | js/comments/16398.js | 💥💥 | 80.00% |
-| js/comments/binary-expressions-block-comments.js | 💥💥 | 88.00% |
-| js/comments/binary-expressions-single-comments.js | 💥💥 | 93.33% |
+| js/comments/binary-expressions-single-comments.js | 💥💥 | 55.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 93.33% |
@@ -66,7 +65,7 @@ js compatibility: 393/699 (56.22%)
 | js/comments/empty-statements.js | 💥💥 | 87.88% |
 | js/comments/export-and-import.js | 💥💥 | 78.05% |
 | js/comments/export.js | 💥💥 | 84.93% |
-| js/comments/function-declaration.js | 💥💥 | 67.77% |
+| js/comments/function-declaration.js | 💥💥 | 72.00% |
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 80.82% |
 | js/comments/issues.js | 💥💥 | 73.68% |
@@ -163,13 +162,12 @@ js compatibility: 393/699 (56.22%)
 | js/label/comment.js | 💥 | 53.33% |
 | js/last-argument-expansion/arrow.js | 💥 | 11.43% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
-| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
+| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/last-argument-expansion/edge_case.js | 💥 | 83.97% |
-| js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
 | js/last-argument-expansion/issue-7518.js | 💥 | 85.71% |
 | js/last-argument-expansion/jsx.js | 💥 | 25.00% |
 | js/last-argument-expansion/object.js | 💥 | 94.74% |
-| js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
+| js/line-suffix-boundary/boundary.js | 💥 | 31.11% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/member/conditional.js | 💥 | 0.00% |
 | js/member/expand.js | 💥 | 57.14% |

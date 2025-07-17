@@ -160,12 +160,12 @@ pub fn can_avoid_parentheses(
         && !f.comments().has_comments_in_span(arrow.params.span)
 }
 
-pub fn should_hug_function_parameters(
-    parameters: &FormalParameters<'_>,
+pub fn should_hug_function_parameters<'a>(
+    parameters: &AstNode<'a, FormalParameters<'a>>,
     parentheses_not_needed: bool,
-    f: &Formatter<'_, '_>,
+    f: &Formatter<'_, 'a>,
 ) -> bool {
-    let list = &parameters.items;
+    let list = &parameters.items();
     if list.len() != 1 || parameters.rest.is_some() {
         return false;
     }
@@ -177,7 +177,19 @@ pub fn should_hug_function_parameters(
         return false;
     }
 
-    if f.comments().has_comments_in_span(parameters.span) {
+    dbg!(f.comments().unprinted_comments());
+    dbg!(parameters.span);
+
+    // `(/ * */ parameter /* */)` Check whether there is a comment around the parameter.
+    dbg!(only_parameter.has_trailing_comments(f));
+    dbg!(only_parameter.span);
+    if only_parameter.has_trailing_comments(f)
+        || f.comments().has_comments(
+            parameters.span.start,
+            only_parameter.span,
+            parameters.span.end,
+        )
+    {
         return false;
     }
 

@@ -336,10 +336,9 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                             )));
 
                 if should_group {
-                    let should_break = f.context().comments().has_trailing_line_comments(
-                        binary_like_expression.left().span().end,
-                        right.span().start,
-                    );
+                    // TODO:
+                    let should_break = false;
+
                     write!(f, [group(&operator_and_right_expression).should_expand(should_break)])
                 } else {
                     write!(f, [operator_and_right_expression])

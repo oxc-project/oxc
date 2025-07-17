@@ -56,7 +56,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 93.33% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
-| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 92.31% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
 | typescript/array/comment.ts | 💥 | 87.50% |
 | typescript/arrow/16067.ts | 💥💥 | 67.35% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
@@ -71,7 +71,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/assert/comment.ts | 💥 | 0.00% |
 | typescript/assert/index.ts | 💥 | 75.00% |
 | typescript/assignment/issue-10846.ts | 💥 | 23.73% |
-| typescript/assignment/issue-10848.tsx | 💥 | 28.57% |
+| typescript/assignment/issue-10848.tsx | 💥 | 41.38% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
 | typescript/assignment/issue-12413.ts | 💥 | 3.03% |
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
@@ -95,7 +95,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/class-comment/misc.ts | 💥 | 71.43% |
 | typescript/classes/break-heritage.ts | 💥 | 51.06% |
 | typescript/classes/break.ts | 💥 | 39.39% |
-| typescript/comments/15707.ts | 💥 | 51.85% |
+| typescript/comments/15707.ts | 💥 | 74.51% |
 | typescript/comments/16065-2.ts | 💥 | 55.56% |
 | typescript/comments/16889.ts | 💥 | 90.60% |
 | typescript/comments/after_jsx_generic.tsx | 💥 | 5.00% |
@@ -103,7 +103,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/comments/interface.ts | 💥 | 92.86% |
 | typescript/comments/issues.ts | 💥 | 21.21% |
 | typescript/comments/jsx.tsx | 💥 | 20.00% |
-| typescript/comments/location.ts | 💥 | 58.54% |
+| typescript/comments/location.ts | 💥 | 75.00% |
 | typescript/comments/mapped_types.ts | 💥 | 58.82% |
 | typescript/comments/method_types.ts | 💥 | 69.23% |
 | typescript/comments/methods.ts | 💥 | 97.96% |

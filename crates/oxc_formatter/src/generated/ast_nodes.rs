@@ -7367,6 +7367,16 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
         )
         .fmt(f)
     }
+
+    pub fn has_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> bool {
+        !f.comments()
+            .get_trailing_comments(
+                &self.parent.as_sibling_node(),
+                &SiblingNode::from(self.inner),
+                self.following_node.as_ref(),
+            )
+            .is_empty()
+    }
 }
 
 impl<'a> AstNode<'a, FormalParameter<'a>> {
@@ -7423,6 +7433,14 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
             self.following_node.as_ref(),
         )
         .fmt(f)
+    }
+
+    pub fn has_trailing_comments(&self, f: &Formatter<'_, 'a>) -> bool {
+        f.comments().has_trailing_comments2(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
     }
 }
 
