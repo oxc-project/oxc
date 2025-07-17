@@ -809,6 +809,29 @@ impl CallExpression<'_> {
     }
 }
 
+impl NewExpression<'_> {
+    /// Returns the span covering **all** arguments in this new call expression.
+    ///
+    /// The span starts at the beginning of the first argument and ends at the end
+    /// of the last argument (inclusive).
+    ///
+    /// # Examples
+    /// ```ts
+    /// new Foo(bar, baz);
+    /// //      ^^^^^^^^  <- arguments_span() covers this range
+    /// ```
+    ///
+    /// If the new expression has no arguments, [`None`] is returned.
+    pub fn arguments_span(&self) -> Option<Span> {
+        self.arguments.first().map(|first| {
+            // The below will never panic since the len of `self.arguments` must be >= 1
+            #[expect(clippy::missing_panics_doc)]
+            let last = self.arguments.last().unwrap();
+            Span::new(first.span().start, last.span().end)
+        })
+    }
+}
+
 impl Argument<'_> {
     /// Returns `true` if this argument is a spread element (like `...foo`).
     pub fn is_spread(&self) -> bool {
