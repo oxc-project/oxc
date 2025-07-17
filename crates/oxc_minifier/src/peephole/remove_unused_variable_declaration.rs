@@ -1,6 +1,5 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
 
@@ -79,13 +78,9 @@ impl<'a> PeepholeOptimizations {
         if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
             return false;
         }
+        *e = assign_expr.right.take_in(ctx.ast);
         state.changed = true;
-        if assign_expr.right.may_have_side_effects(ctx) {
-            *e = assign_expr.right.take_in(ctx.ast);
-            false
-        } else {
-            true
-        }
+        false
     }
 
     /// Do remove top level vars in script mode.
@@ -132,7 +127,17 @@ mod test {
         test_options("var x = 1; x = 2;", "", &options);
         test_options("var x = 1; x = foo();", "foo()", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
-        test_same_options("function foo() { var t; return t = x(); } foo();", &options);
+        test_same_options("function foo() { return t = x(); } foo();", &options);
+        test_options(
+            "function foo() { var t; return t = x(); } foo();",
+            "function foo() { return x(); } foo();",
+            &options,
+        );
+        test_options(
+            "function foo(t) { return t = x(); } foo();",
+            "function foo(t) { return x(); } foo();",
+            &options,
+        );
     }
 
     #[test]

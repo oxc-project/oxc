@@ -49,6 +49,10 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_conditional_expression(e, state, ctx)
             }
             Expression::SequenceExpression(e) => self.try_fold_sequence_expression(e, state, ctx),
+            Expression::AssignmentExpression(_) => {
+                self.remove_unused_assignment_expression(expr, state, ctx);
+                None
+            }
             _ => None,
         } {
             *expr = folded_expr;
