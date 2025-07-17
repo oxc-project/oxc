@@ -10,6 +10,41 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
+ 1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1)
+   ·             ───────────────────────────────────
+   ╰────
+  help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+   ╭─[prefer_array_flat_map.tsx:1:13]
+ 1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.0)
+   ·             ─────────────────────────────────────
+   ╰────
+  help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+   ╭─[prefer_array_flat_map.tsx:1:13]
+ 1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)
+   ·             ──────────────────────────────────────
+   ╰────
+  help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+   ╭─[prefer_array_flat_map.tsx:1:13]
+ 1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999995)
+   ·             ─────────────────────────────────────────────────────
+   ╰────
+  help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+   ╭─[prefer_array_flat_map.tsx:1:13]
+ 1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999988)
+   ·             ─────────────────────────────────────────────────────
+   ╰────
+  help: Prefer `.flatMap(…)` over `.map(…).flat()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
+   ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat(1,)
    ·             ────────────────────────────────────
    ╰────
