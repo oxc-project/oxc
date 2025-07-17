@@ -298,7 +298,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), "[", self.expression(), "]"])
+        write!(f, self.object())?;
+
+        if matches!(self.expression, Expression::NumericLiteral(_)) {
+            write!(f, [self.optional().then_some("?"), "[", self.expression(), "]"])
+        } else {
+            write!(
+                f,
+                group(&format_args!(
+                    self.optional().then_some("?"),
+                    "[",
+                    soft_block_indent(self.expression()),
+                    "]"
+                ))
+            )
+        }
     }
 }
 

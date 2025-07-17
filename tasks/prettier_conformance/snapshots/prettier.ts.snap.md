@@ -49,7 +49,7 @@ ts compatibility: 229/573 (39.97%)
 | jsx/spread/child.js | 💥 | 33.33% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 21.58% |
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
-| jsx/text-wrap/test.js | 💥 | 32.99% |
+| jsx/text-wrap/test.js | 💥 | 32.85% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 72.00% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
@@ -77,7 +77,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 54.55% |
-| typescript/cast/generic-cast.ts | 💥 | 39.60% |
+| typescript/cast/generic-cast.ts | 💥 | 38.94% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
@@ -175,7 +175,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 61.29% |
 | typescript/conformance/types/union/unionTypeEquivalence.ts | 💥 | 90.00% |
 | typescript/conformance/types/union/unionTypeFromArrayLiteral.ts | 💥 | 93.55% |
-| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 29.85% |
+| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 26.67% |
 | typescript/const/initializer-ambient-context.ts | 💥 | 93.33% |
 | typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
