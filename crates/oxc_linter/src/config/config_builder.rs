@@ -427,13 +427,14 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(any(not(feature = "oxlint2"), feature = "disable_oxlint2"))]
+    #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+    #[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
     fn load_external_plugin(
-        _oxlintrc_dir_path: &Path,
-        _plugin_specifier: &str,
-        _external_linter: &ExternalLinter,
-        _resolver: &Resolver,
-        _external_plugin_store: &mut ExternalPluginStore,
+        oxlintrc_dir_path: &Path,
+        plugin_specifier: &str,
+        external_linter: &ExternalLinter,
+        resolver: &Resolver,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ConfigBuilderError> {
         unreachable!()
     }
