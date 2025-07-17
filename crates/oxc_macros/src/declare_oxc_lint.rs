@@ -256,7 +256,11 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
                 is_conditional = true;
                 false
             }
-            "and" | "or" => false, // e.g. fix_or_suggestion
+            // e.g. "safe_fix". safe is implied
+            "safe"
+            // e.g. fix_or_suggestion
+            | "and" | "or" 
+            => false,
             _ => true,
         })
         .unique()
@@ -273,8 +277,8 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
 
 fn parse_fix_kind(s: &str) -> proc_macro2::TokenStream {
     match s {
-        "fix" => quote! { FixKind::Fix },
-        "suggestion" => quote! { FixKind::Suggestion },
+        "fix" | "fixes" => quote! { FixKind::Fix },
+        "suggestion" | "suggestions" => quote! { FixKind::Suggestion },
         "dangerous" => quote! { FixKind::Dangerous },
         _ => panic!("invalid fix kind: {s}. Valid fix kinds are fix, suggestion, or dangerous."),
     }
