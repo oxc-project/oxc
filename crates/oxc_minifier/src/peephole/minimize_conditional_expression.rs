@@ -319,7 +319,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Try using the "??" or "?." operators
-        if self.target >= ESTarget::ES2020 {
+        if ctx.options().target >= ESTarget::ES2020 {
             if let Expression::BinaryExpression(test_binary) = &mut expr.test {
                 if let Some(is_negate) = match test_binary.operator {
                     BinaryOperator::Inequality => Some(true),

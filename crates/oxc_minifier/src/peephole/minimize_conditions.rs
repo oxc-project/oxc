@@ -219,7 +219,7 @@ impl<'a> PeepholeOptimizations {
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> bool {
-        if self.target < ESTarget::ES2020 {
+        if ctx.options().target < ESTarget::ES2020 {
             return false;
         }
         if !matches!(expr.operator, AssignmentOperator::Assign) {

@@ -15,7 +15,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = &mut ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).dead_code_elimination(program);
+        Compressor::new(&allocator).dead_code_elimination(program, options);
     }
     Codegen::new().build(program).code
 }

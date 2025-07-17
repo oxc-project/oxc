@@ -35,10 +35,9 @@ pub struct CompressOptions {
     pub treeshake: TreeShakeOptions,
 }
 
-#[expect(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { drop_console: false, ..Self::smallest() }
+        Self::smallest()
     }
 }
 

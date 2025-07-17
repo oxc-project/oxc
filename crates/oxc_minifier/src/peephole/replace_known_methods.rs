@@ -412,7 +412,7 @@ impl<'a> PeepholeOptimizations {
         object: &Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2016 {
+        if ctx.options().target < ESTarget::ES2016 {
             return None;
         }
         if !Self::validate_global_reference(object, "Math", ctx)
@@ -726,7 +726,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::StringLiteral(base_str) => {
-                if self.target < ESTarget::ES2015
+                if ctx.state.options.target < ESTarget::ES2015
                     || args.is_empty()
                     || !args.iter().all(Argument::is_expression)
                 {
@@ -917,7 +917,7 @@ impl<'a> PeepholeOptimizations {
             "NEGATIVE_INFINITY" => num(span, f64::NEG_INFINITY),
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
-                if self.target < ESTarget::ES2016 {
+                if ctx.options().target < ESTarget::ES2016 {
                     num(span, 2.0f64.powi(53) - 1.0)
                 } else {
                     // 2**53 - 1
@@ -925,7 +925,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             "MIN_SAFE_INTEGER" => {
-                if self.target < ESTarget::ES2016 {
+                if ctx.options().target < ESTarget::ES2016 {
                     num(span, -(2.0f64.powi(53) - 1.0))
                 } else {
                     // -(2**53 - 1)
@@ -937,7 +937,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             "EPSILON" => {
-                if self.target < ESTarget::ES2016 {
+                if ctx.options().target < ESTarget::ES2016 {
                     return None;
                 }
                 // 2**-52

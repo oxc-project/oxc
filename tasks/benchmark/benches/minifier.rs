@@ -41,7 +41,7 @@ fn bench_minifier(criterion: &mut Criterion) {
 
                 let options = CompressOptions::smallest();
                 runner.run(|| {
-                    Compressor::new(&allocator, options).build_with_scoping(scoping, &mut program);
+                    Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options);
                 });
             });
         });

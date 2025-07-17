@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use rustc_hash::FxHashMap;
 
 use oxc_ecmascript::constant_evaluation::ConstantValue;
@@ -8,7 +6,7 @@ use oxc_semantic::SymbolId;
 use crate::CompressOptions;
 
 pub struct MinifierState<'a> {
-    pub options: Rc<CompressOptions>,
+    pub options: CompressOptions,
 
     /// Constant values evaluated from expressions.
     ///
@@ -18,7 +16,7 @@ pub struct MinifierState<'a> {
 }
 
 impl MinifierState<'_> {
-    pub fn new(options: Rc<CompressOptions>) -> Self {
+    pub fn new(options: CompressOptions) -> Self {
         Self { options, constant_values: FxHashMap::default() }
     }
 }

@@ -47,11 +47,11 @@ impl Minifier {
     }
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        let stats = if let Some(compress) = self.options.compress {
+        let stats = if let Some(options) = self.options.compress {
             let semantic = SemanticBuilder::new().build(program).semantic;
             let stats = semantic.stats();
             let scoping = semantic.into_scoping();
-            Compressor::new(allocator, compress).build_with_scoping(scoping, program);
+            Compressor::new(allocator).build_with_scoping(program, scoping, options);
             stats
         } else {
             Stats::default()

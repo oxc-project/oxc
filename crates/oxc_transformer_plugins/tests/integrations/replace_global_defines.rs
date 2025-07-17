@@ -19,8 +19,11 @@ pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfi
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    Compressor::new(&allocator, CompressOptions::default())
-        .dead_code_elimination_with_scoping(scoping, &mut program);
+    Compressor::new(&allocator).dead_code_elimination_with_scoping(
+        &mut program,
+        scoping,
+        CompressOptions::smallest(),
+    );
     let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)

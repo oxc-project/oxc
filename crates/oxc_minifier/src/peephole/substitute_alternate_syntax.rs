@@ -1023,7 +1023,7 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if self.keep_names.function {
+        if ctx.options().keep_names.function {
             return;
         }
 
@@ -1044,7 +1044,7 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if self.keep_names.class {
+        if ctx.options().keep_names.class {
             return;
         }
 
@@ -1171,7 +1171,7 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
-        if self.target >= ESTarget::ES2019 {
+        if ctx.options().target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()

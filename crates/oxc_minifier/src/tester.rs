@@ -45,7 +45,7 @@ pub fn run(source_text: &str, options: Option<CompressOptions>) -> String {
     assert!(ret.errors.is_empty(), "{source_text}");
     let mut program = ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).build(&mut program);
+        Compressor::new(&allocator).build(&mut program, options);
     }
     Codegen::new()
         .with_options(CodegenOptions {

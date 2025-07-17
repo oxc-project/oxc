@@ -99,7 +99,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // try optional chaining and nullish coalescing
-        if self.target >= ESTarget::ES2020 {
+        if ctx.options().target >= ESTarget::ES2020 {
             let LogicalExpression {
                 span: logical_span,
                 left: logical_left,

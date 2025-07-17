@@ -23,12 +23,11 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 use crate::{
     ctx::{Ctx, TraverseCtx},
-    options::CompressOptionsKeepNames,
     state::MinifierState,
 };
 
@@ -40,9 +39,6 @@ pub struct State {
 }
 
 pub struct PeepholeOptimizations {
-    target: ESTarget,
-    keep_names: CompressOptionsKeepNames,
-
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
     /// in top level and each function. No minification code are run if the function is not changed
@@ -56,10 +52,8 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
-    pub fn new(target: ESTarget, keep_names: CompressOptionsKeepNames) -> Self {
+    pub fn new() -> Self {
         Self {
-            target,
-            keep_names,
             iteration: 0,
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
@@ -405,13 +399,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
 /// Changes that do not interfere with optimizations that are run inside the fixed-point loop,
 /// which can be done as a last AST pass.
-pub struct LatePeepholeOptimizations {
-    target: ESTarget,
-}
+pub struct LatePeepholeOptimizations;
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn new(target: ESTarget) -> Self {
-        Self { target }
+    pub fn new() -> Self {
+        Self
     }
 
     pub fn build(
@@ -463,12 +455,7 @@ pub struct DeadCodeElimination {
 
 impl<'a> DeadCodeElimination {
     pub fn new() -> Self {
-        Self {
-            inner: PeepholeOptimizations::new(
-                ESTarget::ESNext,
-                CompressOptionsKeepNames::all_true(),
-            ),
-        }
+        Self { inner: PeepholeOptimizations::new() }
     }
 
     pub fn build(

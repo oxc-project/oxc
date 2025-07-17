@@ -11,7 +11,7 @@ use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::format_atom;
 use oxc_syntax::reference::ReferenceId;
 
-use crate::state::MinifierState;
+use crate::{options::CompressOptions, state::MinifierState};
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -93,8 +93,12 @@ pub fn is_exact_int64(num: f64) -> bool {
 }
 
 impl<'a> Ctx<'a, '_> {
-    fn scoping(&self) -> &Scoping {
+    pub fn scoping(&self) -> &Scoping {
         self.0.scoping()
+    }
+
+    pub fn options(&self) -> &CompressOptions {
+        &self.0.state.options
     }
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
