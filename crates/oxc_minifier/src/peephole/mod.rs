@@ -181,6 +181,43 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         }
     }
 
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::FunctionDeclaration(func) = stmt {
+            if let Some(body) = &func.body {
+                if body.is_empty() {
+                    if let Some(id) = &func.id {
+                        if let Some(symbol_id) = id.symbol_id.get() {
+                            if ctx
+                                .scoping()
+                                .get_resolved_references(symbol_id)
+                                .all(|r| r.flags().is_read_only())
+                            {
+                                ctx.state.empty_functions.insert(symbol_id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if let Statement::VariableDeclaration(decl) = stmt {
+            for d in &decl.declarations {
+                if d.init.as_ref().is_some_and(|e|matches!(e, Expression::ArrowFunctionExpression(arrow) if arrow.body.is_empty())) {
+                    if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
+                        if let Some(symbol_id) = id.symbol_id.get() {
+                            if ctx
+                                .scoping()
+                                .get_resolved_references(symbol_id)
+                                .all(|r| r.flags().is_read_only())
+                            {
+                                ctx.state.empty_functions.insert(symbol_id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;

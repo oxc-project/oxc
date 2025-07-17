@@ -53,6 +53,8 @@ impl<'a> PeepholeOptimizations {
                 self.remove_unused_assignment_expression(expr, state, ctx);
                 None
             }
+            Expression::CallExpression(call_expr) => self.remove_call_expression(call_expr, ctx),
+
             _ => None,
         } {
             *expr = folded_expr;
@@ -490,6 +492,39 @@ impl<'a> PeepholeOptimizations {
 
         if sequence_expr.expressions.len() != old_len {
             state.changed = true;
+        }
+        None
+    }
+
+    fn remove_call_expression(
+        &self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::Identifier(ident) = &call_expr.callee {
+            if let Some(reference_id) = ident.reference_id.get() {
+                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
+                    if ctx.state.empty_functions.contains(&symbol_id) {
+                        if call_expr.arguments.is_empty() {
+                            return Some(ctx.ast.void_0(call_expr.span));
+                        } else {
+                            let mut exprs = ctx.ast.vec();
+                            for arg in call_expr.arguments.drain(..) {
+                                match arg {
+                                    Argument::SpreadElement(e) => {
+                                        exprs.push(e.unbox().argument);
+                                    }
+                                    match_expression!(Argument) => {
+                                        exprs.push(arg.into_expression())
+                                    }
+                                }
+                            }
+                            exprs.push(ctx.ast.void_0(call_expr.span));
+                            return Some(ctx.ast.expression_sequence(call_expr.span, exprs));
+                        }
+                    }
+                }
+            }
         }
         None
     }
