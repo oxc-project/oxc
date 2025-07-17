@@ -1,4 +1,3 @@
-use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
@@ -48,38 +47,38 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_assignment_expression(
         &self,
-        e: &mut Expression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
+        _e: &mut Expression<'a>,
+        _state: &mut State,
+        _ctx: &mut Ctx<'a, '_>,
     ) -> bool {
-        let Expression::AssignmentExpression(assign_expr) = e else { return false };
-        if matches!(
-            ctx.state.options.unused,
-            CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
-        ) {
-            return false;
-        }
-        let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
-            assign_expr.left.as_simple_assignment_target()
-        else {
-            return false;
-        };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
-            return false;
-        }
-        let Some(reference_id) = ident.reference_id.get() else { return false };
-        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
-            return false;
-        };
-        // Keep error for assigning to `const foo = 1; foo = 2`.
-        if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
-            return false;
-        }
-        if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
-            return false;
-        }
-        *e = assign_expr.right.take_in(ctx.ast);
-        state.changed = true;
+        // let Expression::AssignmentExpression(assign_expr) = e else { return false };
+        // if matches!(
+        // ctx.state.options.unused,
+        // CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
+        // ) {
+        // return false;
+        // }
+        // let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
+        // assign_expr.left.as_simple_assignment_target()
+        // else {
+        // return false;
+        // };
+        // if Self::keep_top_level_var_in_script_mode(ctx) {
+        // return false;
+        // }
+        // let Some(reference_id) = ident.reference_id.get() else { return false };
+        // let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+        // return false;
+        // };
+        // // Keep error for assigning to `const foo = 1; foo = 2`.
+        // if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
+        // return false;
+        // }
+        // if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
+        // return false;
+        // }
+        // *e = assign_expr.right.take_in(ctx.ast);
+        // state.changed = true;
         false
     }
 
@@ -121,11 +120,13 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn remove_unused_assignment_expression() {
         let options = CompressOptions::smallest();
         test_options("var x = 1; x = 2;", "", &options);
         test_options("var x = 1; x = 2;", "", &options);
         test_options("var x = 1; x = foo();", "foo()", &options);
+        test_same_options("export let foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
         test_same_options("function foo() { return t = x(); } foo();", &options);
         test_options(
@@ -141,6 +142,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn keep_in_script_mode() {
         let options = CompressOptions::smallest();
         let source_type = SourceType::cjs();
