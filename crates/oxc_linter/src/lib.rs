@@ -3,9 +3,7 @@
 
 use std::{path::Path, rc::Rc, sync::Arc};
 
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNode, Semantic};
-use oxc_span::Span;
 
 #[cfg(test)]
 mod tester;
@@ -39,7 +37,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
     },
-    external_plugin_store::ExternalPluginStore,
+    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -54,7 +52,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
-    fixer::{Fixer, Message, PossibleFixes},
+    fixer::{Fixer, Message},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
@@ -76,6 +74,7 @@ fn size_asserts() {
 pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
+    #[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
     external_linter: Option<ExternalLinter>,
 }
 
@@ -119,6 +118,9 @@ impl Linter {
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+
+        #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+        let _ = external_rules;
 
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
@@ -202,46 +204,8 @@ impl Linter {
             }
         }
 
-        if !external_rules.is_empty() {
-            if let Some(external_linter) = self.external_linter.as_ref() {
-                let result = (external_linter.run)(
-                    #[expect(clippy::missing_panics_doc)]
-                    path.to_str().unwrap().to_string(),
-                    external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
-                );
-                match result {
-                    Ok(diagnostics) => {
-                        for diagnostic in diagnostics {
-                            match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id)
-                            {
-                                Some((plugin_name, rule_name)) => {
-                                    ctx_host.push_diagnostic(Message::new(
-                                        // TODO: `error` isn't right, we need to get the severity from `external_rules`
-                                        OxcDiagnostic::error(diagnostic.message)
-                                            .with_label(Span::new(
-                                                diagnostic.loc.start,
-                                                diagnostic.loc.end,
-                                            ))
-                                            .with_error_code(
-                                                plugin_name.to_string(),
-                                                rule_name.to_string(),
-                                            ),
-                                        PossibleFixes::None,
-                                    ));
-                                }
-                                None => {
-                                    // TODO: report diagnostic, this should be unreachable
-                                    debug_assert!(false);
-                                }
-                            }
-                        }
-                    }
-                    Err(_err) => {
-                        // TODO: report diagnostic
-                    }
-                }
-            }
-        }
+        #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+        self.run_external_rules(&external_rules, path, &ctx_host);
 
         if let Some(severity) = self.options.report_unused_directive {
             if severity.is_warn_deny() {
@@ -250,6 +214,58 @@ impl Linter {
         }
 
         ctx_host.take_diagnostics()
+    }
+
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    fn run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        path: &Path,
+        ctx_host: &ContextHost,
+    ) {
+        use oxc_diagnostics::OxcDiagnostic;
+        use oxc_span::Span;
+
+        use crate::fixer::PossibleFixes;
+
+        if external_rules.is_empty() {
+            return;
+        }
+
+        // TODO: Error or `unwrap` instead of `return`?
+        let Some(external_linter) = &self.external_linter else { return };
+
+        let result = (external_linter.run)(
+            path.to_str().unwrap().to_string(),
+            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+        );
+        match result {
+            Ok(diagnostics) => {
+                for diagnostic in diagnostics {
+                    match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id) {
+                        Some((plugin_name, rule_name)) => {
+                            ctx_host.push_diagnostic(Message::new(
+                                // TODO: `error` isn't right, we need to get the severity from `external_rules`
+                                OxcDiagnostic::error(diagnostic.message)
+                                    .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                                    .with_error_code(
+                                        plugin_name.to_string(),
+                                        rule_name.to_string(),
+                                    ),
+                                PossibleFixes::None,
+                            ));
+                        }
+                        None => {
+                            // TODO: report diagnostic, this should be unreachable
+                            debug_assert!(false);
+                        }
+                    }
+                }
+            }
+            Err(_err) => {
+                // TODO: report diagnostic
+            }
+        }
     }
 }
 
