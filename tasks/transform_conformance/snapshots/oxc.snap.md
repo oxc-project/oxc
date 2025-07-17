@@ -180,14 +180,17 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Name":
-after transform: SymbolId(7): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+after transform: SymbolId(7): SymbolFlags(Export | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Name":
 after transform: SymbolId(7): Span { start: 116, end: 120 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol flags mismatch for "Q":
+after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
+after transform: SymbolId(9): SymbolFlags(Function | Export | TypeAlias)
+rebuilt        : SymbolId(8): SymbolFlags(Function | Export)
 Symbol span mismatch for "T":
 after transform: SymbolId(9): Span { start: 205, end: 206 }
 rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
@@ -304,13 +307,16 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 17, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
 rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 * namespace/redeclaration-with-type-alias/input.ts
 Bindings mismatch:
@@ -327,13 +333,19 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
 rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "Zoo":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 * namespace/redeclaration-with-type-only-namespace/input.ts
 Scope children mismatch:
@@ -344,13 +356,16 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 17, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
+Symbol flags mismatch for "Bar":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
@@ -365,8 +380,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import | Export)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
@@ -377,14 +392,14 @@ Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 57, end: 58 }, Span { start: 79, end: 83 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Import)
+after transform: SymbolId(1): SymbolFlags(Import | Export | TypeAlias)
+rebuilt        : SymbolId(1): SymbolFlags(Import | Export)
 Symbol redeclarations mismatch for "T":
 after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | Export | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 267, end: 268 }
 rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
@@ -499,6 +514,9 @@ rebuilt        : SymbolId(5): ScopeId(4)
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(1): [ReferenceId(6), ReferenceId(7)]
+Symbol flags mismatch for "AbstractClass":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "AbstractClass":
 after transform: SymbolId(2): Span { start: 69, end: 82 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
@@ -632,12 +650,18 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 11, end: 12 }
+Symbol flags mismatch for "D":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "D":
 after transform: SymbolId(1): Span { start: 85, end: 86 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "D":
 after transform: SymbolId(6): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 85, end: 86 }
+Symbol flags mismatch for "E":
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "E":
 after transform: SymbolId(2): Span { start: 167, end: 168 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
@@ -648,7 +672,7 @@ rebuilt        : SymbolId(5): Span { start: 167, end: 168 }
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
 Symbol flags mismatch for "_default":
 after transform: SymbolId(0): SymbolFlags(Class)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:
@@ -836,6 +860,9 @@ rebuilt        : ScopeId(0): ["Testing123"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol flags mismatch for "Testing123":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Testing123":
 after transform: SymbolId(3): Span { start: 241, end: 251 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
@@ -859,6 +886,9 @@ rebuilt        : ScopeId(0): ["Testing123"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol flags mismatch for "Testing123":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "Testing123":
 after transform: SymbolId(3): Span { start: 239, end: 249 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
@@ -913,6 +943,9 @@ rebuilt        : ScopeId(0): ["C"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "C":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "C":
 after transform: SymbolId(3): Span { start: 127, end: 128 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
@@ -933,6 +966,9 @@ rebuilt        : ScopeId(0): ["C"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "C":
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 Symbol span mismatch for "C":
 after transform: SymbolId(3): Span { start: 127, end: 128 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }

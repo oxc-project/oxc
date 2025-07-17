@@ -116,24 +116,26 @@ bitflags! {
         const Import                  = 1 << 6;
         /// Imported ESM type-only binding
         const TypeImport              = 1 << 7;
+        /// Indicates exported symbol. e.g. `var x; export default x`, `export var x`.
+        const Export                  = 1 << 8;
         // Type specific symbol flags
-        const TypeAlias               = 1 << 8;
-        const Interface               = 1 << 9;
-        const RegularEnum             = 1 << 10;
-        const ConstEnum               = 1 << 11;
-        const EnumMember              = 1 << 12;
-        const TypeParameter           = 1 << 13;
+        const TypeAlias               = 1 << 9;
+        const Interface               = 1 << 10;
+        const RegularEnum             = 1 << 11;
+        const ConstEnum               = 1 << 12;
+        const EnumMember              = 1 << 13;
+        const TypeParameter           = 1 << 14;
         /// Uninstantiated module
-        const NamespaceModule         = 1 << 14;
+        const NamespaceModule         = 1 << 15;
         /// Instantiated module
-        const ValueModule             = 1 << 15;
+        const ValueModule             = 1 << 16;
         /// Declared with `declare` modifier, like `declare function x() {}`.
         //
         // This flag is not part of TypeScript's `SymbolFlags`, it comes from TypeScript's `NodeFlags`. We introduced it into
         // here because `NodeFlags` is incomplete and we only can access to `NodeFlags` in the Semantic, but we also need to
         // access it in the Transformer.
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
-        const Ambient                 = 1 << 16;
+        const Ambient                 = 1 << 17;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();

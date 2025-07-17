@@ -10,7 +10,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/default2
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
         "id": 0,
         "name": "a",
         "node": "VariableDeclarator(a)",

@@ -7,6 +7,7 @@ use std::{
 
 use oxc_allocator::Address;
 use oxc_data_structures::stack::Stack;
+use oxc_ecmascript::BoundNames;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
@@ -550,6 +551,13 @@ impl<'a> SemanticBuilder<'a> {
         span: Span,
     ) {
         self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
+    }
+
+    /// Flag the symbol bound to an identifier in the current scope as exported.
+    fn add_export_flag_to_identifier(&mut self, name: &str) {
+        if let Some(symbol_id) = self.scoping.get_binding(self.current_scope_id, name) {
+            self.scoping.union_symbol_flag(symbol_id, SymbolFlags::Export);
+        }
     }
 }
 
@@ -2076,6 +2084,33 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
+            AstKind::ExportDefaultDeclaration(d) => {
+                // Add `SymbolFlags::Export` to referenced symbols.
+                if let ExportDefaultDeclarationKind::Identifier(ident) = &d.declaration {
+                    self.add_export_flag_to_identifier(ident.name.as_str());
+                } else {
+                    // Add `SymbolFlags::Export` to bindings.
+                    d.bound_names(&mut |ident| {
+                        self.scoping.union_symbol_flag(ident.symbol_id(), SymbolFlags::Export);
+                    });
+                }
+            }
+            AstKind::ExportNamedDeclaration(d) => {
+                // Add `SymbolFlags::Export` to bindings.
+                if let Some(declaration) = &d.declaration {
+                    declaration.bound_names(&mut |ident| {
+                        self.scoping.union_symbol_flag(ident.symbol_id(), SymbolFlags::Export);
+                    });
+                }
+                // Add `SymbolFlags::Export` to referenced symbols.
+                for specifier in &d.specifiers {
+                    if specifier.export_kind.is_value() {
+                        if let Some(name) = specifier.local.identifier_name() {
+                            self.add_export_flag_to_identifier(name.as_str());
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
