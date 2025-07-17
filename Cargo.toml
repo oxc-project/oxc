@@ -160,7 +160,7 @@ javascript-globals = "1"
 oxc-browserslist = "2"
 oxc_index = "3"
 oxc_resolver = "11"
-oxc_sourcemap = "3"
+oxc_sourcemap = "4"
 
 #
 allocator-api2 = "=0.2.21"

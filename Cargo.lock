@@ -2242,9 +2242,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "3.0.2"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24015d93ed1d8f0c2a0d9f534ca85690888990658a8fc4a87ff0c92640e73300"
+checksum = "91e03c9f8967eb444d211b7f00bb4ac414c7cb6107f59bfc387bdbb75ca58f9a"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -2252,7 +2252,6 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "rayon",
  "rustc-hash",
  "serde",
  "serde_json",
