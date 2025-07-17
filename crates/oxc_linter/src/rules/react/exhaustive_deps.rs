@@ -63,8 +63,9 @@ fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
-fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -> OxcDiagnostic {
-    let deps_pretty = if deps.len() == 1 {
+fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span) -> OxcDiagnostic {
+    let single = deps.len() == 1;
+    let deps_pretty = if single {
         format!("'{}'", deps[0])
     } else {
         let mut iter = deps.iter();
@@ -78,12 +79,25 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -
         format!("{all_but_last}, and '{last}'")
     };
 
-    OxcDiagnostic::warn(if deps.len() == 1 {
+    let labels = deps
+        .iter()
+        .map(|dep| {
+            // when multiple dependencies are missing, labels can quickly get noisy,
+            // so we only add labels when there's only one dependency
+            if single {
+                dep.span.label(format!("{hook_name} uses `{dep}` here"))
+            } else {
+                dep.span.into()
+            }
+        })
+        .chain(std::iter::once(span.primary()));
+
+    OxcDiagnostic::warn(if single {
         format!("React Hook {hook_name} has a missing dependency: {deps_pretty}")
     } else {
         format!("React Hook {hook_name} has missing dependencies: {deps_pretty}")
     })
-    .with_label(span)
+    .with_labels(labels)
     .with_help("Either include it or remove the dependency array.")
     .with_error_code_scope(SCOPE)
 }
@@ -338,7 +352,7 @@ impl Rule for ExhaustiveDeps {
                                                 _ => {
                                                     ctx.diagnostic(missing_dependency_diagnostic(
                                                         hook_name,
-                                                        &[ident.name.to_string()],
+                                                        &[Name::from(ident.as_ref())],
                                                         dependencies_node.span(),
                                                     ));
                                                     None
@@ -354,7 +368,7 @@ impl Rule for ExhaustiveDeps {
                                     AstKind::FormalParameter(_) => {
                                         ctx.diagnostic(missing_dependency_diagnostic(
                                             hook_name,
-                                            &[ident.name.to_string()],
+                                            &[Name::from(ident.as_ref())],
                                             dependencies_node.span(),
                                         ));
                                         None
@@ -558,7 +572,7 @@ impl Rule for ExhaustiveDeps {
         if undeclared_deps.clone().count() > 0 {
             ctx.diagnostic(missing_dependency_diagnostic(
                 hook_name,
-                &undeclared_deps.map(Dependency::to_string).collect::<Vec<_>>(),
+                &undeclared_deps.map(Name::from).collect::<Vec<_>>(),
                 dependencies_node.span(),
             ));
         }
@@ -728,6 +742,33 @@ fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Op
         }
         Expression::Identifier(ident) => Some(&ident.name),
         _ => None,
+    }
+}
+
+#[derive(Debug)]
+struct Name<'a> {
+    pub span: Span,
+    pub name: Cow<'a, str>,
+}
+impl std::fmt::Display for Name<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
+impl<'a> From<&Dependency<'a>> for Name<'a> {
+    fn from(dep: &Dependency<'a>) -> Self {
+        let name = if dep.chain.is_empty() {
+            Cow::Borrowed(dep.name.as_str())
+        } else {
+            Cow::Owned(dep.to_string())
+        };
+        Self { name, span: dep.span }
+    }
+}
+impl<'a> From<&IdentifierReference<'a>> for Name<'a> {
+    fn from(id: &IdentifierReference<'a>) -> Self {
+        Self { name: Cow::Borrowed(id.name.as_str()), span: id.span }
     }
 }
 

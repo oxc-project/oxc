@@ -416,6 +416,12 @@ impl Span {
         LabeledSpan::new_primary_with_span(Some(label.into()), self)
     }
 
+    /// Creates a primary [`LabeledSpan`] covering this [`Span`].
+    #[must_use]
+    pub fn primary(self) -> LabeledSpan {
+        LabeledSpan::new_primary_with_span(None, self)
+    }
+
     /// Convert [`Span`] to a single `u64`.
     ///
     /// On 64-bit platforms, `Span` is aligned on 8, so equivalent to a `u64`.
