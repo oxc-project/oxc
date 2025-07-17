@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
    ╭─[exhaustive_deps.tsx:2:25]
  1 │ function MyComponent(props) {
  2 │           const value = useMemo(() => { return 2*2; });
@@ -108,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget to pass an array of dependencies?
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
    ╭─[exhaustive_deps.tsx:3:22]
  2 │           const value = useMemo(() => { return 2*2; });
  3 │           const fn = useCallback(() => { alert('foo'); });
@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget to pass an array of dependencies?
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo does nothing when called with only one argument.
    ╭─[exhaustive_deps.tsx:2:25]
  1 │ function MyComponent({ fn1, fn2 }) {
  2 │           const value = useMemo(fn1);
@@ -126,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Did you forget to pass an array of dependencies?
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback does nothing when called with only one argument.
    ╭─[exhaustive_deps.tsx:3:22]
  2 │           const value = useMemo(fn1);
  3 │           const fn = useCallback(fn2);
@@ -236,16 +236,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:7:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent() {
+ 2 │           const local1 = {};
+   ·                 ───┬──
+   ·                    ╰── `local1` is declared here
+ 3 │           const local2 = {};
+   ╰────
+   ╭─[exhaustive_deps.tsx:7:15]
  6 │             console.log(local2);
  7 │           }, [local1]);
-   ·              ────────
+   ·               ───┬──
+   ·                  ╰── it will always cause this hook to re-evaluate
  8 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useMemo has unnecessary dependency: local2
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: local2
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             console.log(local1);
  6 │           }, [local1, local2]);
@@ -254,20 +262,34 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:6:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `local1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent() {
+ 2 │           const local1 = {};
+   ·                 ───┬──
+   ·                    ╰── `local1` is declared here
+ 3 │           const local2 = {};
+   ╰────
+   ╭─[exhaustive_deps.tsx:6:15]
  5 │             console.log(local1);
  6 │           }, [local1, local2]);
-   ·              ────────────────
+   ·               ───┬──
+   ·                  ╰── it will always cause this hook to re-evaluate
  7 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:6:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `local2`, which changes every render
+   ╭─[exhaustive_deps.tsx:6:23]
+ 2 │           const local1 = {};
+ 3 │           const local2 = {};
+   ·                 ───┬──
+   ·                    ╰── `local2` is declared here
+ 4 │           useMemo(() => {
  5 │             console.log(local1);
  6 │           }, [local1, local2]);
-   ·              ────────────────
+   ·                       ───┬──
+   ·                          ╰── it will always cause this hook to re-evaluate
  7 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -315,11 +337,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:6:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent() {
+ 2 │           const local = {};
+   ·                 ──┬──
+   ·                   ╰── `local` is declared here
+ 3 │           useEffect(() => {
+   ╰────
+   ╭─[exhaustive_deps.tsx:6:15]
  5 │             console.log(local);
  6 │           }, [local, local]);
-   ·              ──────────────
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
  7 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -333,7 +363,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: window
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: window
    ╭─[exhaustive_deps.tsx:2:33]
  1 │ function MyComponent() {
  2 │           useCallback(() => {}, [window]);
@@ -342,7 +372,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local
    ╭─[exhaustive_deps.tsx:3:33]
  2 │           let local = props.foo;
  3 │           useCallback(() => {}, [local]);
@@ -595,7 +625,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Extract the expression to a separate variable so it can be statically checked.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             console.log(props.bar);
  6 │           }, [props, props.foo]);
@@ -604,7 +634,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             console.log(props.bar);
  6 │           }, [props.foo, props]);
@@ -639,7 +669,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(foo);
  5 │           }, [props.bar]);
@@ -661,7 +691,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(bar);
  5 │           }, [props.foo.bar]);
@@ -707,7 +737,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(local);
  5 │           }, [local.id]);
@@ -716,7 +746,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(local);
  5 │           }, [local.id, local]);
@@ -725,7 +755,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(local);
  5 │           }, [local.id, local]);
@@ -734,11 +764,17 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `local`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:25]
+ 1 │ function MyComponent() {
+ 2 │           const local = {id: 42};
+   ·                 ──┬──
+   ·                   ╰── `local` is declared here
+ 3 │           const fn = useCallback(() => {
  4 │             console.log(local);
  5 │           }, [local.id, local]);
-   ·              ─────────────────
+   ·                         ──┬──
+   ·                           ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -767,7 +803,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             console.log(color);
  6 │           }, [props.foo, props.foo.bar.baz]);
@@ -776,7 +812,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
    ╭─[exhaustive_deps.tsx:4:14]
  3 │             console.log(props.foo.bar.baz);
  4 │           }, [props.foo.bar.baz, props.foo]);
@@ -810,7 +846,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
    ╭─[exhaustive_deps.tsx:4:14]
  3 │             console.log(props.foo.bar);
  4 │           }, [props.foo.bar.baz]);
@@ -832,7 +868,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(props.hello);
  5 │           }, [props.foo.bar.baz]);
@@ -850,25 +886,39 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the literal from the array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent() {
+ 2 │           const local = {};
+   ·                 ──┬──
+   ·                   ╰── `local` is declared here
+ 3 │           useEffect(() => {
  4 │             console.log(local);
  5 │           }, [local, local]);
-   ·              ──────────────
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:6:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `local1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent() {
+ 2 │           const local1 = {};
+   ·                 ───┬──
+   ·                    ╰── `local1` is declared here
+ 3 │           useCallback(() => {
+   ╰────
+   ╭─[exhaustive_deps.tsx:6:15]
  5 │             console.log(local1);
  6 │           }, [local1]);
-   ·              ────────
+   ·               ───┬──
+   ·                  ╰── it will always cause this hook to re-evaluate
  7 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: local1
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local1
    ╭─[exhaustive_deps.tsx:3:33]
  2 │           const local1 = {};
  3 │           useCallback(() => {}, [local1]);
@@ -877,11 +927,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:33]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `local1`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:34]
+ 1 │ function MyComponent() {
  2 │           const local1 = {};
+   ·                 ───┬──
+   ·                    ╰── `local1` is declared here
  3 │           useCallback(() => {}, [local1]);
-   ·                                 ────────
+   ·                                  ───┬──
+   ·                                     ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -1245,7 +1299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
    ╭─[exhaustive_deps.tsx:7:14]
  6 │             ref2.current.scrollTop = initY;
  7 │           }, [ref1.current, ref2.current, activeTab, initY]);
@@ -1561,11 +1615,19 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:16]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `z`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:13]
+ 1 │ import MutableStore from 'store';
+ 2 │         let z = {};
+   ·             ┬
+   ·             ╰── `z` is declared here
+ 3 │ 
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:60]
   9 │               console.log(MutableStore.hello.world, props.foo, x, y, z, global.stuff);
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
-    ·                ────────────────────────────────────────────────────────────
+    ·                                                            ┬
+    ·                                                            ╰── it will always cause this hook to re-evaluate
  11 │           }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -1597,11 +1659,19 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:16]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `z`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:13]
+ 1 │ import MutableStore from 'store';
+ 2 │         let z = {};
+   ·             ┬
+   ·             ╰── `z` is declared here
+ 3 │ 
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:60]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
-    ·                ────────────────────────────────────────────────────────────
+    ·                                                            ┬
+    ·                                                            ╰── it will always cause this hook to re-evaluate
  11 │           }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -1633,7 +1703,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1642,7 +1712,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1651,7 +1721,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1660,7 +1730,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1669,7 +1739,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1678,7 +1748,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
@@ -1687,11 +1757,19 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:16]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `z`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:13]
+ 1 │ import MutableStore from 'store';
+ 2 │         let z = {};
+   ·             ┬
+   ·             ╰── `z` is declared here
+ 3 │ 
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:60]
   9 │               // nothing
  10 │             }, [MutableStore.hello.world, props.foo, x, y, z, global.stuff]);
-    ·                ────────────────────────────────────────────────────────────
+    ·                                                            ┬
+    ·                                                            ╰── it will always cause this hook to re-evaluate
  11 │           }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -1723,7 +1801,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1732,7 +1810,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: z
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1741,7 +1819,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: global.stuff
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1750,7 +1828,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: y
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1759,7 +1837,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: x
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1768,7 +1846,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo
     ╭─[exhaustive_deps.tsx:10:16]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
@@ -1777,11 +1855,19 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:16]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `z`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:13]
+ 1 │ import MutableStore from 'store';
+ 2 │         let z = {};
+   ·             ┬
+   ·             ╰── `z` is declared here
+ 3 │ 
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:62]
   9 │               // nothing
  10 │             }, [MutableStore?.hello?.world, props.foo, x, y, z, global?.stuff]);
-    ·                ───────────────────────────────────────────────────────────────
+    ·                                                              ┬
+    ·                                                              ╰── it will always cause this hook to re-evaluate
  11 │           }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -1894,164 +1980,309 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext`, which changes every render
+   ╭─[exhaustive_deps.tsx:4:20]
+ 3 │ 
+ 4 │           function handleNext(value) {
+   ·                    ─────┬────
+   ·                         ╰── `handleNext` is declared here
+ 5 │             setState(value);
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:15]
   9 │             return Store.subscribe(handleNext);
  10 │           }, [handleNext]);
-    ·              ────────────
+    ·               ─────┬────
+    ·                    ╰── it will always cause this hook to re-evaluate
  11 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext`, which changes every render
+   ╭─[exhaustive_deps.tsx:4:17]
+ 3 │ 
+ 4 │           const handleNext = (value) => {
+   ·                 ─────┬────
+   ·                      ╰── `handleNext` is declared here
+ 5 │             setState(value);
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:15]
   9 │             return Store.subscribe(handleNext);
  10 │           }, [handleNext]);
-    ·              ────────────
+    ·               ─────┬────
+    ·                    ╰── it will always cause this hook to re-evaluate
  11 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:10:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext`, which changes every render
+   ╭─[exhaustive_deps.tsx:4:17]
+ 3 │ 
+ 4 │           const handleNext = (value) => {
+   ·                 ─────┬────
+   ·                      ╰── `handleNext` is declared here
+ 5 │             setState(value);
+   ╰────
+    ╭─[exhaustive_deps.tsx:10:15]
   9 │             return Store.subscribe(handleNext);
  10 │           }, [handleNext]);
-    ·              ────────────
+    ·               ─────┬────
+    ·                    ╰── it will always cause this hook to re-evaluate
  11 │ 
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:13:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:20]
+ 1 │ function MyComponent(props) {
+ 2 │           function handleNext1() {
+   ·                    ─────┬─────
+   ·                         ╰── `handleNext1` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:13:15]
  12 │             return Store.subscribe(handleNext1);
  13 │           }, [handleNext1]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  14 │           useLayoutEffect(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:16:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `handleNext2`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:17]
+ 4 │           }
+ 5 │           const handleNext2 = () => {
+   ·                 ─────┬─────
+   ·                      ╰── `handleNext2` is declared here
+ 6 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:16:15]
  15 │             return Store.subscribe(handleNext2);
  16 │           }, [handleNext2]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  17 │           useMemo(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:19:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `handleNext3`, which changes every render
+   ╭─[exhaustive_deps.tsx:8:15]
+ 7 │           };
+ 8 │           let handleNext3 = function() {
+   ·               ─────┬─────
+   ·                    ╰── `handleNext3` is declared here
+ 9 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:19:15]
  18 │             return Store.subscribe(handleNext3);
  19 │           }, [handleNext3]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  20 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:14:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:20]
+ 1 │ function MyComponent(props) {
+ 2 │           function handleNext1() {
+   ·                    ─────┬─────
+   ·                         ╰── `handleNext1` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:14:15]
  13 │             return Store.subscribe(() => handleNext1());
  14 │           }, [handleNext1]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  15 │           useLayoutEffect(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:18:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `handleNext2`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:17]
+ 4 │           }
+ 5 │           const handleNext2 = () => {
+   ·                 ─────┬─────
+   ·                      ╰── `handleNext2` is declared here
+ 6 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:18:15]
  17 │             return Store.subscribe(() => handleNext2());
  18 │           }, [handleNext2]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  19 │           useMemo(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:22:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `handleNext3`, which changes every render
+   ╭─[exhaustive_deps.tsx:8:15]
+ 7 │           };
+ 8 │           let handleNext3 = function() {
+   ·               ─────┬─────
+   ·                    ╰── `handleNext3` is declared here
+ 9 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:22:15]
  21 │             return Store.subscribe(() => handleNext3());
  22 │           }, [handleNext3]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  23 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:14:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:20]
+ 1 │ function MyComponent(props) {
+ 2 │           function handleNext1() {
+   ·                    ─────┬─────
+   ·                         ╰── `handleNext1` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:14:15]
  13 │             return Store.subscribe(() => handleNext1());
  14 │           }, [handleNext1]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  15 │           useLayoutEffect(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:18:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `handleNext2`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:17]
+ 4 │           }
+ 5 │           const handleNext2 = () => {
+   ·                 ─────┬─────
+   ·                      ╰── `handleNext2` is declared here
+ 6 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:18:15]
  17 │             return Store.subscribe(() => handleNext2());
  18 │           }, [handleNext2]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  19 │           useMemo(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:22:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `handleNext3`, which changes every render
+   ╭─[exhaustive_deps.tsx:8:15]
+ 7 │           };
+ 8 │           let handleNext3 = function() {
+   ·               ─────┬─────
+   ·                    ╰── `handleNext3` is declared here
+ 9 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:22:15]
  21 │             return Store.subscribe(() => handleNext3());
  22 │           }, [handleNext3]);
-    ·              ─────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  23 │           return (
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:11:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent(props) {
+ 2 │           const handleNext1 = () => {
+   ·                 ─────┬─────
+   ·                      ╰── `handleNext1` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:11:15]
  10 │             return Store.subscribe(handleNext2);
  11 │           }, [handleNext1, handleNext2]);
-    ·              ──────────────────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  12 │           useEffect(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:11:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext2`, which changes every render
+    ╭─[exhaustive_deps.tsx:11:28]
+  4 │           };
+  5 │           function handleNext2() {
+    ·                    ─────┬─────
+    ·                         ╰── `handleNext2` is declared here
+  6 │             console.log('hello');
+  7 │           }
+  8 │           useEffect(() => {
+  9 │             return Store.subscribe(handleNext1);
  10 │             return Store.subscribe(handleNext2);
  11 │           }, [handleNext1, handleNext2]);
-    ·              ──────────────────────────
+    ·                            ─────┬─────
+    ·                                 ╰── it will always cause this hook to re-evaluate
  12 │           useEffect(() => {
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:15:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext1`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function MyComponent(props) {
+ 2 │           const handleNext1 = () => {
+   ·                 ─────┬─────
+   ·                      ╰── `handleNext1` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:15:15]
  14 │             return Store.subscribe(handleNext2);
  15 │           }, [handleNext1, handleNext2]);
-    ·              ──────────────────────────
+    ·               ─────┬─────
+    ·                    ╰── it will always cause this hook to re-evaluate
  16 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:15:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext2`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:20]
+ 4 │           };
+ 5 │           function handleNext2() {
+   ·                    ─────┬─────
+   ·                         ╰── `handleNext2` is declared here
+ 6 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:15:28]
  14 │             return Store.subscribe(handleNext2);
  15 │           }, [handleNext1, handleNext2]);
-    ·              ──────────────────────────
+    ·                            ─────┬─────
+    ·                                 ╰── it will always cause this hook to re-evaluate
  16 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:12:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:15]
+ 1 │ function MyComponent(props) {
+ 2 │           let handleNext = () => {
+   ·               ─────┬────
+   ·                    ╰── `handleNext` is declared here
+ 3 │             console.log('hello');
+   ╰────
+    ╭─[exhaustive_deps.tsx:12:15]
  11 │             return Store.subscribe(handleNext);
  12 │           }, [handleNext]);
-    ·              ────────────
+    ·               ─────┬────
+    ·                    ╰── it will always cause this hook to re-evaluate
  13 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:13:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `handleNext`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:20]
+ 4 │ 
+ 5 │           function handleNext(value) {
+   ·                    ─────┬────
+   ·                         ╰── `handleNext` is declared here
+ 6 │             let value2 = value * taint;
+   ╰────
+    ╭─[exhaustive_deps.tsx:13:15]
  12 │             return Store.subscribe(handleNext);
  13 │           }, [handleNext]);
-    ·              ────────────
+    ·               ─────┬────
+    ·                    ╰── it will always cause this hook to re-evaluate
  14 │         }
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -2125,11 +2356,19 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-    ╭─[exhaustive_deps.tsx:13:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `increment`, which changes every render
+   ╭─[exhaustive_deps.tsx:4:20]
+ 3 │ 
+ 4 │           function increment(x) {
+   ·                    ────┬────
+   ·                        ╰── `increment` is declared here
+ 5 │             return x + step;
+   ╰────
+    ╭─[exhaustive_deps.tsx:13:15]
  12 │             return () => clearInterval(id);
  13 │           }, [increment]);
-    ·              ───────────
+    ·               ────┬────
+    ·                   ╰── it will always cause this hook to re-evaluate
  14 │ 
     ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
@@ -2423,245 +2662,389 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = [];
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = () => {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = function bar(){};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = class {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = true ? {} : 'fine';
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = bar || {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = bar ?? {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = bar && {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           const foo = bar ? baz ? {} : null : null;
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           let foo = {};
+   ·               ─┬─
+   ·                ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:3:30]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:3:31]
+ 1 │ function Component() {
  2 │           var foo = {};
+   ·               ─┬─
+   ·                ╰── `foo` is declared here
  3 │           useMemo(() => foo, [foo]);
-   ·                              ─────
+   ·                               ─┬─
+   ·                                ╰── it will always cause this hook to re-evaluate
  4 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useCallback depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Component() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useCallback(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Component() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useEffect(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Component() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useLayoutEffect(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useImperativeHandle has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:8:13]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useImperativeHandle depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function Component() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useImperativeHandle(
+   ╰────
+   ╭─[exhaustive_deps.tsx:8:14]
  7 │             },
  8 │             [foo]
-   ·             ─────
+   ·              ─┬─
+   ·               ╰── it will always cause this hook to re-evaluate
  9 │           );
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo(section) {
+ 2 │           const foo = section.section_components?.edges ?? [];
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useEffect(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:6:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function Foo(section) {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           console.log(foo);
+   ╰────
+   ╭─[exhaustive_deps.tsx:6:15]
  5 │             console.log(foo);
  6 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  7 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = <>Hi!</>;
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = <div>Hi!</div>;
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = bar = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = new String('foo'); // Note 'foo' will be boxed, and thus an object and thus compared by reference.
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = new Map([]);
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = /reg/;
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `Bar`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           class Bar {};
+   ·                 ─┬─
+   ·                  ╰── `Bar` is declared here
+ 3 │           useMemo(() => {
  4 │             console.log(new Bar());
  5 │           }, [Bar]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useLayoutEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:5:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useLayoutEffect depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function Foo() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useLayoutEffect(() => {
  4 │             console.log(foo);
  5 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  6 │           useEffect(() => {
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
-   ╭─[exhaustive_deps.tsx:8:14]
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `foo`, which changes every render
+   ╭─[exhaustive_deps.tsx:2:17]
+ 1 │ function Foo() {
+ 2 │           const foo = {};
+   ·                 ─┬─
+   ·                  ╰── `foo` is declared here
+ 3 │           useLayoutEffect(() => {
+   ╰────
+   ╭─[exhaustive_deps.tsx:8:15]
  7 │             console.log(foo);
  8 │           }, [foo]);
-   ·              ─────
+   ·               ─┬─
+   ·                ╰── it will always cause this hook to re-evaluate
  9 │         }
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
