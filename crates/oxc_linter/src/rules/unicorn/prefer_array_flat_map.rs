@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// ```
     PreferArrayFlatMap,
     unicorn,
-    style,
+    perf,
     fix
 );
 
