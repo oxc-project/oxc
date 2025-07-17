@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.2] - 2025-07-17
+
+### 🐛 Bug Fixes
+
+- ed696b5 minifier: Remove more unused assignment expressions (#12364) (Boshen)
+- 8777839 minifier: Improve remove unused variable declaration (#12351) (Boshen)
+
+### 🚜 Refactor
+
+- cc3bea4 minifier: Do not remove unused assignment expression yet (#12367) (Boshen)
+- eb12132 minifier: Unify access `CompressOptions` through `ctx.state` (#12346) (Boshen)
+- 7aea02c minifier: Move `State` to a separate file (#12322) (Boshen)
+
+
 ## [0.77.1] - 2025-07-16
 
 ### 🚀 Features

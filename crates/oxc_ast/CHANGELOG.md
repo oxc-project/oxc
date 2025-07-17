@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.2] - 2025-07-17
+
+### 🚀 Features
+
+- 37be46c ast: Introduce `NewExpression::arguments_span` (#12368) (camc314)
+- 6b8f77d ast: Introduce `CallExpression::arguments_span` (#12321) (camc314)
+
+
 ## [0.77.1] - 2025-07-16
 
 ### 🚀 Features

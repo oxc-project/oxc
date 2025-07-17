@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.2] - 2025-07-17
+
+### 🚜 Refactor
+
+- 3c6b88b semantic: Refactor `check_binding_identifier` (#12303) (overlookmotel)
+
+### ⚡ Performance
+
+- b60d63b semantic: Reduce match arms in `check_binding_identifier` (#12304) (overlookmotel)
+
+
 ## [0.77.1] - 2025-07-16
 
 ### 🚀 Features
