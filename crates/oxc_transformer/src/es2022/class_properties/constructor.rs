@@ -303,7 +303,7 @@ impl<'a> ClassProperties<'a, '_> {
         let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 
         // `(..._args) => (super(..._args), <inits>, this)`
-        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
             SPAN,
             true,
             false,
@@ -320,6 +320,7 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
             super_func_scope_id,
+            false,
             false,
         );
 

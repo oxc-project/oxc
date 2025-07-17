@@ -299,7 +299,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("StaticBlock", StructDetails { field_order: None }),
         (
             "ArrowFunctionExpression",
-            StructDetails { field_order: Some(&[0, 6, 7, 1, 2, 3, 4, 5, 8]) },
+            StructDetails { field_order: Some(&[0, 6, 7, 1, 2, 3, 4, 5, 8, 9]) },
         ),
     ],
 };

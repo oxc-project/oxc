@@ -160,7 +160,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
-            let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+            let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
                 SPAN,
                 true,
                 false,
@@ -169,6 +169,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 NONE,
                 body,
                 current_scope_id,
+                false,
                 false,
             );
             // `(x) => x;` -> `((x) => x)();`

@@ -954,8 +954,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false,
+        let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
+            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false,
         );
         ctx.ast.variable_declarator(
             SPAN,
