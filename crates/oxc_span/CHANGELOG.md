@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.2] - 2025-07-17
+
+### 🐛 Bug Fixes
+
+- dac4db9 linter/exhaustive-deps: Better diagnostics for missing dependencies (#12337) (Don Isaac)
+
+
 
 
 
