@@ -1275,14 +1275,8 @@ mod test {
     use crate::{
         CompressOptions,
         options::CompressOptionsKeepNames,
-        tester::{default_options, run, test, test_same},
+        tester::{default_options, test, test_same, test_same_options},
     };
-
-    fn test_same_keep_names(keep_names: CompressOptionsKeepNames, code: &str) {
-        let result = run(code, Some(CompressOptions { keep_names, ..default_options() }));
-        let expected = run(code, None);
-        assert_eq!(result, expected, "\nfor source\n{code}\ngot\n{result}");
-    }
 
     #[test]
     fn test_fold_return_result() {
@@ -1919,22 +1913,41 @@ mod test {
         test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
         test_same("try { foo } catch(e) { var e = 2 } bar(e)");
 
+        // FIXME catch(a) has no references but it cannot be removed.
+        // test_same(
+        // r#"var a = "PASS";
+        // try {
+        // throw "FAIL1";
+        // } catch (a) {
+        // var a = "FAIL2";
+        // }
+        // console.log(a);"#,
+        // );
+
         let target = ESTarget::ES2018;
-        let code = "try { foo } catch(e) {}";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_same_options("try { foo } catch(e) {}", &options);
     }
 
     #[test]
     fn test_remove_name_from_expressions() {
         test("var a = function f() {}", "var a = function () {}");
         test_same("var a = function f() { return f; }");
-        test_same_keep_names(CompressOptionsKeepNames::function_only(), "var a = function f() {}");
+
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
-        test_same_keep_names(CompressOptionsKeepNames::class_only(), "var a = class C {}");
+
+        let options = CompressOptions {
+            keep_names: CompressOptionsKeepNames::function_only(),
+            ..default_options()
+        };
+        test_same_options("var a = function f() {}", &options);
+
+        let options = CompressOptions {
+            keep_names: CompressOptionsKeepNames::class_only(),
+            ..default_options()
+        };
+        test_same_options("var a = class C {}", &options);
     }
 
     #[test]

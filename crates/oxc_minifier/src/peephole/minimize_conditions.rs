@@ -303,7 +303,7 @@ impl<'a> PeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions,
-        tester::{run, test, test_same},
+        tester::{test, test_same, test_same_options},
     };
     use oxc_syntax::es_target::ESTarget;
 
@@ -1429,11 +1429,8 @@ mod test {
         test_same("foo().a || (foo().a = 3)");
 
         let target = ESTarget::ES2019;
-        let code = "x || (x = 3)";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_same_options("x || (x = 3)", &options);
     }
 
     #[test]
@@ -1456,11 +1453,8 @@ mod test {
         test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
         let target = ESTarget::ES2019;
-        let code = "var x; x = x || 1";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_same_options("var x; x = x || 1", &options);
     }
 
     #[test]

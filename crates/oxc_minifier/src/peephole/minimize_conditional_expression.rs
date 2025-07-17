@@ -589,15 +589,13 @@ mod test {
 
     use crate::{
         CompressOptions,
-        tester::{run, test, test_same},
+        tester::{test, test_options, test_same},
     };
 
     fn test_es2019(source_text: &str, expected: &str) {
         let target = ESTarget::ES2019;
-        assert_eq!(
-            run(source_text, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(expected, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_options(source_text, expected, &options);
     }
 
     #[test]

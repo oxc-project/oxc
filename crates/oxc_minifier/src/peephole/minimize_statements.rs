@@ -8,7 +8,7 @@ use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
-use crate::{CompressOptionsUnused, ctx::Ctx, keep_var::KeepVar};
+use crate::{ctx::Ctx, keep_var::KeepVar};
 
 use super::{PeepholeOptimizations, State};
 
@@ -385,7 +385,7 @@ impl<'a> PeepholeOptimizations {
         }
         let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
         for mut decl in declarations {
-            if Self::is_declarator_unused(&decl, ctx) {
+            if Self::should_remove_unused_declarator(&decl, ctx) {
                 state.changed = true;
                 if let Some(init) = decl.init.take() {
                     if init.may_have_side_effects(ctx) {
@@ -404,25 +404,6 @@ impl<'a> PeepholeOptimizations {
                 result.push(Statement::VariableDeclaration(new_decl));
             }
         }
-    }
-
-    fn is_declarator_unused(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
-            return false;
-        }
-        // It is unsafe to remove if direct eval is involved.
-        if ctx.scoping().root_scope_flags().contains_direct_eval() {
-            return false;
-        }
-        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                return ctx
-                    .scoping()
-                    .get_resolved_references(symbol_id)
-                    .all(|r| !r.flags().is_read());
-            }
-        }
-        false
     }
 
     fn handle_expression_statement(

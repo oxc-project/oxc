@@ -20,21 +20,40 @@ pub fn test_same_options(source_text: &str, options: &CompressOptions) {
 }
 
 #[track_caller]
+pub fn test_same_options_source_type(
+    source_text: &str,
+    source_type: SourceType,
+    options: &CompressOptions,
+) {
+    test_options_source_type(source_text, source_text, source_type, options);
+}
+
+#[track_caller]
 pub fn test(source_text: &str, expected: &str) {
     test_options(source_text, expected, &default_options());
 }
 
 #[track_caller]
 pub fn test_options(source_text: &str, expected: &str, options: &CompressOptions) {
-    let result = run(source_text, Some(options.clone()));
-    let expected = run(expected, None);
+    let source_type = SourceType::mjs();
+    test_options_source_type(source_text, expected, source_type, options);
+}
+
+#[track_caller]
+pub fn test_options_source_type(
+    source_text: &str,
+    expected: &str,
+    source_type: SourceType,
+    options: &CompressOptions,
+) {
+    let result = run(source_text, source_type, Some(options.clone()));
+    let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
 #[track_caller]
-pub fn run(source_text: &str, options: Option<CompressOptions>) -> String {
+fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type)
         .with_options(ParseOptions {
             allow_return_outside_function: true,

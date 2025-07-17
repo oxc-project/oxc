@@ -2,10 +2,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_semantic::SymbolId;
+use oxc_span::SourceType;
 
 use crate::CompressOptions;
 
 pub struct MinifierState<'a> {
+    pub source_type: SourceType,
+
     pub options: CompressOptions,
 
     /// Constant values evaluated from expressions.
@@ -16,7 +19,7 @@ pub struct MinifierState<'a> {
 }
 
 impl MinifierState<'_> {
-    pub fn new(options: CompressOptions) -> Self {
-        Self { options, constant_values: FxHashMap::default() }
+    pub fn new(source_type: SourceType, options: CompressOptions) -> Self {
+        Self { source_type, options, constant_values: FxHashMap::default() }
     }
 }

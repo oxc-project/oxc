@@ -5,7 +5,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayH
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
-use crate::{CompressOptionsUnused, ctx::Ctx, keep_var::KeepVar};
+use crate::{ctx::Ctx, keep_var::KeepVar};
 
 use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 
@@ -49,40 +49,11 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_conditional_expression(e, state, ctx)
             }
             Expression::SequenceExpression(e) => self.try_fold_sequence_expression(e, state, ctx),
-            Expression::AssignmentExpression(e) => self.remove_dead_assignment_expression(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
             state.changed = true;
         }
-    }
-
-    fn remove_dead_assignment_expression(
-        &self,
-        e: &mut AssignmentExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if matches!(
-            ctx.state.options.unused,
-            CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
-        ) {
-            return None;
-        }
-        let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
-            e.left.as_simple_assignment_target()?
-        else {
-            return None;
-        };
-        let reference_id = ident.reference_id.get()?;
-        let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
-        // Keep error for assigning to `const foo = 1; foo = 2`.
-        if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
-            return None;
-        }
-        if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
-            return None;
-        }
-        Some(e.right.take_in(ctx.ast))
     }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
@@ -566,21 +537,6 @@ impl<'a> PeepholeOptimizations {
             _ => false,
         }
     }
-
-    fn remove_unused_function_declaration(
-        f: &Function<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
-            return None;
-        }
-        let id = f.id.as_ref()?;
-        let symbol_id = id.symbol_id.get()?;
-        if ctx.scoping().symbol_is_unused(symbol_id) {
-            return Some(ctx.ast.statement_empty(f.span));
-        }
-        None
-    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -603,10 +559,7 @@ impl<'a> LatePeepholeOptimizations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
 #[cfg(test)]
 mod test {
-    use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same},
-    };
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_fold_block() {
@@ -812,11 +765,5 @@ mod test {
     #[test]
     fn remove_constant_value() {
         test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
-    }
-
-    #[test]
-    fn remove_unused_function_declaration() {
-        let options = CompressOptions::smallest();
-        test_options("function foo() {}", "", &options);
     }
 }

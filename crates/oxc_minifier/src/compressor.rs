@@ -32,7 +32,7 @@ impl<'a> Compressor<'a> {
         scoping: Scoping,
         options: CompressOptions,
     ) {
-        let state = MinifierState::new(options);
+        let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
@@ -52,7 +52,7 @@ impl<'a> Compressor<'a> {
         scoping: Scoping,
         options: CompressOptions,
     ) {
-        let state = MinifierState::new(options);
+        let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false };

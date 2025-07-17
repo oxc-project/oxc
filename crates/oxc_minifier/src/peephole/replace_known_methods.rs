@@ -1069,12 +1069,12 @@ mod test {
 
     use crate::{
         CompressOptions,
-        tester::{run, test, test_same},
+        tester::{test, test_options, test_same},
     };
 
     fn test_es2015(code: &str, expected: &str) {
-        let opts = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
-        assert_eq!(run(code, Some(opts)), run(expected, None));
+        let options = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
+        test_options(code, expected, &options);
     }
 
     fn test_value(code: &str, expected: &str) {

@@ -101,6 +101,10 @@ impl<'a> Ctx<'a, '_> {
         &self.0.state.options
     }
 
+    pub fn source_type(&self) -> SourceType {
+        self.0.state.source_type
+    }
+
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.0.scoping())
     }

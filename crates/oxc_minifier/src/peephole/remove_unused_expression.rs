@@ -32,6 +32,9 @@ impl<'a> PeepholeOptimizations {
             Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, state, ctx),
             Expression::BinaryExpression(_) => self.fold_binary_expression(e, state, ctx),
             Expression::CallExpression(_) => self.fold_call_expression(e, state, ctx),
+            Expression::AssignmentExpression(_) => {
+                self.remove_unused_assignment_expression(e, state, ctx)
+            }
             _ => !e.may_have_side_effects(ctx),
         }
     }
