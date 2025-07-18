@@ -57,6 +57,8 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             "importingExportingTypes.ts",
             // This is just a binary file
             "TransportStream.ts",
+            // Emits TS5052 (complains compilerOptions are invalid, which we do not support), also implies TS2564 but not emitted
+            "esDecorators-emitDecoratorMetadata.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
