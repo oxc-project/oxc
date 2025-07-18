@@ -92,4 +92,13 @@ describe('oxlint2 CLI', () => {
     expect(exitCode).toBe(0);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('should work with multiple rules', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/basic_custom_plugin_multiple_rules',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });
