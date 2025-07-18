@@ -147,7 +147,13 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.body().span() == self.span(),
+            AstNodes::ExpressionStatement(statement) => {
+                if let AstNodes::FunctionBody(arrow) = statement.parent {
+                    arrow.span == self.span()
+                } else {
+                    false
+                }
+            }
             AstNodes::ConditionalExpression(conditional) => {
                 matches!(
                     parent.parent(),

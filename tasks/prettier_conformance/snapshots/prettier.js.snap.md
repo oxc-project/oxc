@@ -1,4 +1,4 @@
-js compatibility: 409/699 (58.51%)
+js compatibility: 411/699 (58.80%)
 
 # Failed
 
@@ -21,12 +21,10 @@ js compatibility: 409/699 (58.51%)
 | js/assignment-comments/function.js | 💥 | 92.73% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 16.67% |
-| js/binary-expressions/arrow.js | 💥 | 66.67% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
 | js/binary-expressions/jsx_parent.js | 💥 | 33.85% |
 | js/binary-expressions/return.js | 💥 | 77.78% |
 | js/binary-expressions/test.js | 💥 | 95.65% |
-| js/break-calls/react.js | 💥 | 97.50% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
 | js/call/first-argument-expansion/jsx.js | 💥 | 0.00% |
 | js/call/first-argument-expansion/test.js | 💥 | 96.57% |
@@ -262,7 +260,7 @@ js compatibility: 409/699 (58.51%)
 | jsx/fragment/fragment.js | 💥 | 78.57% |
 | jsx/ignore/jsx_ignore.js | 💥 | 67.31% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 24.53% |
-| jsx/jsx/arrow.js | 💥💥💥💥 | 45.16% |
+| jsx/jsx/arrow.js | 💥💥💥💥 | 32.26% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
 | jsx/jsx/await.js | 💥💥💥💥 | 15.00% |
 | jsx/jsx/conditional-expression.js | 💥💥💥💥 | 64.10% |

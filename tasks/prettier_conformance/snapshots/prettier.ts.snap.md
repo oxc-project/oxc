@@ -18,7 +18,7 @@ ts compatibility: 234/573 (40.84%)
 | jsx/fragment/fragment.js | 💥 | 78.57% |
 | jsx/ignore/jsx_ignore.js | 💥 | 67.31% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 24.53% |
-| jsx/jsx/arrow.js | 💥💥💥💥 | 45.16% |
+| jsx/jsx/arrow.js | 💥💥💥💥 | 32.26% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
 | jsx/jsx/await.js | 💥💥💥💥 | 15.00% |
 | jsx/jsx/conditional-expression.js | 💥💥💥💥 | 64.10% |

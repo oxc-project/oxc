@@ -99,10 +99,9 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             .iter()
             .enumerate()
             .map(|(index, element)| {
-                let leading_lines = get_lines_before(element.span(), f);
-                has_empty_line = has_empty_line || leading_lines > 1;
+                has_empty_line = has_empty_line || get_lines_before(element.span(), f) > 1;
 
-                FormatCallArgument::Default { element, is_last: index == last_index, leading_lines }
+                FormatCallArgument::Default { element, is_last: index == last_index }
             })
             .collect();
 
@@ -140,9 +139,6 @@ pub enum FormatCallArgument<'a, 'b> {
 
         /// Whether this is the last element.
         is_last: bool,
-
-        /// The number of lines before this node
-        leading_lines: usize,
     },
 
     /// The argument has been formatted because a caller inspected if it [Self::will_break].
@@ -154,9 +150,6 @@ pub enum FormatCallArgument<'a, 'b> {
 
         /// The separated element
         element: &'b AstNode<'a, Argument<'a>>,
-
-        /// The lines before this element
-        leading_lines: usize,
     },
 }
 
@@ -164,7 +157,7 @@ impl<'a> FormatCallArgument<'a, '_> {
     /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
     fn will_break(&mut self, f: &mut Formatter<'_, 'a>) -> bool {
         match &self {
-            Self::Default { element, leading_lines, .. } => {
+            Self::Default { element, .. } => {
                 let interned = f.intern(&self);
 
                 let breaks = match &interned {
@@ -172,8 +165,7 @@ impl<'a> FormatCallArgument<'a, '_> {
                     _ => false,
                 };
 
-                *self =
-                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
+                *self = Self::Inspected { content: interned, element };
                 breaks
             }
             Self::Inspected { content: Ok(Some(result)), .. } => result.will_break(),
@@ -184,11 +176,10 @@ impl<'a> FormatCallArgument<'a, '_> {
     /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
     fn inspected(&mut self, f: &mut Formatter<'_, 'a>) {
         match &self {
-            Self::Default { element, leading_lines, .. } => {
+            Self::Default { element, .. } => {
                 let interned = f.intern(&self);
 
-                *self =
-                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
+                *self = Self::Inspected { content: interned, element };
             }
             _ => {}
         }
@@ -203,14 +194,13 @@ impl<'a> FormatCallArgument<'a, '_> {
     /// If [`cache_function_body`](Self::cache_function_body) or [`will_break`](Self::will_break) has been called on this argument before.
     fn cache_function_body(&mut self, f: &mut Formatter<'_, 'a>) {
         match &self {
-            Self::Default { element, leading_lines, .. } => {
+            Self::Default { element, .. } => {
                 let interned = f.intern(&format_once(|f| {
                     self.fmt_with_cache_mode(FunctionBodyCacheMode::Cache, f)?;
                     Ok(())
                 }));
 
-                *self =
-                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
+                *self = Self::Inspected { content: interned, element };
             }
             Self::Inspected { .. } => {
                 panic!("`cache` must be called before inspecting or formatting the element.");
@@ -251,15 +241,6 @@ impl<'a> FormatCallArgument<'a, '_> {
                 }
 
                 if *is_last { Ok(()) } else { write!(f, ",") }
-            }
-        }
-    }
-
-    /// Returns the number of leading lines before the argument's node
-    fn leading_lines(&self) -> usize {
-        match self {
-            Self::Inspected { leading_lines, .. } | Self::Default { leading_lines, .. } => {
-                *leading_lines
             }
         }
     }
@@ -334,7 +315,7 @@ impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
                 soft_block_indent(&format_with(|f| {
                     for (index, entry) in self.args.iter().enumerate() {
                         if index > 0 {
-                            match entry.leading_lines() {
+                            match get_lines_before(entry.element().span(), f) {
                                 0 | 1 => write!(f, [soft_line_break_or_space()])?,
                                 _ => write!(f, [empty_line()])?,
                             }
