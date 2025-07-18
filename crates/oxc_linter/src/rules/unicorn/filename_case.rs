@@ -23,7 +23,7 @@ impl std::ops::Deref for FilenameCase {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct FilenameCaseConfig {
     /// Whether kebab case is allowed.
     kebab_case: bool,
@@ -35,6 +35,19 @@ pub struct FilenameCaseConfig {
     pascal_case: bool,
     ignore: Option<Regex>,
     multi_extensions: bool,
+}
+
+impl Default for FilenameCaseConfig {
+    fn default() -> Self {
+        Self {
+            kebab_case: true,
+            camel_case: false,
+            snake_case: false,
+            pascal_case: false,
+            ignore: None,
+            multi_extensions: true,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -141,6 +154,7 @@ impl Rule for FilenameCase {
         let mut config = FilenameCaseConfig { multi_extensions: true, ..Default::default() };
 
         if let Some(value) = value.get(0) {
+            config.kebab_case = false;
             if let Some(Value::String(val)) = value.get("ignore") {
                 config.ignore = RegexBuilder::new(val).build().ok();
             }
@@ -380,6 +394,7 @@ fn test() {
             "src/foo/foo_bar.test_utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
+        ("", None, None, Some(PathBuf::from("foo-bar.tsx"))),
     ];
 
     let fail = vec![
@@ -425,6 +440,7 @@ fn test() {
             "src/foo/foo_bar.test-utils.js",
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
+        ("", None, None, Some(PathBuf::from("FooBar.tsx"))),
     ];
 
     Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
