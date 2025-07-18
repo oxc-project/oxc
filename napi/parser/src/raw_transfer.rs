@@ -19,7 +19,7 @@ use oxc_napi::get_source_type;
 
 use crate::{
     AstType, ParserOptions, get_ast_type, parse,
-    raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BLOCK_SIZE as BUFFER_SIZE},
+    raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE},
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 

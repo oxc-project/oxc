@@ -1666,6 +1666,7 @@ dependencies = [
  "allocator-api2",
  "bumpalo",
  "hashbrown 0.15.4",
+ "oxc_ast_macros",
  "oxc_data_structures",
  "oxc_estree",
  "rustc-hash",

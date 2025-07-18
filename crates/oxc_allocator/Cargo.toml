@@ -19,6 +19,7 @@ workspace = true
 doctest = true
 
 [dependencies]
+oxc_ast_macros = { workspace = true, optional = true }
 oxc_data_structures = { workspace = true, features = ["assert_unchecked", "pointer_ext"] }
 oxc_estree = { workspace = true, optional = true }
 
@@ -35,7 +36,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-fixed_size = ["from_raw_parts"]
+fixed_size = ["from_raw_parts", "dep:oxc_ast_macros"]
 disable_fixed_size = []
 from_raw_parts = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

@@ -6,6 +6,8 @@ use std::{
     sync::Mutex,
 };
 
+use oxc_ast_macros::ast;
+
 use crate::{
     Allocator,
     fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
@@ -86,6 +88,16 @@ impl Drop for AllocatorGuard<'_> {
     }
 }
 
+/// Metadata about a [`FixedSizeAllocator`].
+///
+/// Is stored in the memory backing the [`FixedSizeAllocator`], after `RawTransferMetadata`,
+/// which is after the section of the allocation which [`Allocator`] uses for its chunk.
+#[ast]
+pub struct FixedSizeAllocatorMetadata {
+    /// Pointer to start of original allocation backing the `FixedSizeAllocator`
+    pub alloc_ptr: NonNull<u8>,
+}
+
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
 // But system allocator on Mac OS refuses allocations with 4 GiB alignment.
 // https://github.com/rust-lang/rust/blob/556d20a834126d2d0ac20743b9792b8474d6d03c/library/std/src/sys/alloc/unix.rs#L16-L27
@@ -109,10 +121,17 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
     Err(_) => unreachable!(),
 };
 
-/// Structure which wraps an [`Allocator`] with fixed size of 2 GiB, and aligned on 4 GiB.
+/// Structure which wraps an [`Allocator`] with fixed size of 2 GiB - 16, and aligned on 4 GiB.
 ///
-/// To achieve this, we manually allocate memory to back the `Allocator`'s single chunk.
-/// We over-allocate 4 GiB, and then use a part of that allocation to back the `Allocator`.
+/// # Allocation strategy
+///
+/// To achieve this, we manually allocate memory to back the `Allocator`'s single chunk,
+/// and to store other metadata.
+///
+/// We over-allocate 4 GiB, and then use only half of that allocation - either the 1st half,
+/// or the 2nd half, depending on the alignment of the allocation received from `alloc.alloc()`.
+/// One of those halves will be aligned on 4 GiB, and that's the one we use.
+///
 /// Inner `Allocator` is wrapped in `ManuallyDrop` to prevent it freeing the memory itself,
 /// and `FixedSizeAllocator` has a custom `Drop` impl which frees the whole of the original allocation.
 ///
@@ -120,11 +139,41 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 /// (e.g. Mimalloc in linter). Mimalloc complains that it cannot serve allocations with high alignment,
 /// and presumably it's pointless to try to obtain such large allocations from a thread-local heap,
 /// so better to go direct to the system allocator anyway.
+///
+/// # Regions of the allocated memory
+///
+/// 2 GiB of the allocated memory is not used at all (see above).
+///
+/// The remaining 2 GiB - 16 bytes, which *is* used, is split up as follows:
+///
+/// ```txt
+///                                                         WHOLE BLOCK - aligned on 4 GiB
+/// <-----------------------------------------------------> Allocated block (`BLOCK_SIZE` bytes)
+///
+///                                                         ALLOCATOR
+/// <----------------------------------------->             `Allocator` chunk (`CHUNK_SIZE` bytes)
+///                                      <---->             Bumpalo's `ChunkFooter` (aligned on 16)
+/// <----------------------------------->                   `Allocator` chunk data storage (for AST)
+///
+///                                                         METADATA
+///                                            <---->       `RawTransferMetadata`
+///                                                  <----> `FixedSizeAllocatorMetadata`
+///
+///                                                         BUFFER SENT TO JS
+/// <----------------------------------------------->       Buffer sent to JS (`BUFFER_SIZE` bytes)
+/// ```
+///
+/// Note that the buffer sent to JS includes both the `Allocator` chunk, and `RawTransferMetadata`,
+/// but does NOT include `FixedSizeAllocatorMetadata`.
+///
+/// The end of the region used for `Allocator` chunk must be aligned on `Allocator::RAW_MIN_ALIGN` (16),
+/// due to the requirements of Bumpalo. We manage that by:
+/// * `BLOCK_SIZE` is a multiple of 16.
+/// * `RawTransferMetadata` is 16 bytes.
+/// * Size of `FixedSizeAllocatorMetadata` is rounded up to a multiple of 16.
 pub struct FixedSizeAllocator {
     /// `Allocator` which utilizes part of the original allocation
     allocator: ManuallyDrop<Allocator>,
-    /// Pointer to start of original allocation
-    alloc_ptr: NonNull<u8>,
 }
 
 impl FixedSizeAllocator {
@@ -154,7 +203,13 @@ impl FixedSizeAllocator {
 
         debug_assert!(chunk_ptr.as_ptr() as usize % BLOCK_ALIGN == 0);
 
-        const CHUNK_SIZE: usize = BLOCK_SIZE - RAW_METADATA_SIZE;
+        const FIXED_METADATA_SIZE_ROUNDED: usize =
+            size_of::<FixedSizeAllocatorMetadata>().next_multiple_of(Allocator::RAW_MIN_ALIGN);
+        const FIXED_METADATA_OFFSET: usize = BLOCK_SIZE - FIXED_METADATA_SIZE_ROUNDED;
+        const _: () =
+            assert!(FIXED_METADATA_OFFSET % align_of::<FixedSizeAllocatorMetadata>() == 0);
+
+        const CHUNK_SIZE: usize = FIXED_METADATA_OFFSET - RAW_METADATA_SIZE;
         const _: () = assert!(CHUNK_SIZE % Allocator::RAW_MIN_ALIGN == 0);
 
         // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
@@ -162,8 +217,19 @@ impl FixedSizeAllocator {
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
         let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
 
-        // Store pointer to original allocation, so it can be used to deallocate in `drop`
-        Self { allocator: ManuallyDrop::new(allocator), alloc_ptr }
+        // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
+        // which is after the end of the allocator chunk
+        let metadata = FixedSizeAllocatorMetadata { alloc_ptr };
+        // SAFETY: `FIXED_METADATA_OFFSET` is `FIXED_METADATA_SIZE_ROUNDED` bytes before end of
+        // the allocation, so there's space for `FixedSizeAllocatorMetadata`.
+        // It's sufficiently aligned for `FixedSizeAllocatorMetadata`.
+        unsafe {
+            let metadata_ptr =
+                chunk_ptr.add(FIXED_METADATA_OFFSET).cast::<FixedSizeAllocatorMetadata>();
+            metadata_ptr.write(metadata);
+        }
+
+        Self { allocator: ManuallyDrop::new(allocator) }
     }
 
     /// Reset this [`FixedSizeAllocator`].
@@ -186,11 +252,44 @@ impl FixedSizeAllocator {
 
 impl Drop for FixedSizeAllocator {
     fn drop(&mut self) {
+        // Get pointer to start of original allocation from `FixedSizeAllocatorMetadata`
+        let alloc_ptr = {
+            // SAFETY: This `Allocator` was created by this `FixedSizeAllocator`.
+            // `&FixedSizeAllocatorMetadata` ref only lives until end of this block.
+            let metadata = unsafe { self.allocator.fixed_size_metadata() };
+            metadata.alloc_ptr
+        };
+
         // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`
-        unsafe { System.dealloc(self.alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
+        unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
     }
 }
 
 // SAFETY: `Allocator` is `Send`.
 // Moving `alloc_ptr: NonNull<u8>` across threads along with the `Allocator` is safe.
 unsafe impl Send for FixedSizeAllocator {}
+
+impl Allocator {
+    /// Get reference to the [`FixedSizeAllocatorMetadata`] for this [`Allocator`].
+    ///
+    /// # SAFETY
+    /// * This `Allocator` must have been created by a `FixedSizeAllocator`.
+    /// * Reference returned by this method must not be allowed to live beyond the life of
+    ///   the `FixedSizeAllocator`.
+    unsafe fn fixed_size_metadata(&self) -> &FixedSizeAllocatorMetadata {
+        // SAFETY: Caller guarantees this `Allocator` was created by a `FixedSizeAllocator`.
+        //
+        // `FixedSizeAllocator::new` writes `FixedSizeAllocatorMetadata` after the end of
+        // the chunk owned by the `Allocator`, and `RawTransferMetadata` (see above).
+        // `end_ptr` is end of the allocator chunk (after the chunk header).
+        // So `end_ptr + RAW_METADATA_SIZE` points to a valid, initialized `FixedSizeAllocatorMetadata`.
+        //
+        // We never create `&mut` references to `FixedSizeAllocatorMetadata`,
+        // and it's not part of the buffer sent to JS, so no danger of aliasing violations.
+        unsafe {
+            let metadata_ptr =
+                self.end_ptr().add(RAW_METADATA_SIZE).cast::<FixedSizeAllocatorMetadata>();
+            metadata_ptr.as_ref()
+        }
+    }
+}

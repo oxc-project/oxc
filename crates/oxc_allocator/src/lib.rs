@@ -80,16 +80,26 @@ mod pool_fixed_size;
     target_endian = "little"
 ))]
 use pool_fixed_size as pool;
+// Import here so `generated/assert_layouts.rs` can access it
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
+use pool_fixed_size::FixedSizeAllocatorMetadata;
 
 pub use pool::{AllocatorGuard, AllocatorPool};
 
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
 mod generated {
-    #[cfg(all(
-        feature = "fixed_size",
-        not(feature = "disable_fixed_size"),
-        target_pointer_width = "64",
-        target_endian = "little"
-    ))]
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
     pub mod fixed_size_constants;
 }
 #[cfg(all(

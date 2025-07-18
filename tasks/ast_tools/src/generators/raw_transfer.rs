@@ -30,7 +30,6 @@ use super::define_generator;
 const MALLOC_RESERVED_SIZE: u32 = 16;
 
 /// Minimum alignment requirement for end of `Allocator`'s chunk
-#[expect(dead_code)]
 const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 
 /// Size of block of memory used for raw transfer.
@@ -1002,6 +1001,8 @@ impl DeserializeFunctionName for PointerDef {
 /// Constants for position of fields in buffer which deserialization starts from.
 #[derive(Clone, Copy)]
 struct Constants {
+    /// Size of buffer in bytes
+    buffer_size: u32,
     /// Offset within buffer of `u32` containing position of `RawTransferData`
     data_pointer_pos: u32,
     /// Offset within buffer of `bool` indicating if AST is TS or JS
@@ -1014,13 +1015,14 @@ struct Constants {
 
 /// Generate constants file.
 fn generate_constants(consts: Constants) -> (String, TokenStream) {
-    let Constants { data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size } = consts;
+    let Constants { buffer_size, data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size } =
+        consts;
 
     let data_pointer_pos_32 = data_pointer_pos / 4;
 
     #[rustfmt::skip]
     let js_output = format!("
-        const BUFFER_SIZE = {BLOCK_SIZE},
+        const BUFFER_SIZE = {buffer_size},
             BUFFER_ALIGN = {BLOCK_ALIGN},
             DATA_POINTER_POS_32 = {data_pointer_pos_32},
             IS_TS_FLAG_POS = {is_ts_pos},
@@ -1037,6 +1039,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     let block_size = number_lit(BLOCK_SIZE);
     let block_align = number_lit(BLOCK_ALIGN);
+    let buffer_size = number_lit(buffer_size);
     let raw_metadata_size = number_lit(raw_metadata_size);
     let rust_output = quote! {
         #![expect(clippy::unreadable_literal)]
@@ -1045,6 +1048,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         ///@@line_break
         pub const BLOCK_SIZE: usize = #block_size;
         pub const BLOCK_ALIGN: usize = #block_align;
+        pub const BUFFER_SIZE: usize = #buffer_size;
         pub const RAW_METADATA_SIZE: usize = #raw_metadata_size;
     };
 
@@ -1055,7 +1059,16 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 fn get_constants(schema: &Schema) -> Constants {
     let raw_metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
-    let raw_metadata_pos = BLOCK_SIZE - raw_metadata_size;
+
+    // Round up to multiple of `ALLOCATOR_CHUNK_END_ALIGN`
+    let fixed_metadata_struct =
+        schema.type_by_name("FixedSizeAllocatorMetadata").as_struct().unwrap();
+    let fixed_metadata_size =
+        fixed_metadata_struct.layout_64().size.next_multiple_of(ALLOCATOR_CHUNK_END_ALIGN);
+
+    let buffer_size = BLOCK_SIZE - fixed_metadata_size;
+
+    let raw_metadata_pos = buffer_size - raw_metadata_size;
     let data_pointer_pos =
         raw_metadata_pos + raw_metadata_struct.field_by_name("data_offset").offset_64();
     let is_ts_pos = raw_metadata_pos + raw_metadata_struct.field_by_name("is_ts").offset_64();
@@ -1067,5 +1080,5 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    Constants { data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size }
+    Constants { buffer_size, data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size }
 }

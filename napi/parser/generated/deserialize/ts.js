@@ -20,7 +20,7 @@ function deserialize(buffer, sourceTextInput, sourceByteLenInput) {
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
 
-  const data = deserializeRawTransferData(uint32[536870906]);
+  const data = deserializeRawTransferData(uint32[536870902]);
 
   uint8 =
     uint32 =
@@ -4151,6 +4151,10 @@ function deserializeErrorSeverity(pos) {
   }
 }
 
+function deserializeU8(pos) {
+  return uint8[pos];
+}
+
 function deserializeStr(pos) {
   const pos32 = pos >> 2,
     len = uint32[pos32 + 2];
@@ -4984,10 +4988,6 @@ function deserializeOptionModuleExportName(pos) {
 
 function deserializeF64(pos) {
   return float64[pos >> 3];
-}
-
-function deserializeU8(pos) {
-  return uint8[pos];
 }
 
 function deserializeBoxJSXOpeningElement(pos) {

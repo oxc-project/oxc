@@ -12472,6 +12472,10 @@ class StaticExport {
 
 const DebugStaticExport = class StaticExport {};
 
+function constructU8(pos, ast) {
+  return ast.buffer[pos];
+}
+
 function constructStr(pos, ast) {
   const pos32 = pos >> 2,
     { buffer } = ast,
@@ -13351,10 +13355,6 @@ function constructOptionModuleExportName(pos, ast) {
 
 function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
-}
-
-function constructU8(pos, ast) {
-  return ast.buffer[pos];
 }
 
 function constructBoxJSXOpeningElement(pos, ast) {
