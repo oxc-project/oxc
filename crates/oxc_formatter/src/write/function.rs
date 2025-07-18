@@ -5,6 +5,7 @@ use oxc_ast::ast::*;
 use super::{
     FormatWrite,
     arrow_function_expression::{FunctionBodyCacheMode, GroupedCallArgumentLayout},
+    block_statement::is_empty_block,
 };
 use crate::{
     format_args,
@@ -129,7 +130,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let statements = self.statements();
         let directives = self.directives();
-        if statements.is_empty() && directives.is_empty() {
+        if is_empty_block(statements, f) && directives.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"])

@@ -51,6 +51,7 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
+    block_statement::{is_empty_block, is_non_collapsible},
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},
@@ -599,9 +600,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
-        for stmt in self {
+        for stmt in
+            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+        {
             join.entry(stmt.span(), stmt);
         }
         join.finish()

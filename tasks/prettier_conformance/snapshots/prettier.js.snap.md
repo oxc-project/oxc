@@ -1,4 +1,4 @@
-js compatibility: 411/699 (58.80%)
+js compatibility: 412/699 (58.94%)
 
 # Failed
 
@@ -113,7 +113,6 @@ js compatibility: 411/699 (58.80%)
 | js/destructuring/destructuring.js | 💥 | 78.90% |
 | js/destructuring/issue-5988.js | 💥 | 0.00% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 77.11% |
-| js/empty-statement/no-newline.js | 💥 | 85.71% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/using-declarations.js | 💥 | 70.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
