@@ -7344,7 +7344,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -7366,16 +7366,6 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
             self.following_node.as_ref(),
         )
         .fmt(f)
-    }
-
-    pub fn has_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> bool {
-        !f.comments()
-            .get_trailing_comments(
-                &self.parent.as_sibling_node(),
-                &SiblingNode::from(self.inner),
-                self.following_node.as_ref(),
-            )
-            .is_empty()
     }
 }
 
@@ -7433,14 +7423,6 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
             self.following_node.as_ref(),
         )
         .fmt(f)
-    }
-
-    pub fn has_trailing_comments(&self, f: &Formatter<'_, 'a>) -> bool {
-        f.comments().has_trailing_comments2(
-            &self.parent.as_sibling_node(),
-            &SiblingNode::from(self.inner),
-            self.following_node.as_ref(),
-        )
     }
 }
 

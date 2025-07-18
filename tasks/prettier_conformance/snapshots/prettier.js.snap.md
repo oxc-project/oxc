@@ -125,7 +125,7 @@ js compatibility: 413/699 (59.08%)
 | js/for/in.js | 💥 | 50.00% |
 | js/for/parentheses.js | 💥 | 72.00% |
 | js/for-of/async-identifier.js | 💥 | 90.00% |
-| js/function-comments/params-trail-comments.js | 💥 | 82.61% |
+| js/function-comments/params-trail-comments.js | 💥 | 95.83% |
 | js/function-single-destructuring/array.js | 💥 | 35.42% |
 | js/functional-composition/functional_compose.js | 💥 | 93.20% |
 | js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 77.08% |

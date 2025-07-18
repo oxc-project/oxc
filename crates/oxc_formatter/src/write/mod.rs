@@ -15,6 +15,8 @@ mod semicolon;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
+use std::fmt::write;
+
 pub use arrow_function_expression::{
     ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };

@@ -177,12 +177,10 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
-    if only_parameter.has_trailing_comments(f)
-        || f.comments().has_comments(
-            parameters.span.start,
-            only_parameter.span,
-            parameters.span.end,
-        )
+    // `(/* comment before */ only_parameter /* comment after */)`
+    // Checker whether there are comments around the only parameter.
+    if f.comments().has_comments_between(parameters.span.start, only_parameter.span.start)
+        || f.comments().has_comments_between(only_parameter.span.end, parameters.span.end)
     {
         return false;
     }
