@@ -99,7 +99,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             .iter()
             .enumerate()
             .map(|(index, element)| {
-                let leading_lines = get_lines_before(element.span().start, f);
+                let leading_lines = get_lines_before(element.span(), f);
                 has_empty_line = has_empty_line || leading_lines > 1;
 
                 FormatCallArgument::Default { element, is_last: index == last_index, leading_lines }

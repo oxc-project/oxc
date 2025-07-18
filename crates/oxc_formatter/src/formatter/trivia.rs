@@ -76,7 +76,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                                 write!(f, [maybe_space(!should_nestle)])?;
                             }
                             1 => {
-                                if get_lines_before(comment.span.start, f) == 0 {
+                                if get_lines_before(comment.span, f) == 0 {
                                     write!(f, [soft_line_break_or_space()])?;
                                 } else {
                                     write!(f, [hard_line_break()])?;
@@ -103,6 +103,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                     .unprinted_comments()
                     .iter()
                     .take_while(|comment| comment.span.end <= span.start);
+
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -139,7 +140,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             for comment in comments {
                 f.context_mut().increment_printed_count();
 
-                let lines_before = get_lines_before(comment.span.start, f);
+                let lines_before = get_lines_before(comment.span, f);
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {

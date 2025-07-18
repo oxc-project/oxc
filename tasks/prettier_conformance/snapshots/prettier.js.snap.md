@@ -1,4 +1,4 @@
-js compatibility: 406/699 (58.08%)
+js compatibility: 408/699 (58.37%)
 
 # Failed
 
@@ -18,7 +18,7 @@ js compatibility: 406/699 (58.08%)
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/sequence.js | 💥 | 71.43% |
-| js/assignment-comments/function.js | 💥 | 74.47% |
+| js/assignment-comments/function.js | 💥 | 92.73% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
@@ -43,11 +43,11 @@ js compatibility: 406/699 (58.08%)
 | js/class-comment/superclass.js | 💥 | 57.83% |
 | js/class-extends/complex.js | 💥 | 89.47% |
 | js/class-extends/extends.js | 💥 | 94.74% |
-| js/class-static-block/class-static-block.js | 💥 | 47.83% |
+| js/class-static-block/class-static-block.js | 💥 | 57.14% |
 | js/class-static-block/with-line-breaks.js | 💥 | 50.00% |
 | js/classes/assignment.js | 💥 | 81.25% |
 | js/classes/method.js | 💥 | 71.43% |
-| js/classes/property.js | 💥 | 54.55% |
+| js/classes/property.js | 💥 | 62.86% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 30.77% |
 | js/comments/15661.js | 💥💥 | 53.63% |
 | js/comments/16398.js | 💥💥 | 80.00% |
@@ -69,7 +69,6 @@ js compatibility: 406/699 (58.08%)
 | js/comments/jsdoc.js | 💥💥 | 47.83% |
 | js/comments/jsx.js | 💥💥 | 41.63% |
 | js/comments/last-arg.js | 💥💥 | 80.65% |
-| js/comments/multi-comments-2.js | 💥💥 | 90.91% |
 | js/comments/multi-comments.js | 💥✨ | 44.74% |
 | js/comments/return-statement.js | 💥💥 | 65.38% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
@@ -136,7 +135,6 @@ js compatibility: 406/699 (58.08%)
 | js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 77.08% |
 | js/functional-composition/pipe-function-calls.js | 💥 | 61.11% |
 | js/functional-composition/rxjs_pipe.js | 💥 | 45.45% |
-| js/generator/anonymous.js | 💥 | 91.43% |
 | js/identifier/for-of/await.js | 💥 | 33.33% |
 | js/identifier/for-of/let.js | 💥 | 61.54% |
 | js/identifier/parentheses/const.js | 💥💥 | 0.00% |
@@ -242,7 +240,7 @@ js compatibility: 406/699 (58.08%)
 | js/test-declarations/optional.js | 💥💥 | 0.00% |
 | js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
 | js/throw_statement/binaryish.js | 💥 | 25.00% |
-| js/throw_statement/comment.js | 💥 | 34.29% |
+| js/throw_statement/comment.js | 💥 | 43.24% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
 | js/try/catch.js | 💥 | 52.63% |
@@ -296,4 +294,4 @@ js compatibility: 406/699 (58.08%)
 | jsx/spread/child.js | 💥 | 33.33% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 21.58% |
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
-| jsx/text-wrap/test.js | 💥 | 32.85% |
+| jsx/text-wrap/test.js | 💥 | 33.71% |
