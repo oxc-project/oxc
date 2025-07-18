@@ -26,6 +26,10 @@ pub struct RawTransferData<'a> {
 }
 
 /// Metadata written to end of buffer.
+///
+/// Duplicated as `RawTransferMetadata2` in `crates/oxc_linter/src/lib.rs`.
+/// Any changes made here also need to be made there.
+/// `oxc_ast_tools` checks that the 2 copies are identical.
 #[ast]
 pub struct RawTransferMetadata {
     /// Offset of `RawTransferData` within buffer.

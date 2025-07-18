@@ -6,6 +6,9 @@ use std::{path::Path, rc::Rc, sync::Arc};
 use oxc_allocator::Allocator;
 use oxc_semantic::{AstNode, Semantic};
 
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+use oxc_ast_macros::ast;
+
 #[cfg(test)]
 mod tester;
 
@@ -28,6 +31,12 @@ mod utils;
 pub mod loader;
 pub mod rules;
 pub mod table;
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+mod generated {
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+}
 
 pub use crate::{
     config::{
@@ -270,6 +279,33 @@ impl Linter {
                 // TODO: report diagnostic
             }
         }
+    }
+}
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+/// Metadata written to end of buffer.
+///
+/// Duplicate of `RawTransferMetadata` in `napi/parser/src/raw_transfer_types.rs`.
+/// Any changes made here also need to be made there.
+/// `oxc_ast_tools` checks that the 2 copies are identical.
+#[ast]
+struct RawTransferMetadata2 {
+    /// Offset of `RawTransferData` within buffer.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u64,
+}
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+use RawTransferMetadata2 as RawTransferMetadata;
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[expect(dead_code)]
+impl RawTransferMetadata {
+    pub fn new(data_offset: u32, is_ts: bool) -> Self {
+        Self { data_offset, is_ts, _padding: 0 }
     }
 }
 

@@ -1058,6 +1058,27 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 /// Calculate constants.
 fn get_constants(schema: &Schema) -> Constants {
     let raw_metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
+    let raw_metadata2_struct = schema.type_by_name("RawTransferMetadata2").as_struct().unwrap();
+
+    // Check layout and fields of `RawTransferMetadata` and `RawTransferMetadata2` are identical
+    assert_eq!(raw_metadata_struct.layout, raw_metadata2_struct.layout);
+    assert_eq!(raw_metadata_struct.fields.len(), raw_metadata2_struct.fields.len());
+
+    let mut data_offset_field = None;
+    let mut is_ts_field = None;
+    for (field1, field2) in raw_metadata_struct.fields.iter().zip(&raw_metadata2_struct.fields) {
+        assert_eq!(field1.name(), field2.name());
+        assert_eq!(field1.type_id, field2.type_id);
+        assert_eq!(field1.offset_64(), field2.offset_64());
+        match field1.name() {
+            "data_offset" => data_offset_field = Some(field1),
+            "is_ts" => is_ts_field = Some(field1),
+            _ => {}
+        }
+    }
+    let data_offset_field = data_offset_field.unwrap();
+    let is_ts_field = is_ts_field.unwrap();
+
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
 
     // Round up to multiple of `ALLOCATOR_CHUNK_END_ALIGN`
@@ -1068,10 +1089,10 @@ fn get_constants(schema: &Schema) -> Constants {
 
     let buffer_size = BLOCK_SIZE - fixed_metadata_size;
 
+    // Get offsets of data within buffer
     let raw_metadata_pos = buffer_size - raw_metadata_size;
-    let data_pointer_pos =
-        raw_metadata_pos + raw_metadata_struct.field_by_name("data_offset").offset_64();
-    let is_ts_pos = raw_metadata_pos + raw_metadata_struct.field_by_name("is_ts").offset_64();
+    let data_pointer_pos = raw_metadata_pos + data_offset_field.offset_64();
+    let is_ts_pos = raw_metadata_pos + is_ts_field.offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")

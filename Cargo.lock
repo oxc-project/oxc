@@ -1959,6 +1959,7 @@ dependencies = [
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_macros",
  "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
