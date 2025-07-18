@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     Allocator,
-    fixed_size_constants::{BUFFER_ALIGN, BUFFER_SIZE, METADATA_SIZE},
+    fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
 
 const TWO_GIB: usize = 1 << 31;
@@ -101,7 +101,7 @@ impl Drop for AllocatorGuard<'_> {
 // Could just use that built-in workaround, rather than implementing our own, or allocate a 6 GiB chunk
 // with alignment 16, to skip Rust's built-in workaround.
 // Note: Rust's workaround will likely commit a whole page of memory, just to store the real pointer.
-const ALLOC_SIZE: usize = BUFFER_SIZE + TWO_GIB;
+const ALLOC_SIZE: usize = BLOCK_SIZE + TWO_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
 
 const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
@@ -152,9 +152,9 @@ impl FixedSizeAllocator {
         // SAFETY: We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds
         let chunk_ptr = unsafe { alloc_ptr.add(offset) };
 
-        debug_assert!(chunk_ptr.as_ptr() as usize % BUFFER_ALIGN == 0);
+        debug_assert!(chunk_ptr.as_ptr() as usize % BLOCK_ALIGN == 0);
 
-        const CHUNK_SIZE: usize = BUFFER_SIZE - METADATA_SIZE;
+        const CHUNK_SIZE: usize = BLOCK_SIZE - RAW_METADATA_SIZE;
         const _: () = assert!(CHUNK_SIZE % Allocator::RAW_MIN_ALIGN == 0);
 
         // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
@@ -172,12 +172,12 @@ impl FixedSizeAllocator {
         self.allocator.reset();
 
         // Set data pointer back to start.
-        // SAFETY: Fixed-size allocators have data pointer originally aligned on `BUFFER_ALIGN`,
-        // and size less than `BUFFER_ALIGN`. So we can restore original data pointer by rounding down
-        // to next multiple of `BUFFER_ALIGN`.
+        // SAFETY: Fixed-size allocators have data pointer originally aligned on `BLOCK_ALIGN`,
+        // and size less than `BLOCK_ALIGN`. So we can restore original data pointer by rounding down
+        // to next multiple of `BLOCK_ALIGN`.
         unsafe {
             let data_ptr = self.allocator.data_ptr();
-            let offset = data_ptr.as_ptr() as usize % BUFFER_ALIGN;
+            let offset = data_ptr.as_ptr() as usize % BLOCK_ALIGN;
             let data_ptr = data_ptr.sub(offset);
             self.allocator.set_data_ptr(data_ptr);
         }

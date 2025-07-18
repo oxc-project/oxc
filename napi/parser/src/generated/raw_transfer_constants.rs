@@ -4,6 +4,6 @@
 #![expect(clippy::unreadable_literal)]
 #![allow(dead_code)]
 
-pub const BUFFER_SIZE: usize = 2147483632;
-pub const BUFFER_ALIGN: usize = 4294967296;
-pub const METADATA_SIZE: usize = 16;
+pub const BLOCK_SIZE: usize = 2147483632;
+pub const BLOCK_ALIGN: usize = 4294967296;
+pub const RAW_METADATA_SIZE: usize = 16;

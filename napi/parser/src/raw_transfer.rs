@@ -19,7 +19,7 @@ use oxc_napi::get_source_type;
 
 use crate::{
     AstType, ParserOptions, get_ast_type, parse,
-    raw_transfer_constants::{BUFFER_ALIGN, BUFFER_SIZE},
+    raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BLOCK_SIZE as BUFFER_SIZE},
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 
@@ -182,14 +182,14 @@ unsafe fn parse_raw_impl(
     // Leave space for source before it, and space for metadata after it.
     // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
     // as `bumpalo` requires that alignment.
-    const METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
+    const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
-        assert!(METADATA_SIZE >= BUMP_ALIGN);
-        assert!(is_multiple_of(METADATA_SIZE, BUMP_ALIGN));
+        assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
+        assert!(is_multiple_of(RAW_METADATA_SIZE, BUMP_ALIGN));
     };
     let source_len = source_len as usize;
     let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
-    let data_size = BUFFER_SIZE.saturating_sub(data_offset + METADATA_SIZE);
+    let data_size = BUFFER_SIZE.saturating_sub(data_offset + RAW_METADATA_SIZE);
     assert!(data_size >= Allocator::RAW_MIN_SIZE, "Source text is too long");
 
     // Create `Allocator`.
@@ -274,13 +274,13 @@ unsafe fn parse_raw_impl(
     // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
     let metadata = RawTransferMetadata::new(data_ptr as u32, ast_type == AstType::TypeScript);
-    const METADATA_OFFSET: usize = BUFFER_SIZE - METADATA_SIZE;
-    const _: () = assert!(is_multiple_of(METADATA_OFFSET, BUMP_ALIGN));
-    // SAFETY: `METADATA_OFFSET` is less than length of `buffer`.
-    // `METADATA_OFFSET` is aligned on 16.
+    const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
+    const _: () = assert!(is_multiple_of(RAW_METADATA_OFFSET, BUMP_ALIGN));
+    // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
+    // `RAW_METADATA_OFFSET` is aligned on 16.
     #[expect(clippy::cast_ptr_alignment)]
     unsafe {
-        buffer_ptr.add(METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
+        buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }
 }
 

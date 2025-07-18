@@ -26,13 +26,23 @@ use crate::{
 
 use super::define_generator;
 
-/// Size of raw transfer buffer.
-/// Must be a multiple of 16.
+/// Bytes reserved for `malloc`'s metadata
+const MALLOC_RESERVED_SIZE: u32 = 16;
+
+/// Minimum alignment requirement for end of `Allocator`'s chunk
+#[expect(dead_code)]
+const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
+
+/// Size of block of memory used for raw transfer.
+/// This size includes metadata stored after the `Allocator` chunk which contains AST data.
+///
+/// Must be a multiple of [`ALLOCATOR_CHUNK_END_ALIGN`].
 /// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata (like Bumpalo does).
-const BUFFER_SIZE: u32 = (1 << 31) - 16; // 2 GiB - 16 bytes
-const _: () = assert!(BUFFER_SIZE % 16 == 0);
-/// Alignment of raw transfer buffer.
-const BUFFER_ALIGN: u64 = 1 << 32; // 4 GiB
+const BLOCK_SIZE: u32 = (1 << 31) - MALLOC_RESERVED_SIZE; // 2 GiB - 16 bytes
+const _: () = assert!(BLOCK_SIZE % ALLOCATOR_CHUNK_END_ALIGN == 0);
+
+/// Alignment of block of memory used for raw transfer.
+const BLOCK_ALIGN: u64 = 1 << 32; // 4 GiB
 
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
@@ -92,7 +102,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     // Prelude to generated deserializer.
     // Defines the main `deserialize` function.
-    let Constants { data_pointer_pos_32, .. } = consts;
+    let data_pointer_pos_32 = consts.data_pointer_pos / 4;
 
     #[rustfmt::skip]
     let prelude = format!("
@@ -992,20 +1002,26 @@ impl DeserializeFunctionName for PointerDef {
 /// Constants for position of fields in buffer which deserialization starts from.
 #[derive(Clone, Copy)]
 struct Constants {
-    data_pointer_pos_32: u32,
+    /// Offset within buffer of `u32` containing position of `RawTransferData`
+    data_pointer_pos: u32,
+    /// Offset within buffer of `bool` indicating if AST is TS or JS
     is_ts_pos: u32,
+    /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,
-    metadata_size: u32,
+    /// Size of `RawTransferData` in bytes
+    raw_metadata_size: u32,
 }
 
 /// Generate constants file.
 fn generate_constants(consts: Constants) -> (String, TokenStream) {
-    let Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size } = consts;
+    let Constants { data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size } = consts;
+
+    let data_pointer_pos_32 = data_pointer_pos / 4;
 
     #[rustfmt::skip]
     let js_output = format!("
-        const BUFFER_SIZE = {BUFFER_SIZE},
-            BUFFER_ALIGN = {BUFFER_ALIGN},
+        const BUFFER_SIZE = {BLOCK_SIZE},
+            BUFFER_ALIGN = {BLOCK_ALIGN},
             DATA_POINTER_POS_32 = {data_pointer_pos_32},
             IS_TS_FLAG_POS = {is_ts_pos},
             PROGRAM_OFFSET = {program_offset};
@@ -1019,17 +1035,17 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         }};
     ");
 
-    let buffer_size = number_lit(BUFFER_SIZE);
-    let buffer_align = number_lit(BUFFER_ALIGN);
-    let metadata_size = number_lit(metadata_size);
+    let block_size = number_lit(BLOCK_SIZE);
+    let block_align = number_lit(BLOCK_ALIGN);
+    let raw_metadata_size = number_lit(raw_metadata_size);
     let rust_output = quote! {
         #![expect(clippy::unreadable_literal)]
         #![allow(dead_code)]
 
         ///@@line_break
-        pub const BUFFER_SIZE: usize = #buffer_size;
-        pub const BUFFER_ALIGN: usize = #buffer_align;
-        pub const METADATA_SIZE: usize = #metadata_size;
+        pub const BLOCK_SIZE: usize = #block_size;
+        pub const BLOCK_ALIGN: usize = #block_align;
+        pub const RAW_METADATA_SIZE: usize = #raw_metadata_size;
     };
 
     (js_output, rust_output)
@@ -1037,12 +1053,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
 /// Calculate constants.
 fn get_constants(schema: &Schema) -> Constants {
-    let metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
-    let metadata_size = metadata_struct.layout_64().size;
-    let metadata_pos = BUFFER_SIZE - metadata_size;
-    let data_pointer_pos = metadata_pos + metadata_struct.field_by_name("data_offset").offset_64();
-    let data_pointer_pos_32 = data_pointer_pos / 4;
-    let is_ts_pos = metadata_pos + metadata_struct.field_by_name("is_ts").offset_64();
+    let raw_metadata_struct = schema.type_by_name("RawTransferMetadata").as_struct().unwrap();
+    let raw_metadata_size = raw_metadata_struct.layout_64().size;
+    let raw_metadata_pos = BLOCK_SIZE - raw_metadata_size;
+    let data_pointer_pos =
+        raw_metadata_pos + raw_metadata_struct.field_by_name("data_offset").offset_64();
+    let is_ts_pos = raw_metadata_pos + raw_metadata_struct.field_by_name("is_ts").offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
@@ -1051,5 +1067,5 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    Constants { data_pointer_pos_32, is_ts_pos, program_offset, metadata_size }
+    Constants { data_pointer_pos, is_ts_pos, program_offset, raw_metadata_size }
 }
