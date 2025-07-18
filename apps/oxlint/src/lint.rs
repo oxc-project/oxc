@@ -449,8 +449,15 @@ impl LintRunner {
             }
         }
         for directory in directories {
-            if let Ok(config) = Self::find_oxlint_config_in_directory(directory) {
-                nested_oxlintrc.insert(directory, config);
+            #[expect(clippy::match_same_arms)]
+            match Self::find_oxlint_config_in_directory(directory) {
+                Ok(Some(v)) => {
+                    nested_oxlintrc.insert(directory, v);
+                }
+                Ok(None) => {}
+                Err(_) => {
+                    // TODO(camc314): report this error
+                }
             }
         }
 
@@ -502,18 +509,12 @@ impl LintRunner {
     /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
     /// and returns `Err` if none exists or the file is invalid. Does not apply the default
     /// config file.
-    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Oxlintrc, String> {
+    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
         if possible_config_path.is_file() {
-            Oxlintrc::from_file(&possible_config_path).map_err(|e| {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler.render_report(&mut err, &e).unwrap();
-                err
-            })
+            Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
-            // TODO: Better error handling here.
-            Err("No oxlint config file found".to_string())
+            Ok(None)
         }
     }
 
