@@ -36,13 +36,16 @@ pub struct RawTransferMetadata {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
+    /// Offset of `u32` containing source text length within buffer.
+    /// Not used in this implementation. Used by `napi/oxlint2`.
+    pub(crate) source_len: u32,
     /// Padding to pad struct to size 16.
-    pub(crate) _padding: u64,
+    pub(crate) _padding: u32,
 }
 
 impl RawTransferMetadata {
     pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, _padding: 0 }
+        Self { data_offset, is_ts, source_len: 0, _padding: 0 }
     }
 }
 
