@@ -4,6 +4,7 @@
 //! * [`Allocator::alloc_bytes_start`]
 //! * [`Allocator::data_ptr`]
 //! * [`Allocator::set_data_ptr`]
+//! * [`Allocator::end_ptr`]
 
 use std::{
     alloc::Layout,
@@ -228,6 +229,15 @@ impl Allocator {
         // reference is alive
         let chunk_footer = unsafe { self.chunk_footer() };
         chunk_footer.ptr.get()
+    }
+
+    /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
+    pub fn end_ptr(&self) -> NonNull<u8> {
+        // SAFETY: `chunk_footer_ptr` returns pointer to a valid `ChunkFooter`,
+        // so stepping past it cannot be out of bounds of the chunk's allocation.
+        // If `Allocator` has not allocated, so `chunk_footer_ptr` returns a pointer to the static
+        // empty chunk, it's still valid.
+        unsafe { self.chunk_footer_ptr().add(1).cast::<u8>() }
     }
 
     /// Get reference to current [`ChunkFooter`].
