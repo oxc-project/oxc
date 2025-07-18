@@ -15,8 +15,6 @@ mod semicolon;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
-use std::fmt::write;
-
 pub use arrow_function_expression::{
     ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
@@ -53,7 +51,6 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
-    block_statement::{is_empty_block, is_non_collapsible},
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},

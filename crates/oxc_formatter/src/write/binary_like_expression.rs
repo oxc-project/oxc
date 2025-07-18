@@ -299,16 +299,11 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::Left { parent } => {
-                write!(f, [group(parent.left())])
-            }
+            Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
             } => {
-                // write!(f, [group(binary_like_expression.left())]);
-
-                // dbg!("right", binary_like_expression.span());
                 // // It's only possible to suppress the formatting of the whole binary expression formatting OR
                 // // the formatting of the right hand side value but not of a nested binary expression.
                 // // This aligns with Prettier's behaviour.

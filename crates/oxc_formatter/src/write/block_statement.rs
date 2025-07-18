@@ -40,7 +40,7 @@ pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
 /// * empty block that is the 'bons' or 'alt' of an if statement: two lines `{\n}`
 /// * non empty block: put each stmt on its own line: `{\nstmt1;\nstmt2;\n}`
 /// * non empty block with comments (trailing comments on {, or leading comments on })
-pub fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
+fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
     match parent {
         AstNodes::FunctionBody(_)
         | AstNodes::ForStatement(_)

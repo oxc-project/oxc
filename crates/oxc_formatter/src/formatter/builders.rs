@@ -2461,8 +2461,8 @@ where
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
 pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
     let mut start = span.start;
-    let mut right_parent_start = span.end as usize;
-    // Count the newlines in the leading trivia of the next node
+
+    // Should skip the leading comments of the node.
     let comments = f.comments().unprinted_comments();
     if let Some(comment) = comments.first() {
         if comment.span.end < start {
@@ -2470,7 +2470,9 @@ pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
         }
     };
 
+    // Count the newlines in the leading trivia of the next node
     let mut count = 0;
+    let mut right_parent_start = span.end as usize;
     for c in f.source_text()[..start as usize].chars().rev() {
         if is_white_space_single_line(c) {
             continue;

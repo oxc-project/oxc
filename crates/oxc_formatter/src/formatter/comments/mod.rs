@@ -243,40 +243,8 @@ impl<'a> Comments<'a> {
         self.printed_count += 1;
     }
 
-    pub fn has_trailing_comments2(
-        &self,
-        enclosing_node: &SiblingNode<'a>,
-        preceding_node: &SiblingNode<'a>,
-        following_node: Option<&SiblingNode<'a>>,
-    ) -> bool {
-        !self
-            .get_trailing_comments_impl(
-                self.comments_after(preceding_node.span().end),
-                enclosing_node,
-                preceding_node,
-                following_node,
-            )
-            .is_empty()
-    }
-
-    #[inline]
     pub fn get_trailing_comments(
         &self,
-        enclosing_node: &SiblingNode<'a>,
-        preceding_node: &SiblingNode<'a>,
-        following_node: Option<&SiblingNode<'a>>,
-    ) -> &'a [Comment] {
-        self.get_trailing_comments_impl(
-            self.unprinted_comments(),
-            enclosing_node,
-            preceding_node,
-            following_node,
-        )
-    }
-
-    pub fn get_trailing_comments_impl(
-        &self,
-        comments: &'a [Comment],
         enclosing_node: &SiblingNode<'a>,
         preceding_node: &SiblingNode<'a>,
         following_node: Option<&SiblingNode<'a>>,
@@ -288,11 +256,13 @@ impl<'a> Comments<'a> {
             return &[];
         }
 
-        let source_text = self.source_text;
-        let preceding_span = preceding_node.span();
+        let comments = self.unprinted_comments();
         if comments.is_empty() {
             return &[];
         }
+
+        let source_text = self.source_text;
+        let preceding_span = preceding_node.span();
 
         // All of the comments before this node are printed already.
         debug_assert!(
