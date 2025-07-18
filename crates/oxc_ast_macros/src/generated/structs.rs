@@ -254,7 +254,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ),
         ("Pattern", StructDetails { field_order: None }),
         ("EmptyStatement", StructDetails { field_order: None }),
-        ("FixedSizeAllocatorMetadata", StructDetails { field_order: Some(&[1, 0]) }),
+        ("FixedSizeAllocatorMetadata", StructDetails { field_order: Some(&[1, 0, 2]) }),
         ("Hashbang", StructDetails { field_order: None }),
         ("UnaryExpression", StructDetails { field_order: Some(&[0, 2, 1]) }),
         ("ThrowStatement", StructDetails { field_order: None }),

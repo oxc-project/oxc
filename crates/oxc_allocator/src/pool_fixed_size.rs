@@ -5,7 +5,7 @@ use std::{
     ptr::NonNull,
     sync::{
         Mutex,
-        atomic::{AtomicU32, Ordering},
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
 };
 
@@ -113,6 +113,15 @@ pub struct FixedSizeAllocatorMetadata {
     pub id: u32,
     /// Pointer to start of original allocation backing the `FixedSizeAllocator`
     pub alloc_ptr: NonNull<u8>,
+    /// `true` if both Rust and JS currently hold references to this `FixedSizeAllocator`.
+    ///
+    /// * `false` initially.
+    /// * Set to `true` when buffer is shared with JS.
+    /// * When JS garbage collector collects the buffer, set back to `false` again.
+    ///   Memory will be freed when the `FixedSizeAllocator` is dropped on Rust side.
+    /// * Also set to `false` if `FixedSizeAllocator` is dropped on Rust side.
+    ///   Memory will be freed in finalizer when JS garbage collector collects the buffer.
+    pub is_double_owned: AtomicBool,
 }
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
@@ -236,7 +245,8 @@ impl FixedSizeAllocator {
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
-        let metadata = FixedSizeAllocatorMetadata { alloc_ptr, id };
+        let metadata =
+            FixedSizeAllocatorMetadata { alloc_ptr, id, is_double_owned: AtomicBool::new(false) };
         // SAFETY: `FIXED_METADATA_OFFSET` is `FIXED_METADATA_SIZE_ROUNDED` bytes before end of
         // the allocation, so there's space for `FixedSizeAllocatorMetadata`.
         // It's sufficiently aligned for `FixedSizeAllocatorMetadata`.
@@ -269,17 +279,61 @@ impl FixedSizeAllocator {
 
 impl Drop for FixedSizeAllocator {
     fn drop(&mut self) {
-        // Get pointer to start of original allocation from `FixedSizeAllocatorMetadata`
-        let alloc_ptr = {
-            // SAFETY: This `Allocator` was created by this `FixedSizeAllocator`.
-            // `&FixedSizeAllocatorMetadata` ref only lives until end of this block.
-            let metadata = unsafe { self.allocator.fixed_size_metadata() };
-            metadata.alloc_ptr
-        };
-
-        // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`
-        unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
+        // SAFETY: This `Allocator` was created by this `FixedSizeAllocator`
+        unsafe {
+            let metadata_ptr = self.allocator.fixed_size_metadata_ptr();
+            free_fixed_size_allocator(metadata_ptr);
+        }
     }
+}
+
+/// Deallocate memory backing a [`FixedSizeAllocator`] if it's not double-owned
+/// (both owned by a `FixedSizeAllocator` on Rust side *and* held as a buffer on JS side).
+///
+/// If it is double-owned, don't deallocate the memory but set the flag that it's no longer double-owned
+/// so next call to this function will deallocate it.
+///
+/// # SAFETY
+///
+/// This function must be called only when either:
+/// 1. The corresponding `FixedSizeAllocator` is dropped on Rust side. or
+/// 2. The buffer on JS side corresponding to this `FixedSizeAllocatorMetadata` is garbage collected.
+///
+/// Calling this function in any other circumstances would result in a double-free.
+///
+/// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata`.
+unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
+    // Get pointer to start of original allocation from `FixedSizeAllocatorMetadata`
+    let alloc_ptr = {
+        // SAFETY: This `Allocator` was created by the `FixedSizeAllocator`.
+        // `&FixedSizeAllocatorMetadata` ref only lives until end of this block.
+        let metadata = unsafe { metadata_ptr.as_ref() };
+
+        // * If `is_double_owned` is already `false`, then one of:
+        //   1. The `Allocator` was never sent to JS side, or
+        //   2. The `FixedSizeAllocator` was already dropped on Rust side, or
+        //   3. Garbage collector already collected it on JS side.
+        //   We can deallocate the memory.
+        //
+        // * If `is_double_owned` is `true`, set it to `false` and exit.
+        //   Memory will be freed when `FixedSizeAllocator` is dropped on Rust side
+        //   or JS garbage collector collects the buffer.
+        //
+        // Maybe a more relaxed `Ordering` would be OK, but I (@overlookmotel) am not sure,
+        // so going with `Ordering::SeqCst` to be on safe side.
+        // Deallocation only happens at the end of the whole process, so it shouldn't matter much.
+        // TODO: Figure out if can use `Ordering::Relaxed`.
+        let is_double_owned = metadata.is_double_owned.fetch_and(false, Ordering::SeqCst);
+        if is_double_owned {
+            return;
+        }
+
+        metadata.alloc_ptr
+    };
+
+    // Deallocate the memory backing the `FixedSizeAllocator`.
+    // SAFETY: Originally allocated from `System` allocator at `alloc_ptr`, with layout `ALLOC_LAYOUT`.
+    unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
 }
 
 // SAFETY: `Allocator` is `Send`.
@@ -287,13 +341,13 @@ impl Drop for FixedSizeAllocator {
 unsafe impl Send for FixedSizeAllocator {}
 
 impl Allocator {
-    /// Get reference to the [`FixedSizeAllocatorMetadata`] for this [`Allocator`].
+    /// Get pointer to the [`FixedSizeAllocatorMetadata`] for this [`Allocator`].
     ///
     /// # SAFETY
     /// * This `Allocator` must have been created by a `FixedSizeAllocator`.
-    /// * Reference returned by this method must not be allowed to live beyond the life of
-    ///   the `FixedSizeAllocator`.
-    unsafe fn fixed_size_metadata(&self) -> &FixedSizeAllocatorMetadata {
+    /// * This pointer must not be used to create a mutable reference to the `FixedSizeAllocatorMetadata`,
+    ///   only immutable references.
+    unsafe fn fixed_size_metadata_ptr(&self) -> NonNull<FixedSizeAllocatorMetadata> {
         // SAFETY: Caller guarantees this `Allocator` was created by a `FixedSizeAllocator`.
         //
         // `FixedSizeAllocator::new` writes `FixedSizeAllocatorMetadata` after the end of
@@ -303,10 +357,6 @@ impl Allocator {
         //
         // We never create `&mut` references to `FixedSizeAllocatorMetadata`,
         // and it's not part of the buffer sent to JS, so no danger of aliasing violations.
-        unsafe {
-            let metadata_ptr =
-                self.end_ptr().add(RAW_METADATA_SIZE).cast::<FixedSizeAllocatorMetadata>();
-            metadata_ptr.as_ref()
-        }
+        unsafe { self.end_ptr().add(RAW_METADATA_SIZE).cast::<FixedSizeAllocatorMetadata>() }
     }
 }
