@@ -18,7 +18,7 @@ pub fn get_node_type(ty: &TokenStream) -> TokenStream {
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
-const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: [&str; 1] = ["UnaryExpression"];
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: [&str; 1] = ["ExpressionStatement"];
 
 pub struct FormatterAstNodesGenerator;
 

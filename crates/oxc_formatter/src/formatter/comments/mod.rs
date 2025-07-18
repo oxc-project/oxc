@@ -38,6 +38,11 @@ impl<'a> Comments<'a> {
         &self.comments[self.printed_count..]
     }
 
+    #[inline]
+    pub fn printed_comments(&self) -> &'a [Comment] {
+        &self.comments[..self.printed_count]
+    }
+
     /// Returns the comments that after the given `start` position, even if they were already printed.
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let mut index = self.printed_count;

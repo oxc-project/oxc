@@ -1,4 +1,4 @@
-js compatibility: 403/699 (57.65%)
+js compatibility: 404/699 (57.80%)
 
 # Failed
 
@@ -52,7 +52,6 @@ js compatibility: 403/699 (57.65%)
 | js/classes-private-fields/with_comments.js | 💥💥 | 30.77% |
 | js/comments/15661.js | 💥💥 | 53.63% |
 | js/comments/16398.js | 💥💥 | 80.00% |
-| js/comments/binary-expressions-single-comments.js | 💥💥 | 55.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 93.33% |
@@ -162,7 +161,7 @@ js compatibility: 403/699 (57.65%)
 | js/last-argument-expansion/issue-7518.js | 💥 | 85.71% |
 | js/last-argument-expansion/jsx.js | 💥 | 25.00% |
 | js/last-argument-expansion/object.js | 💥 | 94.74% |
-| js/line-suffix-boundary/boundary.js | 💥 | 31.11% |
+| js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/member/conditional.js | 💥 | 0.00% |
 | js/member/expand.js | 💥 | 57.14% |
