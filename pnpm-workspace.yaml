@@ -6,6 +6,8 @@ packages:
   - tasks/transform_conformance
   - tasks/compat_data
 
+verifyDepsBeforeRun: install
+
 catalog:
   "@napi-rs/cli": 3.0.0-alpha.88
   "vitest": 3.2.4
