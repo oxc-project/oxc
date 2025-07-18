@@ -1,4 +1,4 @@
-js compatibility: 408/699 (58.37%)
+js compatibility: 409/699 (58.51%)
 
 # Failed
 
@@ -199,7 +199,6 @@ js compatibility: 408/699 (58.37%)
 | js/objects/assignment-expression/object-value.js | 💥 | 85.71% |
 | js/optional-chaining/chaining.js | 💥 | 59.77% |
 | js/optional-chaining/comments.js | 💥 | 16.90% |
-| js/preserve-line/argument-list.js | 💥 | 99.44% |
 | js/preserve-line/member-chain.js | 💥 | 23.30% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |

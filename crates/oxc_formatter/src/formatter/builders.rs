@@ -6,7 +6,7 @@ use Tag::{
     StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
     StartLabelled, StartLineSuffix,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
