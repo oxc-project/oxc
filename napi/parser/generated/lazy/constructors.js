@@ -12472,6 +12472,10 @@ class StaticExport {
 
 const DebugStaticExport = class StaticExport {};
 
+function constructU32(pos, ast) {
+  return ast.buffer.uint32[pos >> 2];
+}
+
 function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
@@ -13746,10 +13750,6 @@ function constructOptionTSMappedTypeModifierOperator(pos, ast) {
 
 function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.uint32[pos >> 2], ast);
-}
-
-function constructU32(pos, ast) {
-  return ast.buffer.uint32[pos >> 2];
 }
 
 function constructOptionNameSpan(pos, ast) {

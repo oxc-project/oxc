@@ -3,7 +3,10 @@ use std::{
     mem::ManuallyDrop,
     ops::Deref,
     ptr::NonNull,
-    sync::Mutex,
+    sync::{
+        Mutex,
+        atomic::{AtomicU32, Ordering},
+    },
 };
 
 use oxc_ast_macros::ast;
@@ -21,7 +24,10 @@ const FOUR_GIB: usize = 1 << 32;
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
 #[derive(Default)]
 pub struct AllocatorPool {
+    /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
+    /// ID to assign to next `Allocator` that's created
+    next_id: AtomicU32,
 }
 
 impl AllocatorPool {
@@ -29,7 +35,7 @@ impl AllocatorPool {
     pub fn new(size: usize) -> AllocatorPool {
         // Each allocator consumes a large block of memory, so create them on demand instead of upfront
         let allocators = Vec::with_capacity(size);
-        AllocatorPool { allocators: Mutex::new(allocators) }
+        AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
     }
 
     /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
@@ -44,7 +50,16 @@ impl AllocatorPool {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
         };
-        let allocator = allocator.unwrap_or_else(FixedSizeAllocator::new);
+
+        let allocator = allocator.unwrap_or_else(|| {
+            // Each allocator needs to have a unique ID, but the order those IDs are assigned in
+            // doesn't matter, so `Ordering::Relaxed` is fine
+            let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+            // Protect against IDs wrapping around.
+            // TODO: Does this work? Do we need it anyway?
+            assert!(id < u32::MAX, "Created too many allocators");
+            FixedSizeAllocator::new(id)
+        });
 
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
     }
@@ -94,6 +109,8 @@ impl Drop for AllocatorGuard<'_> {
 /// which is after the section of the allocation which [`Allocator`] uses for its chunk.
 #[ast]
 pub struct FixedSizeAllocatorMetadata {
+    /// ID of this allocator
+    pub id: u32,
     /// Pointer to start of original allocation backing the `FixedSizeAllocator`
     pub alloc_ptr: NonNull<u8>,
 }
@@ -179,7 +196,7 @@ pub struct FixedSizeAllocator {
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
-    pub fn new() -> Self {
+    pub fn new(id: u32) -> Self {
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
@@ -219,7 +236,7 @@ impl FixedSizeAllocator {
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
-        let metadata = FixedSizeAllocatorMetadata { alloc_ptr };
+        let metadata = FixedSizeAllocatorMetadata { alloc_ptr, id };
         // SAFETY: `FIXED_METADATA_OFFSET` is `FIXED_METADATA_SIZE_ROUNDED` bytes before end of
         // the allocation, so there's space for `FixedSizeAllocatorMetadata`.
         // It's sufficiently aligned for `FixedSizeAllocatorMetadata`.

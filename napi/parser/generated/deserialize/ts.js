@@ -4151,6 +4151,10 @@ function deserializeErrorSeverity(pos) {
   }
 }
 
+function deserializeU32(pos) {
+  return uint32[pos >> 2];
+}
+
 function deserializeU8(pos) {
   return uint8[pos];
 }
@@ -5363,10 +5367,6 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(uint32[pos >> 2]);
-}
-
-function deserializeU32(pos) {
-  return uint32[pos >> 2];
 }
 
 function deserializeOptionNameSpan(pos) {
