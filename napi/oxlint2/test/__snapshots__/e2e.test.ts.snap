@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`cli options for bundling > should lint a directory with errors 1`] = `
+exports[`oxlint2 CLI > should lint a directory with errors 1`] = `
 "
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -13,12 +13,12 @@ Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`cli options for bundling > should lint a directory without errors 1`] = `
+exports[`oxlint2 CLI > should lint a directory without errors 1`] = `
 "Found 0 warnings and 0 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`cli options for bundling > should load a custom plugin 1`] = `
+exports[`oxlint2 CLI > should load a custom plugin 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -37,7 +37,7 @@ Found 1 warning and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`cli options for bundling > should load a custom plugin when configured in overrides 1`] = `
+exports[`oxlint2 CLI > should load a custom plugin when configured in overrides 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -56,7 +56,7 @@ Found 1 warning and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`cli options for bundling > should load a custom plugin with multiple files 1`] = `
+exports[`oxlint2 CLI > should load a custom plugin with multiple files 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[files/01.js:1:1]
@@ -322,7 +322,7 @@ Found 20 warnings and 20 errors.
 Finished in Xms on 20 files using X threads."
 `;
 
-exports[`cli options for bundling > should report an error if a custom plugin cannot be loaded 1`] = `
+exports[`oxlint2 CLI > should report an error if a custom plugin cannot be loaded 1`] = `
 "Failed to parse configuration file.
 
   x Failed to load external plugin: ./test_plugin
@@ -330,7 +330,7 @@ exports[`cli options for bundling > should report an error if a custom plugin ca
 "
 `;
 
-exports[`cli options for bundling > should report an error if a rule is not found within a custom plugin 1`] = `
+exports[`oxlint2 CLI > should report an error if a rule is not found within a custom plugin 1`] = `
 "Failed to parse configuration file.
 
   x Rule 'unknown-rule' not found in plugin 'basic-custom-plugin'
