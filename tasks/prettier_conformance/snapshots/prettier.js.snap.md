@@ -1,4 +1,4 @@
-js compatibility: 404/699 (57.80%)
+js compatibility: 406/699 (58.08%)
 
 # Failed
 
@@ -23,9 +23,8 @@ js compatibility: 404/699 (57.80%)
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
-| js/binary-expressions/inline-object-array.js | 💥 | 85.71% |
 | js/binary-expressions/jsx_parent.js | 💥 | 33.85% |
-| js/binary-expressions/return.js | 💥 | 58.82% |
+| js/binary-expressions/return.js | 💥 | 77.78% |
 | js/binary-expressions/test.js | 💥 | 95.65% |
 | js/break-calls/react.js | 💥 | 97.50% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
@@ -72,7 +71,7 @@ js compatibility: 404/699 (57.80%)
 | js/comments/last-arg.js | 💥💥 | 80.65% |
 | js/comments/multi-comments-2.js | 💥💥 | 90.91% |
 | js/comments/multi-comments.js | 💥✨ | 44.74% |
-| js/comments/return-statement.js | 💥💥 | 52.32% |
+| js/comments/return-statement.js | 💥💥 | 65.38% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
 | js/comments/template-literal.js | 💥💥 | 30.43% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
@@ -210,10 +209,9 @@ js compatibility: 404/699 (57.80%)
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 90.67% |
 | js/rest/trailing-commas.js | 💥 | 84.75% |
-| js/return/binaryish.js | 💥 | 25.00% |
+| js/return/binaryish.js | 💥 | 90.91% |
 | js/return/comment.js | 💥 | 63.01% |
-| js/return-outside-function/return-outside-function.js | 💥 | 0.00% |
-| js/sequence-break/break.js | 💥 | 38.53% |
+| js/sequence-break/break.js | 💥 | 46.85% |
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/strings/escaped.js | 💥💥 | 73.68% |
 | js/strings/template-literals.js | 💥💥 | 51.49% |

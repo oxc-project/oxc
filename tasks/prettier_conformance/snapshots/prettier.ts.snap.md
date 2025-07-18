@@ -280,7 +280,7 @@ ts compatibility: 229/573 (39.97%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 58.49% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 5.56% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
-| typescript/private-fields-in-in/basic.ts | 💥 | 59.26% |
+| typescript/private-fields-in-in/basic.ts | 💥 | 96.55% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
 | typescript/readonly/array.ts | 💥 | 0.00% |
 | typescript/rest/rest.ts | 💥 | 0.00% |

@@ -856,7 +856,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "return")?;
         if let Some(argument) = self.argument() {
-            write!(f, [space(), argument])?;
+            let is_binary_like_or_sequence_expression = matches!(
+                argument.as_ref(),
+                Expression::BinaryExpression(_)
+                    | Expression::LogicalExpression(_)
+                    | Expression::SequenceExpression(_)
+            );
+            write!(f, space())?;
+            if is_binary_like_or_sequence_expression {
+                // If the argument is a binary-like expression or sequence expression, we need to wrap it in parentheses
+                write!(
+                    f,
+                    [group(&format_args![
+                        if_group_breaks(&text("(")),
+                        soft_block_indent(&argument),
+                        if_group_breaks(&text(")"))
+                    ])]
+                )
+            } else {
+                write!(f, argument)
+            }?
         }
         write!(f, OptionalSemicolon)
     }
