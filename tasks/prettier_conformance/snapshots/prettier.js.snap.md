@@ -1,10 +1,9 @@
-js compatibility: 412/699 (58.94%)
+js compatibility: 413/699 (59.08%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrays/preserve_empty_lines.js | 💥 | 97.30% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 94.85% |
 | js/arrows/call.js | 💥💥 | 75.68% |
 | js/arrows/comment.js | 💥💥 | 94.55% |
