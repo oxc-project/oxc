@@ -274,9 +274,18 @@ impl Linter {
                                 // TODO: `error` isn't right, we need to get the severity from `external_rules`
                                 OxcDiagnostic::error(diagnostic.message)
                                     .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
-                                    .with_error_code(
-                                        plugin_name.to_string(),
-                                        rule_name.to_string(),
+                                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                    .with_severity(
+                                        (*external_rules
+                                            .iter()
+                                            .find(|(rule_id, _)| {
+                                                rule_id.raw() == diagnostic.external_rule_id
+                                            })
+                                            .map(|(_, severity)| severity)
+                                            .expect(
+                                                "external rule must exist when resolving severity",
+                                            ))
+                                        .into(),
                                     ),
                                 PossibleFixes::None,
                             ));

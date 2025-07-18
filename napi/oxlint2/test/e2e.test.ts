@@ -83,4 +83,13 @@ describe('oxlint2 CLI', () => {
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('should report the correct severity when using a custom plugin', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/basic_custom_plugin_warn_severity',
+    );
+
+    expect(exitCode).toBe(0);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });

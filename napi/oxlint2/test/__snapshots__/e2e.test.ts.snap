@@ -336,3 +336,22 @@ exports[`oxlint2 CLI > should report an error if a rule is not found within a cu
   x Rule 'unknown-rule' not found in plugin 'basic-custom-plugin'
 "
 `;
+
+exports[`oxlint2 CLI > should report the correct severity when using a custom plugin 1`] = `
+"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  ! basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+Found 2 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
