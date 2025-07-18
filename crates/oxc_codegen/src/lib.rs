@@ -115,7 +115,7 @@ pub struct Codegen<'a> {
     // Builders
     comments: CommentsMap,
 
-    sourcemap_builder: Option<SourcemapBuilder>,
+    sourcemap_builder: Option<SourcemapBuilder<'a>>,
 }
 
 impl Default for Codegen<'_> {
