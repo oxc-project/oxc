@@ -143,10 +143,6 @@ impl Linter {
         let should_run_on_jest_node =
             ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-        if path.to_str().is_some_and(|str| str.ends_with(".d.ts")) {
-            return ctx_host.take_diagnostics();
-        }
-
         // IMPORTANT: We have two branches here for performance reasons:
         //
         // 1) Branch where we iterate over each node, then each rule
