@@ -30,7 +30,7 @@ exports[`cli options for bundling > should load a custom plugin 1`] = `
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
 Found 1 warning and 1 error.
@@ -49,7 +49,7 @@ exports[`cli options for bundling > should load a custom plugin when configured 
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
 Found 1 warning and 1 error.
@@ -68,7 +68,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/01.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -81,7 +81,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/02.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -94,7 +94,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/03.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -107,7 +107,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/04.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -120,7 +120,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/05.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -133,7 +133,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/06.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -146,7 +146,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/07.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -159,7 +159,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/08.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -172,7 +172,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/09.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -185,7 +185,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/10.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -198,7 +198,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/11.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -211,7 +211,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/12.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -224,7 +224,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/13.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -237,7 +237,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/14.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -250,7 +250,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/15.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -263,7 +263,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/16.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -276,7 +276,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/17.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -289,7 +289,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/18.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -302,7 +302,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/19.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -315,7 +315,7 @@ exports[`cli options for bundling > should load a custom plugin with multiple fi
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/20.js:1:1]
  1 | debugger;
-   : ^
+   : ^^^^^^^^^
    \`----
 
 Found 20 warnings and 20 errors.

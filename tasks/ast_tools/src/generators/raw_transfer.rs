@@ -9,7 +9,7 @@ use quote::quote;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH,
+    ALLOCATOR_CRATE_PATH, Generator, NAPI_OXLINT_PACKAGE_PATH, NAPI_PARSER_PACKAGE_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
@@ -71,10 +71,18 @@ impl Generator for RawTransferGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
+                code: constants_js.clone(),
+            },
+            Output::Javascript {
+                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src/generated/constants.cjs"),
                 code: constants_js,
             },
             Output::Rust {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/src/generated/raw_transfer_constants.rs"),
+                tokens: constants_rust.clone(),
+            },
+            Output::Rust {
+                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src/generated/raw_transfer_constants.rs"),
                 tokens: constants_rust.clone(),
             },
             Output::Rust {

@@ -213,7 +213,7 @@ impl Linter {
         }
 
         #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-        self.run_external_rules(&external_rules, path, &ctx_host, allocator);
+        self.run_external_rules(&external_rules, path, semantic, &ctx_host, allocator);
 
         // Stop clippy complaining about unused vars
         #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
@@ -233,9 +233,12 @@ impl Linter {
         &self,
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
         path: &Path,
+        semantic: &Semantic<'_>,
         ctx_host: &ContextHost,
-        _allocator: &Allocator,
+        allocator: &Allocator,
     ) {
+        use std::ptr;
+
         use oxc_diagnostics::OxcDiagnostic;
         use oxc_span::Span;
 
@@ -248,9 +251,23 @@ impl Linter {
         // `external_linter` always exists when `oxlint2` feature is enabled
         let external_linter = self.external_linter.as_ref().unwrap();
 
+        // Write offset of `Program` and source text length in metadata at end of buffer
+        let program = semantic.nodes().program().unwrap();
+        let program_offset = ptr::from_ref(program) as u32;
+        #[expect(clippy::cast_possible_truncation)]
+        let source_len = program.source_text.len() as u32;
+
+        let metadata = RawTransferMetadata::new(program_offset, source_len);
+        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
+        // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
+        unsafe { metadata_ptr.write(metadata) };
+
+        // Pass AST and rule IDs to JS
         let result = (external_linter.run)(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            allocator,
         );
         match result {
             Ok(diagnostics) => {
@@ -304,10 +321,9 @@ struct RawTransferMetadata2 {
 use RawTransferMetadata2 as RawTransferMetadata;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-#[expect(dead_code)]
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, source_len: 0, _padding: 0 }
+    pub fn new(data_offset: u32, source_len: u32) -> Self {
+        Self { data_offset, is_ts: false, source_len, _padding: 0 }
     }
 }
 

@@ -2,6 +2,8 @@ use std::{fmt::Debug, pin::Pin, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
+use oxc_allocator::Allocator;
+
 pub type ExternalLinterLoadPluginCb = Arc<
     dyn Fn(
             String,
@@ -17,7 +19,11 @@ pub type ExternalLinterLoadPluginCb = Arc<
 >;
 
 pub type ExternalLinterCb = Arc<
-    dyn Fn(String, Vec<u32>) -> Result<Vec<LintResult>, Box<dyn std::error::Error + Send + Sync>>
+    dyn Fn(
+            String,
+            Vec<u32>,
+            &Allocator,
+        ) -> Result<Vec<LintResult>, Box<dyn std::error::Error + Send + Sync>>
         + Sync
         + Send,
 >;

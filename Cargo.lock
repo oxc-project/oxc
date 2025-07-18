@@ -1994,6 +1994,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "oxc_allocator",
  "oxlint",
  "serde_json",
 ]

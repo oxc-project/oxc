@@ -1,4 +1,17 @@
+import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
+import { DATA_POINTER_POS_32, SOURCE_LEN_POS_32 } from './generated/constants.cjs';
+
+// Import lazy visitor from `oxc-parser`.
+// Use `require` not `import` as `oxc-parser` uses `require` internally,
+// and need to make sure get same instance of modules as it uses internally,
+// otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
+const require = createRequire(import.meta.url);
+const { TOKEN } = require('../../parser/raw-transfer/lazy-common.js'),
+  { Visitor, getVisitorsArr } = require('../../parser/raw-transfer/visitor.js'),
+  walkProgram = require('../../parser/generated/lazy/walk.js');
+
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 class PluginRegistry {
   registeredPluginPaths = new Set();
@@ -33,6 +46,9 @@ class PluginRegistry {
   }
 }
 
+// Buffers cache
+const buffers = [];
+
 class Linter {
   pluginRegistry = new PluginRegistry();
 
@@ -63,8 +79,26 @@ class Linter {
   }
 
   // TODO(camc314): why do we have to destructure here?
-  // In `./bindings.d.ts`, it doesn't indicate that we have to (typed as `(filePath: string, ruleIds: number[]))`
-  lint([filePath, ruleIds]) {
+  // In `./bindings.d.ts`, it doesn't indicate that we have to
+  // (typed as `(filePath: string, bufferId: number, buffer: Uint8Array | undefined | null, ruleIds: number[])`).
+  lint([filePath, bufferId, buffer, ruleIds]) {
+    // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
+    // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
+    // if there's an error.
+    // TODO: Is this enough to guarantee soundness?
+    if (buffer !== null) {
+      const { buffer: arrayBuffer, byteOffset } = buffer;
+      buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
+      buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
+
+      while (buffers.length <= bufferId) {
+        buffers.push(null);
+      }
+      buffers[bufferId] = buffer;
+    } else {
+      buffer = buffers[bufferId];
+    }
+
     if (typeof filePath !== 'string' || filePath.length === 0) {
       throw new Error('expected filePath to be a non-zero length string');
     }
@@ -72,6 +106,7 @@ class Linter {
       throw new Error('Expected `ruleIds` to be a non-zero len array');
     }
 
+    // Get visitors for this file from all rules
     const diagnostics = [];
 
     const createContext = (ruleId) => ({
@@ -85,13 +120,25 @@ class Linter {
       },
     });
 
-    const rules = [];
+    const visitors = [];
     for (const { rule, ruleId } of this.pluginRegistry.getRules(ruleIds)) {
-      rules.push(rule.create(createContext(ruleId)));
+      visitors.push(rule.create(createContext(ruleId)));
     }
 
-    // TODO: walk the AST
+    // TODO: Combine visitors for multiple rules
+    const visitor = new Visitor(visitors[0]);
 
+    // Visit AST
+    const programPos = buffer.uint32[DATA_POINTER_POS_32],
+      sourceByteLen = buffer.uint32[SOURCE_LEN_POS_32];
+
+    const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+    const sourceIsAscii = sourceText.length === sourceByteLen;
+    const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
+
+    walkProgram(programPos, ast, getVisitorsArr(visitor));
+
+    // Send diagnostics back to Rust
     return JSON.stringify(diagnostics);
   }
 }

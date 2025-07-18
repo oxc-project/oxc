@@ -22,6 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
+oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxlint = { workspace = true, features = ["oxlint2", "allocator"] }
 
 napi = { workspace = true, features = ["async"] }

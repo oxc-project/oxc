@@ -142,7 +142,8 @@ pub struct FixedSizeAllocatorMetadata {
 const ALLOC_SIZE: usize = BLOCK_SIZE + TWO_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
 
-const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
+/// Layout of backing allocations for fixed-size allocators.
+pub const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
     Ok(layout) => layout,
     Err(_) => unreachable!(),
 };
@@ -287,7 +288,7 @@ impl Drop for FixedSizeAllocator {
     }
 }
 
-/// Deallocate memory backing a [`FixedSizeAllocator`] if it's not double-owned
+/// Deallocate memory backing a `FixedSizeAllocator` if it's not double-owned
 /// (both owned by a `FixedSizeAllocator` on Rust side *and* held as a buffer on JS side).
 ///
 /// If it is double-owned, don't deallocate the memory but set the flag that it's no longer double-owned
@@ -302,7 +303,7 @@ impl Drop for FixedSizeAllocator {
 /// Calling this function in any other circumstances would result in a double-free.
 ///
 /// `metadata_ptr` must point to a valid `FixedSizeAllocatorMetadata`.
-unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
+pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
     // Get pointer to start of original allocation from `FixedSizeAllocatorMetadata`
     let alloc_ptr = {
         // SAFETY: This `Allocator` was created by the `FixedSizeAllocator`.
@@ -341,13 +342,13 @@ unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocatorMeta
 unsafe impl Send for FixedSizeAllocator {}
 
 impl Allocator {
-    /// Get pointer to the [`FixedSizeAllocatorMetadata`] for this [`Allocator`].
+    /// Get pointer to the `FixedSizeAllocatorMetadata` for this [`Allocator`].
     ///
     /// # SAFETY
     /// * This `Allocator` must have been created by a `FixedSizeAllocator`.
     /// * This pointer must not be used to create a mutable reference to the `FixedSizeAllocatorMetadata`,
     ///   only immutable references.
-    unsafe fn fixed_size_metadata_ptr(&self) -> NonNull<FixedSizeAllocatorMetadata> {
+    pub unsafe fn fixed_size_metadata_ptr(&self) -> NonNull<FixedSizeAllocatorMetadata> {
         // SAFETY: Caller guarantees this `Allocator` was created by a `FixedSizeAllocator`.
         //
         // `FixedSizeAllocator::new` writes `FixedSizeAllocatorMetadata` after the end of
