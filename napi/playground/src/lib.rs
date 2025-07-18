@@ -154,7 +154,14 @@ impl Oxc {
         }
 
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
-        self.run_linter(&run_options, &linter_options, &path, &program, &linter_module_record);
+        self.run_linter(
+            &run_options,
+            &linter_options,
+            &path,
+            &program,
+            &linter_module_record,
+            &allocator,
+        );
 
         self.run_formatter(&run_options, &source_text, source_type);
 
@@ -282,6 +289,7 @@ impl Oxc {
         path: &Path,
         program: &Program,
         module_record: &Arc<ModuleRecord>,
+        allocator: &Allocator,
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
@@ -307,7 +315,7 @@ impl Oxc {
                 ConfigStore::new(lint_config, FxHashMap::default(), ExternalPluginStore::default()),
                 None,
             )
-            .run(path, Rc::clone(&semantic), Arc::clone(module_record));
+            .run(path, Rc::clone(&semantic), Arc::clone(module_record), allocator);
             self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));
         }
     }

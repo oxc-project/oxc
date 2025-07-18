@@ -3,6 +3,7 @@
 
 use std::{path::Path, rc::Rc, sync::Arc};
 
+use oxc_allocator::Allocator;
 use oxc_semantic::{AstNode, Semantic};
 
 #[cfg(test)]
@@ -116,11 +117,9 @@ impl Linter {
         path: &Path,
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
+        allocator: &Allocator,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
-
-        #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
-        let _ = external_rules;
 
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
@@ -205,7 +204,11 @@ impl Linter {
         }
 
         #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-        self.run_external_rules(&external_rules, path, &ctx_host);
+        self.run_external_rules(&external_rules, path, &ctx_host, allocator);
+
+        // Stop clippy complaining about unused vars
+        #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+        let (_, _) = (external_rules, allocator);
 
         if let Some(severity) = self.options.report_unused_directive {
             if severity.is_warn_deny() {
@@ -222,6 +225,7 @@ impl Linter {
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &ContextHost,
+        _allocator: &Allocator,
     ) {
         use oxc_diagnostics::OxcDiagnostic;
         use oxc_span::Span;
