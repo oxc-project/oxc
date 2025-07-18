@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@napi-rs/cli':
-      specifier: 3.0.0-alpha.88
-      version: 3.0.0-alpha.88
+      specifier: 3.0.0
+      version: 3.0.0
     typescript:
       specifier: 5.8.3
       version: 5.8.3
@@ -22,7 +22,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.0.0-alpha.88(@emnapi/runtime@1.4.4)(@types/node@24.0.13)(emnapi@1.4.4)
+        version: 3.0.0(@emnapi/runtime@1.4.4)(@types/node@24.0.13)(emnapi@1.4.4)
       emnapi:
         specifier: 1.4.4
         version: 1.4.4
@@ -796,8 +796,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.29':
     resolution: {integrity: sha512-uw6guiW/gcAGPDhLmd77/6lW8QLeiV5RUTsAX46Db6oLhGaVj4lhnPwb184s1bkc8kdVg/+h988dro8GRDpmYQ==}
 
-  '@napi-rs/cli@3.0.0-alpha.88':
-    resolution: {integrity: sha512-tAzLbGY+7JhRwAfeykv/Rl44mq3rufJzV5MuVQ2Nr+bMq6fr8winy0kV/myACDtYiXYx5Ax+XMHBKiLU2Xw5Ng==}
+  '@napi-rs/cli@3.0.0':
+    resolution: {integrity: sha512-V4xSbP4AnS+1POtAGVRhCt0erOTEyLAsZ2+MJOcI1NXCwgsKZGjp8cf/UmVo8e2jUE8tTkyxvnIPCqzVkT3RjQ==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
@@ -2137,6 +2137,10 @@ packages:
     resolution: {integrity: sha512-v2ZsoEuVHYy8ZIlYqwPe/39Cy+cFDzp4dXPaxNvkEuouymu+2Jbz0PxpKarJHYJTmv2HWT3O382qY8l4jMWthw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  find-up@7.0.0:
+    resolution: {integrity: sha512-YyZM99iHrqLKjmt4LJDj58KI+fYyufRLBSYcqycxf//KpBk9FoewoGX0450m9nB44qrZnovzC2oeP5hUibxc/g==}
+    engines: {node: '>=18'}
+
   flat@5.0.2:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
@@ -3177,9 +3181,6 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
-  toml@3.0.0:
-    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
-
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
     engines: {node: '>=6'}
@@ -4100,7 +4101,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.4
 
-  '@napi-rs/cli@3.0.0-alpha.88(@emnapi/runtime@1.4.4)(@types/node@24.0.13)(emnapi@1.4.4)':
+  '@napi-rs/cli@3.0.0(@emnapi/runtime@1.4.4)(@types/node@24.0.13)(emnapi@1.4.4)':
     dependencies:
       '@inquirer/prompts': 7.6.0(@types/node@24.0.13)
       '@napi-rs/cross-toolchain': 0.0.19
@@ -4109,10 +4110,10 @@ snapshots:
       clipanion: 4.0.0-rc.4(typanion@3.14.0)
       colorette: 2.0.20
       debug: 4.4.1(supports-color@8.1.1)
+      find-up: 7.0.0
       js-yaml: 4.1.0
       lodash-es: 4.17.21
       semver: 7.7.2
-      toml: 3.0.0
       typanion: 3.14.0
       wasm-sjlj: 1.0.6
     optionalDependencies:
@@ -5404,6 +5405,12 @@ snapshots:
       locate-path: 7.2.0
       path-exists: 5.0.0
 
+  find-up@7.0.0:
+    dependencies:
+      locate-path: 7.2.0
+      path-exists: 5.0.0
+      unicorn-magic: 0.1.0
+
   flat@5.0.2: {}
 
   follow-redirects@1.15.9: {}
@@ -6499,8 +6506,6 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
-
-  toml@3.0.0: {}
 
   totalist@3.0.1: {}
 

@@ -9,6 +9,6 @@ packages:
 verifyDepsBeforeRun: install
 
 catalog:
-  "@napi-rs/cli": 3.0.0-alpha.88
+  "@napi-rs/cli": 3.0.0
   "vitest": 3.2.4
   "typescript": 5.8.3

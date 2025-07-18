@@ -83,7 +83,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 'arm') {
       try {
         return require('./oxlint.android-arm-eabi.node')
@@ -95,7 +94,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else {
       loadErrors.push(new Error(`Unsupported architecture on Android ${process.arch}`))
     }
@@ -111,7 +109,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 'ia32') {
       try {
         return require('./oxlint.win32-ia32-msvc.node')
@@ -123,7 +120,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 'arm64') {
       try {
         return require('./oxlint.win32-arm64-msvc.node')
@@ -135,22 +131,20 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else {
       loadErrors.push(new Error(`Unsupported architecture on Windows: ${process.arch}`))
     }
   } else if (process.platform === 'darwin') {
     try {
-        return require('./oxlint.darwin-universal.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-darwin-universal')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+      return require('./oxlint.darwin-universal.node')
+    } catch (e) {
+      loadErrors.push(e)
+    }
+    try {
+      return require('oxlint2-darwin-universal')
+    } catch (e) {
+      loadErrors.push(e)
+    }
     if (process.arch === 'x64') {
       try {
         return require('./oxlint.darwin-x64.node')
@@ -162,7 +156,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 'arm64') {
       try {
         return require('./oxlint.darwin-arm64.node')
@@ -174,7 +167,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else {
       loadErrors.push(new Error(`Unsupported architecture on macOS: ${process.arch}`))
     }
@@ -190,7 +182,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 'arm64') {
       try {
         return require('./oxlint.freebsd-arm64.node')
@@ -202,7 +193,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else {
       loadErrors.push(new Error(`Unsupported architecture on FreeBSD: ${process.arch}`))
     }
@@ -210,106 +200,98 @@ function requireNative() {
     if (process.arch === 'x64') {
       if (isMusl()) {
         try {
-        return require('./oxlint.linux-x64-musl.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-x64-musl')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-x64-musl.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-x64-musl')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       } else {
         try {
-        return require('./oxlint.linux-x64-gnu.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-x64-gnu')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-x64-gnu.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-x64-gnu')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       }
     } else if (process.arch === 'arm64') {
       if (isMusl()) {
         try {
-        return require('./oxlint.linux-arm64-musl.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-arm64-musl')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-arm64-musl.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-arm64-musl')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       } else {
         try {
-        return require('./oxlint.linux-arm64-gnu.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-arm64-gnu')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-arm64-gnu.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-arm64-gnu')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       }
     } else if (process.arch === 'arm') {
       if (isMusl()) {
         try {
-        return require('./oxlint.linux-arm-musleabihf.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-arm-musleabihf')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-arm-musleabihf.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-arm-musleabihf')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       } else {
         try {
-        return require('./oxlint.linux-arm-gnueabihf.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-arm-gnueabihf')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-arm-gnueabihf.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-arm-gnueabihf')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       }
     } else if (process.arch === 'riscv64') {
       if (isMusl()) {
         try {
-        return require('./oxlint.linux-riscv64-musl.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-riscv64-musl')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-riscv64-musl.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-riscv64-musl')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       } else {
         try {
-        return require('./oxlint.linux-riscv64-gnu.node')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-      try {
-        return require('oxlint2-linux-riscv64-gnu')
-      } catch (e) {
-        loadErrors.push(e)
-      }
-
+          return require('./oxlint.linux-riscv64-gnu.node')
+        } catch (e) {
+          loadErrors.push(e)
+        }
+        try {
+          return require('oxlint2-linux-riscv64-gnu')
+        } catch (e) {
+          loadErrors.push(e)
+        }
       }
     } else if (process.arch === 'ppc64') {
       try {
@@ -322,7 +304,6 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else if (process.arch === 's390x') {
       try {
         return require('./oxlint.linux-s390x-gnu.node')
@@ -334,9 +315,45 @@ function requireNative() {
       } catch (e) {
         loadErrors.push(e)
       }
-
     } else {
       loadErrors.push(new Error(`Unsupported architecture on Linux: ${process.arch}`))
+    }
+  } else if (process.platform === 'openharmony') {
+    if (process.arch === 'arm64') {
+      try {
+        return require('./oxlint.linux-arm64-ohos.node')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+      try {
+        return require('oxlint2-linux-arm64-ohos')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+    } else if (process.arch === 'x64') {
+      try {
+        return require('./oxlint.linux-x64-ohos.node')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+      try {
+        return require('oxlint2-linux-x64-ohos')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+    } else if (process.arch === 'arm') {
+      try {
+        return require('./oxlint.linux-arm-ohos.node')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+      try {
+        return require('oxlint2-linux-arm-ohos')
+      } catch (e) {
+        loadErrors.push(e)
+      }
+    } else {
+      loadErrors.push(new Error(`Unsupported architecture on OpenHarmony: ${process.arch}`))
     }
   } else {
     loadErrors.push(new Error(`Unsupported OS: ${process.platform}, architecture: ${process.arch}`))
@@ -366,11 +383,12 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
 
 if (!nativeBinding) {
   if (loadErrors.length > 0) {
-    // TODO Link to documentation with potential fixes
-    //  - The package owner could build/publish bindings for this arch
-    //  - The user may need to bundle the correct files
-    //  - The user may need to re-install node_modules to get new packages
-    throw new Error('Failed to load native binding', { cause: loadErrors })
+    throw new Error(
+      `Cannot find native binding. ` +
+        `npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). ` +
+        'Please try `npm i` again after removing both package-lock.json and node_modules directory.',
+      { cause: loadErrors }
+    )
   }
   throw new Error(`Failed to load native binding`)
 }
