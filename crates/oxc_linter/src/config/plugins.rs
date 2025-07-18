@@ -53,6 +53,7 @@ bitflags! {
 impl Default for BuiltinLintPlugins {
     #[inline]
     fn default() -> Self {
+        // update `oxc_linter::table::RuleTable` when changing the defaults
         BuiltinLintPlugins::UNICORN | BuiltinLintPlugins::TYPESCRIPT | BuiltinLintPlugins::OXC
     }
 }
