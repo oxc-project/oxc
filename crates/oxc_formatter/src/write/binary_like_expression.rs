@@ -147,7 +147,13 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.body().span() == self.span(),
+            AstNodes::ExpressionStatement(statement) => {
+                if let AstNodes::FunctionBody(arrow) = statement.parent {
+                    arrow.span == self.span()
+                } else {
+                    false
+                }
+            }
             AstNodes::ConditionalExpression(conditional) => {
                 matches!(
                     parent.parent(),
@@ -293,7 +299,7 @@ enum BinaryLeftOrRightSide<'a, 'b> {
 impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::Left { parent } => write!(f, [group(parent.left())]),
+            Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
@@ -336,10 +342,28 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                             )));
 
                 if should_group {
-                    let should_break = f.context().comments().has_trailing_line_comments(
-                        binary_like_expression.left().span().end,
-                        right.span().start,
-                    );
+                    // `left` side has printed before `right` side, so that trailing comments of `left` side has been printed,
+                    // so we need to find if there are any printed comments that are after the `left` side and it is line comment.
+                    // If so, it should break the line.
+                    // ```js
+                    // a = b + // comment
+                    // c
+                    // ```
+                    // // to
+                    // ```js
+                    // a =
+                    //     b || // Comment
+                    //     c;
+                    let should_break = f
+                        .comments()
+                        .printed_comments()
+                        .iter()
+                        .rev()
+                        .take_while(|comment| {
+                            binary_like_expression.left().span().end < comment.span.start
+                        })
+                        .any(|comment| comment.is_line());
+
                     write!(f, [group(&operator_and_right_expression).should_expand(should_break)])
                 } else {
                     write!(f, [operator_and_right_expression])

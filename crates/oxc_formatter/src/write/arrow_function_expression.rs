@@ -6,7 +6,7 @@ use crate::{
     formatter::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter,
         buffer::RemoveSoftLinesBuffer, comments::has_new_line_backward, prelude::*,
-        trivia::format_trailing_comments,
+        trivia::format_trailing_comments, write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
@@ -79,7 +79,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     write!(
                         f,
                         [
-                            format_signature(arrow, self.options.call_arg_layout.is_some(), true),
+                            format_signature(
+                                arrow,
+                                self.options.call_arg_layout.is_some(),
+                                true,
+                                self.options.body_cache_mode
+                            ),
                             space(),
                             "=>"
                         ]
@@ -111,10 +116,8 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if matches!(arrow_expression, Some(Expression::SequenceExpression(_))) {
-                    // let has_comment = f.context().comments().has_comments(sequence.syntax());
-                    let has_comment = false;
-                    return if has_comment {
+                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                    return if f.context().comments().has_comments_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -520,7 +523,15 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             }
                         }
 
-                        write!(f, [format_signature(arrow, is_grouped_call_arg_layout, is_first)])
+                        write!(
+                            f,
+                            [format_signature(
+                                arrow,
+                                is_grouped_call_arg_layout,
+                                is_first,
+                                self.options.body_cache_mode
+                            )]
+                        )
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -552,14 +563,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
         });
 
-        // TODO
-        let has_comment = false; //
-        // matches!(
-        // &tail_body,
-        // AnyJsFunctionBody::Expression(Expression::JsSequenceExpression(sequence))
-        // if f.context().comments().has_comments(sequence.syntax())
-        // );
-
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
@@ -569,8 +572,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if matches!(tail.get_expression(), Some(Expression::SequenceExpression(_))) {
-                if has_comment {
+            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+                if f.context().comments().has_comments_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
@@ -814,6 +817,7 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
+    cache_mode: FunctionBodyCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
         let formatted_async_token =
@@ -829,19 +833,35 @@ fn format_signature<'a, 'b>(
             Ok(())
         });
 
-        if is_first_or_last_call_argument {
-            let mut buffer = RemoveSoftLinesBuffer::new(f);
-            let mut recording = buffer.start_recording();
-
+        let signatures = format_once(|f| {
             write!(
-                recording,
+                f,
                 [group(&format_args!(
                     maybe_space(!is_first_in_chain),
                     formatted_async_token,
                     group(&formatted_parameters),
                     group(&format_return_type)
                 ))]
-            )?;
+            )
+        });
+
+        let cached_signature = format_once(|f| {
+            if matches!(cache_mode, FunctionBodyCacheMode::NoCache) {
+                return signatures.fmt(f);
+            } else if let Some(grouped) = f.context().get_cached_element(arrow.params.span) {
+                f.write_element(grouped)
+            } else {
+                let grouped = f.intern(&signatures)?.unwrap();
+                f.context_mut().cache_element(arrow.params.span(), grouped.clone());
+                f.write_element(grouped.clone())
+            }
+        });
+
+        if is_first_or_last_call_argument {
+            let mut buffer = RemoveSoftLinesBuffer::new(f);
+            let mut recording = buffer.start_recording();
+
+            write!(recording, cached_signature)?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);
@@ -855,11 +875,7 @@ fn format_signature<'a, 'b>(
                     // line and can't break pre-emptively without also causing
                     // the parent (i.e., this ArrowChain) to break first.
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
-                    group(&format_args!(
-                        formatted_async_token,
-                        formatted_parameters,
-                        group(&format_return_type)
-                    ))
+                    cached_signature
                 ]
             )?;
         }

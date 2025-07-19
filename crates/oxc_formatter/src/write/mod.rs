@@ -298,7 +298,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), "[", self.expression(), "]"])
+        write!(f, self.object())?;
+
+        if matches!(self.expression, Expression::NumericLiteral(_)) {
+            write!(f, [self.optional().then_some("?"), "[", self.expression(), "]"])
+        } else {
+            write!(
+                f,
+                group(&format_args!(
+                    self.optional().then_some("?"),
+                    "[",
+                    soft_block_indent(self.expression()),
+                    "]"
+                ))
+            )
+        }
     }
 }
 
@@ -381,7 +395,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
         if self.operator().is_keyword() {
             write!(f, space());
         }
-        if f.comments().has_comments_in_span(self.span) {
+        let argument_span = self.argument().span();
+        if f.comments().has_comments_before(argument_span.start)
+            || f.comments().has_comments_between(argument_span.end, self.span().end)
+        {
             write!(
                 f,
                 [group(&format_args!(text("("), soft_block_indent(self.argument()), text(")")))]
@@ -582,9 +599,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
-        for stmt in self {
+        for stmt in
+            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
+        {
             join.entry(stmt.span(), stmt);
         }
         join.finish()
@@ -839,7 +857,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "return")?;
         if let Some(argument) = self.argument() {
-            write!(f, [space(), argument])?;
+            let is_binary_like_or_sequence_expression = matches!(
+                argument.as_ref(),
+                Expression::BinaryExpression(_)
+                    | Expression::LogicalExpression(_)
+                    | Expression::SequenceExpression(_)
+            );
+            write!(f, space())?;
+            if is_binary_like_or_sequence_expression {
+                // If the argument is a binary-like expression or sequence expression, we need to wrap it in parentheses
+                write!(
+                    f,
+                    [group(&format_args![
+                        if_group_breaks(&text("(")),
+                        soft_block_indent(&argument),
+                        if_group_breaks(&text(")"))
+                    ])]
+                )
+            } else {
+                write!(f, argument)
+            }?
         }
         write!(f, OptionalSemicolon)
     }

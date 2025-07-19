@@ -13,6 +13,9 @@ use crate::{
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
+/// Based on the prettier printing comments algorithm, these nodes don't need to print comments.
+const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &["FormalParameters"];
+
 const NEEDS_PARENTHESES: &[&str] = &[
     "Class",
     "Function",
@@ -96,8 +99,9 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     }
 
     let is_program = type_def.as_struct().is_some_and(|s| s.name == "Program");
+    let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&type_def.name());
 
-    let leading_comments = if type_def.is_enum() || is_program {
+    let leading_comments = if type_def.is_enum() || is_program || do_not_print_comment {
         quote! {}
     } else {
         quote! {
@@ -105,7 +109,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    let trailing_comments = if type_def.is_enum() {
+    let trailing_comments = if type_def.is_enum() || do_not_print_comment {
         quote! {}
     } else if is_program {
         quote! {

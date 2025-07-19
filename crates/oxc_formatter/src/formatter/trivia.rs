@@ -9,7 +9,7 @@ use oxc_syntax::comment_node;
 
 use crate::{
     formatter::comments::{is_alignable_comment, is_end_of_line_comment, is_own_line_comment},
-    generated::ast_nodes::SiblingNode,
+    generated::{ast_nodes::SiblingNode, format},
     write,
 };
 
@@ -76,7 +76,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                                 write!(f, [maybe_space(!should_nestle)])?;
                             }
                             1 => {
-                                if get_lines_before(comment.span.start, f) == 0 {
+                                if get_lines_before(comment.span, f) == 0 {
                                     write!(f, [soft_line_break_or_space()])?;
                                 } else {
                                     write!(f, [hard_line_break()])?;
@@ -97,7 +97,6 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let source_text = f.context().source_text();
                 let leading_comments = f
                     .context()
                     .comments()
@@ -140,7 +139,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             for comment in comments {
                 f.context_mut().increment_printed_count();
 
-                let lines_before = get_lines_before(comment.span.start, f);
+                let lines_before = get_lines_before(comment.span, f);
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
@@ -193,6 +192,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                 } else {
                     let content =
                         format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()])?;
                     } else {
@@ -208,91 +208,14 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
-                // The preceding_node is the callee of the call expression or new expression, let following node to print it.
-                // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L726-L741
-                if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
-                {
-                    return Ok(());
-                }
-
-                let comments = f.context().comments().unprinted_comments();
-                if comments.is_empty() {
-                    return Ok(());
-                }
-
-                let preceding_span = preceding_node.span();
-
-                // All of the comments before this node are printed already.
-                debug_assert!(
-                    comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
-                );
-
-                let source_text = f.context().source_text();
-
-                let Some(following_node) = following_node else {
-                    let enclosing_span = enclosing_node.span();
-                    let trailing_comments = comments
-                        .iter()
-                        .take_while(|comment| comment.span.end <= enclosing_span.end);
-                    return format_trailing_comments_impl(trailing_comments, f);
-                };
-
-                let following_span = following_node.span();
-                let mut comment_index = 0;
-                while let Some(comment) = comments.get(comment_index) {
-                    // Check if the comment is before the following node's span
-                    if comment.span.end > following_span.start {
-                        break;
-                    }
-
-                    if is_own_line_comment(comment, source_text) {
-                        // TODO: describe the logic here
-                        // Reached an own line comment, which means it is the leading comment for the next node.
-                        break;
-                    } else if is_end_of_line_comment(comment, source_text) {
-                        // Should be a leading comment of following node.
-                        // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
-                        if matches!(
-                            enclosing_node,
-                            SiblingNode::VariableDeclarator(_)
-                                | SiblingNode::AssignmentExpression(_)
-                                | SiblingNode::TSTypeAliasDeclaration(_)
-                        ) && (comment.is_block()
-                            || matches!(
-                                following_node,
-                                SiblingNode::ObjectExpression(_)
-                                    | SiblingNode::ArrayExpression(_)
-                                    | SiblingNode::TSTypeLiteral(_)
-                                    | SiblingNode::TemplateLiteral(_)
-                                    | SiblingNode::TaggedTemplateExpression(_)
-                            ))
-                        {
-                            return Ok(());
-                        }
-                        return format_trailing_comments_impl(&comments[..=comment_index], f);
-                    }
-
-                    comment_index += 1;
-                }
-
-                if comment_index == 0 {
-                    // No comments to print
-                    return Ok(());
-                }
-
-                let mut gap_end = following_span.start;
-                for cur_index in (0..comment_index).rev() {
-                    let comment = &comments[cur_index];
-                    let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
-                    if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
-                        gap_end = comment.span.start;
-                    } else {
-                        // If there is a non-whitespace character, we stop here
-                        return format_trailing_comments_impl(&comments[..=cur_index], f);
-                    }
-                }
-
-                Ok(())
+                format_trailing_comments_impl(
+                    f.context().comments().get_trailing_comments(
+                        enclosing_node,
+                        preceding_node,
+                        *following_node,
+                    ),
+                    f,
+                )
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }

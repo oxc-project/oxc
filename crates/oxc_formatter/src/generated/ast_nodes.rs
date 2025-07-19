@@ -4814,7 +4814,7 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -5971,7 +5971,7 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -7344,7 +7344,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),

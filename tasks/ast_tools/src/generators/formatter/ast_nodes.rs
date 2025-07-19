@@ -18,6 +18,11 @@ pub fn get_node_type(ty: &TokenStream) -> TokenStream {
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
+/// Based on the printing comments algorithm, the last child of these AST nodes don't need to print comments.
+/// Without following nodes could lead to only print comments that before the end of the node, which is what we want.
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] =
+    &["ExpressionStatement", "AssignmentExpression", "FormalParameters"];
+
 pub struct FormatterAstNodesGenerator;
 
 define_generator!(FormatterAstNodesGenerator);
@@ -255,8 +260,16 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                 quote! { &self.inner.#field_name }
             };
 
-            let mut following_node = quote! {
-                self.following_node
+            let mut following_node = if index == fields.len() - 1
+                && AST_NODE_WITHOUT_FOLLOWING_NODE_LIST.contains(&struct_def.name.as_str())
+            {
+                quote! {
+                    None
+                }
+            } else {
+                quote! {
+                    self.following_node
+                }
             };
 
             let mut next_field_index = index + 1;

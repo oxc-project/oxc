@@ -12,7 +12,7 @@ use crate::{
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
-        if is_empty_block(self, f) {
+        if is_empty_block(&self.body, f) {
             if f.context().comments().has_dangling_comments(self.span) {
                 write!(f, format_dangling_comments(self.span).with_block_indent())?;
             } else if is_non_collapsible(self.parent) {
@@ -25,9 +25,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     }
 }
 
-fn is_empty_block(block: &BlockStatement<'_>, f: &Formatter<'_, '_>) -> bool {
-    block.body.is_empty()
-        || block.body.iter().all(|s| {
+pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
+    block.is_empty()
+        || block.iter().all(|s| {
             matches!(s, Statement::EmptyStatement(_))
             // TODO: it seems removing `has_comments` doesn't break anything, needs to check further
             // && !f.comments().has_comments(s.span())
