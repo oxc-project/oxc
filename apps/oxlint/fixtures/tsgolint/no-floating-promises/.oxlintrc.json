@@ -1,0 +1,6 @@
+{
+  "plugins": ["typescript"],
+  "rules": {
+    "typescript/no-floating-promises": "error"
+  }
+}

@@ -194,7 +194,17 @@ impl DiagnosticService {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
-        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+        let expected_none_msgs = 2; // TODO: 1 if no tsgolint, 2 if tsgolint
+        let mut received_none_count = 0;
+
+        while let Ok(msg) = self.receiver.recv() {
+            let Some((path, diagnostics)) = msg else {
+                received_none_count += 1;
+                if received_none_count >= expected_none_msgs {
+                    break;
+                }
+                continue;
+            };
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
