@@ -288,7 +288,7 @@ impl IdLength {
             AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                let AstKind::SimpleAssignmentTarget(_) = ctx.nodes().parent_kind(parent_node.id())
+                let AstKind::IdentifierReference(_) = ctx.nodes().parent_kind(parent_node.id())
                 else {
                     return;
                 };
