@@ -130,6 +130,12 @@ Arguments:
 
 
 
+## Experimental flags
+- **`    --experimental-tsgolint`** &mdash; 
+  Enable linting with `tsgolint` for rules that require type information
+
+
+
 ## Available positional items:
 - _`PATH`_ &mdash; 
   Single file, single path or list of paths

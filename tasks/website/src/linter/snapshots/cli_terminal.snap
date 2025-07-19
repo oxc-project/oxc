@@ -83,6 +83,10 @@ Inline Configuration Comments
                               severity level of the reported errors. Only one of these two options
                               can be used at a time.
 
+Experimental flags
+        --experimental-tsgolint  Enable linting with `tsgolint` for rules that require type
+                              information
+
 Available positional items:
     PATH                      Single file, single path or list of paths
 
