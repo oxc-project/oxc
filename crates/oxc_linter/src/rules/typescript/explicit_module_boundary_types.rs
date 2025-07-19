@@ -1,6 +1,8 @@
+use std::borrow::Cow;
 #[allow(dead_code, unused)]
 use std::ops::Deref;
 
+use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{
     Visit,
@@ -9,15 +11,17 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, SymbolId};
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
+use smallvec::SmallVec;
 
 use crate::{
     AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
+    // fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::default_true,
 };
@@ -33,7 +37,7 @@ fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExplicitModuleBoundaryTypes(Box<Config>);
 impl From<Config> for ExplicitModuleBoundaryTypes {
     fn from(config: Config) -> Self {
@@ -51,6 +55,7 @@ impl Deref for ExplicitModuleBoundaryTypes {
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     /// Whether to ignore arguments that are explicitly typed as `any`.
+    #[serde(default)]
     allow_arguments_explicitly_typed_as_any: bool,
     /// Whether to ignore return type annotations on body-less arrow functions
     /// that return an `as const` type assertion. You must still type the
@@ -59,6 +64,7 @@ pub struct Config {
     allow_direct_const_assertion_in_arrow_functions: bool,
     /// An array of function/method names that will not have their arguments or
     /// return values checked.
+    #[serde(default)]
     allowed_names: Vec<CompactStr>,
     /// Whether to ignore return type annotations on functions immediately
     /// returning another function expression. You must still type the
@@ -67,6 +73,7 @@ pub struct Config {
     allow_higher_order_functions: bool,
     /// Whether to ignore return type annotations on functions with overload
     /// signatures.
+    #[serde(default)]
     allow_overload_functions: bool,
     /// Whether to ignore type annotations on the variable of a function
     /// expression.
@@ -158,7 +165,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
         let Some(value) = value.get_mut(0).filter(|v| v.is_object()) else {
             return Self::default();
         };
-        Config::try_from(value.take()).unwrap_or_default().into()
+        serde_json::from_value(value.take()).unwrap_or_default()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -181,46 +188,202 @@ impl Rule for ExplicitModuleBoundaryTypes {
     }
 }
 
+#[derive(Clone, Copy)]
 enum Fn<'a> {
-    Fn(&'a oxc_ast::ast::Function<'a>),
-    Arrow(&'a oxc_ast::ast::ArrowFunctionExpression<'a>),
+    Fn(&'a Function<'a>),
+    Arrow(&'a ArrowFunctionExpression<'a>),
+    None,
+}
+impl<'a> Fn<'a> {
+    fn address(self) -> Option<Address> {
+        match self {
+            Fn::Fn(f) => Some(Address::from_ptr(f)),
+            Fn::Arrow(a) => Some(Address::from_ptr(a)),
+            Fn::None => None,
+        }
+    }
 }
 
 struct ExplicitTypesChecker<'a, 'c> {
     rule: &'c ExplicitModuleBoundaryTypes,
     ctx: &'c LintContext<'a>,
-    target_symbol: Option<SymbolId>,
-    fns: Vec<Fn<'a>>,
+    target_symbol: Option<IdentifierName<'a>>,
+    // note: we avoid allocations by reserving space on the stack. Yes this
+    // struct is large, but reserving space for it is just a offset op from the
+    // stack pointer.
+    /// function stack
+    fns: SmallVec<[Fn<'a>; 8]>,
+    /// Return statements we've seen inside visited functions. Keys are the
+    /// [`Address`]es of those functions.
+    fn_returns: FxHashMap<Address, SmallVec<[&'a ReturnStatement<'a>; 2]>>,
 }
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
-        Self { rule, ctx, target_symbol: None, fns: vec![] }
+        Self {
+            rule,
+            ctx,
+            target_symbol: None,
+            fns: smallvec::smallvec![],
+            fn_returns: FxHashMap::default(),
+        }
     }
     fn target_span(&self) -> Option<Span> {
-        self.target_symbol.map(|id| self.ctx.scoping().symbol_span(id))
+        self.target_symbol.as_ref().map(|id| id.span)
     }
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
-        if let Some(id) = binding.as_ref().map(|binding| binding.symbol_id()) {
-            self.target_symbol.replace(id);
+        if let Some(id) = binding {
+            self.target_symbol.replace(IdentifierName { name: id.name, span: id.span });
             true
         } else {
             false
+        }
+    }
+    fn with_target_property(&mut self, prop: Option<&PropertyKey<'a>>) -> bool {
+        let Some(id) = prop else {
+            return false;
+        };
+        if let Some(Cow::Borrowed(name)) = id.static_name() {
+            self.target_symbol.replace(IdentifierName { name: Atom::from(name), span: id.span() });
+            true
+        } else {
+            false
+        }
+    }
+
+    fn check_function_without_return(&mut self, func: &Function<'a>) {
+        debug_assert!(func.return_type.is_none());
+
+        let target_span = self.target_symbol.as_ref();
+        let target_name = target_span.map(|t| t.name);
+        let span = target_span
+            .map(|t| t.span)
+            .unwrap_or(Span::sized(func.span.start, "function".len() as u32));
+        let is_allowed = || {
+            func.name()
+                .map(Into::into)
+                .or(target_name)
+                .is_some_and(|name| self.rule.is_allowed_name(&name))
+        };
+
+        if !self.rule.allow_higher_order_functions {
+            if !is_allowed() {
+                self.ctx.diagnostic(func_missing_return_type(span));
+            }
+            return;
+        }
+        let Some(body) = func.body.as_deref() else {
+            return;
+        };
+        walk::walk_function_body(self, body);
+        if let Some(returns) = self.fn_returns.get(&Address::from_ptr(func)) {
+            let is_hof = returns.iter().any(|ret| {
+                matches!(
+                    ret.argument,
+                    Some(
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    )
+                )
+            });
+            if !is_hof && !is_allowed() {
+                self.ctx.diagnostic(func_missing_return_type(span))
+            }
+        } else {
+            // NOTE: only arrow functions can have implicit returns
+        }
+    }
+
+    fn check_arrow_without_return(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        debug_assert!(arrow.return_type.is_none());
+        let target_span = self.target_symbol.as_ref();
+        let target_name = target_span.map(|t| t.name);
+        let span = target_span.map(|t| t.span).unwrap_or(arrow.params.span);
+        let is_allowed = || target_name.is_some_and(|name| self.rule.is_allowed_name(&name));
+
+        if !self.rule.allow_higher_order_functions {
+            if !is_allowed() {
+                self.ctx.diagnostic(func_missing_return_type(span));
+            }
+            return;
+        }
+
+        if arrow.expression {
+            let Some(expr) = arrow.get_expression() else {
+                debug_assert!(
+                    false,
+                    "ArrowFunctionExpression claims to have an implicit return but get_expression() returned None. This is a parser bug"
+                );
+                return;
+            };
+
+            // `export const foo = () => 1 as const`
+            if self.rule.allow_direct_const_assertion_in_arrow_functions
+                && matches!(get_typed_inner_expression(expr), Expression::TSAsExpression(_))
+            {
+                return;
+            }
+
+            self.ctx.diagnostic(func_missing_return_type(span));
+            return;
+        }
+
+        walk::walk_function_body(self, &arrow.body);
+        if let Some(returns) = self.fn_returns.get(&Address::from_ptr(arrow)) {
+            let is_hof = returns.iter().any(|ret| {
+                matches!(
+                    ret.argument,
+                    Some(
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    )
+                )
+            });
+            if !is_hof && !is_allowed() {
+                self.ctx.diagnostic(func_missing_return_type(span))
+            }
+        } else {
+            // NOTE: only arrow functions can have implicit returns
         }
     }
 }
 
 impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        match kind {
+        match dbg!(kind) {
             AstKind::Function(f) => self.fns.push(Fn::Fn(f)),
             AstKind::ArrowFunctionExpression(arrow) => self.fns.push(Fn::Arrow(arrow)),
+            AstKind::Class(_) => self.fns.push(Fn::None),
+            AstKind::ReturnStatement(ret) => {
+                // returns outside of functions are semantic errors
+                debug_assert!(!self.fns.is_empty());
+                let Some(f) = self.fns.last() else {
+                    return;
+                };
+                let Some(addr) = f.address() else {
+                    // e.g. something like
+                    // function foo() {
+                    //     class C { return; }
+                    // }
+                    // which also doesn't make sense.
+                    debug_assert!(
+                        false,
+                        "found a return nested somewhere in a function, but due to the current scope, that function is not a valid return target."
+                    );
+                    return;
+                };
+                let returns = self.fn_returns.entry(addr).or_default();
+                returns.push(ret)
+            }
             _ => {}
         }
     }
+
     fn leave_node(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                self.fns.pop();
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Class(_) => {
+                let last = self.fns.pop();
+                debug_assert!(
+                    last.is_some(),
+                    "tried to exit a function/class node when it was not on the function stack"
+                );
             }
             _ => {}
         }
@@ -242,7 +405,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
             Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => return,
             expr if expr.is_literal() => return,
             expr => {
-                self.target_symbol.replace(binding.symbol_id());
+                self.with_target_binding(Some(binding));
                 walk_expression(self, expr);
                 self.target_symbol = None;
             }
@@ -265,7 +428,18 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
         {
             return;
         }
+
+        if let ClassElement::PropertyDefinition(prop) = &el {
+            if prop.type_annotation.is_some() {
+                return;
+            }
+        }
+
+        let is_target = self.with_target_property(el.property_key());
         walk::walk_class_element(self, el);
+        if is_target {
+            self.target_symbol = None;
+        }
     }
 
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
@@ -275,21 +449,37 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
             self.visit_formal_parameters(m.value.as_ref().params.as_ref());
             return;
         }
+        walk::walk_method_definition(self, m);
     }
 
     fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        let f = AstKind::Function(self.alloc(func));
         let had_id = self.with_target_binding(func.id.as_ref());
+        self.enter_node(f);
 
         self.visit_formal_parameters(func.params.as_ref());
+
         if func.return_type.is_none() {
-            let span =
-                self.target_span().unwrap_or(Span::sized(func.span.start, "function".len() as u32));
-            self.ctx.diagnostic(func_missing_return_type(span));
+            self.check_function_without_return(func);
         }
 
+        self.leave_node(f);
         if had_id {
             self.target_symbol = None;
         }
+    }
+
+    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
+        let f = AstKind::ArrowFunctionExpression(self.alloc(arrow));
+        self.enter_node(f);
+
+        self.visit_formal_parameters(arrow.params.as_ref());
+
+        if arrow.return_type.is_none() {
+            self.check_arrow_without_return(arrow);
+        }
+
+        self.leave_node(f);
     }
 }
 
@@ -300,6 +490,60 @@ fn get_typed_inner_expression<'a, 'e>(expr: &'e Expression<'a>) -> &'e Expressio
         Expression::TSNonNullExpression(expr) => get_typed_inner_expression(&expr.expression),
         _ => expr,
     }
+}
+
+#[test]
+fn test_debug() {
+    use crate::tester::Tester;
+    use serde_json::{Value, json};
+    let pass: Vec<(&'static str, Option<Value>)> = vec![
+        //
+        // (
+        //     "export function fn() { return (): void => {}; }",
+        //     Some(json!([{ "allowHigherOrderFunctions": true }])),
+        // ),
+        (
+            "
+            export class Test {
+            
+               method() {
+                 return;
+               }
+            //   foo = () => {
+            //     bar: 5;
+            //   };
+            }
+            ",
+            Some(serde_json::json!([{ "allowedNames": ["prop", "method", "null", "foo"], }])),
+        ),
+        // (
+        //     "
+        //     export class Test {
+        //       get prop() {
+        //         return 1;
+        //       }
+        //       set prop(p) {}
+        //       method() {
+        //         return;
+        //       }
+        //       // prettier-ignore
+        //       'method'() {}
+        //       ['prop']() {}
+        //       [`prop`]() {}
+        //       [null]() {}
+        //       [`${v}`](): void {}
+
+        //       foo = () => {
+        //         bar: 5;
+        //       };
+        //     }
+        //     ",
+        //     Some(serde_json::json!([{ "allowedNames": ["prop", "method", "null", "foo"], }])),
+        // ),
+    ];
+    let fail: Vec<(&'static str, Option<Value>)> = vec![];
+    Tester::new(ExplicitModuleBoundaryTypes::NAME, ExplicitModuleBoundaryTypes::PLUGIN, pass, fail)
+        .test();
 }
 
 #[test]
@@ -680,7 +924,7 @@ fn test() {
               get prop() {
                 return 1;
               }
-              set prop() {}
+              set prop(p) {}
               method() {
                 return;
               }
@@ -1231,7 +1475,7 @@ fn test() {
               get prop() {
                 return 1;
               }
-              set prop() {}
+              set prop(p) {}
               method() {
                 return;
               }
@@ -1481,18 +1725,8 @@ fn test() {
             ",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
         ),
-        (
-            "
-            export function foo({ foo }): void {}
-            ",
-            None,
-        ),
-        (
-            "
-            export function foo([bar]): void {}
-            ",
-            None,
-        ),
+        ("export function foo({ foo }): void {}", None),
+        ("export function foo([bar]): void {}", None),
         ("export function foo(...bar): void {}", None),
         ("export function foo(...[a]): void {}", None),
         (
