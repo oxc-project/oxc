@@ -360,9 +360,7 @@ impl<'a> SourcemapBuilder<'a> {
                         for (chunk_byte_offset, ch) in remaining.char_indices() {
                             #[expect(clippy::cast_possible_truncation)]
                             let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            for _ in 0..ch.len_utf8() {
-                                columns.push(column);
-                            }
+                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
 
                             match ch {
                                 '\r' => {
