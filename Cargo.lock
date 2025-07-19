@@ -2030,6 +2030,7 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.77.2"
 dependencies = [
+ "base64",
  "cow-utils",
  "insta",
  "oxc_allocator",
