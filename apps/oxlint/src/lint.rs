@@ -22,6 +22,7 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    tsgolint::TsGoLintState,
     walk::Walk,
 };
 
@@ -280,6 +281,33 @@ impl Runner for LintRunner {
 
         let lint_config = config_builder.build();
 
+        // Enable type-aware linting if:
+        // 1) `--tsconfig` is passed
+        // 2) `tsgolint` appears to be installed
+        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        let type_aware = basic_options.tsconfig.is_some()
+            && (
+                // Check if `tsgolint` is executable
+                std::process::Command::new("tsgolint").arg("--help").output().is_ok()
+            );
+
+        let tsgolint_state = if type_aware {
+            Some(TsGoLintState {
+                cwd: options.cwd().to_path_buf(),
+                paths: paths.clone(),
+                rules: lint_config
+                    .rules()
+                    .iter()
+                    .filter_map(|(_rule, _status)| {
+                        // TODO: Implement checking if this is a tsgolint rule.
+                        None
+                    })
+                    .collect(),
+            })
+        } else {
+            None
+        };
+
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
@@ -336,6 +364,47 @@ impl Runner for LintRunner {
 
             lint_service.run(&tx_error);
         });
+
+        if type_aware
+            && let Some(tsgolint_state) = tsgolint_state
+            && let Some(tsconfig) = tsconfig
+        {
+            let handler = std::thread::spawn(move || {
+                // `./tsgolint headless --tsconfig /path/to/project/tsconfig.json --cwd /path/to/project
+                let mut child = std::process::Command::new("tsgolint")
+                    .arg("headless")
+                    .arg("--tsconfig")
+                    .arg(tsconfig)
+                    .arg("--cwd")
+                    .arg(tsgolint_state.cwd)
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .spawn()
+                    .expect("Failed to spawn tsgolint process");
+
+                let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+                std::thread::spawn(move || {
+                    // TODO: Implement JSON input.
+                    let json = serde_json::to_string(&"{}").expect("Failed to serialize JSON");
+
+                    stdin.write_all(json.as_bytes()).expect("Failed to write to tsgolint stdin");
+                });
+
+                // TODO: Implement output parsing.
+                child.wait_with_output().expect("Failed to wait for tsgolint process");
+            });
+
+            match handler.join() {
+                Ok(()) => {
+                    // Successfully ran tsgolint
+                }
+                Err(err) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+        }
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
