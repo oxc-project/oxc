@@ -1813,7 +1813,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 AstKind::PrivateFieldExpression(self.alloc(it))
             }
         };
-        self.enter_node(kind);
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
         if !self.current_reference_flags.is_write() {
