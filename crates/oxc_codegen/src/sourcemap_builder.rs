@@ -119,7 +119,7 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
-        if matches!(self.last_position, Some(last_position) if last_position == position) {
+        if self.last_position == Some(position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
