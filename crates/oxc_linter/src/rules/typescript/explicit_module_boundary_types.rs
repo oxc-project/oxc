@@ -24,14 +24,6 @@ use crate::{
     utils::default_true,
 };
 
-#[allow(unused)]
-fn explicit_module_boundary_types_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
-}
-
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
 }
@@ -52,14 +44,13 @@ impl From<Config> for ExplicitModuleBoundaryTypes {
 impl Deref for ExplicitModuleBoundaryTypes {
     type Target = Config;
     fn deref(&self) -> &Self::Target {
-        self.0.deref()
+        &self.0
     }
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 #[serde(rename_all = "camelCase")]
-#[allow(dead_code)]
 pub struct Config {
     /// Whether to ignore arguments that are explicitly typed as `any`.
     #[serde(default)]
@@ -81,6 +72,7 @@ pub struct Config {
     /// Whether to ignore return type annotations on functions with overload
     /// signatures.
     #[serde(default)]
+    #[cfg_attr(not(test), expect(dead_code))]
     allow_overload_functions: bool,
     /// Whether to ignore type annotations on the variable of a function
     /// expression.
@@ -223,7 +215,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
                         // nada
                     }
                     match_expression!(ExportDefaultDeclarationKind) => {
-                        self.run_on_exported_expression(ctx, &export.declaration.to_expression());
+                        self.run_on_exported_expression(ctx, export.declaration.to_expression());
                     }
                 }
             }
@@ -254,17 +246,17 @@ impl ExplicitModuleBoundaryTypes {
                 let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
                 match decl.kind() {
                     AstKind::VariableDeclaration(it) => {
-                        walk::walk_variable_declaration(&mut checker, it)
+                        walk::walk_variable_declaration(&mut checker, it);
                     }
                     AstKind::VariableDeclarator(it) => {
                         checker.visit_variable_declarator(it);
                         // walk::walk_variable_declarator(&mut checker, it)
                     }
                     AstKind::Function(it) => {
-                        walk::walk_function(&mut checker, it, ScopeFlags::Function)
+                        walk::walk_function(&mut checker, it, ScopeFlags::Function);
                     }
                     AstKind::Class(it) => walk::walk_class(&mut checker, it),
-                    _ => println!("{}", decl.kind().debug_name()),
+                    _ => {}
                 }
             }
             Expression::ArrowFunctionExpression(arrow) => {
@@ -290,12 +282,13 @@ impl ExplicitModuleBoundaryTypes {
 }
 
 #[derive(Clone, Copy)]
+#[expect(clippy::enum_variant_names)]
 enum Fn<'a> {
     Fn(&'a Function<'a>),
     Arrow(&'a ArrowFunctionExpression<'a>),
     None,
 }
-impl<'a> Fn<'a> {
+impl Fn<'_> {
     fn address(self) -> Option<Address> {
         match self {
             Fn::Fn(f) => Some(Address::from_ptr(f)),
@@ -365,15 +358,10 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
         let target_span = self.target_symbol.as_ref();
         let target_name = target_span.map(|t| t.name);
-        let span = target_span
-            .map(|t| t.span)
-            .unwrap_or(Span::sized(func.span.start, "function".len() as u32));
-        let is_allowed = || {
-            func.name()
-                .map(Into::into)
-                .or(target_name)
-                .is_some_and(|name| self.rule.is_allowed_name(&name))
-        };
+        #[expect(clippy::cast_possible_truncation)]
+        let span =
+            target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
+        let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
 
         if !self.rule.allow_higher_order_functions {
             if !is_allowed() {
@@ -387,7 +375,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         walk::walk_function_body(self, body);
         let is_hof = self.is_higher_order_function(Address::from_ptr(func));
         if !is_hof && !is_allowed() {
-            self.ctx.diagnostic(func_missing_return_type(span))
+            self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
@@ -395,8 +383,8 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         debug_assert!(arrow.return_type.is_none());
         let target_span = self.target_symbol.as_ref();
         let target_name = target_span.map(|t| t.name);
-        let span = target_span.map(|t| t.span).unwrap_or(arrow.params.span);
-        let is_allowed = || target_name.is_some_and(|name| self.rule.is_allowed_name(&name));
+        let span = target_span.map_or(arrow.params.span, |t| t.span);
+        let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
             if !is_allowed() {
@@ -415,8 +403,6 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             };
 
             let mut curr = get_typed_inner_expression(expr);
-            let src: &str = self.ctx.source_range(curr.span());
-            println!("{src}");
             loop {
                 match curr {
                     // `export const foo = () => 1 as const`
@@ -442,12 +428,11 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
                 }
             }
-            unreachable!();
         } else {
             walk::walk_function_body(self, &arrow.body);
             let is_hof = self.is_higher_order_function(Address::from_ptr(arrow));
             if !is_hof && !is_allowed() {
-                self.ctx.diagnostic(func_missing_return_type(span))
+                self.ctx.diagnostic(func_missing_return_type(span));
             }
         }
     }
@@ -465,7 +450,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     }
 }
 
-impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
+impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::Function(f) => self.fns.push(Fn::Fn(f)),
@@ -480,9 +465,11 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
                 };
                 let Some(addr) = f.address() else {
                     // e.g. something like
-                    // function foo() {
-                    //     class C { return; }
-                    // }
+                    //
+                    //     function foo() {
+                    //         class C { return; }
+                    //     }
+                    //
                     // which also doesn't make sense.
                     debug_assert!(
                         false,
@@ -491,7 +478,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
                     return;
                 };
                 let returns = self.fn_returns.entry(addr).or_default();
-                returns.push(ret)
+                returns.push(ret);
             }
             _ => {}
         }
@@ -526,9 +513,8 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
 
         match get_typed_inner_expression(init) {
             // we consider these well-typed
-            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => return,
-            // Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => return,
-            expr if expr.is_literal() => return,
+            Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => {}
+            expr if expr.is_literal() => {}
             expr => {
                 self.with_target_binding(Some(binding));
                 walk_expression(self, expr);
@@ -589,7 +575,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         let f = AstKind::Function(self.alloc(func));
-        let id = dbg!(func.id.as_ref());
+        let id = func.id.as_ref();
         let had_id = self.with_target_binding(id);
         self.enter_node(f);
 
@@ -617,7 +603,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
     }
 
     fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
-        for param in it.items.iter() {
+        for param in &it.items {
             self.visit_formal_parameter(param);
         }
         if let Some(rest) = &it.rest {
@@ -630,9 +616,8 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
                     self.ctx.diagnostic(func_argument_is_explicitly_any(it.span));
                 }
                 return;
-            } else {
-                self.ctx.diagnostic(func_missing_argument_type(it.span));
             }
+            self.ctx.diagnostic(func_missing_argument_type(it.span));
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
