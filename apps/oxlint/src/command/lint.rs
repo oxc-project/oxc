@@ -49,6 +49,9 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    #[bpaf(external)]
+    pub experimental_options: ExperimentalOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
@@ -83,6 +86,14 @@ pub struct BasicOptions {
     /// Initialize oxlint configuration with default values
     #[bpaf(switch, hide_usage)]
     pub init: bool,
+}
+
+/// Experimental flags
+#[derive(Debug, Clone, Bpaf)]
+pub struct ExperimentalOptions {
+    /// Enable linting with `tsgolint` for rules that require type information
+    #[bpaf(switch, hide_usage)]
+    pub experimental_tsgolint: bool,
 }
 
 // This is formatted according to
@@ -363,7 +374,7 @@ pub enum ReportUnusedDirectives {
         /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
         /// Only one of these two options can be used at a time.
         #[bpaf(
-            long("report-unused-disable-directives-severity"), 
+            long("report-unused-disable-directives-severity"),
             argument::<String>("SEVERITY"),
             guard(|s| AllowWarnDeny::try_from(s.as_str()).is_ok(), "Invalid severity value"),
             map(|s| AllowWarnDeny::try_from(s.as_str()).unwrap()), // guard ensures try_from will be Ok
@@ -562,6 +573,14 @@ mod lint_options {
         assert!(options.disable_nested_config);
         let options = get_lint_options(".");
         assert!(!options.disable_nested_config);
+    }
+
+    #[test]
+    fn tsgolint() {
+        let options = get_lint_options("--experimental-tsgolint");
+        assert!(options.experimental_options.experimental_tsgolint);
+        let options = get_lint_options(".");
+        assert!(!options.experimental_options.experimental_tsgolint);
     }
 }
 
