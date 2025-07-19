@@ -22,6 +22,7 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    tsgolint::TsGoLintState,
     walk::Walk,
 };
 
@@ -65,8 +66,11 @@ impl Runner for LintRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            experimental_options,
             ..
         } = self.options;
+
+        let tsgolint_enabled: bool = experimental_options.experimental_tsgolint;
 
         let external_linter = self.external_linter.as_ref();
 
@@ -280,6 +284,23 @@ impl Runner for LintRunner {
 
         let lint_config = config_builder.build();
 
+        let tsgolint_state = if tsgolint_enabled {
+            Some(TsGoLintState {
+                cwd: options.cwd().to_path_buf(),
+                paths: paths.clone(),
+                rules: lint_config
+                    .rules()
+                    .iter()
+                    .filter_map(|(_rule, _status)| {
+                        // TODO: Implement checking if this is a tsgolint rule.
+                        None
+                    })
+                    .collect(),
+            })
+        } else {
+            None
+        };
+
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
@@ -336,6 +357,52 @@ impl Runner for LintRunner {
 
             lint_service.run(&tx_error);
         });
+
+        if tsgolint_enabled && let Some(tsgolint_state) = tsgolint_state {
+            let Some(tsconfig) = tsconfig else {
+                print_and_flush_stdout(
+                    stdout,
+                    "No valid tsconfig.json found. Running with `--experimental-tsgolint` requires passing a tsconfig.json with `--tsconfig`.\n",
+                );
+                return CliRunResult::InvalidOptionTsConfig;
+            };
+
+            let handler = std::thread::spawn(move || {
+                // `./tsgolint headless --tsconfig /path/to/project/tsconfig.json --cwd /path/to/project
+                let mut child = std::process::Command::new("tsgolint")
+                    .arg("headless")
+                    .arg("--tsconfig")
+                    .arg(tsconfig)
+                    .arg("--cwd")
+                    .arg(tsgolint_state.cwd)
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .spawn()
+                    .expect("Failed to spawn tsgolint process");
+
+                let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+                std::thread::spawn(move || {
+                    // TODO: Implement JSON input.
+                    let json = serde_json::to_string(&"{}").expect("Failed to serialize JSON");
+
+                    stdin.write_all(json.as_bytes()).expect("Failed to write to tsgolint stdin");
+                });
+
+                // TODO: Implement output parsing.
+                child.wait_with_output().expect("Failed to wait for tsgolint process");
+            });
+
+            match handler.join() {
+                Ok(_) => {
+                    // Successfully ran tsgolint
+                }
+                Err(err) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {:?}", err));
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+        }
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
