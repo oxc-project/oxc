@@ -118,18 +118,18 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
-            (member_expr, AstKind::SimpleAssignmentTarget(_))
+            (member_expr, AstKind::IdentifierReference(_))
                 if member_expr.is_member_expression_kind() => {}
             (
-                AstKind::SimpleAssignmentTarget(_),
+                AstKind::IdentifierReference(_),
                 AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_),
+                | AstKind::IdentifierReference(_),
             ) => {}
             (
                 AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_),
+                | AstKind::IdentifierReference(_),
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
@@ -139,7 +139,7 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyProperty(_),
             ) => return false,
-            (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(assign_expr)) => {
+            (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(assign_expr)) => {
                 if matches!(assign_expr.operator, AssignmentOperator::Assign) {
                     return false;
                 }

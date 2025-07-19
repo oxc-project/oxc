@@ -42,7 +42,10 @@ impl Symbol<'_, '_> {
                 AstKind::ParenthesizedExpression(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::BindingIdentifier(_)
-                | AstKind::SimpleAssignmentTarget(_)
+                | AstKind::IdentifierReference(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_) => {}
