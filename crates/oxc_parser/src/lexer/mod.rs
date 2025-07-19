@@ -25,6 +25,7 @@ mod punctuation;
 mod regex;
 mod search;
 mod source;
+mod state_machine;
 mod string;
 mod template;
 mod token;
