@@ -120,6 +120,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             | AstKind::TSNonNullExpression(_)
             | AstKind::TSTypeAssertion(_)
             | AstKind::ComputedMemberExpression(_)
+            | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
                 let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node.id());
 
