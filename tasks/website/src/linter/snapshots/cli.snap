@@ -3,7 +3,7 @@ source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[**`--type-aware`**\] \[_`PATH`_\]...
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
@@ -141,6 +141,8 @@ Arguments:
   list all the rules that are currently registered
 - **`    --disable-nested-config`** &mdash; 
   Disables the automatic loading of nested configuration files.
+- **`    --type-aware`** &mdash; 
+  Enables type-aware linting. Requires `tsgolint` to be installed.
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 
