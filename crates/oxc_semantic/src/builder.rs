@@ -1791,7 +1791,28 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
-        let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
+        let kind = match it {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => {
+                AstKind::IdentifierReference(self.alloc(it))
+            }
+            SimpleAssignmentTarget::TSAsExpression(it) => AstKind::TSAsExpression(self.alloc(it)),
+            SimpleAssignmentTarget::TSSatisfiesExpression(it) => {
+                AstKind::TSSatisfiesExpression(self.alloc(it))
+            }
+            SimpleAssignmentTarget::TSNonNullExpression(it) => {
+                AstKind::TSNonNullExpression(self.alloc(it))
+            }
+            SimpleAssignmentTarget::TSTypeAssertion(it) => AstKind::TSTypeAssertion(self.alloc(it)),
+            SimpleAssignmentTarget::ComputedMemberExpression(it) => {
+                AstKind::ComputedMemberExpression(self.alloc(it))
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(it) => {
+                AstKind::StaticMemberExpression(self.alloc(it))
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(it) => {
+                AstKind::PrivateFieldExpression(self.alloc(it))
+            }
+        };
         self.enter_node(kind);
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.

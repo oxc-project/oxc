@@ -113,7 +113,14 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
         let parent_node = self.ast_nodes.parent_node(node.id());
         match parent_node.kind() {
-            AstKind::SimpleAssignmentTarget(_) => {
+            // TODO: investigate if all these need to be checked from SimpleAssignmentTarget
+            AstKind::IdentifierReference(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::ComputedMemberExpression(_)
+            | AstKind::StaticMemberExpression(_) => {
                 let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node.id());
 
                 match grand_parent_node_kind {

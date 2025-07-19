@@ -187,7 +187,15 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
-                AstKind::SimpleAssignmentTarget(_)
+                // TODO: investigate if all these need to be checked from SimpleAssignmentTarget
+                AstKind::IdentifierReference(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                // END OF CHANGES
                 | AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
