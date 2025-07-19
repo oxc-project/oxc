@@ -1935,6 +1935,9 @@ pub struct ArrowFunctionExpression<'a> {
     #[builder(default)]
     #[estree(skip)]
     pub pure: bool,
+    #[builder(default)]
+    #[estree(skip)]
+    pub pife: bool,
 }
 
 /// Generator Function Definitions

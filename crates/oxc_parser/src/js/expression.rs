@@ -226,11 +226,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen);
 
         // ParenthesizedExpression is from acorn --preserveParens
-        let expression = if expressions.len() == 1 {
+        let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
             self.ast.expression_sequence(expr_span, expressions)
         };
+
+        if let Expression::ArrowFunctionExpression(arrow_expr) = &mut expression {
+            arrow_expr.pife = true;
+        }
 
         if self.options.preserve_parens {
             self.ast.expression_parenthesized(self.end_span(span), expression)

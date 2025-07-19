@@ -7551,6 +7551,11 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
         self.inner.pure
     }
 
+    #[inline]
+    pub fn pife(&self) -> bool {
+        self.inner.pife
+    }
+
     pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span()).fmt(f)
     }

@@ -3677,6 +3677,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
             pure: CloneIn::clone_in(&self.pure, allocator),
+            pife: CloneIn::clone_in(&self.pife, allocator),
         }
     }
 
@@ -3691,6 +3692,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
             scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
             pure: CloneIn::clone_in_with_semantic_ids(&self.pure, allocator),
+            pife: CloneIn::clone_in_with_semantic_ids(&self.pife, allocator),
         }
     }
 }
