@@ -64,7 +64,7 @@ impl Rule for NoImportAssign {
                         let parent_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let is_unary_expression_with_delete_operator = |kind| matches!(kind, AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete);
                         let parent_parent_kind = parent_parent_node.kind();
-                        if matches!(parent_parent_kind, AstKind::SimpleAssignmentTarget(_))
+                        if matches!(parent_parent_kind, AstKind::IdentifierReference(_))
                             // delete namespace.module
                             || is_unary_expression_with_delete_operator(parent_parent_kind)
                             // delete namespace?.module

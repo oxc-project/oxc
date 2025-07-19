@@ -468,7 +468,7 @@ impl Rule for ExhaustiveDeps {
                                 return false;
                             }
                             let grand_parent = ctx.nodes().parent_node(parent.id());
-                            matches!(grand_parent.kind(), AstKind::SimpleAssignmentTarget(_))
+                            matches!(grand_parent.kind(), AstKind::IdentifierReference(_))
                         })
                     });
 
@@ -1073,7 +1073,7 @@ fn is_stable_value<'a, 'b>(
                     .any(|reference| {
                         matches!(
                             ctx.nodes().parent_kind(reference.node_id()),
-                            AstKind::SimpleAssignmentTarget(_)
+                            AstKind::IdentifierReference(_)
                         )
                     })
             {

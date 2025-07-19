@@ -380,7 +380,7 @@ fn is_function_maybe_reassigned<'a>(
     ctx: &'a LintContext<'_>,
 ) -> bool {
     ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
-        matches!(ctx.nodes().parent_kind(reference.node_id()), AstKind::SimpleAssignmentTarget(_))
+        matches!(ctx.nodes().parent_kind(reference.node_id()), AstKind::IdentifierReference(_))
     })
 }
 

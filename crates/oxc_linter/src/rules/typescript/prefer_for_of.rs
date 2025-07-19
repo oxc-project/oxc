@@ -187,7 +187,7 @@ impl Rule for PreferForOf {
             let parent = nodes.parent_node(ref_id);
             let grand_parent = nodes.parent_node(parent.id());
             match grand_parent.kind() {
-                AstKind::SimpleAssignmentTarget(_) => {
+                AstKind::IdentifierReference(_) => {
                     return true;
                 }
                 AstKind::UnaryExpression(unary_expr)

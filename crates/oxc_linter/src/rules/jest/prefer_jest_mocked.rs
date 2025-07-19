@@ -125,8 +125,15 @@ impl PreferJestMocked {
 }
 
 fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    outermost_paren_parent(node, ctx)
-        .is_some_and(|parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
+    outermost_paren_parent(node, ctx).is_some_and(|parent| {
+        !matches!(
+            parent.kind(),
+            AstKind::IdentifierReference(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+        )
+    })
 }
 
 #[test]

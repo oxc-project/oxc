@@ -242,7 +242,7 @@ fn is_filter_call(call_expr: &CallExpression) -> bool {
 
 fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     match ctx.nodes().parent_kind(node.id()) {
-        AstKind::ArrayPattern(_) | AstKind::SimpleAssignmentTarget(_) => true,
+        AstKind::ArrayPattern(_) | AstKind::IdentifierReference(_) => true,
         AstKind::AssignmentExpression(expr) => expr.left.span() == node.span(),
         AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
         AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
