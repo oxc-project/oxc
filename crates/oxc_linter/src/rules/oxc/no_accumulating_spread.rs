@@ -219,7 +219,7 @@ fn check_loop_usage<'a>(
 
     let assignment_target = ctx.nodes().parent_node(write_reference.node_id());
 
-    let AstKind::SimpleAssignmentTarget(_) = assignment_target.kind() else { return };
+    let AstKind::IdentifierReference(_) = assignment_target.kind() else { return };
 
     let assignment_expr = ctx.nodes().parent_node(assignment_target.id());
 
