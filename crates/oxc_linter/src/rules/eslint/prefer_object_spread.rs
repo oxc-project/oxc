@@ -148,7 +148,8 @@ impl Rule for PreferObjectSpread {
                     AstKind::VariableDeclarator(_)
                         | AstKind::ArrayExpression(_)
                         | AstKind::ReturnStatement(_)
-                        | AstKind::Argument(_)
+                        // TODO:
+                        // | AstKind::Argument(_)
                         | AstKind::ObjectProperty(_)
                         | AstKind::AssignmentExpression(_)
                 );
