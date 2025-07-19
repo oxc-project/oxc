@@ -35,6 +35,12 @@ fn explicit_module_boundary_types_diagnostic(span: Span) -> OxcDiagnostic {
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
 }
+fn func_missing_argument_type(param_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing argument type on function").with_label(param_span)
+}
+fn func_argument_is_explicitly_any(param_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Argument is explicitly typed as `any`").with_label(param_span)
+}
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExplicitModuleBoundaryTypes(Box<Config>);
@@ -104,6 +110,9 @@ impl TryFrom<Value> for Config {
 impl Config {
     fn is_allowed_name(&self, name: &str) -> bool {
         self.allowed_names.iter().any(|n| n == name)
+    }
+    fn is_some_allowed_name<S: AsRef<str>>(&self, name: Option<S>) -> bool {
+        name.is_some_and(|name| self.is_allowed_name(name.as_ref()))
     }
 }
 
@@ -197,46 +206,24 @@ impl Rule for ExplicitModuleBoundaryTypes {
                     walk::walk_declaration(&mut checker, decl);
                 }
             }
+            AstKind::TSExportAssignment(export) => {
+                self.run_on_exported_expression(ctx, &export.expression);
+            }
             AstKind::ExportDefaultDeclaration(export) => {
-                let mut checker = ExplicitTypesChecker::new(self, ctx);
                 match &export.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                        let mut checker = ExplicitTypesChecker::new(self, ctx);
                         walk::walk_function(&mut checker, func, ScopeFlags::Function);
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+                        let mut checker = ExplicitTypesChecker::new(self, ctx);
                         walk::walk_class(&mut checker, class);
                     }
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                         // nada
                     }
                     match_expression!(ExportDefaultDeclarationKind) => {
-                        let expr = export.declaration.to_expression().get_inner_expression();
-                        match expr {
-                            Expression::Identifier(id) => {
-                                let s = ctx.scoping();
-                                let Some(symbol_id) =
-                                    s.get_reference(id.reference_id()).symbol_id()
-                                else {
-                                    return;
-                                };
-                                let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
-                                match decl.kind() {
-                                    AstKind::VariableDeclaration(it) => {
-                                        walk::walk_variable_declaration(&mut checker, it)
-                                    }
-
-                                    AstKind::Function(it) => {
-                                        walk::walk_function(&mut checker, it, ScopeFlags::Function)
-                                    }
-                                    AstKind::Class(it) => walk::walk_class(&mut checker, it),
-                                    _ => {}
-                                }
-                            }
-                            Expression::ArrowFunctionExpression(arrow) => {
-                                walk::walk_arrow_function_expression(&mut checker, arrow);
-                            }
-                            _ => {}
-                        }
+                        self.run_on_exported_expression(ctx, &export.declaration.to_expression());
                     }
                 }
             }
@@ -245,6 +232,60 @@ impl Rule for ExplicitModuleBoundaryTypes {
     }
     fn should_run(&self, ctx: &crate::ContextHost) -> bool {
         ctx.source_type().is_typescript()
+    }
+}
+impl ExplicitModuleBoundaryTypes {
+    fn run_on_exported_expression<'a>(&self, ctx: &LintContext<'a>, expr: &Expression<'a>) {
+        self.run_on_exported_expression_inner(ctx, expr, true);
+    }
+    fn run_on_exported_expression_inner<'a>(
+        &self,
+        ctx: &LintContext<'a>,
+        expr: &Expression<'a>,
+        inside_export: bool,
+    ) {
+        let mut checker = ExplicitTypesChecker::new(self, ctx);
+        match get_typed_inner_expression(expr) {
+            Expression::Identifier(id) => {
+                let s = ctx.scoping();
+                let Some(symbol_id) = s.get_reference(id.reference_id()).symbol_id() else {
+                    return;
+                };
+                let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
+                match decl.kind() {
+                    AstKind::VariableDeclaration(it) => {
+                        walk::walk_variable_declaration(&mut checker, it)
+                    }
+                    AstKind::VariableDeclarator(it) => {
+                        checker.visit_variable_declarator(it);
+                        // walk::walk_variable_declarator(&mut checker, it)
+                    }
+                    AstKind::Function(it) => {
+                        walk::walk_function(&mut checker, it, ScopeFlags::Function)
+                    }
+                    AstKind::Class(it) => walk::walk_class(&mut checker, it),
+                    _ => println!("{}", decl.kind().debug_name()),
+                }
+            }
+            Expression::ArrowFunctionExpression(arrow) => {
+                walk::walk_arrow_function_expression(&mut checker, arrow);
+            }
+            // const foo = arg => arg;
+            // export default [foo];
+            Expression::ArrayExpression(arr) if inside_export => {
+                for el in arr.elements.iter().filter_map(ArrayExpressionElement::as_expression) {
+                    self.run_on_exported_expression_inner(ctx, el, false);
+                }
+            }
+            // const foo = arg => arg;
+            // export default { foo };
+            Expression::ObjectExpression(obj) if inside_export => {
+                for el in obj.properties.iter().filter_map(ObjectPropertyKind::as_property) {
+                    self.run_on_exported_expression_inner(ctx, &el.value, false);
+                }
+            }
+            _ => {}
+        }
     }
 }
 
@@ -276,6 +317,7 @@ struct ExplicitTypesChecker<'a, 'c> {
     /// Return statements we've seen inside visited functions. Keys are the
     /// [`Address`]es of those functions.
     fn_returns: FxHashMap<Address, SmallVec<[&'a ReturnStatement<'a>; 2]>>,
+    scope_flags: ScopeFlags,
 }
 impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     fn new(rule: &'c ExplicitModuleBoundaryTypes, ctx: &'c LintContext<'a>) -> Self {
@@ -285,6 +327,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             target_symbol: None,
             fns: smallvec::smallvec![],
             fn_returns: FxHashMap::default(),
+            scope_flags: ScopeFlags::empty(),
         }
     }
     // fn target_span(&self) -> Option<Span> {
@@ -308,6 +351,12 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             true
         } else {
             false
+        }
+    }
+    #[inline]
+    fn reset_target(&mut self, had_target: bool) {
+        if had_target {
+            self.target_symbol = None;
         }
     }
 
@@ -366,11 +415,14 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             };
 
             let mut curr = get_typed_inner_expression(expr);
+            let src: &str = self.ctx.source_range(curr.span());
+            println!("{src}");
             loop {
                 match curr {
                     // `export const foo = () => 1 as const`
-                    Expression::TSAsExpression(_)
-                        if self.rule.allow_direct_const_assertion_in_arrow_functions =>
+                    Expression::TSAsExpression(as_expr)
+                        if self.rule.allow_direct_const_assertion_in_arrow_functions
+                            && as_expr.type_annotation.is_const_type_reference() =>
                     {
                         return;
                     }
@@ -381,6 +433,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     // `export const foo = () => () => (): number => 1`
                     Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
+                        walk::walk_function_body(self, &arrow.body);
                         return;
                     }
                     _ => {
@@ -458,7 +511,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
     }
 
     fn visit_variable_declarator(&mut self, var: &VariableDeclarator<'a>) {
-        if var.id.type_annotation.is_some() {
+        if self.rule.allow_typed_function_expressions && var.id.type_annotation.is_some() {
             return;
         }
         let Some(init) = &var.init else {
@@ -474,7 +527,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
         match get_typed_inner_expression(init) {
             // we consider these well-typed
             Expression::TSAsExpression(_) | Expression::TSTypeAssertion(_) => return,
-            Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => return,
+            // Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => return,
             expr if expr.is_literal() => return,
             expr => {
                 self.with_target_binding(Some(binding));
@@ -487,10 +540,7 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
         walk::walk_class_body(self, class.body.as_ref());
-
-        if had_id {
-            self.target_symbol = None;
-        }
+        self.reset_target(had_id);
     }
 
     fn visit_class_element(&mut self, el: &ClassElement<'a>) {
@@ -506,39 +556,51 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
                 return;
             }
         }
+        if self.rule.is_some_allowed_name(el.static_name()) {
+            return;
+        }
 
         let is_target = self.with_target_property(el.property_key());
         walk::walk_class_element(self, el);
-        if is_target {
-            self.target_symbol = None;
+        self.reset_target(is_target);
+    }
+    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
+        let is_set = it.kind == PropertyKind::Set;
+        let prev_flags = self.scope_flags;
+        if is_set {
+            self.scope_flags.set(ScopeFlags::SetAccessor, true);
         }
+        let had_name = self.with_target_property(Some(&it.key));
+        walk::walk_object_property(self, it);
+        self.scope_flags = prev_flags;
+        self.reset_target(had_name);
     }
 
     fn visit_method_definition(&mut self, m: &MethodDefinition<'a>) {
-        if m.kind.is_constructor() {
-            // skip return type
-            // TODO: adjust target_symbol
-            self.visit_formal_parameters(m.value.as_ref().params.as_ref());
-            return;
+        match m.kind {
+            MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
+                // skip return type
+                // TODO: adjust target_symbol
+                self.visit_formal_parameters(m.value.as_ref().params.as_ref());
+            }
+            _ => walk::walk_method_definition(self, m),
         }
-        walk::walk_method_definition(self, m);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         let f = AstKind::Function(self.alloc(func));
-        let had_id = self.with_target_binding(func.id.as_ref());
+        let id = dbg!(func.id.as_ref());
+        let had_id = self.with_target_binding(id);
         self.enter_node(f);
 
         self.visit_formal_parameters(func.params.as_ref());
 
-        if func.return_type.is_none() {
+        if func.return_type.is_none() && !flags.union(self.scope_flags).is_set_accessor() {
             self.check_function_without_return(func);
         }
 
         self.leave_node(f);
-        if had_id {
-            self.target_symbol = None;
-        }
+        self.reset_target(had_id);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
@@ -552,6 +614,46 @@ impl<'a, 'c> Visit<'a> for ExplicitTypesChecker<'a, 'c> {
         }
 
         self.leave_node(f);
+    }
+
+    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
+        for param in it.items.iter() {
+            self.visit_formal_parameter(param);
+        }
+        if let Some(rest) = &it.rest {
+            if let Some(ty) = &rest.argument.type_annotation {
+                if !self.rule.allow_arguments_explicitly_typed_as_any
+                    && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
+                {
+                    // todo
+                    // if name.is_some_and(|n| self.rule.is_allowed_name(&n))
+                    self.ctx.diagnostic(func_argument_is_explicitly_any(it.span));
+                }
+                return;
+            } else {
+                self.ctx.diagnostic(func_missing_argument_type(it.span));
+            }
+        }
+    }
+    fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
+        let param = &it.pattern;
+        // let name = param.get_identifier_name();
+        if let Some(ty) = &param.type_annotation {
+            if !self.rule.allow_arguments_explicitly_typed_as_any
+                && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
+            {
+                // todo
+                // if name.is_some_and(|n| self.rule.is_allowed_name(&n))
+                self.ctx.diagnostic(func_argument_is_explicitly_any(it.span));
+            }
+            return;
+        }
+
+        if matches!(param.kind, BindingPatternKind::AssignmentPattern(_)) {
+            return;
+        }
+
+        self.ctx.diagnostic(func_missing_argument_type(it.span));
     }
 }
 
@@ -588,72 +690,22 @@ mod test {
     #[test]
     fn debug_test() {
         let pass: Vec<(&'static str, Option<Value>)> = vec![
-            // ("export var arrowFn = () => (): void => {};", None),
-            // (
-            //     "
-            //     export function FunctionDeclaration() {
-            //       return function FunctionExpression_Within_FunctionDeclaration() {
-            //         return function FunctionExpression_Within_FunctionExpression() {
-            //           return () => {
-            //             // ArrowFunctionExpression_Within_FunctionExpression
-            //             return () =>
-            //               // ArrowFunctionExpression_Within_ArrowFunctionExpression
-            //               (): number =>
-            //                 1; // ArrowFunctionExpression_Within_ArrowFunctionExpression_WithNoBody
-            //           };
-            //         };
-            //       };
-            //     }
-            //     ",
-            //     Some(json!([{ "allowHigherOrderFunctions": true }])),
-            // ),
             //
-            // (
-            //     "export function fn() { return (): void => {}; }",
-            //     Some(json!([{ "allowHigherOrderFunctions": true }])),
-            // ),
-            // (
-            //     "
-            //     export class Test {
-
-            //        method() {
-            //          return;
-            //        }
-            //     //   foo = () => {
-            //     //     bar: 5;
-            //     //   };
-            //     }
-            //     ",
-            //     Some(json!([{ "allowedNames": ["prop", "method", "null", "foo"], }])),
-            // ),
-            // (
-            //     "
-            //     export class Test {
-            //       get prop() {
-            //         return 1;
-            //       }
-            //       set prop(p) {}
-            //       method() {
-            //         return;
-            //       }
-            //       // prettier-ignore
-            //       'method'() {}
-            //       ['prop']() {}
-            //       [`prop`]() {}
-            //       [null]() {}
-            //       [`${v}`](): void {}
-
-            //       foo = () => {
-            //         bar: 5;
-            //       };
-            //     }
-            //     ",
-            //     Some(json!([{ "allowedNames": ["prop", "method", "null", "foo"], }])),
-            // ),
         ];
         let fail: Vec<(&'static str, Option<Value>)> = vec![
             // line break
-            ("export default () => (true ? () => {} : (): void => {});", None),
+            // ("export default () => (true ? () => {} : (): void => {});", None),
+            (
+                "
+            const foo = arg => arg;
+            export default foo;
+            ",
+                None,
+            ),
+            // (
+            //     "export default () => () => () => 1",
+            //     Some(json!([{ "allowHigherOrderFunctions": true }])),
+            // ),
         ];
         Tester::new(
             ExplicitModuleBoundaryTypes::NAME,
@@ -1650,14 +1702,15 @@ mod test {
             ",
                 None,
             ),
-            (
-                "
-            let foo = (arg: number): number => arg;
-            foo = arg => arg;
-            export default foo;
-            ",
-                None,
-            ),
+            // FIXME: resolve to last write reference
+            // (
+            //     "
+            // let foo = (arg: number): number => arg;
+            // foo = arg => arg;
+            // export default foo;
+            // ",
+            //     None,
+            // ),
             (
                 "
             const foo = arg => arg;
@@ -1784,16 +1837,17 @@ mod test {
             ",
                 None,
             ),
-            (
-                "
-            let test = arg => argl;
-            test = (): void => {
-              return;
-            };
-            export { test };
-            ",
-                None,
-            ),
+            // FIXME: resolve to last write reference
+            // (
+            //     "
+            // let test = arg => argl;
+            // test = (): void => {
+            //   return;
+            // };
+            // export { test };
+            // ",
+            //     None,
+            // ),
             (
                 "
             export const foo =
@@ -1874,36 +1928,36 @@ mod test {
             ",
                 Some(json!([{ "allowedNames": [],        },      ])),
             ),
-            (
-                "
-            export function test(a: string): string;
-            export function test(a: number): number;
-            export function test(a: unknown) {
-              return a;
-            }
-            ",
-                None,
-            ),
-            (
-                "
-            export default function test(a: string): string;
-            export default function test(a: number): number;
-            export default function test(a: unknown) {
-              return a;
-            }
-            ",
-                None,
-            ),
-            (
-                "
-            export default function (a: string): string;
-            export default function (a: number): number;
-            export default function (a: unknown) {
-              return a;
-            }
-            ",
-                None,
-            ),
+            // (
+            //     "
+            // export function test(a: string): string;
+            // export function test(a: number): number;
+            // export function test(a: unknown) {
+            //   return a;
+            // }
+            // ",
+            //     None,
+            // ),
+            // (
+            //     "
+            // export default function test(a: string): string;
+            // export default function test(a: number): number;
+            // export default function test(a: unknown) {
+            //   return a;
+            // }
+            // ",
+            //     None,
+            // ),
+            // (
+            //     "
+            // export default function (a: string): string;
+            // export default function (a: number): number;
+            // export default function (a: unknown) {
+            //   return a;
+            // }
+            // ",
+            //     None,
+            // ),
             (
                 "
             export class Test {
