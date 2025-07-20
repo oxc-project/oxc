@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.77.2",
+  "version": "0.77.3",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
