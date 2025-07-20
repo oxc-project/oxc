@@ -2122,24 +2122,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:18]
- 1 │ if (!!(a = b) || !!(c = d)) {}
-   ·                  ─────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
  1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
    ·     ───────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:24]
- 1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
-   ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
 
@@ -2150,24 +2136,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:20]
- 1 │ if (!!(a >>= b) && !!(c >>= d)) {}
-   ·                    ───────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
  1 │ if (Boolean(a **= b) && Boolean(c **= d)) {}
    ·     ────────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:25]
- 1 │ if (Boolean(a **= b) && Boolean(c **= d)) {}
-   ·                         ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
 
