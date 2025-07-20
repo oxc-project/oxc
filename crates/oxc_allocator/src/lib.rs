@@ -80,8 +80,11 @@ mod pool_fixed_size;
     target_endian = "little"
 ))]
 use pool_fixed_size as pool;
-// Import here so `generated/assert_layouts.rs` can access it
+// Import here so `generated/assert_layouts.rs` can access it.
+// Add `debug_assertions` here because `assert_layouts` is only loaded in debug mode,
+// so this is required to avoid unused vars lint warning in release mode.
 #[cfg(all(
+    debug_assertions,
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
