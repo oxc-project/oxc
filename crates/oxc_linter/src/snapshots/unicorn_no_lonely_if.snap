@@ -102,10 +102,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the inner `if` test to the outer `if` test.
 
   ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
-   ╭─[no_lonely_if.tsx:6:13]
+   ╭─[no_lonely_if.tsx:5:13]
+ 4 │             if (a ?? b)
  5 │             if (a ? b : c)
- 6 │             if (a = b)
    ·             ──
+ 6 │             if (a = b)
  7 │             if (a += b)
    ·             ──
  8 │             if (a -= b)
@@ -113,10 +114,12 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the inner `if` test to the outer `if` test.
 
   ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
-   ╭─[no_lonely_if.tsx:7:13]
+   ╭─[no_lonely_if.tsx:5:13]
+ 4 │             if (a ?? b)
+ 5 │             if (a ? b : c)
+   ·             ──
  6 │             if (a = b)
  7 │             if (a += b)
-   ·             ──
  8 │             if (a -= b)
    ·             ──
  9 │             if (a &&= b)
@@ -124,10 +127,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the inner `if` test to the outer `if` test.
 
   ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
-    ╭─[no_lonely_if.tsx:8:13]
+    ╭─[no_lonely_if.tsx:5:13]
+  4 │             if (a ?? b)
+  5 │             if (a ? b : c)
+    ·             ──
+  6 │             if (a = b)
   7 │             if (a += b)
   8 │             if (a -= b)
-    ·             ──
   9 │             if (a &&= b)
     ·             ──
  10 │             if (yield a)
@@ -135,10 +141,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the inner `if` test to the outer `if` test.
 
   ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
-    ╭─[no_lonely_if.tsx:9:13]
+    ╭─[no_lonely_if.tsx:5:13]
+  4 │             if (a ?? b)
+  5 │             if (a ? b : c)
+    ·             ──
+  6 │             if (a = b)
+  7 │             if (a += b)
   8 │             if (a -= b)
   9 │             if (a &&= b)
-    ·             ──
  10 │             if (yield a)
     ·             ──
  11 │             if (a, b);
