@@ -72,8 +72,11 @@ impl Rule for PreferArrayFind {
 
         if let AstKind::CallExpression(call_expr) = node.kind() {
             if is_method_call(call_expr, None, Some(&["shift"]), Some(0), Some(0)) {
-                if let Expression::CallExpression(filter_call_expr) =
-                    call_expr.callee.as_member_expression().unwrap().object().get_inner_expression()
+                if let Some(Expression::CallExpression(filter_call_expr)) = call_expr
+                    .callee
+                    .get_inner_expression()
+                    .as_member_expression()
+                    .map(|expression| expression.object().get_inner_expression())
                 {
                     if is_filter_call(filter_call_expr) {
                         ctx.diagnostic(prefer_array_find_diagnostic(
@@ -197,12 +200,11 @@ impl Rule for PreferArrayFind {
                     })
                 })
             {
-                if let Expression::CallExpression(filter_call_expr) = at_call_expr
+                if let Some(Expression::CallExpression(filter_call_expr)) = at_call_expr
                     .callee
-                    .as_member_expression()
-                    .unwrap()
-                    .object()
                     .get_inner_expression()
+                    .as_member_expression()
+                    .map(|expression| expression.object().get_inner_expression())
                 {
                     if is_filter_call(filter_call_expr) {
                         ctx.diagnostic(prefer_array_find_diagnostic(
@@ -216,12 +218,11 @@ impl Rule for PreferArrayFind {
         // `array.filter().pop()`
         if let AstKind::CallExpression(pop_call_expr) = node.kind() {
             if is_method_call(pop_call_expr, None, Some(&["pop"]), Some(0), Some(0)) {
-                if let Expression::CallExpression(filter_call_expr) = pop_call_expr
+                if let Some(Expression::CallExpression(filter_call_expr)) = pop_call_expr
                     .callee
-                    .as_member_expression()
-                    .unwrap()
-                    .object()
                     .get_inner_expression()
+                    .as_member_expression()
+                    .map(|expression| expression.object().get_inner_expression())
                 {
                     if is_filter_call(filter_call_expr) {
                         ctx.diagnostic(prefer_array_find_diagnostic(
@@ -427,6 +428,8 @@ fn test() {
         "array.filter().at(0)",
         "array.filter(foo, thisArgument, extraArgument).at(0)",
         "array.filter(...foo).at(0)",
+        // oxc-project/oxc#12399
+        "{a.pop!()}",
     ];
 
     let fail = vec![
@@ -609,6 +612,9 @@ fn test() {
 				)
 				// comment 6
 				;",
+        // oxc-project/oxc#12399
+        "array.filter(foo).pop!()",
+        "array.filter(foo)?.pop()",
     ];
 
     let _fix: Vec<(&'static str, &'static str, Option<serde_json::Value>)> = vec![
