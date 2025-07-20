@@ -220,11 +220,13 @@ impl IdLength {
         let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
+
         if !is_too_long && !is_too_short {
             return;
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
+
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
                 if import_specifier.imported.name() == import_specifier.local.name {
@@ -273,11 +275,13 @@ impl IdLength {
         let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
+
         if !is_too_long && !is_too_short {
             return;
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
+
         match parent_node.kind() {
             AstKind::ExportSpecifier(_)
             | AstKind::ImportAttribute(_)
@@ -288,10 +292,51 @@ impl IdLength {
             AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                let AstKind::IdentifierReference(_) = ctx.nodes().parent_kind(parent_node.id())
-                else {
+                // Check if the parent's parent is also a member expression
+                // If so, this is not the rightmost member in the chain
+                let parent_parent = ctx.nodes().parent_node(parent_node.id());
+                if matches!(
+                    parent_parent.kind(),
+                    AstKind::StaticMemberExpression(_)
+                        | AstKind::ComputedMemberExpression(_)
+                        | AstKind::PrivateFieldExpression(_)
+                ) {
                     return;
-                };
+                }
+
+                // Check if any ancestor is an assignment target or identifier reference
+                let mut current_node = parent_node;
+                let mut is_assignment_target_or_reference = false;
+
+                loop {
+                    let ancestor = ctx.nodes().parent_node(current_node.id());
+                    let ancestor_kind = ancestor.kind();
+
+                    if matches!(ancestor_kind, AstKind::AssignmentExpression(_)) {
+                        is_assignment_target_or_reference = true;
+                        break;
+                    }
+
+                    if matches!(ancestor_kind, AstKind::IdentifierReference(_)) {
+                        is_assignment_target_or_reference = true;
+                        break;
+                    }
+
+                    // Stop if we reach a non-member expression or assignment target property
+                    if !matches!(
+                        ancestor_kind,
+                        AstKind::AssignmentTargetPropertyProperty(_)
+                            | AstKind::ObjectAssignmentTarget(_)
+                    ) {
+                        break;
+                    }
+
+                    current_node = ancestor;
+                }
+
+                if !is_assignment_target_or_reference {
+                    return;
+                }
 
                 if self.properties == PropertyKind::Never {
                     return;
