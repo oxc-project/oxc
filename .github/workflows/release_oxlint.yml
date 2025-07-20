@@ -103,7 +103,7 @@ jobs:
       - name: Build
         shell: bash
         env:
-          CC: clang # for mimalloc
+          TARGET_CC: clang # for mimalloc
         run: |
           cross build --release -p oxlint --bin oxlint --features allocator --target=${{ matrix.target }}
           cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}

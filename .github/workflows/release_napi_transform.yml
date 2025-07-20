@@ -6,8 +6,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - napi/transform/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+      - release-napi
+    # paths:
+      # - napi/transform/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
