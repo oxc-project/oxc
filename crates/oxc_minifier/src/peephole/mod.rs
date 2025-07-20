@@ -181,6 +181,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         }
     }
 
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = &mut Ctx::new(ctx);
+        Self::keep_track_of_empty_functions(stmt, ctx);
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;

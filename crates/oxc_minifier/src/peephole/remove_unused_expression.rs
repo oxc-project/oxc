@@ -953,7 +953,7 @@ mod test {
             treeshake: TreeShakeOptions { annotations: false, ..TreeShakeOptions::default() },
             ..default_options()
         };
-        test_same_options("function test() {} /* @__PURE__ */ test()", &options);
+        test_same_options("function test() { bar } /* @__PURE__ */ test()", &options);
         test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
 
         let options = CompressOptions {

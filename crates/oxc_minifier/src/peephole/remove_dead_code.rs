@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
+use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
@@ -53,6 +54,8 @@ impl<'a> PeepholeOptimizations {
                 self.remove_unused_assignment_expression(expr, state, ctx);
                 None
             }
+            Expression::CallExpression(call_expr) => self.remove_call_expression(call_expr, ctx),
+
             _ => None,
         } {
             *expr = folded_expr;
@@ -494,6 +497,70 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    pub fn keep_track_of_empty_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        match stmt {
+            Statement::FunctionDeclaration(func) => {
+                if let Some(body) = &func.body {
+                    if body.is_empty() {
+                        let symbol_id = func.id.as_ref().and_then(|id| id.symbol_id.get());
+                        Self::save_empty_function(symbol_id, ctx);
+                    }
+                }
+            }
+            Statement::VariableDeclaration(decl) => {
+                for d in &decl.declarations {
+                    if d.init.as_ref().is_some_and(|e|matches!(e, Expression::ArrowFunctionExpression(arrow) if arrow.body.is_empty())) {
+                        if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
+                            let symbol_id = id.symbol_id.get();
+                            Self::save_empty_function(symbol_id,ctx);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn save_empty_function(symbol_id: Option<SymbolId>, ctx: &mut Ctx<'a, '_>) {
+        if let Some(symbol_id) = symbol_id {
+            if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
+                ctx.state.empty_functions.insert(symbol_id);
+            }
+        }
+    }
+
+    fn remove_call_expression(
+        &self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::Identifier(ident) = &call_expr.callee {
+            if let Some(reference_id) = ident.reference_id.get() {
+                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
+                    if ctx.state.empty_functions.contains(&symbol_id) {
+                        if call_expr.arguments.is_empty() {
+                            return Some(ctx.ast.void_0(call_expr.span));
+                        }
+                        let mut exprs = ctx.ast.vec();
+                        for arg in call_expr.arguments.drain(..) {
+                            match arg {
+                                Argument::SpreadElement(e) => {
+                                    exprs.push(e.unbox().argument);
+                                }
+                                match_expression!(Argument) => {
+                                    exprs.push(arg.into_expression());
+                                }
+                            }
+                        }
+                        exprs.push(ctx.ast.void_0(call_expr.span));
+                        return Some(ctx.ast.expression_sequence(call_expr.span, exprs));
+                    }
+                }
+            }
+        }
+        None
+    }
+
     /// Whether the indirect access should be kept.
     /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
@@ -563,7 +630,10 @@ impl<'a> LatePeepholeOptimizations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions,
+        tester::{test, test_options, test_same},
+    };
 
     #[test]
     fn test_fold_block() {
@@ -769,5 +839,19 @@ mod test {
     #[test]
     fn remove_constant_value() {
         test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
+    }
+
+    #[test]
+    fn remove_empty_function() {
+        let options = CompressOptions::smallest();
+        test_options("function foo() {} foo()", "", &options);
+        test_options("function foo() {} foo(); foo()", "", &options);
+        test_options("var foo = () => {}; foo()", "", &options);
+        test_options("var foo = () => {}; foo(a)", "a", &options);
+        test_options("var foo = () => {}; foo(a, b)", "a, b", &options);
+        test_options("var foo = () => {}; foo(...a, b)", "a, b", &options);
+        test_options("var foo = () => {}; foo(...a, ...b)", "a, b", &options);
+        test_options("var foo = () => {}; x = foo()", "x = void 0", &options);
+        test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
     }
 }
