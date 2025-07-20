@@ -188,7 +188,6 @@ impl Gen for Statement<'_> {
 impl Gen for ExpressionStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -1388,7 +1387,7 @@ impl GenExpr for CallExpression<'_> {
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         let pure = self.pure && p.options.print_annotation_comment();
-        if precedence >= Precedence::Postfix && pure {
+        if !wrap && pure && precedence >= Precedence::Postfix {
             wrap = true;
         }
 
@@ -1401,7 +1400,6 @@ impl GenExpr for CallExpression<'_> {
             } else if is_statement {
                 p.start_of_stmt = p.code_len();
             }
-            p.add_source_mapping(self.span);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
                 p.print_str("?.");
@@ -1727,10 +1725,12 @@ impl GenExpr for UnaryExpression<'_> {
             let operator = self.operator.as_str();
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
+                p.add_source_mapping(self.span);
                 p.print_str(operator);
                 p.print_soft_space();
             } else {
                 p.print_space_before_operator(self.operator.into());
+                p.add_source_mapping(self.span);
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();

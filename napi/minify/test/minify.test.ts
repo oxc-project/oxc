@@ -11,7 +11,7 @@ describe('simple', () => {
     expect(ret).toStrictEqual({
       'code': 'function foo(){var e;e(void 0)}foo();',
       'map': {
-        'mappings': 'AACA,SAAS,KAAM,CAAE,IAAIA,EAAK,SAAc,AAAE,CAAC,KAAK',
+        'mappings': 'AACA,SAAS,KAAM,CAAE,IAAIA,EAAKA,EAAI,OAAU,AAAE,CAAC,KAAK',
         'names': [
           'bar',
         ],
