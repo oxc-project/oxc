@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression},
+    ast::{Expression, MemberExpression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -73,6 +73,30 @@ impl Rule for PreferRegexpTest {
             _ => return,
         };
 
+        match name.as_str() {
+            "match" => {
+                if member_expr.object().is_literal()
+                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+                {
+                    return;
+                }
+
+                if let Some(expr) = call_expr.arguments[0].as_expression() {
+                    if expr.is_literal() && !matches!(expr, Expression::RegExpLiteral(_)) {
+                        return;
+                    }
+                }
+            }
+            "exec" => {
+                if member_expr.object().is_literal()
+                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+                {
+                    return;
+                }
+            }
+            _ => unreachable!("expected match or test, got: {:?}", name),
+        }
+
         let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
         };
@@ -118,35 +142,196 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
             }
-            AstKind::WhileStatement(_)
-            | AstKind::DoWhileStatement(_)
-            | AstKind::IfStatement(_)
-            | AstKind::UnaryExpression(_) => {}
-            _ => return,
-        }
-
-        match name.as_str() {
-            "match" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
+            AstKind::WhileStatement(while_stmt) => {
+                // Check if the call expression is the right-hand side of an assignment in the while loop test
+                let test = &while_stmt.test;
+                match test {
+                    Expression::AssignmentExpression(assign_expr) => {
+                        if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                            if call_expr2.span() == call_expr.span() {
+                                return;
+                            }
+                        }
+                    }
+                    Expression::ParenthesizedExpression(paren_expr) => {
+                        if let Expression::AssignmentExpression(assign_expr) =
+                            &paren_expr.expression
+                        {
+                            if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                                if call_expr2.span() == call_expr.span() {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 }
-
-                if let Some(expr) = call_expr.arguments[0].as_expression() {
-                    if expr.is_literal() && !matches!(expr, Expression::RegExpLiteral(_)) {
-                        return;
+            }
+            AstKind::DoWhileStatement(do_while_stmt) => {
+                // Check if the call expression is the right-hand side of an assignment in the do-while loop test
+                let test = &do_while_stmt.test;
+                match test {
+                    Expression::AssignmentExpression(assign_expr) => {
+                        if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                            if call_expr2.span() == call_expr.span() {
+                                return;
+                            }
+                        }
+                    }
+                    Expression::ParenthesizedExpression(paren_expr) => {
+                        if let Expression::AssignmentExpression(assign_expr) =
+                            &paren_expr.expression
+                        {
+                            if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                                if call_expr2.span() == call_expr.span() {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            AstKind::IfStatement(_) | AstKind::UnaryExpression(_) => {
+                // Traverse all ancestors to check for assignment context
+                for ancestor in ctx.nodes().ancestors(node.id()) {
+                    if let AstKind::AssignmentExpression(assign_expr) = ancestor.kind() {
+                        if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                            if call_expr2.span() == call_expr.span() {
+                                return;
+                            }
+                        }
                     }
                 }
             }
-            "exec" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
+            _ => {
+                // Check if any ancestor is a DoWhileStatement
+                for ancestor in ctx.nodes().ancestors(node.id()) {
+                    if let AstKind::DoWhileStatement(do_while_stmt) = ancestor.kind() {
+                        // Check if the call expression is in the test field of the do-while statement
+                        let test = &do_while_stmt.test;
+                        match test {
+                            Expression::AssignmentExpression(assign_expr) => {
+                                if let Expression::CallExpression(call_expr2) = &assign_expr.right {
+                                    if call_expr2.span() == call_expr.span() {
+                                        return;
+                                    }
+                                }
+                            }
+                            Expression::ParenthesizedExpression(paren_expr) => {
+                                if let Expression::AssignmentExpression(assign_expr) =
+                                    &paren_expr.expression
+                                {
+                                    if let Expression::CallExpression(call_expr2) =
+                                        &assign_expr.right
+                                    {
+                                        if call_expr2.span() == call_expr.span() {
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                            Expression::CallExpression(call_expr2) => {
+                                if call_expr2.span() == call_expr.span() {
+                                    // This is a direct call expression in the do-while test, should be flagged
+                                    // Continue to flag the violation
+                                }
+                            }
+                            _ => {}
+                        }
+                        // Don't return early for DoWhileStatement, let it continue to flag if needed
+                    }
+                }
+
+                // Check if parent is Program and contains a DoWhileStatement with matching test
+                let mut found_direct_call_in_do_while = false;
+                if let AstKind::Program(program) = parent.kind() {
+                    for stmt in &program.body {
+                        if let Statement::DoWhileStatement(do_while_stmt) = stmt {
+                            let test = &do_while_stmt.test;
+                            match test {
+                                Expression::AssignmentExpression(assign_expr) => {
+                                    if let Expression::CallExpression(call_expr2) =
+                                        &assign_expr.right
+                                    {
+                                        if call_expr2.span() == call_expr.span() {
+                                            return;
+                                        }
+                                    }
+                                }
+                                Expression::ParenthesizedExpression(paren_expr) => {
+                                    if let Expression::AssignmentExpression(assign_expr) =
+                                        &paren_expr.expression
+                                    {
+                                        if let Expression::CallExpression(call_expr2) =
+                                            &assign_expr.right
+                                        {
+                                            if call_expr2.span() == call_expr.span() {
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                Expression::CallExpression(call_expr2) => {
+                                    if call_expr2.span() == call_expr.span() {
+                                        // This is a direct call expression in the do-while test, should be flagged
+                                        found_direct_call_in_do_while = true;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+
+                // Only flag if the call expression is in a boolean context
+                match parent.kind() {
+                    AstKind::LogicalExpression(_) => {
+                        // Check if the LogicalExpression is part of an assignment or variable declaration
+                        let current = parent;
+                        while let Some(ancestor) = outermost_paren_parent(current, ctx) {
+                            match ancestor.kind() {
+                                AstKind::VariableDeclarator(_)
+                                | AstKind::AssignmentExpression(_) => {
+                                    // This is part of an assignment, don't flag
+                                    return;
+                                }
+                                AstKind::LogicalExpression(_)
+                                | AstKind::UnaryExpression(_)
+                                | AstKind::IfStatement(_)
+                                | AstKind::WhileStatement(_)
+                                | AstKind::DoWhileStatement(_)
+                                | AstKind::ForStatement(_)
+                                | AstKind::ConditionalExpression(_) => {
+                                    // This is a boolean context, flag the violation
+                                    break;
+                                }
+                                _ => {
+                                    // Not a boolean context, don't flag
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    AstKind::UnaryExpression(_)
+                    | AstKind::IfStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ConditionalExpression(_) => {
+                        // This is a boolean context, flag the violation
+                    }
+                    _ => {
+                        // Not a boolean context, but check if we found a direct call in do-while
+                        if found_direct_call_in_do_while {
+                            // Flag the violation even though parent is not a boolean context
+                        } else {
+                            // Not a boolean context, don't flag
+                            return;
+                        }
+                    }
                 }
             }
-            _ => unreachable!("expected match or test, got: {:?}", name),
         }
 
         ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
