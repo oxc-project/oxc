@@ -89,10 +89,10 @@ pub fn try_fold_known_global_methods<'a>(
             try_fold_number_methods(arguments, object, name, ctx)
         }
         "sqrt" | "cbrt" => try_fold_roots(arguments, name, object, ctx),
-        "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
+        "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" | "clz32" => {
             try_fold_math_unary(arguments, name, object, ctx)
         }
-        "min" | "max" => try_fold_math_variadic(arguments, name, object, ctx),
+        "imul" | "min" | "max" => try_fold_math_variadic(arguments, name, object, ctx),
         _ => None,
     }
 }
@@ -478,6 +478,18 @@ fn try_fold_math_unary<'a>(
         "sign" if arg_val.to_bits() == 0f64.to_bits() => 0f64,
         "sign" if arg_val.to_bits() == (-0f64).to_bits() => -0f64,
         "sign" => arg_val.signum(),
+        #[expect(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation)]
+        "clz32" => {
+            let modulus = 2f64.powi(32);
+            let base = if arg_val < 0f64 {
+                let intermediate = arg_val % modulus;
+                if intermediate < 0f64 { intermediate + modulus } else { intermediate }
+            } else {
+                arg_val % modulus
+            } as u32;
+            f64::from(base.leading_zeros())
+        }
         _ => unreachable!(),
     };
     // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
@@ -499,28 +511,45 @@ fn try_fold_math_variadic<'a>(
         let value = expr.get_side_free_number_value(ctx)?;
         numbers.push(value);
     }
-    let result = if numbers.iter().any(|n: &f64| n.is_nan()) {
-        f64::NAN
-    } else {
-        match name {
-            // TODO
-            // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
-            "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
-                if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
-                    a
-                } else {
-                    b
+    let result = match name {
+        "min" | "max" => {
+            if numbers.iter().any(|n: &f64| n.is_nan()) {
+                f64::NAN
+            } else {
+                match name {
+                    // TODO
+                    // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
+                    "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
+                        if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
+                            a
+                        } else {
+                            b
+                        }
+                    }),
+                    "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
+                        if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
+                            a
+                        } else {
+                            b
+                        }
+                    }),
+                    _ => return None,
                 }
-            }),
-            "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
-                if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
-                    a
-                } else {
-                    b
-                }
-            }),
-            _ => return None,
+            }
         }
+        "imul" => {
+            if numbers.is_empty() {
+                return None;
+            }
+            if numbers.iter().take(2).any(|n| n.is_nan() || n.is_infinite()) {
+                0f64
+            } else {
+                let a = numbers.first().copied()?;
+                let b = numbers.get(1).copied().unwrap_or(f64::NAN);
+                f64::from(a.to_int_32().wrapping_mul(b.to_int_32()))
+            }
+        }
+        _ => return None,
     };
     Some(ConstantValue::Number(result))
 }
