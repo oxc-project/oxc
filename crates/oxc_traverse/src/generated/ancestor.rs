@@ -7332,6 +7332,8 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID: usize =
     offset_of!(ArrowFunctionExpression, scope_id);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PURE: usize =
     offset_of!(ArrowFunctionExpression, pure);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE: usize =
+    offset_of!(ArrowFunctionExpression, pife);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -7399,6 +7401,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     pub fn pure(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
         }
     }
 }
@@ -7478,6 +7487,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
         }
     }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
@@ -7555,6 +7571,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
         }
     }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
@@ -7630,6 +7653,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
     pub fn pure(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PIFE) as *const bool)
         }
     }
 }

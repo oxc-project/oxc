@@ -1633,7 +1633,7 @@ impl Gen for PropertyKey<'_> {
 
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign, |p| {
+        p.wrap(precedence >= Precedence::Assign || self.pife, |p| {
             if self.r#async {
                 p.print_space_before_identifier();
                 p.add_source_mapping(self.span);

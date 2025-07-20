@@ -364,7 +364,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`Expression::ArrowFunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`Expression::ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains an [`ArrowFunctionExpression`] that will be stored in the memory arena.
     ///
@@ -378,8 +378,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn expression_arrow_function_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn expression_arrow_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -390,6 +391,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -398,7 +400,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Expression::ArrowFunctionExpression(
-            self.alloc_arrow_function_expression_with_scope_id_and_pure(
+            self.alloc_arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
                 r#async,
@@ -408,6 +410,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
         )
     }
@@ -6067,6 +6070,7 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
             pure: Default::default(),
+            pife: Default::default(),
         }
     }
 
@@ -6114,10 +6118,10 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure`] instead.
+    /// use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6129,8 +6133,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -6141,6 +6146,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> ArrowFunctionExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -6158,13 +6164,14 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
             pure,
+            pife,
         }
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`, and store it in the memory arena.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6176,8 +6183,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn alloc_arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn alloc_arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -6188,6 +6196,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Box<'a, ArrowFunctionExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -6196,7 +6205,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Box::new_in(
-            self.arrow_function_expression_with_scope_id_and_pure(
+            self.arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
                 r#async,
@@ -6206,6 +6215,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
             self.allocator,
         )
