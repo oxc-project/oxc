@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 0920e98 codegen: Keep arrow function PIFEs (#12353) (sapphi-red)
+- b0db2d7 allocator: `FixedSizeAllocator` store flag recording if owned by both Rust and JS (#12381) (overlookmotel)
+- bc0fbe5 allocator: `AllocatorPool` store IDs in `Allocator`s (#12310) (overlookmotel)
+
+### 🚜 Refactor
+
+- c5dff1e linter, napi/parser: Add `source_len` field to `RawTransferMetadata` (#12383) (overlookmotel)
+- 5e3b415 linter: Duplicate `RawTransferMetadata` in `oxc_linter` crate (#12382) (overlookmotel)
+- 319fc3b allocator/fixed-size: Store `alloc_ptr` in the memory block backing the allocator (#12380) (overlookmotel)
+
+
 
 ## [0.77.1] - 2025-07-16
 

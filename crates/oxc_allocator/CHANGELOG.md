@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 6d2b549 napi/oxlint: Pass AST in buffer to JS (#12350) (overlookmotel)
+- b0db2d7 allocator: `FixedSizeAllocator` store flag recording if owned by both Rust and JS (#12381) (overlookmotel)
+- bc0fbe5 allocator: `AllocatorPool` store IDs in `Allocator`s (#12310) (overlookmotel)
+- de006a1 allocator: Add `Allocator::end_ptr` method (#12330) (overlookmotel)
+
+### 🚜 Refactor
+
+- 319fc3b allocator/fixed-size: Store `alloc_ptr` in the memory block backing the allocator (#12380) (overlookmotel)
+- 8fe1aec ast_tools, allocator, napi/parser: Rename vars (#12379) (overlookmotel)
+- dfe54b4 allocator: Move all fixed size allocator code into 1 file (#12309) (overlookmotel)
+
+
 
 ## [0.77.1] - 2025-07-16
 

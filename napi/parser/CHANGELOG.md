@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- bc0fbe5 allocator: `AllocatorPool` store IDs in `Allocator`s (#12310) (overlookmotel)
+
+### 🚜 Refactor
+
+- c5dff1e linter, napi/parser: Add `source_len` field to `RawTransferMetadata` (#12383) (overlookmotel)
+- 5e3b415 linter: Duplicate `RawTransferMetadata` in `oxc_linter` crate (#12382) (overlookmotel)
+- 319fc3b allocator/fixed-size: Store `alloc_ptr` in the memory block backing the allocator (#12380) (overlookmotel)
+- 8fe1aec ast_tools, allocator, napi/parser: Rename vars (#12379) (overlookmotel)
+
+
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- bc0fbe5 allocator: `AllocatorPool` store IDs in `Allocator`s (#12310) (overlookmotel)
+
+### 🚜 Refactor
+
+- c5dff1e linter, napi/parser: Add `source_len` field to `RawTransferMetadata` (#12383) (overlookmotel)
+- 5e3b415 linter: Duplicate `RawTransferMetadata` in `oxc_linter` crate (#12382) (overlookmotel)
+- 319fc3b allocator/fixed-size: Store `alloc_ptr` in the memory block backing the allocator (#12380) (overlookmotel)
+- 8fe1aec ast_tools, allocator, napi/parser: Rename vars (#12379) (overlookmotel)
+
+
 ## [0.77.2] - 2025-07-17
 
 ### 🚜 Refactor
