@@ -65,6 +65,10 @@ pub struct DiagnosticService {
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     max_warnings: Option<usize>,
 
+    /// Number of backends that are expected to send diagnostics. This is normally just 1, but
+    /// might be more if other linters are used (e.g., `tsgolint`).
+    num_backends: usize,
+
     sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
 }
@@ -74,7 +78,15 @@ impl DiagnosticService {
     /// provided [`DiagnosticReporter`].
     pub fn new(reporter: Box<dyn DiagnosticReporter>) -> Self {
         let (sender, receiver) = mpsc::channel();
-        Self { reporter, quiet: false, silent: false, max_warnings: None, sender, receiver }
+        Self {
+            reporter,
+            quiet: false,
+            silent: false,
+            max_warnings: None,
+            sender,
+            receiver,
+            num_backends: 1,
+        }
     }
 
     /// Set to `true` to only report errors and ignore warnings.
@@ -110,6 +122,18 @@ impl DiagnosticService {
     #[must_use]
     pub fn with_max_warnings(mut self, max_warnings: Option<usize>) -> Self {
         self.max_warnings = max_warnings;
+        self
+    }
+
+    /// Specify the number of backends that are expected to send diagnostics.
+    /// This is normally just 1, but might be more if other linters are used (e.g., `tsgolint`).
+    /// This is used to determine when the service can stop listening for messages, as each service
+    /// must send `None` to indicate it has finished processing.
+    ///
+    /// Default: `1`
+    #[must_use]
+    pub fn with_num_backends(mut self, num_backends: usize) -> Self {
+        self.num_backends = num_backends;
         self
     }
 
@@ -194,7 +218,19 @@ impl DiagnosticService {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
-        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+        let mut num_backends_finished = 0;
+
+        while let Ok(msg) = self.receiver.recv() {
+            let Some((path, diagnostics)) = msg else {
+                num_backends_finished += 1;
+
+                // Stop processing diagnostics when all backends have reported as finished.
+                if num_backends_finished >= self.num_backends {
+                    break;
+                }
+
+                continue;
+            };
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);

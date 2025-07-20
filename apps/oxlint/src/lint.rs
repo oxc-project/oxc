@@ -15,6 +15,7 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    read_to_string,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -22,7 +23,7 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintInput, TsGoLintInputFile, TsGoLintState, parse_tsgolint_output},
     walk::Walk,
 };
 
@@ -342,8 +343,10 @@ impl Runner for LintRunner {
         }
 
         let mut diagnostic_service =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options)
+                .with_num_backends(if type_aware { 2 } else { 1 });
         let tx_error = diagnostic_service.sender().clone();
+        let tsgolint_error_sender = diagnostic_service.sender().clone();
 
         let number_of_rules = linter.number_of_rules();
 
@@ -369,6 +372,28 @@ impl Runner for LintRunner {
             && let Some(tsgolint_state) = tsgolint_state
             && let Some(tsconfig) = tsconfig
         {
+            // Feed JSON into STDIN of tsgolint in this format:
+            // ```
+            // {
+            //   "files": [
+            //     {
+            //       "file_path": "/absolute/path/to/file.ts",
+            //       "rules": ["rule-1", "another-rule"]
+            //     }
+            //   ]
+            // }
+            // ```
+            let json_input = TsGoLintInput {
+                files: tsgolint_state
+                    .paths
+                    .iter()
+                    .map(|path| TsGoLintInputFile {
+                        file_path: path.to_string_lossy().to_string(),
+                        rules: tsgolint_state.rules.iter().map(|r| r.name().to_owned()).collect(),
+                    })
+                    .collect(),
+            };
+
             let handler = std::thread::spawn(move || {
                 // `./tsgolint headless --tsconfig /path/to/project/tsconfig.json --cwd /path/to/project
                 let mut child = std::process::Command::new("tsgolint")
@@ -376,7 +401,7 @@ impl Runner for LintRunner {
                     .arg("--tsconfig")
                     .arg(tsconfig)
                     .arg("--cwd")
-                    .arg(tsgolint_state.cwd)
+                    .arg(&tsgolint_state.cwd)
                     .stdin(std::process::Stdio::piped())
                     .stdout(std::process::Stdio::piped())
                     .spawn()
@@ -385,19 +410,72 @@ impl Runner for LintRunner {
                 let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
 
                 std::thread::spawn(move || {
-                    // TODO: Implement JSON input.
-                    let json = serde_json::to_string(&"{}").expect("Failed to serialize JSON");
+                    let json =
+                        serde_json::to_string(&json_input).expect("Failed to serialize JSON");
 
                     stdin.write_all(json.as_bytes()).expect("Failed to write to tsgolint stdin");
                 });
 
-                // TODO: Implement output parsing.
-                child.wait_with_output().expect("Failed to wait for tsgolint process");
+                // TODO: Stream diagnostics as they are emitted, rather than waiting
+                let output = child.wait_with_output().expect("Failed to wait for tsgolint process");
+
+                match parse_tsgolint_output(&output.stdout) {
+                    Ok(parsed) => {
+                        let oxc_diagnostics = parsed
+                            .into_iter()
+                            .map(|tsgolint_diagnostic| {
+                                (tsgolint_diagnostic.file_path.clone(), tsgolint_diagnostic.into())
+                            })
+                            // group diagnostics by file path
+                            .fold(
+                                FxHashMap::default(),
+                                |mut acc: FxHashMap<PathBuf, Vec<OxcDiagnostic>>,
+                                 (file_path, diagnostic)| {
+                                    acc.entry(file_path).or_default().push(diagnostic);
+
+                                    acc
+                                },
+                            )
+                            .into_iter()
+                            .map(|(file_path, diagnostics)| {
+                                (
+                                    file_path.clone(),
+                                    DiagnosticService::wrap_diagnostics(
+                                        tsgolint_state.cwd.clone(),
+                                        file_path.clone(),
+                                        &read_to_string(&file_path)
+                                            .unwrap_or_else(|_| String::new()),
+                                        0,
+                                        diagnostics,
+                                    ),
+                                )
+                            })
+                            .collect::<FxHashMap<_, _>>();
+
+                        for (file_path, diagnostics) in oxc_diagnostics {
+                            tsgolint_error_sender
+                                .send(Some((file_path, diagnostics)))
+                                .expect("Failed to send diagnostic");
+                        }
+
+                        tsgolint_error_sender.send(None).unwrap(); // Done linting
+                        Ok(())
+                    }
+
+                    Err(err) => {
+                        tsgolint_error_sender.send(None).unwrap(); // Done linting
+                        Err(format!("Failed to parse tsgolint output: {err}"))
+                    }
+                }
             });
 
             match handler.join() {
-                Ok(()) => {
+                Ok(Ok(())) => {
                     // Successfully ran tsgolint
+                }
+                Ok(Err(err)) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
+                    return CliRunResult::TsGoLintError;
                 }
                 Err(err) => {
                     print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
