@@ -85,7 +85,6 @@ impl Rule for NoParameterProperties {
             ctx.diagnostic_with_suggestion(
                 no_parameter_properties_diagnostic(property.span),
                 |fixer| {
-                    // Calculate the span to delete (from start of modifiers to start of pattern)
                     let start = property.span.start;
                     let pattern_start = property.pattern.span().start;
                     let modifier_span = Span::new(start, pattern_start);

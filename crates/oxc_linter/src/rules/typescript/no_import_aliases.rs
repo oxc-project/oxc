@@ -54,9 +54,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoImportAliases {
-    //     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
-    // }
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSImportEqualsDeclaration(import_decl) = node.kind() {
             if import_decl.import_kind == ImportOrExportKind::Type {
