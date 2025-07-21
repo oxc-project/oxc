@@ -34,8 +34,8 @@ mod import {
     pub mod no_self_import;
     pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
-    pub mod prefer_default_export;
     pub mod order;
+    pub mod prefer_default_export;
     pub mod unambiguous;
 }
 
