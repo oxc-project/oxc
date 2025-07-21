@@ -337,10 +337,6 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
     unsafe { System.dealloc(alloc_ptr.as_ptr(), ALLOC_LAYOUT) }
 }
 
-// SAFETY: `Allocator` is `Send`.
-// Moving `alloc_ptr: NonNull<u8>` across threads along with the `Allocator` is safe.
-unsafe impl Send for FixedSizeAllocator {}
-
 impl Allocator {
     /// Get pointer to the `FixedSizeAllocatorMetadata` for this [`Allocator`].
     ///
