@@ -50,7 +50,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         Self { string, span, jsx, parent_kind }
     }
 
-    pub fn clean_text(&self, f: &mut Formatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
+    pub fn clean_text(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_type = f.context().source_type();
         let options = f.options();
         let chosen_quote_style =
@@ -60,15 +60,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         let mut string_cleaner =
             LiteralStringNormaliser::new(*self, chosen_quote_style, chosen_quote_properties);
 
-        let content = string_cleaner.normalise_text(source_type);
-        let normalized_text_width = content.width();
-
-        CleanedStringLiteralText {
-            string: self.string,
-            text: content,
-            span: self.span,
-            width: normalized_text_width,
-        }
+        string_cleaner.normalise_text(source_type, f)
     }
 }
 
@@ -93,7 +85,7 @@ impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f).fmt(f)
+        self.clean_text(f)
     }
 }
 
@@ -207,31 +199,42 @@ impl<'a> LiteralStringNormaliser<'a> {
         Self { token, chosen_quote_style, chosen_quote_properties }
     }
 
-    fn normalise_text(&mut self, source_type: SourceType) -> Cow<'a, str> {
+    fn normalise_text(
+        &mut self,
+        source_type: SourceType,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
         let str_info = self.token.compute_string_information(self.chosen_quote_style);
         match self.token.parent_kind {
-            StringLiteralParentKind::Expression => self.normalise_string_literal(str_info),
-            StringLiteralParentKind::Directive => self.normalise_directive(str_info),
-            StringLiteralParentKind::ImportAttribute => self.normalise_import_attribute(str_info),
-            StringLiteralParentKind::Member => self.normalise_type_member(str_info, source_type),
+            StringLiteralParentKind::Expression => self.normalise_string_literal(str_info, f),
+            StringLiteralParentKind::Directive => self.normalise_directive(str_info, f),
+            StringLiteralParentKind::ImportAttribute => {
+                self.normalise_import_attribute(str_info, f)
+            }
+            StringLiteralParentKind::Member => self.normalise_type_member(str_info, source_type, f),
         }
     }
 
     fn normalise_import_attribute(
         &mut self,
         string_information: StringInformation,
-    ) -> Cow<'a, str> {
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
         let quoteless = self.raw_content();
         let can_remove_quotes =
             !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            dynamic_text(quoteless).fmt(f)
         } else {
-            self.normalise_string_literal(string_information)
+            self.normalise_string_literal(string_information, f)
         }
     }
 
-    fn normalise_directive(&mut self, string_information: StringInformation) -> Cow<'a, str> {
+    fn normalise_directive(
+        &mut self,
+        string_information: StringInformation,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
         // In diretcives, unnecessary escapes should be preserved.
         // See https://github.com/prettier/prettier/issues/1555
         // Thus we don't normalise the string.
@@ -242,9 +245,9 @@ impl<'a> LiteralStringNormaliser<'a> {
         // Note that we could change the quotes if the preferred quote is escaped.
         // However, Prettier doesn't go that far.
         if string_information.raw_content_has_quotes {
-            Cow::Borrowed(self.token.string)
+            dynamic_text(self.token.string).fmt(f)
         } else {
-            self.swap_quotes(self.raw_content(), string_information)
+            self.swap_quotes(self.raw_content(), string_information, f)
         }
     }
 
@@ -276,36 +279,36 @@ impl<'a> LiteralStringNormaliser<'a> {
         &mut self,
         string_information: StringInformation,
         source_type: SourceType,
-    ) -> Cow<'a, str> {
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
         let quoteless = self.raw_content();
         let can_remove_quotes = !self.is_preserve_quote_properties()
             && (self.can_remove_number_quotes_by_file_type(source_type)
                 || is_identifier_name(quoteless));
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            dynamic_text(quoteless).fmt(f)
         } else {
-            self.normalise_string_literal(string_information)
+            self.normalise_string_literal(string_information, f)
         }
     }
 
-    fn normalise_string_literal(&self, string_information: StringInformation) -> Cow<'a, str> {
+    fn normalise_string_literal(
+        &self,
+        string_information: StringInformation,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
         let preferred_quote = string_information.preferred_quote;
-        let polished_raw_content = normalize_string(
+
+        text(preferred_quote.as_str()).fmt(f);
+
+        normalize_string(
             self.raw_content(),
             string_information.preferred_quote.into(),
             string_information.current_quote != string_information.preferred_quote,
-        );
+            f,
+        )?;
 
-        match polished_raw_content {
-            Cow::Borrowed(raw_content) => self.swap_quotes(raw_content, string_information),
-            Cow::Owned(mut s) => {
-                // content is owned, meaning we allocated a new string,
-                // so we force replacing quotes, regardless
-                s.insert(0, preferred_quote.as_char());
-                s.push(preferred_quote.as_char());
-                Cow::Owned(s)
-            }
-        }
+        text(preferred_quote.as_str()).fmt(f)
     }
 
     /// Returns the string without its quotes.
@@ -314,14 +317,21 @@ impl<'a> LiteralStringNormaliser<'a> {
         &content[1..content.len() - 1]
     }
 
-    fn swap_quotes(&self, content_to_use: &'a str, str_info: StringInformation) -> Cow<'a, str> {
-        let preferred_quote = str_info.preferred_quote.as_char();
+    fn swap_quotes(
+        &self,
+        content_to_use: &'a str,
+        str_info: StringInformation,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        let preferred_quote = str_info.preferred_quote.as_str();
         let original = self.token.string;
 
         if original.starts_with(preferred_quote) {
-            Cow::Borrowed(original)
+            dynamic_text(original).fmt(f)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
+            text(preferred_quote).fmt(f)?;
+            dynamic_text(content_to_use).fmt(f)?;
+            text(preferred_quote).fmt(f)
         }
     }
 }

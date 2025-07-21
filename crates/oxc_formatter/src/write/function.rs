@@ -75,7 +75,7 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
 
                 let mut recording = buffer.start_recording();
-                write!(recording, cached_signature)?;
+                write!(recording, [cached_signature])?;
                 let recorded = recording.stop();
 
                 if recorded.will_break() {

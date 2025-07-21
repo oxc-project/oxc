@@ -29,11 +29,13 @@
 #[macro_export]
 macro_rules! format_args {
     ($($value:expr),+ $(,)?) => {
-        $crate::formatter::Arguments::new(&[
+        &crate::formatter::prelude::format_once(|f| {
             $(
-                $crate::formatter::Argument::new(&$value)
-            ),+
-        ])
+                $crate::formatter::Format::fmt(&$value, f)?;
+            )+
+
+            FormatResult::<()>::Ok(())
+        })
     }
 }
 
@@ -69,13 +71,18 @@ macro_rules! format_args {
 #[macro_export]
 macro_rules! write {
     ($dst:expr, [$($arg:expr),+ $(,)?]) => {{
-        let result = $dst.write_fmt($crate::format_args!($($arg),+));
+        let result = $dst.write_fmt(
+
+                $crate::formatter::Arguments::new(&[
+            $(
+                $crate::formatter::Argument::new(&$arg)
+            ),+
+        ])
+
+        );
         result
     }};
-    ($dst:expr, $arg:expr) => {{
-        let result = $dst.write_fmt($crate::format_args!($arg));
-        result
-    }}
+    ($dst:expr, $arg:expr) => {{ $crate::formatter::Format::fmt(&$arg, $dst) }};
 }
 
 /// Writes formatted data into the given buffer and prints all written elements for a quick and dirty debugging.

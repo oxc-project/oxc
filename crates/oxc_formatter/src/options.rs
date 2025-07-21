@@ -425,6 +425,13 @@ impl QuoteStyle {
         }
     }
 
+    pub fn as_str(self) -> &'static str {
+        match self {
+            QuoteStyle::Double => "\"",
+            QuoteStyle::Single => "'",
+        }
+    }
+
     pub fn as_byte(self) -> u8 {
         self.as_char() as u8
     }

@@ -113,7 +113,6 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     quote! {
         ///@@line_break
         impl<'a> FormatWrite<'a> for #node_type {
-            #[inline]
             fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 let allocator = self.allocator;
                 #parent;
