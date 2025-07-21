@@ -30,6 +30,7 @@ impl<'a> PeepholeOptimizations {
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             Statement::FunctionDeclaration(f) => Self::remove_unused_function_declaration(f, ctx),
+            Statement::ClassDeclaration(c) => Self::remove_unused_class_declaration(c, ctx),
             _ => None,
         } {
             *stmt = new_stmt;

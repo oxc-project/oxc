@@ -39,10 +39,51 @@ impl<'a> PeepholeOptimizations {
         }
         let id = f.id.as_ref()?;
         let symbol_id = id.symbol_id.get()?;
-        if ctx.scoping().symbol_is_unused(symbol_id) {
-            return Some(ctx.ast.statement_empty(f.span));
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
+            return None;
         }
-        None
+        Some(ctx.ast.statement_empty(f.span))
+    }
+
+    pub fn remove_unused_class_declaration(
+        c: &Class<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Statement<'a>> {
+        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+            return None;
+        }
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return None;
+        }
+        let id = c.id.as_ref()?;
+        let symbol_id = id.symbol_id.get()?;
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
+            return None;
+        }
+        // TODO: keep side effectful expressions and remove the class.
+        if c.super_class.is_some() {
+            return None;
+        }
+        for e in &c.body.body {
+            match e {
+                ClassElement::StaticBlock(e) => {
+                    if !e.body.is_empty() {
+                        return None;
+                    }
+                }
+                ClassElement::MethodDefinition(d) => {
+                    if d.computed {
+                        return None;
+                    }
+                }
+                ClassElement::PropertyDefinition(_)
+                | ClassElement::AccessorProperty(_)
+                | ClassElement::TSIndexSignature(_) => {
+                    return None;
+                }
+            }
+        }
+        Some(ctx.ast.statement_empty(c.span))
     }
 
     pub fn remove_unused_assignment_expression(
@@ -120,6 +161,26 @@ mod test {
     }
 
     #[test]
+    fn remove_unused_class_declaration() {
+        let options = CompressOptions::smallest();
+        test_options("class C {}", "", &options);
+        test_same_options("class C extends Foo { }", &options);
+
+        test_options("class C { static {} }", "", &options);
+        test_same_options("class C { static { foo } }", &options);
+
+        test_options("class C { foo() {} }", "", &options);
+        test_same_options("class C { [foo]() {} }", &options);
+
+        test_same_options("class C { [foo] }", &options);
+        test_same_options("class C { foo = bar() }", &options);
+        test_same_options("class C { foo = 1 }", &options);
+        test_same_options("class C { static foo = bar }", &options);
+
+        test_same_options("class C { accessor foo = 1}", &options);
+    }
+
+    #[test]
     #[ignore]
     fn remove_unused_assignment_expression() {
         let options = CompressOptions::smallest();
@@ -139,21 +200,26 @@ mod test {
             "function foo(t) { return x(); } foo();",
             &options,
         );
-    }
 
-    #[test]
-    #[ignore]
-    fn keep_in_script_mode() {
         let options = CompressOptions::smallest();
         let source_type = SourceType::cjs();
         test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
         test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
-
         test_options_source_type(
             "function foo() { var x = 1; x = 2; bar() } foo()",
             "function foo() { bar() } foo()",
             source_type,
             &options,
         );
+    }
+
+    #[test]
+    fn keep_in_script_mode() {
+        let options = CompressOptions::smallest();
+        let source_type = SourceType::cjs();
+        test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
+        test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
+
+        test_options_source_type("class C {}", "class C {}", source_type, &options);
     }
 }
