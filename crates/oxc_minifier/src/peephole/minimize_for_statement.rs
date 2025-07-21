@@ -4,16 +4,11 @@ use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
-    pub fn minimize_for_statement(
-        &self,
-        for_stmt: &mut ForStatement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn minimize_for_statement(&self, for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
@@ -66,7 +61,7 @@ impl<'a> PeepholeOptimizations {
 
             let alternate = if_stmt.alternate.take();
             for_stmt.body = Self::drop_first_statement(span, body, alternate, ctx);
-            state.changed = true;
+            ctx.state.changed = true;
             return;
         }
         // "for (;;) if (x) y(); else break;" => "for (; x;) y();"
@@ -103,7 +98,7 @@ impl<'a> PeepholeOptimizations {
 
             let consequent = if_stmt.consequent.take_in(ctx.ast);
             for_stmt.body = Self::drop_first_statement(span, body, Some(consequent), ctx);
-            state.changed = true;
+            ctx.state.changed = true;
         }
     }
 

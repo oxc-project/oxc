@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn should_remove_unused_declarator(
@@ -89,7 +89,6 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_assignment_expression(
         &self,
         _e: &mut Expression<'a>,
-        _state: &mut State,
         _ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         // let Expression::AssignmentExpression(assign_expr) = e else { return false };

@@ -19,6 +19,8 @@ pub struct MinifierState<'a> {
 
     /// Function declarations that are empty
     pub empty_functions: FxHashSet<SymbolId>,
+
+    pub changed: bool,
 }
 
 impl MinifierState<'_> {
@@ -28,6 +30,7 @@ impl MinifierState<'_> {
             options,
             constant_values: FxHashMap::default(),
             empty_functions: FxHashSet::default(),
+            changed: false,
         }
     }
 }

@@ -6,7 +6,7 @@ use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
@@ -15,7 +15,6 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
         &self,
         expr: &mut Expression<'a>,
-        state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) {
         let mut changed = false;
@@ -57,7 +56,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
         if changed {
-            state.changed = true;
+            ctx.state.changed = true;
         }
     }
 

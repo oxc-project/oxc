@@ -11,23 +11,18 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(
-        &self,
-        expr: &mut Expression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn fold_constants_exit_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         match expr {
             Expression::TemplateLiteral(t) => {
-                self.try_inline_values_in_template_literal(t, state, ctx);
+                self.try_inline_values_in_template_literal(t, ctx);
             }
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, state, ctx),
+            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
             _ => {}
         }
 
@@ -43,7 +38,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            state.changed = true;
+            ctx.state.changed = true;
         }
 
         // Save `const value = false` into constant values.
@@ -664,12 +659,7 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
-    fn fold_object_spread(
-        &self,
-        e: &mut ObjectExpression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    fn fold_object_spread(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         let (new_size, should_fold) =
             e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
                 let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
@@ -745,7 +735,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         e.properties = new_properties;
-        state.changed = true;
+        ctx.state.changed = true;
     }
 
     fn is_spread_inlineable_object_literal(
@@ -774,7 +764,7 @@ impl<'a> PeepholeOptimizations {
     fn try_inline_values_in_template_literal(
         &self,
         t: &mut TemplateLiteral<'a>,
-        state: &mut State,
+
         ctx: &mut Ctx<'a, '_>,
     ) {
         let has_expr_to_inline = t
@@ -824,7 +814,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        state.changed = true;
+        ctx.state.changed = true;
     }
 }
 

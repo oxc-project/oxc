@@ -23,8 +23,6 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::NonEmptyStack;
-use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 use crate::{
@@ -34,32 +32,18 @@ use crate::{
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
-#[derive(Debug, Default, Clone, Copy)]
-pub struct State {
-    pub changed: bool,
-}
-
 pub struct PeepholeOptimizations {
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
     /// in top level and each function. No minification code are run if the function is not changed
     /// in the previous walk.
     iteration: u8,
-    prev_functions_changed: FxHashSet<ScopeId>,
-    functions_changed: FxHashSet<ScopeId>,
-    /// Track the current function as a stack.
-    current_function:
-        NonEmptyStack<(ScopeId, /* prev changed */ bool, /* current changed */ bool)>,
+    changed: bool,
 }
 
 impl<'a> PeepholeOptimizations {
     pub fn new() -> Self {
-        Self {
-            iteration: 0,
-            prev_functions_changed: FxHashSet::default(),
-            functions_changed: FxHashSet::default(),
-            current_function: NonEmptyStack::new((ScopeId::new(0), true, false)),
-        }
+        Self { iteration: 0, changed: false }
     }
 
     pub fn build(
@@ -76,44 +60,16 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
     ) {
         loop {
+            self.changed = false;
             self.build(program, ctx);
-            if self.functions_changed.is_empty() {
+            if !self.changed {
                 break;
             }
-            self.prev_functions_changed.clear();
-            std::mem::swap(&mut self.prev_functions_changed, &mut self.functions_changed);
             if self.iteration > 10 {
                 debug_assert!(false, "Ran loop more than 10 times.");
                 break;
             }
             self.iteration += 1;
-        }
-    }
-
-    fn mark_current_function_as_changed(&mut self) {
-        let (_scope_id, _prev_changed, current_changed) = self.current_function.last_mut();
-        *current_changed = true;
-    }
-
-    #[inline]
-    fn is_prev_function_changed(&self) -> bool {
-        true
-        // let (_, prev_changed, _) = self.current_function.last();
-        // *prev_changed
-    }
-
-    fn enter_program_or_function(&mut self, scope_id: ScopeId) {
-        self.current_function.push((
-            scope_id,
-            self.iteration == 0 || self.prev_functions_changed.contains(&scope_id),
-            false,
-        ));
-    }
-
-    fn exit_program_or_function(&mut self) {
-        let (scope_id, _, changed) = self.current_function.pop();
-        if changed {
-            self.functions_changed.insert(scope_id);
         }
     }
 
@@ -145,13 +101,11 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
-    fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.enter_program_or_function(program.scope_id());
+    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.exit_program_or_function();
-
         let refs_before =
             ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
         let mut counter = ReferencesCounter::default();
@@ -159,26 +113,12 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         for reference_id_to_remove in refs_before.difference(&counter.refs) {
             ctx.scoping_mut().delete_reference(*reference_id_to_remove);
         }
-    }
-
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.enter_program_or_function(func.scope_id());
-    }
-
-    fn exit_function(&mut self, _: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.exit_program_or_function();
+        self.changed = ctx.state.changed;
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.minimize_statements(stmts, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+        self.minimize_statements(stmts, &mut ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -187,46 +127,26 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
         self.try_fold_stmt_in_boolean_context(stmt, &mut ctx);
-        self.remove_dead_code_exit_statement(stmt, &mut state, &mut ctx);
+        self.remove_dead_code_exit_statement(stmt, &mut ctx);
         if let Statement::IfStatement(if_stmt) = stmt {
-            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, &mut state, &mut ctx) {
+            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, &mut ctx) {
                 *stmt = folded_stmt;
-                self.mark_current_function_as_changed();
+                ctx.state.changed = true;
             }
-        }
-        if state.changed {
-            self.mark_current_function_as_changed();
         }
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
-        let mut state = State::default();
         let mut ctx = Ctx::new(ctx);
-        self.minimize_for_statement(stmt, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+        self.minimize_for_statement(stmt, &mut ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_return_statement(stmt, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_return_statement(stmt, &mut ctx);
     }
 
     fn exit_variable_declaration(
@@ -234,80 +154,46 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_variable_declaration(decl, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_variable_declaration(decl, &mut ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.fold_constants_exit_expression(expr, &mut state, &mut ctx);
-        self.minimize_conditions_exit_expression(expr, &mut state, &mut ctx);
-        self.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
-        self.replace_known_methods_exit_expression(expr, &mut state, &mut ctx);
-        self.substitute_exit_expression(expr, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.fold_constants_exit_expression(expr, &mut ctx);
+        self.minimize_conditions_exit_expression(expr, &mut ctx);
+        self.remove_dead_code_exit_expression(expr, &mut ctx);
+        self.replace_known_methods_exit_expression(expr, &mut ctx);
+        self.substitute_exit_expression(expr, &mut ctx);
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-
         if expr.operator.is_not()
             && self.try_fold_expr_in_boolean_context(&mut expr.argument, &mut ctx)
         {
-            self.mark_current_function_as_changed();
+            ctx.state.changed = true;
         }
     }
 
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_call_expression(expr, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_call_expression(expr, &mut ctx);
     }
 
     fn exit_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_new_expression(expr, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_new_expression(expr, &mut ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_object_property(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_object_property(prop, &mut ctx);
     }
 
     fn exit_assignment_target_property(
@@ -315,15 +201,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         node: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_assignment_target_property(node, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_assignment_target_property(node, &mut ctx);
     }
 
     fn exit_assignment_target_property_property(
@@ -331,27 +211,15 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_assignment_target_property_property(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_assignment_target_property_property(prop, &mut ctx);
     }
 
     fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_binding_property(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_binding_property(prop, &mut ctx);
     }
 
     fn exit_method_definition(
@@ -359,15 +227,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_method_definition(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_method_definition(prop, &mut ctx);
     }
 
     fn exit_property_definition(
@@ -375,15 +237,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_property_definition(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_property_definition(prop, &mut ctx);
     }
 
     fn exit_accessor_property(
@@ -391,15 +247,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         let mut ctx = Ctx::new(ctx);
-        let mut state = State::default();
-        self.substitute_accessor_property(prop, &mut state, &mut ctx);
-        if state.changed {
-            self.mark_current_function_as_changed();
-        }
+
+        self.substitute_accessor_property(prop, &mut ctx);
     }
 }
 
@@ -475,26 +325,27 @@ impl<'a> DeadCodeElimination {
 
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut state = State::default();
         let mut ctx = Ctx::new(ctx);
-        self.inner.remove_dead_code_exit_statement(stmt, &mut state, &mut ctx);
+        self.inner.remove_dead_code_exit_statement(stmt, &mut ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut state = State::default();
         let mut ctx = Ctx::new(ctx);
-        self.inner.minimize_statements(stmts, &mut state, &mut ctx);
-        if state.changed {
-            self.inner.minimize_statements(stmts, &mut state, &mut ctx);
+        let changed = ctx.state.changed;
+        ctx.state.changed = false;
+        self.inner.minimize_statements(stmts, &mut ctx);
+        if ctx.state.changed {
+            self.inner.minimize_statements(stmts, &mut ctx);
+        } else {
+            ctx.state.changed = changed;
         }
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut state = State::default();
         let mut ctx = Ctx::new(ctx);
-        self.inner.fold_constants_exit_expression(expr, &mut state, &mut ctx);
-        self.inner.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
+        self.inner.fold_constants_exit_expression(expr, &mut ctx);
+        self.inner.remove_dead_code_exit_expression(expr, &mut ctx);
     }
 }
 
