@@ -312,7 +312,9 @@ impl Linter {
 /// `oxc_ast_tools` checks that the 2 copies are identical.
 #[ast]
 struct RawTransferMetadata2 {
-    /// Offset of `RawTransferData` within buffer.
+    /// Offset of `Program` within buffer.
+    /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
+    /// but here it's offset of `Program`.
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
