@@ -57,6 +57,9 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
             // TODO
+            join_vars: true,
+            sequences: true,
+            // TODO
             unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),

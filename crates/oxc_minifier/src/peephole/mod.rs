@@ -483,7 +483,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
         let mut ctx = Ctx::new(ctx);
-        self.inner.remove_dead_code_exit_statements(stmts, &mut state, &mut ctx);
+        self.inner.minimize_statements(stmts, &mut state, &mut ctx);
+        if state.changed {
+            self.inner.minimize_statements(stmts, &mut state, &mut ctx);
+        }
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 

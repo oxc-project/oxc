@@ -59,10 +59,6 @@ impl<'a> KeepVar<'a> {
         Self { ast, vars: std::vec![], all_hoisted: true }
     }
 
-    pub fn all_hoisted(&self) -> bool {
-        self.all_hoisted
-    }
-
     pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
