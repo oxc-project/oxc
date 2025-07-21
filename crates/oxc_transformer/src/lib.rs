@@ -300,6 +300,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
             typescript.exit_class(class, ctx);
         }
         self.x2_es2022.exit_class(class, ctx);
+        // `decorator` has some statements should be inserted after `class-properties` plugin.
+        self.decorator.exit_class_at_end(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {

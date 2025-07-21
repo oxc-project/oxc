@@ -403,18 +403,18 @@ describe('typescript', () => {
         },
       });
       expect(ret.code).toMatchInlineSnapshot(`
-				"import _decorate from "@oxc-project/runtime/helpers/decorate";
-				class Foo {
-					constructor() {
-						this.b = 1;
-					}
-				}
-				_decorate([dec], Foo.prototype, "c", void 0);
-				class StaticFoo {}
-				_decorate([dec], StaticFoo, "c", void 0);
-				StaticFoo.b = 1;
-				"
-			`);
+        "import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Foo {
+        	constructor() {
+        		this.b = 1;
+        	}
+        }
+        _decorate([dec], Foo.prototype, "c", void 0);
+        class StaticFoo {}
+        StaticFoo.b = 1;
+        _decorate([dec], StaticFoo, "c", void 0);
+        "
+      `);
     });
   });
 });
