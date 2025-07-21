@@ -76,7 +76,7 @@ ts compatibility: 233/573 (40.66%)
 | typescript/assignment/issue-12413.ts | 💥 | 3.03% |
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
-| typescript/cast/as-const.ts | 💥 | 54.55% |
+| typescript/cast/as-const.ts | 💥 | 60.00% |
 | typescript/cast/generic-cast.ts | 💥 | 39.46% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
@@ -105,9 +105,9 @@ ts compatibility: 233/573 (40.66%)
 | typescript/comments/jsx.tsx | 💥 | 20.00% |
 | typescript/comments/location.ts | 💥 | 75.00% |
 | typescript/comments/mapped_types.ts | 💥 | 58.82% |
-| typescript/comments/method_types.ts | 💥 | 69.23% |
+| typescript/comments/method_types.ts | 💥 | 74.36% |
 | typescript/comments/methods.ts | 💥 | 97.96% |
-| typescript/comments/type-parameters.ts | 💥 | 39.29% |
+| typescript/comments/type-parameters.ts | 💥 | 40.00% |
 | typescript/comments/type_literals.ts | 💥 | 55.17% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/comments-2/dangling.ts | 💥💥 | 75.00% |
@@ -167,12 +167,12 @@ ts compatibility: 233/573 (40.66%)
 | typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameter/typeParameter.ts | 💥 | 66.67% |
 | typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts | 💥 | 93.33% |
-| typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 49.51% |
+| typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 61.22% |
 | typescript/conformance/types/union/unionTypeCallSignatures3.ts | 💥 | 68.97% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 61.29% |
 | typescript/conformance/types/union/unionTypeEquivalence.ts | 💥 | 90.00% |
 | typescript/conformance/types/union/unionTypeFromArrayLiteral.ts | 💥 | 93.55% |
-| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 29.85% |
+| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 56.67% |
 | typescript/const/initializer-ambient-context.ts | 💥 | 93.33% |
 | typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |

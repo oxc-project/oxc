@@ -1,13 +1,12 @@
-js compatibility: 394/699 (56.37%)
+js compatibility: 400/699 (57.22%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrays/preserve_empty_lines.js | 💥 | 97.30% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 94.85% |
 | js/arrows/call.js | 💥💥 | 75.68% |
-| js/arrows/comment.js | 💥💥 | 63.75% |
+| js/arrows/comment.js | 💥💥 | 94.55% |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/issue-1389-curry.js | 💥💥 | 86.96% |
@@ -20,12 +19,11 @@ js compatibility: 394/699 (56.37%)
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/sequence.js | 💥 | 71.43% |
-| js/assignment-comments/function.js | 💥 | 92.73% |
+| js/assignment-comments/function.js | 💥 | 78.18% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
 | js/binary-expressions/comment.js | 💥 | 86.36% |
-| js/binary-expressions/in_instanceof.js | 💥 | 97.96% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
 | js/binary-expressions/inline-object-array.js | 💥 | 85.71% |
 | js/binary-expressions/jsx_parent.js | 💥 | 33.85% |
@@ -45,6 +43,7 @@ js compatibility: 394/699 (56.37%)
 | js/chain-expression/test-3.js | 💥 | 75.00% |
 | js/chain-expression/test.js | 💥 | 25.00% |
 | js/class-comment/class-property.js | 💥 | 30.77% |
+| js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 57.83% |
 | js/class-extends/complex.js | 💥 | 89.47% |
 | js/class-extends/extends.js | 💥 | 94.74% |
@@ -54,28 +53,27 @@ js compatibility: 394/699 (56.37%)
 | js/classes/method.js | 💥 | 71.43% |
 | js/classes/property.js | 💥 | 62.86% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 30.77% |
-| js/comments/15661.js | 💥💥 | 46.15% |
+| js/comments/15661.js | 💥💥 | 53.63% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 93.33% |
 | js/comments/dangling_array.js | 💥💥 | 25.00% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
-| js/comments/dynamic_imports.js | 💥💥 | 66.67% |
-| js/comments/empty-statements.js | 💥💥 | 87.88% |
+| js/comments/dynamic_imports.js | 💥💥 | 71.43% |
+| js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export-and-import.js | 💥💥 | 78.05% |
 | js/comments/export.js | 💥💥 | 84.93% |
-| js/comments/function-declaration.js | 💥💥 | 67.77% |
+| js/comments/function-declaration.js | 💥💥 | 66.67% |
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 80.82% |
-| js/comments/issues.js | 💥💥 | 73.68% |
+| js/comments/issues.js | 💥💥 | 74.63% |
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
 | js/comments/jsdoc.js | 💥💥 | 47.83% |
 | js/comments/jsx.js | 💥💥 | 41.63% |
 | js/comments/last-arg.js | 💥💥 | 80.65% |
-| js/comments/multi-comments-on-same-line.js | 💥✨ | 42.78% |
-| js/comments/multi-comments.js | 💥✨ | 36.84% |
+| js/comments/multi-comments.js | 💥✨ | 44.74% |
 | js/comments/return-statement.js | 💥💥 | 52.32% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
 | js/comments/template-literal.js | 💥💥 | 30.43% |
@@ -83,7 +81,7 @@ js compatibility: 394/699 (56.37%)
 | js/comments/try.js | 💥💥 | 71.43% |
 | js/comments/variable_declarator.js | 💥✨ | 49.31% |
 | js/comments/while.js | 💥💥 | 62.75% |
-| js/comments/flow-types/inline.js | 💥 | 53.33% |
+| js/comments/flow-types/inline.js | 💥 | 62.50% |
 | js/comments/function/between-parentheses-and-function-body.js | 💥 | 55.17% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
 | js/comments-closure-typecast/binary-expr.js | 💥 | 0.00% |
@@ -121,7 +119,6 @@ js compatibility: 394/699 (56.37%)
 | js/destructuring/destructuring.js | 💥 | 78.90% |
 | js/destructuring/issue-5988.js | 💥 | 0.00% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 77.11% |
-| js/empty-paren-comment/empty_paren_comment.js | 💥 | 94.44% |
 | js/empty-statement/no-newline.js | 💥 | 85.71% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/using-declarations.js | 💥 | 70.00% |
@@ -136,7 +133,7 @@ js compatibility: 394/699 (56.37%)
 | js/for/in.js | 💥 | 50.00% |
 | js/for/parentheses.js | 💥 | 72.00% |
 | js/for-of/async-identifier.js | 💥 | 90.00% |
-| js/function-comments/params-trail-comments.js | 💥 | 82.61% |
+| js/function-comments/params-trail-comments.js | 💥 | 95.83% |
 | js/function-single-destructuring/array.js | 💥 | 35.42% |
 | js/functional-composition/functional_compose.js | 💥 | 93.20% |
 | js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 77.08% |
@@ -147,7 +144,7 @@ js compatibility: 394/699 (56.37%)
 | js/identifier/parentheses/const.js | 💥💥 | 0.00% |
 | js/identifier/parentheses/let.js | 💥💥 | 79.09% |
 | js/if/comment_before_else.js | 💥 | 61.54% |
-| js/if/expr_and_same_line_comments.js | 💥 | 73.33% |
+| js/if/expr_and_same_line_comments.js | 💥 | 86.67% |
 | js/if/if_comments.js | 💥 | 54.72% |
 | js/if/non-block.js | 💥 | 66.67% |
 | js/if/trailing_comment.js | 💥 | 72.73% |
@@ -194,8 +191,6 @@ js compatibility: 394/699 (56.37%)
 | js/method-chain/test.js | 💥 | 54.55% |
 | js/method-chain/this.js | 💥 | 0.00% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
-| js/newline/backslash_2028.js | 💥 | 50.00% |
-| js/newline/backslash_2029.js | 💥 | 50.00% |
 | js/no-semi/class.js | 💥✨ | 46.55% |
 | js/no-semi/comments.js | 💥✨ | 36.36% |
 | js/no-semi/issue2006.js | 💥✨ | 37.50% |
@@ -258,7 +253,6 @@ js compatibility: 394/699 (56.37%)
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
 | js/try/catch.js | 💥 | 52.63% |
 | js/try/try.js | 💥 | 50.00% |
-| js/unary-expression/comments.js | 💥 | 76.58% |
 | js/unicode/nbsp-jsx.js | 💥 | 22.22% |
 | js/variable_declarator/multiple.js | 💥 | 87.27% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
