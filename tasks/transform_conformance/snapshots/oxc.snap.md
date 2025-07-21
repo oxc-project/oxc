@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 179/297
+Passed: 180/298
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -20,7 +20,7 @@ Passed: 179/297
 * regexp
 
 
-# babel-plugin-transform-class-properties (21/27)
+# babel-plugin-transform-class-properties (22/28)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 

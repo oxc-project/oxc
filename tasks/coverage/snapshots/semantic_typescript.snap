@@ -216,10 +216,10 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyBasics.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(11)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
