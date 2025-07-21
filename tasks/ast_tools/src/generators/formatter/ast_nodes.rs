@@ -590,7 +590,7 @@ fn ast_node_and_ast_nodes_impls() -> TokenStream {
         }
 
         ///@@line_break
-        impl<'a>  AstNode<'a, Program<'a>> {
+        impl<'a> AstNode<'a, Program<'a>> {
             pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
                 AstNode { inner, parent, allocator, following_node: None }
             }
