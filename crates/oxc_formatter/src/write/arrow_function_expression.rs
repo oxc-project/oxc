@@ -111,10 +111,8 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if matches!(arrow_expression, Some(Expression::SequenceExpression(_))) {
-                    // let has_comment = f.context().comments().has_comments(sequence.syntax());
-                    let has_comment = false;
-                    return if has_comment {
+                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                    return if f.context().comments().has_comments_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -552,14 +550,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
         });
 
-        // TODO
-        let has_comment = false; //
-        // matches!(
-        // &tail_body,
-        // AnyJsFunctionBody::Expression(Expression::JsSequenceExpression(sequence))
-        // if f.context().comments().has_comments(sequence.syntax())
-        // );
-
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
@@ -569,8 +559,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if matches!(tail.get_expression(), Some(Expression::SequenceExpression(_))) {
-                if has_comment {
+            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+                if f.context().comments().has_comments_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(

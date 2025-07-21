@@ -6,7 +6,10 @@ use std::{
 };
 
 use oxc_allocator::Vec;
-use oxc_ast::{Comment, CommentKind, ast};
+use oxc_ast::{
+    Comment, CommentKind,
+    ast::{self, CallExpression, NewExpression},
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -30,13 +33,20 @@ impl<'a> Comments<'a> {
         Comments { source_text, comments, printed_count: 0 }
     }
 
+    /// Returns comments that not printed yet.
     #[inline]
     pub fn unprinted_comments(&self) -> &'a [Comment] {
         &self.comments[self.printed_count..]
     }
 
+    /// Returns comments that were printed already.
+    #[inline]
+    pub fn printed_comments(&self) -> &'a [Comment] {
+        &self.comments[..self.printed_count]
+    }
+
     /// Returns the comments that after the given `start` position, even if they were already printed.
-    pub fn comments_after(&self, start: u32) -> &'a [Comment] {
+    pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let mut index = self.printed_count;
 
         // No comments or all are printed already
@@ -44,28 +54,19 @@ impl<'a> Comments<'a> {
             return &[];
         }
 
-        let forward = self.comments[index].span.end < start;
-        // Skip comments that before start
-        if forward {
-            while index < self.comments.len() - 1 {
-                if self.comments[index + 1].span.end <= start {
-                    index += 1;
-                    continue;
-                }
-                break;
-            }
-        } else {
-            // Find comments that after start
-            while index > 0 {
-                if self.comments[index - 1].span.start > start {
-                    index -= 1;
-                    continue;
-                }
-                break;
-            }
+        // You may want to check comments after your are printing the node,
+        // so it may have a lot of comments that don't print yet.
+        //
+        // Skip comments that before pos
+        while index < self.comments.len() - 1 && self.comments[index].span.end < pos {
+            index += 1;
         }
 
-        &self.comments[index..]
+        if self.comments[index].span.end < pos {
+            &self.comments[index + 1..]
+        } else {
+            &self.comments[index..]
+        }
     }
 
     #[inline]
@@ -242,6 +243,100 @@ impl<'a> Comments<'a> {
     #[inline]
     pub fn increment_printed_count(&mut self) {
         self.printed_count += 1;
+    }
+
+    pub fn get_trailing_comments(
+        &self,
+        enclosing_node: &SiblingNode<'a>,
+        preceding_node: &SiblingNode<'a>,
+        following_node: Option<&SiblingNode<'a>>,
+    ) -> &'a [Comment] {
+        // The preceding_node is the callee of the call expression or new expression, let following node to print it.
+        // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L726-L741
+        if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
+        {
+            return &[];
+        }
+
+        let comments = self.unprinted_comments();
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let source_text = self.source_text;
+        let preceding_span = preceding_node.span();
+
+        // All of the comments before this node are printed already.
+        debug_assert!(
+            comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
+        );
+
+        let Some(following_node) = following_node else {
+            let enclosing_span = enclosing_node.span();
+            return comments
+                .iter()
+                .enumerate()
+                .take_while(|(_, comment)| comment.span.end <= enclosing_span.end)
+                .last()
+                .map_or(&[], |(index, _)| &comments[..=index]);
+        };
+
+        let following_span = following_node.span();
+        let mut comment_index = 0;
+        while let Some(comment) = comments.get(comment_index) {
+            // Check if the comment is before the following node's span
+            if comment.span.end > following_span.start {
+                break;
+            }
+
+            if is_own_line_comment(comment, source_text) {
+                // TODO: describe the logic here
+                // Reached an own line comment, which means it is the leading comment for the next node.
+                break;
+            } else if is_end_of_line_comment(comment, source_text) {
+                // Should be a leading comment of following node.
+                // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
+                if matches!(
+                    enclosing_node,
+                    SiblingNode::VariableDeclarator(_)
+                        | SiblingNode::AssignmentExpression(_)
+                        | SiblingNode::TSTypeAliasDeclaration(_)
+                ) && (comment.is_block()
+                    || matches!(
+                        following_node,
+                        SiblingNode::ObjectExpression(_)
+                            | SiblingNode::ArrayExpression(_)
+                            | SiblingNode::TSTypeLiteral(_)
+                            | SiblingNode::TemplateLiteral(_)
+                            | SiblingNode::TaggedTemplateExpression(_)
+                    ))
+                {
+                    return &[];
+                }
+                return &comments[..=comment_index];
+            }
+
+            comment_index += 1;
+        }
+
+        if comment_index == 0 {
+            // No comments to print
+            return &[];
+        }
+
+        let mut gap_end = following_span.start;
+        for cur_index in (0..comment_index).rev() {
+            let comment = &comments[cur_index];
+            let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
+            if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+                gap_end = comment.span.start;
+            } else {
+                // If there is a non-whitespace character, we stop here
+                return &comments[..=cur_index];
+            }
+        }
+
+        &[]
     }
 }
 

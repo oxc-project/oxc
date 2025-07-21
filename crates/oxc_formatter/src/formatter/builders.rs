@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cell::Cell, num::NonZeroU8};
+use std::{backtrace, borrow::Cow, cell::Cell, num::NonZeroU8};
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
@@ -6,7 +6,7 @@ use Tag::{
     StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
     StartLabelled, StartLineSuffix,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
@@ -2454,37 +2454,63 @@ where
 
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
     pub fn has_lines_before(&self, span: Span) -> bool {
-        get_lines_before(span.start, self.fmt) > 1
+        get_lines_before(span, self.fmt) > 1
     }
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-pub fn get_lines_before(start: u32, f: &Formatter) -> usize {
-    // Count the newlines in the leading trivia of the next node
-    let comments = f.comments().unprinted_comments();
-    let start = if let Some(comment) = comments.first() {
-        if comment.span.end < start { comment.span.start } else { start }
-    } else {
-        start
-    };
+pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
+    let mut start = span.start;
 
-    f.source_text()[..start as usize]
-        // TODO: This is a workaround.
-        // Trim `(` because we turned off `preserveParens`, which causes us to not have a parenthesis node,
-        // but you will still find `(` or `)` in the source text.
-        .trim_end_matches(|c| is_white_space_single_line(c) || c == '(')
-        .chars()
-        .rev()
-        .take_while(|c| is_line_terminator(*c))
-        .count()
+    // Should skip the leading comments of the node.
+    let comments = f.comments().unprinted_comments();
+    if let Some(comment) = comments.first() {
+        if comment.span.end < start {
+            start = comment.span.start;
+        }
+    }
+
+    // Count the newlines in the leading trivia of the next node
+    let mut count = 0;
+    let mut right_parent_start = span.end as usize;
+    for c in f.source_text()[..start as usize].chars().rev() {
+        if is_white_space_single_line(c) {
+            continue;
+        }
+
+        if c == '(' {
+            // We don't have a parenthesis node when `preserveParens` is turned off,
+            // but we will find the `(` and `)` around the node if it exists.
+            // If we find a `(`, we try to find the matching `)` and reset the count.
+            // This is necessary to avoid counting the newlines inside the parenthesis.
+
+            let Some((pos, ')')) =
+                f.source_text()[right_parent_start..].trim_start().chars().enumerate().next()
+            else {
+                return count;
+            };
+
+            right_parent_start = pos;
+            count = 0;
+            continue;
+        }
+
+        if !is_line_terminator(c) {
+            return count;
+        }
+
+        count += 1;
+    }
+
+    count
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
 pub fn get_lines_after(end: u32, source_text: &str) -> usize {
     source_text[end as usize..]
-        .trim_start_matches(is_white_space_single_line)
         .chars()
-        .take_while(|c| is_line_terminator(*c))
+        .filter(|&c| !is_white_space_single_line(c))
+        .take_while(|&c| is_line_terminator(c))
         .count()
 }
 

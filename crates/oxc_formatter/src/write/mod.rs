@@ -381,7 +381,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
         if self.operator().is_keyword() {
             write!(f, space());
         }
-        if f.comments().has_comments_in_span(self.span) {
+        let Span { start, end, .. } = self.argument.span();
+        if f.comments().has_comments_before(start)
+            || f.comments().has_comments_between(end, self.span().end)
+        {
             write!(
                 f,
                 [group(&format_args!(text("("), soft_block_indent(self.argument()), text(")")))]
