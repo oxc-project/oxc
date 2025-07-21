@@ -23,8 +23,8 @@ pub enum ObjectPatternLike<'a, 'b> {
 impl<'a> ObjectPatternLike<'a, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectPattern(o) => o.span(),
-            Self::ObjectAssignmentTarget(o) => o.span(),
+            Self::ObjectPattern(o) => o.span,
+            Self::ObjectAssignmentTarget(o) => o.span,
         }
     }
 

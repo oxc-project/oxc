@@ -201,6 +201,11 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
 
     let fields = &struct_def.fields;
     let methods = fields.iter().enumerate().filter_map(|(index, field)| {
+        if field.name == "span" {
+            // Instead of generating a method for `span`, we implement the `GetSpan` trait for it.
+            return None;
+        }
+
         let field_type_def = field.type_def(schema);
         let is_option = field_type_def.is_option();
         let (original_field_type, is_box) = if let TypeDef::Box(box_def) =
@@ -365,6 +370,13 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
             }
         }
 
+        ///@@line_break
+        impl<'a> GetSpan for AstNode<'a, #type_ty>  {
+            #[inline]
+            fn span(&self) -> oxc_span::Span {
+                self.inner.span()
+            }
+        }
     }
 }
 
