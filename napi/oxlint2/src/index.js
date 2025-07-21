@@ -125,8 +125,9 @@ class Linter {
       visitors.push(rule.create(createContext(ruleId)));
     }
 
-    // TODO: Combine visitors for multiple rules
-    const visitor = new Visitor(visitors[0]);
+    const visitor = new Visitor(
+      visitors.length === 1 ? visitors[0] : combineVisitors(visitors),
+    );
 
     // Visit AST
     const programPos = buffer.uint32[DATA_POINTER_POS_32],
@@ -141,6 +142,25 @@ class Linter {
     // Send diagnostics back to Rust
     return JSON.stringify(diagnostics);
   }
+}
+
+function combineVisitors(visitors) {
+  const combinedVisitor = {};
+  for (const visitor of visitors) {
+    for (const nodeType of Object.keys(visitor)) {
+      if (!(nodeType in combinedVisitor)) {
+        combinedVisitor[nodeType] = function(node) {
+          for (const v of visitors) {
+            if (typeof v[nodeType] === 'function') {
+              v[nodeType](node);
+            }
+          }
+        };
+      }
+    }
+  }
+
+  return combinedVisitor;
 }
 
 async function main() {

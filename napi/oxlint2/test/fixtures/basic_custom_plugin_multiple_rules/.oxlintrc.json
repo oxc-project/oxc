@@ -1,0 +1,9 @@
+{
+    "plugins": ["./test_plugin"],
+    "rules": {
+        "basic-custom-plugin/no-debugger": "error",
+        "basic-custom-plugin/no-debugger-2": "error",
+        "basic-custom-plugin/no-ident-references-named-foo": "error"
+    },
+    "ignorePatterns": ["test_plugin"]
+}
