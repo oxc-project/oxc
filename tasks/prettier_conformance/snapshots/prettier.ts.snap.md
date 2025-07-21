@@ -56,9 +56,9 @@ ts compatibility: 234/573 (40.84%)
 | typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 93.33% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
-| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 92.31% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
 | typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 67.35% |
+| typescript/arrow/16067.ts | 💥💥 | 79.17% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 64.57% |

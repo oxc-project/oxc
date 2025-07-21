@@ -1,4 +1,4 @@
-js compatibility: 408/699 (58.37%)
+js compatibility: 413/699 (59.08%)
 
 # Failed
 
@@ -17,7 +17,7 @@ js compatibility: 408/699 (58.37%)
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/sequence.js | 💥 | 71.43% |
-| js/assignment-comments/function.js | 💥 | 78.18% |
+| js/assignment-comments/function.js | 💥 | 92.73% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
@@ -25,7 +25,6 @@ js compatibility: 408/699 (58.37%)
 | js/binary-expressions/return.js | 💥 | 77.78% |
 | js/binary-expressions/test.js | 💥 | 95.65% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
-| js/call/first-argument-expansion/issue-13237.js | 💥 | 63.16% |
 | js/call/first-argument-expansion/jsx.js | 💥 | 0.00% |
 | js/call/first-argument-expansion/test.js | 💥 | 96.57% |
 | js/chain-expression/call-expression.js | 💥 | 42.86% |
@@ -52,13 +51,13 @@ js compatibility: 408/699 (58.37%)
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 93.33% |
-| js/comments/dangling_array.js | 💥💥 | 25.00% |
+| js/comments/dangling_array.js | 💥✨ | 40.00% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/dynamic_imports.js | 💥💥 | 71.43% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export-and-import.js | 💥💥 | 78.05% |
 | js/comments/export.js | 💥💥 | 84.93% |
-| js/comments/function-declaration.js | 💥💥 | 66.67% |
+| js/comments/function-declaration.js | 💥💥 | 68.29% |
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 80.82% |
 | js/comments/issues.js | 💥💥 | 74.63% |
@@ -150,14 +149,11 @@ js compatibility: 408/699 (58.37%)
 | js/label/comment.js | 💥 | 53.33% |
 | js/last-argument-expansion/arrow.js | 💥 | 11.43% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
-| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
+| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/last-argument-expansion/edge_case.js | 💥 | 83.97% |
-| js/last-argument-expansion/empty-object.js | 💥 | 86.67% |
-| js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
 | js/last-argument-expansion/issue-7518.js | 💥 | 85.71% |
 | js/last-argument-expansion/jsx.js | 💥 | 25.00% |
 | js/last-argument-expansion/object.js | 💥 | 94.74% |
-| js/last-argument-expansion/overflow.js | 💥 | 71.22% |
 | js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/member/conditional.js | 💥 | 0.00% |
@@ -199,7 +195,6 @@ js compatibility: 408/699 (58.37%)
 | js/objects/assignment-expression/object-value.js | 💥 | 85.71% |
 | js/optional-chaining/chaining.js | 💥 | 59.77% |
 | js/optional-chaining/comments.js | 💥 | 16.90% |
-| js/preserve-line/argument-list.js | 💥 | 99.44% |
 | js/preserve-line/member-chain.js | 💥 | 23.30% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |

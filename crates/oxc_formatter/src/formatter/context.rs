@@ -6,6 +6,7 @@ use oxc_ast::{
     ast::{FunctionBody, Program},
 };
 use oxc_span::{GetSpan, SourceType, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
 
@@ -22,7 +23,7 @@ pub struct FormatContext<'ast> {
 
     comments: Comments<'ast>,
 
-    cached_function_body: Option<(Span, FormatElement<'ast>)>,
+    cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
     allocator: &'ast Allocator,
 }
@@ -34,7 +35,7 @@ impl std::fmt::Debug for FormatContext<'_> {
             .field("source_text", &self.source_text)
             .field("source_type", &self.source_type)
             .field("comments", &self.comments)
-            .field("cached_function_body", &self.cached_function_body)
+            .field("cached_elements", &self.cached_elements)
             .finish()
     }
 }
@@ -50,8 +51,8 @@ impl<'ast> FormatContext<'ast> {
             source_text: program.source_text,
             source_type: program.source_type,
             comments: Comments::new(program.source_text, &program.comments),
-            cached_function_body: None,
             allocator,
+            cached_elements: FxHashMap::default(),
         }
     }
 
@@ -65,6 +66,11 @@ impl<'ast> FormatContext<'ast> {
         &self.comments
     }
 
+    /// Returns a reference to the program's comments.
+    pub fn comments_mut(&mut self) -> &mut Comments<'ast> {
+        &mut self.comments
+    }
+
     /// Returns the formatting options
     pub fn source_text(&self) -> &'ast str {
         self.source_text
@@ -75,28 +81,14 @@ impl<'ast> FormatContext<'ast> {
         self.source_type
     }
 
-    /// Returns the formatted content for the passed function body if it is cached or `None` if the currently
-    /// cached content belongs to another function body or the cache is empty.
-    ///
-    /// See [JsFormatContext::cached_function_body] for more in depth documentation.
-    pub(crate) fn get_cached_function_body(
-        &self,
-        body: &AstNode<'ast, FunctionBody<'ast>>,
-    ) -> Option<FormatElement<'ast>> {
-        self.cached_function_body.as_ref().and_then(|(expected_body_span, formatted)| {
-            if *expected_body_span == body.span() { Some(formatted.clone()) } else { None }
-        })
+    /// Returns the cached formatted element for the given key.
+    pub(crate) fn get_cached_element<T: GetSpan>(&self, key: &T) -> Option<FormatElement<'ast>> {
+        self.cached_elements.get(&key.span()).cloned()
     }
 
-    /// Sets the currently cached formatted function body.
-    ///
-    /// See [JsFormatContext::cached_function_body] for more in depth documentation.
-    pub(crate) fn set_cached_function_body(
-        &mut self,
-        body: &AstNode<'ast, FunctionBody<'ast>>,
-        formatted: FormatElement<'ast>,
-    ) {
-        self.cached_function_body = Some((body.span(), formatted));
+    /// Caches the formatted element for the given key.
+    pub(crate) fn cache_element<T: GetSpan>(&mut self, key: &T, formatted: FormatElement<'ast>) {
+        self.cached_elements.insert(key.span(), formatted);
     }
 
     pub(crate) fn increment_printed_count(&mut self) {

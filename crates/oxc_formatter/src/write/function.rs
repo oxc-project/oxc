@@ -21,7 +21,8 @@ use crate::{
 #[derive(Copy, Clone, Debug, Default)]
 pub struct FormatFunctionOptions {
     pub call_argument_layout: Option<GroupedCallArgumentLayout>,
-    pub body_cache_mode: FunctionBodyCacheMode,
+    // Determine whether the signature and body should be cached.
+    pub cache_mode: FunctionBodyCacheMode,
 }
 
 pub struct FormatFunction<'a, 'b> {
@@ -53,22 +54,38 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
             ]
         );
 
+        // The [`call_arguments`] will format the argument that can be grouped in different ways until
+        // find the best layout. So we have to cache the parameters because it never be broken.
+        let cached_signature = format_once(|f| {
+            if matches!(self.options.cache_mode, FunctionBodyCacheMode::NoCache) {
+                self.params().fmt(f)
+            } else if let Some(grouped) = f.context().get_cached_element(&self.params.span) {
+                f.write_element(grouped)
+            } else {
+                if let Ok(Some(grouped)) = f.intern(&self.params()) {
+                    f.context_mut().cache_element(&self.params.span, grouped.clone());
+                    f.write_element(grouped.clone());
+                }
+                Ok(())
+            }
+        });
+
         let format_parameters = format_with(|f: &mut Formatter<'_, 'a>| {
             if self.options.call_argument_layout.is_some() {
                 let mut buffer = RemoveSoftLinesBuffer::new(f);
 
                 let mut recording = buffer.start_recording();
-                write!(recording, [self.params()])?;
+                write!(recording, cached_signature)?;
                 let recorded = recording.stop();
 
                 if recorded.will_break() {
                     return Err(FormatError::PoorLayout);
                 }
-            } else {
-                self.params().fmt(f)?;
-            }
 
-            Ok(())
+                Ok(())
+            } else {
+                cached_signature.fmt(f)
+            }
         });
 
         write!(
@@ -101,7 +118,7 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
                     space(),
                     FormatMaybeCachedFunctionBody {
                         body,
-                        mode: self.options.body_cache_mode,
+                        mode: self.options.cache_mode,
                         expression: false
                     }
                 ]

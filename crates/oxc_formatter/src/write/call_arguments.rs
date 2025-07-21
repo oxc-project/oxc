@@ -1,3 +1,5 @@
+use std::mem;
+
 use oxc_allocator::{Address, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression};
 use oxc_span::GetSpan;
@@ -8,9 +10,9 @@ use crate::{
         BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
         format_element,
         prelude::{
-            FormatElements, MemoizeFormat, Tag, empty_line, expand_parent, format_once,
-            format_with, get_lines_before, group, soft_block_indent, soft_line_break_or_space,
-            space,
+            FormatElements, FormatOnce, FormatWith, MemoizeFormat, Tag, empty_line, expand_parent,
+            format_once, format_with, get_lines_before, group, soft_block_indent,
+            soft_line_break_or_space, space,
         },
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, format_dangling_comments},
@@ -35,6 +37,7 @@ use super::{
         FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
         FunctionBodyCacheMode, GroupedCallArgumentLayout,
     },
+    function,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
@@ -92,176 +95,34 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let last_index = self.len().saturating_sub(1);
         let mut has_empty_line = false;
 
-        let arguments: Vec<_> = self
-            .iter()
-            .enumerate()
-            .map(|(index, element)| {
-                let leading_lines = get_lines_before(element.span(), f);
-                has_empty_line = has_empty_line || leading_lines > 1;
-
-                FormatCallArgument::Default { element, is_last: index == last_index, leading_lines }
-            })
-            .collect();
+        let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
 
         if has_empty_line || is_function_composition_args(self) {
-            return write!(
-                f,
-                [FormatAllArgsBrokenOut { args: &arguments, node: self, expand: true }]
-            );
+            return format_all_args_broken_out(self, true, f);
         }
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
-            write_grouped_arguments(self, arguments, group_layout, f)
+            write_grouped_arguments(self, group_layout, f)
         } else if is_long_curried_call(self.parent) {
             write!(
                 f,
                 [
                     l_paren_token,
                     soft_block_indent(&format_once(|f| {
-                        write_arguments_multi_line(arguments.iter(), f)
+                        write_arguments_multi_line(
+                            FormatSeparatedIter::new(self.iter(), ",")
+                                .with_trailing_separator(TrailingSeparator::Omit),
+                            f,
+                        )
                     })),
                     r_paren_token,
                 ]
             )
         } else {
-            write!(f, [FormatAllArgsBrokenOut { args: &arguments, node: self, expand: false }])
+            format_all_args_broken_out(self, false, f)
         }
-    }
-}
-
-/// Helper for formatting a call argument
-pub enum FormatCallArgument<'a, 'b> {
-    /// Argument that has not been inspected if its formatted content breaks.
-    Default {
-        element: &'b AstNode<'a, Argument<'a>>,
-
-        /// Whether this is the last element.
-        is_last: bool,
-
-        /// The number of lines before this node
-        leading_lines: usize,
-    },
-
-    /// The argument has been formatted because a caller inspected if it [Self::will_break].
-    ///
-    /// Allows to re-use the formatted output rather than having to call into the formatting again.
-    Inspected {
-        /// The formatted element
-        content: FormatResult<Option<FormatElement<'a>>>,
-
-        /// The separated element
-        element: &'b AstNode<'a, Argument<'a>>,
-
-        /// The lines before this element
-        leading_lines: usize,
-    },
-}
-
-impl<'a> FormatCallArgument<'a, '_> {
-    /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
-    fn will_break(&mut self, f: &mut Formatter<'_, 'a>) -> bool {
-        match &self {
-            Self::Default { element, leading_lines, .. } => {
-                let interned = f.intern(&self);
-
-                let breaks = match &interned {
-                    Ok(Some(element)) => element.will_break(),
-                    _ => false,
-                };
-
-                *self =
-                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
-                breaks
-            }
-            Self::Inspected { content: Ok(Some(result)), .. } => result.will_break(),
-            Self::Inspected { .. } => false,
-        }
-    }
-
-    /// Formats the node of this argument and caches the function body.
-    ///
-    /// See [crate::FormatContext::cached_function_body]
-    ///
-    /// # Panics
-    ///
-    /// If [`cache_function_body`](Self::cache_function_body) or [`will_break`](Self::will_break) has been called on this argument before.
-    fn cache_function_body(&mut self, f: &mut Formatter<'_, 'a>) {
-        match &self {
-            Self::Default { element, leading_lines, .. } => {
-                let interned = f.intern(&format_once(|f| {
-                    self.fmt_with_cache_mode(FunctionBodyCacheMode::Cache, f)?;
-                    Ok(())
-                }));
-
-                *self =
-                    Self::Inspected { content: interned, element, leading_lines: *leading_lines };
-            }
-            Self::Inspected { .. } => {
-                panic!("`cache` must be called before inspecting or formatting the element.");
-            }
-        }
-    }
-
-    fn fmt_with_cache_mode(
-        &self,
-        cache_mode: FunctionBodyCacheMode,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<()> {
-        match self {
-            // Re-use the cached formatted output if there is any.
-            Self::Inspected { content, .. } => match content.clone()? {
-                Some(element) => f.write_element(element),
-                None => Ok(()),
-            },
-            Self::Default { element, is_last, .. } => {
-                match element.as_ast_nodes() {
-                    AstNodes::Function(function) => {
-                        function.fmt_with_options(
-                            FormatFunctionOptions {
-                                body_cache_mode: cache_mode,
-                                ..Default::default()
-                            },
-                            f,
-                        )?;
-                    }
-                    AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                        FormatJsArrowFunctionExpressionOptions {
-                            body_cache_mode: cache_mode,
-                            ..FormatJsArrowFunctionExpressionOptions::default()
-                        },
-                        f,
-                    )?,
-                    _ => write!(f, element)?,
-                }
-
-                if *is_last { Ok(()) } else { write!(f, ",") }
-            }
-        }
-    }
-
-    /// Returns the number of leading lines before the argument's node
-    fn leading_lines(&self) -> usize {
-        match self {
-            Self::Inspected { leading_lines, .. } | Self::Default { leading_lines, .. } => {
-                *leading_lines
-            }
-        }
-    }
-
-    /// Returns an argument.
-    fn element(&self) -> &AstNode<'a, Argument<'a>> {
-        match self {
-            Self::Inspected { element, .. } | Self::Default { element, .. } => element,
-        }
-    }
-}
-
-impl<'a> Format<'a> for FormatCallArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.fmt_with_cache_mode(FunctionBodyCacheMode::default(), f)
     }
 }
 
@@ -304,42 +165,68 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     false
 }
 
-pub struct FormatAllArgsBrokenOut<'a, 'b> {
-    pub args: &'b [FormatCallArgument<'a, 'b>],
-    pub expand: bool,
-    pub node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-}
-
-impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_inside_import = matches!(self.node.parent, AstNodes::ImportExpression(_));
-
-        write!(
-            f,
-            [group(&format_args!(
-                "(",
-                soft_block_indent(&format_with(|f| {
-                    for (index, entry) in self.args.iter().enumerate() {
+fn format_all_elements_broken_out<'a, 'b>(
+    elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
+    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    expand: bool,
+    mut buffer: impl Buffer<'a>,
+) -> FormatResult<()> {
+    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
+    write!(
+        buffer,
+        [group(&format_args!(
+            "(",
+            soft_block_indent(&format_once(move |f| {
+                for (index, (element, lines_before)) in elements.into_iter().enumerate() {
+                    if let Ok(Some(element)) = element {
                         if index > 0 {
-                            match entry.leading_lines() {
+                            match lines_before {
                                 0 | 1 => write!(f, [soft_line_break_or_space()])?,
                                 _ => write!(f, [empty_line()])?,
                             }
                         }
 
-                        write!(f, [entry])?;
+                        f.write_element(element)?;
+                    }
+                }
+
+                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+            })),
+            ")",
+        ))
+        .should_expand(expand)]
+    )
+}
+
+fn format_all_args_broken_out<'a, 'b>(
+    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    expand: bool,
+    mut buffer: impl Buffer<'a>,
+) -> FormatResult<()> {
+    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
+    let last_index = node.len() - 1;
+    write!(
+        buffer,
+        [group(&format_args!(
+            "(",
+            soft_block_indent(&format_once(move |f| {
+                for (index, argument) in node.iter().enumerate() {
+                    if index > 0 {
+                        match get_lines_before(argument.span(), f) {
+                            0 | 1 => write!(f, [soft_line_break_or_space()])?,
+                            _ => write!(f, [empty_line()])?,
+                        }
                     }
 
-                    if !is_inside_import {
-                        write!(f, [FormatTrailingCommas::All])?;
-                    }
-                    Ok(())
-                })),
-                ")",
-            ))
-            .should_expand(self.expand)]
-        )
-    }
+                    write!(f, [argument, (index != last_index).then_some(",")])?;
+                }
+
+                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+            })),
+            ")",
+        ))
+        .should_expand(expand)]
+    )
 }
 
 pub fn arguments_grouped_layout(
@@ -386,13 +273,7 @@ fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter
 
             let call_like_span = args.parent.span();
             !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
-                && !can_group_expression_argument(
-                    first.span().end,
-                    second,
-                    // The span just for finding comment before the call like expression.
-                    call_like_span.end,
-                    f,
-                )
+                && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
         }
         _ => false,
@@ -420,7 +301,7 @@ fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<
                 return false;
             }
 
-            if !can_group_expression_argument(previous_span, last, call_like_span.end, f) {
+            if !can_group_expression_argument(last, f) {
                 return false;
             }
 
@@ -554,42 +435,28 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 }
 
 /// Checks if `argument` benefits from grouping in call arguments.
-fn can_group_expression_argument(
-    previous_end: u32,
-    argument: &Expression<'_>,
-    following_start: u32,
-    f: &Formatter<'_, '_>,
-) -> bool {
+fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_>) -> bool {
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
-                || f.comments().has_comments(previous_end, object_expression.span, following_start)
+                || f.comments().has_comments_in_span(object_expression.span)
         }
 
         Expression::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
-                || f.comments().has_comments(previous_end, array_expression.span, following_start)
+                || f.comments().has_comments_in_span(array_expression.span)
         }
-        Expression::TSTypeAssertion(assertion_expression) => can_group_expression_argument(
-            previous_end,
-            &assertion_expression.expression,
-            following_start,
-            f,
-        ),
+        Expression::TSTypeAssertion(assertion_expression) => {
+            can_group_expression_argument(&assertion_expression.expression, f)
+        }
 
-        Expression::TSAsExpression(as_expression) => can_group_expression_argument(
-            previous_end,
-            &as_expression.expression,
-            following_start,
-            f,
-        ),
+        Expression::TSAsExpression(as_expression) => {
+            can_group_expression_argument(&as_expression.expression, f)
+        }
 
-        Expression::TSSatisfiesExpression(satisfies_expression) => can_group_expression_argument(
-            previous_end,
-            &satisfies_expression.expression,
-            following_start,
-            f,
-        ),
+        Expression::TSSatisfiesExpression(satisfies_expression) => {
+            can_group_expression_argument(&satisfies_expression.expression, f)
+        }
 
         Expression::ArrowFunctionExpression(arrow_function) => {
             can_group_arrow_function_expression_argument(arrow_function, false, f)
@@ -660,53 +527,88 @@ fn can_group_arrow_function_expression_argument(
     })
 }
 
-fn write_grouped_arguments<'a, 'b>(
-    call_arguments: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
-    mut arguments: Vec<FormatCallArgument<'a, 'b>>,
+fn write_grouped_arguments<'a>(
+    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
-    let grouped_breaks = {
-        let (grouped_arg, other_args) = match group_layout {
-            GroupedCallArgumentLayout::GroupedFirstArgument => {
-                let (first, tail) = arguments.split_at_mut(1);
-                (&mut first[0], tail)
-            }
-            GroupedCallArgumentLayout::GroupedLastArgument => {
-                let end_index = arguments.len().saturating_sub(1);
-                let (head, last) = arguments.split_at_mut(end_index);
-                (&mut last[0], head)
-            }
-        };
+    let last_index = node.len() - 1;
+    let only_one_argument = last_index == 0;
+    let mut non_grouped_breaks = false;
+    let mut grouped_breaks = false;
+    let mut has_cached = false;
 
-        let non_grouped_breaks = other_args.iter_mut().any(|arg| arg.will_break(f));
+    // Pre-format the arguments to determine if they can be grouped.
+    let mut elements = node
+        .iter()
+        .enumerate()
+        .map(|(index, argument)| {
+            let is_grouped_argument = (group_layout.is_grouped_first() && index == 0)
+                || (group_layout.is_grouped_last() && index == last_index);
 
-        // if any of the not grouped elements break, then fall back to the variant where
-        // all arguments are printed in expanded mode.
-        if non_grouped_breaks {
-            return write!(
-                f,
-                [FormatAllArgsBrokenOut { args: &arguments, node: call_arguments, expand: true }]
+            let format_argument = format_once(|f| {
+                if is_grouped_argument {
+                    match argument.as_ast_nodes() {
+                        AstNodes::Function(function)
+                            if !group_layout.is_grouped_first()
+                                && (!only_one_argument
+                                    || function_has_only_simple_parameters(&function.params)) =>
+                        {
+                            has_cached = true;
+                            return function.fmt_with_options(
+                                FormatFunctionOptions {
+                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    ..Default::default()
+                                },
+                                f,
+                            );
+                        }
+                        AstNodes::ArrowFunctionExpression(arrow) => {
+                            has_cached = true;
+                            return arrow.fmt_with_options(
+                                FormatJsArrowFunctionExpressionOptions {
+                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    ..FormatJsArrowFunctionExpressionOptions::default()
+                                },
+                                f,
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+                argument.fmt(f)
+            });
+
+            // We have to get the lines before the argument has been formatted, because it relies on
+            // the comments before the argument. After formatting, the comments might marked as printed,
+            // which would lead to a wrong line count.
+            let lines_before = get_lines_before(argument.span(), f);
+
+            let interned = f.intern(
+                &format_once(|f| {
+                    format_argument.fmt(f)?;
+                    write!(f, (last_index != index).then_some(","))
+                })
+                .memoized(),
             );
-        }
 
-        match grouped_arg.element().as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(_) => {
-                grouped_arg.cache_function_body(f);
-            }
-            AstNodes::Function(function)
-                if !other_args.is_empty()
-                    || function_has_only_simple_parameters(&function.params) =>
-            {
-                grouped_arg.cache_function_body(f);
-            }
-            _ => {
-                // Node doesn't have a function body or its a function that doesn't get re-formatted.
-            }
-        }
+            let break_type =
+                if is_grouped_argument { &mut grouped_breaks } else { &mut non_grouped_breaks };
 
-        grouped_arg.will_break(f)
-    };
+            *break_type = *break_type
+                || interned
+                    .as_ref()
+                    .is_ok_and(|i| i.as_ref().is_some_and(FormatElement::will_break));
+
+            (interned, lines_before)
+        })
+        .collect::<Vec<_>>();
+
+    // If any of the not grouped elements break, then fall back to the variant where
+    // all arguments are printed in expanded mode.
+    if non_grouped_breaks {
+        return format_all_elements_broken_out(elements.into_iter(), node, true, f);
+    }
 
     // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
     // print each version first
@@ -718,10 +620,8 @@ fn write_grouped_arguments<'a, 'b>(
         let mut buffer = VecBuffer::new(f.state_mut());
         buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-        write!(
-            buffer,
-            [FormatAllArgsBrokenOut { args: &arguments, node: call_arguments, expand: true }]
-        )?;
+        format_all_elements_broken_out(elements.iter().cloned(), node, true, &mut buffer);
+
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
         buffer.into_vec()
@@ -734,25 +634,26 @@ fn write_grouped_arguments<'a, 'b>(
     // This implementation caches the function body of the "normal" formatted function or arrow function expression
     // to avoid quadratic complexity if the functions' body contains another call expression with an arrow or function expression
     // as first or last argument.
-    let last_index = arguments.len() - 1;
-    let grouped = arguments
-        .iter()
-        .enumerate()
-        .map(|(index, argument)| {
-            let layout = match group_layout {
-                GroupedCallArgumentLayout::GroupedFirstArgument if index == 0 => {
-                    Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-                }
-                GroupedCallArgumentLayout::GroupedLastArgument if index == last_index => {
-                    Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                }
-                _ => None,
-            };
-
-            FormatGroupedArgument { argument, single_argument_list: last_index == 0, layout }
-                .memoized()
-        })
-        .collect::<Vec<_>>();
+    let mut grouped = elements;
+    if has_cached {
+        match group_layout {
+            GroupedCallArgumentLayout::GroupedFirstArgument => {
+                let argument = node.first().unwrap();
+                let mut first = grouped.first_mut().unwrap();
+                first.0 = f.intern(&format_once(|f| {
+                    FormatGroupedFirstArgument { argument }.fmt(f)?;
+                    write!(f, (last_index != 0).then_some(","))
+                }));
+            }
+            GroupedCallArgumentLayout::GroupedLastArgument => {
+                let argument = node.last().unwrap();
+                let mut last = grouped.last_mut().unwrap();
+                last.0 = f.intern(&format_once(|f| {
+                    FormatGroupedLastArgument { argument, is_only: only_one_argument }.fmt(f)
+                }));
+            }
+        }
+    }
 
     // Write the most flat variant with the first or last argument grouped.
     let most_flat = {
@@ -765,7 +666,17 @@ fn write_grouped_arguments<'a, 'b>(
             [
                 l_paren_token,
                 format_with(|f| {
-                    f.join_with(soft_line_break_or_space()).entries(grouped.iter()).finish()
+                    f.join_with(soft_line_break_or_space())
+                        .entries(grouped.iter().map(|(element, _)| {
+                            format_once(|f| {
+                                if let Some(element) = element.clone()? {
+                                    f.write_element(element)
+                                } else {
+                                    Ok(())
+                                }
+                            })
+                        }))
+                        .finish()
                 }),
                 r_paren_token,
             ]
@@ -783,10 +694,10 @@ fn write_grouped_arguments<'a, 'b>(
 
             let mut most_expanded_iter = most_expanded.into_iter();
             // Skip over the Start/EndEntry items.
-            most_expanded_iter.next();
             most_expanded_iter.next_back();
 
-            return f.write_elements(most_expanded_iter);
+            // `skip(1)` is skipping the `StartEntry` tag
+            return f.write_elements(most_expanded_iter.skip(1));
         }
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
@@ -804,20 +715,35 @@ fn write_grouped_arguments<'a, 'b>(
             buffer,
             [
                 l_paren_token,
-                format_with(|f| {
+                format_once(|f| {
                     let mut joiner = f.join_with(soft_line_break_or_space());
 
-                    match group_layout {
-                        GroupedCallArgumentLayout::GroupedFirstArgument => {
-                            joiner.entry(&group(&grouped[0]).should_expand(true));
-                            joiner.entries(&grouped[1..]).finish()
-                        }
-                        GroupedCallArgumentLayout::GroupedLastArgument => {
-                            let last_index = grouped.len() - 1;
-                            joiner.entries(&grouped[..last_index]);
-                            joiner.entry(&group(&grouped[last_index]).should_expand(true)).finish()
+                    for (i, (element, _)) in grouped.into_iter().enumerate() {
+                        if (group_layout.is_grouped_first() && i == 0)
+                            || (group_layout.is_grouped_last() && i == last_index)
+                        {
+                            joiner.entry(
+                                &group(&format_once(|f| {
+                                    if let Some(arg_element) = element? {
+                                        f.write_element(arg_element)
+                                    } else {
+                                        Ok(())
+                                    }
+                                }))
+                                .should_expand(true),
+                            );
+                        } else {
+                            joiner.entry(&format_once(|f| {
+                                if let Some(arg_element) = element? {
+                                    f.write_element(arg_element)
+                                } else {
+                                    Ok(())
+                                }
+                            }));
                         }
                     }
+
+                    joiner.finish()
                 }),
                 r_paren_token
             ]
@@ -849,60 +775,25 @@ fn write_grouped_arguments<'a, 'b>(
     }
 }
 
-/// Helper for formatting a grouped call argument (see [should_group_first_argument] and [should_group_last_argument]).
-struct FormatGroupedArgument<'a, 'b> {
-    argument: &'b FormatCallArgument<'a, 'b>,
-
-    /// Whether this argument is the only argument in the argument list.
-    single_argument_list: bool,
-
-    /// The layout to use for this argument.
-    layout: Option<GroupedCallArgumentLayout>,
-}
-
-impl<'a> Format<'a> for FormatGroupedArgument<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self.layout {
-            Some(GroupedCallArgumentLayout::GroupedFirstArgument) => FormatGroupedFirstArgument {
-                is_only: self.single_argument_list,
-                argument: self.argument,
-            }
-            .fmt(f),
-            Some(GroupedCallArgumentLayout::GroupedLastArgument) => FormatGroupedLastArgument {
-                is_only: self.single_argument_list,
-                argument: self.argument,
-            }
-            .fmt(f),
-            None => self.argument.fmt(f),
-        }
-    }
-}
-
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
 struct FormatGroupedFirstArgument<'a, 'b> {
-    argument: &'b FormatCallArgument<'a, 'b>,
-
-    /// Whether this is the only argument in the argument list.
-    is_only: bool,
+    argument: &'b AstNode<'a, Argument<'a>>,
 }
 
 impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let element = self.argument.element();
-
-        match element.as_ast_nodes() {
+        match self.argument.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        body_cache_mode: FunctionBodyCacheMode::Cached,
+                        cache_mode: FunctionBodyCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },
                     f,
-                );
-                write!(f, ",")
+                )
             }),
 
             // For all other nodes, use the normal formatting (which already has been cached)
@@ -914,26 +805,24 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
 struct FormatGroupedLastArgument<'a, 'b> {
     /// The argument to format
-    argument: &'b FormatCallArgument<'a, 'b>,
+    argument: &'b AstNode<'a, Argument<'a>>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
 
 impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let element = self.argument.element();
-
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match element.as_ast_nodes() {
+        match self.argument.as_ast_nodes() {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
                 with_token_tracking_disabled(f, |f| {
                     function.fmt_with_options(
                         FormatFunctionOptions {
-                            body_cache_mode: FunctionBodyCacheMode::Cached,
+                            cache_mode: FunctionBodyCacheMode::Cache,
                             call_argument_layout: Some(
                                 GroupedCallArgumentLayout::GroupedLastArgument,
                             ),
@@ -946,7 +835,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        body_cache_mode: FunctionBodyCacheMode::Cached,
+                        cache_mode: FunctionBodyCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },

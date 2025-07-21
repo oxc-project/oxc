@@ -626,16 +626,13 @@ pub fn with_assignment_layout<'a, 'b>(
 impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.expression.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                FormatJsArrowFunctionExpression::new_with_options(
-                    arrow,
-                    FormatJsArrowFunctionExpressionOptions {
-                        assignment_layout: self.layout,
-                        ..FormatJsArrowFunctionExpressionOptions::default()
-                    },
-                )
-                .fmt(f)
-            }
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
+                FormatJsArrowFunctionExpressionOptions {
+                    assignment_layout: self.layout,
+                    ..FormatJsArrowFunctionExpressionOptions::default()
+                },
+                f,
+            ),
             _ => self.expression.fmt(f),
         }
     }

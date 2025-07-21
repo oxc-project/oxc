@@ -6,7 +6,7 @@ use crate::{
     formatter::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter,
         buffer::RemoveSoftLinesBuffer, comments::has_new_line_backward, prelude::*,
-        trivia::format_trailing_comments,
+        trivia::format_trailing_comments, write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
@@ -25,10 +25,11 @@ pub struct FormatJsArrowFunctionExpression<'a, 'b> {
 pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
     pub call_arg_layout: Option<GroupedCallArgumentLayout>,
-    pub body_cache_mode: FunctionBodyCacheMode,
+    // Determine whether the signature and body should be cached.
+    pub cache_mode: FunctionBodyCacheMode,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupedCallArgumentLayout {
     /// Group the first call argument.
     GroupedFirstArgument,
@@ -37,14 +38,21 @@ pub enum GroupedCallArgumentLayout {
     GroupedLastArgument,
 }
 
+impl GroupedCallArgumentLayout {
+    pub fn is_grouped_first(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedFirstArgument)
+    }
+
+    pub fn is_grouped_last(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedLastArgument)
+    }
+}
+
 #[derive(Default, Debug, Clone, Copy)]
 pub enum FunctionBodyCacheMode {
     /// Format the body without caching it or retrieving it from the cache.
     #[default]
     NoCache,
-
-    /// The body has been cached before, try to retrieve the body from the cache.
-    Cached,
 
     /// Cache the body during the next [formatting](Format::fmt).
     Cache,
@@ -79,7 +87,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     write!(
                         f,
                         [
-                            format_signature(arrow, self.options.call_arg_layout.is_some(), true),
+                            format_signature(
+                                arrow,
+                                self.options.call_arg_layout.is_some(),
+                                true,
+                                self.options.cache_mode
+                            ),
                             space(),
                             "=>"
                         ]
@@ -89,7 +102,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let format_body = FormatMaybeCachedFunctionBody {
                     body,
                     expression: arrow.expression(),
-                    mode: self.options.body_cache_mode,
+                    mode: self.options.cache_mode,
                 };
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
@@ -518,7 +531,15 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             }
                         }
 
-                        write!(f, [format_signature(arrow, is_grouped_call_arg_layout, is_first)])
+                        write!(
+                            f,
+                            [format_signature(
+                                arrow,
+                                is_grouped_call_arg_layout,
+                                is_first,
+                                self.options.cache_mode
+                            )]
+                        )
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -554,7 +575,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
                 expression: tail.expression(),
-                mode: self.options.body_cache_mode,
+                mode: self.options.cache_mode,
             };
 
             // Ensure that the parens of sequence expressions end up on their own line if the
@@ -804,6 +825,7 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
+    cache_mode: FunctionBodyCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
         let formatted_async_token =
@@ -812,26 +834,41 @@ fn format_signature<'a, 'b>(
         let formatted_parameters =
             format_with(|f| write!(f, [arrow.type_parameters(), arrow.params()]));
 
-        let format_return_type = format_with(|f| {
-            if let Some(return_type) = &arrow.return_type() {
-                write!(f, return_type)?;
-            }
-            Ok(())
-        });
+        let format_return_type = format_with(|f| write!(f, arrow.return_type()));
 
-        if is_first_or_last_call_argument {
-            let mut buffer = RemoveSoftLinesBuffer::new(f);
-            let mut recording = buffer.start_recording();
-
+        let signatures = format_once(|f| {
             write!(
-                recording,
+                f,
                 [group(&format_args!(
                     maybe_space(!is_first_in_chain),
                     formatted_async_token,
                     group(&formatted_parameters),
                     group(&format_return_type)
                 ))]
-            )?;
+            )
+        });
+
+        // The [`call_arguments`] will format the argument that can be grouped in different ways until
+        // find the best layout. So we have to cache the parameters because it never be broken.
+        let cached_signature = format_once(|f| {
+            if matches!(cache_mode, FunctionBodyCacheMode::NoCache) {
+                signatures.fmt(f)
+            } else if let Some(grouped) = f.context().get_cached_element(&arrow.params.span) {
+                f.write_element(grouped)
+            } else {
+                if let Ok(Some(grouped)) = f.intern(&signatures) {
+                    f.context_mut().cache_element(&arrow.params.span, grouped.clone());
+                    f.write_element(grouped.clone());
+                }
+                Ok(())
+            }
+        });
+
+        if is_first_or_last_call_argument {
+            let mut buffer = RemoveSoftLinesBuffer::new(f);
+            let mut recording = buffer.start_recording();
+
+            write!(recording, cached_signature)?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);
@@ -845,11 +882,7 @@ fn format_signature<'a, 'b>(
                     // line and can't break pre-emptively without also causing
                     // the parent (i.e., this ArrowChain) to break first.
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
-                    group(&format_args!(
-                        formatted_async_token,
-                        formatted_parameters,
-                        group(&format_return_type)
-                    ))
+                    cached_signature
                 ]
             )?;
         }
@@ -892,30 +925,19 @@ impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.mode {
             FunctionBodyCacheMode::NoCache => self.format(f),
-            FunctionBodyCacheMode::Cached => {
-                match f.context().get_cached_function_body(self.body) {
-                    Some(cached) => f.write_element(cached),
-                    None => {
-                        // This can happen in the unlikely event where a function has a parameter with
-                        // an initializer that contains a call expression with a first or last function/arrow
-                        // ```javascript
-                        // test((
-                        //   problematic = test(() => body)
-                        // ) => {});
-                        // ```
-                        // This case should be rare as it requires very specific syntax (and is rather messy to write)
-                        // which is why it's fine to just fallback to formatting the body again in this case.
-                        self.format(f)
+            FunctionBodyCacheMode::Cache => {
+                if let Some(cached) = f.context().get_cached_element(&self.body.span) {
+                    f.write_element(cached)
+                } else {
+                    match f.intern(&format_once(|f| self.format(f)))? {
+                        Some(interned) => {
+                            f.context_mut().cache_element(&self.body.span, interned.clone());
+                            f.write_element(interned)
+                        }
+                        None => Ok(()),
                     }
                 }
             }
-            FunctionBodyCacheMode::Cache => match f.intern(&format_once(|f| self.format(f)))? {
-                Some(interned) => {
-                    f.context_mut().set_cached_function_body(self.body, interned.clone());
-                    f.write_element(interned)
-                }
-                None => Ok(()),
-            },
         }
     }
 }
