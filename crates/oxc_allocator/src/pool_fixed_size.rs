@@ -324,7 +324,7 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         // so going with `Ordering::SeqCst` to be on safe side.
         // Deallocation only happens at the end of the whole process, so it shouldn't matter much.
         // TODO: Figure out if can use `Ordering::Relaxed`.
-        let is_double_owned = metadata.is_double_owned.fetch_and(false, Ordering::SeqCst);
+        let is_double_owned = metadata.is_double_owned.swap(false, Ordering::SeqCst);
         if is_double_owned {
             return;
         }

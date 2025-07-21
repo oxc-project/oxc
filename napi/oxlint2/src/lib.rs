@@ -62,7 +62,7 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
             // stored at the pointer returned by `Allocator::fixed_size_metadata_ptr`.
             let metadata = unsafe { metadata_ptr.as_ref() };
             // TODO: Is `Ordering::SeqCst` excessive here?
-            let already_sent_to_js = metadata.is_double_owned.fetch_or(true, Ordering::SeqCst);
+            let already_sent_to_js = metadata.is_double_owned.swap(true, Ordering::SeqCst);
 
             (metadata.id, already_sent_to_js)
         };
