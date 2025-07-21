@@ -1,4 +1,4 @@
-ts compatibility: 233/573 (40.66%)
+ts compatibility: 234/573 (40.84%)
 
 # Failed
 
@@ -18,7 +18,7 @@ ts compatibility: 233/573 (40.66%)
 | jsx/fragment/fragment.js | 💥 | 78.57% |
 | jsx/ignore/jsx_ignore.js | 💥 | 67.31% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 24.53% |
-| jsx/jsx/arrow.js | 💥💥💥💥 | 45.16% |
+| jsx/jsx/arrow.js | 💥💥💥💥 | 32.26% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
 | jsx/jsx/await.js | 💥💥💥💥 | 15.00% |
 | jsx/jsx/conditional-expression.js | 💥💥💥💥 | 64.10% |
@@ -49,7 +49,7 @@ ts compatibility: 233/573 (40.66%)
 | jsx/spread/child.js | 💥 | 33.33% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 21.58% |
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
-| jsx/text-wrap/test.js | 💥 | 33.85% |
+| jsx/text-wrap/test.js | 💥 | 33.71% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 72.00% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
@@ -77,7 +77,7 @@ ts compatibility: 233/573 (40.66%)
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 60.00% |
-| typescript/cast/generic-cast.ts | 💥 | 39.46% |
+| typescript/cast/generic-cast.ts | 💥 | 38.82% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
@@ -276,7 +276,6 @@ ts compatibility: 233/573 (40.66%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 58.49% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 5.56% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
-| typescript/private-fields-in-in/basic.ts | 💥 | 64.29% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
 | typescript/readonly/array.ts | 💥 | 0.00% |
 | typescript/rest/rest.ts | 💥 | 0.00% |

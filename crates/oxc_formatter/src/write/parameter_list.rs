@@ -227,6 +227,6 @@ pub fn has_only_simple_parameters(
 /// [a, b]          => false
 ///
 fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
-    parameter.pattern.get_binding_identifier().is_some()
+    parameter.pattern.kind.is_binding_identifier()
         && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
 }
