@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
     ast::{Argument, BindingPatternKind, Expression},
@@ -25,7 +26,7 @@ pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
 #[derive(Debug, Clone)]
 pub struct CatchErrorNameConfig {
-    ignore: Vec<CompactStr>,
+    ignore: Vec<Regex>,
     name: CompactStr,
 }
 
@@ -127,14 +128,13 @@ impl Rule for CatchErrorName {
     fn from_configuration(value: serde_json::Value) -> Self {
         let ignored_names = value
             .get(0)
-            .and_then(|v| v.get("ignored"))
+            .and_then(|v| v.get("ignore"))
             .and_then(serde_json::Value::as_array)
             .unwrap_or(&vec![])
             .iter()
-            .map(serde_json::Value::as_str)
-            .filter(Option::is_some)
-            .map(|x| CompactStr::from(x.unwrap()))
-            .collect::<Vec<CompactStr>>();
+            .filter_map(serde_json::Value::as_str)
+            .filter_map(|x| Regex::new(x).ok())
+            .collect::<Vec<Regex>>();
 
         let allowed_name = CompactStr::from(
             value
@@ -176,7 +176,7 @@ impl Rule for CatchErrorName {
 
 impl CatchErrorName {
     fn is_name_allowed(&self, name: &str) -> bool {
-        self.name == name || self.ignore.iter().any(|s| s.as_str() == name)
+        self.name == name || self.ignore.iter().any(|s| s.is_match(name))
     }
 
     fn check_function_arguments(&self, arg: &Argument, ctx: &LintContext) {
@@ -284,10 +284,23 @@ fn test() {
 								console.log(_);
 							}
 						",
-            Some(serde_json::json!([{"ignored": ["_"]}])),
+            Some(serde_json::json!([{"ignore": ["_"]}])),
         ),
         ("try { } catch (error) { }", None),
-        ("promise.catch(unicorn => { })", Some(serde_json::json!([{"ignored": ["unicorn"]}]))),
+        ("promise.catch(unicorn => { })", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
+        //   https://github.com/oxc-project/oxc/issues/12430
+        (
+            "try {
+  // some codes
+} catch (error: unknown) {
+  try {
+    // some codes
+  } catch (error2: unknown) {
+    // some codes
+  }
+}",
+            Some(serde_json::json!([{"ignore": [ "^error\\d*$"]}])),
+        ),
         ("try { } catch (exception) { }", Some(serde_json::json!([{"name": "exception"}]))),
     ];
 
