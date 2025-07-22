@@ -49,6 +49,9 @@ class PluginRegistry {
 // Buffers cache
 const buffers = [];
 
+// Diagnostics array. Reused for every file.
+const diagnostics = [];
+
 class Linter {
   pluginRegistry = new PluginRegistry();
 
@@ -107,22 +110,9 @@ class Linter {
     }
 
     // Get visitors for this file from all rules
-    const diagnostics = [];
-
-    const createContext = (ruleId) => ({
-      physicalFilename: filePath,
-      report: (diagnostic) => {
-        diagnostics.push({
-          message: diagnostic.message,
-          loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-          externalRuleId: ruleId,
-        });
-      },
-    });
-
     const visitors = [];
     for (const { rule, ruleId } of this.pluginRegistry.getRules(ruleIds)) {
-      visitors.push(rule.create(createContext(ruleId)));
+      visitors.push(rule.create(new Context(ruleId, filePath)));
     }
 
     const visitor = new Visitor(
@@ -140,7 +130,9 @@ class Linter {
     walkProgram(programPos, ast, getVisitorsArr(visitor));
 
     // Send diagnostics back to Rust
-    return JSON.stringify(diagnostics);
+    const ret = JSON.stringify(diagnostics);
+    diagnostics.length = 0;
+    return ret;
   }
 }
 
@@ -161,6 +153,43 @@ function combineVisitors(visitors) {
   }
 
   return combinedVisitor;
+}
+
+/**
+ * Context class.
+ *
+ * A `Context` is passed to each rule's `create` function.
+ */
+class Context {
+  // Rule ID. Index into `PluginRegistry`'s `registeredRules` array.
+  #ruleId;
+
+  /**
+   * @constructor
+   * @param {number} ruleId - Rule ID
+   * @param {string} filePath - Absolute path of file being linted
+   */
+  constructor(ruleId, filePath) {
+    this.#ruleId = ruleId;
+    this.physicalFilename = filePath;
+  }
+
+  /**
+   * Report error.
+   * @param {Object} diagnostic - Diagnostic object
+   * @param {string} diagnostic.message - Error message
+   * @param {Object} diagnostic.loc - Node or loc object
+   * @param {number} diagnostic.loc.start - Start range of diagnostic
+   * @param {number} diagnostic.loc.end - End range of diagnostic
+   * @returns {undefined}
+   */
+  report(diagnostic) {
+    diagnostics.push({
+      message: diagnostic.message,
+      loc: { start: diagnostic.node.start, end: diagnostic.node.end },
+      externalRuleId: this.#ruleId,
+    });
+  }
 }
 
 async function main() {
