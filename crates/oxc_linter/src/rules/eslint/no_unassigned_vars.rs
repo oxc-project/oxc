@@ -57,7 +57,7 @@ impl Rule for NoUnassignedVars {
         if declarator.init.is_some() || declarator.kind.is_const() {
             return;
         }
-        let Some(AstKind::VariableDeclaration(parent)) = ctx.nodes().parent_kind(node.id()) else {
+        let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
         if parent.declare {
