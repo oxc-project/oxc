@@ -215,7 +215,7 @@ by porting all test cases from well-known minifiers such as [google-closure-comp
 Preliminary results indicate that we are on track to achieve our objectives.
 With the Oxc minifier, you can expect faster minification times without sacrificing compression quality.
 
-See [minification benchmarks](https://github.com/privatenumber/minification-benchmarks) for comparions.
+See [minification benchmarks](https://github.com/privatenumber/minification-benchmarks) for comparisons.
 
 ### 🔸 Formatter
 
