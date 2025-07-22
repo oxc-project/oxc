@@ -74,9 +74,7 @@ impl Rule for NoUnassignedVars {
         let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind else {
             return;
         };
-        let Some(symbol_id) = ident.symbol_id.take() else {
-            return;
-        };
+        let symbol_id = ident.symbol_id();
         let mut has_read = false;
         for reference in ctx.symbol_references(symbol_id) {
             if reference.is_write() {
