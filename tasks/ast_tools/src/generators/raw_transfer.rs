@@ -74,7 +74,7 @@ impl Generator for RawTransferGenerator {
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src/generated/constants.cjs"),
+                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src-js/generated/constants.cjs"),
                 code: constants_js,
             },
             Output::Rust {

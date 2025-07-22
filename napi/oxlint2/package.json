@@ -1,10 +1,10 @@
 {
   "name": "oxlint2",
   "version": "0.1.0",
-  "main": "src/index.js",
+  "main": "src-js/index.js",
   "type": "module",
   "scripts": {
-    "build-dev": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src --no-dts-cache --esm",
+    "build-dev": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --esm",
     "build-test": "pnpm run build-dev --profile coverage --features force_test_reporter",
     "build": "pnpm run build-dev --release",
     "test": "vitest"
