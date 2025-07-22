@@ -429,10 +429,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     }
 }
 
-// SimpleAssignmentTarget => AssignmentTargetIdentifier | TSAsExpression | TSSatisfiesExpression | TSNonNullExpression | TSTypeAssertion | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression
-
-// https://www.typescriptlang.org/play/?jsx=0#code/PTAEGMHsDsGcBdQFsCeBhAhtAbh2oBeUAHgAkAVAWQBlMc8BRAGwFMkXp4A+AE0nACu7TgDoA5i3jM2HeACEUASR4AKAERIMAS2gB9cFlyw1ASgDcAKAvwUABxagAYpEiFQAbwuhvP7wCMMACcALlA-F1YsSwBfKyg4RChAwJZwRCJiZ0gudwCQ0AAzDCZYFmjLC3iEUGghN0yXLgBGCqrEBED6rK41JrVWmGrwyCYuxvhAgRYBhNAJlF1aplGM7qWmGer53QFoHhYCnRYeMezd-cPoY83EbZYAD1sU2FgtGEIG7KaAaiagA
-
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         matches!(
