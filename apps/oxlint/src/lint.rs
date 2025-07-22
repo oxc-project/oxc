@@ -304,9 +304,12 @@ impl Runner for LintRunner {
                 rules: lint_config
                     .rules()
                     .iter()
-                    .filter_map(|(_rule, _status)| {
-                        // TODO: Implement checking if this is a tsgolint rule.
-                        None
+                    .filter_map(|(rule, status)| {
+                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                            Some(rule.clone())
+                        } else {
+                            None
+                        }
                     })
                     .collect(),
             })
@@ -1343,5 +1346,11 @@ mod test {
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsgolint() {
+        let args = &["fixtures/tsgolint", "--tsconfig", "fixtures/tsgolint/tsconfig.json"];
+        Tester::new().test_and_snapshot(args);
     }
 }
