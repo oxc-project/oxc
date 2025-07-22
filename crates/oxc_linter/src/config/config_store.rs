@@ -92,10 +92,6 @@ impl Config {
         &self.base.rules
     }
 
-    pub fn number_of_rules(&self) -> usize {
-        self.base.rules.len()
-    }
-
     pub fn apply_overrides(
         &self,
         path: &Path,
@@ -248,10 +244,6 @@ impl ConfigStore {
         }
     }
 
-    pub fn number_of_rules(&self) -> Option<usize> {
-        self.nested_configs.is_empty().then_some(self.base.base.rules.len())
-    }
-
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.base.rules
     }
@@ -393,7 +385,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.rules().len(), 1);
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
         assert_eq!(rules_for_source_file.rules.len(), 1);
@@ -423,7 +415,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.rules().len(), 1);
 
         assert_eq!(store.resolve("App.tsx".as_ref()).rules.len(), 1);
         assert_eq!(store.resolve("src/App.tsx".as_ref()).rules.len(), 2);
@@ -453,7 +445,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.rules().len(), 1);
 
         let app = store.resolve("App.tsx".as_ref()).rules;
         assert_eq!(app.len(), 1);

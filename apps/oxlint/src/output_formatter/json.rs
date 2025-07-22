@@ -39,21 +39,17 @@ impl InternalFormatter for JsonOutputFormatter {
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
         let diagnostics = self.reporter.0.borrow_mut().render();
-        let number_of_rules =
-            lint_command_info.number_of_rules.map_or("null".to_string(), |x| x.to_string());
         let start_time = lint_command_info.start_time.as_secs_f64();
 
         Some(format!(
             r#"{{ "diagnostics": {},
               "number_of_files": {},
-              "number_of_rules": {},
               "threads_count": {},
               "start_time": {}
             }}
             "#,
             diagnostics,
             lint_command_info.number_of_files,
-            number_of_rules,
             lint_command_info.threads_count,
             start_time,
         ))
@@ -148,14 +144,13 @@ mod test {
         let output = formatter
             .lint_command_info(&LintCommandInfo {
                 number_of_files: 0,
-                number_of_rules: Some(0),
                 start_time: Duration::new(0, 0),
                 threads_count: 1,
             })
             .unwrap();
         assert_eq!(
             &output,
-            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
+            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
     }
 }

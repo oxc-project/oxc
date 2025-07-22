@@ -165,7 +165,6 @@ impl Runner for LintRunner {
             if provided_path_count > 0 {
                 if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
                     number_of_files: 0,
-                    number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
                 }) {
@@ -317,8 +316,6 @@ impl Runner for LintRunner {
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
         let tx_error = diagnostic_service.sender().clone();
 
-        let number_of_rules = linter.number_of_rules();
-
         let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
@@ -341,7 +338,6 @@ impl Runner for LintRunner {
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
-            number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
         }) {

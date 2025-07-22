@@ -59,9 +59,6 @@ impl FromStr for OutputFormat {
 pub struct LintCommandInfo {
     /// The number of files that were linted.
     pub number_of_files: usize,
-    /// The number of lint rules that were run. If the number varies and can't be clearly
-    /// computed, then this defaults to None.
-    pub number_of_rules: Option<usize>,
     /// The used CPU threads count
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task

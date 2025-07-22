@@ -917,7 +917,7 @@ mod test {
         "#,
         );
         assert!(allow_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Allow));
-        assert_eq!(allow_all.number_of_rules(), 0);
+        assert_eq!(allow_all.rules().len(), 0);
 
         let allow_and_override_config = config_store_from_str(
             r#"
