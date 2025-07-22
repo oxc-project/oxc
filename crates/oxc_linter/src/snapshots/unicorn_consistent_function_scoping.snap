@@ -54,11 +54,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `inner` does not capture any variables from its parent scope
    ╭─[consistent_function_scoping.tsx:4:34]
+ 2 │ 
  3 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Outer scope where this function is defined
  4 │                 inner = function inner() {}
-   ·                                  ──┬──┬
-   ·                                    │  ╰── This function does not use any variables from the parent function
-   ·                                    ╰── Outer scope where this function is defined
+   ·                                  ──┬──
+   ·                                    ╰── This function does not use any variables from the parent function
  5 │             }
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
