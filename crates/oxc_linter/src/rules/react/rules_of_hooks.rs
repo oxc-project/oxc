@@ -140,11 +140,7 @@ impl Rule for RulesOfHooks {
         // Check if our parent function is part of a class.
         if matches!(
             nodes.parent_kind(parent_func.id()),
-            Some(
-                AstKind::MethodDefinition(_)
-                    | AstKind::StaticBlock(_)
-                    | AstKind::PropertyDefinition(_)
-            )
+            AstKind::MethodDefinition(_) | AstKind::StaticBlock(_) | AstKind::PropertyDefinition(_)
         ) {
             return ctx.diagnostic(diagnostics::class_component(span, hook_name));
         }
@@ -328,10 +324,7 @@ fn has_conditional_path_accept_throw(
 }
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes
-        .ancestor_ids(node.id())
-        .map(|id| nodes.get_node(id))
-        .find(|it| it.kind().is_function_like())
+    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
 }
 
 /// Checks if the `node_id` is a callback argument,
@@ -339,12 +332,12 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
 /// Returns `true` if this node is a function argument and that isn't a React special function.
 /// Otherwise it would return `false`.
 fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let argument = match nodes.parent_node(node_id) {
-        Some(parent) if matches!(parent.kind(), AstKind::Argument(_)) => parent,
-        _ => return false,
-    };
+    let parent = nodes.parent_node(node_id);
+    if !matches!(parent.kind(), AstKind::Argument(_)) {
+        return false;
+    }
 
-    let Some(AstKind::CallExpression(call)) = nodes.parent_kind(argument.id()) else {
+    let AstKind::CallExpression(call) = nodes.parent_kind(parent.id()) else {
         return false;
     };
 
@@ -353,8 +346,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestor_ids(node_id)
-        .map(|id| nodes.get_node(id))
+        .ancestors(node_id)
         .filter(|node| node.kind().is_function_like())
         .map(|node| {
             (
@@ -390,10 +382,7 @@ fn get_declaration_identifier<'a>(
             Some(Cow::Borrowed(id.name.as_str()))
         }
         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-            let parent =
-                nodes.ancestor_ids(node_id).skip(1).map(|node| nodes.get_node(node)).next()?;
-
-            match parent.kind() {
+            match nodes.parent_kind(node_id) {
                 AstKind::VariableDeclarator(decl) => {
                     decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
@@ -421,7 +410,7 @@ fn get_declaration_identifier<'a>(
 /// # Panics
 /// `node_id` should always point to a valid `Function`.
 fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
-    nodes.ancestor_ids(node_id).map(|id| nodes.get_node(id)).any(|node| {
+    nodes.ancestors(node_id).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
             call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
         } else {

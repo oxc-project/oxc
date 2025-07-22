@@ -41,7 +41,7 @@ pub(crate) fn run(
     assert!(ret.errors.is_empty(), "{source_text}");
     let mut program = ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).build(&mut program);
+        Compressor::new(&allocator).build(&mut program, options);
     }
     Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

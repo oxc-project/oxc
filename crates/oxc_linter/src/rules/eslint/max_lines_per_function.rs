@@ -28,12 +28,25 @@ fn max_lines_per_function_diagnostic(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct MaxLinesPerFunctionConfig {
     max: usize,
     skip_comments: bool,
     skip_blank_lines: bool,
     iifes: bool,
+}
+
+const DEFAULT_MAX_LINES_PER_FUNCTION: usize = 50;
+
+impl Default for MaxLinesPerFunctionConfig {
+    fn default() -> Self {
+        Self {
+            max: DEFAULT_MAX_LINES_PER_FUNCTION,
+            skip_comments: false,
+            skip_blank_lines: false,
+            iifes: false,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -157,7 +170,9 @@ impl Rule for MaxLinesPerFunction {
                 .and_then(|config| config.get("max"))
                 .and_then(Value::as_number)
                 .and_then(serde_json::Number::as_u64)
-                .map_or(50, |v| usize::try_from(v).unwrap_or(50));
+                .map_or(DEFAULT_MAX_LINES_PER_FUNCTION, |v| {
+                    usize::try_from(v).unwrap_or(DEFAULT_MAX_LINES_PER_FUNCTION)
+                });
             let skip_comments = config
                 .and_then(|config| config.get("skipComments"))
                 .and_then(Value::as_bool)
@@ -203,8 +218,7 @@ impl Rule for MaxLinesPerFunction {
 
         let final_lines = lines_in_function.saturating_sub(comment_lines);
         if final_lines > self.max {
-            let name =
-                get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()).unwrap());
+            let name = get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()));
             ctx.diagnostic(max_lines_per_function_diagnostic(&name, final_lines, self.max, span));
         }
     }
@@ -221,6 +235,12 @@ fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    let defaults = MaxLinesPerFunction::default();
+    assert_eq!(defaults.max, 50);
+    assert!(!defaults.skip_comments);
+    assert!(!defaults.skip_blank_lines);
+    assert!(!defaults.iifes);
 
     let pass = vec![
         (

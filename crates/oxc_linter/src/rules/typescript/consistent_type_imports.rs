@@ -576,8 +576,7 @@ fn get_type_only_named_import<'a>(
     ctx: &LintContext<'a>,
     source: &str,
 ) -> Option<&'a ImportDeclaration<'a>> {
-    let root = ctx.nodes().root_node()?;
-    let program = root.kind().as_program()?;
+    let program = ctx.nodes().program().unwrap();
 
     for stmt in &program.body {
         let Statement::ImportDeclaration(import_decl) = stmt else {
@@ -793,7 +792,8 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let fixer = fixer.for_multifix();
-    let import_source = ctx.source_range(import_decl.span);
+    let import_specifiers_span = Span::new(import_decl.span.start, import_decl.source.span.start);
+    let import_source = ctx.source_range(import_specifiers_span);
     let mut rule_fixes = fixer.new_fix_with_capacity(1);
 
     // "import { Foo, Bar } from 'foo'" => "import type { Foo, Bar } from 'foo'"
@@ -3390,6 +3390,11 @@ export class Foo extends Bar {}
             const c = defineParallelPlugin()
             ",
             None,
+        ),
+        (
+            "\nimport Foo from'{'; type k = Foo",
+            "\nimport type Foo from'{'; type k = Foo",
+            Some(serde_json::json!([{ "prefer": "type-imports" }])),
         ),
     ];
 

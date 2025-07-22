@@ -188,7 +188,7 @@ impl AnchorIsValid {
                         return false;
                     }
 
-                    let Some(quasi) = temp_lit.quasi() else {
+                    let Some(quasi) = temp_lit.single_quasi() else {
                         return false;
                     };
                     self.is_invalid_href(&quasi)

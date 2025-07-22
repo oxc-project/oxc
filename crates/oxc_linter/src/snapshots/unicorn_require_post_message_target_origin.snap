@@ -4,111 +4,111 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message)
-   ·                           ─
+   ·                           ▲
    ╰────
   help: Insert `, window.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:25]
  1 │ self.postMessage(message)
-   ·                         ─
+   ·                         ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
  1 │ globalThis.postMessage(message)
-   ·                               ─
+   ·                               ▲
    ╰────
   help: Insert `, globalThis.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message )
-   ·                        ──
+   ·                        ▲
    ╰────
   help: Insert `, foo.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
  1 │ foo.postMessage( ((message)) )
-   ·                             ──
+   ·                             ▲
    ╰────
   help: Insert `, foo.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message,)
-   ·                        ──
+   ·                        ▲
    ╰────
-  help: Insert ` foo.location.origin,`
+  help: Insert `, foo.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
-   ╭─[require_post_message_target_origin.tsx:1:25]
+   ╭─[require_post_message_target_origin.tsx:1:24]
  1 │ foo.postMessage(message , )
-   ·                         ───
+   ·                        ▲
    ╰────
-  help: Insert ` foo.location.origin,`
+  help: Insert `, foo.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:31]
  1 │ foo.window.postMessage(message)
-   ·                               ─
+   ·                               ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:41]
  1 │ document.defaultView.postMessage(message)
-   ·                                         ─
+   ·                                         ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ getWindow().postMessage(message)
-   ·                                ─
+   ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message,                 /** comments */  )
-   ·                           ────────────────────────────────────
+   ·                           ▲
    ╰────
-  help: Insert ` window.location.origin,`
+  help: Insert `, window.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:29]
  1 │ window.c.postMessage(message)
-   ·                             ─
+   ·                             ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:30]
  1 │ window?.c.postMessage(message)
-   ·                              ─
+   ·                              ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ window?.a.b.postMessage(message)
-   ·                                ─
+   ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:32]
  1 │ window.a?.b.postMessage(message)
-   ·                                ─
+   ·                                ▲
    ╰────
   help: Insert `, self.location.origin`
 
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:33]
  1 │ window?.a?.b.postMessage(message)
-   ·                                 ─
+   ·                                 ▲
    ╰────
   help: Insert `, self.location.origin`

@@ -22,11 +22,10 @@ impl FunctionKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
-            || self.at(Kind::Async)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Function) && !p.token.is_on_new_line()
-                })
+            || self.at(Kind::Async) && {
+                let token = self.lexer.peek_token();
+                token.kind() == Kind::Function && !token.is_on_new_line()
+            }
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
@@ -117,8 +116,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
-        let return_type =
-            self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
+        let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());

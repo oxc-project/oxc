@@ -34,13 +34,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "dual",
-            "node_id": 12
+            "node_id": 11
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "dual",
-            "node_id": 16
+            "node_id": 15
           }
         ]
       },

@@ -207,6 +207,7 @@ use utils::create_ident;
 
 /// Paths to source files containing AST types
 static SOURCE_PATHS: &[&str] = &[
+    "crates/oxc_allocator/src/pool_fixed_size.rs",
     "crates/oxc_ast/src/ast/js.rs",
     "crates/oxc_ast/src/ast/literal.rs",
     "crates/oxc_ast/src/ast/jsx.rs",
@@ -218,6 +219,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/serialize/js.rs",
     "crates/oxc_ast/src/serialize/jsx.rs",
     "crates/oxc_ast/src/serialize/ts.rs",
+    "crates/oxc_linter/src/lib.rs",
     "crates/oxc_syntax/src/lib.rs",
     "crates/oxc_syntax/src/comment_node.rs",
     "crates/oxc_syntax/src/module_record.rs",
@@ -232,6 +234,9 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_regular_expression/src/ast.rs",
     "napi/parser/src/raw_transfer_types.rs",
 ];
+
+/// Path to `oxc_allocator` crate
+const ALLOCATOR_CRATE_PATH: &str = "crates/oxc_allocator";
 
 /// Path to `oxc_ast` crate
 const AST_CRATE_PATH: &str = "crates/oxc_ast";
@@ -250,6 +255,9 @@ const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
 /// Path to NAPI parser package
 const NAPI_PARSER_PACKAGE_PATH: &str = "napi/parser";
+
+/// Path to NAPI oxlint package
+const NAPI_OXLINT_PACKAGE_PATH: &str = "napi/oxlint2";
 
 /// Path to write AST changes filter list to
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";

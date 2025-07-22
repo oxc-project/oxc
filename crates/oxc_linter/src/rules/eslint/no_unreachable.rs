@@ -8,6 +8,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -54,7 +55,7 @@ declare_oxc_lint!(
 impl Rule for NoUnreachable {
     fn run_once(&self, ctx: &LintContext) {
         let nodes = ctx.nodes();
-        let Some(root) = nodes.root_node() else { return };
+        let root = nodes.get_node(NodeId::ROOT);
         let cfg = ctx.cfg();
         let graph = cfg.graph();
 

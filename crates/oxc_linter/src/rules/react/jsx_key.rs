@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
-        Statement,
+        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
+        JSXFragment, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -139,7 +139,7 @@ pub fn is_children<'a, 'b>(call: &'b CallExpression<'a>, ctx: &'b LintContext<'a
     is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN
 }
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let parents_iter = ctx.nodes().ancestors(node.id()).skip(2);
+    let parents_iter = ctx.nodes().ancestors(node.id()).skip(1);
     parents_iter
         .filter_map(|parent_node| parent_node.kind().as_call_expression())
         .any(|parent_call| is_children(parent_call, ctx) && is_to_array(parent_call))
@@ -150,6 +150,7 @@ enum InsideArrayOrIterator {
     Iterator(Span),
 }
 
+#[expect(clippy::bool_to_int_with_if)]
 fn is_in_array_or_iter<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
@@ -158,9 +159,10 @@ fn is_in_array_or_iter<'a, 'b>(
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
+    let mut argument = None;
 
-    loop {
-        let parent = ctx.nodes().parent_node(node.id())?;
+    while !matches!(node.kind(), AstKind::Program(_)) {
+        let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 let is_arrow_expr_statement = matches!(
@@ -171,9 +173,7 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
-                let parent = ctx.nodes().parent_node(parent.id())?;
-
-                if let AstKind::ObjectProperty(_) = parent.kind() {
+                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -182,9 +182,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::Function(_) => {
-                let parent = ctx.nodes().parent_node(parent.id())?;
-
-                if let AstKind::ObjectProperty(_) = parent.kind() {
+                if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
                     return None;
                 }
                 if is_outside_containing_function {
@@ -202,9 +200,15 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parentheses();
 
-                if let Some(v) = callee.as_member_expression() {
-                    if let Some((span, ident)) = v.static_property_info() {
-                        if TARGET_METHODS.contains(&ident) {
+                if let Some(member_expr) = callee.as_member_expression() {
+                    if let Some((span, ident)) = member_expr.static_property_info() {
+                        if TARGET_METHODS.contains(&ident)
+                            && argument.is_some_and(|argument: &Argument<'_>| {
+                                v.arguments
+                                    .get(if ident == "from" { 1 } else { 0 })
+                                    .is_some_and(|arg| arg.span() == argument.span())
+                            })
+                        {
                             return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
@@ -219,10 +223,15 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
             }
+            AstKind::Argument(arg) => {
+                argument = Some(arg);
+            }
             _ => {}
         }
         node = parent;
     }
+
+    None
 }
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
@@ -495,6 +504,7 @@ fn test() {
             );
            }))}
         ",
+        r"const DummyComponent: FC<{ children: ReactNode }> = ({ children }) => { const wrappedChildren = Children.map(children, (child) => { return <div>{child}</div>; }); return <main>{wrappedChildren}</main>; };",
     ];
 
     let fail = vec![

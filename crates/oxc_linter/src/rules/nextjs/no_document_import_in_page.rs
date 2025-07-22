@@ -1,9 +1,14 @@
-use oxc_ast::{AstKind, ast::ModuleDeclaration};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_document_page};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_document_page,
+};
 
 fn no_document_import_in_page_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page").with_help("Prevent importing `next/document` outside of `pages/_document.js`.").with_label(span)
@@ -19,15 +24,33 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
+    /// Importing `next/document` outside of `pages/_document.js` can cause
+    /// unexpected issues in your Next.js application.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
+    /// ```jsx
+    /// // `components/MyDocument.jsx`
+    /// import Document from 'next/document'
+    ///
+    /// class MyDocument extends Document {
+    ///   //...
+    /// }
+    ///
+    /// export default MyDocument
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```jsx
+    /// // `pages/_document.jsx`
+    /// import Document from 'next/document'
+    ///
+    /// class MyDocument extends Document {
+    ///   //...
+    /// }
+    ///
+    /// export default MyDocument
     /// ```
     NoDocumentImportInPage,
     nextjs,
@@ -36,9 +59,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDocumentImportInPage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
-            node.kind()
-        else {
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
 
@@ -46,15 +67,15 @@ impl Rule for NoDocumentImportInPage {
             return;
         }
 
+        ctx.diagnostic(no_document_import_in_page_diagnostic(import_decl.span));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         let Some(path) = ctx.file_path().to_str() else {
-            return;
+            return false;
         };
 
-        if is_document_page(path) {
-            return;
-        }
-
-        ctx.diagnostic(no_document_import_in_page_diagnostic(import_decl.span));
+        !is_document_page(path)
     }
 }
 

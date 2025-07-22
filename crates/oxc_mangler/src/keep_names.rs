@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
 use rustc_hash::FxHashSet;
@@ -112,17 +111,12 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
-        let Some(parent_node) = self.ast_nodes.parent_node(node.id()) else { return false };
+        let parent_node = self.ast_nodes.parent_node(node.id());
         match parent_node.kind() {
             AstKind::SimpleAssignmentTarget(_) => {
-                let Some((grand_parent_node_kind, grand_grand_parent_node_kind)) =
-                    self.ast_nodes.ancestor_kinds(parent_node.id()).skip(1).take(2).collect_tuple()
-                else {
-                    return false;
-                };
-                debug_assert!(matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)));
+                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node.id());
 
-                match grand_grand_parent_node_kind {
+                match grand_parent_node_kind {
                     AstKind::AssignmentExpression(assign_expr) => {
                         Self::is_assignment_target_id_of_specific_reference(
                             &assign_expr.left,
@@ -138,19 +132,14 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                     _ => false,
                 }
             }
-            AstKind::ObjectAssignmentTarget(assign_target) => {
-                assign_target.properties.iter().any(|property| {
-                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(prop_id) =
-                        &property
-                    {
-                        if prop_id.binding.reference_id() == reference_id {
-                            return prop_id.init.as_ref().is_some_and(|init| {
-                                self.is_expression_whose_name_needs_to_be_kept(init)
-                            });
-                        }
-                    }
-                    false
-                })
+            AstKind::AssignmentTargetPropertyIdentifier(ident) => {
+                if ident.binding.reference_id() == reference_id {
+                    return ident
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
+                }
+                false
             }
             _ => false,
         }

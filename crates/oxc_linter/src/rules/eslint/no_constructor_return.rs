@@ -67,12 +67,16 @@ fn is_constructor(node: &AstNode<'_>) -> bool {
 }
 
 fn is_definitely_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
-    ctx.nodes()
-        .ancestor_ids(node_id)
-        .map(|id| ctx.nodes().get_node(id))
-        .skip_while(|node| !node.kind().is_function_like())
-        .nth(1)
-        .is_some_and(is_constructor)
+    for ancestor_id in ctx.nodes().ancestor_ids(node_id) {
+        match ctx.nodes().kind(ancestor_id) {
+            AstKind::Function(_) => {
+                return is_constructor(ctx.nodes().parent_node(ancestor_id));
+            }
+            AstKind::ArrowFunctionExpression(_) => return false,
+            _ => {}
+        }
+    }
+    false
 }
 
 #[test]

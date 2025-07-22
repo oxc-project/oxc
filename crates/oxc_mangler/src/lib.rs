@@ -361,10 +361,18 @@ impl<'t> Mangler<'t> {
                 let declared_scope_id =
                     ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
 
-                // Calculate the scope ids that this symbol is alive in.
-                let lived_scope_ids = scoping
+                let redeclared_scope_ids = scoping
+                    .symbol_redeclarations(symbol_id)
+                    .iter()
+                    .map(|r| ast_nodes.get_node(r.declaration).scope_id());
+
+                let referenced_scope_ids = scoping
                     .get_resolved_references(symbol_id)
-                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id())
+                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id());
+
+                // Calculate the scope ids that this symbol is alive in.
+                let lived_scope_ids = referenced_scope_ids
+                    .chain(redeclared_scope_ids)
                     .chain([scope_id, declared_scope_id])
                     .flat_map(|used_scope_id| {
                         scoping.scope_ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)

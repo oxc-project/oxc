@@ -181,7 +181,9 @@ impl<'a> ParserImpl<'a> {
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 self.parse_template_literal_expression(false)
             }
-            Kind::Percent => self.parse_v8_intrinsic_expression(),
+            Kind::Percent if self.options.allow_v8_intrinsics => {
+                self.parse_v8_intrinsic_expression()
+            }
             Kind::New => self.parse_new_expression(),
             Kind::Super => self.parse_super(),
             Kind::Import => self.parse_import_meta_or_call(),
@@ -224,11 +226,15 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen);
 
         // ParenthesizedExpression is from acorn --preserveParens
-        let expression = if expressions.len() == 1 {
+        let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
             self.ast.expression_sequence(expr_span, expressions)
         };
+
+        if let Expression::ArrowFunctionExpression(arrow_expr) = &mut expression {
+            arrow_expr.pife = true;
+        }
 
         if self.options.preserve_parens {
             self.ast.expression_parenthesized(self.end_span(span), expression)
@@ -612,10 +618,6 @@ impl<'a> ParserImpl<'a> {
     /// V8 Runtime calls.
     /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
     pub(crate) fn parse_v8_intrinsic_expression(&mut self) -> Expression<'a> {
-        if !self.options.allow_v8_intrinsics {
-            return self.unexpected();
-        }
-
         let span = self.start_span();
         self.expect(Kind::Percent);
         let name = self.parse_identifier_name();

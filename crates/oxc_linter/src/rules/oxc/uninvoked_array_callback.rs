@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, MemberExpression},
-};
+use oxc_ast::{AstKind, MemberExpressionKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -63,16 +60,12 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
 
-        let Some(member_expr_node) = ctx.nodes().parent_node(node.id()) else {
+        let member_expr_node = ctx.nodes().parent_node(node.id());
+        let Some(member_expr) = member_expr_node.kind().as_member_expression_kind() else {
             return;
         };
 
-        let AstKind::MemberExpression(member_expr) = member_expr_node.kind() else {
-            return;
-        };
-
-        let Some(AstKind::CallExpression(call_expr)) =
-            ctx.nodes().parent_kind(member_expr_node.id())
+        let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(member_expr_node.id())
         else {
             return;
         };
@@ -84,9 +77,9 @@ impl Rule for UninvokedArrayCallback {
         }
 
         let property_span = match member_expr {
-            MemberExpression::ComputedMemberExpression(expr) => expr.expression.span(),
-            MemberExpression::StaticMemberExpression(expr) => expr.property.span,
-            MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
+            MemberExpressionKind::Computed(expr) => expr.expression.span(),
+            MemberExpressionKind::Static(expr) => expr.property.span,
+            MemberExpressionKind::PrivateField(expr) => expr.field.span,
         };
         ctx.diagnostic(uninvoked_array_callback_diagnostic(property_span, new_expr.span));
     }

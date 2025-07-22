@@ -1,6 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use bitflags::bitflags;
+
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 

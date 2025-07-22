@@ -852,7 +852,7 @@ mod test {
     use similar::TextDiff;
 
     use oxc_allocator::Allocator;
-    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
@@ -889,7 +889,7 @@ mod test {
         }
         let code = Codegen::new()
             .with_options(CodegenOptions {
-                comments: false,
+                comments: CommentOptions::disabled(),
                 single_quote: true,
                 ..CodegenOptions::default()
             })
@@ -906,7 +906,7 @@ mod test {
 
         Codegen::new()
             .with_options(CodegenOptions {
-                comments: false,
+                comments: CommentOptions::disabled(),
                 single_quote: true,
                 ..CodegenOptions::default()
             })

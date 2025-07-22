@@ -1094,7 +1094,7 @@ fn test() {
         ),
     ];
 
-    let dts_pass = vec![
+    let dts_pass: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> = vec![
         (
             "
         			        /** @default 0 */
@@ -1158,14 +1158,15 @@ fn test() {
             None,
         ),
     ];
-    let dts_fail = vec![(
-        "
+    let dts_fail: Vec<(&'static str, Option<serde_json::Value>, Option<serde_json::Value>)> =
+        vec![(
+            "
         			        /** @typoo {string} (fail: invalid name) */
         			        let a;
         			      ",
-        None,
-        None,
-    )];
+            None,
+            None,
+        )];
 
     Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test_and_snapshot();
     // Currently only 1 snapshot can be saved under a rule name

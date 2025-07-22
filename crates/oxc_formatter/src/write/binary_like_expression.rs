@@ -123,7 +123,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        match &logical.right().as_ref() {
+        Self::can_inline_logical_expr(logical)
+    }
+
+    pub fn can_inline_logical_expr(logical: &LogicalExpression) -> bool {
+        match &logical.right {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
@@ -143,7 +147,13 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.body().span() == self.span(),
+            AstNodes::ExpressionStatement(statement) => {
+                if let AstNodes::FunctionBody(arrow) = statement.parent {
+                    arrow.span == self.span()
+                } else {
+                    false
+                }
+            }
             AstNodes::ConditionalExpression(conditional) => {
                 matches!(
                     parent.parent(),
@@ -204,7 +214,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
-            AstNodes::MemberExpression(_) | AstNodes::UnaryExpression(_) => true,
+            AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
             AstNodes::CallExpression(call) => {
                 call.callee().without_parentheses().span() == self.span()
             }
@@ -226,7 +236,6 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
 
         let flattened = parts.len() > 2;
-
         if should_not_indent
             || (inline_logical_expression && !flattened)
             || (!inline_logical_expression && should_indent_if_inlines)
@@ -284,25 +293,16 @@ enum BinaryLeftOrRightSide<'a, 'b> {
         parent: BinaryLikeExpression<'a, 'b>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
-
-        /// Indicates if the comments of the parent should be printed or not.
-        /// Must be true if `parent` isn't the root `BinaryLikeExpression` for which `format` is called.
-        print_parent_comments: bool,
-
-        /// Indicates if the parent has the same kind as the current binary expression.
-        parent_has_same_kind: bool,
     },
 }
 
 impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::Left { parent } => write!(f, [group(parent.left())]),
+            Self::Left { parent } => write!(f, group(parent.left())),
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
-                print_parent_comments,
-                parent_has_same_kind,
             } => {
                 // // It's only possible to suppress the formatting of the whole binary expression formatting OR
                 // // the formatting of the right hand side value but not of a nested binary expression.
@@ -319,52 +319,55 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         write!(f, [soft_line_break_or_space()])?;
                     }
 
-                    write!(f, right)?;
-
-                    Ok(())
+                    write!(f, right)
                 });
 
+                let parent = binary_like_expression.parent();
+
                 // Doesn't match prettier that only distinguishes between logical and binary
-                let left_has_same_kind = is_same_binary_expression_kind(
-                    binary_like_expression,
-                    binary_like_expression.left(),
-                );
-
-                let right_has_same_kind =
-                    is_same_binary_expression_kind(binary_like_expression, right);
-
-                // let should_break = f
-                //     .context()
-                //     .comments()
-                //     .trailing_comments(binary_like_expression.left()?.syntax())
-                //     .iter()
-                //     .any(|comment| comment.kind().is_line());
-                let should_break = false;
-
-                let should_group = !(*parent_has_same_kind
-                    || left_has_same_kind
-                    || right_has_same_kind
-                    || (*inside_parenthesis
-                        && matches!(
+                let should_group =
+                    !(is_same_binary_expression_kind(binary_like_expression, parent)
+                        || is_same_binary_expression_kind(
                             binary_like_expression,
-                            BinaryLikeExpression::LogicalExpression(_)
-                        )));
-
-                // if *print_parent_comments {
-                //     write!(f, binary_like_expression)?;
-                // }
+                            binary_like_expression.left().as_ast_nodes(),
+                        )
+                        || is_same_binary_expression_kind(
+                            binary_like_expression,
+                            right.as_ast_nodes(),
+                        )
+                        || (*inside_parenthesis
+                            && matches!(
+                                binary_like_expression,
+                                BinaryLikeExpression::LogicalExpression(_)
+                            )));
 
                 if should_group {
-                    write!(f, [group(&operator_and_right_expression).should_expand(should_break)])?;
+                    // `left` side has printed before `right` side, so that trailing comments of `left` side has been printed,
+                    // so we need to find if there are any printed comments that are after the `left` side and it is line comment.
+                    // If so, it should break the line.
+                    // ```js
+                    // a = b + // comment
+                    // c
+                    // ```
+                    // // to
+                    // ```js
+                    // a =
+                    //     b || // Comment
+                    //     c;
+                    let should_break = f
+                        .comments()
+                        .printed_comments()
+                        .iter()
+                        .rev()
+                        .take_while(|comment| {
+                            binary_like_expression.left().span().end < comment.span.start
+                        })
+                        .any(|comment| comment.is_line());
+
+                    write!(f, [group(&operator_and_right_expression).should_expand(should_break)])
                 } else {
-                    write!(f, [operator_and_right_expression])?;
+                    write!(f, [operator_and_right_expression])
                 }
-
-                // if *print_parent_comments {
-                //     write!(f, [format_trailing_comments(binary_like_expression.syntax())])?;
-                // }
-
-                Ok(())
             }
         }
     }
@@ -403,7 +406,6 @@ fn split_into_left_and_right_sides<'a, 'b>(
     fn split_into_left_and_right_sides_inner<'a, 'b>(
         binary: BinaryLikeExpression<'a, 'b>,
         inside_condition: bool,
-        parent_has_same_kind: bool,
         items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
     ) {
         let left = binary.left();
@@ -416,28 +418,20 @@ fn split_into_left_and_right_sides<'a, 'b>(
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
-                is_same_binary_expression_kind(&binary, left),
                 items,
             );
         } else {
             items.push(BinaryLeftOrRightSide::Left { parent: binary });
         }
 
-        items.push(BinaryLeftOrRightSide::Right {
-            parent: binary,
-            inside_condition,
-            // TODO:
-            // print_parent_comments: expression.syntax() != root.syntax(),
-            print_parent_comments: false,
-            parent_has_same_kind,
-        });
+        items.push(BinaryLeftOrRightSide::Right { parent: binary, inside_condition });
     }
 
     // Stores the left and right parts of the binary expression in sequence (rather than nested as they
     // appear in the tree).
     let mut items = Vec::new();
 
-    split_into_left_and_right_sides_inner(root, inside_condition, false, &mut items);
+    split_into_left_and_right_sides_inner(root, inside_condition, &mut items);
 
     items
 }
@@ -447,31 +441,25 @@ fn split_into_left_and_right_sides<'a, 'b>(
 ///
 /// This function checks what the parents adheres to this behaviour
 fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
-    if matches!(parent, AstNodes::AssignmentExpression(_) | AstNodes::ObjectProperty(_)) {
-        return true;
-    }
-
-    match parent.parent() {
-        AstNodes::VariableDeclarator(decl) => {
-            decl.init().as_ref().is_some_and(|init| init.span() == parent.span())
-        }
-        AstNodes::PropertyDefinition(decl) => {
-            decl.value().as_ref().is_some_and(|value| value.span() == parent.span())
-        }
-        _ => false,
-    }
+    matches!(
+        parent,
+        AstNodes::AssignmentExpression(_)
+            | AstNodes::ObjectProperty(_)
+            | AstNodes::VariableDeclarator(_)
+            | AstNodes::PropertyDefinition(_)
+    )
 }
 
 fn is_same_binary_expression_kind(
     binary: &BinaryLikeExpression<'_, '_>,
-    other: &Expression<'_>,
+    other: &AstNodes<'_>,
 ) -> bool {
     match binary {
         BinaryLikeExpression::LogicalExpression(_) => {
-            matches!(other, Expression::LogicalExpression(_))
+            matches!(other, AstNodes::LogicalExpression(_))
         }
         BinaryLikeExpression::BinaryExpression(_) => {
-            matches!(other, Expression::BinaryExpression(_))
+            matches!(other, AstNodes::BinaryExpression(_))
         }
     }
 }

@@ -4,6 +4,121 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.77.2] - 2025-07-17
+
+### 🚜 Refactor
+
+- 3c6b88b semantic: Refactor `check_binding_identifier` (#12303) (overlookmotel)
+
+### ⚡ Performance
+
+- b60d63b semantic: Reduce match arms in `check_binding_identifier` (#12304) (overlookmotel)
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+- c995fe2 semantic: Build semantic for `.d.ts` files (#12193) (camc314)
+
+### 🐛 Bug Fixes
+
+- 089f7b1 semantic: Allow `arguments`/`eval` as name of `TSTypeAliasDeclaration`, `TSInterfaceDeclaration` (#12291) (camc314)
+- 1bfd44f semantic: Allow `arguments`/`eval` as spread argument name inside `TSMethodSignature`, `TSFunctionType` (#12290) (camc314)
+- a740f3f semantic: Allow `arguments`/`eval` as argument name inside `TSMethodSignature` (#12289) (camc314)
+- cd98426 semantic: Handle var hoisting in catch block with same catch parameter name (#12313) (Dunqing)
+- e82f758 semantic: Allow `arguments`/`eval` as argument name inside `TSFunctionType` (#12288) (camc314)
+- 2a1e805 semantic: Allow assigning to `eval` and `arguments` in ambient context (#12208) (camc314)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c025868 ast: Remove `AstKind` for `TSFunctionType` (#12287) (camc314)
+
+### ⚡ Performance
+
+- 6f58abc semantic: Inline `SemanticBuilder::pop_ast_node` (#12280) (Boshen)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🐛 Bug Fixes
+
+- e095e99 semantic: Panics when function is the part of `IfStatement` (#12190) (Dunqing)
+
+### 🚜 Refactor
+
+- 8a7c9e8 semantic: Streamline handling of no side effects for function (#12221) (Dunqing)
+- c868ee3 semantic: Rename `AstNodeIdAncestorsIter` and add comments (#12136) (overlookmotel)
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+- 228cff5 semantic,linter: Assert that Program is always the first node (#12123) (Ulrich Stark)
+
+### ⚡ Performance
+
+- c7889c3 semantic,linter: Simplify implementation and uses of ancestors iterators (#12164) (Ulrich Stark)
+- 6cfcb7e semantic: Dereference `parent_id`s to slice only once (#12137) (overlookmotel)
+
+
+## [0.76.0] - 2025-07-08
+
+### 🚜 Refactor
+
+- e8e2a25 ast: Remove `AstKind` for `AssignmentTargetPattern` (#12105) (camchenry)
+- 54cf5cb semantic: Remove Option from parent_* methods (#12087) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 2bf1d7e semantic: Implement `FusedIterator` for `AstNodeParentIter` (#12094) (overlookmotel)
+
+
+## [0.75.1] - 2025-07-03
+
+### 🚀 Features
+
+- c9b6513 semantic/example: Add ability to print symbols and references in example (#12017) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 2e79d01 semantic: Panic when brackets are unmatched (#12001) (camc314)
+- 404cb14 semantic: Remove needless ts type param empty check (#11899) (camc314)
+
+### 🚜 Refactor
+
+- 07e14a4 semantic: Remove redundant code handling reference flags (#12043) (Dunqing)
+- f1d4086 ast: Remove `AstKind` for `ModuleDeclaration` (#12022) (camchenry)
+- 754c05a ast: Remove `AstKind` for `TSTypeName` (#11990) (camchenry)
+- d6563f8 semantic: Derive `PartialEq`, `Eq` for `JSDocCommentPart` (#12000) (camc314)
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+- 9f6784a ast: Add `AstKind` for `TSInterfaceBody` (#11967) (camc314)
+- 3f50cef ast: Add `AstKind` for `TSIndexSignature` (#11966) (camc314)
+- 03bce3f ast: Add `AstKind` for `TSConstructorType` (#11965) (camc314)
+- 0cef370 ast: Add `AstKind::TemplateElement` (#11955) (camchenry)
+
+### 📚 Documentation
+
+- 9bf52f9 semantic: Add docs for `JSDocCommentPart` (#11999) (camc314)
+- 5845a24 semantic: Add docs for `JSDocTagTypePart` (#11998) (camc314)
+- 1a612ad semantic: Add docs for `JSDoctagTypeNamePart` (#11997) (camc314)
+
+
+## [0.75.0] - 2025-06-25
+
+### 🚜 Refactor
+
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+
+## [0.74.0] - 2025-06-23
+
+### 💥 BREAKING CHANGES
+
+- e81be6e semantic: [**BREAKING**] Rename `symbol_is_used` to `symbol_is_unused` (#11802) (Boshen)
+
+
 ## [0.73.2] - 2025-06-18
 
 ### 🚀 Features

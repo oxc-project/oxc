@@ -15,6 +15,7 @@ mod r#box;
 mod cell;
 mod r#enum;
 mod option;
+mod pointer;
 mod primitive;
 mod r#struct;
 mod r#type;
@@ -23,6 +24,7 @@ pub use r#box::BoxDef;
 pub use cell::CellDef;
 pub use r#enum::{Discriminant, EnumDef, VariantDef};
 pub use option::OptionDef;
+pub use pointer::{PointerDef, PointerKind};
 pub use primitive::PrimitiveDef;
 pub use r#struct::{FieldDef, StructDef};
 pub use r#type::TypeDef;
@@ -130,6 +132,8 @@ pub struct Containers {
     pub vec_id: Option<TypeId>,
     /// [`TypeId`] of `Cell` containing this type, if it exists in AST
     pub cell_id: Option<TypeId>,
+    /// [`TypeId`] of `NonNull` containing this type, if it exists in AST
+    pub non_null_id: Option<TypeId>,
 }
 
 /// Visibility of a struct / enum / struct field.

@@ -204,7 +204,7 @@ pub fn get_enclosing_function<'a, 'b>(
         {
             return Some(current_node);
         }
-        current_node = semantic.nodes().parent_node(current_node.id())?;
+        current_node = semantic.nodes().parent_node(current_node.id());
     }
 }
 
@@ -222,11 +222,10 @@ pub fn outermost_paren<'a, 'b>(
     let mut node = node;
 
     loop {
-        if let Some(parent) = semantic.nodes().parent_node(node.id()) {
-            if let AstKind::ParenthesizedExpression(_) = parent.kind() {
-                node = parent;
-                continue;
-            }
+        let parent = semantic.nodes().parent_node(node.id());
+        if let AstKind::ParenthesizedExpression(_) = parent.kind() {
+            node = parent;
+            continue;
         }
 
         break;
@@ -242,7 +241,6 @@ pub fn outermost_paren_parent<'a, 'b>(
     semantic
         .nodes()
         .ancestors(node.id())
-        .skip(1)
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
 }
 
@@ -254,7 +252,6 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
     semantic
         .nodes()
         .ancestors(node.id())
-        .skip(1)
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
         .nth(n)
 }
@@ -265,7 +262,7 @@ pub fn iter_outer_expressions<'a, 's>(
     semantic: &'s Semantic<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = AstKind<'a>> + 's {
-    semantic.nodes().ancestor_kinds(node_id).skip(1).filter(|parent| {
+    semantic.nodes().ancestor_kinds(node_id).filter(|parent| {
         !matches!(
             parent,
             AstKind::ParenthesizedExpression(_)
@@ -311,9 +308,7 @@ pub fn extract_regex_flags<'a>(
     }
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
-        Argument::TemplateLiteral(template) if template.is_no_substitution_template() => {
-            template.quasi().expect("no-substitution templates always have a quasi")
-        }
+        Argument::TemplateLiteral(template) => template.single_quasi()?,
         _ => return None,
     };
     let mut flags = RegExpFlags::empty();
@@ -399,7 +394,7 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let member_expr = call_expr.callee.without_parentheses().as_member_expression()?;
+    let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
     member_expr.static_property_info()
 }
 
@@ -652,8 +647,9 @@ pub fn is_default_this_binding<'a>(
 
     let mut current_node = node;
     loop {
-        let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
-        match parent.kind() {
+        let parent = semantic.nodes().parent_node(current_node.id());
+        let parent_kind = parent.kind();
+        match parent_kind {
             AstKind::ChainExpression(_)
             | AstKind::ConditionalExpression(_)
             | AstKind::LogicalExpression(_)
@@ -661,7 +657,7 @@ pub fn is_default_this_binding<'a>(
                 current_node = parent;
             }
             AstKind::ReturnStatement(_) => {
-                let upper_func = semantic.nodes().ancestors(parent.id()).skip(1).find(|node| {
+                let upper_func = semantic.nodes().ancestors(parent.id()).find(|node| {
                     matches!(
                         node.kind(),
                         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
@@ -719,9 +715,12 @@ pub fn is_default_this_binding<'a>(
 
                 return !is_constructor;
             }
-            AstKind::MemberExpression(mem_expr) => {
-                if mem_expr.object().span() == current_node.span()
-                    && matches!(mem_expr.static_property_name(), Some("apply" | "bind" | "call"))
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                let member_expr_kind = parent_kind.as_member_expression_kind().unwrap();
+                if member_expr_kind.object().span() == current_node.span()
+                    && member_expr_kind
+                        .static_property_name()
+                        .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
                     if let AstKind::CallExpression(call_expr) = node.kind() {

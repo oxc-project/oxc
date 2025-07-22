@@ -6,7 +6,7 @@ use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
@@ -15,7 +15,6 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
         &self,
         expr: &mut Expression<'a>,
-        state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) {
         let mut changed = false;
@@ -57,7 +56,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
         if changed {
-            state.changed = true;
+            ctx.state.changed = true;
         }
     }
 
@@ -219,7 +218,7 @@ impl<'a> PeepholeOptimizations {
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> bool {
-        if self.target < ESTarget::ES2020 {
+        if ctx.options().target < ESTarget::ES2020 {
             return false;
         }
         if !matches!(expr.operator, AssignmentOperator::Assign) {
@@ -303,7 +302,7 @@ impl<'a> PeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions,
-        tester::{run, test, test_same},
+        tester::{test, test_same, test_same_options},
     };
     use oxc_syntax::es_target::ESTarget;
 
@@ -1429,11 +1428,8 @@ mod test {
         test_same("foo().a || (foo().a = 3)");
 
         let target = ESTarget::ES2019;
-        let code = "x || (x = 3)";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_same_options("x || (x = 3)", &options);
     }
 
     #[test]
@@ -1456,11 +1452,8 @@ mod test {
         test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
         let target = ESTarget::ES2019;
-        let code = "var x; x = x || 1";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_same_options("var x; x = x || 1", &options);
     }
 
     #[test]

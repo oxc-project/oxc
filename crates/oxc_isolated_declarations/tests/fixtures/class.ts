@@ -1,5 +1,5 @@
 export class Foo {
-  private constructor(a: number = 0) {}
+  private constructor(a: number = 0, b) {}
 }
 
 export class Bar {
@@ -68,4 +68,10 @@ export class PublicMethodClass {
   public get badGetter() {
     return {[('x')]: 1};
   }
+}
+
+export class ConstructorOverloadsClass {
+  constructor(a: number);
+  constructor(a: string);
+  constructor(readonly a: any) {}
 }

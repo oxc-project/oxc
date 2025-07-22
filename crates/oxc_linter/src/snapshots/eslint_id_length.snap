@@ -1,0 +1,530 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var x = 1;
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var x;
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ obj.e = document.body;
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ function x() {};
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ function xyz(a) {};
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ var obj = { a: 1, bc: 2 };
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:24]
+ 1 │ try { blah(); } catch (e) { /* pass */ }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:25]
+ 1 │ var handler = function (e) {};
+   ·                         ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ for (var i=0; i < 10; i++) { console.log(i); }
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var j=0; while (j > -10) { console.log(--j); }
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:6]
+ 1 │ var [i] = arr;
+   ·      ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ var [,i,a] = arr;
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:9]
+ 1 │ var [,i,a] = arr;
+   ·         ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ function foo([a]) {}
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:8]
+ 1 │ import x from 'module';
+   ·        ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ import { x as z } from 'module';
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:17]
+ 1 │ import { foo as z } from 'module';
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:19]
+ 1 │ import { 'foo' as z } from 'module';
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ import * as x from 'module';
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:8]
+ 1 │ import longName from 'module';
+   ·        ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:13]
+ 1 │ import * as longName from 'module';
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:17]
+ 1 │ import { foo as longName } from 'module';
+   ·                 ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 4).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var _$xt_$ = Foo(42)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 4).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var _$x$_t$ = Foo(42)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var toString;
+   ·     ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:2]
+ 1 │ (a) => { a * a };
+   ·  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ function foo(x = 0) { }
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ class x { }
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { x() {} }
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:17]
+ 1 │ function foo(...x) { }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ function foo({x}) { }
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:18]
+ 1 │ function foo({x: a}) { }
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:18]
+ 1 │ function foo({x: a, longName}) { }
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 3).
+   ╭─[id_length.tsx:1:26]
+ 1 │ function foo({ longName: a }) {}
+   ·                          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:22]
+ 1 │ function foo({ prop: longName }) {};
+   ·                      ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:19]
+ 1 │ function foo({ a: b }) {};
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 10).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var hasOwnProperty;
+   ·     ──────────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:29]
+ 1 │ function foo({ a: { b: { c: d, e } } }) { }
+   ·                             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:32]
+ 1 │ function foo({ a: { b: { c: d, e } } }) { }
+   ·                                ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ var { x} = {};
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ var { x: a} = {};
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ var { a: a} = {};
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ var { prop: a } = {};
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 3).
+   ╭─[id_length.tsx:1:17]
+ 1 │ var { longName: a } = {};
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ var { prop: [x] } = {};
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ var { prop: [[x]] } = {};
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:13]
+ 1 │ var { prop: longName } = {};
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ var { x: a} = {};
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:20]
+ 1 │ var { a: { b: { c: d } } } = {};
+   ·                    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:20]
+ 1 │ var { a: { b: { c: d, e } } } = {};
+   ·                    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:23]
+ 1 │ var { a: { b: { c: d, e } } } = {};
+   ·                       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:17]
+ 1 │ var { a: { b: { c, e: longName } } } = {};
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:20]
+ 1 │ var { a: { b: { c: d, e: longName } } } = {};
+   ·                    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ var { a, b: { c: d, e: longName } } = {};
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:18]
+ 1 │ var { a, b: { c: d, e: longName } } = {};
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:8]
+ 1 │ import x from 'y';
+   ·        ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:12]
+ 1 │ export var x = 0;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ ({ a: obj.x.y.z } = {});
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ ({ prop: obj.x } = {});
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var x = 1;
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:12]
+ 1 │ var {prop: x} = foo;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:12]
+ 1 │ var foo = {x: prop};
+   ·            ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:10]
+ 1 │ function BEFORE_send() {};
+   ·          ───────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 5).
+   ╭─[id_length.tsx:1:10]
+ 1 │ function NOTMATCHED_send() {};
+   ·          ───────────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 3).
+   ╭─[id_length.tsx:1:10]
+ 1 │ function N() {};
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { #x() {} }
+   ·             ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { x = 1 }
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { #x = 1 }
+   ·             ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 3).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { #abcdefg() {} }
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 3).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { abcdefg = 1 }
+   ·             ───────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too long (> 3).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { #abcdefg = 1 }
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var 𠮟 = 2
+   ·     ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ var 葛󠄀 = 2
+   ·     ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ var myObj = { 𐌘: 1 };
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:2]
+ 1 │ (𐌘) => { 𐌘 * 𐌘 };
+   ·  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ class 𠮟 { }
+   ·       ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ class Foo { 𐌘() {} }
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ class Foo1 { #𐌘() {} }
+   ·              ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ class Foo2 { 𐌘 = 1 }
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ class Foo3 { #𐌘 = 1 }
+   ·              ──
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:18]
+ 1 │ function foo1(...𐌘) { }
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ function foo([𐌘]) { }
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ var [ 𐌘 ] = arr;
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ var { prop: [𐌘]} = {};
+   ·              ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:15]
+ 1 │ function foo({𐌘}) { }
+   ·               ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ var { 𐌘 } = {};
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:13]
+ 1 │ var { prop: 𐌘} = {};
+   ·             ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:14]
+ 1 │ ({ prop: obj.𐌘 } = {});
+   ·              ─
+   ╰────

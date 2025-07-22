@@ -188,7 +188,6 @@ impl Gen for Statement<'_> {
 impl Gen for ExpressionStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
-        p.add_source_mapping(self.span);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -1388,7 +1387,7 @@ impl GenExpr for CallExpression<'_> {
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         let pure = self.pure && p.options.print_annotation_comment();
-        if precedence >= Precedence::Postfix && pure {
+        if !wrap && pure && precedence >= Precedence::Postfix {
             wrap = true;
         }
 
@@ -1401,7 +1400,6 @@ impl GenExpr for CallExpression<'_> {
             } else if is_statement {
                 p.start_of_stmt = p.code_len();
             }
-            p.add_source_mapping(self.span);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
                 p.print_str("?.");
@@ -1480,8 +1478,15 @@ impl GenExpr for ObjectExpression<'_> {
         let n = p.code_len();
         let len = self.properties.len();
         let is_multi_line = len > 1;
-        let wrap = p.start_of_stmt == n || p.start_of_arrow_expr == n;
+        let has_comment = p.has_comment(self.span.start);
+        let wrap = has_comment || p.start_of_stmt == n || p.start_of_arrow_expr == n;
         p.wrap(wrap, |p| {
+            // Print comments for lingui https://lingui.dev/ref/macro#definemessage
+            // `const message = /*i18n*/ { };`
+            if has_comment {
+                p.print_leading_comments(self.span.start);
+                p.print_indent();
+            }
             p.add_source_mapping(self.span);
             p.print_ascii_byte(b'{');
             if is_multi_line {
@@ -1628,7 +1633,7 @@ impl Gen for PropertyKey<'_> {
 
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign, |p| {
+        p.wrap(precedence >= Precedence::Assign || self.pife, |p| {
             if self.r#async {
                 p.print_space_before_identifier();
                 p.add_source_mapping(self.span);
@@ -1720,10 +1725,12 @@ impl GenExpr for UnaryExpression<'_> {
             let operator = self.operator.as_str();
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
+                p.add_source_mapping(self.span);
                 p.print_str(operator);
                 p.print_soft_space();
             } else {
                 p.print_space_before_operator(self.operator.into());
+                p.add_source_mapping(self.span);
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
@@ -2025,9 +2032,10 @@ impl GenExpr for ImportExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
 
-        let has_comment_before_right_paren =
-            p.options.comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
-        let has_comment = p.options.comments
+        let has_comment_before_right_paren = p.options.print_annotation_comment()
+            && self.span.end > 0
+            && p.has_comment(self.span.end - 1);
+        let has_comment = p.options.print_annotation_comment()
             && (has_comment_before_right_paren
                 || p.has_comment(self.source.span().start)
                 || self
@@ -2077,21 +2085,29 @@ impl GenExpr for ImportExpression<'_> {
 
 impl Gen for TemplateLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'`');
-        let mut expressions = self.expressions.iter();
 
-        for quasi in &self.quasis {
+        debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
+
+        let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
+
+        p.add_source_mapping(first_quasi.span);
+        p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
+        p.add_source_mapping_end(first_quasi.span);
+
+        for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
+            p.print_str("${");
+            p.print_expression(expr);
+            p.print_ascii_byte(b'}');
+
             p.add_source_mapping(quasi.span);
-            p.print_str(quasi.value.raw.as_str());
-
-            if let Some(expr) = expressions.next() {
-                p.print_str("${");
-                p.print_expression(expr);
-                p.print_ascii_byte(b'}');
-            }
+            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
+            p.add_source_mapping_end(quasi.span);
         }
 
         p.print_ascii_byte(b'`');
+        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -3223,6 +3239,9 @@ impl Gen for TSTypeName<'_> {
                 decl.left.print(p, ctx);
                 p.print_str(".");
                 decl.right.print(p, ctx);
+            }
+            Self::ThisExpression(e) => {
+                e.print(p, ctx);
             }
         }
     }

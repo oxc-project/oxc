@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 154/258
+Passed: 180/298
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -20,7 +20,7 @@ Passed: 154/258
 * regexp
 
 
-# babel-plugin-transform-class-properties (21/27)
+# babel-plugin-transform-class-properties (22/28)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -467,10 +467,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (42/45)
-* refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
-x Output mismatch
-
+# babel-plugin-transform-react-jsx (44/46)
 * refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
 x Output mismatch
 
@@ -497,7 +494,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (4/76)
+# legacy-decorators (6/79)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -542,6 +539,14 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
+
+* oxc/metadata/this/input.ts
+Symbol span mismatch for "Example":
+after transform: SymbolId(0): Span { start: 6, end: 13 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol span mismatch for "Example":
+after transform: SymbolId(2): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 6, end: 13 }
 
 * oxc/metadata/typescript-syntax/input.ts
 
@@ -612,7 +617,7 @@ after transform: SymbolId(2): Span { start: 103, end: 106 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(7), ReferenceId(9)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 Symbol span mismatch for "Foo":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
@@ -1418,5 +1423,49 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
+
+
+# plugin-styled-components (20/34)
+* styled-components/add-identifier-with-top-level-import-paths/input.js
+x Output mismatch
+
+* styled-components/add-identifier-with-top-level-import-paths-and-named-import/input.js
+x Output mismatch
+
+* styled-components/annotate-create-global-style-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-css-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/annotate-styled-calls-with-pure-comments/input.js
+x Output mismatch
+
+* styled-components/css-declared-after-component/input.jsx
+x Output mismatch
+
+* styled-components/does-not-replace-native-with-no-tags/input.js
+x Output mismatch
+
+* styled-components/pre-transpiled/input.js
+x Output mismatch
+
+* styled-components/transformed-imports-with-jsx-member-expressions/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-add-import/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-add-require/input.jsx
+x Output mismatch
+
+* styled-components/transpile-css-prop-all-options-on/input.jsx
+x Output mismatch
+
+* styled-components/transpile-require-default/input.js
+x Output mismatch
 
 

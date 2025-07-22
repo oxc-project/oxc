@@ -26,10 +26,6 @@ pub struct IgnoreOptions {
 
     #[bpaf(switch, hide_usage, help(NO_IGNORE_HELP))]
     pub no_ignore: bool,
-
-    /// Follow symbolic links. Oxlint ignores symbolic links by default.
-    #[bpaf(switch, hide_usage)]
-    pub symlinks: bool,
 }
 
 #[cfg(test)]

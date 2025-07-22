@@ -1890,6 +1890,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // Remaining variants do not contain scopes:
                 // `IdentifierReference`
                 // `QualifiedName`
+                // `ThisExpression`
             }
         }
     }

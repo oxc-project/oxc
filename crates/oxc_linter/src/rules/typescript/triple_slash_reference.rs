@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Statement, TSModuleReference},
-};
+use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -109,10 +106,7 @@ impl Rule for TripleSlashReference {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else {
-            return;
-        };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
+        let program = ctx.nodes().program().unwrap();
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
@@ -149,7 +143,8 @@ impl Rule for TripleSlashReference {
                             }
                         }
                         TSModuleReference::IdentifierReference(_)
-                        | TSModuleReference::QualifiedName(_) => {}
+                        | TSModuleReference::QualifiedName(_)
+                        | TSModuleReference::ThisExpression(_) => {}
                     },
                     Statement::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {

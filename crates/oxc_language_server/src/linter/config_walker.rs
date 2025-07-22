@@ -64,9 +64,6 @@ impl ConfigWalker {
     /// Will not canonicalize paths.
     /// # Panics
     pub fn new(path: &Path) -> Self {
-        // Turning off `follow_links` because:
-        // * following symlinks is a really slow syscall
-        // * it is super rare to have symlinked source code
         let inner: ignore::WalkParallel = ignore::WalkBuilder::new(path)
             // disable skip hidden, which will not not search for files starting with a dot
             .hidden(false)
@@ -74,7 +71,7 @@ impl ConfigWalker {
             .parents(false)
             .ignore(false)
             .git_global(false)
-            .follow_links(false)
+            .follow_links(true)
             .build_parallel();
 
         Self { inner }

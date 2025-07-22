@@ -52,17 +52,13 @@ impl Rule for NoNew {
         let mut ancestors = ctx
             .nodes()
             .ancestors(node.id())
-            .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)))
-            .map(AstNode::id)
-            .skip(1);
-        let Some(node_id) = ancestors.next() else { return };
+            .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)));
+        let Some(node) = ancestors.next() else { return };
 
-        let kind = ctx.nodes().kind(node_id);
-        if matches!(kind, AstKind::ExpressionStatement(_)) {
+        if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
             ancestors.next(); // skip `FunctionBody`
-            if let Some(node_id) = ancestors.next() {
-                let kind = ctx.nodes().kind(node_id);
-                if matches!(kind, AstKind::ArrowFunctionExpression(e) if e.expression) {
+            if let Some(node) = ancestors.next() {
+                if matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression) {
                     return;
                 }
             }

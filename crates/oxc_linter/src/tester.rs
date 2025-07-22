@@ -7,20 +7,22 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Allocator, AllocatorPool};
-use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+
 use crate::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
-    Linter, Oxlintrc, RuleEnum,
+    AllowWarnDeny, BuiltinLintPlugins, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService,
+    LintServiceOptions, Linter, Oxlintrc, RuleEnum,
+    external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
     options::LintOptions,
-    read_to_string,
     rules::RULES,
     service::RuntimeFileSystem,
+    utils::read_to_arena_str,
 };
 
 #[derive(Eq, PartialEq)]
@@ -196,15 +198,18 @@ impl TesterFileSystem {
 }
 
 impl RuntimeFileSystem for TesterFileSystem {
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+    fn read_to_arena_str<'a>(
+        &self,
+        path: &Path,
+        allocator: &'a Allocator,
+    ) -> Result<&'a str, std::io::Error> {
         if path == self.path_to_lint {
-            return Ok(self.source_text.clone());
+            return Ok(allocator.alloc_str(&self.source_text));
         }
-
-        read_to_string(path)
+        read_to_arena_str(path, allocator)
     }
 
-    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+    fn write_file(&self, _path: &Path, _content: &str) -> Result<(), std::io::Error> {
         panic!("writing file should not be allowed in Tester");
     }
 }
@@ -301,37 +306,37 @@ impl Tester {
     }
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::IMPORT, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::IMPORT, yes);
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::JEST, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::JEST, yes);
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::VITEST, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::VITEST, yes);
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::JSX_A11Y, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::JSX_A11Y, yes);
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NEXTJS, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::NEXTJS, yes);
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::REACT_PERF, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::REACT_PERF, yes);
         self
     }
 
     pub fn with_node_plugin(mut self, yes: bool) -> Self {
-        self.plugins.set(LintPlugins::NODE, yes);
+        self.plugins.builtin.set(BuiltinLintPlugins::NODE, yes);
         self
     }
 
@@ -498,20 +503,30 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
+        let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
             self.lint_options,
             ConfigStore::new(
                 eslint_config
                     .map_or_else(ConfigStoreBuilder::empty, |mut v| {
                         v.as_object_mut().unwrap().insert("categories".into(), json!({}));
-                        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-                            .unwrap()
+                        ConfigStoreBuilder::from_oxlintrc(
+                            true,
+                            Oxlintrc::deserialize(v).unwrap(),
+                            None,
+                            &mut external_plugin_store,
+                        )
+                        .unwrap()
                     })
-                    .with_plugins(self.plugins)
+                    .with_builtin_plugins(
+                        self.plugins.builtin.union(BuiltinLintPlugins::from(self.plugin_name)),
+                    )
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(),
                 FxHashMap::default(),
+                external_plugin_store,
             ),
+            None,
         )
         .with_fix(fix_kind.into());
 
@@ -528,12 +543,14 @@ impl Tester {
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
-        let options =
-            LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
-        let mut lint_service =
-            LintService::new(&linter, AllocatorPool::default(), options).with_file_system(
-                Box::new(TesterFileSystem::new(path_to_lint, source_text.to_string())),
-            );
+        let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
+        let mut lint_service = LintService::new(linter, AllocatorPool::default(), options);
+        let _ = lint_service
+            .with_file_system(Box::new(TesterFileSystem::new(
+                path_to_lint,
+                source_text.to_string(),
+            )))
+            .with_paths(paths);
 
         let (sender, _receiver) = mpsc::channel();
         let result = lint_service.run_test_source(&allocator, false, &sender);

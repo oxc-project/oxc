@@ -387,6 +387,7 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
         }
         TypeDef::Box(box_def) => ts_type_name(box_def.inner_type(schema), schema),
         TypeDef::Cell(cell_def) => ts_type_name(cell_def.inner_type(schema), schema),
+        TypeDef::Pointer(pointer_def) => ts_type_name(pointer_def.inner_type(schema), schema),
     }
 }
 

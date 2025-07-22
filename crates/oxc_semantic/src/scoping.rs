@@ -358,9 +358,9 @@ impl Scoping {
         }
     }
 
-    /// Get whether a symbol is used (i.e. read or written after declaration).
-    pub fn symbol_is_used(&self, symbol_id: SymbolId) -> bool {
-        self.get_resolved_references(symbol_id).count() > 0
+    /// Get whether a symbol is unused (i.e. not read or written after declaration).
+    pub fn symbol_is_unused(&self, symbol_id: SymbolId) -> bool {
+        self.get_resolved_reference_ids(symbol_id).is_empty()
     }
 
     /// Add a reference to a symbol.
@@ -368,6 +368,12 @@ impl Scoping {
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.resolved_references[symbol_id.index()].push(reference_id);
         });
+    }
+
+    /// Delete a reference.
+    pub fn delete_reference(&mut self, reference_id: ReferenceId) {
+        let Some(symbol_id) = self.get_reference(reference_id).symbol_id() else { return };
+        self.delete_resolved_reference(symbol_id, reference_id);
     }
 
     /// Delete a reference to a symbol.

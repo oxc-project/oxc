@@ -332,9 +332,17 @@ impl<'a> ReplaceGlobalDefines<'a> {
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !ident.is_global_reference(ctx.scoping()) {
-            return None;
+        if let Some(symbol_id) = ident
+            .reference_id
+            .get()
+            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
+        {
+            // Ignore `declare const IS_PROD: boolean;`
+            if !ctx.scoping().symbol_flags(symbol_id).is_ambient() {
+                return None;
+            }
         }
+        // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
                 let value = self.parse_value(value);

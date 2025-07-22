@@ -105,9 +105,7 @@ fn check_assert_calls(symbol_id: SymbolId, ctx: &LintContext<'_>) {
     let references = ctx.semantic().symbol_references(symbol_id);
 
     for reference in references {
-        let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
-            continue;
-        };
+        let parent = ctx.nodes().parent_node(reference.node_id());
 
         match parent.kind() {
             AstKind::CallExpression(call_expr) => {

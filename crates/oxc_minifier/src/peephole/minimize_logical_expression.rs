@@ -207,7 +207,7 @@ impl<'a> PeepholeOptimizations {
         expr: &mut LogicalExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
+        if ctx.options().target < ESTarget::ES2020 {
             return None;
         }
         let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {

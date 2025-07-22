@@ -1107,6 +1107,7 @@ impl ContentEq for ArrowFunctionExpression<'_> {
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.pure, &other.pure)
+            && ContentEq::content_eq(&self.pife, &other.pife)
     }
 }
 
@@ -2061,6 +2062,7 @@ impl ContentEq for TSTypeName<'_> {
         match (self, other) {
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -2306,6 +2308,7 @@ impl ContentEq for TSTypeQueryExprName<'_> {
             (Self::TSImportType(a), Self::TSImportType(b)) => a.content_eq(b),
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -2396,6 +2399,7 @@ impl ContentEq for TSModuleReference<'_> {
             (Self::ExternalModuleReference(a), Self::ExternalModuleReference(b)) => a.content_eq(b),
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }

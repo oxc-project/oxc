@@ -104,7 +104,7 @@ impl Rule for ValidTypeof {
         };
 
         let binary_expr = match ctx.nodes().parent_kind(node.id()) {
-            Some(AstKind::BinaryExpression(binary_expr)) if binary_expr.operator.is_equality() => {
+            AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr
             }
             _ => return,
@@ -124,8 +124,8 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::TemplateLiteral(template) = sibling {
-            if template.expressions.is_empty() {
-                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(&value.as_str())) {
+            if let Some(quasi) = template.single_quasi() {
+                if !VALID_TYPES.contains(&quasi.as_str()) {
                     ctx.diagnostic(invalid_value(None, sibling.span()));
                 }
                 return;

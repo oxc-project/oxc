@@ -73,7 +73,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
    ╭─[index.js:1:1]
- 1 │ module.exports.face = "palm"
+ 1 │ module.exports = face
    · ──────────────
    ╰────
   help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
@@ -82,13 +82,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[index.js:1:1]
  1 │ module.exports = face
    · ──────────────
-   ╰────
-  help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
-
-  ⚠ eslint-plugin-import(no-commonjs): Expected export instead of exports
-   ╭─[index.js:1:11]
- 1 │ exports = module.exports = {}
-   ·           ──────────────
    ╰────
   help: Do not use CommonJS `require` calls and `module.exports` or `exports.*`
 

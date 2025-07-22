@@ -295,7 +295,14 @@ expression: json
     "LintPlugins": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/LintPluginOptionsSchema"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/LintPluginOptionsSchema"
+          },
+          {
+            "type": "string"
+          }
+        ]
       }
     },
     "NextPluginSettings": {

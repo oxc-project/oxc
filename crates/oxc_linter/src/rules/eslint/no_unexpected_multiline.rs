@@ -113,7 +113,7 @@ impl Rule for NoUnexpectedMultiline {
                 if call_expr.optional {
                     return;
                 }
-                if let Some(AstKind::ChainExpression(_)) = ctx.nodes().parent_kind(node.id()) {
+                if let AstKind::ChainExpression(_) = ctx.nodes().parent_kind(node.id()) {
                     return;
                 }
 
@@ -135,12 +135,12 @@ impl Rule for NoUnexpectedMultiline {
                     );
                 }
             }
-            AstKind::MemberExpression(member_expr) => {
-                if !member_expr.is_computed() || member_expr.optional() {
+            AstKind::ComputedMemberExpression(member_expr) => {
+                if member_expr.optional {
                     return;
                 }
 
-                let span = Span::new(member_expr.object().span().end, member_expr.span().end);
+                let span = Span::new(member_expr.object.span().end, member_expr.span().end);
                 if let Some(open_bracket_pos) = has_newline_before(ctx, span, b'[') {
                     let bracket_span = Span::sized(span.start + open_bracket_pos, 1);
 
@@ -175,7 +175,7 @@ impl Rule for NoUnexpectedMultiline {
                 if binary_expr.operator != BinaryOperator::Division {
                     return;
                 }
-                let Some(AstKind::BinaryExpression(parent_binary_expr)) =
+                let AstKind::BinaryExpression(parent_binary_expr) =
                     ctx.nodes().parent_kind(node.id())
                 else {
                     return;

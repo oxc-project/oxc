@@ -242,6 +242,16 @@ mod test {
     }
 
     #[test]
+    fn test_closing_character_inside_attribute() {
+        let source_text = r"
+        <script description='PI > 5'>a</script>
+        ";
+
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "a");
+    }
+
+    #[test]
     fn lang() {
         let cases = [
             ("<script>debugger</script>", Some(SourceType::mjs())),

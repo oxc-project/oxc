@@ -4,16 +4,13 @@ use std::borrow::Cow;
 use oxc_ast::{Comment, CommentKind, ast::Program};
 use oxc_syntax::identifier::is_line_terminator;
 
-use crate::{Codegen, LegalComment};
+use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
-        if !self.options.comments
-            && self.options.legal_comments.is_none()
-            && !self.options.annotation_comments
-        {
+        if self.options.comments == CommentOptions::disabled() {
             return;
         }
         for comment in comments {
@@ -24,6 +21,9 @@ impl Codegen<'_> {
             let mut add = false;
             if comment.is_leading() {
                 if comment.is_legal() && self.options.print_legal_comment() {
+                    add = true;
+                }
+                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
                     add = true;
                 }
                 if comment.is_annotation() && self.options.print_annotation_comment() {
@@ -128,7 +128,7 @@ impl Codegen<'_> {
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
             CommentKind::Line => {
-                self.print_str(comment_source);
+                self.print_str_escaping_script_close_tag(comment_source);
             }
             CommentKind::Block => {
                 // Print block comments with our own indentation.
@@ -136,7 +136,7 @@ impl Codegen<'_> {
                     if !line.starts_with("/*") {
                         self.print_indent();
                     }
-                    self.print_str(line.trim_start());
+                    self.print_str_escaping_script_close_tag(line.trim_start());
                     if !line.ends_with("*/") {
                         self.print_hard_newline();
                     }
@@ -151,7 +151,7 @@ impl Codegen<'_> {
         &mut self,
         program: &Program<'_>,
     ) -> Vec<Comment> {
-        let legal_comments = &self.options.legal_comments;
+        let legal_comments = &self.options.comments.legal;
         if matches!(legal_comments, LegalComment::None | LegalComment::Inline) {
             return vec![];
         }

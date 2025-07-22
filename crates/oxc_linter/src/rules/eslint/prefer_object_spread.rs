@@ -145,14 +145,12 @@ impl Rule for PreferObjectSpread {
 
                 let needs_paren = !matches!(
                     ctx.nodes().parent_kind(node.id()),
-                    Some(
-                        AstKind::VariableDeclarator(_)
-                            | AstKind::ArrayExpression(_)
-                            | AstKind::ReturnStatement(_)
-                            | AstKind::Argument(_)
-                            | AstKind::ObjectProperty(_)
-                            | AstKind::AssignmentExpression(_)
-                    )
+                    AstKind::VariableDeclarator(_)
+                        | AstKind::ArrayExpression(_)
+                        | AstKind::ReturnStatement(_)
+                        | AstKind::Argument(_)
+                        | AstKind::ObjectProperty(_)
+                        | AstKind::AssignmentExpression(_)
                 );
 
                 let Some(callee_left_paren_span) = find_char_span(ctx, call_expr, b'(') else {

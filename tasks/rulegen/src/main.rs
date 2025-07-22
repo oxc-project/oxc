@@ -178,7 +178,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
-        tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+        tag_expr.quasi.single_quasi().map(|quasi| quasi.to_string())
     }
 }
 
@@ -225,7 +225,7 @@ impl<'a> Visit<'a> for TestCase {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -266,7 +266,7 @@ impl<'a> Visit<'a> for TestCase {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
                             }
                             _ => None,
                         }
@@ -301,7 +301,7 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
-        self.code = Some(lit.quasi().unwrap().to_string());
+        self.code = Some(lit.single_quasi().unwrap().to_string());
         self.config = None;
     }
 

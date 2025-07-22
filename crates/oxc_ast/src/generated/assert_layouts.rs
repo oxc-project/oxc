@@ -617,7 +617,7 @@ const _: () = {
     assert!(offset_of!(FunctionBody, directives) == 8);
     assert!(offset_of!(FunctionBody, statements) == 32);
 
-    // Padding: 1 bytes
+    // Padding: 0 bytes
     assert!(size_of::<ArrowFunctionExpression>() == 48);
     assert!(align_of::<ArrowFunctionExpression>() == 8);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
@@ -629,6 +629,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, body) == 32);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 40);
     assert!(offset_of!(ArrowFunctionExpression, pure) == 46);
+    assert!(offset_of!(ArrowFunctionExpression, pife) == 47);
 
     // Padding: 7 bytes
     assert!(size_of::<YieldExpression>() == 32);
@@ -2207,7 +2208,7 @@ const _: () = {
     assert!(offset_of!(FunctionBody, directives) == 8);
     assert!(offset_of!(FunctionBody, statements) == 24);
 
-    // Padding: 1 bytes
+    // Padding: 0 bytes
     assert!(size_of::<ArrowFunctionExpression>() == 32);
     assert!(align_of::<ArrowFunctionExpression>() == 4);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
@@ -2219,6 +2220,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, body) == 20);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 24);
     assert!(offset_of!(ArrowFunctionExpression, pure) == 30);
+    assert!(offset_of!(ArrowFunctionExpression, pife) == 31);
 
     // Padding: 3 bytes
     assert!(size_of::<YieldExpression>() == 20);

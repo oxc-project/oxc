@@ -195,8 +195,11 @@ pub trait CompilerInterface {
                     .build(&program)
                     .semantic
                     .into_scoping();
-                Compressor::new(&allocator, CompressOptions::default())
-                    .dead_code_elimination_with_scoping(scoping, &mut program);
+                Compressor::new(&allocator).dead_code_elimination_with_scoping(
+                    &mut program,
+                    scoping,
+                    CompressOptions::smallest(),
+                );
             }
         }
 
@@ -276,7 +279,7 @@ pub trait CompilerInterface {
         program: &mut Program<'a>,
         options: CompressOptions,
     ) {
-        Compressor::new(allocator, options).build(program);
+        Compressor::new(allocator).build(program, options);
     }
 
     fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Scoping {

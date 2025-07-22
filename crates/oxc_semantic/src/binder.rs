@@ -1,17 +1,13 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use std::ptr;
-
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_syntax::{
-    node::NodeId,
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
-};
+use oxc_span::GetSpan;
+use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::SemanticBuilder;
+use crate::checker::is_function_part_of_if_statement;
 
 pub trait Binder<'a> {
     #[expect(unused_variables)]
@@ -20,10 +16,9 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = builder
+        let is_declare = matches!(builder
             .nodes
-            .parent_kind(builder.current_node_id)
-            .is_some_and(|kind| matches!(kind, AstKind::VariableDeclaration(decl) if decl.declare));
+            .parent_kind(builder.current_node_id), AstKind::VariableDeclaration(decl) if decl.declare);
 
         let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const
@@ -76,11 +71,15 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
-                        // remove current scope binding and add to target scope
-                        // avoid same symbols appear in multi-scopes
-                        builder.scoping.remove_binding(scope_id, &name);
-                        builder.scoping.add_binding(target_scope_id, &name, symbol_id);
-                        builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                        // Hoist current symbol to target scope when it is not already declared
+                        // in the target scope.
+                        if !builder.scoping.scope_has_binding(target_scope_id, &name) {
+                            // remove current scope binding and add to target scope
+                            // avoid same symbols appear in multi-scopes
+                            builder.scoping.remove_binding(scope_id, &name);
+                            builder.scoping.add_binding(target_scope_id, &name, symbol_id);
+                            builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                        }
                         break;
                     }
                 }
@@ -138,28 +137,6 @@ impl<'a> Binder<'a> for Class<'a> {
     }
 }
 
-/// Check for Annex B `if (foo) function a() {} else function b() {}`
-fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
-    if builder.current_scope_flags().is_strict_mode() {
-        return false;
-    }
-    let Some(AstKind::IfStatement(stmt)) = builder.nodes.parent_kind(builder.current_node_id)
-    else {
-        return false;
-    };
-    if let Statement::FunctionDeclaration(func) = &stmt.consequent {
-        if ptr::eq(func.as_ref(), function) {
-            return true;
-        }
-    }
-    if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate {
-        if ptr::eq(func.as_ref(), function) {
-            return true;
-        }
-    }
-    false
-}
-
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let includes = if self.declare {
@@ -169,45 +146,40 @@ impl<'a> Binder<'a> for Function<'a> {
         };
 
         if let Some(ident) = &self.id {
-            if is_function_part_of_if_statement(self, builder) {
-                let symbol_id = builder.scoping.create_symbol(
-                    ident.span,
-                    ident.name.into(),
-                    includes,
-                    ScopeId::new(u32::MAX - 1), // Not bound to any scope.
-                    builder.current_node_id,
-                );
-                ident.symbol_id.set(Some(symbol_id));
+            let excludes = if builder.source_type.is_typescript() {
+                SymbolFlags::FunctionExcludes
+            } else if is_function_part_of_if_statement(self, builder) {
+                SymbolFlags::empty()
             } else {
-                let excludes = if builder.source_type.is_typescript() {
-                    SymbolFlags::FunctionExcludes
-                } else {
-                    // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
-                    // doesn't care about non-strict mode, so we need to exclude this,
-                    // and further check in checker.
-                    SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
-                };
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
-                ident.symbol_id.set(Some(symbol_id));
+                // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
+                // doesn't care about non-strict mode, so we need to exclude this,
+                // and further check in checker.
+                SymbolFlags::FunctionExcludes - SymbolFlags::FunctionScopedVariable
+            };
+
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            ident.symbol_id.set(Some(symbol_id));
+
+            // Save `@__NO_SIDE_EFFECTS__`
+            if self.pure {
+                builder.scoping.no_side_effects.insert(symbol_id);
             }
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if let Some(AstKind::ObjectProperty(prop)) =
-            builder.nodes.parent_kind(builder.current_node_id)
-        {
+        if let AstKind::ObjectProperty(prop) = builder.nodes.parent_kind(builder.current_node_id) {
+            // Do not bind scope flags when function is inside of the object property key:
+            //
+            // { set [function() {}](val) {} }
+            //        ^^^^^^^^^^^^^
+            if prop.key.span() == self.span {
+                return;
+            }
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
-            }
-        }
-
-        // Save `@__NO_SIDE_EFFECTS__`
-        if self.pure {
-            if let Some(symbold_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
-                builder.scoping.no_side_effects.insert(symbold_id);
             }
         }
     }
@@ -216,7 +188,7 @@ impl<'a> Binder<'a> for Function<'a> {
 impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else {
             return;
         };
@@ -238,7 +210,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         if parameters.kind.is_signature() {
@@ -305,8 +277,7 @@ fn declare_symbol_for_import_specifier(
     builder: &mut SemanticBuilder,
 ) {
     let includes = if is_type
-        || builder.nodes.parent_kind(builder.current_node_id).is_some_and(
-            |decl| matches!(decl, AstKind::ImportDeclaration(decl) if decl.import_kind.is_type()),
+        || matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
         ) {
         SymbolFlags::TypeImport
     } else {
@@ -659,7 +630,7 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some(node) = builder.nodes.ancestors(current_node_id).skip(1).find(|node| {
+        let Some(node) = builder.nodes.ancestors(current_node_id).find(|node| {
             matches!(
                 node.kind(),
                 AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
@@ -688,7 +659,7 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let scope_id = if matches!(
             builder.nodes.parent_kind(builder.current_node_id),
-            Some(AstKind::TSInferType(_))
+            AstKind::TSInferType(_)
         ) {
             builder
                 .scoping

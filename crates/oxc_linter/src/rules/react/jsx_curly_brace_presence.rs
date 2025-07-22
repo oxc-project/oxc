@@ -462,8 +462,9 @@ impl JsxCurlyBracePresence {
                 }
             }
             Expression::TemplateLiteral(template) => {
-                if allowed.is_never() && template.is_no_substitution_template() {
-                    let string = template.quasi().unwrap();
+                if allowed.is_never()
+                    && let Some(string) = template.single_quasi()
+                {
                     if contains_quote_characters(string.as_str())
                         || is_allowed_string_like(
                             ctx,
@@ -550,7 +551,7 @@ fn has_adjacent_jsx_expression_containers<'a>(
     node_id: NodeId,
     // element: &JSXElement<'a>,
 ) -> bool {
-    let Some(parent) = ctx.nodes().parent_kind(node_id) else { return false };
+    let parent = ctx.nodes().parent_kind(node_id);
     let children = match parent {
         AstKind::JSXElement(el) => &el.children,
         AstKind::JSXFragment(fragment) => &fragment.children,
@@ -802,7 +803,7 @@ fn test() {
         (
             r#"
 			        import React from "react";
-			
+
 			        const Component = () => {
 			          return <span>{"/*"}</span>;
 			        };

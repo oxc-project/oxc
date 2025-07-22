@@ -58,23 +58,27 @@ impl Rule for NoImportAssign {
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if is_namespace_specifier {
-                    let Some(parent_node) = ctx.nodes().parent_node(reference.node_id()) else {
-                        return;
-                    };
-                    if let AstKind::MemberExpression(expr) = parent_node.kind() {
-                        let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id())
-                        else {
-                            return;
-                        };
+                    let parent_node = ctx.nodes().parent_node(reference.node_id());
+                    if parent_node.kind().is_member_expression_kind() {
+                        let expr = parent_node.kind();
+                        let parent_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let is_unary_expression_with_delete_operator = |kind| matches!(kind, AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete);
                         let parent_parent_kind = parent_parent_node.kind();
                         if matches!(parent_parent_kind, AstKind::SimpleAssignmentTarget(_))
                             // delete namespace.module
                             || is_unary_expression_with_delete_operator(parent_parent_kind)
                             // delete namespace?.module
-                            || matches!(parent_parent_kind, AstKind::ChainExpression(_) if ctx.nodes().parent_kind(parent_parent_node.id()).is_some_and(is_unary_expression_with_delete_operator))
+                            || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id())))
                         {
-                            if let Some((span, _)) = expr.static_property_info() {
+                            if let Some((span, _)) = match expr {
+                                AstKind::StaticMemberExpression(expr) => {
+                                    Some(expr.static_property_info())
+                                }
+                                AstKind::ComputedMemberExpression(expr) => {
+                                    expr.static_property_info()
+                                }
+                                _ => return,
+                            } {
                                 if span != ctx.semantic().reference_span(reference) {
                                     return ctx
                                         .diagnostic(no_import_assign_diagnostic(expr.span()));
@@ -109,10 +113,9 @@ impl Rule for NoImportAssign {
 /// - `Reflect.setPrototypeOf`
 fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     let current_node = ctx.nodes().get_node(node_id);
-    let call_expression_node =
-        ctx.nodes().parent_node(node_id).and_then(|node| ctx.nodes().parent_kind(node.id()));
+    let call_expression_node = ctx.nodes().parent_kind(ctx.nodes().parent_id(node_id));
 
-    let Some(AstKind::CallExpression(expr)) = call_expression_node else {
+    let AstKind::CallExpression(expr) = call_expression_node else {
         return false;
     };
 

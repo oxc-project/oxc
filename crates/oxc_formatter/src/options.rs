@@ -1,7 +1,7 @@
 use std::{fmt, num::ParseIntError, str::FromStr};
 
 pub use crate::formatter::{
-    Buffer, Format, FormatResult, SourceComment, SyntaxTriviaPieceComments, token::string::Quote,
+    Buffer, Format, FormatResult, SyntaxTriviaPieceComments, token::string::Quote,
 };
 use crate::{
     formatter::{
@@ -590,7 +590,8 @@ impl FromStr for ArrowParentheses {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "as-needed" => Ok(Self::AsNeeded),
+            // Prettier calls it `avoid`, but Biome calls it `AsNeeded`
+            "avoid" => Ok(Self::AsNeeded),
             "always" => Ok(Self::Always),
             _ => Err(
                 "Value not supported for Arrow parentheses. Supported values are 'as-needed' and 'always'.",

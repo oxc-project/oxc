@@ -133,19 +133,14 @@ fn is_correct_place_to_call_expect<'a>(
     id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> Option<()> {
-    let mut parent = ctx.nodes().parent_node(node.id())?;
+    let mut parent = ctx.nodes().parent_node(node.id());
 
     // loop until find the closest function body
-    loop {
-        if matches!(parent.kind(), AstKind::FunctionBody(_)) {
-            break;
-        }
-
-        parent = ctx.nodes().parent_node(parent.id())?;
+    while !matches!(parent.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
+        parent = ctx.nodes().parent_node(parent.id());
     }
 
-    let node = parent;
-    let parent = ctx.nodes().parent_node(node.id())?;
+    let parent = ctx.nodes().parent_node(parent.id());
 
     match parent.kind() {
         AstKind::Function(function) => {
@@ -155,7 +150,7 @@ fn is_correct_place_to_call_expect<'a>(
             }
 
             if function.is_expression() {
-                let grandparent = ctx.nodes().parent_node(parent.id())?;
+                let grandparent = ctx.nodes().parent_node(parent.id());
 
                 // `test('foo', function () { expect(1).toBe(1) })`
                 // `const foo = function() {expect(1).toBe(1)}`
@@ -172,7 +167,7 @@ fn is_correct_place_to_call_expect<'a>(
             }
         }
         AstKind::ArrowFunctionExpression(_) => {
-            let grandparent = ctx.nodes().parent_node(parent.id())?;
+            let grandparent = ctx.nodes().parent_node(parent.id());
             // `test('foo', () => expect(1).toBe(1))`
             // `const foo = () => expect(1).toBe(1)`
             return if is_var_declarator_or_test_block(
@@ -215,14 +210,26 @@ fn is_var_declarator_or_test_block<'a>(
                 return true;
             }
         }
-        AstKind::Argument(_) => {
-            if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-                return is_var_declarator_or_test_block(
-                    parent,
-                    additional_test_block_functions,
-                    id_nodes_mapping,
-                    ctx,
-                );
+        AstKind::Argument(_) | AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
+            let mut current = node;
+            loop {
+                let parent = ctx.nodes().parent_node(current.id());
+                match parent.kind() {
+                    AstKind::CallExpression(_) | AstKind::VariableDeclarator(_) => {
+                        return is_var_declarator_or_test_block(
+                            parent,
+                            additional_test_block_functions,
+                            id_nodes_mapping,
+                            ctx,
+                        );
+                    }
+                    AstKind::Argument(_)
+                    | AstKind::ArrayExpression(_)
+                    | AstKind::ObjectExpression(_) => {
+                        current = parent;
+                    }
+                    _ => break,
+                }
             }
         }
         _ => {}

@@ -2,6 +2,7 @@ use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
+use crate::utils::assignment_like::AssignmentLike;
 use crate::write::semicolon::MaybeOptionalSemicolon;
 use crate::write::{OptionalSemicolon, semicolon};
 use crate::{
@@ -71,7 +72,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
             None => return Err(FormatError::SyntaxError),
         };
 
-        if length == 1 && !f.comments().has_leading_comments(first_declarator_span.start) {
+        if length == 1 && !f.comments().has_comments_before(first_declarator_span.start) {
             return write!(f, format_first_declarator);
         }
 
@@ -94,10 +95,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclarator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.id())?;
-        if let Some(init) = &self.init() {
-            write!(f, [space(), "=", space(), init])?;
-        }
-        Ok(())
+        AssignmentLike::VariableDeclarator(self).fmt(f)
     }
 }

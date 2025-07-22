@@ -34,7 +34,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, body, source_type, hashbang), via = ProgramConverter)]
+#[estree(field_order(body, source_type, hashbang, span), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -215,7 +215,7 @@ pub use match_expression;
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, name, optional, typeAnnotation),
+    field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct IdentifierName<'a> {
     pub span: Span,
@@ -234,7 +234,7 @@ pub struct IdentifierName<'a> {
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, name, optional, typeAnnotation),
+    field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct IdentifierReference<'a> {
     pub span: Span,
@@ -263,7 +263,7 @@ pub struct IdentifierReference<'a> {
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, name, optional, typeAnnotation),
+    field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct BindingIdentifier<'a> {
     pub span: Span,
@@ -290,7 +290,7 @@ pub struct BindingIdentifier<'a> {
 #[estree(
     rename = "Identifier",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, name, optional, typeAnnotation),
+    field_order(decorators, name, optional, typeAnnotation, span),
 )]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
@@ -708,7 +708,7 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "BinaryExpression", add_fields(operator = In), field_order(span, left, operator, right))]
+#[estree(rename = "BinaryExpression", add_fields(operator = In), field_order(left, operator, right, span))]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
@@ -855,7 +855,7 @@ pub use match_assignment_target_pattern;
 #[estree(
     rename = "ArrayPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, elements, optional, typeAnnotation),
+    field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
@@ -873,7 +873,7 @@ pub struct ArrayAssignmentTarget<'a> {
 #[estree(
     rename = "ObjectPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, properties, optional, typeAnnotation),
+    field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
@@ -891,7 +891,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[estree(
     rename = "RestElement",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
-    field_order(span, decorators, target, optional, typeAnnotation, value),
+    field_order(decorators, target, optional, typeAnnotation, value, span),
 )]
 pub struct AssignmentTargetRest<'a> {
     pub span: Span,
@@ -921,7 +921,7 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 #[estree(
     rename = "AssignmentPattern",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, binding, init, optional, typeAnnotation),
+    field_order(decorators, binding, init, optional, typeAnnotation, span),
 )]
 pub struct AssignmentTargetWithDefault<'a> {
     pub span: Span,
@@ -949,7 +949,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, shorthand = True, computed = False, optional = TsFalse),
-    field_order(span, kind, binding, init, method, shorthand, computed, optional),
+    field_order(kind, binding, init, method, shorthand, computed, optional, span),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -968,7 +968,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, shorthand = False, optional = TsFalse),
-    field_order(span, kind, name, binding, method, shorthand, computed, optional),
+    field_order(kind, name, binding, method, shorthand, computed, optional, span),
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
@@ -1603,7 +1603,7 @@ pub enum BindingPatternKind<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, left, right, optional, typeAnnotation),
+    field_order(decorators, left, right, optional, typeAnnotation, span),
 )]
 pub struct AssignmentPattern<'a> {
     pub span: Span,
@@ -1619,7 +1619,7 @@ pub struct AssignmentPattern<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, properties, optional, typeAnnotation),
+    field_order(decorators, properties, optional, typeAnnotation, span),
 )]
 pub struct ObjectPattern<'a> {
     pub span: Span,
@@ -1634,7 +1634,7 @@ pub struct ObjectPattern<'a> {
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, optional = TsFalse),
-    field_order(span, kind, key, value, method, shorthand, computed, optional),
+    field_order(kind, key, value, method, shorthand, computed, optional, span),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -1652,7 +1652,7 @@ pub struct BindingProperty<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull),
-    field_order(span, decorators, elements, optional, typeAnnotation),
+    field_order(decorators, elements, optional, typeAnnotation, span),
 )]
 pub struct ArrayPattern<'a> {
     pub span: Span,
@@ -1676,7 +1676,7 @@ pub struct ArrayPattern<'a> {
 #[estree(
     rename = "RestElement",
     add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull, value = TsNull),
-    field_order(span, decorators, argument, optional, typeAnnotation, value),
+    field_order(decorators, argument, optional, typeAnnotation, value, span),
 )]
 pub struct BindingRestElement<'a> {
     pub span: Span,
@@ -1935,6 +1935,14 @@ pub struct ArrowFunctionExpression<'a> {
     #[builder(default)]
     #[estree(skip)]
     pub pure: bool,
+    #[builder(default)]
+    #[estree(skip)]
+    /// `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
+    ///
+    /// References:
+    /// - v8 blog post about PIFEs: <https://v8.dev/blog/preparser#pife>
+    /// - introduced PR: <https://github.com/oxc-project/oxc/pull/12353>
+    pub pife: bool,
 }
 
 /// Generator Function Definitions

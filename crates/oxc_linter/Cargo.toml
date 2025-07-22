@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "1.2.0"
+version = "1.7.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,6 +17,9 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
+oxlint2 = ["dep:oxc_ast_macros", "tokio/rt-multi-thread"]
+disable_oxlint2 = []
+force_test_reporter = []
 
 [lints]
 workspace = true
@@ -27,6 +30,7 @@ doctest = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_macros = { workspace = true, optional = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
@@ -49,6 +53,7 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
+icu_segmenter = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
 javascript-globals = { workspace = true }
@@ -68,6 +73,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 insta = { workspace = true }

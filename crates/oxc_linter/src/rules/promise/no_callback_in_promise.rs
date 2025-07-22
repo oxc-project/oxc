@@ -115,12 +115,7 @@ impl Rule for NoCallbackInPromise {
                     ctx.diagnostic(no_callback_in_promise_diagnostic(id.span));
                 }
             }
-        } else if ctx
-            .nodes()
-            .ancestors(node.id())
-            .skip(1)
-            .any(|node| Self::is_inside_promise(node, ctx))
-        {
+        } else if ctx.nodes().ancestors(node.id()).any(|node| Self::is_inside_promise(node, ctx)) {
             ctx.diagnostic(no_callback_in_promise_diagnostic(node.span()));
         }
     }
@@ -129,12 +124,12 @@ impl Rule for NoCallbackInPromise {
 impl NoCallbackInPromise {
     fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-            || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
+            || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
         {
             return false;
         }
 
-        ctx.nodes().ancestors(node.id()).nth(2).is_some_and(|node| {
+        ctx.nodes().ancestors(node.id()).nth(1).is_some_and(|node| {
             node.kind().as_call_expression().is_some_and(Self::has_promise_callback)
         })
     }

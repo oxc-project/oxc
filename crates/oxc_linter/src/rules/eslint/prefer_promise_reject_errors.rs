@@ -1,5 +1,4 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::MemberExpression;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -149,10 +148,8 @@ fn check_reject_in_function(
         };
 
         ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
-            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
-                return;
-            };
-            if let AstKind::CallExpression(call_expr) = node.kind() {
+            if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
+            {
                 check_reject_call(call_expr, ctx, allow_empty_reject);
             }
         });
@@ -169,10 +166,8 @@ fn check_reject_in_function(
             continue;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else { continue };
-        let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(member_expr)) =
-            parent.kind()
-        else {
+        let parent = ctx.nodes().parent_node(reference.node_id());
+        let AstKind::ComputedMemberExpression(member_expr) = parent.kind() else {
             continue;
         };
 
@@ -184,11 +179,7 @@ fn check_reject_in_function(
             continue;
         }
 
-        let Some(node) = ctx.nodes().parent_node(parent.id()) else {
-            continue;
-        };
-
-        if let AstKind::CallExpression(call_expr) = node.kind() {
+        if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) {
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     }
@@ -243,6 +234,8 @@ fn test() {
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
+        // TODO: This currently passes, as we only look at the immediate parent of the member expression
+        ("new Promise(function (...rest) { (rest[1])(5); });", None),
     ];
 
     let fail = vec![

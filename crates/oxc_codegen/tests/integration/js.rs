@@ -251,7 +251,7 @@ fn r#yield() {
 fn arrow() {
     test_minify("x => a, b", "x=>a,b;");
     test_minify("x => (a, b)", "x=>(a,b);");
-    test_minify("x => (a => b)", "x=>a=>b;");
+    test_minify("x => (a => b)", "x=>(a=>b);");
     test_minify("x => y => a, b", "x=>y=>a,b;");
     test_minify("x => y => (a = b)", "x=>y=>a=b;");
     test_minify("x => y => z => a = b, c", "x=>y=>z=>a=b,c;");
@@ -413,6 +413,14 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a?.b();\n");
     test_same("true && /* @__PURE__ */ noEffect();\n");
     test_same("false || /* @__PURE__ */ noEffect();\n");
+}
+
+#[test]
+fn pife() {
+    test_same("foo((() => 0));\n");
+    test_minify_same("foo((()=>0));");
+    test_same("(() => 0)();\n");
+    test_minify_same("(()=>0)();");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422

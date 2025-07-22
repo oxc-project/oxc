@@ -62,10 +62,10 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
         if (innerId.type === 'Identifier') {
             id = {
                 type: 'TSQualifiedName',
-                start: id.start,
-                end: innerId.end,
                 left: id,
                 right: innerId,
+                start: id.start,
+                end: innerId.end,
             };
         } else {
             // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
@@ -77,10 +77,10 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
             }
             innerId.left = {
                 type: 'TSQualifiedName',
-                start: id.start,
-                end: innerId.left.end,
                 left: id,
                 right: innerId.left,
+                start: id.start,
+                end: innerId.left.end,
             };
             id = body.id;
         }
@@ -89,8 +89,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 
     // Skip `body` field if `null`
     const node = body === null
-        ? { type: 'TSModuleDeclaration', start, end, id, kind, declare, global }
-        : { type: 'TSModuleDeclaration', start, end, id, body, kind, declare, global };
+        ? { type: 'TSModuleDeclaration', id, kind, declare, global, start, end }
+        : { type: 'TSModuleDeclaration', id, body, kind, declare, global, start, end };
     node
 ")]
 pub struct TSModuleDeclarationConverter<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
@@ -101,8 +101,6 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
-        state.serialize_field("start", &module.span.start);
-        state.serialize_field("end", &module.span.end);
 
         match &module.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_module)) => {
@@ -157,6 +155,9 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
         state.serialize_field("kind", &module.kind);
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &TSModuleDeclarationGlobal(module));
+
+        state.serialize_span(module.span);
+
         state.end();
     }
 }
@@ -168,13 +169,10 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
         let parts = self.0;
         assert!(!parts.is_empty());
 
-        let span_start = parts[0].span.start;
         let (&last, rest) = parts.split_last().unwrap();
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
-        state.serialize_field("start", &span_start);
-        state.serialize_field("end", &last.span.end);
 
         if rest.len() == 1 {
             // Only one part remaining (e.g. `X`). Serialize as `Identifier`.
@@ -185,6 +183,10 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
         }
 
         state.serialize_field("right", last);
+
+        let span = Span::new(parts[0].span.start, last.span.end);
+        state.serialize_span(span);
+
         state.end();
     }
 }
@@ -257,31 +259,6 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
     }
 }
 
-/// Serializer for `IdentifierReference` variant of `TSTypeName`.
-///
-/// Where is an identifier called `this`, TS-ESTree presents it as a `ThisExpression`.
-#[ast_meta]
-#[estree(
-    ts_type = "IdentifierReference | ThisExpression",
-    raw_deser = "
-        let id = DESER[Box<IdentifierReference>](POS);
-        if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-        id
-    "
-)]
-pub struct TSTypeNameIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
-
-impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let ident = self.0;
-        if ident.name == "this" {
-            ThisExpression { span: ident.span }.serialize(serializer);
-        } else {
-            ident.serialize(serializer);
-        }
-    }
-}
-
 /// Serializer for `expression` field of `TSClassImplements`.
 ///
 /// Our AST represents `X.Y` in `class C implements X.Y {}` as a `TSQualifiedName`.
@@ -295,27 +272,29 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
     raw_deser = "
         let expression = DESER[TSTypeName](POS_OFFSET.expression);
         if (expression.type === 'TSQualifiedName') {
+            let object = expression.left;
             let parent = expression = {
                 type: 'MemberExpression',
-                start: expression.start,
-                end: expression.end,
-                object: expression.left,
+                object,
                 property: expression.right,
                 optional: false,
                 computed: false,
+                start: expression.start,
+                end: expression.end,
             };
 
-            while (parent.object.type === 'TSQualifiedName') {
-                const object = parent.object;
+            while (object.type === 'TSQualifiedName') {
+                const { left } = object;
                 parent = parent.object = {
                     type: 'MemberExpression',
-                    start: object.start,
-                    end: object.end,
-                    object: object.left,
+                    object: left,
                     property: object.right,
                     optional: false,
                     computed: false,
+                    start: object.start,
+                    end: object.end,
                 };
+                object = left;
             }
         }
         expression
@@ -336,20 +315,22 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self.0 {
             TSTypeName::IdentifierReference(ident) => {
-                TSTypeNameIdentifierReference(ident).serialize(serializer);
+                ident.serialize(serializer);
             }
             TSTypeName::QualifiedName(name) => {
                 // Convert to `TSQualifiedName` to `MemberExpression`.
                 // Recursively convert `left` to `MemberExpression` too if it's a `TSQualifiedName`.
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("type", &JsonSafeString("MemberExpression"));
-                state.serialize_field("start", &name.span.start);
-                state.serialize_field("end", &name.span.end);
                 state.serialize_field("object", &TSTypeNameAsMemberExpression(&name.left));
                 state.serialize_field("property", &name.right);
                 state.serialize_field("optional", &false);
                 state.serialize_field("computed", &false);
+                state.serialize_span(name.span);
                 state.end();
+            }
+            TSTypeName::ThisExpression(e) => {
+                e.serialize(serializer);
             }
         }
     }

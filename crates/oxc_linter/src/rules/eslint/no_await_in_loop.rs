@@ -70,19 +70,19 @@ impl Rule for NoAwaitInLoop {
         // Perform validation for AwaitExpression and ForOfStatement that contains await
         let mut parent_node = nodes.parent_node(node.id());
         let mut is_in_loop = false;
-        while let Some(parent) = parent_node {
+        while !matches!(parent_node.kind(), AstKind::Program(_)) {
             // Check if the current node is the boundary of the loop
-            if Self::is_boundary(parent) {
+            if Self::is_boundary(parent_node) {
                 break;
             }
 
             // if AwaitExpression or AwaitForOfStatement are in loop, break and report error
-            if Self::is_looped(span, parent) {
+            if Self::is_looped(span, parent_node) {
                 is_in_loop = true;
                 break;
             }
 
-            parent_node = nodes.parent_node(parent.id());
+            parent_node = nodes.parent_node(parent_node.id());
         }
 
         if is_in_loop {

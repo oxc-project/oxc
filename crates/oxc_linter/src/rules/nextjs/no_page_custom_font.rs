@@ -31,16 +31,46 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// * The custom font you're adding was added to a page - this only adds the font to the specific page and not the entire application.
-    /// * The custom font you're adding was added to a separate component within pages/_document.js - this disables automatic font optimization.
+    /// * The custom font you're adding was added to a separate component within `pages/_document.js` - this disables automatic font optimization.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
+    /// ```jsx
+    /// // pages/index.jsx
+    /// import Head from "next/head";
+    /// function IndexPage() {
+    ///   return (
+    ///     <Head>
+    ///       <link
+    ///         href="https://fonts.googleapis.com/css2?family=Krona+One&display=swap"
+    ///         rel="stylesheet"
+    ///       />
+    ///     </Head>
+    ///   );
+    /// }
+    /// export default IndexPage;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```jsx
+    /// // pages/_document.jsx
+    /// import NextDocument, { Html, Head } from "next/document";
+    /// class Document extends NextDocument {
+    ///   render() {
+    ///     return (
+    ///       <Html>
+    ///         <Head>
+    ///           <link
+    ///             href="https://fonts.googleapis.com/css2?family=Krona+One&display=swap"
+    ///             rel="stylesheet"
+    ///           />
+    ///         </Head>
+    ///       </Html>
+    ///     );
+    ///   }
+    /// }
+    /// export default Document;
     /// ```
     NoPageCustomFont,
     nextjs,
@@ -72,7 +102,7 @@ impl Rule for NoPageCustomFont {
         let in_document = ctx.file_path().file_name().is_some_and(|file_name| {
             file_name.to_str().is_some_and(|file_name| file_name.starts_with("_document."))
         });
-        let span = ctx.nodes().parent_kind(node.id()).unwrap().span();
+        let span = ctx.nodes().parent_kind(node.id()).span();
         let diagnostic = if in_document {
             if is_inside_export_default(node, ctx) {
                 return;
@@ -104,7 +134,7 @@ fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
 
         let name = id.map_or_else(
             || {
-                let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id())?;
+                let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id());
 
                 let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
                     return None;

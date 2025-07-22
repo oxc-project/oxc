@@ -209,7 +209,10 @@ impl Comment {
     /// Is comment with special meaning.
     #[inline]
     pub fn is_annotation(self) -> bool {
-        self.content != CommentContent::None && self.content != CommentContent::Legal
+        self.content != CommentContent::None
+            && self.content != CommentContent::Legal
+            && self.content != CommentContent::Jsdoc
+            && self.content != CommentContent::JsdocLegal
     }
 
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading` and `is_block`.

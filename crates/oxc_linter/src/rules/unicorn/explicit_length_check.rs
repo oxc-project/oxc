@@ -1,8 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        BinaryExpression, Expression, LogicalExpression, MemberExpression, StaticMemberExpression,
-    },
+    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -122,11 +120,11 @@ fn get_length_check_node<'a, 'b>(
     // (is_zero_length_check, length_check_node)
 ) -> Option<(bool, &'b AstNode<'a>)> {
     let parent = ctx.nodes().parent_node(node.id());
-    parent.and_then(|parent| {
-        if let AstKind::BinaryExpression(binary_expr) = parent.kind() {
-            // Zero length check
-            // `foo.length === 0`
-            if is_compare_right(binary_expr, BinaryOperator::StrictEquality, 0.0)
+
+    if let AstKind::BinaryExpression(binary_expr) = parent.kind() {
+        // Zero length check
+        // `foo.length === 0`
+        if is_compare_right(binary_expr, BinaryOperator::StrictEquality, 0.0)
             // `foo.length == 0`
                 || is_compare_right(binary_expr, BinaryOperator::Equality, 0.0)
                 // `foo.length < 1`
@@ -137,12 +135,12 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_left(binary_expr, BinaryOperator::Equality, 0.0)
                 // `1 > foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::GreaterThan, 1.0)
-            {
-                return Some((true, parent));
-            }
-            // Non-Zero length check
-            // `foo.length !== 0`
-            if is_compare_right(binary_expr, BinaryOperator::StrictInequality, 0.0)
+        {
+            return Some((true, parent));
+        }
+        // Non-Zero length check
+        // `foo.length !== 0`
+        if is_compare_right(binary_expr, BinaryOperator::StrictInequality, 0.0)
             // `foo.length != 0`
                 || is_compare_right(binary_expr, BinaryOperator::Inequality, 0.0)
                 // `foo.length > 0`
@@ -157,13 +155,12 @@ fn get_length_check_node<'a, 'b>(
                 || is_compare_left(binary_expr, BinaryOperator::LessThan, 0.0)
                 // `1 <= foo.length`
                 || is_compare_left(binary_expr, BinaryOperator::LessEqualThan, 1.0)
-            {
-                return Some((false, parent));
-            }
-            return None;
+        {
+            return Some((false, parent));
         }
-        None
-    })
+        return None;
+    }
+    None
 }
 
 impl ExplicitLengthCheck {
@@ -206,7 +203,7 @@ impl ExplicitLengthCheck {
         let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
         let need_paren = matches!(kind, AstKind::UnaryExpression(_))
-            && matches!(parent, Some(AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_)));
+            && matches!(parent, AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_));
         if span.start > 1 {
             let start = ctx.source_text().as_bytes()[span.start as usize - 1];
             need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
@@ -245,11 +242,8 @@ impl ExplicitLengthCheck {
 }
 impl Rule for ExplicitLengthCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
-            static_member_expr,
-        )) = node.kind()
-        {
-            let StaticMemberExpression { object, property, .. } = &**static_member_expr;
+        if let AstKind::StaticMemberExpression(static_member_expr) = node.kind() {
+            let StaticMemberExpression { object, property, .. } = static_member_expr;
             if property.name != "length" && property.name != "size" {
                 return;
             }
@@ -272,11 +266,10 @@ impl Rule for ExplicitLengthCheck {
                     return;
                 }
                 match ctx.nodes().parent_kind(node.id()) {
-                    Some(AstKind::LogicalExpression(LogicalExpression {
-                        operator, right, ..
-                    })) if *operator == LogicalOperator::And
-                        || (*operator == LogicalOperator::Or
-                            && !matches!(right, Expression::NumericLiteral(_))) =>
+                    AstKind::LogicalExpression(LogicalExpression { operator, right, .. })
+                        if *operator == LogicalOperator::And
+                            || (*operator == LogicalOperator::Or
+                                && !matches!(right, Expression::NumericLiteral(_))) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }

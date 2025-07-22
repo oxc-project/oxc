@@ -319,7 +319,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Try using the "??" or "?." operators
-        if self.target >= ESTarget::ES2020 {
+        if ctx.options().target >= ESTarget::ES2020 {
             if let Expression::BinaryExpression(test_binary) = &mut expr.test {
                 if let Some(is_negate) = match test_binary.operator {
                     BinaryOperator::Inequality => Some(true),
@@ -589,15 +589,13 @@ mod test {
 
     use crate::{
         CompressOptions,
-        tester::{run, test, test_same},
+        tester::{test, test_options, test_same},
     };
 
     fn test_es2019(source_text: &str, expected: &str) {
         let target = ESTarget::ES2019;
-        assert_eq!(
-            run(source_text, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(expected, None)
-        );
+        let options = CompressOptions { target, ..CompressOptions::default() };
+        test_options(source_text, expected, &options);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.2.0"
+version = "1.7.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,6 +16,8 @@ description.workspace = true
 workspace = true
 
 [lib]
+crate-type = ["lib"]
+path = "src/lib.rs"
 doctest = false
 
 [[bin]]
@@ -34,10 +36,12 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
+napi = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+simdutf8 = { workspace = true, optional = true }
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
@@ -57,3 +61,6 @@ lazy-regex = { workspace = true }
 [features]
 default = []
 allocator = ["dep:mimalloc-safe"]
+oxlint2 = ["oxc_linter/oxlint2", "oxc_allocator/fixed_size", "dep:simdutf8"]
+disable_oxlint2 = ["oxc_linter/disable_oxlint2", "oxc_allocator/disable_fixed_size"]
+force_test_reporter = ["oxc_linter/force_test_reporter"]

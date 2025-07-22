@@ -4,6 +4,101 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 6d2b549 napi/oxlint: Pass AST in buffer to JS (#12350) (overlookmotel)
+- b0db2d7 allocator: `FixedSizeAllocator` store flag recording if owned by both Rust and JS (#12381) (overlookmotel)
+- bc0fbe5 allocator: `AllocatorPool` store IDs in `Allocator`s (#12310) (overlookmotel)
+- de006a1 allocator: Add `Allocator::end_ptr` method (#12330) (overlookmotel)
+
+### 🚜 Refactor
+
+- 319fc3b allocator/fixed-size: Store `alloc_ptr` in the memory block backing the allocator (#12380) (overlookmotel)
+- 8fe1aec ast_tools, allocator, napi/parser: Rename vars (#12379) (overlookmotel)
+- dfe54b4 allocator: Move all fixed size allocator code into 1 file (#12309) (overlookmotel)
+
+
+
+## [0.77.1] - 2025-07-16
+
+### 🐛 Bug Fixes
+
+- 13c5783 allocator: Fix `FixedSizeAllocator` pointer maths (#12299) (overlookmotel)
+
+### 🚜 Refactor
+
+- 04e6a2f allocator: Improve documentation on pointer alignment (#12307) (overlookmotel)
+- 2f9bd11 allocator: Fixed size allocator leave space for metadata after arena (#12278) (overlookmotel)
+- 39ef911 napi/parser, allocator: Raw transfer: store buffer size and align as consts (#12275) (overlookmotel)
+- f130a0c allocator: Disable fixed size allocators on unsupported platforms (#12272) (overlookmotel)
+
+### ⚡ Performance
+
+- cc1e9fc napi/parser: Raw transfer: reduce size of buffer by 16 bytes (#12277) (overlookmotel)
+
+
+## [0.77.0] - 2025-07-12
+
+### 💥 BREAKING CHANGES
+
+- facd3cd allocator: [**BREAKING**] Remove `vec!` macro (#12206) (overlookmotel)
+
+### 🚀 Features
+
+- 152e59d napi/oxlint: Read source text into start of allocator (#12122) (overlookmotel)
+- 8d710a2 allocator: Add `Allocator::alloc_bytes_start` method (#12083) (overlookmotel)
+- 704350a allocator: Fixed size allocators (#12082) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6ff6643 allocator: Add error type to `RawVec` (#12204) (overlookmotel)
+- a9482f2 allocator: Remove dead code from `Vec` (#12203) (overlookmotel)
+- 068669f allocator: Add `AllocatorWrapper` abstraction to `AllocatorPool` (#12081) (overlookmotel)
+
+### 📚 Documentation
+
+- b3a076b allocator: Extend doc comments for `Vec` and `RawVec` (#12205) (overlookmotel)
+
+
+## [0.76.0] - 2025-07-08
+
+### 💥 BREAKING CHANGES
+
+- 1108a5c allocator: [**BREAKING**] Remove `DerefMut` impl from `AllocatorGuard` (#12077) (overlookmotel)
+
+### 📚 Documentation
+
+- 9cf5552 allocator: Improve doc comments for `AllocatorPool` (#12076) (overlookmotel)
+
+### ⚡ Performance
+
+- d732e85 allocator: `Allocator::from_raw_parts` get offset of chunk footer field as const (#12080) (overlookmotel)
+
+
+## [0.75.1] - 2025-07-03
+
+### 📚 Documentation
+
+- ff1d42f allocator: Update comments about `bumpalo` version (#12033) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+
+## [0.74.0] - 2025-06-23
+
+### 🚀 Features
+
+- f2ce5ad allocator: Add `Allocator::alloc_slice_copy` method (#11822) (overlookmotel)
+- 4ba5258 allocator: Add `Allocator::alloc_layout` method (#11821) (overlookmotel)
+
+
 
 ## [0.73.1] - 2025-06-17
 

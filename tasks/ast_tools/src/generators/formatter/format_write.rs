@@ -70,6 +70,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                     inner,
                     parent,
                     allocator,
+                    following_node: self.following_node,
                 }).fmt(f)
             },
         })
@@ -92,6 +93,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                     inner,
                     parent,
                     allocator,
+                    following_node: self.following_node,
                 }).fmt(f)
             },
         };

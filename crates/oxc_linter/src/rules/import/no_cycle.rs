@@ -162,6 +162,24 @@ impl Rule for NoCycle {
                     }
                 }
 
+                // Allow self referencing named export.
+                // In test.js:
+                // ```
+                // export function example1() { }
+                // export * as Example from './test.js';
+                // ```
+                if path == &parent.resolved_absolute_path {
+                    if let Some(e) = val
+                        .indirect_export_entries
+                        .iter()
+                        .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
+                    {
+                        if e.export_name.is_name() {
+                            return false;
+                        }
+                    }
+                }
+
                 true
             })
             .event(|event, (key, val), _| match event {
@@ -271,6 +289,7 @@ fn test() {
         // (r#"import { bar } from "./flow-types-only-importing-multiple-types""#, None),
         // (r#"import { bar } from "./flow-typeof""#, None),
         (r#"import { foo } from "./typescript/ts-types-re-exporting-type";"#, None),
+        (r"export function Foo() {}; export * as ns from './depth-zero'", None),
     ];
 
     let fail = vec![
@@ -379,6 +398,7 @@ fn test() {
             r#"import { foo } from "./typescript/ts-types-re-exporting-type";"#,
             Some(json!([{"ignoreTypes":false}])),
         ),
+        (r"export function Foo() {}; export * from './depth-zero'", None),
     ];
 
     Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)

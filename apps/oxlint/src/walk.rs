@@ -5,7 +5,7 @@ use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Extensions(pub Vec<&'static str>);
 
 impl Default for Extensions {
@@ -92,11 +92,7 @@ impl Walk {
             }
         }
 
-        // Turning off `follow_links` because:
-        // * following symlinks is a really slow syscall
-        // * it is super rare to have symlinked source code
-        let inner =
-            inner.ignore(false).git_global(false).follow_links(options.symlinks).build_parallel();
+        let inner = inner.ignore(false).git_global(false).follow_links(true).build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
 
@@ -146,7 +142,6 @@ mod test {
             no_ignore: false,
             ignore_path: OsString::from(".gitignore"),
             ignore_pattern: vec![],
-            symlinks: false,
         };
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();

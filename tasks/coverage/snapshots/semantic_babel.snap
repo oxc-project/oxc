@@ -2,15 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1945/2362 (82.35%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-Symbol scope ID mismatch for "f":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
-Symbol scope ID mismatch for "g":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
-
+Positive Passed: 1953/2362 (82.68%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -36,11 +28,6 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 Unexpected new.target expression
 Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-Symbol scope ID mismatch for "foo":
-after transform: SymbolId(1): ScopeId(4294967294)
-rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -118,11 +105,6 @@ Identifier `x` has already been declared
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(0): ScopeId(4294967294)
-rebuilt        : SymbolId(0): ScopeId(4294967294)
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
@@ -176,33 +158,35 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-babel-7/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-dot-this/input.js
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-dot-this-babel-7/input.js
-Unresolved references mismatch:
-after transform: ["this"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-with-options/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-with-options-babel-7/input.js
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain/input.ts
@@ -407,11 +391,6 @@ Multiple constructor implementations are not allowed.
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 Identifier `x` has already been declared
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["a"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-extends/input.ts
 Unresolved references mismatch:
 after transform: ["T", "f"]
@@ -575,16 +554,20 @@ after transform: ScopeId(0): ["x", "y"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
+Bindings mismatch:
+after transform: ScopeId(0): ["arguments", "eval"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
-Cannot assign to 'eval' in strict mode
-Cannot assign to 'arguments' in strict mode
+Bindings mismatch:
+after transform: ScopeId(0): ["arguments", "eval"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function-rest-trailing-comma/input.ts
 Bindings mismatch:
@@ -1411,12 +1394,8 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
-An interface can only extend an identifier/qualified-name with optional type arguments.
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -1428,9 +1407,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 Expected `,` but found `extends`
@@ -2677,13 +2653,19 @@ after transform: ScopeId(0): ["A", "B", "T", "Types"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic/input.ts
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-babel-7/input.ts
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Unresolved references mismatch:
-after transform: ["Y", "foo"]
+after transform: ["foo"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/indexed/input.ts
@@ -2901,16 +2883,6 @@ rebuilt        : []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof/input.ts
 Unresolved references mismatch:
 after transform: ["y"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-this/input.ts
-Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-this-babel-7/input.ts
-Unresolved references mismatch:
-after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-type-asi-false-parameters/input.ts

@@ -12,7 +12,6 @@ struct ArrowFunctionHead<'a> {
     return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
     span: u32,
-    has_return_colon: bool,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -222,7 +221,6 @@ impl<'a> ParserImpl<'a> {
         let params = {
             let ident = match ident {
                 Expression::Identifier(ident) => {
-                    let ident = ident.unbox();
                     self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
                 _ => return self.unexpected(),
@@ -248,14 +246,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Arrow);
 
         self.parse_arrow_function_expression_body(
-            ArrowFunctionHead {
-                type_parameters: None,
-                params,
-                return_type: None,
-                r#async,
-                span,
-                has_return_colon: false,
-            },
+            ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, span },
             allow_return_type_in_arrow_function,
         )
     }
@@ -279,8 +270,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
-        let has_return_colon = self.is_ts && self.at(Kind::Colon);
-        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false);
+        let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
 
         self.ctx = self.ctx.and_await(has_await);
 
@@ -290,7 +280,7 @@ impl<'a> ParserImpl<'a> {
 
         self.expect(Kind::Arrow);
 
-        ArrowFunctionHead { type_parameters, params, return_type, r#async, span, has_return_colon }
+        ArrowFunctionHead { type_parameters, params, return_type, r#async, span }
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -303,7 +293,7 @@ impl<'a> ParserImpl<'a> {
         arrow_function_head: ArrowFunctionHead<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span, .. } =
+        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span } =
             arrow_function_head;
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
@@ -362,7 +352,7 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
 
-        let has_return_colon = head.has_return_colon;
+        let has_return_type = head.return_type.is_some();
 
         let body =
             self.parse_arrow_function_expression_body(head, allow_return_type_in_arrow_function);
@@ -381,7 +371,7 @@ impl<'a> ParserImpl<'a> {
         //     a() ? (b: number, c?: string): void => d() : e
         // is determined by isParenthesizedArrowFunctionExpression to unambiguously
         // be an arrow expression, so we allow a return type.
-        if !allow_return_type_in_arrow_function && has_return_colon {
+        if !allow_return_type_in_arrow_function && has_return_type {
             // However, if the arrow function we were able to parse is followed by another colon
             // as in:
             //     a ? (x): string => x : null

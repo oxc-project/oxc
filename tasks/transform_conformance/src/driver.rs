@@ -3,7 +3,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     CompilerInterface,
     ast::ast::Program,
-    codegen::{CodegenOptions, CodegenReturn},
+    codegen::{CodegenOptions, CodegenReturn, CommentOptions},
     diagnostics::OxcDiagnostic,
     parser::ParseOptions,
     span::SourceType,
@@ -34,8 +34,10 @@ impl CompilerInterface for Driver {
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
         Some(CodegenOptions {
-            comments: false,
-            annotation_comments: self.print_annotation_comments,
+            comments: CommentOptions {
+                annotation: self.print_annotation_comments,
+                ..CommentOptions::default()
+            },
             ..CodegenOptions::default()
         })
     }

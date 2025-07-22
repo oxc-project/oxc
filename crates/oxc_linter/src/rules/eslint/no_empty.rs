@@ -62,7 +62,7 @@ impl Rule for NoEmpty {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 let parent = ctx.nodes().parent_kind(node.id());
-                if self.allow_empty_catch && matches!(parent, Some(AstKind::CatchClause(_))) {
+                if self.allow_empty_catch && matches!(parent, AstKind::CatchClause(_)) {
                     return;
                 }
 
@@ -70,30 +70,23 @@ impl Rule for NoEmpty {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
-                    if let Some(parent) = parent {
-                        if let AstKind::TryStatement(try_stmt) = parent {
-                            if let Some(try_block_stmt) = &try_stmt.finalizer {
-                                if try_block_stmt.span == block.span {
-                                    return if let Some(finally_kw_start) =
-                                        find_finally_start(ctx, block)
-                                    {
-                                        fixer.delete_range(Span::new(
-                                            finally_kw_start,
-                                            block.span.end,
-                                        ))
-                                    } else {
-                                        fixer.noop()
-                                    };
-                                }
+                    if let AstKind::TryStatement(try_stmt) = parent {
+                        if let Some(try_block_stmt) = &try_stmt.finalizer {
+                            if try_block_stmt.span == block.span {
+                                return if let Some(finally_kw_start) =
+                                    find_finally_start(ctx, block)
+                                {
+                                    fixer.delete_range(Span::new(finally_kw_start, block.span.end))
+                                } else {
+                                    fixer.noop()
+                                };
                             }
                         }
-                        if matches!(parent, AstKind::CatchClause(_)) {
-                            return fixer.noop();
-                        }
-                        fixer.delete(&parent)
-                    } else {
-                        fixer.noop()
                     }
+                    if matches!(parent, AstKind::CatchClause(_)) {
+                        return fixer.noop();
+                    }
+                    fixer.delete(&parent)
                 });
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {

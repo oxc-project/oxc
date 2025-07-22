@@ -214,51 +214,47 @@ impl<'a> SemanticBuilder<'a> {
         if self.build_jsdoc {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
-        if self.source_type.is_typescript_definition() {
-            let scope_id = self.scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
-            program.scope_id.set(Some(scope_id));
+
+        // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
+        // in `AstNodes`, `ScopeTree` and `SymbolTable`.
+        //
+        // This means that as we traverse the AST and fill up these structures with data,
+        // they never need to grow and reallocate - which is an expensive operation as it
+        // involves copying all the memory from the old allocation to the new one.
+        // For large source files, these structures are very large, so growth is very costly
+        // as it involves copying massive chunks of memory.
+        // Avoiding this growth produces up to 30% perf boost on our benchmarks.
+        //
+        // If user did not provide existing `Stats`, calculate them by visiting AST.
+        #[cfg_attr(not(debug_assertions), expect(unused_variables))]
+        let (stats, check_stats) = if let Some(stats) = self.stats {
+            (stats, None)
         } else {
-            // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
-            // in `AstNodes`, `ScopeTree` and `SymbolTable`.
-            //
-            // This means that as we traverse the AST and fill up these structures with data,
-            // they never need to grow and reallocate - which is an expensive operation as it
-            // involves copying all the memory from the old allocation to the new one.
-            // For large source files, these structures are very large, so growth is very costly
-            // as it involves copying massive chunks of memory.
-            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
-            //
-            // If user did not provide existing `Stats`, calculate them by visiting AST.
-            #[cfg_attr(not(debug_assertions), expect(unused_variables))]
-            let (stats, check_stats) = if let Some(stats) = self.stats {
-                (stats, None)
-            } else {
-                let stats = Stats::count(program);
-                let stats_with_excess = stats.increase_by(self.excess_capacity);
-                (stats_with_excess, Some(stats))
-            };
-            self.nodes.reserve(stats.nodes as usize);
-            self.scoping.reserve(
-                stats.symbols as usize,
-                stats.references as usize,
-                stats.scopes as usize,
+            let stats = Stats::count(program);
+            let stats_with_excess = stats.increase_by(self.excess_capacity);
+            (stats_with_excess, Some(stats))
+        };
+        self.nodes.reserve(stats.nodes as usize);
+        self.scoping.reserve(
+            stats.symbols as usize,
+            stats.references as usize,
+            stats.scopes as usize,
+        );
+
+        // Visit AST to generate scopes tree etc
+        self.visit_program(program);
+
+        // Check that estimated counts accurately (unless in release mode)
+        #[cfg(debug_assertions)]
+        if let Some(stats) = check_stats {
+            #[expect(clippy::cast_possible_truncation)]
+            let actual_stats = Stats::new(
+                self.nodes.len() as u32,
+                self.scoping.scopes_len() as u32,
+                self.scoping.symbols_len() as u32,
+                self.scoping.references.len() as u32,
             );
-
-            // Visit AST to generate scopes tree etc
-            self.visit_program(program);
-
-            // Check that estimated counts accurately (unless in release mode)
-            #[cfg(debug_assertions)]
-            if let Some(stats) = check_stats {
-                #[expect(clippy::cast_possible_truncation)]
-                let actual_stats = Stats::new(
-                    self.nodes.len() as u32,
-                    self.scoping.scopes_len() as u32,
-                    self.scoping.symbols_len() as u32,
-                    self.scoping.references.len() as u32,
-                );
-                stats.assert_accurate(actual_stats);
-            }
+            stats.assert_accurate(actual_stats);
         }
 
         let comments = self.alloc(&program.comments);
@@ -317,10 +313,9 @@ impl<'a> SemanticBuilder<'a> {
         self.record_ast_node();
     }
 
+    #[inline]
     fn pop_ast_node(&mut self) {
-        if let Some(parent_id) = self.nodes.parent_id(self.current_node_id) {
-            self.current_node_id = parent_id;
-        }
+        self.current_node_id = self.nodes.parent_id(self.current_node_id);
     }
 
     #[inline]
@@ -359,6 +354,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Is the current scope in strict mode?
+    #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
     }
@@ -1781,9 +1777,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
-        let kind = AstKind::MemberExpression(self.alloc(it));
-        self.enter_node(kind);
-
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
         self.current_reference_flags -= ReferenceFlags::Write;
@@ -1795,7 +1788,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
-        self.leave_node(kind);
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
@@ -1834,12 +1826,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         &mut self,
         it: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::AssignmentTargetPropertyIdentifier(self.alloc(it));
+        self.enter_node(kind);
         self.current_reference_flags = ReferenceFlags::Write;
         self.visit_identifier_reference(&it.binding);
         if let Some(init) = &it.init {
             self.visit_expression(init);
         }
+        self.leave_node(kind);
     }
 
     fn visit_export_default_declaration_kind(&mut self, it: &ExportDefaultDeclarationKind<'a>) {
@@ -2016,9 +2010,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
-            AstKind::TSInterfaceHeritage(_) => {
-                self.current_reference_flags = ReferenceFlags::Type;
-            }
             AstKind::TSPropertySignature(signature) => {
                 if signature.key.is_expression() {
                     // interface A { [prop]: string }
@@ -2031,31 +2022,16 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flags = ReferenceFlags::ValueAsType;
             }
-            AstKind::TSTypeParameterInstantiation(_) => {
-                // type A<T> = typeof a<T>;
-                //                     ^^^ avoid treat T as a value and TSTypeQuery
-                self.current_reference_flags -= ReferenceFlags::ValueAsType;
-            }
-            AstKind::TSTypeName(_) => {
-                match self.nodes.parent_kind(self.current_node_id) {
-                    Some(
-                        // import A = a;
-                        //            ^
-                        AstKind::TSImportEqualsDeclaration(_),
-                    ) => {
-                        self.current_reference_flags = ReferenceFlags::Read;
-                    }
-                    Some(AstKind::TSQualifiedName(_)) => {
-                        // import A = a.b
-                        //            ^^^ Keep the current reference flag
-                    }
-                    _ => {
-                        // Handled in `AstKind::PropertySignature` or `AstKind::TSTypeQuery`
-                        if !self.current_reference_flags.is_value_as_type() {
-                            self.current_reference_flags = ReferenceFlags::Type;
-                        }
-                    }
-                }
+            AstKind::TSInterfaceHeritage(_)
+            | AstKind::TSClassImplements(_)
+            | AstKind::TSTypeReference(_) => {
+                // interface A extends B {}
+                //             ^^^^^^^^^
+                //
+                // class A implements B {}
+                //         ^^^^^^^^^^^^
+
+                self.current_reference_flags = ReferenceFlags::Type;
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -2095,12 +2071,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSTypeName(_) => {
-                self.current_reference_flags -= ReferenceFlags::Type;
-            }
-            AstKind::TSTypeQuery(_)
-            // Clear the reference flags that are set in AstKind::PropertySignature
-            | AstKind::PropertyKey(_) => {
+            AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
+                // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),

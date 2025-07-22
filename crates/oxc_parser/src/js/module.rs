@@ -377,25 +377,19 @@ impl<'a> ParserImpl<'a> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
-                ModuleDeclaration::ExportNamedDeclaration(self.ast.alloc_export_named_declaration(
+                self.ast.module_declaration_export_named_declaration(
                     self.end_span(span),
                     Some(decl),
                     self.ast.vec(),
                     None,
                     ImportOrExportKind::Value,
                     NONE,
-                ))
+                )
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
-            Kind::As
-                if self.is_ts
-                    && self.lookahead(|p| {
-                        p.bump_any();
-                        p.at(Kind::Namespace)
-                    }) =>
-            {
+            Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(span),
@@ -411,10 +405,7 @@ impl<'a> ParserImpl<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
             Kind::Type if self.is_ts => {
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let next_kind = self.cur_kind();
-                self.rewind(checkpoint);
+                let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
@@ -721,8 +712,6 @@ impl<'a> ParserImpl<'a> {
         let type_or_name_token = self.cur_token();
         let type_or_name_token_kind = type_or_name_token.kind();
         let mut check_identifier_token = self.cur_token();
-        let mut check_identifier_is_keyword =
-            type_or_name_token_kind.is_any_keyword() && !type_or_name_token_kind.is_identifier();
 
         let mut kind = ImportOrExportKind::Value;
         let mut can_parse_as_keyword = true;
@@ -752,8 +741,6 @@ impl<'a> ParserImpl<'a> {
                                 .module_export_name_identifier_name(second_as.span, second_as.name),
                         );
                         check_identifier_token = self.cur_token();
-                        check_identifier_is_keyword =
-                            self.cur_kind().is_any_keyword() && !self.cur_kind().is_identifier();
                         name = self.parse_module_export_name();
                         can_parse_as_keyword = false;
                     } else {
@@ -773,8 +760,6 @@ impl<'a> ParserImpl<'a> {
                     property_name = Some(name);
                     can_parse_as_keyword = false;
                     check_identifier_token = self.cur_token();
-                    check_identifier_is_keyword =
-                        self.cur_kind().is_any_keyword() && !self.cur_kind().is_identifier();
                     name = self.parse_module_export_name();
                 } else {
                     // { type as }
@@ -787,18 +772,13 @@ impl<'a> ParserImpl<'a> {
                 // { type "something" ...? }
                 kind = ImportOrExportKind::Type;
                 check_identifier_token = self.cur_token();
-                check_identifier_is_keyword =
-                    self.cur_kind().is_any_keyword() && !self.cur_kind().is_identifier();
                 name = self.parse_module_export_name();
             }
         }
 
-        if can_parse_as_keyword && self.at(Kind::As) {
+        if can_parse_as_keyword && self.eat(Kind::As) {
             property_name = Some(name);
-            self.expect(Kind::As);
             check_identifier_token = self.cur_token();
-            check_identifier_is_keyword =
-                self.cur_kind().is_any_keyword() && !self.cur_kind().is_identifier();
             name = self.parse_module_export_name();
         }
 
@@ -817,15 +797,11 @@ impl<'a> ParserImpl<'a> {
 
                 if !name.is_identifier() {
                     self.error(diagnostics::identifier_expected(name.span()));
-                } else if check_identifier_is_keyword {
-                    if check_identifier_token.kind().is_reserved_keyword() {
-                        self.error(diagnostics::identifier_reserved_word(
-                            check_identifier_token.span(),
-                            check_identifier_token.kind().to_str(),
-                        ));
-                    } else {
-                        self.error(diagnostics::identifier_expected(check_identifier_token.span()));
-                    }
+                } else if check_identifier_token.kind().is_reserved_keyword() {
+                    self.error(diagnostics::identifier_reserved_word(
+                        check_identifier_token.span(),
+                        check_identifier_token.kind().to_str(),
+                    ));
                 }
 
                 ImportOrExportSpecifier::Import(self.ast.import_specifier(
@@ -894,10 +870,7 @@ impl<'a> ParserImpl<'a> {
             return ImportOrExportKind::Value;
         }
 
-        let checkpoint = self.checkpoint();
-        self.bump_any();
-        let next_kind = self.cur_kind();
-        self.rewind(checkpoint);
+        let next_kind = self.lexer.peek_token().kind();
 
         if matches!(next_kind, Kind::LCurly | Kind::Star) {
             self.bump_any();

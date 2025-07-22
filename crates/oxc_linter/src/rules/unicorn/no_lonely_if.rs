@@ -55,9 +55,7 @@ impl Rule for NoLonelyIf {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         let parent_if_stmt_span = match parent.kind() {
             AstKind::BlockStatement(block_stmt) => {
@@ -65,11 +63,8 @@ impl Rule for NoLonelyIf {
                     return;
                 }
 
-                let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
-                    return;
-                };
-
-                let AstKind::IfStatement(parent_if_stmt) = parent.kind() else {
+                let AstKind::IfStatement(parent_if_stmt) = ctx.nodes().parent_kind(parent.id())
+                else {
                     return;
                 };
 

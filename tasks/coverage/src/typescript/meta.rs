@@ -3,7 +3,7 @@
 use std::{fs, path::Path, sync::Arc};
 
 use lazy_regex::{Lazy, Regex, lazy_regex};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc::{
     allocator::Allocator,
@@ -20,6 +20,9 @@ static META_OPTIONS: Lazy<Regex> = lazy_regex!(
     r"(?m)^/{2}[[:space:]]*@(?P<name>[[:word:]]+)[[:space:]]*:[[:space:]]*(?P<value>[^\r\n]*)"
 );
 // static TEST_BRACES: Lazy<Regex> = lazy_regex!(r"^[[:space:]]*[{|}][[:space:]]*$");
+// Returns a match for a tsc diagnostic error code like `error TS1234: xxx`
+static TS_ERROR_CODES: Lazy<Regex> =
+    lazy_regex!(r"error[[:space:]]+TS(?P<code>\d{4,5}):[[:space:]]+");
 
 #[expect(unused)]
 #[derive(Debug)]
@@ -93,7 +96,7 @@ pub struct TestUnitData {
 pub struct TestCaseContent {
     pub tests: Vec<TestUnitData>,
     pub settings: CompilerSettings,
-    pub error_files: Vec<String>,
+    pub error_codes: Vec<String>,
 }
 
 impl TestCaseContent {
@@ -148,6 +151,25 @@ impl TestCaseContent {
         let is_module = test_unit_data.len() > 1;
         let test_unit_data = test_unit_data
             .into_iter()
+            // Some snapshot units contain an invalid file with just a message, not even a comment!
+            // e.g. typescript/tests/cases/compiler/extendsUntypedModule.ts
+            // e.g. typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
+            // Based on some config, it's not expected to be read in the first place.
+            .filter(|unit| {
+                // `unit.content.trim().starts_with()` is insufficient when dealing with the first unit.
+                // This is because the first unit may contain normal comments before the invalid content.
+                let is_invalid_line = |line: &str| {
+                    [
+                        "This file is not read.",
+                        "This file is not processed.",
+                        "Nor is this one.",
+                        "not read",
+                    ]
+                    .iter()
+                    .any(|&invalid| line.starts_with(invalid))
+                };
+                !unit.content.lines().any(is_invalid_line)
+            })
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
                 if is_module {
@@ -159,7 +181,14 @@ impl TestCaseContent {
             .collect::<Vec<_>>();
 
         let error_files = Self::get_error_files(path, &settings);
-        Self { tests: test_unit_data, settings, error_files }
+        let error_codes = Self::extract_error_codes(&error_files);
+        assert!(
+            error_files.is_empty() || !error_codes.is_empty(),
+            "No error codes found for test case: {}",
+            path.display(),
+        );
+
+        Self { tests: test_unit_data, settings, error_codes }
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
@@ -196,6 +225,23 @@ impl TestCaseContent {
             }
         }
         error_files
+    }
+
+    fn extract_error_codes(error_files: &[String]) -> Vec<String> {
+        if error_files.is_empty() {
+            return vec![];
+        }
+
+        let mut error_codes = FxHashSet::default();
+        for error_file in error_files {
+            for cap in TS_ERROR_CODES.captures_iter(error_file) {
+                if let Some(code) = cap.name("code") {
+                    error_codes.insert(code.as_str().to_string());
+                }
+            }
+        }
+
+        error_codes.into_iter().collect()
     }
 }
 

@@ -138,31 +138,66 @@ impl Rule for NoEval {
                                 ctx.diagnostic(no_eval_diagnostic(node.span()));
                             }
                         } else {
-                            while let Some(mem_expr) = parent.kind().as_member_expression() {
-                                if mem_expr.static_property_name().is_some_and(|p| p == name) {
-                                    parent = Self::outermost_mem_expr(parent, ctx).unwrap();
-                                } else {
-                                    break;
+                            loop {
+                                match parent.kind() {
+                                    AstKind::StaticMemberExpression(mem_expr) => {
+                                        if mem_expr.property.name == name {
+                                            parent = Self::outermost_mem_expr(parent, ctx).unwrap();
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    AstKind::ComputedMemberExpression(computed_mem_expr) => {
+                                        if computed_mem_expr
+                                            .static_property_name()
+                                            .is_some_and(|p| p == name)
+                                        {
+                                            parent = Self::outermost_mem_expr(parent, ctx).unwrap();
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    _ => break,
                                 }
                             }
 
-                            let Some(mem_expr) = parent.kind().as_member_expression() else {
-                                continue;
-                            };
-                            let Some((span, name)) = mem_expr.static_property_info() else {
-                                continue;
-                            };
-                            if name == "eval" {
-                                ctx.diagnostic(no_eval_diagnostic(span));
+                            match parent.kind() {
+                                AstKind::StaticMemberExpression(mem_expr) => {
+                                    if mem_expr.property.name == "eval" {
+                                        ctx.diagnostic(no_eval_diagnostic(mem_expr.property.span));
+                                    }
+                                }
+                                AstKind::ComputedMemberExpression(comp_mem_expr) => {
+                                    if comp_mem_expr
+                                        .static_property_name()
+                                        .is_some_and(|name| name == "eval")
+                                    {
+                                        ctx.diagnostic(no_eval_diagnostic(
+                                            comp_mem_expr.expression.span(),
+                                        ));
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                     }
                 }
             }
             AstKind::ThisExpression(_) if !self.allow_indirect => {
-                let parent = ctx.nodes().parent_node(node.id()).unwrap();
-                let Some(mem_expr) = parent.kind().as_member_expression() else { return };
-                let Some((span, name)) = mem_expr.static_property_info() else { return };
+                let parent = ctx.nodes().parent_node(node.id());
+                let property_info = match parent.kind() {
+                    AstKind::StaticMemberExpression(mem_expr) => {
+                        Some(mem_expr.static_property_info())
+                    }
+                    AstKind::ComputedMemberExpression(comp_mem_expr) => {
+                        comp_mem_expr.static_property_info()
+                    }
+                    _ => None,
+                };
+
+                let Some((span, name)) = property_info else {
+                    return;
+                };
 
                 if name == "eval" {
                     let scope_id =
@@ -179,11 +214,8 @@ impl Rule for NoEval {
                         return;
                     }
 
-                    let root = ctx.nodes().get_node(ctx.nodes().root().unwrap());
-                    let program = root.kind().as_program().unwrap();
-
                     let is_valid = if scope_flags.is_top() {
-                        program.source_type.is_script()
+                        ctx.nodes().program().unwrap().source_type.is_script()
                     } else {
                         let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
                         ast_util::is_default_this_binding(ctx, node, true)
@@ -211,7 +243,7 @@ impl NoEval {
         node: &'a AstNode<'b>,
         semantic: &'a LintContext<'b>,
     ) -> Option<&'a AstNode<'b>> {
-        semantic.nodes().ancestors(node.id()).skip(1).find(|parent| {
+        semantic.nodes().ancestors(node.id()).find(|parent| {
             !matches!(
                 parent.kind(),
                 AstKind::ParenthesizedExpression(_) | AstKind::ChainExpression(_)

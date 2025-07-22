@@ -4,6 +4,129 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 0920e98 codegen: Keep arrow function PIFEs (#12353) (sapphi-red)
+
+
+## [0.77.2] - 2025-07-17
+
+### 🚀 Features
+
+- 37be46c ast: Introduce `NewExpression::arguments_span` (#12368) (camc314)
+- 6b8f77d ast: Introduce `CallExpression::arguments_span` (#12321) (camc314)
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c025868 ast: Remove `AstKind` for `TSFunctionType` (#12287) (camc314)
+- c68b607 ast: Rename `TemplateLiteral::quasi` to `TemplateLiteral::single_quasi` (#12266) (Dunqing)
+- 32c32af ast: Check whether there is a single `quasi` in `TemplateLiteral::quasi` (#12265) (Dunqing)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+
+### ⚡ Performance
+
+- 4c35f4a napi/parser: Optimize raw transfer deserializer for `TSClassImplements` (#12158) (overlookmotel)
+
+
+## [0.76.0] - 2025-07-08
+
+### 💥 BREAKING CHANGES
+
+- 8b30a5b codegen: [**BREAKING**] Introduce `CommentOptions` (#12114) (Boshen)
+
+### 🚜 Refactor
+
+- e8e2a25 ast: Remove `AstKind` for `AssignmentTargetPattern` (#12105) (camchenry)
+
+
+## [0.75.1] - 2025-07-03
+
+### 🚀 Features
+
+- 79c93e3 ast: Add `range` field to custom serializers (#11890) (Bacary Bruno Bodian)
+- 6a4db24 ast: Derive `Debug, Clone, Copy` on `MemberExpressionKind` (#11903) (Boshen)
+- be5e5e8 ast: Add `MemberExpressionKind::static_property_info` (#11900) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6d865af parser: Allow `extends this.B` syntax (#12038) (camchenry)
+- 43e6962 ast/estree: Add `range` field to `TSModuleDeclaration` (#12006) (overlookmotel)
+
+### 🚜 Refactor
+
+- f5ec26b ast: Fix misspelling (#12055) (overlookmotel)
+- f1d4086 ast: Remove `AstKind` for `ModuleDeclaration` (#12022) (camchenry)
+- 754c05a ast: Remove `AstKind` for `TSTypeName` (#11990) (camchenry)
+- 016634f ast/estree: Introduce `serialize_span` method (#12013) (overlookmotel)
+- 754f01d ast/estree: Move `start` and `end` fields to last (#12012) (overlookmotel)
+- 8f83067 ast: Remove dummy comment (#12010) (overlookmotel)
+- 4597311 ast/estree: Remove temp vars for `ranges` from serializer (#12007) (overlookmotel)
+- dc04dbc ast/estree: Simplify adding `range` field (#12005) (overlookmotel)
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- cfa52c2 ast: Add `AstKind` for `AssignmentTargetRest` (#11984) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+- 9f6784a ast: Add `AstKind` for `TSInterfaceBody` (#11967) (camc314)
+- 3f50cef ast: Add `AstKind` for `TSIndexSignature` (#11966) (camc314)
+- 03bce3f ast: Add `AstKind` for `TSConstructorType` (#11965) (camc314)
+- 0cef370 ast: Add `AstKind::TemplateElement` (#11955) (camchenry)
+
+### 📚 Documentation
+
+- 81ff679 ast: Improve docs for TS types (#12053) (overlookmotel)
+- 4a408c3 napi/parser: Document options (#12008) (overlookmotel)
+
+### ⚡ Performance
+
+- 735c0d3 ast: Call `Expression::without_parentheses` only once (#12056) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+### 🐛 Bug Fixes
+
+- fe78dcf ast: `MemberExpression::static_property_info` use `cooked` not `raw` for `TemplateElement`s (#11879) (overlookmotel)
+
+### 🚜 Refactor
+
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+### ⚡ Performance
+
+- 5500d2d ast: Remove redundant checks from `MemberExpression::static_property_info` and `ComputedMemberExpression::static_property_name` (#11882) (overlookmotel)
+
+
+## [0.74.0] - 2025-06-23
+
+### 🐛 Bug Fixes
+
+- 8627ced ast: `ComputedMemberExpression::static_property_name` use `cooked` for `TemplateElement`s (#11829) (overlookmotel)
+
+### 🚜 Refactor
+
+- 08e666f ast/estree: Add `#[estree]` attrs to `RegExpFlagsAlias` (#11794) (overlookmotel)
+
+
 
 ## [0.73.1] - 2025-06-17
 

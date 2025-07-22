@@ -54,6 +54,7 @@ use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
+use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
@@ -92,6 +93,8 @@ pub struct LegacyDecorator<'a, 'ctx> {
     /// we have to transforms decorators to `exit_class` otherwise after class is being transformed by
     /// `class-properties` plugin, the decorators' nodes might be lost.
     class_decorated_data: Option<ClassDecoratedData<'a>>,
+    /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
+    decorations: FxHashMap<Address, Vec<Statement<'a>>>,
     ctx: &'ctx TransformCtx<'a>,
 }
 
@@ -102,6 +105,7 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
             metadata: LegacyDecoratorMetadata::new(ctx),
             class_decorated_data: None,
             ctx,
+            decorations: FxHashMap::default(),
         }
     }
 }
@@ -492,8 +496,8 @@ impl<'a> LegacyDecorator<'a, '_> {
         };
 
         if has_private_in_expression_in_decorator {
-            let stmts = mem::replace(&mut decoration_stmts, ctx.ast.vec());
-            Self::insert_decorations_into_class_static_block(class, stmts, ctx);
+            let decorations = mem::take(&mut decoration_stmts);
+            Self::insert_decorations_into_class_static_block(class, decorations, ctx);
         } else {
             let address = match ctx.parent() {
                 Ancestor::ExportDefaultDeclarationDeclaration(_)
@@ -503,7 +507,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             };
 
             decoration_stmts.push(constructor_decoration);
-            self.ctx.statement_injector.insert_many_after(&address, decoration_stmts);
+            self.decorations.entry(address).or_default().append(&mut decoration_stmts);
             self.class_decorated_data = Some(ClassDecoratedData {
                 binding: class_binding,
                 // If the class alias has reassigned to `this` in the static block, then
@@ -561,7 +565,7 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     /// Transforms a non-decorated class declaration.
     fn transform_class_declaration_without_class_decorators(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -575,7 +579,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             class_binding
         };
 
-        let decoration_stmts =
+        let mut decoration_stmts =
             self.transform_decorators_of_class_elements(class, &class_binding, ctx);
 
         if has_private_in_expression_in_decorator {
@@ -587,7 +591,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 // `Class` is always stored in a `Box`, so has a stable memory location
                 _ => Address::from_ptr(class),
             };
-            self.ctx.statement_injector.insert_many_after(&stmt_address, decoration_stmts);
+            self.decorations.entry(stmt_address).or_default().append(&mut decoration_stmts);
         }
     }
 
@@ -598,8 +602,8 @@ impl<'a> LegacyDecorator<'a, '_> {
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> ArenaVec<'a, Statement<'a>> {
-        let mut decoration_stmts = ctx.ast.vec_with_capacity(class.body.body.len());
+    ) -> Vec<Statement<'a>> {
+        let mut decoration_stmts = Vec::with_capacity(class.body.body.len());
 
         for element in &mut class.body.body {
             let (is_static, key, descriptor, decorations) = match element {
@@ -738,10 +742,11 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     fn insert_decorations_into_class_static_block(
         class: &mut Class<'a>,
-        decorations: ArenaVec<'a, Statement<'a>>,
+        decorations: Vec<Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
+        let decorations = ctx.ast.vec_from_iter(decorations);
         let element = ctx.ast.class_element_static_block_with_scope_id(SPAN, decorations, scope_id);
         class.body.body.push(element);
     }
@@ -777,6 +782,14 @@ impl<'a> LegacyDecorator<'a, '_> {
                     ctx,
                 ))
             }));
+        }
+    }
+
+    /// Injects the class decorator statements after class-properties plugin has run, ensuring that
+    /// all transformed fields are injected before the class decorator statements.
+    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        for (address, stmts) in mem::take(&mut self.decorations) {
+            self.ctx.statement_injector.insert_many_after(&address, stmts);
         }
     }
 
@@ -885,8 +898,8 @@ impl<'a> LegacyDecorator<'a, '_> {
                             PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
                     }
                 }
-                ClassElement::PropertyDefinition(prop) if !prop.declare => {
-                    class_element_is_decorated |= !prop.decorators.is_empty();
+                ClassElement::PropertyDefinition(prop) if !prop.decorators.is_empty() => {
+                    class_element_is_decorated = true;
 
                     if class_element_is_decorated && !has_private_in_expression_in_decorator {
                         has_private_in_expression_in_decorator =
@@ -895,8 +908,8 @@ impl<'a> LegacyDecorator<'a, '_> {
                             );
                     }
                 }
-                ClassElement::AccessorProperty(accessor) => {
-                    class_element_is_decorated |= !accessor.decorators.is_empty();
+                ClassElement::AccessorProperty(accessor) if !accessor.decorators.is_empty() => {
+                    class_element_is_decorated = true;
 
                     if class_element_is_decorated && !has_private_in_expression_in_decorator {
                         has_private_in_expression_in_decorator =

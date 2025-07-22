@@ -25,12 +25,12 @@ impl Default for Ctx {
         }
     }
 }
-impl IsGlobalReference for Ctx {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+impl<'a> IsGlobalReference<'a> for Ctx {
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
-impl MayHaveSideEffectsContext for Ctx {
+impl MayHaveSideEffectsContext<'_> for Ctx {
     fn annotations(&self) -> bool {
         self.annotation
     }

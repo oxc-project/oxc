@@ -59,6 +59,11 @@ export declare class PublicMethodClass {
 	bad(a): void;
 	get badGetter(): {};
 }
+export declare class ConstructorOverloadsClass {
+	readonly a: any;
+	constructor(a: number);
+	constructor(a: string);
+}
 
 
 ==================== Errors ====================

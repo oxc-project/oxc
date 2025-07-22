@@ -1,1147 +1,396 @@
-//! Types for extracting and representing comments of a syntax tree.
-//!
-//! Most programming languages support comments allowing programmers to document their programs. Comments are different from other syntaxes  because programming languages allow comments in almost any position, giving programmers great flexibility on where they can write comments:
-//!
-//! ```ignore
-//! /**
-//!  * Documentation comment
-//!  */
-//! async /* comment */ function Test () // line comment
-//! {/*inline*/}
-//! ```
-//!
-//! However, this flexibility makes formatting comments challenging because:
-//! * The formatter must consistently place comments so that re-formatting the output yields the same result and does not create invalid syntax (line comments).
-//! * It is essential that formatters place comments close to the syntax the programmer intended to document. However, the lack of rules regarding where comments are allowed and what syntax they document requires the use of heuristics to infer the documented syntax.
-//!
-//! This module strikes a balance between placing comments as closely as possible to their source location and reducing the complexity of formatting comments. It does so by associating comments per node rather than a token. This greatly reduces the combinations of possible comment positions but turns out to be, in practice, sufficiently precise to keep comments close to their source location.
-//!
-//! ## Node comments
-//!
-//! Comments are associated per node but get further distinguished on their location related to that node:
-//!
-//! ### Leading Comments
-//!
-//! A comment at the start of a node
-//!
-//! ```ignore
-//! // Leading comment of the statement
-//! console.log("test");
-//!
-//! [/* leading comment of identifier */ a ];
-//! ```
-//!
-//! ### Dangling Comments
-//!
-//! A comment that is neither at the start nor the end of a node
-//!
-//! ```ignore
-//! [/* in between the brackets */ ];
-//! async  /* between keywords */  function Test () {}
-//! ```
-//!
-//! ### Trailing Comments
-//!
-//! A comment at the end of a node
-//!
-//! ```ignore
-//! [a /* trailing comment of a */, b, c];
-//! [
-//!     a // trailing comment of a
-//! ]
-//! ```
-//!
-//! ## Limitations
-//! Limiting the placement of comments to leading, dangling, or trailing node comments reduces complexity inside the formatter but means, that the formatter's possibility of where comments can be formatted depends on the AST structure.
-//!
-//! For example, the continue statement in JavaScript is defined as:
-//!
-//! ```ungram
-//! JsContinueStatement =
-//! 'continue'
-//! (label: 'ident')?
-//! ';'?
-//! ```
-//!
-//! but a programmer may decide to add a comment in front or after the label:
-//!
-//! ```ignore
-//! continue /* comment 1 */ label;
-//! continue label /* comment 2*/; /* trailing */
-//! ```
-//!
-//! Because all children of the `continue` statement are tokens, it is only possible to make the comments leading, dangling, or trailing comments of the `continue` statement. But this results in a loss of information as the formatting code can no longer distinguish if a comment appeared before or after the label and, thus, has to format them the same way.
-//!
-//! This hasn't shown to be a significant limitation today but the infrastructure could be extended to support a `label` on [`SourceComment`] that allows to further categorise comments.
-//!
-
-mod map;
-
 use std::{
-    cell::{Cell, RefCell},
-    fmt::{self, Debug},
+    backtrace,
+    cell::Cell,
     marker::PhantomData,
-    rc::Rc,
+    ops::{ControlFlow, Deref},
 };
 
-use oxc_ast::ast::Program;
-use oxc_span::Span;
-use rustc_hash::FxHashSet;
+use oxc_allocator::Vec;
+use oxc_ast::{
+    Comment, CommentKind,
+    ast::{self, CallExpression, NewExpression},
+};
+use oxc_span::{GetSpan, Span};
 
-use crate::{formatter::prelude::*, write};
-
-use super::{
-    Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize, buffer::Buffer,
-    syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
+use crate::{
+    Format, FormatResult, SyntaxTriviaPieceComments,
+    formatter::{
+        Formatter,
+        prelude::{get_lines_after, get_lines_before},
+    },
+    generated::ast_nodes::SiblingNode,
 };
 
-use self::map::CommentsMap;
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum CommentKind {
-    /// An inline comment that can appear between any two tokens and doesn't contain any line breaks.
-    ///
-    /// ## Examples
-    ///
-    /// ```ignore
-    /// a /* test */
-    /// ```
-    InlineBlock,
-
-    /// A block comment that can appear between any two tokens and contains at least one line break.
-    ///
-    /// ## Examples
-    ///
-    /// ```javascript
-    /// /* first line
-    ///  * more content on the second line
-    ///  */
-    /// ```
-    Block,
-
-    /// A line comment that appears at the end of the line.
-    ///
-    /// ## Examples
-    ///
-    /// ```ignore
-    /// a // test
-    /// ```
-    Line,
-}
-
-impl CommentKind {
-    pub const fn is_line(self) -> bool {
-        matches!(self, CommentKind::Line)
-    }
-
-    pub const fn is_block(self) -> bool {
-        matches!(self, CommentKind::Block)
-    }
-
-    pub const fn is_inline_block(self) -> bool {
-        matches!(self, CommentKind::InlineBlock)
-    }
-
-    /// Returns `true` for comments that can appear inline between any two tokens.
-    ///
-    /// ## Examples
-    ///
-    /// ```rust
-    /// use biome_formatter::comments::CommentKind;
-    ///
-    /// // Block and InlineBlock comments can appear inline
-    /// assert!(CommentKind::Block.is_inline());
-    /// assert!(CommentKind::InlineBlock.is_inline());
-    ///
-    /// // But not line comments
-    /// assert!(!CommentKind::Line.is_inline())
-    /// ```
-    pub const fn is_inline(self) -> bool {
-        matches!(self, CommentKind::InlineBlock | CommentKind::Block)
-    }
-}
-
-/// A comment in the source document.
 #[derive(Debug, Clone)]
-pub struct SourceComment {
-    pub(crate) span: Span,
-
-    /// The number of lines appearing before this comment
-    pub(crate) lines_before: u32,
-
-    pub(crate) lines_after: u32,
-
-    /// The comment piece
-    pub(crate) piece: SyntaxTriviaPieceComments,
-
-    /// The kind of the comment.
-    pub(crate) kind: CommentKind,
-
-    /// Whether the comment has been formatted or not.
-    pub(crate) formatted: Cell<bool>,
+pub struct Comments<'a> {
+    source_text: &'a str,
+    comments: &'a Vec<'a, Comment>,
+    printed_count: usize,
 }
 
-impl SourceComment {
-    /// Returns the underlining comment trivia piece
-    pub fn piece(&self) -> &SyntaxTriviaPieceComments {
-        &self.piece
+impl<'a> Comments<'a> {
+    pub fn new(source_text: &'a str, comments: &'a Vec<'a, Comment>) -> Self {
+        Comments { source_text, comments, printed_count: 0 }
     }
 
-    /// The number of lines between this comment and the **previous** token or comment.
-    ///
-    /// # Examples
-    ///
-    /// ## Same line
-    ///
-    /// ```ignore
-    /// a // end of line
-    /// ```
-    ///
-    /// Returns `0` because there's no line break between the token `a` and the comment.
-    ///
-    /// ## Own Line
-    ///
-    /// ```ignore
-    /// a;
-    ///
-    /// /* comment */
-    /// ```
-    ///
-    /// Returns `2` because there are two line breaks between the token `a` and the comment.
-    pub fn lines_before(&self) -> u32 {
-        self.lines_before
+    /// Returns comments that not printed yet.
+    #[inline]
+    pub fn unprinted_comments(&self) -> &'a [Comment] {
+        &self.comments[self.printed_count..]
     }
 
-    /// The number of line breaks right after this comment.
-    ///
-    /// # Examples
-    ///
-    /// ## End of line
-    ///
-    /// ```ignore
-    /// a; // comment
-    ///
-    /// b;
-    /// ```
-    ///
-    /// Returns `2` because there are two line breaks between the comment and the token `b`.
-    ///
-    /// ## Same line
-    ///
-    /// ```ignore
-    /// a;
-    /// /* comment */ b;
-    /// ```
-    ///
-    /// Returns `0` because there are no line breaks between the comment and the token `b`.
-    pub fn lines_after(&self) -> u32 {
-        self.lines_after
+    /// Returns comments that were printed already.
+    #[inline]
+    pub fn printed_comments(&self) -> &'a [Comment] {
+        &self.comments[..self.printed_count]
     }
 
-    /// The kind of the comment
-    pub fn kind(&self) -> CommentKind {
-        self.kind
-    }
+    /// Returns the comments that after the given `start` position, even if they were already printed.
+    pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
+        let mut index = self.printed_count;
 
-    /// Marks the comment as formatted
-    pub fn mark_formatted(&self) {
-        self.formatted.set(true);
-    }
-}
+        // No comments or all are printed already
+        if index == self.comments.len() {
+            return &[];
+        }
 
-impl<'a> Format<'a> for SourceComment {
-    #[expect(clippy::cast_possible_truncation)]
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = self.span.source_text(f.source_text());
-        if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+        // You may want to check comments after your are printing the node,
+        // so it may have a lot of comments that don't print yet.
+        //
+        // Skip comments that before pos
+        while index < self.comments.len() - 1 && self.comments[index].span.end < pos {
+            index += 1;
+        }
 
-            let mut lines = source_text.lines();
-
-            // `is_alignable_comment` only returns `true` for multiline comments
-            let first_line = lines.next().unwrap();
-            write!(f, [dynamic_text(first_line.trim_end(), source_offset)])?;
-
-            source_offset += first_line.len() as u32;
-
-            // Indent the remaining lines by one space so that all `*` are aligned.
-            write!(
-                f,
-                [&format_once(|f| {
-                    for line in lines {
-                        write!(
-                            f,
-                            [hard_line_break(), " ", dynamic_text(line.trim(), source_offset)]
-                        )?;
-                        source_offset += line.len() as u32;
-                    }
-                    Ok(())
-                })]
-            )
+        if self.comments[index].span.end < pos {
+            &self.comments[index + 1..]
         } else {
-            write!(f, [dynamic_text(source_text, self.span.start)])
+            &self.comments[index..]
         }
     }
-}
 
-/// A comment decorated with additional information about its surrounding context in the source document.
-///
-/// Used by [CommentStyle::place_comment] to determine if this should become a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) comment.
-#[derive(Debug, Clone)]
-pub struct DecoratedComment {
-    enclosing: SyntaxNode,
-    preceding: Option<SyntaxNode>,
-    following: Option<SyntaxNode>,
-    following_token: Option<SyntaxToken>,
-    text_position: CommentTextPosition,
-    lines_before: u32,
-    lines_after: u32,
-    comment: SyntaxTriviaPieceComments,
-    kind: CommentKind,
-}
-
-impl DecoratedComment {
-    /// The closest parent node that fully encloses the comment.
-    ///
-    /// A node encloses a comment when the comment is between two of its direct children (ignoring lists).
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// [a, /* comment */ b]
-    /// ```
-    ///
-    /// The enclosing node is the array expression and not the identifier `b` because
-    /// `a` and `b` are children of the array expression and `comment` is a comment between the two nodes.
-    pub fn enclosing_node(&self) -> &SyntaxNode {
-        &self.enclosing
-    }
-
-    // /// Returns the comment piece.
-    // pub fn piece(&self) -> &SyntaxTriviaPieceComments {
-    // &self.comment
-    // }
-
-    /// Returns the node preceding the comment.
-    ///
-    /// The direct child node (ignoring lists) of the [`enclosing_node`](DecoratedComment::enclosing_node) that precedes this comment.
-    ///
-    /// Returns [None] if the [`enclosing_node`](DecoratedComment::enclosing_node) only consists of tokens or if
-    /// all preceding children of the [`enclosing_node`](DecoratedComment::enclosing_node) have been tokens.
-    ///
-    /// The Preceding node is guaranteed to be a sibling of [`following_node`](DecoratedComment::following_node).
-    ///
-    /// # Examples
-    ///
-    /// ## Preceding tokens only
-    ///
-    /// ```ignore
-    /// [/* comment */]
-    /// ```
-    /// Returns [None] because the comment has no preceding node, only a preceding `[` token.
-    ///
-    /// ## Preceding node
-    ///
-    /// ```ignore
-    /// [a /* comment */, b]
-    /// ```
-    ///
-    /// Returns `Some(a)` because `a` directly precedes the comment.
-    ///
-    /// ## Preceding token and node
-    ///
-    /// ```ignore
-    /// [a, /* comment */]
-    /// ```
-    ///
-    ///  Returns `Some(a)` because `a` is the preceding node of `comment`. The presence of the `,` token
-    /// doesn't change that.
-    pub fn preceding_node(&self) -> Option<&SyntaxNode> {
-        self.preceding.as_ref()
-    }
-
-    /// Takes the [`preceding_node`](DecoratedComment::preceding_node) and replaces it with [None].
-    fn take_preceding_node(&mut self) -> Option<SyntaxNode> {
-        self.preceding.take()
-    }
-
-    /// Returns the node following the comment.
-    ///
-    /// The direct child node (ignoring lists) of the [`enclosing_node`](DecoratedComment::enclosing_node) that follows this comment.
-    ///
-    /// Returns [None] if the [`enclosing_node`](DecoratedComment::enclosing_node) only consists of tokens or if
-    /// all children children of the [`enclosing_node`](DecoratedComment::enclosing_node) following this comment are tokens.
-    ///
-    /// The following node is guaranteed to be a sibling of [`preceding_node`](DecoratedComment::preceding_node).
-    ///
-    /// # Examples
-    ///
-    /// ## Following tokens only
-    ///
-    /// ```ignore
-    /// [ /* comment */ ]
-    /// ```
-    ///
-    /// Returns [None] because there's no node following the comment, only the `]` token.
-    ///
-    /// ## Following node
-    ///
-    /// ```ignore
-    /// [ /* comment */ a ]
-    /// ```
-    ///
-    /// Returns `Some(a)` because `a` is the node directly following the comment.
-    ///
-    /// ## Following token and node
-    ///
-    /// ```ignore
-    /// async /* comment */ function test() {}
-    /// ```
-    ///
-    /// Returns `Some(test)` because the `test` identifier is the first node following `comment`.
-    ///
-    /// ## Following parenthesized expression
-    ///
-    /// ```ignore
-    /// !(
-    ///     a /* comment */
-    /// );
-    /// b
-    /// ```
-    ///
-    /// Returns `None` because `comment` is enclosed inside the parenthesized expression and it has no children
-    /// following `/* comment */.
-    pub fn following_node(&self) -> Option<&SyntaxNode> {
-        self.following.as_ref()
-    }
-
-    /// Takes the [`following_node`](DecoratedComment::following_node) and replaces it with [None].
-    fn take_following_node(&mut self) -> Option<SyntaxNode> {
-        self.following.take()
-    }
-
-    /// The number of line breaks between this comment and the **previous** token or comment.
-    ///
-    /// # Examples
-    ///
-    /// ## Same line
-    ///
-    /// ```ignore
-    /// a // end of line
-    /// ```
-    ///
-    /// Returns `0` because there's no line break between the token `a` and the comment.
-    ///
-    /// ## Own Line
-    ///
-    /// ```ignore
-    /// a;
-    ///
-    /// /* comment */
-    /// ```
-    ///
-    /// Returns `2` because there are two line breaks between the token `a` and the comment.
-    pub fn lines_before(&self) -> u32 {
-        self.lines_before
-    }
-
-    /// The number of line breaks right after this comment.
-    ///
-    /// # Examples
-    ///
-    /// ## End of line
-    ///
-    /// ```ignore
-    /// a; // comment
-    ///
-    /// b;
-    /// ```
-    ///
-    /// Returns `2` because there are two line breaks between the comment and the token `b`.
-    ///
-    /// ## Same line
-    ///
-    /// ```ignore
-    /// a;
-    /// /* comment */ b;
-    /// ```
-    ///
-    /// Returns `0` because there are no line breaks between the comment and the token `b`.
-    pub fn lines_after(&self) -> u32 {
-        self.lines_after
-    }
-
-    /// Returns the [CommentKind] of the comment.
-    pub fn kind(&self) -> CommentKind {
-        self.kind
-    }
-
-    /// The position of the comment in the text.
-    pub fn text_position(&self) -> CommentTextPosition {
-        self.text_position
-    }
-
-    /// The next token that comes after this comment. It is possible that other comments are between this comment
-    /// and the token.
-    ///
-    /// ```ignore
-    /// a /* comment */ /* other */ b
-    /// ```
-    ///
-    /// The `following_token` for both comments is `b` because it's the token coming after the comments.
-    pub fn following_token(&self) -> Option<&SyntaxToken> {
-        self.following_token.as_ref()
-    }
-}
-
-// impl From<DecoratedComment> for SourceComment {
-// fn from(decorated: DecoratedComment) -> Self {
-// Self {
-// lines_before: decorated.lines_before,
-// lines_after: decorated.lines_after,
-// piece: decorated.comment,
-// kind: decorated.kind,
-// #[cfg(debug_assertions)]
-// formatted: Cell::new(false),
-// }
-// }
-// }
-
-/// The position of a comment in the source text.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum CommentTextPosition {
-    /// A comment that is on the same line as the preceding token and is separated by at least one line break from the following token.
-    ///
-    /// # Examples
-    ///
-    /// ## End of line
-    ///
-    /// ```ignore
-    /// a; /* this */ // or this
-    /// b;
-    /// ```
-    ///
-    /// Both `/* this */` and `// or this` are end of line comments because both comments are separated by
-    /// at least one line break from the following token `b`.
-    ///
-    /// ## Own line
-    ///
-    /// ```ignore
-    /// a;
-    /// /* comment */
-    /// b;
-    /// ```
-    ///
-    /// This is not an end of line comment because it isn't on the same line as the preceding token `a`.
-    EndOfLine,
-
-    /// A Comment that is separated by at least one line break from the preceding token.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// a;
-    /// /* comment */ /* or this */
-    /// b;
-    /// ```
-    ///
-    /// Both comments are own line comments because they are separated by one line break from the preceding
-    /// token `a`.
-    OwnLine,
-
-    /// A comment that is placed on the same line as the preceding and following token.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// a /* comment */ + b
-    /// ```
-    SameLine,
-}
-
-impl CommentTextPosition {
-    pub const fn is_same_line(self) -> bool {
-        matches!(self, CommentTextPosition::SameLine)
-    }
-
-    pub const fn is_own_line(self) -> bool {
-        matches!(self, CommentTextPosition::OwnLine)
-    }
-
-    pub const fn is_end_of_line(self) -> bool {
-        matches!(self, CommentTextPosition::EndOfLine)
-    }
-}
-
-#[derive(Debug)]
-pub enum CommentPlacement {
-    /// Makes `comment` a [leading comment](self#leading-comments) of `node`.
-    Leading { node: SyntaxNode, comment: SourceComment },
-    /// Makes `comment` a [trailing comment](self#trailing-comments) of `node`.
-    Trailing { node: SyntaxNode, comment: SourceComment },
-
-    /// Makes `comment` a [dangling comment](self#dangling-comments) of `node`.
-    Dangling { node: SyntaxNode, comment: SourceComment },
-
-    /// Uses the default heuristic to determine the placement of the comment.
-    ///
-    /// # Same line comments
-    ///
-    /// Makes the comment a...
-    ///
-    /// * [trailing comment] of the [`preceding_node`] if both the [`following_node`] and [`preceding_node`] are not [None]
-    ///   and the comment and [`preceding_node`] are only separated by a space (there's no token between the comment and [`preceding_node`]).
-    /// * [leading comment] of the [`following_node`] if the [`following_node`] is not [None]
-    /// * [trailing comment] of the [`preceding_node`] if the [`preceding_node`] is not [None]
-    /// * [dangling comment] of the [`enclosing_node`].
-    ///
-    /// ## Examples
-    /// ### Comment with preceding and following nodes
-    ///
-    /// ```ignore
-    /// [
-    ///     a, // comment
-    ///     b
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [trailing comment] of the node `a`.
-    ///
-    /// ### Comment with preceding node only
-    ///
-    /// ```ignore
-    /// [
-    ///     a // comment
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [trailing comment] of the node `a`.
-    ///
-    /// ### Comment with following node only
-    ///
-    /// ```ignore
-    /// [ // comment
-    ///     b
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [leading comment] of the node `b`.
-    ///
-    /// ### Dangling comment
-    ///
-    /// ```ignore
-    /// [ // comment
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [dangling comment] of the enclosing array expression because both the [`preceding_node`] and [`following_node`] are [None].
-    ///
-    /// # Own line comments
-    ///
-    /// Makes the comment a...
-    ///
-    /// * [leading comment] of the [`following_node`] if the [`following_node`] is not [None]
-    /// * or a [trailing comment] of the [`preceding_node`] if the [`preceding_node`] is not [None]
-    /// * or a [dangling comment] of the [`enclosing_node`].
-    ///
-    /// ## Examples
-    ///
-    /// ### Comment with leading and preceding nodes
-    ///
-    /// ```ignore
-    /// [
-    ///     a,
-    ///     // comment
-    ///     b
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [leading comment] of the node `b`.
-    ///
-    /// ### Comment with preceding node only
-    ///
-    /// ```ignore
-    /// [
-    ///     a
-    ///     // comment
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [trailing comment] of the node `a`.
-    ///
-    /// ### Comment with following node only
-    ///
-    /// ```ignore
-    /// [
-    ///     // comment
-    ///     b
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [leading comment] of the node `b`.
-    ///
-    /// ### Dangling comment
-    ///
-    /// ```ignore
-    /// [
-    ///     // comment
-    /// ]
-    /// ```
-    ///
-    /// The comment becomes a [dangling comment] of the array expression because both [`preceding_node`] and [`following_node`] are [None].
-    ///
-    ///
-    /// # End of line comments
-    /// Makes the comment a...
-    ///
-    /// * [trailing comment] of the [`preceding_node`] if the [`preceding_node`] is not [None]
-    /// * or a [leading comment] of the [`following_node`] if the [`following_node`] is not [None]
-    /// * or a [dangling comment] of the [`enclosing_node`].
-    ///
-    ///
-    /// ## Examples
-    ///
-    /// ### Comment with leading and preceding nodes
-    ///
-    /// ```ignore
-    /// [a /* comment */, b]
-    /// ```
-    ///
-    /// The comment becomes a [trailing comment] of the node `a` because there's no token between the node `a` and the `comment`.
-    ///
-    /// ```ignore
-    /// [a, /* comment */ b]
-    /// ```
-    ///
-    /// The comment becomes a [leading comment] of the node `b` because the node `a` and the comment are separated by a `,` token.
-    ///
-    /// ### Comment with preceding node only
-    ///
-    /// ```ignore
-    /// [a, /* last */ ]
-    /// ```
-    ///
-    /// The comment becomes a [trailing comment] of the node `a` because the [`following_node`] is [None].
-    ///
-    /// ### Comment with following node only
-    ///
-    /// ```ignore
-    /// [/* comment */ b]
-    /// ```
-    ///
-    /// The comment becomes a [leading comment] of the node `b` because the [`preceding_node`] is [None]
-    ///
-    /// ### Dangling comment
-    ///
-    /// ```ignore
-    /// [/* comment*/]
-    /// ```
-    ///
-    /// The comment becomes a [dangling comment] of the array expression because both [`preceding_node`] and [`following_node`] are [None].
-    ///
-    /// [`preceding_node`]: DecoratedComment::preceding_node
-    /// [`following_node`]: DecoratedComment::following_node
-    /// [`enclosing_node`]: DecoratedComment::enclosing_node
-    /// [trailing comment]: self#trailing-comments
-    /// [leading comment]: self#leading-comments
-    /// [dangling comment]: self#dangling-comments
-    Default(DecoratedComment),
-}
-
-impl CommentPlacement {
-    /// Makes `comment` a [leading comment](self#leading-comments) of `node`.
     #[inline]
-    pub fn leading(node: SyntaxNode, comment: impl Into<SourceComment>) -> Self {
-        Self::Leading { node, comment: comment.into() }
+    pub fn filter_comments_in_span(&self, span: Span) -> impl Iterator<Item = &Comment> {
+        self.comments
+            .iter()
+            .skip_while(move |comment| comment.span.end < span.start)
+            .take_while(move |comment| comment.span.start <= span.end)
     }
 
-    /// Makes `comment` a [dangling comment](self::dangling-comments) of `node`.
-    pub fn dangling(node: SyntaxNode, comment: impl Into<SourceComment>) -> Self {
-        Self::Dangling { node, comment: comment.into() }
-    }
-
-    /// Makes `comment` a [trailing comment](self::trailing-comments) of `node`.
     #[inline]
-    pub fn trailing(node: SyntaxNode, comment: impl Into<SourceComment>) -> Self {
-        Self::Trailing { node, comment: comment.into() }
+    pub fn has_comments_in_span(&self, span: Span) -> bool {
+        self.has_comments_between(span.start, span.end)
     }
 
-    /// Returns the placement if it isn't [CommentPlacement::Default], otherwise calls `f` and returns the result.
-    #[must_use]
-    #[inline]
-    pub fn or_else<F>(self, f: F) -> Self
-    where
-        F: FnOnce(DecoratedComment) -> CommentPlacement,
-    {
-        match self {
-            CommentPlacement::Default(comment) => f(comment),
-            placement => placement,
-        }
-    }
-}
-
-/// Defines how to format comments for a specific [Language].
-#[derive(Eq, PartialEq, Copy, Clone, Debug, Default)]
-pub struct CommentStyle;
-
-impl CommentStyle {
-    /// Returns `true` if a comment with the given `text` is a `biome-ignore format:` suppression comment.
-    pub fn is_suppression(_text: &str) -> bool {
-        todo!()
-    }
-
-    /// Returns the (kind)[CommentKind] of the comment
-    pub fn get_comment_kind(_comment: &SyntaxTriviaPieceComments) -> CommentKind {
-        todo!()
-    }
-
-    /// Determines the placement of `comment`.
-    ///
-    /// The default implementation returns [CommentPlacement::Default].
-    pub fn place_comment(self, _comment: DecoratedComment) -> CommentPlacement {
-        todo!()
-    }
-}
-
-/// The comments of a syntax tree stored by node.
-///
-/// Cloning `comments` is cheap as it only involves bumping a reference counter.
-#[derive(Debug, Clone)]
-pub struct Comments {
-    /// The use of a [Rc] is necessary to achieve that [Comments] has a lifetime that is independent from the [crate::Formatter].
-    /// Having independent lifetimes is necessary to support the use case where a (formattable object)[crate::Format]
-    /// iterates over all comments, and writes them into the [crate::Formatter] (mutably borrowing the [crate::Formatter] and in turn its context).
-    ///
-    /// ```block
-    /// for leading in f.context().comments().leading_comments(node) {
-    ///     ^
-    ///     |- Borrows comments
-    ///   write!(f, [comment(leading.piece.text())])?;
-    ///          ^
-    ///          |- Mutably borrows the formatter, state, context, and comments (if comments aren't cloned)
-    /// }
-    /// ```
-    ///
-    /// Using an `Rc` here allows to cheaply clone [Comments] for these use cases.
-    data: Rc<CommentsData>,
-}
-
-impl Comments {
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn from_oxc_comments<'a>(program: &'a Program<'a>) -> Self {
-        use oxc_ast::ast;
-        let comments = &program.comments;
-        let source_text = program.source_text;
-        let mut map = CommentsMap::new();
-        for comment in comments {
-            // TODO: Converting to `SourceComment` is incomplete.
-            let c = SourceComment {
-                span: comment.span,
-                lines_before: source_text[..comment.span.start as usize]
-                    .bytes()
-                    .rev()
-                    .take_while(|&b| b == b'\n')
-                    .count() as u32,
-                lines_after: source_text[comment.span.end as usize..]
-                    .bytes()
-                    .take_while(|&b| b == b'\n')
-                    .count() as u32,
-                // FIXME
-                piece: SyntaxTriviaPieceComments {},
-                kind: match comment.kind {
-                    ast::CommentKind::Line => CommentKind::Line,
-                    ast::CommentKind::Block => CommentKind::Block, // TODO: missing CommentKind::InlineBlock
-                },
-                formatted: Cell::new(false),
-            };
-            match comment.position {
-                ast::CommentPosition::Leading => {
-                    map.push_leading(comment.attached_to, c);
-                }
-                ast::CommentPosition::Trailing => {
-                    // Trailing comments are not attached to anything yet.
-                    let attached_to = comment.span.start
-                        - source_text[..comment.span.start as usize]
-                            .bytes()
-                            .rev()
-                            .take_while(|&b| b == b' ')
-                            .count() as u32;
-                    map.push_trailing(attached_to, c);
-                } // TODO:: missing Comment::Position::Dangling
+    pub fn has_comments_between(&self, start: u32, end: u32) -> bool {
+        for comment in self.unprinted_comments() {
+            // Check if the comment before the span
+            if start > comment.span.end {
+                continue;
             }
+
+            // Check if the comment after the span
+            if comment.span.start > end {
+                return false;
+            }
+
+            // Then it is a dangling comment
+            return true;
         }
 
-        let data = Rc::new(CommentsData {
-            comments: map,
-            #[cfg(debug_assertions)]
-            checked_suppressions: RefCell::new(FxHashSet::default()),
-        });
-        Self { data }
+        false
     }
 
-    /// Returns `true` if the given `node` has any [leading](self#leading-comments) or [trailing](self#trailing-comments) comments.
     #[inline]
-    pub fn has_comments(&self, span: Span) -> bool {
-        self.data.comments.has(&span.start)
+    pub fn has_comments_before(&self, start: u32) -> bool {
+        self.unprinted_comments()
+            .iter()
+            .take_while(|comment| comment.span.end <= start)
+            .next()
+            .is_some()
     }
 
-    /// Returns `true` if the given `node` has any [leading comments](self#leading-comments).
     #[inline]
-    pub fn has_leading_comments(&self, start: u32) -> bool {
-        !self.leading_comments(start).is_empty()
-    }
-
-    /// Tests if the node has any [leading comments](self#leading-comments) that have a leading line break.
-    ///
-    /// Corresponds to [CommentTextPosition::OwnLine].
-    pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.leading_comments(start).iter().any(|comment| comment.lines_after() > 0)
-    }
-
-    /// Returns the `node`'s [leading comments](self#leading-comments).
-    #[inline]
-    pub fn leading_comments(&self, start: u32) -> &[SourceComment] {
-        self.data.comments.leading(&start)
-    }
-
-    /// Returns `true` if node has any [dangling comments](self#dangling-comments).
     pub fn has_dangling_comments(&self, span: Span) -> bool {
-        !self.dangling_comments(span).is_empty()
+        self.has_comments_in_span(span)
     }
 
-    /// Returns the [dangling comments](self#dangling-comments) of `node`
-    pub fn dangling_comments(&self, span: Span) -> &[SourceComment] {
-        self.data.comments.dangling(&span.start)
-    }
-
-    /// Returns the `node`'s [trailing comments](self#trailing-comments).
-    #[inline]
-    pub fn trailing_comments(&self, end: u32) -> &[SourceComment] {
-        self.data.comments.trailing(&end)
-    }
-
-    /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
-    pub fn has_trailing_line_comment(&self, end: u32) -> bool {
-        self.trailing_comments(end).iter().any(|comment| comment.kind().is_line())
-    }
-
-    /// Returns `true` if the given `node` has any [trailing comments](self#trailing-comments).
-    #[inline]
-    pub fn has_trailing_comments(&self, end: u32) -> bool {
-        !self.trailing_comments(end).is_empty()
-    }
-
-    /// Returns an iterator over the [leading](self#leading-comments) and [trailing comments](self#trailing-comments) of `node`.
-    pub fn leading_trailing_comments(
-        &self,
-        span: Span,
-    ) -> impl Iterator<Item = &SourceComment> + use<'_> {
-        self.leading_comments(span.start).iter().chain(self.trailing_comments(span.end).iter())
-    }
-
-    /// Returns an iterator over the [leading](self#leading-comments), [dangling](self#dangling-comments), and [trailing](self#trailing) comments of `node`.
-    pub fn leading_dangling_trailing_comments(
-        &self,
-        span: Span,
-    ) -> impl Iterator<Item = &SourceComment> + '_ {
-        self.data.comments.parts(&span.start)
-    }
-
-    /// Returns `true` if that node has skipped token trivia attached.
-    #[inline]
-    pub fn has_skipped(&self, span: Span) -> bool {
-        // TODO
-        // self.data.with_skipped.contains(&token.key())
-        false
-    }
-
-    /// Returns `true` if `node` has a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) suppression comment.
-    ///
-    /// # Examples
-    ///
-    /// ```javascript
-    /// // biome-ignore format: Reason
-    /// console.log("Test");
-    /// ```
-    ///
-    /// Returns `true` for the expression statement but `false` for the call expression because the
-    /// call expression is nested inside of the expression statement.
-    pub fn is_suppressed(&self, span: Span) -> bool {
-        false
-        // self.mark_suppression_checked(node);
-        // let is_suppression = self.data.is_suppression;
-
-        // self.leading_dangling_trailing_comments(node)
-        // .any(|comment| is_suppression(comment.piece().text()))
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline(always)]
-    pub fn mark_suppression_checked(&self, _: &SyntaxNode) {}
-
-    /// Marks that it isn't necessary for the given node to check if it has been suppressed or not.
-    #[cfg(debug_assertions)]
-    pub fn mark_suppression_checked(&self, node: &SyntaxNode) {
-        todo!()
-        // let mut checked_nodes = self.data.checked_suppressions.borrow_mut();
-        // checked_nodes.insert(node.clone());
-    }
-
-    #[cfg(not(debug_assertions))]
-    #[inline(always)]
-    pub(crate) fn assert_checked_all_suppressions(&self, _: &SyntaxNode) {}
-
-    /// Verifies that [NodeSuppressions::is_suppressed] has been called for every node of `root`.
-    /// This is a no-op in builds that have the feature `debug_assertions` disabled.
-    ///
-    /// # Panics
-    /// If theres any node for which the formatting didn't very if it has a suppression comment.
-    #[cfg(debug_assertions)]
-    pub(crate) fn assert_checked_all_suppressions(&self, root: &SyntaxNode) {
-        todo!()
-        // use biome_rowan::SyntaxKind;
-
-        // let checked_nodes = self.data.checked_suppressions.borrow();
-        // for node in root.descendants() {
-        // if node.kind().is_list() || node.kind().is_root() {
-        // continue;
-        // }
-
-        // if !checked_nodes.contains(&node) {
-        // panic!(
-        // r#"
-        // The following node has been formatted without checking if it has suppression comments.
-        // Ensure that the formatter calls into the node's formatting rule by using `node.format()` or
-        // manually test if the node has a suppression comment using `f.context().comments().is_suppressed(node.syntax())`
-        // if using the node's format rule isn't an option."
-
-        // Node:
-        // {node:#?}"#
-        // );
-        // }
-        // }
-    }
-
-    #[inline(always)]
-    #[cfg(not(debug_assertions))]
-    pub(crate) fn assert_formatted_all_comments(&self) {}
-
-    #[cfg(debug_assertions)]
-    pub(crate) fn assert_formatted_all_comments(&self) {
-        todo!()
-        // let has_unformatted_comments =
-        // self.data.comments.all_parts().any(|comment| !comment.formatted.get());
-
-        // if has_unformatted_comments {
-        // let mut unformatted_comments = Vec::new();
-
-        // for node in
-        // self.data.root.as_ref().expect("Expected root for comments with data").descendants()
-        // {
-        // unformatted_comments.extend(self.leading_comments(&node).iter().filter_map(
-        // |comment| {
-        // (!comment.formatted.get())
-        // .then_some(DebugComment::Leading { node: node.clone(), comment })
-        // },
-        // ));
-        // unformatted_comments.extend(self.dangling_comments(&node).iter().filter_map(
-        // |comment| {
-        // (!comment.formatted.get())
-        // .then_some(DebugComment::Dangling { node: node.clone(), comment })
-        // },
-        // ));
-        // unformatted_comments.extend(self.trailing_comments(&node).iter().filter_map(
-        // |comment| {
-        // (!comment.formatted.get())
-        // .then_some(DebugComment::Trailing { node: node.clone(), comment })
-        // },
-        // ));
-        // }
-
-        // panic!("The following comments have not been formatted.\n{unformatted_comments:#?}")
-        // }
-    }
-}
-
-#[derive(Default)]
-struct CommentsData {
-    // root: Option<SyntaxNode>,
-
-    // is_suppression: fn(&str) -> bool,
-    /// Stores all leading node comments by node
-    comments: CommentsMap<u32, SourceComment>,
-    // with_skipped: FxHashSet<SyntaxElementKey>,
-    /// Stores all nodes for which [Comments::is_suppressed] has been called.
-    /// This index of nodes that have been checked if they have a suppression comments is used to
-    /// detect format implementations that manually format a child node without previously checking if
-    /// the child has a suppression comment.
-    ///
-    /// The implementation refrains from snapshotting the checked nodes because a node gets formatted
-    /// as verbatim if its formatting fails which has the same result as formatting it as suppressed node
-    /// (thus, guarantees that the formatting isn't changed).
-    #[cfg(debug_assertions)]
-    checked_suppressions: RefCell<FxHashSet<SyntaxNode>>,
-}
-
-impl Debug for CommentsData {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(&self.comments, f)
-        // let mut comments = Vec::new();
-
-        // if let Some(root) = &self.root {
-        // for node in root.descendants() {
-        // for leading in self.comments.leading(&node.key()) {
-        // comments.push(DebugComment::Leading { node: node.clone(), comment: leading });
-        // }
-
-        // for dangling in self.comments.dangling(&node.key()) {
-        // comments.push(DebugComment::Dangling { node: node.clone(), comment: dangling });
-        // }
-
-        // for trailing in self.comments.trailing(&node.key()) {
-        // comments.push(DebugComment::Trailing { node: node.clone(), comment: trailing });
-        // }
-        // }
-        // }
-
-        // comments.sort_by_key(|comment| comment.start());
-
-        // f.debug_list().entries(comments).finish()
-    }
-}
-
-/// Helper for printing a comment of [Comments]
-enum DebugComment<'a> {
-    Leading { comment: &'a SourceComment, node: SyntaxNode },
-    Trailing { comment: &'a SourceComment, node: SyntaxNode },
-    Dangling { comment: &'a SourceComment, node: SyntaxNode },
-}
-
-impl DebugComment<'_> {
-    fn start(&self) -> TextSize {
-        todo!()
-        // match self {
-        // DebugComment::Leading { comment, .. }
-        // | DebugComment::Trailing { comment, .. }
-        // | DebugComment::Dangling { comment, .. } => comment.piece.text_range().start(),
-        // }
-    }
-}
-
-impl Debug for DebugComment<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DebugComment::Leading { node, comment } => {
-                f.debug_struct("Leading").field("node", node).field("comment", comment).finish()
+    pub fn has_leading_comments(&self, previous_end: u32, current_start: u32) -> bool {
+        let comments = self.unprinted_comments();
+        let mut comment_index = 0;
+        while let Some(comment) = comments.get(comment_index) {
+            // Check if the comment is after the previous node's span
+            if comment.span.start < previous_end {
+                comment_index += 1;
+                continue;
             }
-            DebugComment::Dangling { node, comment } => {
-                f.debug_struct("Dangling").field("node", node).field("comment", comment).finish()
+
+            // Check if the comment is before the following node's span
+            if comment.span.end > current_start {
+                break;
             }
-            DebugComment::Trailing { node, comment } => {
-                f.debug_struct("Trailing").field("node", node).field("comment", comment).finish()
+
+            if is_own_line_comment(comment, self.source_text) {
+                return true;
+            } else if is_end_of_line_comment(comment, self.source_text) {
+                return false;
+            }
+
+            comment_index += 1;
+        }
+
+        if comment_index == 0 {
+            return false;
+        }
+
+        let last_remaining_comment = &comments[comment_index - 1];
+        let gap_str =
+            Span::new(last_remaining_comment.span.end, current_start).source_text(self.source_text);
+
+        gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'('))
+    }
+
+    pub fn has_leading_own_line_comments(&self, start: u32) -> bool {
+        for comment in self.unprinted_comments() {
+            // Check if the comment is before the following node's span
+            if comment.span.end > start {
+                return false;
+            }
+
+            if is_own_line_comment(comment, self.source_text)
+                || get_lines_after(comment.span.end, self.source_text) > 0
+            {
+                return true;
             }
         }
+
+        false
     }
+
+    pub fn has_trailing_comments(&self, current_end: u32, following_start: u32) -> bool {
+        let comments = &self.comments_after(current_end);
+
+        let mut comment_index = 0;
+        while let Some(comment) = comments.get(comment_index) {
+            // Check if the comment is before the following node's span
+            if comment.span.end > following_start {
+                break;
+            }
+
+            if is_own_line_comment(comment, self.source_text) {
+                return false;
+            } else if is_end_of_line_comment(comment, self.source_text) {
+                return true;
+            }
+
+            comment_index += 1;
+        }
+
+        if comment_index == 0 {
+            return false;
+        }
+
+        let mut gap_end = following_start;
+        for cur_index in (0..comment_index).rev() {
+            let comment = &comments[cur_index];
+            let gap_str = Span::new(comment.span.end, gap_end).source_text(self.source_text);
+            if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+                gap_end = comment.span.start;
+            } else {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn has_trailing_line_comments(&self, current_end: u32, following_start: u32) -> bool {
+        for comment in self.comments_after(current_end) {
+            if comment.span.start > following_start {
+                return false;
+            }
+
+            if is_own_line_comment(comment, self.source_text) {
+                return false;
+            } else if is_end_of_line_comment(comment, self.source_text) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Leading comments are between the `previous_span` and the `current_span`.
+    /// Trailing comments are between the `current_span` and the `following_span`.
+    #[inline]
+    pub fn has_comments(
+        &self,
+        previous_end: u32,
+        current_span: Span,
+        following_start: u32,
+    ) -> bool {
+        self.has_leading_comments(previous_end, current_span.start)
+            || self.has_trailing_comments(current_span.end, following_start)
+    }
+
+    #[inline]
+    pub fn is_trailing_line_comment(&self, comment: &Comment) -> bool {
+        comment.is_line()
+            && !is_own_line_comment(comment, self.source_text)
+            && is_end_of_line_comment(comment, self.source_text)
+    }
+
+    #[inline]
+    pub fn increment_printed_count(&mut self) {
+        self.printed_count += 1;
+    }
+
+    pub fn get_trailing_comments(
+        &self,
+        enclosing_node: &SiblingNode<'a>,
+        preceding_node: &SiblingNode<'a>,
+        following_node: Option<&SiblingNode<'a>>,
+    ) -> &'a [Comment] {
+        // The preceding_node is the callee of the call expression or new expression, let following node to print it.
+        // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L726-L741
+        if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
+        {
+            return &[];
+        }
+
+        let comments = self.unprinted_comments();
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let source_text = self.source_text;
+        let preceding_span = preceding_node.span();
+
+        // All of the comments before this node are printed already.
+        debug_assert!(
+            comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
+        );
+
+        let Some(following_node) = following_node else {
+            let enclosing_span = enclosing_node.span();
+            return comments
+                .iter()
+                .enumerate()
+                .take_while(|(_, comment)| comment.span.end <= enclosing_span.end)
+                .last()
+                .map_or(&[], |(index, _)| &comments[..=index]);
+        };
+
+        let following_span = following_node.span();
+        let mut comment_index = 0;
+        while let Some(comment) = comments.get(comment_index) {
+            // Check if the comment is before the following node's span
+            if comment.span.end > following_span.start {
+                break;
+            }
+
+            if is_own_line_comment(comment, source_text) {
+                // TODO: describe the logic here
+                // Reached an own line comment, which means it is the leading comment for the next node.
+                break;
+            } else if is_end_of_line_comment(comment, source_text) {
+                // Should be a leading comment of following node.
+                // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
+                if matches!(
+                    enclosing_node,
+                    SiblingNode::VariableDeclarator(_)
+                        | SiblingNode::AssignmentExpression(_)
+                        | SiblingNode::TSTypeAliasDeclaration(_)
+                ) && (comment.is_block()
+                    || matches!(
+                        following_node,
+                        SiblingNode::ObjectExpression(_)
+                            | SiblingNode::ArrayExpression(_)
+                            | SiblingNode::TSTypeLiteral(_)
+                            | SiblingNode::TemplateLiteral(_)
+                            | SiblingNode::TaggedTemplateExpression(_)
+                    ))
+                {
+                    return &[];
+                }
+                return &comments[..=comment_index];
+            }
+
+            comment_index += 1;
+        }
+
+        if comment_index == 0 {
+            // No comments to print
+            return &[];
+        }
+
+        let mut gap_end = following_span.start;
+        for cur_index in (0..comment_index).rev() {
+            let comment = &comments[cur_index];
+            let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
+            if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+                gap_end = comment.span.start;
+            } else {
+                // If there is a non-whitespace character, we stop here
+                return &comments[..=cur_index];
+            }
+        }
+
+        &[]
+    }
+}
+
+#[inline]
+pub fn is_new_line(char: char) -> ControlFlow<bool> {
+    if char == ' ' || char == '\t' {
+        ControlFlow::Continue(())
+    } else if char == '\n' || char == '\r' || char == '\u{2028}' || char == '\u{2029}' {
+        ControlFlow::Break(true)
+    } else {
+        ControlFlow::Break(false)
+    }
+}
+
+pub fn has_new_line_backward(text: &str) -> bool {
+    let mut chars = text.chars().rev();
+
+    for char in chars {
+        match is_new_line(char) {
+            ControlFlow::Continue(()) => {}
+            ControlFlow::Break(true) => return true,
+            ControlFlow::Break(false) => return false,
+        }
+    }
+
+    false
+}
+
+pub fn has_new_line_forward(text: &str) -> bool {
+    let mut chars = text.chars();
+
+    for char in chars {
+        match is_new_line(char) {
+            ControlFlow::Continue(()) => {}
+            ControlFlow::Break(true) => return true,
+            ControlFlow::Break(false) => return false,
+        }
+    }
+
+    false
+}
+
+pub fn is_own_line_comment(comment: &Comment, source_text: &str) -> bool {
+    let start = comment.span.start;
+    if start == 0 {
+        return false;
+    }
+
+    has_new_line_backward(Span::sized(0, comment.span.start).source_text(source_text))
+}
+
+pub fn is_end_of_line_comment(comment: &Comment, source_text: &str) -> bool {
+    let end = comment.span.end;
+    has_new_line_forward(&source_text[(end as usize)..])
 }
 
 /// Formats a comment as it was in the source document

@@ -901,7 +901,7 @@ fn constant_evaluation_test() {
     test("x = +{valueOf:()=>1}", "x = +{ valueOf: () => 1 };");
     test("x = 3 + 6", "x = 9;");
     test("x = 3 - 6", "x = -3;");
-    test("x = 3 * 6", "x = 3 * 6;");
+    test("x = 3 * 6", "x = 18;");
     test("x = 3 / 6", "x = 3 / 6;");
     test("x = 3 % 6", "x = 3 % 6;");
     test("x = 3 ** 6", "x = 3 ** 6;");
@@ -977,7 +977,7 @@ fn test_remove_dead_expr_nullish_related() {
     test("x('' ?? 1)", "x('');");
     test("x(/./ ?? 1)", "x(/./);");
     test("x({} ?? 1)", "x({});");
-    test("x((() => {}) ?? 1)", "x(() => {});");
+    test("x((() => {}) ?? 1)", "x((() => {}));");
     test("x(class {} ?? 1)", "x(class {});");
     test("x(function() {} ?? 1)", "x(function() {});");
     test("x(null ?? 1)", "x(1);");

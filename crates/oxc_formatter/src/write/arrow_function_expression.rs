@@ -1,14 +1,18 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     format_args,
     formatter::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer, prelude::*, trivia::format_trailing_comments,
+        buffer::RemoveSoftLinesBuffer, comments::has_new_line_backward, prelude::*,
+        trivia::format_trailing_comments, write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
+    utils::assignment_like::AssignmentLikeLayout,
     write,
+    write::parameter_list::has_only_simple_parameters,
 };
 
 #[derive(Clone, Copy)]
@@ -21,123 +25,11 @@ pub struct FormatJsArrowFunctionExpression<'a, 'b> {
 pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
     pub call_arg_layout: Option<GroupedCallArgumentLayout>,
-    pub body_cache_mode: FunctionBodyCacheMode,
+    // Determine whether the signature and body should be cached.
+    pub cache_mode: FunctionBodyCacheMode,
 }
 
-/// Determines how a assignment like be formatted
-///
-/// Assignment like are:
-/// - Assignment
-/// - Object property member
-/// - Variable declaration
-#[derive(Clone, Copy)]
-pub enum AssignmentLikeLayout {
-    /// This is a special layout usually used for variable declarations.
-    /// This layout is hit, usually, when a variable declarator doesn't have initializer:
-    /// ```js
-    ///     let variable;
-    /// ```
-    /// ```ts
-    ///     let variable: Map<string, number>;
-    /// ```
-    OnlyLeft,
-
-    /// First break right-hand side, then after operator.
-    /// ```js
-    /// {
-    ///   "array-key": [
-    ///     {
-    ///       "nested-key-1": 1,
-    ///       "nested-key-2": 2,
-    ///     },
-    ///   ]
-    /// }
-    /// ```
-    Fluid,
-
-    /// First break after operator, then the sides are broken independently on their own lines.
-    /// There is a soft line break after operator token.
-    /// ```js
-    /// {
-    ///     "enough-long-key-to-break-line":
-    ///         1 + 2,
-    ///     "not-long-enough-key":
-    ///         "but long enough string to break line",
-    /// }
-    /// ```
-    BreakAfterOperator,
-
-    /// First break right-hand side, then left-hand side. There are not any soft line breaks
-    /// between left and right parts
-    /// ```js
-    /// {
-    ///     key1: "123",
-    ///     key2: 123,
-    ///     key3: class MyClass {
-    ///        constructor() {},
-    ///     },
-    /// }
-    /// ```
-    NeverBreakAfterOperator,
-
-    /// This is a special layout usually used for long variable declarations or assignment expressions
-    /// This layout is hit, usually, when we are in the "middle" of the chain:
-    ///
-    /// ```js
-    /// var a =
-    ///     loreum =
-    ///     ipsum =
-    ///         "foo";
-    /// ```
-    ///
-    /// Given the previous snippet, then `loreum` and `ipsum` will be formatted using the `Chain` layout.
-    Chain,
-
-    /// This is a special layout usually used for long variable declarations or assignment expressions
-    /// This layout is hit, usually, when we are in the end of a chain:
-    /// ```js
-    /// var a = loreum = ipsum = "foo";
-    /// ```
-    ///
-    /// Given the previous snippet, then `"foo"` formatted  using the `ChainTail` layout.
-    ChainTail,
-
-    /// This layout is used in cases where we want to "break" the left hand side
-    /// of assignment like expression, but only when the group decides to do it.
-    ///
-    /// ```js
-    /// const a {
-    ///     loreum: { ipsum },
-    ///     something_else,
-    ///     happy_days: { fonzy }
-    /// } = obj;
-    /// ```
-    ///
-    /// The snippet triggers the layout because the left hand side contains a "complex destructuring"
-    /// which requires having the properties broke on different lines.
-    BreakLeftHandSide,
-
-    /// This is a special case of the "chain" layout collection. This is triggered when there's
-    /// a series of simple assignments (at least three) and in the middle we have an arrow function
-    /// and this function followed by two more arrow functions.
-    ///
-    /// This layout will break the right hand side of the tail on a new line and add a new level
-    /// of indentation
-    ///
-    /// ```js
-    /// lorem =
-    ///     fff =
-    ///     ee =
-    ///         () => (fff) => () => (fefef) => () => fff;
-    /// ```
-    ChainTailArrowFunction,
-
-    /// Layout used when the operator and right hand side are part of a `JsInitializerClause<
-    /// that has a suppression comment.
-    SuppressedInitializer,
-}
-
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupedCallArgumentLayout {
     /// Group the first call argument.
     GroupedFirstArgument,
@@ -146,14 +38,21 @@ pub enum GroupedCallArgumentLayout {
     GroupedLastArgument,
 }
 
-#[derive(Default, Clone, Copy)]
+impl GroupedCallArgumentLayout {
+    pub fn is_grouped_first(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedFirstArgument)
+    }
+
+    pub fn is_grouped_last(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedLastArgument)
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy)]
 pub enum FunctionBodyCacheMode {
     /// Format the body without caching it or retrieving it from the cache.
     #[default]
     NoCache,
-
-    /// The body has been cached before, try to retrieve the body from the cache.
-    Cached,
 
     /// Cache the body during the next [formatting](Format::fmt).
     Cache,
@@ -188,7 +87,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     write!(
                         f,
                         [
-                            format_signature(arrow, self.options.call_arg_layout.is_some(), true),
+                            format_signature(
+                                arrow,
+                                self.options.call_arg_layout.is_some(),
+                                true,
+                                self.options.cache_mode
+                            ),
                             space(),
                             "=>"
                         ]
@@ -198,7 +102,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let format_body = FormatMaybeCachedFunctionBody {
                     body,
                     expression: arrow.expression(),
-                    mode: self.options.body_cache_mode,
+                    mode: self.options.cache_mode,
                 };
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
@@ -218,72 +122,85 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 // Therefore if our body is an arrow self, array, or object, we
                 // do not have a soft line break after the arrow because the body is
                 // going to get broken anyways.
-                let body_has_soft_line_break = match arrow.get_expression() {
-                    None
-                    | Some(
+                let arrow_expression = arrow.get_expression();
+
+                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                    return if f.context().comments().has_comments_before(sequence.span().start) {
+                        write!(
+                            f,
+                            [group(&format_args!(
+                                formatted_signature,
+                                group(&format_args!(indent(&format_args!(
+                                    hard_line_break(),
+                                    text("("),
+                                    soft_block_indent(&format_body),
+                                    text(")")
+                                ))))
+                            ))]
+                        )
+                    } else {
+                        write!(
+                            f,
+                            [group(&format_args!(
+                                formatted_signature,
+                                group(&format_args!(
+                                    space(),
+                                    text("("),
+                                    soft_block_indent(&format_body),
+                                    text(")")
+                                ))
+                            ))]
+                        )
+                    };
+                }
+
+                #[expect(clippy::match_same_arms)]
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
-                        | Expression::ObjectExpression(_),
-                    ) => !f.comments().has_leading_own_line_comment(body.span().start),
-                    _ => false,
-                };
-                // TODO:
-                // let body_has_soft_line_break = match &body {
-                // AnyJsExpression(JsxTagExpression(_)) => true,
-                // AnyJsExpression(JsTemplateExpression(template)) => {
-                // is_multiline_template_starting_on_same_line(template)
-                // }
-                // AnyJsExpression(JsSequenceExpression(sequence)) => {
-                // let has_comment = f.context().comments().has_comments(sequence.syntax());
-                // if has_comment {
-                // return write!(
-                // f,
-                // [group(&format_args![
-                // formatted_signature,
-                // group(&format_args!(indent(&format_args!(
-                // hard_line_break(),
-                // "(",
-                // soft_block_indent(&format_body),
-                // ")"
-                // ))))
-                // ])]
-                // );
-                // }
-                // return write!(
-                // f,
-                // group(&format_args!(
-                // formatted_signature,
-                // group(&format_args!(
-                // space(),
-                // "(",
-                // soft_block_indent(&format_body),
-                // ")"
-                // ))
-                // ))
-                // );
-                // }
-                // _ => false,
-                // };
-                // TODO
-                let body_is_condition_type = false; // matches!(body, AnyJsExpression(JsConditionalExpression(_)));
+                        | Expression::ObjectExpression(_) => {
+                            // TODO: It seems no difference whether check there is a leading comment or not.
+                            // !f.comments().has_leading_own_line_comment(body.span().start)
+                            true
+                        }
+                        Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+                        Expression::TemplateLiteral(template) => {
+                            is_multiline_template_starting_on_same_line(
+                                template.span.start,
+                                template,
+                                f.source_text(),
+                            )
+                        }
+                        Expression::TaggedTemplateExpression(template) => {
+                            is_multiline_template_starting_on_same_line(
+                                template.span.start,
+                                &template.quasi,
+                                f.source_text(),
+                            )
+                        }
+                        _ => false,
+                    }
+                });
+
+                let body_is_condition_type =
+                    matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
                 if body_has_soft_line_break {
                     write!(f, [formatted_signature, space(), format_body])
                 } else {
-                    let should_add_parens = should_add_parens(body);
+                    let should_add_parens = arrow.expression && should_add_parens(body);
 
                     let is_last_call_arg = matches!(
                         self.options.call_arg_layout,
                         Some(GroupedCallArgumentLayout::GroupedLastArgument)
                     );
 
-                    let should_add_soft_line = (
-                        is_last_call_arg
+                    let should_add_soft_line = (is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        /*|| matches!(node.syntax().parent.kind(), Some(JsSyntaxKind::JSX_EXPRESSION_CHILD | JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE))*/
-                    ) && !f
-                        .context()
-                        .comments()
-                        .has_comments(arrow.span());
+                        || matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(_)));
+                    // TODO: it seems no difference whether check there is a comment or not.
+                    //&& !f.context().comments().has_comments(node.syntax());
+
                     if body_is_condition_type {
                         write!(
                             f,
@@ -368,7 +285,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// of the different layouts.
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
-        comments: &Comments,
+        comments: &Comments<'a>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
@@ -387,7 +304,9 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                         if matches!(
                             options.call_arg_layout,
                             None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        ) && !comments.is_suppressed(next.span())
+                        )
+                        // TODO: Unsupported yet
+                        //  && !comments.is_suppressed(next.span())
                         {
                             should_break = should_break || Self::should_break_chain(current);
 
@@ -435,25 +354,52 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 
         let parameters = &arrow.params;
 
-        let has_parameters = parameters.has_parameter();
-        // TODO
-        // let has_parameters = match &parameters {
-        // AnyJsArrowFunctionParameters::AnyJsBinding(_) => true,
-        // AnyJsArrowFunctionParameters::JsParameters(parameters) => {
-        // // This matches Prettier, which allows type annotations when
-        // // grouping arrow expressions, but disallows them when grouping
-        // // normal function expressions.
-        // if !has_only_simple_parameters(parameters, true) {
-        // return Ok(true);
-        // }
-        // !parameters.items().is_empty()
-        // }
-        // };
+        // This matches Prettier, which allows type annotations when
+        // grouping arrow expressions, but disallows them when grouping
+        // normal function expressions.
+        if !has_only_simple_parameters(parameters, true) {
+            return true;
+        }
 
+        let has_parameters = parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
-
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
     }
+}
+
+/// Returns `true` for a template that starts on the same line as the previous token and contains a line break.
+///
+///
+/// # Examples
+///
+/// ```javascript
+/// "test" + `
+///   some content
+/// `;
+/// ```
+///
+/// Returns `true` because the template starts on the same line as the `+` token and its text contains a line break.
+///
+/// ```javascript
+/// "test" + `no line break`
+/// ```
+///
+/// Returns `false` because the template text contains no line break.
+///
+/// ```javascript
+/// "test" +
+///     `template
+///     with line break`;
+/// ```
+///
+/// Returns `false` because the template isn't on the same line as the '+' token.
+pub fn is_multiline_template_starting_on_same_line(
+    start: u32,
+    template: &TemplateLiteral,
+    source_text: &str,
+) -> bool {
+    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
+        && !has_new_line_backward(&source_text[..start as usize])
 }
 
 struct ArrowChain<'a, 'b> {
@@ -485,7 +431,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
-        // let head_parent = head.syntax().parent;
+        let head_parent = self.head.parent;
         let tail_body = tail.body();
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
@@ -500,14 +446,8 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        // TODO
-        let is_callee = false;
-        // let is_callee = head_parent.as_ref().is_some_and(|parent| {
-        // matches!(
-        // parent.kind(),
-        // JsSyntaxKind::JS_CALL_EXPRESSION | JsSyntaxKind::JS_NEW_EXPRESSION
-        // )
-        // });
+        let is_callee =
+            matches!(head_parent, AstNodes::CallExpression(_) | AstNodes::NewExpression(_));
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
@@ -524,17 +464,16 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
-        let body_on_separate_line = false;
-        // !matches!(
-        // tail_body,
-        // AnyJsFunctionBody::JsFunctionBody(_)
-        // | AnyJsFunctionBody::AnyJsExpression(
-        // AnyJsExpression::JsObjectExpression(_)
-        // | AnyJsExpression::JsArrayExpression(_)
-        // | AnyJsExpression::JsSequenceExpression(_)
-        // | AnyJsExpression::JsxTagExpression(_)
-        // )
-        // );
+        let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
+            matches!(
+                expression,
+                Expression::ObjectExpression(_)
+                    | Expression::ArrayExpression(_)
+                    | Expression::SequenceExpression(_)
+                    | Expression::JSXElement(_)
+                    | Expression::JSXFragment(_)
+            )
+        });
 
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
@@ -568,7 +507,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_leading_comments(arrow.span().start);
+                        && f.context().comments().has_comments_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -580,19 +519,27 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             // then we want to _force_ the line break so that the leading comments
                             // don't inadvertently end up on the previous line after the fat arrow.
                             if is_grouped_call_arg_layout {
-                                write!(f, [space(), format_leading_comments(arrow.span().start)])?;
+                                write!(f, [space(), format_leading_comments(arrow.span())])?;
                             } else {
                                 write!(
                                     f,
                                     [
                                         soft_line_break_or_space(),
-                                        format_leading_comments(arrow.span().start)
+                                        format_leading_comments(arrow.span())
                                     ]
                                 )?;
                             }
                         }
 
-                        write!(f, [format_signature(arrow, is_grouped_call_arg_layout, is_first)])
+                        write!(
+                            f,
+                            [format_signature(
+                                arrow,
+                                is_grouped_call_arg_layout,
+                                is_first,
+                                self.options.cache_mode
+                            )]
+                        )
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -624,77 +571,65 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
         });
 
-        // TODO
-        let has_comment = false; //
-        // matches!(
-        // &tail_body,
-        // AnyJsFunctionBody::AnyJsExpression(AnyJsExpression::JsSequenceExpression(sequence))
-        // if f.context().comments().has_comments(sequence.syntax())
-        // );
-
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
                 expression: tail.expression(),
-                mode: self.options.body_cache_mode,
+                mode: self.options.cache_mode,
             };
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            // if matches!(
-            // tail_body,
-            // AnyJsFunctionBody::AnyJsExpression(AnyJsExpression::JsSequenceExpression(_))
-            // ) {
-            // if has_comment {
-            // write!(
-            // f,
-            // group(&format_args!(indent(&format_args!(
-            // hard_line_break(),
-            // text("("),
-            // soft_block_indent(&format_tail_body),
-            // text(")")
-            // ))))
-            // )?;
-            // } else {
-            // write!(
-            // f,
-            // group(&format_args!("(", soft_block_indent(&format_tail_body), ")"))
-            // )?;
-            // }
-            // } else {
-            // let should_add_parens = should_add_parens(&tail_body);
-            // if should_add_parens {
-            // write!(
-            // f,
-            // [
-            // if_group_fits_on_line(&text("(")),
-            // format_tail_body,
-            // if_group_fits_on_line(&text(")"))
-            // ]
-            // )?;
-            // } else {
-            write!(f, format_tail_body)?;
-            // }
-            // }
+            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+                if f.context().comments().has_comments_before(sequence.span().start) {
+                    write!(
+                        f,
+                        [group(&format_args!(indent(&format_args!(
+                            hard_line_break(),
+                            text("("),
+                            soft_block_indent(&format_tail_body),
+                            text(")")
+                        ))))]
+                    )?;
+                } else {
+                    write!(
+                        f,
+                        [group(&format_args!(
+                            text("("),
+                            soft_block_indent(&format_tail_body),
+                            text(")")
+                        ))]
+                    )?;
+                }
+            } else {
+                let should_add_parens = tail.expression && should_add_parens(tail_body);
+                if should_add_parens {
+                    write!(
+                        f,
+                        [
+                            if_group_fits_on_line(&text("(")),
+                            format_tail_body,
+                            if_group_fits_on_line(&text(")"))
+                        ]
+                    )?;
+                } else {
+                    write!(f, [format_tail_body])?;
+                }
+            }
 
             // Format the trailing comments of all arrow function EXCEPT the first one because
             // the comments of the head get formatted as part of the `FormatJsArrowFunctionExpression` call.
-            for arrow in self.arrows().skip(1) {
-                write!(f, format_trailing_comments(arrow.span().end))?;
-            }
+            // TODO: It seems unneeded in the current oxc implementation?
+            // for arrow in self.arrows().skip(1) {
+            //     write!(f, format_trailing_comments(arrow.span().end))?;
+            // }
 
             Ok(())
         });
 
         let format_tail_body = format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-            let should_add_soft_line = false; //matches!(
-            // head_parent.kind(),
-            // Some(
-            // JsSyntaxKind::JSX_EXPRESSION_CHILD
-            // | JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE
-            // )
-            // );
+            let should_add_soft_line = matches!(head_parent, AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
                 write!(
@@ -747,34 +682,132 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
+pub enum ExpressionLeftSide<'a, 'b> {
+    Expression(&'b Expression<'a>),
+    AssignmentTarget(&'b AssignmentTarget<'a>),
+    SimpleAssignmentTarget(&'b SimpleAssignmentTarget<'a>),
+}
+
+impl<'a, 'b> From<&'b Expression<'a>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b Expression<'a>) -> Self {
+        Self::Expression(value)
+    }
+}
+
+impl<'a, 'b> From<&'b AssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AssignmentTarget<'a>) -> Self {
+        Self::AssignmentTarget(value)
+    }
+}
+
+impl<'a, 'b> From<&'b SimpleAssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b SimpleAssignmentTarget<'a>) -> Self {
+        Self::SimpleAssignmentTarget(value)
+    }
+}
+
+impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
+    pub fn leftmost(expression: &'b Expression<'a>) -> Self {
+        let mut current: Self = expression.into();
+        loop {
+            match current.left_expression() {
+                None => {
+                    break current;
+                }
+                Some(left) => {
+                    current = left;
+                }
+            }
+        }
+    }
+
+    /// Returns the left side of an expression (an expression where the first child is a `Node` or [None]
+    /// if the expression has no left side.
+    pub fn left_expression(&self) -> Option<Self> {
+        match self {
+            Self::Expression(expression) => match expression {
+                Expression::SequenceExpression(expr) => expr.expressions.first().map(Into::into),
+                Expression::StaticMemberExpression(expr) => Some((&expr.object).into()),
+                Expression::ComputedMemberExpression(expr) => Some((&expr.object).into()),
+                Expression::TaggedTemplateExpression(expr) => Some((&expr.tag).into()),
+                Expression::NewExpression(expr) => Some((&expr.callee).into()),
+                Expression::CallExpression(expr) => Some((&expr.callee).into()),
+                Expression::ConditionalExpression(expr) => Some((&expr.test).into()),
+                Expression::TSAsExpression(expr) => Some((&expr.expression).into()),
+                Expression::TSSatisfiesExpression(expr) => Some((&expr.expression).into()),
+                Expression::TSNonNullExpression(expr) => Some((&expr.expression).into()),
+                Expression::AssignmentExpression(expr) => Some(Self::AssignmentTarget(&expr.left)),
+                Expression::UpdateExpression(expr) => {
+                    if expr.prefix {
+                        None
+                    } else {
+                        Some(Self::SimpleAssignmentTarget(&expr.argument))
+                    }
+                }
+                Expression::BinaryExpression(binary) => Some((&binary.left).into()),
+                Expression::LogicalExpression(logical) => Some((&logical.left).into()),
+                _ => None,
+            },
+            Self::AssignmentTarget(target) => match target {
+                match_simple_assignment_target!(AssignmentTarget) => {
+                    Self::SimpleAssignmentTarget(target.to_simple_assignment_target())
+                        .left_expression()
+                }
+                _ => None,
+            },
+            Self::SimpleAssignmentTarget(target) => match target {
+                SimpleAssignmentTarget::TSAsExpression(expr) => Some((&expr.expression).into()),
+                SimpleAssignmentTarget::TSSatisfiesExpression(expr) => {
+                    Some((&expr.expression).into())
+                }
+                SimpleAssignmentTarget::TSNonNullExpression(expr) => {
+                    Some((&expr.expression).into())
+                }
+                SimpleAssignmentTarget::TSTypeAssertion(expr) => Some((&expr.expression).into()),
+                SimpleAssignmentTarget::ComputedMemberExpression(expr) => {
+                    Some((&expr.object).into())
+                }
+                SimpleAssignmentTarget::StaticMemberExpression(expr) => Some((&expr.object).into()),
+                SimpleAssignmentTarget::PrivateFieldExpression(expr) => Some((&expr.object).into()),
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier_reference) => None,
+            },
+        }
+    }
+
+    pub fn span(&self) -> Span {
+        match self {
+            ExpressionLeftSide::Expression(expression) => expression.span(),
+            ExpressionLeftSide::AssignmentTarget(target) => target.span(),
+            ExpressionLeftSide::SimpleAssignmentTarget(target) => target.span(),
+        }
+    }
+}
+
 fn should_add_parens(body: &FunctionBody) -> bool {
-    // TODO
-    false
+    let Statement::ExpressionStatement(stmt) = body.statements.first().unwrap() else {
+        unreachable!()
+    };
+
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    // match &body {
-    // AnyJsFunctionBody::AnyJsExpression(
-    // expression @ AnyJsExpression::JsConditionalExpression(_),
-    // ) => {
-    // let var_name = matches!(
-    // AnyJsExpressionLeftSide::leftmost(expression.clone()),
-    // AnyJsExpressionLeftSide::AnyJsExpression(
-    // AnyJsExpression::JsObjectExpression(_)
-    // | AnyJsExpression::JsFunctionExpression(_)
-    // | AnyJsExpression::JsClassExpression(_)
-    // )
-    // );
-    // let are_parentheses_mandatory = var_name;
-
-    // !are_parentheses_mandatory
-    // }
-    // _ => false,
-    // }
+    if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+        !matches!(
+            ExpressionLeftSide::leftmost(&stmt.expression),
+            ExpressionLeftSide::Expression(
+                Expression::ObjectExpression(_)
+                    | Expression::FunctionExpression(_)
+                    | Expression::ClassExpression(_)
+            )
+        )
+    } else {
+        false
+    }
 }
 
 fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
     params.rest.is_some()
+        || params.items.iter().any(|param| param.pattern.kind.is_destructuring_pattern())
 }
 
 /// Writes the arrow function type parameters, parameters, and return type annotation.
@@ -792,65 +825,50 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
+    cache_mode: FunctionBodyCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
         let formatted_async_token =
             format_with(|f| if arrow.r#async() { write!(f, ["async", space()]) } else { Ok(()) });
 
-        let formatted_parameters = format_with(|f| {
-            write!(f, arrow.type_parameters())?;
+        let formatted_parameters =
+            format_with(|f| write!(f, [arrow.type_parameters(), arrow.params()]));
 
-            // match arrow.params {
-            // AnyJsArrowFunctionParameters::AnyJsBinding(binding) => {
-            // let should_hug =
-            // is_test_call_argument(arrow.syntax())? || is_first_or_last_call_argument;
-            // let parentheses_not_needed = can_avoid_parentheses(arrow, f);
+        let format_return_type = format_with(|f| write!(f, arrow.return_type()));
 
-            // if !parentheses_not_needed {
-            // write!(f, "(")?;
-            // }
-
-            // if should_hug || parentheses_not_needed {
-            // write!(f, [binding.format()])?;
-            // } else {
-            // write!(
-            // f,
-            // [&soft_block_indent(&format_args![binding, FormatTrailingCommas::All])]
-            // )?
-            // }
-
-            // if !parentheses_not_needed {
-            // write!(f, ")")?;
-            // }
-            // }
-            // AnyJsArrowFunctionParameters::JsParameters(params) => {
-            write!(f, arrow.params())?;
-            // }
-            // };
-
-            Ok(())
-        });
-
-        let format_return_type = format_with(|f| {
-            if let Some(return_type) = &arrow.return_type() {
-                write!(f, return_type)?;
-            }
-            Ok(())
-        });
-
-        if is_first_or_last_call_argument {
-            let mut buffer = RemoveSoftLinesBuffer::new(f);
-            let mut recording = buffer.start_recording();
-
+        let signatures = format_once(|f| {
             write!(
-                recording,
+                f,
                 [group(&format_args!(
                     maybe_space(!is_first_in_chain),
                     formatted_async_token,
                     group(&formatted_parameters),
                     group(&format_return_type)
                 ))]
-            )?;
+            )
+        });
+
+        // The [`call_arguments`] will format the argument that can be grouped in different ways until
+        // find the best layout. So we have to cache the parameters because it never be broken.
+        let cached_signature = format_once(|f| {
+            if matches!(cache_mode, FunctionBodyCacheMode::NoCache) {
+                signatures.fmt(f)
+            } else if let Some(grouped) = f.context().get_cached_element(&arrow.params.span) {
+                f.write_element(grouped)
+            } else {
+                if let Ok(Some(grouped)) = f.intern(&signatures) {
+                    f.context_mut().cache_element(&arrow.params.span, grouped.clone());
+                    f.write_element(grouped.clone());
+                }
+                Ok(())
+            }
+        });
+
+        if is_first_or_last_call_argument {
+            let mut buffer = RemoveSoftLinesBuffer::new(f);
+            let mut recording = buffer.start_recording();
+
+            write!(recording, cached_signature)?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);
@@ -864,18 +882,15 @@ fn format_signature<'a, 'b>(
                     // line and can't break pre-emptively without also causing
                     // the parent (i.e., this ArrowChain) to break first.
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
-                    group(&format_args!(
-                        formatted_async_token,
-                        formatted_parameters,
-                        group(&format_return_type)
-                    ))
+                    cached_signature
                 ]
             )?;
         }
 
-        if f.comments().has_dangling_comments(arrow.span()) {
-            write!(f, [space(), format_dangling_comments(arrow.span())])?;
-        }
+        // TODO: for case `a = (x: any): x is string /* comment */ => {}`
+        // if f.comments().has_dangling_comments(arrow.span()) {
+        //     write!(f, [space(), format_dangling_comments(arrow.span())])?;
+        // }
 
         Ok(())
     })
@@ -910,30 +925,19 @@ impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.mode {
             FunctionBodyCacheMode::NoCache => self.format(f),
-            FunctionBodyCacheMode::Cached => {
-                match f.context().get_cached_function_body(self.body) {
-                    Some(cached) => f.write_element(cached),
-                    None => {
-                        // This can happen in the unlikely event where a function has a parameter with
-                        // an initializer that contains a call expression with a first or last function/arrow
-                        // ```javascript
-                        // test((
-                        //   problematic = test(() => body)
-                        // ) => {});
-                        // ```
-                        // This case should be rare as it requires very specific syntax (and is rather messy to write)
-                        // which is why it's fine to just fallback to formatting the body again in this case.
-                        self.format(f)
+            FunctionBodyCacheMode::Cache => {
+                if let Some(cached) = f.context().get_cached_element(&self.body.span) {
+                    f.write_element(cached)
+                } else {
+                    match f.intern(&format_once(|f| self.format(f)))? {
+                        Some(interned) => {
+                            f.context_mut().cache_element(&self.body.span, interned.clone());
+                            f.write_element(interned)
+                        }
+                        None => Ok(()),
                     }
                 }
             }
-            FunctionBodyCacheMode::Cache => match f.intern(&self.body)? {
-                Some(interned) => {
-                    f.context_mut().set_cached_function_body(self.body, interned.clone());
-                    f.write_element(interned)
-                }
-                None => Ok(()),
-            },
         }
     }
 }

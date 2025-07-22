@@ -28,7 +28,7 @@ oxc_index = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
 
-napi = { workspace = true }
+napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }

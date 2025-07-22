@@ -82,3 +82,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
         }
     }
 }
+
+impl<'a> Decorator<'a, '_> {
+    pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_class_at_end(class, ctx);
+        }
+    }
+}

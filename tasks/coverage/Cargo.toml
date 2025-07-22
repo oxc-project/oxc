@@ -34,6 +34,7 @@ encoding_rs = { workspace = true }
 encoding_rs_io = { workspace = true }
 futures = { workspace = true }
 lazy-regex = { workspace = true }
+phf = { workspace = true }
 pico-args = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

@@ -14,18 +14,6 @@ fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDi
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
-fn empty_type_parameter_list(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span)
-}
-
-pub fn check_ts_type_parameter_declaration(
-    declaration: &TSTypeParameterDeclaration<'_>,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if declaration.params.is_empty() {
-        ctx.error(empty_type_parameter_list(declaration.span));
-    }
-}
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
     check_type_name_is_reserved(&param.name, ctx, "Type parameter");
 }
@@ -151,13 +139,12 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
-    for node in ctx.nodes.ancestors(ctx.current_node_id).skip(1) {
+    for node in ctx.nodes.ancestors(ctx.current_node_id) {
         match node.kind() {
             AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
                 break;
             }
-            AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
-                // export namespace N {}
+            m if m.is_module_declaration() => {
                 // We need to check the parent of the parent
             }
             _ => {
@@ -498,7 +485,7 @@ pub fn check_jsx_expression_container(
     ctx: &SemanticBuilder<'_>,
 ) {
     if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttribute(_)))
+        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), AstKind::JSXAttribute(_))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
     }

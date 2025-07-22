@@ -174,7 +174,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if prop.declare || prop.decorators.is_empty() {
+        if prop.decorators.is_empty() {
             return;
         }
         prop.decorators.push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
@@ -419,6 +419,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
                 }
             }
+            TSTypeName::ThisExpression(_) => None,
         }
     }
 

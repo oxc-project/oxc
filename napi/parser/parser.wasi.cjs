@@ -65,6 +65,29 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
     worker.onmessage = ({ data }) => {
       __wasmCreateOnMessageForFsProxy(__nodeFs)(data)
     }
+
+    // The main thread of Node.js waits for all the active handles before exiting.
+    // But Rust threads are never waited without `thread::join`.
+    // So here we hack the code of Node.js to prevent the workers from being referenced (active).
+    // According to https://github.com/nodejs/node/blob/19e0d472728c79d418b74bddff588bea70a403d0/lib/internal/worker.js#L415,
+    // a worker is consist of two handles: kPublicPort and kHandle.
+    {
+      const kPublicPort = Object.getOwnPropertySymbols(worker).find(s =>
+        s.toString().includes("kPublicPort")
+      );
+      if (kPublicPort) {
+        worker[kPublicPort].ref = () => {};
+      }
+
+      const kHandle = Object.getOwnPropertySymbols(worker).find(s =>
+        s.toString().includes("kHandle")
+      );
+      if (kHandle) {
+        worker[kHandle].ref = () => {};
+      }
+
+      worker.unref();
+    }
     return worker
   },
   overwriteImports(importObject) {
@@ -90,10 +113,7 @@ module.exports.ParseResult = __napiModule.exports.ParseResult
 module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
-module.exports.getBufferOffset = __napiModule.exports.getBufferOffset
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
 module.exports.parseAsync = __napiModule.exports.parseAsync
-module.exports.parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 module.exports.parseSync = __napiModule.exports.parseSync
-module.exports.parseSyncRaw = __napiModule.exports.parseSyncRaw
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported

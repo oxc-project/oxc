@@ -51,9 +51,15 @@ fn consistent_function_scoping(
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsistentFunctionScoping {
     check_arrow_functions: bool,
+}
+
+impl Default for ConsistentFunctionScoping {
+    fn default() -> Self {
+        Self { check_arrow_functions: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -374,7 +380,7 @@ fn get_short_span_for_fn_scope(
 
     let scope_id =
         match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
-            Some(AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_)) => {
+            AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_) => {
                 ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
             }
             _ => scope_id,
@@ -385,7 +391,7 @@ fn get_short_span_for_fn_scope(
     match node_creating_parent_scope.kind() {
         AstKind::Function(f) => f.id.as_ref().map(|id| (id.span(), "function")),
         AstKind::ArrowFunctionExpression(_) => {
-            let parent = ctx.nodes().parent_kind(node_creating_parent_scope.id())?;
+            let parent = ctx.nodes().parent_kind(node_creating_parent_scope.id());
             match parent {
                 AstKind::VariableDeclarator(v) => Some((v.id.span(), "arrow function")),
                 AstKind::AssignmentExpression(a) => Some((a.left.span(), "arrow function")),

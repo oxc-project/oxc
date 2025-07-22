@@ -63,12 +63,12 @@ impl ValueType {
 /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
 /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
 /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects`].
-pub trait DetermineValueType {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType;
+pub trait DetermineValueType<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType;
 }
 
-impl DetermineValueType for Expression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for Expression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         match self {
             Expression::BigIntLiteral(_) => ValueType::BigInt,
             Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
@@ -116,8 +116,8 @@ impl DetermineValueType for Expression<'_> {
     }
 }
 
-impl DetermineValueType for BinaryExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for BinaryExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         match self.operator {
             BinaryOperator::Addition => {
                 let left = self.left.to_primitive(is_global_reference);
@@ -173,8 +173,8 @@ impl DetermineValueType for BinaryExpression<'_> {
     }
 }
 
-impl DetermineValueType for UnaryExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for UnaryExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         match self.operator {
             UnaryOperator::Void => ValueType::Undefined,
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
@@ -197,8 +197,8 @@ impl DetermineValueType for UnaryExpression<'_> {
     }
 }
 
-impl DetermineValueType for AssignmentExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for AssignmentExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         match self.operator {
             AssignmentOperator::Assign => self.right.value_type(is_global_reference),
             AssignmentOperator::Addition => {
@@ -232,8 +232,8 @@ impl DetermineValueType for AssignmentExpression<'_> {
     }
 }
 
-impl DetermineValueType for ConditionalExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for ConditionalExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         let left = self.consequent.value_type(is_global_reference);
         if left.is_undetermined() {
             return ValueType::Undetermined;
@@ -246,8 +246,8 @@ impl DetermineValueType for ConditionalExpression<'_> {
     }
 }
 
-impl DetermineValueType for LogicalExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         match self.operator {
             LogicalOperator::And | LogicalOperator::Or => {
                 let left = self.left.value_type(is_global_reference);
@@ -274,8 +274,8 @@ impl DetermineValueType for LogicalExpression<'_> {
     }
 }
 
-impl DetermineValueType for StaticMemberExpression<'_> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
         if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY") {
             if let Some(ident) = self.object.get_identifier_reference() {
                 if ident.name.as_str() == "Number"

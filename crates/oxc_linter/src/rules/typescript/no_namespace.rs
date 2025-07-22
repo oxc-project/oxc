@@ -18,10 +18,16 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoNamespace {
     allow_declarations: bool,
     allow_definition_files: bool,
+}
+
+impl Default for NoNamespace {
+    fn default() -> Self {
+        Self { allow_declarations: false, allow_definition_files: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -130,7 +136,7 @@ impl Rule for NoNamespace {
                 .get(0)
                 .and_then(|x| x.get("allowDefinitionFiles"))
                 .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
+                .unwrap_or(true),
         }
     }
 
@@ -147,13 +153,13 @@ impl Rule for NoNamespace {
             return;
         }
 
-        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-            if let AstKind::TSModuleDeclaration(_) = parent.kind() {
-                return;
-            }
+        if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
+            return;
         }
 
-        if self.allow_declarations && is_declaration(node, ctx) {
+        if self.allow_declarations
+            && (declaration.declare || is_any_ancestor_declaration(node, ctx))
+        {
             return;
         }
 
@@ -181,7 +187,7 @@ impl Rule for NoNamespace {
     }
 }
 
-fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
     ctx.nodes()
         .ancestors(node.id())
         .any(|node| node.kind().as_ts_module_declaration().is_some_and(|decl| decl.declare))

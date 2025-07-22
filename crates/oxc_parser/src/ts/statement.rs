@@ -140,14 +140,12 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let intrinsic_ident = self.ast.alloc_identifier_reference(
+                let left_name = self.ast.ts_type_name_identifier_reference(
                     intrinsic_token.span(),
                     self.token_source(&intrinsic_token),
                 );
-                let type_name = self.parse_ts_qualified_type_name(
-                    intrinsic_token.start(),
-                    TSTypeName::IdentifierReference(intrinsic_ident),
-                );
+                let type_name =
+                    self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);
                 let type_parameters = self.parse_type_arguments_of_type_reference();
                 self.ast.ts_type_type_reference(
                     self.end_span(intrinsic_token.start()),
@@ -199,11 +197,8 @@ impl<'a> ParserImpl<'a> {
             ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
-        if !implements.is_empty() {
-            self.error(diagnostics::interface_implements(Span::new(
-                implements.first().unwrap().span.start,
-                implements.last().unwrap().span.end,
-            )));
+        if let Some((implements_kw_span, _)) = implements {
+            self.error(diagnostics::interface_implements(implements_kw_span));
         }
         for extend in &extends {
             if !extend.expression.is_entity_name_expression() {
@@ -236,7 +231,9 @@ impl<'a> ParserImpl<'a> {
             return self.parse_signature_member(CallOrConstructorSignature::Call);
         }
 
-        if kind == Kind::New && self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) {
+        if kind == Kind::New
+            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+        {
             return self.parse_signature_member(CallOrConstructorSignature::Constructor);
         }
 
@@ -260,11 +257,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.parse_property_or_method_signature(span, &modifiers)
-    }
-
-    fn is_next_token_open_paren_or_angle_bracket(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
     }
 
     pub(crate) fn is_index_signature(&mut self) -> bool {

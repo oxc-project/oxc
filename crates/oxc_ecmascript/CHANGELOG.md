@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+## [0.77.1] - 2025-07-16
+
+### 🚜 Refactor
+
+- c68b607 ast: Rename `TemplateLiteral::quasi` to `TemplateLiteral::single_quasi` (#12266) (Dunqing)
+- 32c32af ast: Check whether there is a single `quasi` in `TemplateLiteral::quasi` (#12265) (Dunqing)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- d5c94a8 ecmascript: Move `is_less_than` to its own file (#12189) (Boshen)
+
+
+
+
+
+## [0.74.0] - 2025-06-23
+
+### 💥 BREAKING CHANGES
+
+- 7a05e71 minifier: [**BREAKING**] Add `Treeshake` options (#11786) (Boshen)
+
+### 🚀 Features
+
+- d462ead minifier: Remove dead code that evaluates to a constant value (#11788) (Boshen)
+
+### 🚜 Refactor
+
+- 5a46641 ecmascript: Move `get_constant_value_for_reference_id` to `IsGlobalReference` trait (#11810) (Boshen)
+
+
+
+
 ## [0.73.0] - 2025-06-13
 
 ### 💥 BREAKING CHANGES

@@ -79,6 +79,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### Options
+    /// ```typescript
     /// interface Options {
     ///     ignoreSpaces?: boolean;
     ///     ignoreTypeOfTestName?: boolean;
@@ -87,6 +88,8 @@ declare_oxc_lint!(
     ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     /// }
+    /// ```
+    ///
     ValidTitle,
     jest,
     correctness,
@@ -177,10 +180,7 @@ impl ValidTitle {
                 );
             }
             Argument::TemplateLiteral(template_literal) => {
-                if !template_literal.is_no_substitution_template() {
-                    return;
-                }
-                if let Some(quasi) = template_literal.quasi() {
+                if let Some(quasi) = template_literal.single_quasi() {
                     validate_title(
                         quasi.as_str(),
                         template_literal.span,

@@ -205,4 +205,20 @@ impl Schema {
     pub fn cell_def_mut(&mut self, type_id: TypeId) -> &mut CellDef {
         self.types[type_id].as_cell_mut().unwrap()
     }
+
+    /// Get reference to [`PointerDef`] for a [`TypeId`].
+    ///
+    /// # Panics
+    /// Panics if type [`TypeId`] refers to is not a pointer.
+    pub fn pointer_def(&self, type_id: TypeId) -> &PointerDef {
+        self.types[type_id].as_pointer().unwrap()
+    }
+
+    /// Get mutable reference to [`PointerDef`] for a [`TypeId`].
+    ///
+    /// # Panics
+    /// Panics if type [`TypeId`] refers to is not a pointer.
+    pub fn pointer_def_mut(&mut self, type_id: TypeId) -> &mut PointerDef {
+        self.types[type_id].as_pointer_mut().unwrap()
+    }
 }

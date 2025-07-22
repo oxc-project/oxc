@@ -1,11 +1,29 @@
 use oxc_span::Span;
 
-/// Used for `JSDoc.comment` and `JSDocTag.comment`
-#[derive(Debug, Clone, Copy)]
+/// Represents the raw text of a JSDoc tag *outside* the type expression (`{}`) and tag name (e.g., `@param`),
+/// such as the parameter name or trailing description.
+///
+/// This is used to capture parts of a JSDoc tag that aren't types but still carry semantic meaning,
+/// for example, the name `bar` or the description text in `@param {foo=} bar Some description`.
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar Some description
+///  *               ^^^^^^^^^^^^^^^^^^^^
+///  *               This is the `JSDocCommentPart`
+///  */
+/// ```
+///
+/// Used to populate the `.comment` field on `JSDoc` and `JSDocTag` nodes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocCommentPart<'a> {
+    /// The raw string content, such as a parameter name or freeform description text.
     raw: &'a str,
+
+    /// The span in the source text corresponding to this part.
     pub span: Span,
 }
+
 impl<'a> JSDocCommentPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         Self { raw: part_content, span }
@@ -107,11 +125,31 @@ impl<'a> JSDocTagKindPart<'a> {
     }
 }
 
+/// Represents the raw type content inside a JSDoc tag's curly braces `{}`.
+///
+/// This struct captures the type expression including the curly braces.
+/// It stores the raw string slice as it appears in the source (with the
+/// enclosing braces) and its corresponding span.
+///
+/// For example, in a JSDoc tag like:
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar
+///  *         ^^^^
+///  *         This is the `JSDocTagTypePart`, covering the full type expression
+///  */
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypePart<'a> {
+    /// The raw, unprocessed type expression string inside `{}`, including the braces.
+    /// For example: `"{foo=}"`, `"{Array<string>}"`, or `"{number | undefined}"`.
     raw: &'a str,
+
+    /// The span in the source text covering the entire `{...}` expression, including the braces.
     pub span: Span,
 }
+
 impl<'a> JSDocTagTypePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('{'));
@@ -127,13 +165,40 @@ impl<'a> JSDocTagTypePart<'a> {
     }
 }
 
+/// Represents a single component of a type name in a JSDoc tag
+/// typically seen within unions, generics, or optional/defaulted parameters.
+///
+/// This structure captures the raw source string, its span in the original code,
+/// and any modifiers like optional (`?`) or default (`=`).
+///
+/// For example, in a JSDoc tag like:
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar
+///  *               ^^^
+///  *               This is the `JSDocTagTypeNamePart`
+///  * @type {string} [myStr]
+///  *                ~~~~~~~ This is `optional: true` case
+///  *
+///  * @property {number} [myNum = 1]
+///  *                    ~~~~~~~~~~~ This is `optional: true` and `default: true` case
+///  */
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypeNamePart<'a> {
     raw: &'a str,
+
+    /// The span in the source text corresponding to this part.
     pub span: Span,
+
+    /// Indicates whether the type name part is marked as optional (`foo?`).
     pub optional: bool,
+
+    /// Indicates whether the type name part has a default value (`foo=`).
     pub default: bool,
 }
+
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.trim() == part_content);

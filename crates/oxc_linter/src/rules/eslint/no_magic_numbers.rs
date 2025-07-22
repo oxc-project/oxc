@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
+    ast::{AssignmentTarget, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -294,13 +294,13 @@ impl Rule for NoMagicNumbers {
         }
 
         let nodes = ctx.nodes();
-        let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
+        let config = InternConfig::from(node, nodes.parent_node(node.id()));
 
         if self.is_skipable(&config, nodes) {
             return;
         }
 
-        let parent_kind = nodes.parent_node(config.node.id()).unwrap().kind();
+        let parent_kind = nodes.parent_kind(config.node.id());
         let span = config.node.kind().span();
 
         let Some(reason) = self.get_report_reason(&parent_kind) else {
@@ -320,8 +320,20 @@ fn is_default_value(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::AssignmentTargetWithDefault(_) | AstKind::AssignmentPattern(_))
 }
 
-fn is_class_field_initial_value(parent_kind: &AstKind<'_>) -> bool {
-    matches!(parent_kind, AstKind::PropertyDefinition(_))
+fn is_class_field_initial_value(current_kind: &AstKind<'_>, parent_kind: &AstKind<'_>) -> bool {
+    let Some(prop_def) = parent_kind.as_property_definition() else {
+        return false;
+    };
+    // Allow this (literal is part of key):
+    //
+    // class C { 2; }
+    //           ^
+    //
+    // But do not allow this (literal is part of value):
+    //
+    // class C { x = 2 }
+    //               ^
+    prop_def.key.span() != current_kind.span()
 }
 
 fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
@@ -378,15 +390,10 @@ fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool
             _ => false,
         },
         AstKind::NumericLiteral(numeric) => match parent_kind {
-            AstKind::MemberExpression(expression) => {
-                if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
-                {
-                    return computed_expression.expression.is_number_value(numeric.value)
-                        && numeric.value.fract() == 0.0
-                        && numeric.value < f64::from(u32::MAX);
-                }
-
-                false
+            AstKind::ComputedMemberExpression(computed_expression) => {
+                computed_expression.expression.is_number_value(numeric.value)
+                    && numeric.value.fract() == 0.0
+                    && numeric.value < f64::from(u32::MAX)
             }
             _ => false,
         },
@@ -405,7 +412,7 @@ fn is_ts_numeric_literal<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<
         node.kind(),
         AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
     ) {
-        node = nodes.parent_node(node.id()).unwrap();
+        node = nodes.parent_node(node.id());
     }
 
     matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_))
@@ -422,7 +429,7 @@ fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNo
         node.kind(),
         AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
     ) {
-        node = nodes.parent_node(node.id()).unwrap();
+        node = nodes.parent_node(node.id());
     }
 
     matches!(node.kind(), AstKind::TSIndexedAccessType(_))
@@ -434,7 +441,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        let parent = nodes.parent_node(config.node.id()).unwrap();
+        let parent = nodes.parent_node(config.node.id());
         let parent_kind = parent.kind();
 
         if self.ignore_enums && is_ts_enum(&parent_kind) {
@@ -449,7 +456,9 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_class_field_initial_values && is_class_field_initial_value(&parent_kind) {
+        if self.ignore_class_field_initial_values
+            && is_class_field_initial_value(&config.node.kind(), &parent_kind)
+        {
             return true;
         }
 
@@ -457,7 +466,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        let parent_parent = nodes.parent_node(parent.id()).unwrap();
+        let parent_parent = nodes.parent_node(parent.id());
 
         if is_parse_int_radix(parent_parent) {
             return true;

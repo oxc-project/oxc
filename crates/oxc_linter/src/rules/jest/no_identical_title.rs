@@ -149,9 +149,9 @@ fn filter_and_process_jest_result<'a>(
         Some(Argument::StringLiteral(string_lit)) => {
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
-        Some(Argument::TemplateLiteral(template_lit)) => {
-            template_lit.quasi().map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id))
-        }
+        Some(Argument::TemplateLiteral(template_lit)) => template_lit
+            .single_quasi()
+            .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
         _ => None,
     }
 }
@@ -162,7 +162,7 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
             Some(node.id())
         }
         _ => {
-            let parent = ctx.nodes().parent_node(node.id())?;
+            let parent = ctx.nodes().parent_node(node.id());
             get_closest_block(parent, ctx)
         }
     }

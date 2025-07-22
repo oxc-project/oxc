@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// ```
     PreferArrayFlatMap,
     unicorn,
-    style,
+    perf,
     fix
 );
 
@@ -68,11 +68,13 @@ impl Rule for PreferArrayFlatMap {
         }
 
         if let Some(first_arg) = flat_call_expr.arguments.first() {
-            if let Argument::NumericLiteral(number_lit) = first_arg {
-                if number_lit.raw.as_ref().unwrap() != "1" {
-                    return;
-                }
-            } else {
+            // `Array.prototype.flat` rounds down the argument.
+            // So `.flat(1.5)` is equivalent to `.flat(1)`.
+            // https://tc39.es/ecma262/#sec-array.prototype.flat
+            // https://tc39.es/ecma262/#sec-tointegerorinfinity
+            // https://tc39.es/ecma262/#eqn-truncate
+            #[expect(clippy::float_cmp)]
+            if !matches!(first_arg, Argument::NumericLiteral(lit) if lit.value.floor() == 1.0) {
                 return;
             }
         }
@@ -107,7 +109,13 @@ fn test() {
         ("const bar = [[1],[2],[3]].flat()", None),
         ("const bar = [1,2,3].map(i => [i]).sort().flat()", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(2)", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(2.0)", None),
+        // Parsed as 0.9999999999999999. Rounds down to 0.
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999994)", None),
+        // Parsed as 2.0.
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999989)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(1, null)", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(-1)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(Infinity)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(Number.POSITIVE_INFINITY)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(Number.MAX_VALUE)", None),
@@ -117,11 +125,17 @@ fn test() {
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(+1)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo.bar)", None),
-        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)", None),
     ];
 
     let fail = vec![
         ("const bar = [[1],[2],[3]].map(i => [i]).flat()", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1)", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.0)", None),
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.00)", None),
+        // Parsed as 1.0.
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(0.99999999999999995)", None),
+        // Parsed as 1.9999999999999998. Rounds down to 1.
+        ("const bar = [[1],[2],[3]].map(i => [i]).flat(1.99999999999999988)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(1,)", None),
         ("const bar = [1,2,3].map(i => [i]).flat()", None),
         ("const bar = [1,2,3].map((i) => [i]).flat()", None),

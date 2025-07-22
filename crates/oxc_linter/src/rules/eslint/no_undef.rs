@@ -79,11 +79,12 @@ impl Rule for NoUndef {
 }
 
 fn has_typeof_operator(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes().parent_node(node.id()).is_some_and(|parent| match parent.kind() {
+    let parent = ctx.nodes().parent_node(node.id());
+    match parent.kind() {
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Typeof,
         AstKind::ParenthesizedExpression(_) => has_typeof_operator(parent, ctx),
         _ => false,
-    })
+    }
 }
 
 #[test]

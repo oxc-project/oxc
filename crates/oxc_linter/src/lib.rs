@@ -1,6 +1,14 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
 #![allow(clippy::literal_string_with_formatting_args)]
 
+use std::{path::Path, rc::Rc, sync::Arc};
+
+use oxc_allocator::Allocator;
+use oxc_semantic::{AstNode, Semantic};
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+use oxc_ast_macros::ast;
+
 #[cfg(test)]
 mod tester;
 
@@ -8,6 +16,8 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
+mod external_linter;
+mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
@@ -22,16 +32,22 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
-use std::{path::Path, rc::Rc, sync::Arc};
-
-use oxc_semantic::{AstNode, Semantic};
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+mod generated {
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+}
 
 pub use crate::{
     config::{
-        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintPlugins,
-        Oxlintrc,
+        BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
+        ESLintRule, LintPlugins, Oxlintrc,
     },
     context::LintContext,
+    external_linter::{
+        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
+    },
+    external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -40,6 +56,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
+    utils::read_to_arena_str,
     utils::read_to_string,
 };
 use crate::{
@@ -63,15 +80,21 @@ fn size_asserts() {
 }
 
 #[derive(Debug, Clone)]
+#[expect(clippy::struct_field_names)]
 pub struct Linter {
     options: LintOptions,
-    // config: Arc<LintConfig>,
     config: ConfigStore,
+    #[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
+    external_linter: Option<ExternalLinter>,
 }
 
 impl Linter {
-    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+    pub fn new(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+    ) -> Self {
+        Self { options, config, external_linter }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -103,8 +126,9 @@ impl Linter {
         path: &Path,
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
+        allocator: &Allocator,
     ) -> Vec<Message<'a>> {
-        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
@@ -137,7 +161,7 @@ impl Linter {
         // don't thrash the cache too much. Feel free to tweak based on benchmarking.
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-        if semantic.stats().nodes > 200_000 {
+        if semantic.nodes().len() > 200_000 {
             // Collect rules into a Vec so that we can iterate over the rules multiple times
             let rules = rules.collect::<Vec<_>>();
 
@@ -184,6 +208,13 @@ impl Linter {
             }
         }
 
+        #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+        self.run_external_rules(&external_rules, path, semantic, &ctx_host, allocator);
+
+        // Stop clippy complaining about unused vars
+        #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+        let (_, _) = (external_rules, allocator);
+
         if let Some(severity) = self.options.report_unused_directive {
             if severity.is_warn_deny() {
                 ctx_host.report_unused_directives(severity.into());
@@ -191,6 +222,115 @@ impl Linter {
         }
 
         ctx_host.take_diagnostics()
+    }
+
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    fn run_external_rules(
+        &self,
+        external_rules: &[(ExternalRuleId, AllowWarnDeny)],
+        path: &Path,
+        semantic: &Semantic<'_>,
+        ctx_host: &ContextHost,
+        allocator: &Allocator,
+    ) {
+        use std::ptr;
+
+        use oxc_diagnostics::OxcDiagnostic;
+        use oxc_span::Span;
+
+        use crate::fixer::PossibleFixes;
+
+        if external_rules.is_empty() {
+            return;
+        }
+
+        // `external_linter` always exists when `oxlint2` feature is enabled
+        let external_linter = self.external_linter.as_ref().unwrap();
+
+        // Write offset of `Program` and source text length in metadata at end of buffer
+        let program = semantic.nodes().program().unwrap();
+        let program_offset = ptr::from_ref(program) as u32;
+        #[expect(clippy::cast_possible_truncation)]
+        let source_len = program.source_text.len() as u32;
+
+        let metadata = RawTransferMetadata::new(program_offset, source_len);
+        let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
+        // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
+        // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
+        unsafe { metadata_ptr.write(metadata) };
+
+        // Pass AST and rule IDs to JS
+        let result = (external_linter.run)(
+            path.to_str().unwrap().to_string(),
+            external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            allocator,
+        );
+        match result {
+            Ok(diagnostics) => {
+                for diagnostic in diagnostics {
+                    match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id) {
+                        Some((plugin_name, rule_name)) => {
+                            ctx_host.push_diagnostic(Message::new(
+                                // TODO: `error` isn't right, we need to get the severity from `external_rules`
+                                OxcDiagnostic::error(diagnostic.message)
+                                    .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                    .with_severity(
+                                        (*external_rules
+                                            .iter()
+                                            .find(|(rule_id, _)| {
+                                                rule_id.raw() == diagnostic.external_rule_id
+                                            })
+                                            .map(|(_, severity)| severity)
+                                            .expect(
+                                                "external rule must exist when resolving severity",
+                                            ))
+                                        .into(),
+                                    ),
+                                PossibleFixes::None,
+                            ));
+                        }
+                        None => {
+                            // TODO: report diagnostic, this should be unreachable
+                            debug_assert!(false);
+                        }
+                    }
+                }
+            }
+            Err(_err) => {
+                // TODO: report diagnostic
+            }
+        }
+    }
+}
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+/// Metadata written to end of buffer.
+///
+/// Duplicate of `RawTransferMetadata` in `napi/parser/src/raw_transfer_types.rs`.
+/// Any changes made here also need to be made there.
+/// `oxc_ast_tools` checks that the 2 copies are identical.
+#[ast]
+struct RawTransferMetadata2 {
+    /// Offset of `Program` within buffer.
+    /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
+    /// but here it's offset of `Program`.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+    /// Offset of `u32` containing source text length within buffer.
+    pub(crate) source_len: u32,
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u32,
+}
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+use RawTransferMetadata2 as RawTransferMetadata;
+
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+impl RawTransferMetadata {
+    pub fn new(data_offset: u32, source_len: u32) -> Self {
+        Self { data_offset, is_ts: false, source_len, _padding: 0 }
     }
 }
 

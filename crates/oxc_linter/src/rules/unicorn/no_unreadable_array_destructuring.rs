@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::AssignmentTarget};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -63,9 +63,7 @@ impl Rule for NoUnreadableArrayDestructuring {
             }
         }
 
-        if let AstKind::AssignmentTarget(AssignmentTarget::ArrayAssignmentTarget(array_pattern)) =
-            node.kind()
-        {
+        if let AstKind::ArrayAssignmentTarget(array_pattern) = node.kind() {
             if is_unreadable_array_destructuring(
                 &array_pattern.elements,
                 array_pattern.rest.as_ref(),

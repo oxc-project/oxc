@@ -139,7 +139,7 @@ impl Case for SemanticTypeScriptCase {
     }
 
     fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case() || self.base.should_fail()
+        self.base.skip_test_case() || self.base.should_fail_with_any_error_codes()
     }
 
     fn execute(&mut self, source_type: SourceType) -> TestResult {

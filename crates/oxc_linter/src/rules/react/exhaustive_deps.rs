@@ -10,9 +10,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
         BindingPatternKind, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, MemberExpression, StaticMemberExpression,
-        TSTypeAnnotation, TSTypeParameter, TSTypeReference, VariableDeclarationKind,
-        VariableDeclarator,
+        FunctionBody, IdentifierReference, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
@@ -46,6 +45,7 @@ fn dependency_array_required_diagnostic(hook_name: &str, span: Span) -> OxcDiagn
     ))
     .with_label(span)
     .with_help("Did you forget to pass an array of dependencies?")
+    .with_error_code_scope(SCOPE)
 }
 
 fn unknown_dependencies_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -64,8 +64,9 @@ fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
-fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -> OxcDiagnostic {
-    let deps_pretty = if deps.len() == 1 {
+fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span) -> OxcDiagnostic {
+    let single = deps.len() == 1;
+    let deps_pretty = if single {
         format!("'{}'", deps[0])
     } else {
         let mut iter = deps.iter();
@@ -79,12 +80,25 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -
         format!("{all_but_last}, and '{last}'")
     };
 
-    OxcDiagnostic::warn(if deps.len() == 1 {
+    let labels = deps
+        .iter()
+        .map(|dep| {
+            // when multiple dependencies are missing, labels can quickly get noisy,
+            // so we only add labels when there's only one dependency
+            if single {
+                dep.span.label(format!("{hook_name} uses `{dep}` here"))
+            } else {
+                dep.span.into()
+            }
+        })
+        .chain(std::iter::once(span.primary()));
+
+    OxcDiagnostic::warn(if single {
         format!("React Hook {hook_name} has a missing dependency: {deps_pretty}")
     } else {
         format!("React Hook {hook_name} has missing dependencies: {deps_pretty}")
     })
-    .with_label(span)
+    .with_labels(labels)
     .with_help("Either include it or remove the dependency array.")
     .with_error_code_scope(SCOPE)
 }
@@ -93,6 +107,7 @@ fn unnecessary_dependency_diagnostic(hook_name: &str, dep_name: &str, span: Span
     OxcDiagnostic::warn(format!("React Hook {hook_name} has unnecessary dependency: {dep_name}"))
         .with_label(span)
         .with_help("Either include it or remove the dependency array.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn dependency_array_not_array_literal_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
@@ -120,11 +135,19 @@ fn complex_expression_in_dependency_array_diagnostic(hook_name: &str, span: Span
     .with_error_code_scope(SCOPE)
 }
 
-fn dependency_changes_on_every_render_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
+fn dependency_changes_on_every_render_diagnostic(
+    hook_name: &str,
+    span: Span,
+    dep_name: &str,
+    dep_decl_span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "React Hook {hook_name} has a dependency array that changes every render."
+        "React hook {hook_name} depends on `{dep_name}`, which changes every render"
     ))
-    .with_label(span)
+    .with_labels([
+        span.primary_label("it will always cause this hook to re-evaluate"),
+        dep_decl_span.label(format!("`{dep_name}` is declared here")),
+    ])
     .with_help("Try memoizing this variable with `useRef` or `useCallback`.")
     .with_error_code_scope(SCOPE)
 }
@@ -219,7 +242,8 @@ declare_oxc_lint!(
     /// ```
     ExhaustiveDeps,
     react,
-    correctness
+    correctness,
+    safe_fixes_and_dangerous_suggestions
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
@@ -274,10 +298,10 @@ impl Rule for ExhaustiveDeps {
 
         if dependencies_node.is_none() && !is_effect {
             if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
-                ctx.diagnostic(dependency_array_required_diagnostic(
-                    hook_name.as_str(),
-                    call_expr.span(),
-                ));
+                ctx.diagnostic_with_fix(
+                    dependency_array_required_diagnostic(hook_name.as_str(), call_expr.span()),
+                    |fixer| fixer.insert_text_after(callback_node, ", []"),
+                );
             }
             return;
         }
@@ -339,7 +363,7 @@ impl Rule for ExhaustiveDeps {
                                                 _ => {
                                                     ctx.diagnostic(missing_dependency_diagnostic(
                                                         hook_name,
-                                                        &[ident.name.to_string()],
+                                                        &[Name::from(ident.as_ref())],
                                                         dependencies_node.span(),
                                                     ));
                                                     None
@@ -355,7 +379,7 @@ impl Rule for ExhaustiveDeps {
                                     AstKind::FormalParameter(_) => {
                                         ctx.diagnostic(missing_dependency_diagnostic(
                                             hook_name,
-                                            &[ident.name.to_string()],
+                                            &[Name::from(ident.as_ref())],
                                             dependencies_node.span(),
                                         ));
                                         None
@@ -436,23 +460,15 @@ impl Rule for ExhaustiveDeps {
                     let reference = ctx.scoping().get_reference(ident.reference_id());
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
-                            ctx.nodes().parent_node(reference.node_id()).is_some_and(|parent| {
-                                let AstKind::MemberExpression(
-                                    MemberExpression::StaticMemberExpression(member_expr),
-                                ) = parent.kind()
-                                else {
-                                    return false;
-                                };
-                                if member_expr.property.name != "current" {
-                                    return false;
-                                }
-                                ctx.nodes().parent_node(parent.id()).is_some_and(|grand_parent| {
-                                    matches!(
-                                        grand_parent.kind(),
-                                        AstKind::SimpleAssignmentTarget(_)
-                                    )
-                                })
-                            })
+                            let parent = ctx.nodes().parent_node(reference.node_id());
+                            let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
+                                return false;
+                            };
+                            if member_expr.property.name != "current" {
+                                return false;
+                            }
+                            let grand_parent = ctx.nodes().parent_node(parent.id());
+                            matches!(grand_parent.kind(), AstKind::SimpleAssignmentTarget(_))
                         })
                     });
 
@@ -565,11 +581,11 @@ impl Rule for ExhaustiveDeps {
         });
 
         if undeclared_deps.clone().count() > 0 {
-            ctx.diagnostic(missing_dependency_diagnostic(
-                hook_name,
-                &undeclared_deps.map(Dependency::to_string).collect::<Vec<_>>(),
-                dependencies_node.span(),
-            ));
+            let undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+            ctx.diagnostic_with_dangerous_suggestion(
+                missing_dependency_diagnostic(hook_name, &undeclared, dependencies_node.span()),
+                |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
+            );
         }
 
         // effects are allowed to have extra dependencies
@@ -613,9 +629,10 @@ impl Rule for ExhaustiveDeps {
             let Some(symbol_id) = dep.symbol_id else { continue };
 
             if dep.chain.is_empty() && is_symbol_declaration_referentially_unique(symbol_id, ctx) {
+                let name = ctx.scoping().symbol_name(symbol_id);
+                let decl_span = ctx.scoping().symbol_span(symbol_id);
                 ctx.diagnostic(dependency_changes_on_every_render_diagnostic(
-                    hook_name,
-                    dependencies_node.span,
+                    hook_name, dep.span, name, decl_span,
                 ));
             }
         }
@@ -737,6 +754,33 @@ fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Op
         }
         Expression::Identifier(ident) => Some(&ident.name),
         _ => None,
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Name<'a> {
+    pub span: Span,
+    pub name: Cow<'a, str>,
+}
+impl std::fmt::Display for Name<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
+impl<'a> From<&Dependency<'a>> for Name<'a> {
+    fn from(dep: &Dependency<'a>) -> Self {
+        let name = if dep.chain.is_empty() {
+            Cow::Borrowed(dep.name.as_str())
+        } else {
+            Cow::Owned(dep.to_string())
+        };
+        Self { name, span: dep.span }
+    }
+}
+impl<'a> From<&IdentifierReference<'a>> for Name<'a> {
+    fn from(id: &IdentifierReference<'a>) -> Self {
+        Self { name: Cow::Borrowed(id.name.as_str()), span: id.span }
     }
 }
 
@@ -1029,7 +1073,7 @@ fn is_stable_value<'a, 'b>(
                     .any(|reference| {
                         matches!(
                             ctx.nodes().parent_kind(reference.node_id()),
-                            Some(AstKind::SimpleAssignmentTarget(_))
+                            AstKind::SimpleAssignmentTarget(_)
                         )
                     })
             {
@@ -1206,7 +1250,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         // noop
     }
 
-    fn visit_ts_type_parameters(&mut self, _it: &oxc_allocator::Vec<'a, TSTypeParameter<'a>>) {
+    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {
         // noop
     }
 
@@ -1254,7 +1298,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         }
 
         let is_parent_call_expr =
-            self.stack.get(self.stack.len() - 2).is_some_and(|&ty| ty == AstType::CallExpression);
+            self.stack.last().is_some_and(|&ty| ty == AstType::CallExpression);
 
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {
@@ -1401,6 +1445,43 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
     }
 
     false
+}
+
+mod fix {
+    use super::Name;
+    use itertools::Itertools;
+    use oxc_ast::ast::ArrayExpression;
+    use oxc_span::GetSpan;
+
+    use crate::fixer::{RuleFix, RuleFixer};
+
+    pub fn append_dependencies<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        names: &[Name<'a>],
+        deps: &ArrayExpression<'a>,
+    ) -> RuleFix<'a> {
+        let names_as_deps = names.iter().map(|n| n.name.as_ref()).join(", ");
+        let Some(last) = deps.elements.last() else {
+            return fixer.replace(deps.span, format!("[{names_as_deps}]"));
+        };
+        // look for a trailing comma. we'll need to add one if its not there already
+        let mut needs_comma = true;
+        let last_span = last.span();
+        for c in fixer.source_text()[(last_span.end as usize)..].chars() {
+            match c {
+                ',' => {
+                    needs_comma = false;
+                    break;
+                }
+                ']' => break,
+                _ => {} // continue
+            }
+        }
+        fixer.insert_text_after_range(
+            last_span,
+            if needs_comma { format!(", {names_as_deps}") } else { format!(" {names_as_deps}") },
+        )
+    }
 }
 
 #[test]
@@ -2361,6 +2442,7 @@ fn test() {
             bar();
           }, [])
         }",
+        // check various forms of member expressions
         r"function Example(props) {
           useEffect(() => {
             let topHeight = 0;
@@ -2471,6 +2553,7 @@ fn test() {
         r"function Foo2() { useEffect(() => { foo() }, []); const foo = () => { bar() }; function bar () { foo() } }",
         r"function MyComponent(props) { useEffect(() => { console.log(props.foo!.bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
+        r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
     ];
 
     let fail = vec![
@@ -3951,11 +4034,81 @@ fn test() {
         Some(serde_json::json!([{ "additionalHooks": "useSpecialEffect" }])),
     )];
 
+    let fix = vec![
+        (
+            "const useHook = x => useCallback(() => x)",
+            "const useHook = x => useCallback(() => x, [])",
+            // None,
+            // FixKind::SafeFix,
+        ),
+        (
+            "const useHook = x => useCallback(() => { return x; })",
+            "const useHook = x => useCallback(() => { return x; }, [])",
+            // None,
+            // FixKind::SafeFix,
+        ),
+        (
+            r"const useHook = () => {
+              const [state, setState] = useState(0);
+              const foo = useCallback(() => state, []);
+            }",
+            r"const useHook = () => {
+              const [state, setState] = useState(0);
+              const foo = useCallback(() => state, [state]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const foo = useCallback(() => x + y, []);
+            }",
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const foo = useCallback(() => x + y, [x, y]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [x]);
+            }",
+            r"const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [x, y, z]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        // (
+        //     r#"const useHook = () => {
+        //       const [state, setState] = useState(0);
+        //       const foo = useCallback(() => state);
+        //     }"#,
+        //     r#"const useHook = () => {
+        //       const [state, setState] = useState(0);
+        //       const foo = useCallback(() => state, [state]);
+        //     }"#,
+        //     // None,
+        //     // FixKind::DangerousSuggestion,
+        // ),
+    ];
+
     Tester::new(
         ExhaustiveDeps::NAME,
         ExhaustiveDeps::PLUGIN,
         pass.iter().map(|&code| (code, None)).chain(pass_additional_hooks).collect::<Vec<_>>(),
         fail.iter().map(|&code| (code, None)).chain(fail_additional_hooks).collect::<Vec<_>>(),
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

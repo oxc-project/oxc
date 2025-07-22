@@ -3677,6 +3677,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
             pure: CloneIn::clone_in(&self.pure, allocator),
+            pife: CloneIn::clone_in(&self.pife, allocator),
         }
     }
 
@@ -3691,6 +3692,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
             scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
             pure: CloneIn::clone_in_with_semantic_ids(&self.pure, allocator),
+            pife: CloneIn::clone_in_with_semantic_ids(&self.pife, allocator),
         }
     }
 }
@@ -6714,6 +6716,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeName<'_> {
                 TSTypeName::IdentifierReference(CloneIn::clone_in(it, allocator))
             }
             Self::QualifiedName(it) => TSTypeName::QualifiedName(CloneIn::clone_in(it, allocator)),
+            Self::ThisExpression(it) => {
+                TSTypeName::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
         }
     }
 
@@ -6724,6 +6729,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeName<'_> {
             }
             Self::QualifiedName(it) => {
                 TSTypeName::QualifiedName(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            }
+            Self::ThisExpression(it) => {
+                TSTypeName::ThisExpression(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
         }
     }
@@ -7379,6 +7387,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQueryExprName<'_> {
             Self::QualifiedName(it) => {
                 TSTypeQueryExprName::QualifiedName(CloneIn::clone_in(it, allocator))
             }
+            Self::ThisExpression(it) => {
+                TSTypeQueryExprName::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
         }
     }
 
@@ -7391,6 +7402,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQueryExprName<'_> {
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
             Self::QualifiedName(it) => TSTypeQueryExprName::QualifiedName(
+                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            ),
+            Self::ThisExpression(it) => TSTypeQueryExprName::ThisExpression(
                 CloneIn::clone_in_with_semantic_ids(it, allocator),
             ),
         }
@@ -7632,6 +7646,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleReference<'_> {
             Self::QualifiedName(it) => {
                 TSModuleReference::QualifiedName(CloneIn::clone_in(it, allocator))
             }
+            Self::ThisExpression(it) => {
+                TSModuleReference::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
         }
     }
 
@@ -7646,6 +7663,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleReference<'_> {
             Self::QualifiedName(it) => {
                 TSModuleReference::QualifiedName(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
+            Self::ThisExpression(it) => TSModuleReference::ThisExpression(
+                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            ),
         }
     }
 }

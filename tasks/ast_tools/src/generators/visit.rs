@@ -787,8 +787,8 @@ pub fn generate_visit_type<V: VisitorOutputs>(
         TypeDef::Vec(vec_def) => {
             generate_visit_vec(vec_def, target, visit_args, visitor, trailing_semicolon, schema)
         }
-        // Primitives and `Cell`s are not visited
-        TypeDef::Primitive(_) | TypeDef::Cell(_) => None,
+        // Primitives, `Cell`s, and pointers are not visited
+        TypeDef::Primitive(_) | TypeDef::Cell(_) | TypeDef::Pointer(_) => None,
     }
 }
 

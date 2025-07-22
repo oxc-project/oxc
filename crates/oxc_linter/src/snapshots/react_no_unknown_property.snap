@@ -132,7 +132,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div crossOrigin />
    ·      ───────────
    ╰────
-  help: Property 'crossOrigin' is only allowed on: script, audio, link, image, video, img
+  help: Property 'crossOrigin' is only allowed on: link, script, audio, image, img, video
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -181,21 +181,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                                                                     ───────
    ╰────
-  help: Property 'onError' is only allowed on: source, link, script, audio, video, iframe, img, picture
+  help: Property 'onError' is only allowed on: source, picture, video, link, script, audio, img, iframe
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onLoad={this.load} />
    ·      ──────
    ╰────
-  help: Property 'onLoad' is only allowed on: source, iframe, picture, script, object, img, link
+  help: Property 'onLoad' is only allowed on: link, source, picture, script, iframe, img, object
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div fill="pink" />
    ·      ────
    ╰────
-  help: Property 'fill' is only allowed on: rect, ellipse, textPath, animateMotion, tref, animate, marker, svg, animateColor, use, symbol, polygon, text, circle, polyline, path, altGlyph, tspan, set, g, line, animateTransform, mask
+  help: Property 'fill' is only allowed on: polyline, animateMotion, g, animateTransform, polygon, svg, set, path, mask, symbol, tref, textPath, ellipse, animateColor, altGlyph, marker, circle, line, animate, tspan, text, use, rect
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -230,14 +230,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                                                                                                ───────────────
    ╰────
-  help: Property 'allowFullScreen' is only allowed on: iframe, video
+  help: Property 'allowFullScreen' is only allowed on: video, iframe
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div download="foo" />
    ·      ────────
    ╰────
-  help: Property 'download' is only allowed on: area, a
+  help: Property 'download' is only allowed on: a, area
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -279,7 +279,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div abbr="abbr" />
    ·      ────
    ╰────
-  help: Property 'abbr' is only allowed on: td, th
+  help: Property 'abbr' is only allowed on: th, td
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]

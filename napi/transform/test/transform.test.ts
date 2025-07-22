@@ -403,18 +403,45 @@ describe('typescript', () => {
         },
       });
       expect(ret.code).toMatchInlineSnapshot(`
-				"import _decorate from "@oxc-project/runtime/helpers/decorate";
-				class Foo {
-					constructor() {
-						this.b = 1;
-					}
-				}
-				_decorate([dec], Foo.prototype, "c", void 0);
-				class StaticFoo {}
-				_decorate([dec], StaticFoo, "c", void 0);
-				StaticFoo.b = 1;
-				"
-			`);
+        "import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Foo {
+        	constructor() {
+        		this.b = 1;
+        	}
+        }
+        _decorate([dec], Foo.prototype, "c", void 0);
+        class StaticFoo {}
+        StaticFoo.b = 1;
+        _decorate([dec], StaticFoo, "c", void 0);
+        "
+      `);
     });
+  });
+});
+
+describe('styled-components', () => {
+  test('matches output', () => {
+    const code = `
+      import styled, { css } from 'styled-components';
+
+      styled.div\`color: red;\`;
+      const v = css(["color: red;"]);
+    `;
+    const ret = transform('test.js', code, {
+      plugins: {
+        styledComponents: {
+          pure: true,
+        },
+      },
+    });
+    expect(ret.code).toMatchInlineSnapshot(`
+			"import styled, { css } from "styled-components";
+			styled.div.withConfig({
+				displayName: "test",
+				componentId: "sc-3q0sbi-0"
+			})(["color:red;"]);
+			const v = /* @__PURE__ */ css(["color: red;"]);
+			"
+		`);
   });
 });

@@ -51,25 +51,25 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "obj",
-            "node_id": 33
+            "node_id": 32
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "obj",
-            "node_id": 39
+            "node_id": 38
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "obj",
-            "node_id": 45
+            "node_id": 44
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 7,
             "name": "obj",
-            "node_id": 51
+            "node_id": 50
           }
         ]
       }

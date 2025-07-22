@@ -57,7 +57,6 @@ Ignore Files
                               .eslintignore)
         --no-ignore           Disables excluding of files from .eslintignore files, --ignore-path
                               flags and --ignore-pattern flags
-        --symlinks            Follow symbolic links. Oxlint ignores symbolic links by default.
 
 Handle Warnings
         --quiet               Disable reporting on warnings, only errors are reported

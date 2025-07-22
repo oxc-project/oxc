@@ -34,11 +34,13 @@ mod import {
     pub mod no_self_import;
     pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
+    pub mod prefer_default_export;
     pub mod unambiguous;
 }
 
 mod eslint {
     pub mod array_callback_return;
+    pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod curly;
     pub mod default_case;
@@ -51,6 +53,7 @@ mod eslint {
     pub mod getter_return;
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
+    pub mod id_length;
     pub mod init_declarations;
     pub mod max_classes_per_file;
     pub mod max_depth;
@@ -509,6 +512,7 @@ mod nextjs {
     pub mod no_duplicate_head;
     pub mod no_head_element;
     pub mod no_head_import_in_document;
+    pub mod no_html_link_for_pages;
     pub mod no_img_element;
     pub mod no_page_custom_font;
     pub mod no_script_component_in_head;
@@ -574,6 +578,7 @@ mod node {
 
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
+    eslint::arrow_body_style,
     eslint::block_scoped_var,
     eslint::curly,
     eslint::default_case,
@@ -586,6 +591,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::getter_return,
     eslint::grouped_accessor_pairs,
     eslint::guard_for_in,
+    eslint::id_length,
     eslint::init_declarations,
     eslint::max_classes_per_file,
     eslint::max_depth,
@@ -745,6 +751,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     import::no_webpack_loader_syntax,
+    import::prefer_default_export,
     import::unambiguous,
     jest::consistent_test_it,
     jest::expect_expect,
@@ -862,6 +869,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_title_in_document_head,
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
+    nextjs::no_html_link_for_pages,
     node::no_exports_assign,
     node::no_new_require,
     oxc::approx_constant,

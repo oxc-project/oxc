@@ -1,10 +1,11 @@
 {
   "name": "oxc-parser",
-  "version": "0.73.2",
+  "version": "0.77.3",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --platform --js bindings.js",
+    "build-test": "pnpm run build",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
@@ -43,14 +44,19 @@
     "wasm.mjs",
     "bindings.js",
     "webcontainer-fallback.js",
+    "generated/constants.js",
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
-    "generated/deserialize/lazy.js",
-    "raw-transfer/index.js",
+    "generated/lazy/constructors.js",
+    "generated/lazy/types.js",
+    "generated/lazy/walk.js",
+    "raw-transfer/common.js",
     "raw-transfer/eager.js",
     "raw-transfer/lazy.js",
     "raw-transfer/lazy-common.js",
-    "raw-transfer/node-array.js"
+    "raw-transfer/node-array.js",
+    "raw-transfer/supported.js",
+    "raw-transfer/visitor.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -61,8 +67,8 @@
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
-    "@napi-rs/wasm-runtime": "^0.2.7",
-    "@vitest/browser": "3.2.3",
+    "@napi-rs/wasm-runtime": "^1.0.0",
+    "@vitest/browser": "3.2.4",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
     "tinypool": "^1.1.0",

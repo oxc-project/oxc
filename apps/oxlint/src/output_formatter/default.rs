@@ -40,12 +40,12 @@ impl InternalFormatter for DefaultOutputFormatter {
         }
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "force_test_reporter")))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GraphicalReporter::default())
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "force_test_reporter"))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
 
@@ -113,7 +113,7 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
     output
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "force_test_reporter"))]
 mod test_implementation {
     use oxc_diagnostics::{
         Error, GraphicalReportHandler, GraphicalTheme,

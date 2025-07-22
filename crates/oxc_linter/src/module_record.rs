@@ -92,8 +92,8 @@ impl fmt::Debug for ModuleRecord {
             .loaded_modules
             .read()
             .unwrap()
-            .iter()
-            .map(|(key, _)| (key.to_string()))
+            .keys()
+            .map(ToString::to_string)
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
@@ -383,6 +383,11 @@ impl ExportExportName {
     /// Returns `true` if this is [`ExportExportName::Null`].
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
+    }
+
+    /// Returns `true` if this is [`ExportExportName::Name`].
+    pub fn is_name(&self) -> bool {
+        matches!(self, Self::Name(_))
     }
 
     /// Attempt to get the [`Span`] of this export name.

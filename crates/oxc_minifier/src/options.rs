@@ -24,6 +24,21 @@ pub struct CompressOptions {
     /// Default `false`
     pub drop_console: bool,
 
+    /// Join consecutive var, let and const statements.
+    ///
+    /// Default `true`
+    pub join_vars: bool,
+
+    /// Join consecutive simple statements using the comma operator.
+    ///
+    /// `a; b` -> `a, b`
+    ///
+    /// Default `true`
+    pub sequences: bool,
+
+    /// Drop unreferenced functions and variables.
+    pub unused: CompressOptionsUnused,
+
     /// Keep function / class names.
     pub keep_names: CompressOptionsKeepNames,
 
@@ -32,10 +47,9 @@ pub struct CompressOptions {
     pub treeshake: TreeShakeOptions,
 }
 
-#[expect(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { drop_console: false, ..Self::smallest() }
+        Self::smallest()
     }
 }
 
@@ -45,7 +59,10 @@ impl CompressOptions {
             target: ESTarget::ESNext,
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
-            drop_console: true,
+            drop_console: false,
+            join_vars: true,
+            sequences: true,
+            unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
         }
     }
@@ -56,9 +73,33 @@ impl CompressOptions {
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
+            join_vars: true,
+            sequences: true,
+            unused: CompressOptionsUnused::Keep,
             treeshake: TreeShakeOptions::default(),
         }
     }
+
+    pub fn dce() -> Self {
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::all_true(),
+            drop_debugger: false,
+            drop_console: false,
+            join_vars: false,
+            sequences: false,
+            unused: CompressOptionsUnused::Remove,
+            treeshake: TreeShakeOptions::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
+pub enum CompressOptionsUnused {
+    #[default]
+    Remove,
+    KeepAssign,
+    Keep,
 }
 
 #[derive(Debug, Clone, Copy, Default)]

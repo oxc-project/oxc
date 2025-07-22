@@ -13,11 +13,12 @@
     "./*": "./*"
   },
   "scripts": {
-    "build": "napi build --platform --release --target wasm32-wasip1-threads && node patch.mjs",
-    "dev": "napi build --platform --target wasm32-wasip1-threads && node patch.mjs"
+    "build-dev": "napi build --platform --target wasm32-wasip1-threads && node patch.mjs",
+    "build-test": "pnpm run build",
+    "build": "napi build --platform --release --target wasm32-wasip1-threads && node patch.mjs"
   },
   "dependencies": {
-    "@napi-rs/wasm-runtime": "^0.2.7"
+    "@napi-rs/wasm-runtime": "^1.0.0"
   },
   "collaborators": [
     "Boshen <boshenc@gmail.com>",

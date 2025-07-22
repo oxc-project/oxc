@@ -1,0 +1,140 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const a = 3
+   · ──────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:10]
+ 1 │ export { MemoryValue } from './Memory'
+   ·          ───────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const a = 3
+   · ──────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export function bar() {}
+   · ────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const foo = 'foo';
+   · ─────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:20]
+ 1 │ const foo = 'foo'; export { foo };
+   ·                    ───────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const { foo } = { foo: 'bar' };
+   · ──────────────────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const { foo: { bar } } = { foo: { bar: 'baz' } };
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export on a file with single export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const [a] = ['foo']
+   · ──────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:3:17]
+ 2 │                 export const foo = 'foo'
+ 3 │                 export const bar = 'bar';
+   ·                 ─────────────────────────
+ 4 │             
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:3:17]
+ 2 │                 export const foo = 'foo';
+ 3 │                 export function bar() {};
+   ·                 ────────────────────────
+ 4 │             
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:3:17]
+ 2 │                 let foo, bar;
+ 3 │                 export { foo, bar }
+   ·                 ───────────────────
+ 4 │             
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:4:17]
+ 3 │                 export const foo = item;
+ 4 │                 export { item };
+   ·                 ────────────────
+ 5 │             
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export { a, b } from 'foo.js'
+   · ─────────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:3:17]
+ 2 │                 const foo = 'foo';
+ 3 │                 export { foo };
+   ·                 ───────────────
+ 4 │             
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const { foo } = { foo: 'bar' };
+   · ──────────────────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:1:1]
+ 1 │ export const { foo: { bar } } = { foo: { bar: 'baz' } };
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Prefer a default export
+
+  ⚠ eslint-plugin-import(prefer-default-export): Prefer default export to be present on every file that has export.
+   ╭─[prefer_default_export.tsx:4:17]
+ 3 │                 export const r = 3;
+ 4 │                 export { last } from './Memory'
+   ·                 ───────────────────────────────
+ 5 │             
+   ╰────
+  help: Prefer a default export

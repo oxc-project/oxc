@@ -27,13 +27,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/namespac
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "v",
-            "node_id": 7
+            "node_id": 6
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "v",
-            "node_id": 12
+            "node_id": 10
           }
         ]
       },

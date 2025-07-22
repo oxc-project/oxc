@@ -1175,7 +1175,7 @@ export interface TSTypeReference extends Span {
   typeArguments: TSTypeParameterInstantiation | null;
 }
 
-export type TSTypeName = IdentifierReference | ThisExpression | TSQualifiedName;
+export type TSTypeName = IdentifierReference | TSQualifiedName | ThisExpression;
 
 export interface TSQualifiedName extends Span {
   type: 'TSQualifiedName';
@@ -1515,6 +1515,7 @@ export type UpdateOperator = '++' | '--';
 export interface Span {
   start: number;
   end: number;
+  range?: [number, number];
 }
 
 export type ModuleKind = 'script' | 'module';

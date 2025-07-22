@@ -7,8 +7,8 @@ use oxc_napi::{Comment, OxcError};
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
-    /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
-    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
@@ -22,6 +22,14 @@ pub struct ParserOptions {
     /// The type of the file is determined from `lang` option, or extension of provided `filename`.
     #[napi(ts_type = "'js' | 'ts'")]
     pub ast_type: Option<String>,
+
+    /// Controls whether the `range` property is included on AST nodes.
+    /// The `range` property is a `[number, number]` which indicates the start/end offsets
+    /// of the node in the file contents.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub range: Option<bool>,
 
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///

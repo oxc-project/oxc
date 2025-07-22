@@ -5,10 +5,10 @@ use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins},
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{FixKind, Message, PossibleFixes},
+    AllowWarnDeny, FrameworkFlags, LintPlugins,
+    config::LintConfig,
+    disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
+    fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -63,8 +63,6 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
-    /// A list of all available linter plugins.
-    pub(super) plugins: LintPlugins,
 }
 
 impl<'a> ContextHost<'a> {
@@ -90,7 +88,6 @@ impl<'a> ContextHost<'a> {
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
-        let plugins = config.plugins;
 
         Self {
             semantic,
@@ -101,23 +98,8 @@ impl<'a> ContextHost<'a> {
             file_path,
             config,
             frameworks: options.framework_hints,
-            plugins,
         }
         .sniff_for_frameworks()
-    }
-
-    /// Set the linter configuration for this context.
-    #[inline]
-    pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
-        let plugins = config.plugins;
-        self.config = Arc::clone(config);
-
-        if self.plugins != plugins {
-            self.plugins = plugins;
-            return self.sniff_for_frameworks();
-        }
-
-        self
     }
 
     /// Shared reference to the [`Semantic`] analysis of the file.
@@ -149,14 +131,14 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> LintPlugins {
-        self.plugins
+    pub fn plugins(&self) -> &LintPlugins {
+        &self.config.plugins
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(super) fn push_diagnostic(&self, diagnostic: Message<'a>) {
+    pub(crate) fn push_diagnostic(&self, diagnostic: Message<'a>) {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
@@ -167,26 +149,48 @@ impl<'a> ContextHost<'a> {
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
     pub fn report_unused_directives(&self, rule_severity: Severity) {
-        let unused_enable_comments = self.disable_directives.unused_enable_comments();
-        let unused_disable_comments = self.disable_directives.collect_unused_disable_comments();
-        let mut unused_directive_diagnostics: Vec<(Cow<str>, Span)> =
-            Vec::with_capacity(unused_enable_comments.len() + unused_disable_comments.len());
-
         // report unused disable
         // relate to lint result, check after linter run finish
         let unused_disable_comments = self.disable_directives.collect_unused_disable_comments();
         let message_for_disable = "Unused eslint-disable directive (no problems were reported).";
-        for (rule_name, disable_comment_span) in unused_disable_comments {
-            unused_directive_diagnostics.push((
-                rule_name.map_or(Cow::Borrowed(message_for_disable), |name| {
-                    Cow::Owned(format!(
-                        "Unused eslint-disable directive (no problems were reported from {name})."
-                    ))
-                }),
-                disable_comment_span,
-            ));
+        let fix_message = "remove unused disable directive";
+        let source_text = self.semantic.source_text();
+
+        for unused_disable_comment in unused_disable_comments {
+            let span = unused_disable_comment.span;
+            match &unused_disable_comment.r#type {
+                RuleCommentType::All => {
+                    // eslint-disable
+                    self.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(message_for_disable)
+                            .with_label(span)
+                            .with_severity(rule_severity),
+                        PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                    ));
+                }
+                RuleCommentType::Single(rules_vec) => {
+                    for rule in rules_vec {
+                        let rule_message = Cow::<str>::Owned(format!(
+                            "Unused eslint-disable directive (no problems were reported from {}).",
+                            rule.rule_name
+                        ));
+
+                        let fix = rule.create_fix(source_text, span).with_message(fix_message);
+
+                        self.push_diagnostic(Message::new(
+                            OxcDiagnostic::error(rule_message)
+                                .with_label(rule.name_span)
+                                .with_severity(rule_severity),
+                            PossibleFixes::Single(fix),
+                        ));
+                    }
+                }
+            }
         }
 
+        let unused_enable_comments = self.disable_directives.unused_enable_comments();
+        let mut unused_directive_diagnostics: Vec<(Cow<str>, Span)> =
+            Vec::with_capacity(unused_enable_comments.len());
         // report unused enable
         // not relate to lint result, check during comment directives' construction
         let message_for_enable =
@@ -209,7 +213,7 @@ impl<'a> ContextHost<'a> {
                     Message::new(
                         OxcDiagnostic::error(message).with_label(span).with_severity(rule_severity),
                         // TODO: fixer
-                        // if all rules in the same directive are unused, fixer should remove the entire comment
+                        // copy the structure of disable directives
                         PossibleFixes::None,
                     )
                 })
@@ -265,7 +269,7 @@ impl<'a> ContextHost<'a> {
     /// on top of those hints, providing a more granular understanding of the
     /// frameworks in use.
     fn sniff_for_frameworks(mut self) -> Self {
-        if self.plugins.has_test() {
+        if self.plugins().has_test() {
             // let mut test_flags = FrameworkFlags::empty();
 
             let vitest_like = frameworks::has_vitest_imports(self.module_record());

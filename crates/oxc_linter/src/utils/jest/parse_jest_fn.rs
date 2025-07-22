@@ -13,7 +13,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_pure_string},
+    utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
     utils::valid_vitest_fn::is_valid_vitest_call,
 };
 
@@ -84,9 +84,12 @@ pub fn parse_jest_fn_call<'a>(
         // Ensure that we're at the "top" of the function call chain otherwise when
         // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
         // the full chain is not a valid jest function call chain
-        if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
-            matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
-        }) {
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::CallExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+        ) {
             return None;
         }
 
@@ -139,8 +142,12 @@ fn parse_jest_expect_fn_call<'a>(
     }
 
     if matches!(expect_error, Some(ExpectError::MatcherNotFound)) {
-        let parent = ctx.nodes().parent_node(node.id())?;
-        if matches!(parent.kind(), AstKind::MemberExpression(_)) {
+        // If the parent is a member expression, we can assume that the matcher
+        // is not called, so we can set the error to `MatcherNotCalled`.
+        if matches!(
+            ctx.nodes().parent_kind(node.id()),
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_)
+        ) {
             expect_error = Some(ExpectError::MatcherNotCalled);
         }
     }
@@ -235,13 +242,13 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     let mut node = node;
 
     loop {
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return true;
-        };
+        let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
             AstKind::CallExpression(_) => return false,
-            AstKind::MemberExpression(_) => node = parent,
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                node = parent;
+            }
             _ => {
                 return true;
             }
@@ -411,7 +418,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
                     Some(Cow::Borrowed(string_literal.value.as_str()))
                 }
                 Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
-                    template_literal.quasi().expect("get string content").as_str(),
+                    template_literal.single_quasi().expect("get string content").as_str(),
                 )),
                 _ => None,
             },
@@ -547,7 +554,9 @@ fn recurse_extend_node_chain<'a>(
                 span: string_literal.span,
             });
         }
-        Expression::TemplateLiteral(template_literal) if is_pure_string(template_literal) => {
+        Expression::TemplateLiteral(template_literal)
+            if template_literal.is_no_substitution_template() =>
+        {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
                 parent: *parent,

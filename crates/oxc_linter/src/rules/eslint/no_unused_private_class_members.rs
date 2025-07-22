@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
@@ -95,6 +95,7 @@ impl Rule for NoUnusedPrivateClassMembers {
                 if !element.kind.intersects(ElementKind::Property | ElementKind::Method) {
                     continue;
                 }
+
                 if element.is_private
                     && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
                         // If the element is a property, it must be read.
@@ -113,33 +114,66 @@ impl Rule for NoUnusedPrivateClassMembers {
 }
 
 fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
-    for (curr, parent) in nodes
-        .ancestors(nodes.parent_id(current_node_id).unwrap_or(current_node_id))
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+    for (curr, parent) in
+        nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
+            (member_expr, AstKind::SimpleAssignmentTarget(_))
+                if member_expr.is_member_expression_kind() => {}
             (
-                AstKind::SimpleAssignmentTarget(_) | AstKind::MemberExpression(_),
-                AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_),
+                AstKind::SimpleAssignmentTarget(_),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
             ) => {}
             (
-                AstKind::AssignmentTarget(_),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_),
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTarget(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::ArrayAssignmentTarget(_),
-            )
-            | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::AssignmentTargetPropertyProperty(_),
+            ) => return false,
+            (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(assign_expr)) => {
+                if matches!(assign_expr.operator, AssignmentOperator::Assign) {
+                    return false;
+                }
+
+                // if an assignment expression is inside a call expression, it should be considered a read.
+                let is_parent_inside_call_expression =
+                    nodes.ancestors(parent.id()).any(|grand_parent_node| {
+                        matches!(grand_parent_node.kind(), AstKind::CallExpression(_))
+                    });
+
+                if is_parent_inside_call_expression {
+                    return true;
+                }
+
+                if matches!(
+                    assign_expr.operator,
+                    AssignmentOperator::LogicalOr
+                        | AssignmentOperator::LogicalAnd
+                        | AssignmentOperator::LogicalNullish
+                ) {
+                    return !matches!(
+                        nodes.parent_kind(parent.id()),
+                        AstKind::ExpressionStatement(_)
+                    );
+                }
+
                 return false;
             }
-            (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_))
+            (
+                AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_),
+                AstKind::AssignmentExpression(_),
+            )
             | (_, AstKind::UpdateExpression(_)) => {
-                return !matches!(
-                    nodes.parent_kind(parent.id()),
-                    Some(AstKind::ExpressionStatement(_))
-                );
+                return !matches!(nodes.parent_kind(parent.id()), AstKind::ExpressionStatement(_));
             }
             _ => return true,
         }
@@ -155,24 +189,24 @@ fn test() {
     let pass = vec![
         r"class Foo {}",
         r"class Foo {
-			    publicMember = 42;
-			}",
+        	    publicMember = 42;
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    method() {
-			        return this.#usedMember;
-			    }
-			}",
+        	    #usedMember = 42;
+        	    method() {
+        	        return this.#usedMember;
+        	    }
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    anotherMember = this.#usedMember;
-			}",
+        	    #usedMember = 42;
+        	    anotherMember = this.#usedMember;
+        	}",
         r"class Foo {
-			    #usedMember = 42;
-			    foo() {
-			        anotherMember = this.#usedMember;
-			    }
-			}",
+        	    #usedMember = 42;
+        	    foo() {
+        	        anotherMember = this.#usedMember;
+        	    }
+        	}",
         r"class C {
 			    #usedMember;
 
@@ -307,6 +341,7 @@ fn test() {
                 callback;
             }
          }",
+        r"class ChildProcess extends EventEmitter { #stdioObject; #createStdioObject() {} get stdio() { return (this.#stdioObject ??= this.#createStdioObject()); } }",
     ];
 
     let fail = vec![

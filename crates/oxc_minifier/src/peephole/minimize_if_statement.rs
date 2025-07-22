@@ -6,17 +6,16 @@ use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
         &self,
         if_stmt: &mut IfStatement<'a>,
-        state: &mut State,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
-        self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
+        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
@@ -48,7 +47,7 @@ impl<'a> PeepholeOptimizations {
             {
                 // "if (a) {}" => "a;"
                 let mut expr = if_stmt.test.take_in(ctx.ast);
-                self.remove_unused_expression(&mut expr, state, ctx);
+                self.remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
@@ -71,7 +70,7 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.test = unary_expr.argument.take_in(ctx.ast);
                         if_stmt.consequent = stmt.take_in(ctx.ast);
                         if_stmt.alternate = None;
-                        state.changed = true;
+                        ctx.state.changed = true;
                     }
                     // "if (a) {} else return b;" => "if (!a) return b;"
                     _ => {
@@ -82,8 +81,8 @@ impl<'a> PeepholeOptimizations {
                         );
                         if_stmt.consequent = stmt.take_in(ctx.ast);
                         if_stmt.alternate = None;
-                        self.try_minimize_if(if_stmt, state, ctx);
-                        state.changed = true;
+                        self.try_minimize_if(if_stmt, ctx);
+                        ctx.state.changed = true;
                     }
                 }
             }
@@ -96,8 +95,8 @@ impl<'a> PeepholeOptimizations {
                         // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                         if_stmt.test = unary_expr.argument.take_in(ctx.ast);
                         std::mem::swap(&mut if_stmt.consequent, alternate);
-                        self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
-                        state.changed = true;
+                        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
+                        ctx.state.changed = true;
                     }
                 }
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
@@ -116,7 +115,7 @@ impl<'a> PeepholeOptimizations {
                             ctx,
                         );
                         if_stmt.consequent = if2_stmt.consequent.take_in(ctx.ast);
-                        state.changed = true;
+                        ctx.state.changed = true;
                     }
                 }
             }
@@ -127,12 +126,7 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     #[expect(clippy::cast_possible_truncation)]
-    fn wrap_to_avoid_ambiguous_else(
-        &self,
-        if_stmt: &mut IfStatement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    fn wrap_to_avoid_ambiguous_else(&self, if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
                 let scope_id = ScopeId::new(ctx.scoping.scoping().scopes_len() as u32);
@@ -143,7 +137,7 @@ impl<'a> PeepholeOptimizations {
                         scope_id,
                     ),
                 ));
-                state.changed = true;
+                ctx.state.changed = true;
             }
         }
     }

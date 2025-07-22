@@ -84,10 +84,8 @@ impl Rule for PreferNativeCoercionFunctions {
                 if func.r#async || func.generator || func.params.items.is_empty() {
                     return;
                 }
-                if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-                    if matches!(parent.kind(), AstKind::ObjectProperty(_)) {
-                        return;
-                    }
+                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)) {
+                    return;
                 }
                 if let Some(function_body) = &func.body {
                     if let Some(call_expr_ident) =
@@ -199,20 +197,16 @@ fn check_array_callback_methods(
     is_arrow: bool,
     ctx: &LintContext,
 ) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node_id) else {
-        return false;
-    };
+    let parent = ctx.nodes().parent_node(node_id);
     let AstKind::Argument(parent_call_expr_arg) = parent.kind() else {
         return false;
     };
-    let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) else {
-        return false;
-    };
+    let grand_parent = ctx.nodes().parent_node(parent.id());
     let AstKind::CallExpression(call_expr) = grand_parent.kind() else {
         return false;
     };
 
-    if !std::ptr::eq(&call_expr.arguments[0], parent_call_expr_arg) {
+    if !std::ptr::eq(&raw const call_expr.arguments[0], parent_call_expr_arg) {
         return false;
     }
     if call_expr.optional {

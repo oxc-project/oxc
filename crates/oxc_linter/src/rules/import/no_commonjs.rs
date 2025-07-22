@@ -118,10 +118,12 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
     if is_cond {
         true
     } else {
-        let Some(parent) = ctx.nodes().parent_node(parent_node.id()) else {
-            return false;
-        };
-        is_conditional(parent, ctx)
+        let parent = ctx.nodes().parent_node(parent_node.id());
+        if matches!(parent.kind(), AstKind::Program(_)) {
+            false
+        } else {
+            is_conditional(parent, ctx)
+        }
     }
 }
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
@@ -146,55 +148,88 @@ impl Rule for NoCommonjs {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
                 // module.exports
-                let Some(property_name) = member_expr.static_property_name() else {
+                let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
+                let Some(property_name) =
+                    member_expr_kind.static_property_name().map(|s| s.as_str())
+                else {
                     return;
                 };
 
-                if member_expr.object().is_specific_id("module") && property_name == "exports" {
-                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(3) else {
+                let object = member_expr_kind.object();
+
+                if object.is_specific_id("module") && property_name == "exports" {
+                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(2) else {
                         return;
                     };
 
                     if !self.allow_primitive_modules {
                         ctx.diagnostic(no_commonjs_diagnostic(
-                            member_expr.span(),
+                            member_expr_kind.span(),
                             "export",
                             property_name,
                         ));
                     }
 
-                    if let AstKind::AssignmentExpression(assignment_expr) = parent_node.kind() {
-                        if let Expression::ObjectExpression(_object_expr) =
-                            &assignment_expr.right.without_parentheses()
+                    match parent_node.kind() {
+                        AstKind::ExpressionStatement(expr_statement)
+                            if matches!(
+                                expr_statement.expression,
+                                Expression::AssignmentExpression(_)
+                            ) =>
                         {
+                            match &expr_statement.expression {
+                                Expression::AssignmentExpression(assign_expr) => {
+                                    if !assign_expr.right.is_function()
+                                        && !assign_expr.right.is_string_literal()
+                                    {
+                                        ctx.diagnostic(no_commonjs_diagnostic(
+                                            member_expr_kind.span(),
+                                            "export",
+                                            property_name,
+                                        ));
+                                    }
+
+                                    return;
+                                }
+                                _ => return,
+                            }
+                        }
+                        AstKind::AssignmentExpression(assignment_expr) => {
+                            if let Expression::ObjectExpression(_object_expr) =
+                                &assignment_expr.right.without_parentheses()
+                            {
+                                ctx.diagnostic(no_commonjs_diagnostic(
+                                    member_expr_kind.span(),
+                                    "export",
+                                    property_name,
+                                ));
+                            } else {
+                                return;
+                            }
+                        }
+                        _ => {
                             ctx.diagnostic(no_commonjs_diagnostic(
-                                member_expr.span(),
+                                member_expr_kind.span(),
                                 "export",
                                 property_name,
                             ));
-                        } else {
                             return;
                         }
-                    } else {
-                        ctx.diagnostic(no_commonjs_diagnostic(
-                            member_expr.span(),
-                            "export",
-                            property_name,
-                        ));
                     }
-                    return;
                 }
 
                 // exports.
-                if member_expr.object().is_specific_id("exports") {
+                if object.is_specific_id("exports") {
                     if node.scope_id() != ctx.scoping().root_scope_id() {
                         return;
                     }
 
                     ctx.diagnostic(no_commonjs_diagnostic(
-                        member_expr.span(),
+                        member_expr_kind.span(),
                         "export",
                         property_name,
                     ));
@@ -225,9 +260,7 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-                    return;
-                };
+                let parent_node = ctx.nodes().parent_node(node.id());
 
                 if self.allow_conditional_require && is_conditional(parent_node, ctx) {
                     return;

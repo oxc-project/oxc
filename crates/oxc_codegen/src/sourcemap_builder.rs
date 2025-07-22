@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
@@ -65,9 +65,9 @@ pub struct ColumnOffsets {
 }
 
 #[expect(clippy::struct_field_names)]
-pub struct SourcemapBuilder {
+pub struct SourcemapBuilder<'a> {
     source_id: u32,
-    original_source: Arc<str>,
+    original_source: &'a str,
     last_generated_update: usize,
     last_position: Option<u32>,
     line_offset_tables: LineOffsetTables,
@@ -80,15 +80,15 @@ pub struct SourcemapBuilder {
     last_line_lookup: u32,
 }
 
-impl SourcemapBuilder {
-    pub fn new(path: &Path, source_text: &str) -> Self {
+impl<'a> SourcemapBuilder<'a> {
+    pub fn new(path: &Path, source_text: &'a str) -> Self {
         let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
         let source_id =
             sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
             source_id,
-            original_source: Arc::from(source_text),
+            original_source: source_text,
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
@@ -114,18 +114,17 @@ impl SourcemapBuilder {
         let original_name = self.original_source.get(span.start as usize..span.end as usize);
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
-        let token_name =
-            if original_name == Some(name) { None } else { original_name.map(Into::into) };
+        let token_name = if original_name == Some(name) { None } else { original_name };
         self.add_source_mapping(output, span.start, token_name);
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
-        if matches!(self.last_position, Some(last_position) if last_position == position) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+        if self.last_position == Some(position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
+        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
         self.sourcemap_builder.add_token(
             self.generated_line,
             self.generated_column,
@@ -361,9 +360,7 @@ impl SourcemapBuilder {
                         for (chunk_byte_offset, ch) in remaining.char_indices() {
                             #[expect(clippy::cast_possible_truncation)]
                             let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            for _ in 0..ch.len_utf8() {
-                                columns.push(column);
-                            }
+                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
 
                             match ch {
                                 '\r' => {

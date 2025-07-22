@@ -116,17 +116,17 @@ impl Tester<'_> {
     #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
         let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-        let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            self.create_workspace_worker()
-                .await
-                .lint_file(&uri, None)
-                .await
-                .expect("lint file is ignored")
-        });
-        let snapshot = if reports.is_empty() {
-            "No diagnostic reports".to_string()
+        let reports = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { self.create_workspace_worker().await.lint_file(&uri, None).await });
+        let snapshot = if let Some(reports) = reports {
+            if reports.is_empty() {
+                "No diagnostic reports".to_string()
+            } else {
+                reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
+            }
         } else {
-            reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
+            "File is ignored".to_string()
         };
 
         let snapshot_name = self.relative_root_dir.replace('/', "_");

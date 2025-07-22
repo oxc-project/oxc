@@ -1,8 +1,8 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, MemberExpressionKind,
     ast::{
-        BindingPatternKind, MemberExpression, MethodDefinition, MethodDefinitionKind,
-        ObjectProperty, PropertyKey, PropertyKind, UpdateExpression,
+        BindingPatternKind, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
+        PropertyKind, UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -65,8 +65,12 @@ impl Rule for NoAccessorRecursion {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;
         };
-        let Some(target) = ctx.nodes().ancestors(node.id()).skip(1).find(|n| match n.kind() {
-            AstKind::MemberExpression(member_expr) => {
+
+        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return false;
+                };
                 member_expr.object().without_parentheses().span() == this_expr.span()
             }
             AstKind::VariableDeclarator(decl) => decl
@@ -81,12 +85,11 @@ impl Rule for NoAccessorRecursion {
         let Some(nearest_func) = get_nearest_function(node, ctx) else {
             return;
         };
-        let Some(func_parent) = ctx.nodes().parent_node(nearest_func.id()) else {
-            return;
-        };
+        let func_parent = ctx.nodes().parent_node(nearest_func.id());
         if !is_property_or_method_def(func_parent) {
             return;
         }
+
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(key_name) = get_property_or_method_def_name(func_parent) else {
@@ -102,8 +105,11 @@ impl Rule for NoAccessorRecursion {
                     }
                 }
             }
-            AstKind::MemberExpression(member_expr) => {
-                let Some(expr_key_name) = get_member_expr_key_name(member_expr) else {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
+                let Some(expr_key_name) = get_member_expr_key_name(&member_expr) else {
                     return;
                 };
                 match func_parent.kind() {
@@ -113,7 +119,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpression::PrivateFieldExpression(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -129,6 +135,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
@@ -142,7 +149,7 @@ impl Rule for NoAccessorRecursion {
                             return;
                         };
                         let is_same_key = {
-                            if matches!(member_expr, MemberExpression::PrivateFieldExpression(_)) {
+                            if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
                                     && prop_key_name.as_ref() == expr_key_name
                             } else {
@@ -158,6 +165,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if method_def.kind == MethodDefinitionKind::Set
                             && is_property_write(target, ctx)
                         {
@@ -186,19 +194,36 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
             argument.span() == node.span()
         }
-        // e.g. "this.bar = 1" or "[this.bar] = array"
-        AstKind::AssignmentTarget(assign_target) => assign_target.span() == node.span(),
+        // e.g. "this.bar = 1"
+        AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+            assign_target.span() == node.span()
+        }
+        // e.g. "[this.bar] = array"
+        AstKind::ArrayAssignmentTarget(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentTargetWithDefault(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        // e.g. "({property: this.bar} = object)"
+        AstKind::ObjectAssignmentTarget(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+            assign_target.span.contains_inclusive(node.span())
+        }
+        AstKind::AssignmentExpression(_) => true,
         _ => false,
     }
 }
 
-fn get_member_expr_key_name<'a>(expr: &'a MemberExpression) -> Option<&'a str> {
+fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
     match expr {
-        MemberExpression::ComputedMemberExpression(_)
-        | MemberExpression::StaticMemberExpression(_) => expr.static_property_name(),
-        MemberExpression::PrivateFieldExpression(priv_field) => {
-            Some(priv_field.field.name.as_str())
+        MemberExpressionKind::Computed(expr) => {
+            expr.static_property_name().map(|name| name.as_str())
         }
+        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
+        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
     }
 }
 
@@ -216,17 +241,17 @@ fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
 }
 
 fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
-    let mut parent = ctx.nodes().parent_node(node.id())?;
-    while let Some(new_parent) = ctx.nodes().parent_node(parent.id()) {
+    let mut parent = ctx.nodes().parent_node(node.id());
+    loop {
         match parent.kind() {
-            AstKind::Function(_) => break,
+            AstKind::Program(_) | AstKind::Function(_) => break,
             // If a class is declared in the accessor, ignore it
             // e.g. "let foo = { get bar() { class baz { } } }"
             AstKind::Class(_) => {
                 return None;
             }
             _ => {
-                parent = new_parent;
+                parent = ctx.nodes().parent_node(parent.id());
             }
         }
     }
@@ -417,17 +442,17 @@ fn test() {
         ",
         r"
             class Foo {
-				get bar() {
-					return this.bar;
-				}
-			}
+        		get bar() {
+        			return this.bar;
+        		}
+        	}
         ",
         r"
             const foo = {
-				get bar() {
-					return this.bar.baz;
-				}
-			};
+        		get bar() {
+        			return this.bar.baz;
+        		}
+        	};
         ",
         r"
             const foo = {

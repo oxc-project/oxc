@@ -293,10 +293,10 @@ fn report_if_needed<'a>(
             let fixed = format!("{{{}}}", ctx.source_range(body.span()));
             fixer.replace(body.span(), fixed)
         } else {
-            let needs_preceding_space = ctx
-                .nodes()
-                .parent_node(get_node_by_statement(body, ctx).id())
-                .is_some_and(|parent| matches!(parent.kind(), AstKind::DoWhileStatement(_)));
+            let needs_preceding_space = matches!(
+                ctx.nodes().parent_kind(get_node_by_statement(body, ctx).id()),
+                AstKind::DoWhileStatement(_)
+            );
             let mut fixed = ctx.source_range(body.span()).to_string();
 
             if let Some(stripped) = fixed.strip_prefix(|c: char| c.is_whitespace() || c == '{') {
@@ -329,10 +329,13 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 
     let before_node_span = get_token_before(node, ctx).map_or_else(
         || {
-            ctx.nodes()
-                .parent_node(node.id())
-                .filter(|parent| parent.span().start < span.start)
-                .map_or(Span::empty(0), |parent| Span::empty(parent.span().start))
+            let parent = ctx.nodes().parent_node(node.id());
+
+            if parent.span().start < span.start {
+                Span::empty(parent.span().start)
+            } else {
+                Span::empty(0)
+            }
         },
         oxc_span::GetSpan::span,
     );

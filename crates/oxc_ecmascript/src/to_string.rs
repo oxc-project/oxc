@@ -15,11 +15,17 @@ use crate::{
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tostring>
 pub trait ToJsString<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>>;
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>>;
 }
 
 impl<'a> ToJsString<'a> for Expression<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         match self {
             Expression::StringLiteral(lit) => lit.to_js_string(is_global_reference),
             Expression::TemplateLiteral(lit) => lit.to_js_string(is_global_reference),
@@ -38,7 +44,10 @@ impl<'a> ToJsString<'a> for Expression<'a> {
 }
 
 impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         match self {
             ArrayExpressionElement::SpreadElement(_) => None,
             ArrayExpressionElement::Elision(_) => Some(Cow::Borrowed("")),
@@ -55,13 +64,19 @@ impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
 }
 
 impl<'a> ToJsString<'a> for StringLiteral<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         Some(Cow::Borrowed(self.value.as_str()))
     }
 }
 
 impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         let mut str = String::new();
         for (i, quasi) in self.quasis.iter().enumerate() {
             str.push_str(quasi.value.cooked.as_ref()?);
@@ -77,7 +92,10 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
 }
 
 impl<'a> ToJsString<'a> for IdentifierReference<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         let name = self.name.as_str();
         (matches!(name, "undefined" | "Infinity" | "NaN")
             && is_global_reference.is_global_reference(self) == Some(true))
@@ -86,7 +104,10 @@ impl<'a> ToJsString<'a> for IdentifierReference<'a> {
 }
 
 impl<'a> ToJsString<'a> for NumericLiteral<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         use oxc_syntax::number::ToJsString;
         let value = self.value;
         Some(if value == 0.0 { Cow::Borrowed("0") } else { Cow::Owned(value.to_js_string()) })
@@ -95,25 +116,37 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
 
 /// <https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.prototype.tostring>
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         Some(Cow::Borrowed(self.value.as_str()))
     }
 }
 
 impl<'a> ToJsString<'a> for BooleanLiteral {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         Some(Cow::Borrowed(if self.value { "true" } else { "false" }))
     }
 }
 
 impl<'a> ToJsString<'a> for NullLiteral {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         Some(Cow::Borrowed("null"))
     }
 }
 
 impl<'a> ToJsString<'a> for UnaryExpression<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         match self.operator {
             UnaryOperator::Void => Some(Cow::Borrowed("undefined")),
             UnaryOperator::LogicalNot => self
@@ -126,13 +159,19 @@ impl<'a> ToJsString<'a> for UnaryExpression<'a> {
 }
 
 impl<'a> ToJsString<'a> for ArrayExpression<'a> {
-    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         self.array_join(is_global_reference, Some(",")).map(Cow::Owned)
     }
 }
 
 impl<'a> ToJsString<'a> for ObjectExpression<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         if maybe_object_with_to_primitive_related_properties_overridden(self) {
             None
         } else {
@@ -142,7 +181,10 @@ impl<'a> ToJsString<'a> for ObjectExpression<'a> {
 }
 
 impl<'a> ToJsString<'a> for RegExpLiteral<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         if let Some(raw) = self.raw.as_ref() {
             Some(Cow::Borrowed(raw.as_str()))
         } else {

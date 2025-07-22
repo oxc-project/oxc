@@ -15,9 +15,17 @@ fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+const DEFAULT_MAX_DEPTH: usize = 4;
+
+#[derive(Debug, Clone, JsonSchema)]
 pub struct MaxDepth {
     max: usize,
+}
+
+impl Default for MaxDepth {
+    fn default() -> Self {
+        Self { max: DEFAULT_MAX_DEPTH }
+    }
 }
 
 declare_oxc_lint!(
@@ -107,7 +115,7 @@ declare_oxc_lint!(
 impl Rule for MaxDepth {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if should_count(node, ctx.nodes()) {
-            let depth = ctx
+            let depth = 1 + ctx
                 .nodes()
                 .ancestors(node.id())
                 .take_while(|node| !should_stop(node))
@@ -132,14 +140,14 @@ impl Rule for MaxDepth {
                 .and_then(|config| config.get("max"))
                 .and_then(Value::as_number)
                 .and_then(serde_json::Number::as_u64)
-                .map_or(4, |v| usize::try_from(v).unwrap_or(4))
+                .map_or(DEFAULT_MAX_DEPTH, |v| usize::try_from(v).unwrap_or(DEFAULT_MAX_DEPTH))
         };
         Self { max }
     }
 }
 
 fn should_count(node: &AstNode<'_>, nodes: &AstNodes<'_>) -> bool {
-    matches!(node.kind(), AstKind::IfStatement(_) if !matches!(nodes.parent_kind(node.id()), Some(AstKind::IfStatement(_))))
+    matches!(node.kind(), AstKind::IfStatement(_) if !matches!(nodes.parent_kind(node.id()), AstKind::IfStatement(_)))
         || matches!(node.kind(), |AstKind::SwitchStatement(_)| AstKind::TryStatement(_)
             | AstKind::DoWhileStatement(_)
             | AstKind::WhileStatement(_)
@@ -156,6 +164,9 @@ fn should_stop(node: &AstNode<'_>) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    let defaults = MaxDepth::default();
+    assert_eq!(defaults.max, 4);
 
     let pass = vec![
         (

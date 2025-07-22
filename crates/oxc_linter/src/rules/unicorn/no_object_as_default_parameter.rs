@@ -60,11 +60,7 @@ impl Rule for NoObjectAsDefaultParameter {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return;
-        };
-
-        if !matches!(parent.kind(), AstKind::FormalParameter(_)) {
+        if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::FormalParameter(_)) {
             return;
         }
 

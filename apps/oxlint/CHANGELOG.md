@@ -4,6 +4,81 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- 5e428a4 linter/eslint-plugin-next: No-html-link-for-pages rule addition (#12194) (Gabriel Díaz Aguilera)
+- c551b8f linter: Report diagnostics from custom plugins (#12219) (camc314)
+- d387729 linter: JS custom rules config (#12160) (camc314)
+- 152e59d napi/oxlint: Read source text into start of allocator (#12122) (overlookmotel)
+- d4ebd14 linter: Add `oxlint2`/`disable_oxlint2` feature flags (#12130) (camc314)
+- a4dae73 linter: Introduce `LintPlugins` to store builtin + custom plugins (#12117) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9720774 linter: Report implicit config parse errors (#12260) (Simon Buchan)
+- 853d2bc linter, language_server: Correctly identify usage of `import` plugin (#12157) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+- acfac68 oxlint: Adjust ignore patterns by counting bytes instead of chars (#12209) (Sysix)
+- 1d2eaca oxlint2: Introduce `force_test_reporter` feature for consistent graphical outputs (#12133) (camc314)
+- f7c675d linter: Rename `LintPlugins` to `BuiltinLintPlugins` (#12116) (camc314)
+
+### 🧪 Testing
+
+- d1194e8 oxlint: Ignore test on windows (#12262) (camc314)
+
+
+## [1.6.0] - 2025-07-07
+
+### 🚀 Features
+
+- f81d336 linter: Introduce `ExternalLinter` struct (#12052) (camc314)
+
+### 🐛 Bug Fixes
+
+- 5851d2c oxlint: Always follow symlinks; remove cli flag `--symlinks` (#12048) (Boshen)
+
+### 🚜 Refactor
+
+- 2f7cbda linter: Move napi bindings out of oxc_linter (#12072) (camc314)
+- 9254252 linter: Move code (#12071) (overlookmotel)
+
+
+## [1.5.0] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- 4b2c658 oxlint: Make `--version` exit code be `0` (#11986) (camc314)
+
+
+## [1.4.0] - 2025-06-30
+
+### 🚀 Features
+
+- 9b19b40 napi: Add basic oxlint napi bindings (#11877) (camc314)
+- f102cb1 linter: Add `import/prefer-default-export` rule (#11891) (yefan)
+
+### 🐛 Bug Fixes
+
+- d991fed linter: Fix `jsx-a11y/label-has-associated-control` default values (#11832) (Sysix)
+
+### 🚜 Refactor
+
+- 2cf9fa3 linter: Derive debug for `extensions` (#11938) (camc314)
+
+
+## [1.3.0] - 2025-06-23
+
+### 🚜 Refactor
+
+- b39d1fa linter: Output smaller spans for unused disable directives with multiple rules (#11781) (Sysix)
+
+
 ## [1.2.0] - 2025-06-19
 
 ### 🚀 Features

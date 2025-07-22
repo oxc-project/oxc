@@ -8,6 +8,7 @@ use std::{
     borrow::Cow,
     cmp::{Ordering, max, min},
     num,
+    sync::atomic,
 };
 
 use phf_codegen::Map as PhfMapGen;
@@ -20,7 +21,8 @@ use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
-        Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
+        Def, Discriminant, EnumDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
+        Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -107,6 +109,13 @@ fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
                 schema.cell_def_mut(type_id).layout = calculate_layout_for_cell(type_id, schema);
             }
             &schema.cell_def(type_id).layout
+        }
+        TypeDef::Pointer(pointer_def) => {
+            if is_not_calculated(&pointer_def.layout) {
+                schema.pointer_def_mut(type_id).layout =
+                    calculate_layout_for_pointer(type_id, schema);
+            }
+            &schema.pointer_def(type_id).layout
         }
     }
 }
@@ -409,6 +418,24 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
     layout
 }
 
+/// Calculate layout for a pointer.
+///
+/// `NonNull` pointers have a niche, `*const` and `*mut` have no niche.
+fn calculate_layout_for_pointer(type_id: TypeId, schema: &Schema) -> Layout {
+    let pointer_def = schema.pointer_def(type_id);
+    if pointer_def.kind == PointerKind::NonNull {
+        Layout {
+            layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+        }
+    } else {
+        Layout {
+            layout_64: PlatformLayout::from_size_align(8, 8),
+            layout_32: PlatformLayout::from_size_align(4, 4),
+        }
+    }
+}
+
 /// Calculate layout for a primitive.
 ///
 /// Primitives have varying layouts. Some have niches, most don't.
@@ -472,6 +499,20 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             )
         }
         "NonZeroIsize" => non_zero_usize_layout,
+        // Unlike `bool`, `AtomicBool` does not have any niches
+        "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),
+        "AtomicU8" => Layout::from_type::<atomic::AtomicU8>(),
+        "AtomicU16" => Layout::from_type::<atomic::AtomicU16>(),
+        "AtomicU32" => Layout::from_type::<atomic::AtomicU32>(),
+        "AtomicU64" => Layout::from_type::<atomic::AtomicU64>(),
+        "AtomicUsize" => usize_layout,
+        "AtomicI8" => Layout::from_type::<atomic::AtomicI8>(),
+        "AtomicI16" => Layout::from_type::<atomic::AtomicI16>(),
+        "AtomicI32" => Layout::from_type::<atomic::AtomicI32>(),
+        "AtomicI64" => Layout::from_type::<atomic::AtomicI64>(),
+        "AtomicIsize" => usize_layout,
+        // `AtomicPtr` has no niche - like `*mut T`, not `NonNull<T>`
+        "AtomicPtr" => usize_layout,
         "PointerAlign" => Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
@@ -700,7 +741,7 @@ fn generate_struct_details(schema: &Schema) -> Output {
 
         let details = quote!( StructDetails { field_order: #field_order } );
 
-        map.entry(struct_def.name(), &details.to_string());
+        map.entry(struct_def.name(), details.to_string());
     }
     let map = parse_str::<Expr>(&map.build().to_string()).unwrap();
 

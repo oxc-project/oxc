@@ -24,177 +24,183 @@ pub enum AstType {
     Elision = 7,
     ObjectExpression = 8,
     ObjectProperty = 9,
-    PropertyKey = 10,
-    TemplateLiteral = 11,
-    TaggedTemplateExpression = 12,
-    MemberExpression = 13,
-    CallExpression = 14,
-    NewExpression = 15,
-    MetaProperty = 16,
-    SpreadElement = 17,
-    Argument = 18,
-    UpdateExpression = 19,
-    UnaryExpression = 20,
-    BinaryExpression = 21,
-    PrivateInExpression = 22,
-    LogicalExpression = 23,
-    ConditionalExpression = 24,
-    AssignmentExpression = 25,
-    AssignmentTarget = 26,
-    SimpleAssignmentTarget = 27,
-    AssignmentTargetPattern = 28,
+    TemplateLiteral = 10,
+    TaggedTemplateExpression = 11,
+    TemplateElement = 12,
+    ComputedMemberExpression = 13,
+    StaticMemberExpression = 14,
+    PrivateFieldExpression = 15,
+    CallExpression = 16,
+    NewExpression = 17,
+    MetaProperty = 18,
+    SpreadElement = 19,
+    Argument = 20,
+    UpdateExpression = 21,
+    UnaryExpression = 22,
+    BinaryExpression = 23,
+    PrivateInExpression = 24,
+    LogicalExpression = 25,
+    ConditionalExpression = 26,
+    AssignmentExpression = 27,
+    SimpleAssignmentTarget = 28,
     ArrayAssignmentTarget = 29,
     ObjectAssignmentTarget = 30,
-    AssignmentTargetWithDefault = 31,
-    SequenceExpression = 32,
-    Super = 33,
-    AwaitExpression = 34,
-    ChainExpression = 35,
-    ParenthesizedExpression = 36,
-    Directive = 37,
-    Hashbang = 38,
-    BlockStatement = 39,
-    VariableDeclaration = 40,
-    VariableDeclarator = 41,
-    EmptyStatement = 42,
-    ExpressionStatement = 43,
-    IfStatement = 44,
-    DoWhileStatement = 45,
-    WhileStatement = 46,
-    ForStatement = 47,
-    ForInStatement = 48,
-    ForOfStatement = 49,
-    ContinueStatement = 50,
-    BreakStatement = 51,
-    ReturnStatement = 52,
-    WithStatement = 53,
-    SwitchStatement = 54,
-    SwitchCase = 55,
-    LabeledStatement = 56,
-    ThrowStatement = 57,
-    TryStatement = 58,
-    CatchClause = 59,
-    CatchParameter = 60,
-    DebuggerStatement = 61,
-    AssignmentPattern = 62,
-    ObjectPattern = 63,
-    ArrayPattern = 64,
-    BindingRestElement = 65,
-    Function = 66,
-    FormalParameters = 67,
-    FormalParameter = 68,
-    FunctionBody = 69,
-    ArrowFunctionExpression = 70,
-    YieldExpression = 71,
-    Class = 72,
-    ClassBody = 73,
-    MethodDefinition = 74,
-    PropertyDefinition = 75,
-    PrivateIdentifier = 76,
-    StaticBlock = 77,
-    ModuleDeclaration = 78,
-    AccessorProperty = 79,
-    ImportExpression = 80,
-    ImportDeclaration = 81,
-    ImportSpecifier = 82,
-    ImportDefaultSpecifier = 83,
-    ImportNamespaceSpecifier = 84,
-    WithClause = 85,
-    ImportAttribute = 86,
-    ExportNamedDeclaration = 87,
-    ExportDefaultDeclaration = 88,
-    ExportAllDeclaration = 89,
-    ExportSpecifier = 90,
-    V8IntrinsicExpression = 91,
-    BooleanLiteral = 92,
-    NullLiteral = 93,
-    NumericLiteral = 94,
-    StringLiteral = 95,
-    BigIntLiteral = 96,
-    RegExpLiteral = 97,
-    JSXElement = 98,
-    JSXOpeningElement = 99,
-    JSXClosingElement = 100,
-    JSXFragment = 101,
-    JSXOpeningFragment = 102,
-    JSXClosingFragment = 103,
-    JSXNamespacedName = 104,
-    JSXMemberExpression = 105,
-    JSXExpressionContainer = 106,
-    JSXEmptyExpression = 107,
-    JSXAttribute = 108,
-    JSXSpreadAttribute = 109,
-    JSXIdentifier = 110,
-    JSXSpreadChild = 111,
-    JSXText = 112,
-    TSThisParameter = 113,
-    TSEnumDeclaration = 114,
-    TSEnumBody = 115,
-    TSEnumMember = 116,
-    TSTypeAnnotation = 117,
-    TSLiteralType = 118,
-    TSConditionalType = 119,
-    TSUnionType = 120,
-    TSIntersectionType = 121,
-    TSParenthesizedType = 122,
-    TSTypeOperator = 123,
-    TSArrayType = 124,
-    TSIndexedAccessType = 125,
-    TSTupleType = 126,
-    TSNamedTupleMember = 127,
-    TSOptionalType = 128,
-    TSRestType = 129,
-    TSAnyKeyword = 130,
-    TSStringKeyword = 131,
-    TSBooleanKeyword = 132,
-    TSNumberKeyword = 133,
-    TSNeverKeyword = 134,
-    TSIntrinsicKeyword = 135,
-    TSUnknownKeyword = 136,
-    TSNullKeyword = 137,
-    TSUndefinedKeyword = 138,
-    TSVoidKeyword = 139,
-    TSSymbolKeyword = 140,
-    TSThisType = 141,
-    TSObjectKeyword = 142,
-    TSBigIntKeyword = 143,
-    TSTypeReference = 144,
-    TSTypeName = 145,
-    TSQualifiedName = 146,
-    TSTypeParameterInstantiation = 147,
-    TSTypeParameter = 148,
-    TSTypeParameterDeclaration = 149,
-    TSTypeAliasDeclaration = 150,
-    TSClassImplements = 151,
-    TSInterfaceDeclaration = 152,
-    TSPropertySignature = 153,
-    TSCallSignatureDeclaration = 154,
-    TSMethodSignature = 155,
-    TSConstructSignatureDeclaration = 156,
-    TSIndexSignatureName = 157,
-    TSInterfaceHeritage = 158,
-    TSTypePredicate = 159,
-    TSModuleDeclaration = 160,
-    TSModuleBlock = 161,
-    TSTypeLiteral = 162,
-    TSInferType = 163,
-    TSTypeQuery = 164,
-    TSImportType = 165,
-    TSMappedType = 166,
-    TSTemplateLiteralType = 167,
-    TSAsExpression = 168,
-    TSSatisfiesExpression = 169,
-    TSTypeAssertion = 170,
-    TSImportEqualsDeclaration = 171,
-    TSExternalModuleReference = 172,
-    TSNonNullExpression = 173,
-    Decorator = 174,
-    TSExportAssignment = 175,
-    TSNamespaceExportDeclaration = 176,
-    TSInstantiationExpression = 177,
-    JSDocNullableType = 178,
-    JSDocNonNullableType = 179,
-    JSDocUnknownType = 180,
+    AssignmentTargetRest = 31,
+    AssignmentTargetWithDefault = 32,
+    AssignmentTargetPropertyIdentifier = 33,
+    AssignmentTargetPropertyProperty = 34,
+    SequenceExpression = 35,
+    Super = 36,
+    AwaitExpression = 37,
+    ChainExpression = 38,
+    ParenthesizedExpression = 39,
+    Directive = 40,
+    Hashbang = 41,
+    BlockStatement = 42,
+    VariableDeclaration = 43,
+    VariableDeclarator = 44,
+    EmptyStatement = 45,
+    ExpressionStatement = 46,
+    IfStatement = 47,
+    DoWhileStatement = 48,
+    WhileStatement = 49,
+    ForStatement = 50,
+    ForInStatement = 51,
+    ForOfStatement = 52,
+    ContinueStatement = 53,
+    BreakStatement = 54,
+    ReturnStatement = 55,
+    WithStatement = 56,
+    SwitchStatement = 57,
+    SwitchCase = 58,
+    LabeledStatement = 59,
+    ThrowStatement = 60,
+    TryStatement = 61,
+    CatchClause = 62,
+    CatchParameter = 63,
+    DebuggerStatement = 64,
+    AssignmentPattern = 65,
+    ObjectPattern = 66,
+    BindingProperty = 67,
+    ArrayPattern = 68,
+    BindingRestElement = 69,
+    Function = 70,
+    FormalParameters = 71,
+    FormalParameter = 72,
+    FunctionBody = 73,
+    ArrowFunctionExpression = 74,
+    YieldExpression = 75,
+    Class = 76,
+    ClassBody = 77,
+    MethodDefinition = 78,
+    PropertyDefinition = 79,
+    PrivateIdentifier = 80,
+    StaticBlock = 81,
+    AccessorProperty = 82,
+    ImportExpression = 83,
+    ImportDeclaration = 84,
+    ImportSpecifier = 85,
+    ImportDefaultSpecifier = 86,
+    ImportNamespaceSpecifier = 87,
+    WithClause = 88,
+    ImportAttribute = 89,
+    ExportNamedDeclaration = 90,
+    ExportDefaultDeclaration = 91,
+    ExportAllDeclaration = 92,
+    ExportSpecifier = 93,
+    V8IntrinsicExpression = 94,
+    BooleanLiteral = 95,
+    NullLiteral = 96,
+    NumericLiteral = 97,
+    StringLiteral = 98,
+    BigIntLiteral = 99,
+    RegExpLiteral = 100,
+    JSXElement = 101,
+    JSXOpeningElement = 102,
+    JSXClosingElement = 103,
+    JSXFragment = 104,
+    JSXOpeningFragment = 105,
+    JSXClosingFragment = 106,
+    JSXNamespacedName = 107,
+    JSXMemberExpression = 108,
+    JSXExpressionContainer = 109,
+    JSXEmptyExpression = 110,
+    JSXAttribute = 111,
+    JSXSpreadAttribute = 112,
+    JSXIdentifier = 113,
+    JSXSpreadChild = 114,
+    JSXText = 115,
+    TSThisParameter = 116,
+    TSEnumDeclaration = 117,
+    TSEnumBody = 118,
+    TSEnumMember = 119,
+    TSTypeAnnotation = 120,
+    TSLiteralType = 121,
+    TSConditionalType = 122,
+    TSUnionType = 123,
+    TSIntersectionType = 124,
+    TSParenthesizedType = 125,
+    TSTypeOperator = 126,
+    TSArrayType = 127,
+    TSIndexedAccessType = 128,
+    TSTupleType = 129,
+    TSNamedTupleMember = 130,
+    TSOptionalType = 131,
+    TSRestType = 132,
+    TSAnyKeyword = 133,
+    TSStringKeyword = 134,
+    TSBooleanKeyword = 135,
+    TSNumberKeyword = 136,
+    TSNeverKeyword = 137,
+    TSIntrinsicKeyword = 138,
+    TSUnknownKeyword = 139,
+    TSNullKeyword = 140,
+    TSUndefinedKeyword = 141,
+    TSVoidKeyword = 142,
+    TSSymbolKeyword = 143,
+    TSThisType = 144,
+    TSObjectKeyword = 145,
+    TSBigIntKeyword = 146,
+    TSTypeReference = 147,
+    TSQualifiedName = 148,
+    TSTypeParameterInstantiation = 149,
+    TSTypeParameter = 150,
+    TSTypeParameterDeclaration = 151,
+    TSTypeAliasDeclaration = 152,
+    TSClassImplements = 153,
+    TSInterfaceDeclaration = 154,
+    TSInterfaceBody = 155,
+    TSPropertySignature = 156,
+    TSIndexSignature = 157,
+    TSCallSignatureDeclaration = 158,
+    TSMethodSignature = 159,
+    TSConstructSignatureDeclaration = 160,
+    TSIndexSignatureName = 161,
+    TSInterfaceHeritage = 162,
+    TSTypePredicate = 163,
+    TSModuleDeclaration = 164,
+    TSModuleBlock = 165,
+    TSTypeLiteral = 166,
+    TSInferType = 167,
+    TSTypeQuery = 168,
+    TSImportType = 169,
+    TSFunctionType = 170,
+    TSConstructorType = 171,
+    TSMappedType = 172,
+    TSTemplateLiteralType = 173,
+    TSAsExpression = 174,
+    TSSatisfiesExpression = 175,
+    TSTypeAssertion = 176,
+    TSImportEqualsDeclaration = 177,
+    TSExternalModuleReference = 178,
+    TSNonNullExpression = 179,
+    Decorator = 180,
+    TSExportAssignment = 181,
+    TSNamespaceExportDeclaration = 182,
+    TSInstantiationExpression = 183,
+    JSDocNullableType = 184,
+    JSDocNonNullableType = 185,
+    JSDocUnknownType = 186,
 }
 
 /// Untyped AST Node Kind
@@ -211,11 +217,14 @@ pub enum AstKind<'a> {
     Elision(&'a Elision) = AstType::Elision as u8,
     ObjectExpression(&'a ObjectExpression<'a>) = AstType::ObjectExpression as u8,
     ObjectProperty(&'a ObjectProperty<'a>) = AstType::ObjectProperty as u8,
-    PropertyKey(&'a PropertyKey<'a>) = AstType::PropertyKey as u8,
     TemplateLiteral(&'a TemplateLiteral<'a>) = AstType::TemplateLiteral as u8,
     TaggedTemplateExpression(&'a TaggedTemplateExpression<'a>) =
         AstType::TaggedTemplateExpression as u8,
-    MemberExpression(&'a MemberExpression<'a>) = AstType::MemberExpression as u8,
+    TemplateElement(&'a TemplateElement<'a>) = AstType::TemplateElement as u8,
+    ComputedMemberExpression(&'a ComputedMemberExpression<'a>) =
+        AstType::ComputedMemberExpression as u8,
+    StaticMemberExpression(&'a StaticMemberExpression<'a>) = AstType::StaticMemberExpression as u8,
+    PrivateFieldExpression(&'a PrivateFieldExpression<'a>) = AstType::PrivateFieldExpression as u8,
     CallExpression(&'a CallExpression<'a>) = AstType::CallExpression as u8,
     NewExpression(&'a NewExpression<'a>) = AstType::NewExpression as u8,
     MetaProperty(&'a MetaProperty<'a>) = AstType::MetaProperty as u8,
@@ -228,14 +237,16 @@ pub enum AstKind<'a> {
     LogicalExpression(&'a LogicalExpression<'a>) = AstType::LogicalExpression as u8,
     ConditionalExpression(&'a ConditionalExpression<'a>) = AstType::ConditionalExpression as u8,
     AssignmentExpression(&'a AssignmentExpression<'a>) = AstType::AssignmentExpression as u8,
-    AssignmentTarget(&'a AssignmentTarget<'a>) = AstType::AssignmentTarget as u8,
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>) = AstType::SimpleAssignmentTarget as u8,
-    AssignmentTargetPattern(&'a AssignmentTargetPattern<'a>) =
-        AstType::AssignmentTargetPattern as u8,
     ArrayAssignmentTarget(&'a ArrayAssignmentTarget<'a>) = AstType::ArrayAssignmentTarget as u8,
     ObjectAssignmentTarget(&'a ObjectAssignmentTarget<'a>) = AstType::ObjectAssignmentTarget as u8,
+    AssignmentTargetRest(&'a AssignmentTargetRest<'a>) = AstType::AssignmentTargetRest as u8,
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>) =
         AstType::AssignmentTargetWithDefault as u8,
+    AssignmentTargetPropertyIdentifier(&'a AssignmentTargetPropertyIdentifier<'a>) =
+        AstType::AssignmentTargetPropertyIdentifier as u8,
+    AssignmentTargetPropertyProperty(&'a AssignmentTargetPropertyProperty<'a>) =
+        AstType::AssignmentTargetPropertyProperty as u8,
     SequenceExpression(&'a SequenceExpression<'a>) = AstType::SequenceExpression as u8,
     Super(&'a Super) = AstType::Super as u8,
     AwaitExpression(&'a AwaitExpression<'a>) = AstType::AwaitExpression as u8,
@@ -269,6 +280,7 @@ pub enum AstKind<'a> {
     DebuggerStatement(&'a DebuggerStatement) = AstType::DebuggerStatement as u8,
     AssignmentPattern(&'a AssignmentPattern<'a>) = AstType::AssignmentPattern as u8,
     ObjectPattern(&'a ObjectPattern<'a>) = AstType::ObjectPattern as u8,
+    BindingProperty(&'a BindingProperty<'a>) = AstType::BindingProperty as u8,
     ArrayPattern(&'a ArrayPattern<'a>) = AstType::ArrayPattern as u8,
     BindingRestElement(&'a BindingRestElement<'a>) = AstType::BindingRestElement as u8,
     Function(&'a Function<'a>) = AstType::Function as u8,
@@ -284,7 +296,6 @@ pub enum AstKind<'a> {
     PropertyDefinition(&'a PropertyDefinition<'a>) = AstType::PropertyDefinition as u8,
     PrivateIdentifier(&'a PrivateIdentifier<'a>) = AstType::PrivateIdentifier as u8,
     StaticBlock(&'a StaticBlock<'a>) = AstType::StaticBlock as u8,
-    ModuleDeclaration(&'a ModuleDeclaration<'a>) = AstType::ModuleDeclaration as u8,
     AccessorProperty(&'a AccessorProperty<'a>) = AstType::AccessorProperty as u8,
     ImportExpression(&'a ImportExpression<'a>) = AstType::ImportExpression as u8,
     ImportDeclaration(&'a ImportDeclaration<'a>) = AstType::ImportDeclaration as u8,
@@ -353,7 +364,6 @@ pub enum AstKind<'a> {
     TSObjectKeyword(&'a TSObjectKeyword) = AstType::TSObjectKeyword as u8,
     TSBigIntKeyword(&'a TSBigIntKeyword) = AstType::TSBigIntKeyword as u8,
     TSTypeReference(&'a TSTypeReference<'a>) = AstType::TSTypeReference as u8,
-    TSTypeName(&'a TSTypeName<'a>) = AstType::TSTypeName as u8,
     TSQualifiedName(&'a TSQualifiedName<'a>) = AstType::TSQualifiedName as u8,
     TSTypeParameterInstantiation(&'a TSTypeParameterInstantiation<'a>) =
         AstType::TSTypeParameterInstantiation as u8,
@@ -363,7 +373,9 @@ pub enum AstKind<'a> {
     TSTypeAliasDeclaration(&'a TSTypeAliasDeclaration<'a>) = AstType::TSTypeAliasDeclaration as u8,
     TSClassImplements(&'a TSClassImplements<'a>) = AstType::TSClassImplements as u8,
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>) = AstType::TSInterfaceDeclaration as u8,
+    TSInterfaceBody(&'a TSInterfaceBody<'a>) = AstType::TSInterfaceBody as u8,
     TSPropertySignature(&'a TSPropertySignature<'a>) = AstType::TSPropertySignature as u8,
+    TSIndexSignature(&'a TSIndexSignature<'a>) = AstType::TSIndexSignature as u8,
     TSCallSignatureDeclaration(&'a TSCallSignatureDeclaration<'a>) =
         AstType::TSCallSignatureDeclaration as u8,
     TSMethodSignature(&'a TSMethodSignature<'a>) = AstType::TSMethodSignature as u8,
@@ -378,6 +390,8 @@ pub enum AstKind<'a> {
     TSInferType(&'a TSInferType<'a>) = AstType::TSInferType as u8,
     TSTypeQuery(&'a TSTypeQuery<'a>) = AstType::TSTypeQuery as u8,
     TSImportType(&'a TSImportType<'a>) = AstType::TSImportType as u8,
+    TSFunctionType(&'a TSFunctionType<'a>) = AstType::TSFunctionType as u8,
+    TSConstructorType(&'a TSConstructorType<'a>) = AstType::TSConstructorType as u8,
     TSMappedType(&'a TSMappedType<'a>) = AstType::TSMappedType as u8,
     TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>) = AstType::TSTemplateLiteralType as u8,
     TSAsExpression(&'a TSAsExpression<'a>) = AstType::TSAsExpression as u8,
@@ -424,10 +438,12 @@ impl GetSpan for AstKind<'_> {
             Self::Elision(it) => it.span(),
             Self::ObjectExpression(it) => it.span(),
             Self::ObjectProperty(it) => it.span(),
-            Self::PropertyKey(it) => it.span(),
             Self::TemplateLiteral(it) => it.span(),
             Self::TaggedTemplateExpression(it) => it.span(),
-            Self::MemberExpression(it) => it.span(),
+            Self::TemplateElement(it) => it.span(),
+            Self::ComputedMemberExpression(it) => it.span(),
+            Self::StaticMemberExpression(it) => it.span(),
+            Self::PrivateFieldExpression(it) => it.span(),
             Self::CallExpression(it) => it.span(),
             Self::NewExpression(it) => it.span(),
             Self::MetaProperty(it) => it.span(),
@@ -440,12 +456,13 @@ impl GetSpan for AstKind<'_> {
             Self::LogicalExpression(it) => it.span(),
             Self::ConditionalExpression(it) => it.span(),
             Self::AssignmentExpression(it) => it.span(),
-            Self::AssignmentTarget(it) => it.span(),
             Self::SimpleAssignmentTarget(it) => it.span(),
-            Self::AssignmentTargetPattern(it) => it.span(),
             Self::ArrayAssignmentTarget(it) => it.span(),
             Self::ObjectAssignmentTarget(it) => it.span(),
+            Self::AssignmentTargetRest(it) => it.span(),
             Self::AssignmentTargetWithDefault(it) => it.span(),
+            Self::AssignmentTargetPropertyIdentifier(it) => it.span(),
+            Self::AssignmentTargetPropertyProperty(it) => it.span(),
             Self::SequenceExpression(it) => it.span(),
             Self::Super(it) => it.span(),
             Self::AwaitExpression(it) => it.span(),
@@ -478,6 +495,7 @@ impl GetSpan for AstKind<'_> {
             Self::DebuggerStatement(it) => it.span(),
             Self::AssignmentPattern(it) => it.span(),
             Self::ObjectPattern(it) => it.span(),
+            Self::BindingProperty(it) => it.span(),
             Self::ArrayPattern(it) => it.span(),
             Self::BindingRestElement(it) => it.span(),
             Self::Function(it) => it.span(),
@@ -492,7 +510,6 @@ impl GetSpan for AstKind<'_> {
             Self::PropertyDefinition(it) => it.span(),
             Self::PrivateIdentifier(it) => it.span(),
             Self::StaticBlock(it) => it.span(),
-            Self::ModuleDeclaration(it) => it.span(),
             Self::AccessorProperty(it) => it.span(),
             Self::ImportExpression(it) => it.span(),
             Self::ImportDeclaration(it) => it.span(),
@@ -559,7 +576,6 @@ impl GetSpan for AstKind<'_> {
             Self::TSObjectKeyword(it) => it.span(),
             Self::TSBigIntKeyword(it) => it.span(),
             Self::TSTypeReference(it) => it.span(),
-            Self::TSTypeName(it) => it.span(),
             Self::TSQualifiedName(it) => it.span(),
             Self::TSTypeParameterInstantiation(it) => it.span(),
             Self::TSTypeParameter(it) => it.span(),
@@ -567,7 +583,9 @@ impl GetSpan for AstKind<'_> {
             Self::TSTypeAliasDeclaration(it) => it.span(),
             Self::TSClassImplements(it) => it.span(),
             Self::TSInterfaceDeclaration(it) => it.span(),
+            Self::TSInterfaceBody(it) => it.span(),
             Self::TSPropertySignature(it) => it.span(),
+            Self::TSIndexSignature(it) => it.span(),
             Self::TSCallSignatureDeclaration(it) => it.span(),
             Self::TSMethodSignature(it) => it.span(),
             Self::TSConstructSignatureDeclaration(it) => it.span(),
@@ -580,6 +598,8 @@ impl GetSpan for AstKind<'_> {
             Self::TSInferType(it) => it.span(),
             Self::TSTypeQuery(it) => it.span(),
             Self::TSImportType(it) => it.span(),
+            Self::TSFunctionType(it) => it.span(),
+            Self::TSConstructorType(it) => it.span(),
             Self::TSMappedType(it) => it.span(),
             Self::TSTemplateLiteralType(it) => it.span(),
             Self::TSAsExpression(it) => it.span(),
@@ -612,10 +632,12 @@ impl GetAddress for AstKind<'_> {
             Self::Elision(it) => Address::from_ptr(it),
             Self::ObjectExpression(it) => Address::from_ptr(it),
             Self::ObjectProperty(it) => Address::from_ptr(it),
-            Self::PropertyKey(it) => it.address(),
             Self::TemplateLiteral(it) => Address::from_ptr(it),
             Self::TaggedTemplateExpression(it) => Address::from_ptr(it),
-            Self::MemberExpression(it) => it.address(),
+            Self::TemplateElement(it) => Address::from_ptr(it),
+            Self::ComputedMemberExpression(it) => Address::from_ptr(it),
+            Self::StaticMemberExpression(it) => Address::from_ptr(it),
+            Self::PrivateFieldExpression(it) => Address::from_ptr(it),
             Self::CallExpression(it) => Address::from_ptr(it),
             Self::NewExpression(it) => Address::from_ptr(it),
             Self::MetaProperty(it) => Address::from_ptr(it),
@@ -628,12 +650,13 @@ impl GetAddress for AstKind<'_> {
             Self::LogicalExpression(it) => Address::from_ptr(it),
             Self::ConditionalExpression(it) => Address::from_ptr(it),
             Self::AssignmentExpression(it) => Address::from_ptr(it),
-            Self::AssignmentTarget(it) => it.address(),
             Self::SimpleAssignmentTarget(it) => it.address(),
-            Self::AssignmentTargetPattern(it) => it.address(),
             Self::ArrayAssignmentTarget(it) => Address::from_ptr(it),
             Self::ObjectAssignmentTarget(it) => Address::from_ptr(it),
+            Self::AssignmentTargetRest(it) => Address::from_ptr(it),
             Self::AssignmentTargetWithDefault(it) => Address::from_ptr(it),
+            Self::AssignmentTargetPropertyIdentifier(it) => Address::from_ptr(it),
+            Self::AssignmentTargetPropertyProperty(it) => Address::from_ptr(it),
             Self::SequenceExpression(it) => Address::from_ptr(it),
             Self::Super(it) => Address::from_ptr(it),
             Self::AwaitExpression(it) => Address::from_ptr(it),
@@ -666,6 +689,7 @@ impl GetAddress for AstKind<'_> {
             Self::DebuggerStatement(it) => Address::from_ptr(it),
             Self::AssignmentPattern(it) => Address::from_ptr(it),
             Self::ObjectPattern(it) => Address::from_ptr(it),
+            Self::BindingProperty(it) => Address::from_ptr(it),
             Self::ArrayPattern(it) => Address::from_ptr(it),
             Self::BindingRestElement(it) => Address::from_ptr(it),
             Self::Function(it) => Address::from_ptr(it),
@@ -680,7 +704,6 @@ impl GetAddress for AstKind<'_> {
             Self::PropertyDefinition(it) => Address::from_ptr(it),
             Self::PrivateIdentifier(it) => Address::from_ptr(it),
             Self::StaticBlock(it) => Address::from_ptr(it),
-            Self::ModuleDeclaration(it) => it.address(),
             Self::AccessorProperty(it) => Address::from_ptr(it),
             Self::ImportExpression(it) => Address::from_ptr(it),
             Self::ImportDeclaration(it) => Address::from_ptr(it),
@@ -747,7 +770,6 @@ impl GetAddress for AstKind<'_> {
             Self::TSObjectKeyword(it) => Address::from_ptr(it),
             Self::TSBigIntKeyword(it) => Address::from_ptr(it),
             Self::TSTypeReference(it) => Address::from_ptr(it),
-            Self::TSTypeName(it) => it.address(),
             Self::TSQualifiedName(it) => Address::from_ptr(it),
             Self::TSTypeParameterInstantiation(it) => Address::from_ptr(it),
             Self::TSTypeParameter(it) => Address::from_ptr(it),
@@ -755,7 +777,9 @@ impl GetAddress for AstKind<'_> {
             Self::TSTypeAliasDeclaration(it) => Address::from_ptr(it),
             Self::TSClassImplements(it) => Address::from_ptr(it),
             Self::TSInterfaceDeclaration(it) => Address::from_ptr(it),
+            Self::TSInterfaceBody(it) => Address::from_ptr(it),
             Self::TSPropertySignature(it) => Address::from_ptr(it),
+            Self::TSIndexSignature(it) => Address::from_ptr(it),
             Self::TSCallSignatureDeclaration(it) => Address::from_ptr(it),
             Self::TSMethodSignature(it) => Address::from_ptr(it),
             Self::TSConstructSignatureDeclaration(it) => Address::from_ptr(it),
@@ -768,6 +792,8 @@ impl GetAddress for AstKind<'_> {
             Self::TSInferType(it) => Address::from_ptr(it),
             Self::TSTypeQuery(it) => Address::from_ptr(it),
             Self::TSImportType(it) => Address::from_ptr(it),
+            Self::TSFunctionType(it) => Address::from_ptr(it),
+            Self::TSConstructorType(it) => Address::from_ptr(it),
             Self::TSMappedType(it) => Address::from_ptr(it),
             Self::TSTemplateLiteralType(it) => Address::from_ptr(it),
             Self::TSAsExpression(it) => Address::from_ptr(it),
@@ -839,11 +865,6 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_property_key(self) -> Option<&'a PropertyKey<'a>> {
-        if let Self::PropertyKey(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
     pub fn as_template_literal(self) -> Option<&'a TemplateLiteral<'a>> {
         if let Self::TemplateLiteral(v) = self { Some(v) } else { None }
     }
@@ -854,8 +875,23 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_member_expression(self) -> Option<&'a MemberExpression<'a>> {
-        if let Self::MemberExpression(v) = self { Some(v) } else { None }
+    pub fn as_template_element(self) -> Option<&'a TemplateElement<'a>> {
+        if let Self::TemplateElement(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_computed_member_expression(self) -> Option<&'a ComputedMemberExpression<'a>> {
+        if let Self::ComputedMemberExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_static_member_expression(self) -> Option<&'a StaticMemberExpression<'a>> {
+        if let Self::StaticMemberExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_private_field_expression(self) -> Option<&'a PrivateFieldExpression<'a>> {
+        if let Self::PrivateFieldExpression(v) = self { Some(v) } else { None }
     }
 
     #[inline]
@@ -919,18 +955,8 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_assignment_target(self) -> Option<&'a AssignmentTarget<'a>> {
-        if let Self::AssignmentTarget(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
     pub fn as_simple_assignment_target(self) -> Option<&'a SimpleAssignmentTarget<'a>> {
         if let Self::SimpleAssignmentTarget(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
-    pub fn as_assignment_target_pattern(self) -> Option<&'a AssignmentTargetPattern<'a>> {
-        if let Self::AssignmentTargetPattern(v) = self { Some(v) } else { None }
     }
 
     #[inline]
@@ -944,8 +970,27 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_assignment_target_rest(self) -> Option<&'a AssignmentTargetRest<'a>> {
+        if let Self::AssignmentTargetRest(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
     pub fn as_assignment_target_with_default(self) -> Option<&'a AssignmentTargetWithDefault<'a>> {
         if let Self::AssignmentTargetWithDefault(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_assignment_target_property_identifier(
+        self,
+    ) -> Option<&'a AssignmentTargetPropertyIdentifier<'a>> {
+        if let Self::AssignmentTargetPropertyIdentifier(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_assignment_target_property_property(
+        self,
+    ) -> Option<&'a AssignmentTargetPropertyProperty<'a>> {
+        if let Self::AssignmentTargetPropertyProperty(v) = self { Some(v) } else { None }
     }
 
     #[inline]
@@ -1109,6 +1154,11 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_binding_property(self) -> Option<&'a BindingProperty<'a>> {
+        if let Self::BindingProperty(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
     pub fn as_array_pattern(self) -> Option<&'a ArrayPattern<'a>> {
         if let Self::ArrayPattern(v) = self { Some(v) } else { None }
     }
@@ -1176,11 +1226,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_static_block(self) -> Option<&'a StaticBlock<'a>> {
         if let Self::StaticBlock(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
-    pub fn as_module_declaration(self) -> Option<&'a ModuleDeclaration<'a>> {
-        if let Self::ModuleDeclaration(v) = self { Some(v) } else { None }
     }
 
     #[inline]
@@ -1514,11 +1559,6 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_ts_type_name(self) -> Option<&'a TSTypeName<'a>> {
-        if let Self::TSTypeName(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
     pub fn as_ts_qualified_name(self) -> Option<&'a TSQualifiedName<'a>> {
         if let Self::TSQualifiedName(v) = self { Some(v) } else { None }
     }
@@ -1556,8 +1596,18 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_ts_interface_body(self) -> Option<&'a TSInterfaceBody<'a>> {
+        if let Self::TSInterfaceBody(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
     pub fn as_ts_property_signature(self) -> Option<&'a TSPropertySignature<'a>> {
         if let Self::TSPropertySignature(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_index_signature(self) -> Option<&'a TSIndexSignature<'a>> {
+        if let Self::TSIndexSignature(v) = self { Some(v) } else { None }
     }
 
     #[inline]
@@ -1620,6 +1670,16 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_import_type(self) -> Option<&'a TSImportType<'a>> {
         if let Self::TSImportType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_function_type(self) -> Option<&'a TSFunctionType<'a>> {
+        if let Self::TSFunctionType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_constructor_type(self) -> Option<&'a TSConstructorType<'a>> {
+        if let Self::TSConstructorType(v) = self { Some(v) } else { None }
     }
 
     #[inline]

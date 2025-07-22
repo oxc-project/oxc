@@ -563,3 +563,17 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     // comment 2
    ╰────
   help: Use 'find(predicate)' instead of 'filter(predicate)[0]' or similar patterns
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer 'find' over filtering and accessing the first result
+   ╭─[prefer_array_find.tsx:1:7]
+ 1 │ array.filter(foo).pop!()
+   ·       ──────
+   ╰────
+  help: Use 'find(predicate)' instead of 'filter(predicate)[0]' or similar patterns
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer 'find' over filtering and accessing the first result
+   ╭─[prefer_array_find.tsx:1:7]
+ 1 │ array.filter(foo)?.pop()
+   ·       ──────
+   ╰────
+  help: Use 'find(predicate)' instead of 'filter(predicate)[0]' or similar patterns

@@ -49,7 +49,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "f",
-            "node_id": 17
+            "node_id": 16
           }
         ]
       },
