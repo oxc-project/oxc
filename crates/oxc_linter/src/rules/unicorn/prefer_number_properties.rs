@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, UnaryOperator, match_member_expression},
+    ast::{Expression, UnaryExpression, UnaryOperator, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -127,57 +127,35 @@ impl Rule for PreferNumberProperties {
                     || (matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt")
                         && matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)))
                 {
-                    let mut replacement = "Number.POSITIVE_INFINITY";
-                    let mut replace_span = ident_ref.span;
-                    let fixer = |fixer: RuleFixer<'_, 'a>| {
-                        if ident_name == "Infinity" {
-                            let unary_expr =
-                                ctx.nodes().ancestor_kinds(node.id()).find_map(|ancestor| {
-                                    if let AstKind::UnaryExpression(unary_expr) = ancestor {
-                                        Some(unary_expr)
-                                    } else {
-                                        None
-                                    }
-                                });
+                    let (replacement_span, replacement_text) = if ident_name == "Infinity" {
+                        if let Some(unary) = find_ancestor_unary(node, ctx) {
+                            match unary.operator {
+                                UnaryOperator::UnaryNegation => {
+                                    (unary.span, "Number.NEGATIVE_INFINITY")
+                                }
+                                _ => (ident_ref.span, "Number.POSITIVE_INFINITY"),
+                            }
+                        } else {
+                            (ident_ref.span, "Number.POSITIVE_INFINITY")
+                        }
+                    } else {
+                        (ident_ref.span, "")
+                    };
 
-                            if let Some(unary_expr) = unary_expr {
-                                replacement = if matches!(
-                                    unary_expr.operator,
-                                    UnaryOperator::UnaryNegation
-                                ) {
-                                    // -(Infinity) ->  Number.NEGATIVE_INFINITY
-                                    // +(Infinity) -> +(Number.POSITIVE_INFINITY)
-                                    replace_span = unary_expr.span;
-                                    "Number.NEGATIVE_INFINITY"
-                                } else {
-                                    "Number.POSITIVE_INFINITY"
-                                };
-                            }
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id())
+                    {
+                        AstKind::ObjectProperty(prop)
+                            if prop.shorthand && ident_name == "Infinity" =>
+                        {
+                            fixer
+                                .insert_text_after(&ident_ref.span, format!(": {replacement_text}"))
                         }
-                        match ctx.nodes().parent_kind(node.id()) {
-                            AstKind::ObjectProperty(object_property)
-                                if object_property.shorthand =>
-                            {
-                                if ident_name == "Infinity" {
-                                    fixer.insert_text_after(
-                                        &ident_ref.span,
-                                        format!(": {replacement}"),
-                                    )
-                                } else {
-                                    fixer.insert_text_before(
-                                        &ident_ref.span,
-                                        format!("{}: Number.", ident_ref.name.as_str()),
-                                    )
-                                }
-                            }
-                            _ => {
-                                if ident_name == "Infinity" {
-                                    fixer.replace(replace_span, replacement)
-                                } else {
-                                    fixer.insert_text_before(&ident_ref.span, "Number.")
-                                }
-                            }
+                        AstKind::ObjectProperty(prop) if prop.shorthand => fixer
+                            .insert_text_before(&ident_ref.span, format!("{ident_name}: Number.")),
+                        _ if ident_name == "Infinity" => {
+                            fixer.replace(replacement_span, replacement_text)
                         }
+                        _ => fixer.insert_text_before(&ident_ref.span, "Number."),
                     };
 
                     if ident_name == "isNaN" || ident_name == "isFinite" {
@@ -239,6 +217,16 @@ impl Rule for PreferNumberProperties {
             _ => {}
         }
     }
+}
+
+/// Finds the nearest enclosing unary expression ancestor for `node`.
+fn find_ancestor_unary<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<&'a UnaryExpression<'a>> {
+    ctx.nodes().ancestor_kinds(node.id()).find_map(|ancestor| {
+        if let AstKind::UnaryExpression(unary_expr) = ancestor { Some(unary_expr) } else { None }
+    })
 }
 
 fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
