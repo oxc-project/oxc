@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, match_member_expression},
+    ast::{Expression, UnaryOperator, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -121,28 +121,66 @@ impl Rule for PreferNumberProperties {
             AstKind::IdentifierReference(ident_ref)
                 if ctx.is_reference_to_global_variable(ident_ref) =>
             {
-                if (ident_ref.name.as_str() == "NaN" && self.check_nan)
-                    || (ident_ref.name.as_str() == "Infinity" && self.check_infinity)
-                    || (matches!(
-                        ident_ref.name.as_str(),
-                        "isNaN" | "isFinite" | "parseFloat" | "parseInt"
-                    ) && matches!(
-                        ctx.nodes().parent_kind(node.id()),
-                        AstKind::ObjectProperty(_)
-                    ))
+                let ident_name = ident_ref.name.as_str();
+                if (ident_name == "NaN" && self.check_nan)
+                    || (ident_name == "Infinity" && self.check_infinity)
+                    || (matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt")
+                        && matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)))
                 {
-                    let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id())
-                    {
-                        AstKind::ObjectProperty(object_property) if object_property.shorthand => {
-                            fixer.insert_text_before(
-                                &ident_ref.span,
-                                format!("{}: Number.", ident_ref.name.as_str()),
-                            )
+                    let mut replacement = "Number.POSITIVE_INFINITY";
+                    let mut replace_span = ident_ref.span;
+                    let fixer = |fixer: RuleFixer<'_, 'a>| {
+                        if ident_name == "Infinity" {
+                            let unary_expr =
+                                ctx.nodes().ancestor_kinds(node.id()).find_map(|ancestor| {
+                                    if let AstKind::UnaryExpression(unary_expr) = ancestor {
+                                        Some(unary_expr)
+                                    } else {
+                                        None
+                                    }
+                                });
+
+                            if let Some(unary_expr) = unary_expr {
+                                replacement = if matches!(
+                                    unary_expr.operator,
+                                    UnaryOperator::UnaryNegation
+                                ) {
+                                    // -(Infinity) ->  Number.NEGATIVE_INFINITY
+                                    // +(Infinity) -> +(Number.POSITIVE_INFINITY)
+                                    replace_span = unary_expr.span;
+                                    "Number.NEGATIVE_INFINITY"
+                                } else {
+                                    "Number.POSITIVE_INFINITY"
+                                };
+                            }
                         }
-                        _ => fixer.insert_text_before(&ident_ref.span, "Number."),
+                        match ctx.nodes().parent_kind(node.id()) {
+                            AstKind::ObjectProperty(object_property)
+                                if object_property.shorthand =>
+                            {
+                                if ident_name == "Infinity" {
+                                    fixer.insert_text_after(
+                                        &ident_ref.span,
+                                        format!(": {replacement}"),
+                                    )
+                                } else {
+                                    fixer.insert_text_before(
+                                        &ident_ref.span,
+                                        format!("{}: Number.", ident_ref.name.as_str()),
+                                    )
+                                }
+                            }
+                            _ => {
+                                if ident_name == "Infinity" {
+                                    fixer.replace(replace_span, replacement)
+                                } else {
+                                    fixer.insert_text_before(&ident_ref.span, "Number.")
+                                }
+                            }
+                        }
                     };
 
-                    if ident_ref.name.as_str() == "isNaN" || ident_ref.name.as_str() == "isFinite" {
+                    if ident_name == "isNaN" || ident_name == "isFinite" {
                         ctx.diagnostic_with_dangerous_fix(
                             prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
                             fixer,
@@ -480,6 +518,41 @@ function inner() {
         ("class Foo3 {[NaN] = 1}", "class Foo3 {[Number.NaN] = 1}", None),
         ("class Foo2 {[NaN] = 1}", "class Foo2 {[Number.NaN] = 1}", None),
         ("class Foo {[NaN] = 1}", "class Foo {[Number.NaN] = 1}", None),
+        (
+            "const foo = Infinity;",
+            "const foo = Number.POSITIVE_INFINITY;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "const foo = -Infinity;",
+            "const foo = Number.NEGATIVE_INFINITY;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "const foo = -(Infinity);",
+            "const foo = Number.NEGATIVE_INFINITY;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "const foo = -((Infinity));",
+            "const foo = Number.NEGATIVE_INFINITY;",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "let a = { Infinity, }",
+            "let a = { Infinity: Number.POSITIVE_INFINITY, }",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "let a = (Infinity)",
+            "let a = (Number.POSITIVE_INFINITY)",
+            Some(json!([{"checkInfinity":true}])),
+        ),
+        (
+            "let a = +(Infinity)",
+            "let a = +(Number.POSITIVE_INFINITY)",
+            Some(json!([{"checkInfinity":true}])),
+        ),
     ];
 
     Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)
