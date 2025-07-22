@@ -1,4 +1,4 @@
-ts compatibility: 234/573 (40.84%)
+ts compatibility: 242/573 (42.23%)
 
 # Failed
 
@@ -64,7 +64,7 @@ ts compatibility: 234/573 (40.84%)
 | typescript/as/as.ts | 💥 | 64.57% |
 | typescript/as/assignment2.ts | 💥 | 91.18% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
-| typescript/as/expression-statement.ts | 💥 | 50.00% |
+| typescript/as/expression-statement.ts | 💥 | 75.00% |
 | typescript/as/long-identifiers.ts | 💥 | 88.89% |
 | typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
 | typescript/as/ternary.ts | 💥 | 45.00% |
@@ -95,7 +95,6 @@ ts compatibility: 234/573 (40.84%)
 | typescript/class-comment/misc.ts | 💥 | 71.43% |
 | typescript/classes/break-heritage.ts | 💥 | 51.06% |
 | typescript/classes/break.ts | 💥 | 39.39% |
-| typescript/comments/15707.ts | 💥 | 74.51% |
 | typescript/comments/16065-2.ts | 💥 | 55.56% |
 | typescript/comments/16889.ts | 💥 | 90.60% |
 | typescript/comments/after_jsx_generic.tsx | 💥 | 5.00% |
@@ -157,13 +156,7 @@ ts compatibility: 234/573 (40.84%)
 | typescript/conformance/types/interfaceDeclaration/interfaceDeclaration.ts | 💥 | 90.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
 | typescript/conformance/types/thisType/thisType.ts | 💥 | 66.67% |
-| typescript/conformance/types/tuple/tupleElementTypes1.ts | 💥 | 0.00% |
-| typescript/conformance/types/tuple/tupleElementTypes2.ts | 💥 | 0.00% |
-| typescript/conformance/types/tuple/tupleElementTypes3.ts | 💥 | 0.00% |
-| typescript/conformance/types/tuple/tupleElementTypes4.ts | 💥 | 0.00% |
 | typescript/conformance/types/tuple/wideningTuples1.ts | 💥 | 80.00% |
-| typescript/conformance/types/tuple/wideningTuples5.ts | 💥 | 50.00% |
-| typescript/conformance/types/tuple/wideningTuples6.ts | 💥 | 66.67% |
 | typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameter/typeParameter.ts | 💥 | 66.67% |
 | typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts | 💥 | 93.33% |
@@ -205,7 +198,6 @@ ts compatibility: 234/573 (40.84%)
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
-| typescript/destructuring/destructuring.ts | 💥 | 75.00% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/enum/enum.ts | 💥 | 52.17% |
 | typescript/enum/multiline.ts | 💥 | 0.00% |

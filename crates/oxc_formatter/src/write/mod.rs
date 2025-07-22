@@ -57,7 +57,7 @@ use self::{
     semicolon::{ClassPropertySemicolon, OptionalSemicolon},
     type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
     utils::{
-        array::TrailingSeparatorMode,
+        array::{TrailingSeparatorMode, write_array_node},
         statement_body::FormatStatementBody,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
     },
@@ -454,65 +454,30 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // Copy of `utils::array::write_array_node`
-        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
+        write!(f, "[")?;
 
-        // Specifically do not use format_separated as arrays need separators
-        // inserted after holes regardless of the formatting since this makes a
-        // semantic difference
-
-        let source_text = f.source_text();
-        let mut join = f.join_nodes_with_soft_line();
-        let last_index = self.elements().len().saturating_sub(1);
-
-        let test = self.elements().iter();
-        for (index, element) in self.elements().iter().enumerate() {
-            let separator_mode = match element.as_ref() {
-                None => TrailingSeparatorMode::Force,
-                _ => TrailingSeparatorMode::Auto,
-            };
-
-            let is_disallow = matches!(separator_mode, TrailingSeparatorMode::Disallow);
-            let is_force = matches!(separator_mode, TrailingSeparatorMode::Force);
-
-            join.entry(
-                SPAN,
-                &format_with(|f| {
-                    if let Some(element) = element.as_ref() {
-                        write!(f, group(element))?;
+        if self.elements.is_empty() && self.rest.is_none() {
+            write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
+        } else {
+            write!(
+                f,
+                group(&soft_block_indent(&format_once(|f| {
+                    if !self.elements.is_empty() {
+                        write_array_node(
+                            self.elements.len(),
+                            self.elements().iter().map(AstNode::as_ref),
+                            f,
+                        )?;
                     }
-
-                    if is_disallow {
-                        // Trailing separators are disallowed, replace it with an empty element
-                        // if let Some(separator) = element.trailing_separator()? {
-                        // write!(f, [format_removed(separator)])?;
-                        // }
-                    } else if is_force || index != last_index {
-                        // In forced separator mode or if this element is not the last in the list, print the separator
-                        // match element.trailing_separator()? {
-                        // Some(trailing) => write!(f, [trailing.format()])?,
-                        // None => text(",").fmt(f)?,
-                        // };
-                        ",".fmt(f)?;
-                    // } else if let Some(separator) = element.trailing_separator()? {
-                    // match trailing_separator {
-                    // TrailingSeparator::Omit => {
-                    // // write!(f, [format_removed(separator)])?;
-                    // }
-                    // _ => {
-                    // write!(f, format_only_if_breaks(SPAN, separator))?;
-                    // }
-                    // }
-                    } else {
-                        write!(f, FormatTrailingCommas::ES5)?;
+                    if let Some(rest) = self.rest() {
+                        write!(f, [soft_line_break_or_space(), rest]);
                     }
-
                     Ok(())
-                }),
-            );
+                })))
+            )?;
         }
 
-        join.finish()
+        write!(f, "]")
     }
 }
 
@@ -1109,11 +1074,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
-        if self.is_empty() {
+
+        if self.elements.is_empty() && self.rest.is_none() {
             write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
         } else {
-            // write!(f, [group(&soft_block_indent(&self.elements))])?;
+            write!(
+                f,
+                group(&soft_block_indent(&format_once(|f| {
+                    if !self.elements.is_empty() {
+                        write_array_node(
+                            self.elements.len(),
+                            self.elements().iter().map(AstNode::as_ref),
+                            f,
+                        )?;
+                    }
+                    if let Some(rest) = self.rest() {
+                        write!(f, [soft_line_break_or_space(), rest]);
+                    }
+                    Ok(())
+                })))
+            )?;
         }
+
         write!(f, "]")
     }
 }
