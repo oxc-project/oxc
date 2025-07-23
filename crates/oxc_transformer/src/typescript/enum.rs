@@ -222,19 +222,18 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut prev_member_name = None;
 
-        for member in members.iter_mut() {
+        for member in members.take_in(ctx.ast.allocator) {
             let member_name = member.id.static_name();
 
-            let init = if let Some(initializer) = &mut member.initializer {
+            let init = if let Some(mut initializer) = member.initializer {
                 let constant_value =
-                    self.computed_constant_value(initializer, &previous_enum_members, ctx);
+                    self.computed_constant_value(&initializer, &previous_enum_members, ctx);
 
                 previous_enum_members.insert(member_name, constant_value);
 
                 match constant_value {
                     None => {
                         prev_constant_number = None;
-                        let mut new_initializer = initializer.take_in(ast);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,
@@ -242,9 +241,9 @@ impl<'a> TypeScriptEnum<'a> {
                             previous_enum_members.clone(),
                             ctx,
                         )
-                        .visit_expression(&mut new_initializer);
+                        .visit_expression(&mut initializer);
 
-                        new_initializer
+                        initializer
                     }
                     Some(constant_value) => match constant_value {
                         ConstantValue::Number(v) => {
