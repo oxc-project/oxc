@@ -232,7 +232,6 @@ impl IdLength {
                 if import_specifier.imported.name() == import_specifier.local.name {
                     return;
                 }
-                // TODO: Is there a better way to do this check?
                 if !import_specifier.local.content_eq(ident) {
                     return;
                 }
@@ -273,6 +272,7 @@ impl IdLength {
 
         let segmenter = GraphemeClusterSegmenter::new();
         let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
 
@@ -292,55 +292,48 @@ impl IdLength {
             AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                // Check if the parent's parent is also a member expression
-                // If so, this is not the rightmost member in the chain
-                let parent_parent = ctx.nodes().parent_node(parent_node.id());
+                // Only check property names in member expressions if properties == Always
+                if self.properties != PropertyKind::Always {
+                    return;
+                }
+
+                // Check if this member expression is on the left side of an assignment
+                let parent_kind = ctx.nodes().parent_kind(parent_node.id());
+
+                if matches!(parent_kind, AstKind::AssignmentExpression(_)) {
+                    // Check if this member expression is the left operand of the assignment
+                    if let AstKind::AssignmentExpression(assignment) = parent_kind {
+                        // Check if this node is the left operand (not the right)
+                        if assignment.left.span() == parent_node.span() {
+                            // This is a left-side assignment, check the property
+                        } else {
+                            // This is a right-side assignment, skip it
+                            return;
+                        }
+                    } else {
+                        // This is a right-side assignment, skip it
+                        return;
+                    }
+                } else if matches!(parent_kind, AstKind::AssignmentTargetPropertyProperty(_)) {
+                    // This is a member expression in a destructuring pattern
+                    // Check if it's the value of a property in an ObjectPattern
+                } else {
+                    // Not an assignment or destructuring, skip it
+                    return;
+                }
+
+                // Only check the rightmost property in a chain if properties == Always
+                let grandparent_kind = ctx.nodes().parent_kind(parent_node.id());
                 if matches!(
-                    parent_parent.kind(),
+                    grandparent_kind,
                     AstKind::StaticMemberExpression(_)
                         | AstKind::ComputedMemberExpression(_)
                         | AstKind::PrivateFieldExpression(_)
                 ) {
+                    // This is an intermediate property, not the rightmost
                     return;
                 }
-
-                // Check if any ancestor is an assignment target or identifier reference
-                let mut current_node = parent_node;
-                let mut is_assignment_target_or_reference = false;
-
-                loop {
-                    let ancestor = ctx.nodes().parent_node(current_node.id());
-                    let ancestor_kind = ancestor.kind();
-
-                    if matches!(ancestor_kind, AstKind::AssignmentExpression(_)) {
-                        is_assignment_target_or_reference = true;
-                        break;
-                    }
-
-                    if matches!(ancestor_kind, AstKind::IdentifierReference(_)) {
-                        is_assignment_target_or_reference = true;
-                        break;
-                    }
-
-                    // Stop if we reach a non-member expression or assignment target property
-                    if !matches!(
-                        ancestor_kind,
-                        AstKind::AssignmentTargetPropertyProperty(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                    ) {
-                        break;
-                    }
-
-                    current_node = ancestor;
-                }
-
-                if !is_assignment_target_or_reference {
-                    return;
-                }
-
-                if self.properties == PropertyKind::Never {
-                    return;
-                }
+                // If it's not an intermediate property, it's the rightmost, so check it
             }
             property_key if property_key.is_property_key() => {
                 let property_key = property_key.as_property_key_kind().unwrap();
@@ -392,9 +385,6 @@ impl IdLength {
                 }
             }
             AstKind::AssignmentTargetPropertyProperty(assignment_target) => {
-                if self.properties == PropertyKind::Never {
-                    return;
-                }
                 // Skip node when it is the original identifier in an assignment target property
                 //
                 // ({x: a}) = {};
