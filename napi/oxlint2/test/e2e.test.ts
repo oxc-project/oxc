@@ -101,4 +101,13 @@ describe('oxlint2 CLI', () => {
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('should receive data via `context`', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/context_properties',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });

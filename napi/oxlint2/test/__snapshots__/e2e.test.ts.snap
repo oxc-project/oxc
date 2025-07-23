@@ -322,6 +322,36 @@ Found 20 warnings and 20 errors.
 Finished in Xms on 20 files using X threads."
 `;
 
+exports[`oxlint2 CLI > should receive data via \`context\` 1`] = `
+"
+  x context-plugin(log-context): id: context-plugin/log-context
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): physicalFilename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): id: context-plugin/log-context
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x context-plugin(log-context): physicalFilename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+Found 0 warnings and 4 errors.
+Finished in Xms on 2 files using X threads."
+`;
+
 exports[`oxlint2 CLI > should report an error if a custom plugin cannot be loaded 1`] = `
 "Failed to parse configuration file.
 

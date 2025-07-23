@@ -50,17 +50,14 @@ async function loadPluginImpl(path) {
   registeredPluginPaths.add(path);
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
+  const pluginName = plugin.meta.name;
   let ruleId = registeredRules.length;
   const ruleNames = [];
-  const ret = {
-    name: plugin.meta.name,
-    offset: ruleId,
-    ruleNames,
-  };
+  const ret = { name: pluginName, offset: ruleId, ruleNames };
 
   for (const [ruleName, rule] of Object.entries(plugin.rules)) {
     ruleNames.push(ruleName);
-    registeredRules.push({ rule, context: new Context(ruleId) });
+    registeredRules.push({ rule, context: new Context(ruleId, `${pluginName}/${ruleName}`) });
     ruleId++;
   }
 
@@ -75,15 +72,19 @@ async function loadPluginImpl(path) {
 class Context {
   // Rule ID. Index into `registeredRules` array.
   #ruleId;
+  // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
+  id;
   // Absolute path of file being linted. Set before calling `rule`'s `create` method.
   physicalFilename;
 
   /**
    * @constructor
    * @param {number} ruleId - Rule ID
+   * @param {string} fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
-  constructor(ruleId) {
+  constructor(ruleId, fullRuleName) {
     this.#ruleId = ruleId;
+    this.id = fullRuleName;
   }
 
   /**
