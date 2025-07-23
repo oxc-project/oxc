@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
 import { DATA_POINTER_POS_32, SOURCE_LEN_POS_32 } from './generated/constants.cjs';
+import { getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Import methods and objects from `oxc-parser`.
@@ -34,11 +35,8 @@ const registeredRules = [];
 async function loadPlugin(path) {
   try {
     return await loadPluginImpl(path);
-  } catch (error) {
-    const errorMessage = 'message' in error && typeof error.message === 'string'
-      ? error.message
-      : 'An unknown error occurred';
-    return JSON.stringify({ Failure: errorMessage });
+  } catch (err) {
+    return JSON.stringify({ Failure: getErrorMessage(err) });
   }
 }
 
