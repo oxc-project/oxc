@@ -161,20 +161,20 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   }
   const needsVisit = finalizeCompiledVisitor();
 
-  // Skip visiting AST if no visitors visit any nodes.
+  // Visit AST.
+  // Skip this if no visitors visit any nodes.
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
-  if (!needsVisit) return '[]';
+  if (needsVisit) {
+    const programPos = buffer.uint32[DATA_POINTER_POS_32],
+      sourceByteLen = buffer.uint32[SOURCE_LEN_POS_32];
 
-  // Visit AST
-  const programPos = buffer.uint32[DATA_POINTER_POS_32],
-    sourceByteLen = buffer.uint32[SOURCE_LEN_POS_32];
+    const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+    const sourceIsAscii = sourceText.length === sourceByteLen;
+    const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
 
-  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-  const sourceIsAscii = sourceText.length === sourceByteLen;
-  const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
-
-  walkProgram(programPos, ast, compiledVisitor);
+    walkProgram(programPos, ast, compiledVisitor);
+  }
 
   // Send diagnostics back to Rust
   const ret = JSON.stringify(diagnostics);
