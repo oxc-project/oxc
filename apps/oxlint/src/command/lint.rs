@@ -440,7 +440,7 @@ pub struct SuppressionOptions {
     /// Remove entries for violations that no longer exist
     #[bpaf(switch, hide_usage)]
     pub prune_suppressions: bool,
-    
+
     /// Path to the suppression file (default: oxlint-suppressions.json)
     #[bpaf(argument("PATH"), hide_usage)]
     pub suppression_file: Option<PathBuf>,

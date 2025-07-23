@@ -321,12 +321,14 @@ impl CliRunner {
         let number_of_files = files_to_lint.len();
 
         // Handle suppression file setup
-        let suppression_file_path = suppression_options.suppression_file
+        let suppression_file_path = suppression_options
+            .suppression_file
             .unwrap_or_else(|| PathBuf::from("oxlint-suppressions.json"));
-        
-        let suppression_manager = if suppression_options.suppress_all 
-            || suppression_options.prune_suppressions 
-            || suppression_file_path.exists() {
+
+        let suppression_manager = if suppression_options.suppress_all
+            || suppression_options.prune_suppressions
+            || suppression_file_path.exists()
+        {
             SuppressionManager::load(&suppression_file_path).unwrap_or_default()
         } else {
             SuppressionManager::new()
@@ -360,7 +362,10 @@ impl CliRunner {
                 Ok(_) => {
                     print_and_flush_stdout(
                         stdout,
-                        &format!("Generated suppression file: {}\n", suppression_file_path.display()),
+                        &format!(
+                            "Generated suppression file: {}\n",
+                            suppression_file_path.display()
+                        ),
                     );
                     return CliRunResult::LintSucceeded;
                 }
@@ -478,7 +483,6 @@ impl CliRunner {
         self.cwd = cwd;
         self
     }
-
 
     fn get_diagnostic_service(
         reporter: &OutputFormatter,
