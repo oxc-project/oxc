@@ -162,7 +162,7 @@ impl Rule for NoCommonjs {
                 let object = member_expr_kind.object();
 
                 if object.is_specific_id("module") && property_name == "exports" {
-                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(2) else {
+                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(1) else {
                         return;
                     };
 

@@ -186,6 +186,8 @@ impl Rule for PreferForOf {
 
             let parent = nodes.parent_node(ref_id);
             let grand_parent = nodes.parent_node(parent.id());
+
+            // Check for direct uses of the loop variable that prevent for-of conversion
             match grand_parent.kind() {
                 AstKind::IdentifierReference(_) => {
                     return true;
@@ -195,7 +197,65 @@ impl Rule for PreferForOf {
                 {
                     return true;
                 }
+                AstKind::UpdateExpression(_) => {
+                    return true;
+                }
                 _ => {}
+            }
+
+            // For member expressions on the array being iterated, check if they're assignment targets
+            if let Some(mem_expr) = parent.kind().as_member_expression_kind() {
+                if let Expression::Identifier(id) = mem_expr.object() {
+                    if id.name.as_str() == array_name {
+                        // This is arr[i] - check if it's directly an assignment target
+                        match grand_parent.kind() {
+                            AstKind::AssignmentExpression(assign_expr) => {
+                                if assign_expr.left.span() == parent.span() {
+                                    return true;
+                                }
+                            }
+                            AstKind::ArrayAssignmentTarget(_)
+                            | AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::AssignmentTargetWithDefault(_) => {
+                                return true;
+                            }
+                            _ => {}
+                        }
+
+                        // Check for spread patterns like [...arr[i]]
+                        let mut current_node = grand_parent;
+                        for _ in 0..3 {
+                            current_node = nodes.parent_node(current_node.id());
+                            match current_node.kind() {
+                                AstKind::ArrayAssignmentTarget(_) => {
+                                    // Only flag if the arr[i] span is directly within this assignment target
+                                    // This helps distinguish [...arr[i]] from [obj[arr[i]]]
+                                    if current_node.span().start <= parent.span().start
+                                        && parent.span().end <= current_node.span().end
+                                    {
+                                        // Check if arr[i] is one of the direct elements, not nested
+                                        let immediate_parent = nodes.parent_node(parent.id());
+                                        let great_grand_parent =
+                                            nodes.parent_node(immediate_parent.id());
+                                        if great_grand_parent.id() == current_node.id() {
+                                            return true;
+                                        }
+                                    }
+                                }
+                                AstKind::ObjectAssignmentTarget(_)
+                                | AstKind::AssignmentTargetWithDefault(_) => {
+                                    if current_node.span().start <= parent.span().start
+                                        && parent.span().end <= current_node.span().end
+                                    {
+                                        return true;
+                                    }
+                                }
+                                AstKind::Program(_) => break,
+                                _ => {}
+                            }
+                        }
+                    }
+                }
             }
 
             let parent_kind = parent.kind();
