@@ -26,18 +26,15 @@ importers:
       emnapi:
         specifier: 1.4.5
         version: 1.4.5
+      oxlint-tsgolint:
+        specifier: 0.0.0-8
+        version: 0.0.0-8
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@24.0.15)(@vitest/browser@3.2.4)
-
-  apps/oxlint:
-    devDependencies:
-      oxlint-tsgolint:
-        specifier: 0.0.0-8
-        version: 0.0.0-8
 
   editors/vscode:
     dependencies:

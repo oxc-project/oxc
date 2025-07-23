@@ -7,7 +7,6 @@ target/
 
 # node_modules
 /node_modules/
-/apps/oxlint/node_modules/
 /website/node_modules/
 /benchmark/node_modules/
 /tasks/benchmark/codspeed/node_modules/

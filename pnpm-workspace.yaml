@@ -5,7 +5,6 @@ packages:
   - editors/*
   - tasks/transform_conformance
   - tasks/compat_data
-  - apps/oxlint
 
 catalog:
   '@napi-rs/cli': 3.0.0
