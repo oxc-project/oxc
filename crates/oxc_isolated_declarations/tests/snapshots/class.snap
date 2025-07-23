@@ -64,6 +64,10 @@ export declare class ConstructorOverloadsClass {
 	constructor(a: number);
 	constructor(a: string);
 }
+export declare class ClassParameterProperties {
+	readonly b: string;
+	constructor(a: number, b: string);
+}
 
 
 ==================== Errors ====================

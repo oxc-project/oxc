@@ -75,3 +75,10 @@ export class ConstructorOverloadsClass {
   constructor(a: string);
   constructor(readonly a: any) {}
 }
+
+export class ClassParameterProperties {
+	constructor(
+		a: number,
+		readonly b: string,
+	) {}
+}
