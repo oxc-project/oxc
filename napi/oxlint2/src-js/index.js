@@ -142,6 +142,16 @@ const diagnostics = [];
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
+// AST data object. Reused for every file.
+const ast = {
+  buffer: null,
+  sourceText: '',
+  sourceByteLen: 0,
+  sourceIsAscii: false,
+  nodes: new Map(),
+  token: TOKEN,
+};
+
 // Run rules on a file.
 //
 // TODO(camc314): why do we have to destructure here?
@@ -193,8 +203,12 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
       sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
     const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-    const sourceIsAscii = sourceText.length === sourceByteLen;
-    const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
+
+    ast.buffer = buffer;
+    ast.sourceText = sourceText;
+    ast.sourceByteLen = sourceByteLen;
+    ast.sourceIsAscii = sourceText.length === sourceByteLen;
+    ast.nodes.clear();
 
     walkProgram(programPos, ast, compiledVisitor);
   }
