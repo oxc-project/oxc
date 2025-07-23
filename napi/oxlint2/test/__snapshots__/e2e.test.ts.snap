@@ -342,6 +342,18 @@ exports[`oxlint2 CLI > should receive data via \`context\` 1`] = `
    : ^
    \`----
 
+  x context-plugin(log-context): getFilename(): files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): getPhysicalFilename(): files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
   x context-plugin(log-context): id: context-plugin/log-context
    ,-[files/2.js:1:1]
  1 | let y;
@@ -360,7 +372,19 @@ exports[`oxlint2 CLI > should receive data via \`context\` 1`] = `
    : ^
    \`----
 
-Found 0 warnings and 6 errors.
+  x context-plugin(log-context): getFilename(): files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x context-plugin(log-context): getPhysicalFilename(): files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+Found 0 warnings and 10 errors.
 Finished in Xms on 2 files using X threads."
 `;
 

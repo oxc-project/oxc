@@ -104,6 +104,24 @@ class Context {
     });
   }
 
+  /**
+   * Get the absolute path of the file being linted.
+   * @deprecated Use `filename` instead.
+   * @returns {string} - The absolute path of the file being linted.
+   */
+  getFilename() {
+    return this.filename;
+  }
+
+  /**
+   * Get the physical filename (absolute path) of the file being linted.
+   * @deprecated Use `physicalFilename` instead.
+   * @returns {string} - The physical filename of the file being linted.
+   */
+  getPhysicalFilename() {
+    return this.physicalFilename;
+  }
+
   static {
     /**
      * Update a `Context` with file-specific data.

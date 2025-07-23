@@ -30,6 +30,16 @@ export default {
           node: SPAN,
         });
 
+        context.report({
+          message: `getFilename(): ${relativePath(context.getFilename())}`,
+          node: SPAN,
+        });
+
+        context.report({
+          message: `getPhysicalFilename(): ${relativePath(context.getPhysicalFilename())}`,
+          node: SPAN,
+        });
+
         return {};
       },
     },
