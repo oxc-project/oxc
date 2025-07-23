@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "test.js": {
+      "eslint/no-console": { "count": 1 },
+      "eslint/no-debugger": { "count": 1 }
+    },
+    "another.js": {
+      "eslint/no-console": { "count": 2 },
+      "eslint/no-unused-vars": { "count": 1 }
+    },
+    "deleted-file.js": {
+      "eslint/no-console": { "count": 5 }
+    }
+  }
+}
