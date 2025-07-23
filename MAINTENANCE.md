@@ -8,9 +8,12 @@
 
 - Run [Oxlint Ecosystem CI](https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ecosystem-ci.yml)
 
-## Release Crates
+## Publish Crates
 
 - Run [Prepare Release Crates] https://github.com/oxc-project/oxc/actions/workflows/prepare_release_crates.yml
+
+Note: [crates.io trusted publishing](https://crates.io/docs/trusted-publishing) is configured,
+a short lived token is used instead of a long-live token stored in github secrets.
 
 ## Update `VSCE_PERSONAL_ACCESS_TOKEN`
 
