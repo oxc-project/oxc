@@ -1,4 +1,9 @@
-use std::{ffi::OsStr, io::Read, path::PathBuf, sync::Arc};
+use std::{
+    ffi::OsStr,
+    io::Read,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::rules::RuleEnum;
@@ -143,4 +148,27 @@ fn parse_single_message(cursor: &mut std::io::Cursor<&[u8]>) -> Result<TsGoLintD
         Ok(diagnostic) => Ok(diagnostic),
         Err(e) => Err(format!("Failed to parse tsgolint payload: {e}")),
     }
+}
+
+/// Tries to find the `tsgolint` executable. In priority order, this will check:
+/// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
+/// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
+pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
+    // Check the environment variable first
+    if let Ok(path) = std::env::var("OXLINT_TSGOLINT_PATH") {
+        let path = PathBuf::from(path);
+        if path.is_dir() {
+            return Some(path.join("tsgolint"));
+        } else if path.is_file() {
+            return Some(path);
+        }
+    }
+
+    // Check the local node_modules/.bin directory
+    let local_bin_path = cwd.join("node_modules").join(".bin").join("tsgolint");
+    if local_bin_path.is_file() {
+        return Some(local_bin_path);
+    }
+
+    None
 }

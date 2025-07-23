@@ -1,0 +1,8 @@
+{
+  "name": "oxlint",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "oxlint-tsgolint": "0.0.0-8"
+  }
+}

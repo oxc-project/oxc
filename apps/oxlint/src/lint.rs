@@ -23,7 +23,10 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    tsgolint::{TsGoLintInput, TsGoLintInputFile, TsGoLintState, parse_tsgolint_output},
+    tsgolint::{
+        TsGoLintInput, TsGoLintInputFile, TsGoLintState, parse_tsgolint_output,
+        try_find_tsgolint_executable,
+    },
     walk::Walk,
 };
 
@@ -286,10 +289,12 @@ impl Runner for LintRunner {
         // 1) `--tsconfig` is passed
         // 2) `tsgolint` appears to be installed
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        let tsgolint_path =
+            try_find_tsgolint_executable(options.cwd()).unwrap_or(PathBuf::from("tsgolint"));
         let type_aware = basic_options.tsconfig.is_some()
             && (
                 // Check if `tsgolint` is executable
-                std::process::Command::new("tsgolint").arg("--help").output().is_ok()
+                std::process::Command::new(&tsgolint_path).arg("--help").output().is_ok()
             );
 
         let tsgolint_state = if type_aware {
@@ -396,7 +401,7 @@ impl Runner for LintRunner {
 
             let handler = std::thread::spawn(move || {
                 // `./tsgolint headless --tsconfig /path/to/project/tsconfig.json --cwd /path/to/project
-                let mut child = std::process::Command::new("tsgolint")
+                let mut child = std::process::Command::new(tsgolint_path)
                     .arg("headless")
                     .arg("--tsconfig")
                     .arg(tsconfig)
