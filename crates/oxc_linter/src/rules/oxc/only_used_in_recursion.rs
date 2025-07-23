@@ -379,9 +379,29 @@ fn is_function_maybe_reassigned<'a>(
     function_id: &'a BindingIdentifier,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
-        matches!(ctx.nodes().parent_kind(reference.node_id()), AstKind::IdentifierReference(_))
-    })
+    // Check if the function is ever used as the left-hand side of an assignment
+    for reference in ctx.semantic().symbol_references(function_id.symbol_id()) {
+        let reference_node = ctx.nodes().get_node(reference.node_id());
+
+        // Check if this reference is on the left side of an assignment
+        let parent_node = ctx.nodes().parent_node(reference.node_id());
+        match parent_node.kind() {
+            AstKind::AssignmentExpression(assignment) => {
+                // Check if the function identifier is the left-hand side of assignment
+                if let Some(simple_target) = assignment.left.as_simple_assignment_target() {
+                    if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
+                        simple_target
+                    {
+                        if ident.span == reference_node.span() {
+                            return true; // Function is being reassigned
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    false
 }
 
 fn get_jsx_element_symbol_id<'a>(
