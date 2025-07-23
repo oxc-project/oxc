@@ -69,6 +69,43 @@ async function loadPluginImpl(path) {
   return JSON.stringify({ Success: ret });
 }
 
+/**
+ * Context class.
+ *
+ * Each rule has its own `Context` object. It is passed to that rule's `create` function.
+ */
+class Context {
+  // Rule ID. Index into `registeredRules` array.
+  #ruleId;
+  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
+  physicalFilename;
+
+  /**
+   * @constructor
+   * @param {number} ruleId - Rule ID
+   */
+  constructor(ruleId) {
+    this.#ruleId = ruleId;
+  }
+
+  /**
+   * Report error.
+   * @param {Object} diagnostic - Diagnostic object
+   * @param {string} diagnostic.message - Error message
+   * @param {Object} diagnostic.loc - Node or loc object
+   * @param {number} diagnostic.loc.start - Start range of diagnostic
+   * @param {number} diagnostic.loc.end - End range of diagnostic
+   * @returns {undefined}
+   */
+  report(diagnostic) {
+    diagnostics.push({
+      message: diagnostic.message,
+      loc: { start: diagnostic.node.start, end: diagnostic.node.end },
+      externalRuleId: this.#ruleId,
+    });
+  }
+}
+
 // --------------------
 // Running rules
 // --------------------
@@ -145,43 +182,6 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   const ret = JSON.stringify(diagnostics);
   diagnostics.length = 0;
   return ret;
-}
-
-/**
- * Context class.
- *
- * Each rule has its own `Context` object. It is passed to that rule's `create` function.
- */
-class Context {
-  // Rule ID. Index into `registeredRules` array.
-  #ruleId;
-  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
-  physicalFilename;
-
-  /**
-   * @constructor
-   * @param {number} ruleId - Rule ID
-   */
-  constructor(ruleId) {
-    this.#ruleId = ruleId;
-  }
-
-  /**
-   * Report error.
-   * @param {Object} diagnostic - Diagnostic object
-   * @param {string} diagnostic.message - Error message
-   * @param {Object} diagnostic.loc - Node or loc object
-   * @param {number} diagnostic.loc.start - Start range of diagnostic
-   * @param {number} diagnostic.loc.end - End range of diagnostic
-   * @returns {undefined}
-   */
-  report(diagnostic) {
-    diagnostics.push({
-      message: diagnostic.message,
-      loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-      externalRuleId: this.#ruleId,
-    });
-  }
 }
 
 // --------------------
