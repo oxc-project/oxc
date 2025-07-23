@@ -60,6 +60,17 @@
 // * `finalizeCompiledVisitor` once.
 //
 // After this sequence of calls, `compiledVisitor` is ready to be used to walk the AST.
+//
+// We also recycle:
+//
+// * `{ enter, exit }` objects which are stored in compiled visitor.
+// * Temporary arrays used to store multiple visit functions, which are merged into a single function
+//   in `finalizeCompiledVisitor`.
+//
+// The aim is to reduce pressure on the garbage collector. All these recycled objects are long-lived
+// and will graduate to "old space", which leaves as much capacity as possible in "new space"
+// for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
+// it will avoid full GC runs, which should greatly improve performance.
 
 import types from '../../parser/generated/lazy/types.js';
 
@@ -105,6 +116,53 @@ mergedExitVisitorTypeIds.length = 0;
 // `true` if `addVisitor` has been called with a visitor which visits at least one AST type
 let hasActiveVisitors = false;
 
+// Enter+exit object cache.
+//
+// `compiledVisitor` may contain many `{ enter, exit }` objects.
+// Use this cache to reuse those objects across all visitor compilations.
+//
+// `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
+// It may point to the end of the cache array.
+const enterExitObjectCache = [];
+let enterExitObjectCacheNextIndex = 0;
+
+function getEnterExitObject() {
+  if (enterExitObjectCacheNextIndex < enterExitObjectCache.length) {
+    return enterExitObjectCache[enterExitObjectCacheNextIndex++];
+  }
+
+  const enterExit = { enter: null, exit: null };
+  enterExitObjectCache.push(enterExit);
+  enterExitObjectCacheNextIndex++;
+  return enterExit;
+}
+
+// Visit function arrays cache.
+//
+// During compilation, many arrays may be used temporarily to store multiple visit functions for same AST type.
+// The functions in each array are merged into a single function in `finalizeCompiledVisitor`,
+// after which these arrays aren't used again.
+//
+// Use this cache to reuse these arrays across each visitor compilation.
+//
+// `visitFnArrayCacheNextIndex` is the index of first array in cache which is currently unused.
+// It may point to the end of the cache array.
+const visitFnArrayCache = [];
+let visitFnArrayCacheNextIndex = 0;
+
+function createVisitFnArray(visit1, visit2) {
+  if (visitFnArrayCacheNextIndex < visitFnArrayCache.length) {
+    const arr = visitFnArrayCache[visitFnArrayCacheNextIndex++];
+    arr.push(visit1, visit2);
+    return arr;
+  }
+
+  const arr = [visit1, visit2];
+  visitFnArrayCache.push(arr);
+  visitFnArrayCacheNextIndex++;
+  return arr;
+}
+
 /**
  * Initialize compiled visitor, ready for calls to `addVisitor`.
  * @returns {undefined}
@@ -114,6 +172,14 @@ export function initCompiledVisitor() {
   for (let i = 0; i < NODE_TYPES_COUNT; i++) {
     compiledVisitor[i] = null;
   }
+
+  // Reset enter+exit objects which were used in previous compilation
+  for (let i = 0; i < enterExitObjectCacheNextIndex; i++) {
+    const enterExit = enterExitObjectCache[i];
+    enterExit.enter = null;
+    enterExit.exit = null;
+  }
+  enterExitObjectCacheNextIndex = 0;
 }
 
 /**
@@ -170,9 +236,12 @@ export function addVisitorToCompiled(visitor) {
     } else {
       // Not leaf node - store enter+exit pair
       if (existing === null) {
-        compiledVisitor[typeId] = isExit
-          ? { enter: null, exit: visitFn }
-          : { enter: visitFn, exit: null };
+        const enterExit = compiledVisitor[typeId] = getEnterExitObject();
+        if (isExit) {
+          enterExit.exit = visitFn;
+        } else {
+          enterExit.enter = visitFn;
+        }
       } else if (isExit) {
         let { exit } = existing;
         if (exit === null) {
@@ -180,7 +249,7 @@ export function addVisitorToCompiled(visitor) {
         } else if (isArray(exit)) {
           exit.push(visitFn);
         } else {
-          existing.exit = [exit, visitFn];
+          existing.exit = createVisitFnArray(exit, visitFn);
           mergedExitVisitorTypeIds.push(typeId);
         }
       } else {
@@ -190,7 +259,7 @@ export function addVisitorToCompiled(visitor) {
         } else if (isArray(enter)) {
           enter.push(visitFn);
         } else {
-          existing.enter = [enter, visitFn];
+          existing.enter = createVisitFnArray(enter, visitFn);
           mergedEnterVisitorTypeIds.push(typeId);
         }
       }
@@ -227,6 +296,10 @@ export function finalizeCompiledVisitor() {
   mergedEnterVisitorTypeIds.length = 0;
   mergedExitVisitorTypeIds.length = 0;
 
+  // Note: Visit function arrays have been emptied in `mergeVisitFns`, so all arrays in `visitFnArrayCache`
+  // are now empty and ready for reuse. We just need to reset the index.
+  visitFnArrayCacheNextIndex = 0;
+
   hasActiveVisitors = false;
 
   return true;
@@ -234,6 +307,8 @@ export function finalizeCompiledVisitor() {
 
 /**
  * Merge array of visit functions into a single function, which calls each of input functions in turn.
+ *
+ * The array passed is cleared (length set to 0), so the array can be reused.
  *
  * The merged function is statically defined and does not contain a loop, to hopefully allow
  * JS engine to heavily optimize it.
@@ -261,7 +336,12 @@ function mergeVisitFns(visitFns) {
   }
 
   // Merge functions
-  return merger(...visitFns);
+  const mergedFn = merger(...visitFns);
+
+  // Empty `visitFns` array, so it can be reused
+  visitFns.length = 0;
+
+  return mergedFn;
 }
 
 /**
