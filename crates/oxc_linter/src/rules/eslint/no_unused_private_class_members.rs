@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::AssignmentOperator};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
@@ -91,31 +91,23 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedPrivateClassMembers {
     fn run_once(&self, ctx: &LintContext) {
-        println!("[DEBUG] Entering run_once for NoUnusedPrivateClassMembers");
         ctx.classes().iter_enumerated().for_each(|(class_id, _)| {
-            println!("[DEBUG] Inspecting class_id: {:?}", class_id);
             for (element_id, element) in ctx.classes().elements[class_id].iter_enumerated() {
-                println!("[DEBUG]  Element: id={:?}, name={}, is_private={}, kind={:?}", element_id, element.name, element.is_private, element.kind);
                 if !element.kind.intersects(ElementKind::Property | ElementKind::Method) {
-                    println!("[DEBUG]   Skipping element (not property or method): {}", element.name);
                     continue;
                 }
 
                 if element.is_private {
                     let mut found = false;
                     for ident in ctx.classes().iter_private_identifiers(class_id) {
-                        println!("[DEBUG]    Checking private identifier: name={}, id={:?}, element_ids={:?}", ident.name, ident.id, ident.element_ids);
                         let is_property = element.kind.is_property();
                         let read = !is_property || is_read(ident.id, ctx.nodes());
-                        println!("[DEBUG]     is_property={}, is_read={}", is_property, read);
                         if read && ident.element_ids.contains(&element_id) {
-                            println!("[DEBUG]     Found usage for element: {}", element.name);
                             found = true;
                             break;
                         }
                     }
                     if !found {
-                        println!("[DEBUG]   Reporting unused private member: {}", element.name);
                         ctx.diagnostic(no_unused_private_class_members_diagnostic(
                             &element.name,
                             element.span,
@@ -128,25 +120,21 @@ impl Rule for NoUnusedPrivateClassMembers {
 }
 
 fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
-    println!("[DEBUG] is_read: current_node_id={:?}", current_node_id);
     for (curr, parent) in
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
-        println!("[DEBUG]  Ancestor tuple: curr={:?}, parent={:?}", curr.kind(), parent.kind());
         match (curr.kind(), parent.kind()) {
+            // Skip member expressions in identifier context
             (member_expr, AstKind::IdentifierReference(_))
-                if member_expr.is_member_expression_kind() =>
-            {
-                println!("[DEBUG]   Member expression kind, continue");
-            }
+                if member_expr.is_member_expression_kind() => {}
+            // Skip identifier references in assignment targets
             (
                 AstKind::IdentifierReference(_),
                 AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
                 | AstKind::IdentifierReference(_),
-            ) => {
-                println!("[DEBUG]   IdentifierReference in assignment target, continue");
-            }
+            ) => {}
+            // Write-only contexts
             (
                 AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
@@ -160,59 +148,33 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::AssignmentTargetRest(_)
                 | AstKind::AssignmentTargetPropertyProperty(_),
             ) => {
-                println!("[DEBUG]   Write-only context detected, returning false");
                 return false;
             }
-            (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_)) => {
-                println!(
-                    "[DEBUG]   AssignmentExpression: identifier is on the left-hand side, returning false (not a read)"
-                );
+            // Assignment and update expressions are writes
+            (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_))
+            | (_, AstKind::UpdateExpression(_)) => {
                 return false;
             }
-            // Update expressions (++, --) are also writes, not reads
-            (_, AstKind::UpdateExpression(_)) => {
-                println!(
-                    "[DEBUG]   UpdateExpression: identifier is being updated, returning false (not a read)"
-                );
-                return false;
-            }
-            // Explicitly handle known read contexts
-            (AstKind::PrivateFieldExpression(_), AstKind::ReturnStatement(_)) => {
-                println!("[DEBUG]   Used in return statement, returning true (is a read)");
+            // All these are read contexts for private fields
+            (
+                AstKind::PrivateFieldExpression(_),
+                AstKind::ReturnStatement(_)
+                | AstKind::CallExpression(_)
+                | AstKind::BinaryExpression(_)
+                | AstKind::VariableDeclarator(_)
+                | AstKind::ExpressionStatement(_)
+                | AstKind::PropertyDefinition(_)
+                | AstKind::Argument(_),
+            ) => {
                 return true;
             }
-            (AstKind::PrivateFieldExpression(_), AstKind::CallExpression(_)) => {
-                println!("[DEBUG]   Used in call expression, returning true (is a read)");
-                return true;
-            }
-            (AstKind::PrivateFieldExpression(_), AstKind::BinaryExpression(_)) => {
-                println!("[DEBUG]   Used in binary expression, returning true (is a read)");
-                return true;
-            }
-            (AstKind::PrivateFieldExpression(_), AstKind::VariableDeclarator(_)) => {
-                println!("[DEBUG]   Used in variable declarator, returning true (is a read)");
-                return true;
-            }
-            (AstKind::PrivateFieldExpression(_), AstKind::ExpressionStatement(_)) => {
-                println!("[DEBUG]   Used in expression statement, returning true (is a read)");
-                return true;
-            }
-            (AstKind::PrivateFieldExpression(_), AstKind::PropertyDefinition(_)) => {
-                println!("[DEBUG]   Used in property definition, returning true (is a read)");
-                return true;
-            }
+            // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
             (AstKind::PrivateFieldExpression(_), AstKind::AssignmentExpression(assign_expr)) => {
-                // Check if the current node is the right-hand side of the assignment
                 if assign_expr.right.span() == curr.span() {
-                    println!(
-                        "[DEBUG]   Used as right-hand side of assignment, returning true (is a read)"
-                    );
                     return true;
                 }
-                // For compound assignments (+=, -=, etc.), if the result is used in a value context, it's a read
                 use oxc_ast::ast::AssignmentOperator;
                 if assign_expr.operator != AssignmentOperator::Assign {
-                    // Look for the grandparent node
                     if let Some((_, grandparent)) = nodes
                         .ancestors(parent.id())
                         .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
@@ -229,59 +191,38 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                             | AstKind::ObjectProperty(_)
                             | AstKind::JSXExpressionContainer(_)
                             | AstKind::Argument(_) => {
-                                println!(
-                                    "[DEBUG]   Compound assignment result used in value context, returning true (is a read)"
-                                );
                                 return true;
                             }
                             _ => {}
                         }
                     }
                 }
-                // Otherwise, fall through to default (not a read)
             }
-            (AstKind::PrivateFieldExpression(_), AstKind::Argument(_)) => {
-                println!("[DEBUG]   Used as function argument, returning true (is a read)");
-                return true;
-            }
+            // ForIn/ForOf: only right-hand side is a read
             (AstKind::PrivateFieldExpression(_), AstKind::ForInStatement(for_in)) => {
                 if for_in.right.span() == curr.span() {
-                    println!(
-                        "[DEBUG]   Used as right-hand side of for...in, returning true (is a read)"
-                    );
                     return true;
                 }
-                // Otherwise, fall through to default (not a read)
             }
             (AstKind::PrivateFieldExpression(_), AstKind::ForOfStatement(for_of)) => {
                 if for_of.right.span() == curr.span() {
-                    println!(
-                        "[DEBUG]   Used as right-hand side of for...of, returning true (is a read)"
-                    );
                     return true;
                 }
-                // Otherwise, fall through to default (not a read)
             }
+            // AssignmentTargetPropertyProperty: only computed property name is a read
             (
                 AstKind::PrivateFieldExpression(_),
                 AstKind::AssignmentTargetPropertyProperty(prop),
             ) => {
                 if prop.computed && prop.name.span() == curr.span() {
-                    println!(
-                        "[DEBUG]   Used as computed property name in object assignment pattern, returning true (is a read)"
-                    );
                     return true;
                 }
-                // Otherwise, fall through to default (not a read)
             }
             _ => {
-                println!("[DEBUG]   Default case, returning false (not a read)");
                 return false;
             }
         }
     }
-
-    println!("[DEBUG] is_read: reached end, returning true");
     true
 }
 
