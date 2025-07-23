@@ -1,11 +1,11 @@
 enum Size {
-  SMALL = "SMALL",
-  LARGE = "LARGE",
+  SMALL = "tiny",
+  LARGE = "big",
 }
 
 enum Animal {
-  CAT = "CAT",
-  DOG = "DOG",
+  CAT = "meow",
+  DOG = "woof",
 }
 
 enum AnimalSize {
