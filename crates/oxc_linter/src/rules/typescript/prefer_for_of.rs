@@ -189,9 +189,6 @@ impl Rule for PreferForOf {
 
             // Check for direct uses of the loop variable that prevent for-of conversion
             match grand_parent.kind() {
-                AstKind::IdentifierReference(_) => {
-                    return true;
-                }
                 AstKind::UnaryExpression(unary_expr)
                     if unary_expr.operator == UnaryOperator::Delete =>
                 {
@@ -200,58 +197,48 @@ impl Rule for PreferForOf {
                 AstKind::UpdateExpression(_) => {
                     return true;
                 }
+                // Check if the loop variable itself is being assigned to (like i = something)
+                AstKind::AssignmentExpression(assign_expr) => {
+                    if assign_expr.left.span() == parent.span() {
+                        return true;
+                    }
+                }
                 _ => {}
             }
 
-            // For member expressions on the array being iterated, check if they're assignment targets
+            // Only prevent for-of if arr[i] is directly the assignment target, not just used within one
             if let Some(mem_expr) = parent.kind().as_member_expression_kind() {
                 if let Expression::Identifier(id) = mem_expr.object() {
                     if id.name.as_str() == array_name {
-                        // This is arr[i] - check if it's directly an assignment target
-                        match grand_parent.kind() {
-                            AstKind::AssignmentExpression(assign_expr) => {
-                                if assign_expr.left.span() == parent.span() {
-                                    return true;
-                                }
+                        // Check if arr[i] is the exact assignment target
+
+                        // Direct assignment: arr[i] = value
+                        if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind() {
+                            if assign_expr.left.span() == parent.span() {
+                                return true; // arr[i] = value
                             }
-                            AstKind::ArrayAssignmentTarget(_)
-                            | AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::AssignmentTargetWithDefault(_) => {
-                                return true;
-                            }
-                            _ => {}
                         }
 
-                        // Check for spread patterns like [...arr[i]]
-                        let mut current_node = grand_parent;
-                        for _ in 0..3 {
-                            current_node = nodes.parent_node(current_node.id());
-                            match current_node.kind() {
-                                AstKind::ArrayAssignmentTarget(_) => {
-                                    // Only flag if the arr[i] span is directly within this assignment target
-                                    // This helps distinguish [...arr[i]] from [obj[arr[i]]]
-                                    if current_node.span().start <= parent.span().start
-                                        && parent.span().end <= current_node.span().end
-                                    {
-                                        // Check if arr[i] is one of the direct elements, not nested
-                                        let immediate_parent = nodes.parent_node(parent.id());
-                                        let great_grand_parent =
-                                            nodes.parent_node(immediate_parent.id());
-                                        if great_grand_parent.id() == current_node.id() {
-                                            return true;
-                                        }
-                                    }
-                                }
-                                AstKind::ObjectAssignmentTarget(_)
-                                | AstKind::AssignmentTargetWithDefault(_) => {
-                                    if current_node.span().start <= parent.span().start
-                                        && parent.span().end <= current_node.span().end
-                                    {
-                                        return true;
-                                    }
-                                }
-                                AstKind::Program(_) => break,
-                                _ => {}
+                        // Check if arr[i] is a direct element in destructuring
+                        // [arr[i]] = [1] should prevent for-of (arr[i] -> ArrayAssignmentTarget)
+                        // [obj[arr[i]]] = [1] should allow for-of (arr[i] -> obj[arr[i]] -> ArrayAssignmentTarget)
+                        if matches!(
+                            grand_parent.kind(),
+                            AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_)
+                        ) {
+                            return true; // arr[i] is directly in assignment target
+                        }
+
+                        // Check one level deeper, but only if there's no intermediate member expression
+                        let great_grand_parent = nodes.parent_node(grand_parent.id());
+                        if matches!(
+                            great_grand_parent.kind(),
+                            AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_)
+                        ) {
+                            // Only prevent for-of if grand_parent is NOT a member expression
+                            // This distinguishes [arr[i]] from [obj[arr[i]]]
+                            if !grand_parent.kind().is_member_expression_kind() {
+                                return true;
                             }
                         }
                     }
