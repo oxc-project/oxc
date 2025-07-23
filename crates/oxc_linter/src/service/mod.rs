@@ -93,7 +93,6 @@ impl LintService {
     /// # Panics
     pub fn run(&mut self, tx_error: &DiagnosticSender) {
         self.runtime.run(tx_error);
-        tx_error.send(None).unwrap();
     }
 
     #[cfg(feature = "language_server")]

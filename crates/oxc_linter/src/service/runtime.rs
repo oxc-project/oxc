@@ -560,7 +560,7 @@ impl Runtime {
                                 section.source.start,
                                 errors,
                             );
-                            tx_error.send(Some((path.to_path_buf(), diagnostics))).unwrap();
+                            tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
                         }
                     }
                     // If the new source text is owned, that means it was modified,
@@ -820,7 +820,7 @@ impl Runtime {
                 let (source_type, source_text) = match stt {
                     Ok(v) => v,
                     Err(e) => {
-                        tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                        tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
                         return Err(());
                     }
                 };
@@ -854,7 +854,7 @@ impl Runtime {
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
                 Err(e) => {
-                    tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                    tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
                     return default_output();
                 }
             };

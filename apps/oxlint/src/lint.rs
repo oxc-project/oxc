@@ -11,7 +11,7 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
@@ -313,9 +313,8 @@ impl Runner for LintRunner {
             }
         }
 
-        let mut diagnostic_service =
+        let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-        let tx_error = diagnostic_service.sender().clone();
 
         let number_of_rules = linter.number_of_rules();
 
@@ -373,11 +372,15 @@ impl LintRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
-    ) -> DiagnosticService {
-        DiagnosticService::new(reporter.get_diagnostic_reporter())
-            .with_quiet(warning_options.quiet)
-            .with_silent(misc_options.silent)
-            .with_max_warnings(warning_options.max_warnings)
+    ) -> (DiagnosticService, DiagnosticSender) {
+        let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
+        (
+            service
+                .with_quiet(warning_options.quiet)
+                .with_silent(misc_options.silent)
+                .with_max_warnings(warning_options.max_warnings),
+            sender,
+        )
     }
 
     // moved into a separate function for readability, but it's only ever used

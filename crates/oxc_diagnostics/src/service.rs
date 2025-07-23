@@ -17,36 +17,33 @@ use crate::{
 };
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
-pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
-pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
+pub type DiagnosticSender = mpsc::Sender<DiagnosticTuple>;
+pub type DiagnosticReceiver = mpsc::Receiver<DiagnosticTuple>;
 
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
 ///
 /// [`DiagnosticService`] is designed to support multi-threaded jobs that may produce
 /// reports. These jobs can send [messages](DiagnosticTuple) to the service over its
-/// multi-producer, single-consumer [channel](DiagnosticService::sender).
+/// multi-producer, single-consumer channel.
 ///
 /// # Example
 /// ```rust
-/// use std::thread;
-/// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService};
+/// use std::{path::PathBuf, thread};
+/// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
 ///
-/// // By default, services will pretty-print diagnostics to the console
-/// let mut service = DiagnosticService::default();
-/// // Get a clone of the sender to send diagnostics to the service
-/// let mut sender = service.sender().clone();
+/// // Create a service with a graphical reporter
+/// let (mut service, sender) = DiagnosticService::new(Box::new(GraphicalReportHandler::new()));
 ///
 /// // Spawn a thread that does work and reports diagnostics
 /// thread::spawn(move || {
-///     sender.send(Some((
+///     sender.send((
 ///         PathBuf::from("file.txt"),
 ///         vec![Error::new(OxcDiagnostic::error("Something went wrong"))],
-///     )));
+///     ));
 ///
-///     // Send `None` to have the service stop listening for messages.
-///     // If you don't ever send `None`, the service will poll forever.
-///     sender.send(None);
+///     // The service will stop listening when all senders are dropped.
+///     // No explicit termination signal is needed.
 /// });
 ///
 /// // Listen for and process messages
@@ -65,16 +62,15 @@ pub struct DiagnosticService {
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     max_warnings: Option<usize>,
 
-    sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
 }
 
 impl DiagnosticService {
     /// Create a new [`DiagnosticService`] that will render and report diagnostics using the
     /// provided [`DiagnosticReporter`].
-    pub fn new(reporter: Box<dyn DiagnosticReporter>) -> Self {
+    pub fn new(reporter: Box<dyn DiagnosticReporter>) -> (Self, DiagnosticSender) {
         let (sender, receiver) = mpsc::channel();
-        Self { reporter, quiet: false, silent: false, max_warnings: None, sender, receiver }
+        (Self { reporter, quiet: false, silent: false, max_warnings: None, receiver }, sender)
     }
 
     /// Set to `true` to only report errors and ignore warnings.
@@ -111,16 +107,6 @@ impl DiagnosticService {
     pub fn with_max_warnings(mut self, max_warnings: Option<usize>) -> Self {
         self.max_warnings = max_warnings;
         self
-    }
-
-    /// Channel for sending [diagnostic messages] to the service.
-    ///
-    /// The service will only start processing diagnostics after [`run`](DiagnosticService::run)
-    /// has been called.
-    ///
-    /// [diagnostics]: DiagnosticTuple
-    pub fn sender(&self) -> &DiagnosticSender {
-        &self.sender
     }
 
     /// Check if the max warning threshold, as set by
@@ -194,7 +180,7 @@ impl DiagnosticService {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
-        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+        while let Ok((path, diagnostics)) = self.receiver.recv() {
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
