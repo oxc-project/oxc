@@ -213,7 +213,11 @@ impl<'a> TypeScriptEnum<'a> {
         let ast = ctx.ast;
 
         let mut statements = ast.vec();
-        let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
+
+        // If enum number has no initializer, its value will be the previous member value + 1,
+        // if it's the first member, it will be `0`.
+        // It used to keep track of the previous constant number.
+        let mut prev_constant_number = Some(-1.0);
         let mut previous_enum_members = self.enums.entry(param_binding.name).or_default().clone();
 
         let mut prev_member_name = None;
@@ -227,11 +231,9 @@ impl<'a> TypeScriptEnum<'a> {
 
                 previous_enum_members.insert(member_name, constant_value);
 
-                // prev_constant_value = constant_value
-
                 match constant_value {
                     None => {
-                        prev_constant_value = None;
+                        prev_constant_number = None;
                         let mut new_initializer = initializer.take_in(ast);
 
                         IdentifierReferenceRename::new(
@@ -246,26 +248,21 @@ impl<'a> TypeScriptEnum<'a> {
                     }
                     Some(constant_value) => match constant_value {
                         ConstantValue::Number(v) => {
-                            prev_constant_value = Some(ConstantValue::Number(v));
+                            prev_constant_number = Some(v);
                             Self::get_initializer_expr(v, ctx)
                         }
                         ConstantValue::String(str) => {
-                            prev_constant_value = None;
-                            ast.expression_string_literal(SPAN, ast.atom(&str), None)
+                            prev_constant_number = None;
+                            ast.expression_string_literal(SPAN, str, None)
                         }
                     },
                 }
-            } else if let Some(value) = &prev_constant_value {
-                match value {
-                    ConstantValue::Number(value) => {
-                        let value = value + 1.0;
-                        let constant_value = ConstantValue::Number(value);
-                        prev_constant_value = Some(constant_value);
-                        previous_enum_members.insert(member_name, Some(constant_value));
-                        Self::get_initializer_expr(value, ctx)
-                    }
-                    ConstantValue::String(_) => unreachable!(),
-                }
+                // No initializer, try to infer the value from the previous member.
+            } else if let Some(value) = &prev_constant_number {
+                let value = value + 1.0;
+                prev_constant_number = Some(value);
+                previous_enum_members.insert(member_name, Some(ConstantValue::Number(value)));
+                Self::get_initializer_expr(value, ctx)
             } else if let Some(prev_member_name) = prev_member_name {
                 previous_enum_members.insert(member_name, None);
                 let self_ref = {
