@@ -52,16 +52,18 @@ async function loadPluginImpl(path) {
   registeredPluginPaths.add(path);
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
+  let ruleId = registeredRules.length;
   const rules = [];
   const ret = {
     name: plugin.meta.name,
-    offset: registeredRules.length,
+    offset: ruleId,
     rules,
   };
 
   for (const [ruleName, rule] of Object.entries(plugin.rules)) {
     rules.push(ruleName);
-    registeredRules.push(rule);
+    registeredRules.push({ rule, context: new Context(ruleId) });
+    ruleId++;
   }
 
   return JSON.stringify({ Success: ret });
@@ -117,7 +119,9 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   // Get visitors for this file from all rules
   initCompiledVisitor();
   for (const ruleId of ruleIds) {
-    const visitor = registeredRules[ruleId].create(new Context(ruleId, filePath));
+    const { rule: { create }, context } = registeredRules[ruleId];
+    context.physicalFilename = filePath;
+    const visitor = create(context);
     addVisitorToCompiled(visitor);
   }
   const needsVisit = finalizeCompiledVisitor();
@@ -146,20 +150,20 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
 /**
  * Context class.
  *
- * A `Context` is passed to each rule's `create` function.
+ * Each rule has its own `Context` object. It is passed to that rule's `create` function.
  */
 class Context {
   // Rule ID. Index into `registeredRules` array.
   #ruleId;
+  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
+  physicalFilename;
 
   /**
    * @constructor
    * @param {number} ruleId - Rule ID
-   * @param {string} filePath - Absolute path of file being linted
    */
-  constructor(ruleId, filePath) {
+  constructor(ruleId) {
     this.#ruleId = ruleId;
-    this.physicalFilename = filePath;
   }
 
   /**
