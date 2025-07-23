@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 180/298
+Passed: 180/299
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (5/26)
+# babel-plugin-transform-typescript (5/27)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -168,6 +168,41 @@ rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "NestInner":
 after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
 rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
+
+* enum-template-literal/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["LARGE", "SMALL", "Size"]
+rebuilt        : ScopeId(1): ["Size"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["Animal", "CAT", "DOG"]
+rebuilt        : ScopeId(2): ["Animal"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["AnimalSize", "LARGE_DOG", "SMALL_CAT"]
+rebuilt        : ScopeId(3): ["AnimalSize"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Symbol flags mismatch for "Size":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "Size":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(3)]
+Symbol flags mismatch for "Animal":
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "Animal":
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(2): [ReferenceId(7)]
+Symbol flags mismatch for "AnimalSize":
+after transform: SymbolId(6): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 * export-elimination/input.ts
 Bindings mismatch:

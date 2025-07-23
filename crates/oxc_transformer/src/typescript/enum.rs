@@ -417,10 +417,18 @@ impl<'a> TypeScriptEnum<'a> {
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
-                let mut value = String::new();
-                for part in &lit.quasis {
-                    value.push_str(&part.value.raw);
-                }
+                let value = if let Some(quasi) = lit.single_quasi() {
+                    quasi.to_string()
+                } else {
+                    let mut value = String::new();
+                    for (quasi, expr) in lit.quasis.iter().zip(&lit.expressions) {
+                        value.push_str(&quasi.value.cooked.unwrap_or(quasi.value.raw));
+                        if let ConstantValue::String(str) = self.evaluate(expr, prev_members)? {
+                            value.push_str(&str);
+                        }
+                    }
+                    value
+                };
                 Some(ConstantValue::String(value))
             }
             Expression::ParenthesizedExpression(expr) => {
