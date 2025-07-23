@@ -65,9 +65,7 @@ impl Rule for NoImportAssign {
                         let is_unary_expression_with_delete_operator = |kind| matches!(kind, AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete);
                         let parent_parent_kind = parent_parent_node.kind();
                         if matches!(parent_parent_kind, AstKind::IdentifierReference(_))
-                            // delete namespace.module
                             || is_unary_expression_with_delete_operator(parent_parent_kind)
-                            // delete namespace?.module
                             || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id())))
                         {
                             if let Some((span, _)) = match expr {
@@ -84,6 +82,347 @@ impl Rule for NoImportAssign {
                                         .diagnostic(no_import_assign_diagnostic(expr.span()));
                                 }
                             }
+                        }
+                        // --- NEW LOGIC: assignment to namespace property ---
+                        // Only report if the reference is the object of the member expression
+                        match (expr, parent_parent_kind) {
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::AssignmentExpression(assign_expr),
+                            ) => {
+                                if assign_expr.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::UpdateExpression(update_expr),
+                            ) => {
+                                if update_expr.argument.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::AssignmentExpression(assign_expr),
+                            ) => {
+                                if assign_expr.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::UpdateExpression(update_expr),
+                            ) => {
+                                if update_expr.argument.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // --- NEW LOGIC: for-in/of left side ---
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::ForInStatement(for_in),
+                            ) => {
+                                if for_in.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::ForOfStatement(for_of),
+                            ) => {
+                                if for_of.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::ForInStatement(for_in),
+                            ) => {
+                                if for_in.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::ForOfStatement(for_of),
+                            ) => {
+                                if for_of.left.span() == parent_node.span() {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // --- NEW LOGIC: destructuring assignment targets ---
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::ArrayAssignmentTarget(array_target),
+                            ) => {
+                                // Check if this member expression is one of the elements
+                                if array_target.elements.iter().any(|el| {
+                                    if let Some(el) = el.as_ref() {
+                                        match el {
+                                            oxc_ast::ast::AssignmentTargetMaybeDefault::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                            _ => false,
+                                        }
+                                    } else {
+                                        false
+                                    }
+                                }) {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::ArrayAssignmentTarget(array_target),
+                            ) => {
+                                if array_target.elements.iter().any(|el| {
+                                    if let Some(el) = el.as_ref() {
+                                        match el {
+                                            oxc_ast::ast::AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                            _ => false,
+                                        }
+                                    } else {
+                                        false
+                                    }
+                                }) {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::AssignmentTargetPropertyProperty(prop_target),
+                            ) => {
+                                // Check if this member expression is the binding
+                                let is_target = match &prop_target.binding {
+                                    oxc_ast::ast::AssignmentTargetMaybeDefault::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::AssignmentTargetPropertyProperty(prop_target),
+                            ) => {
+                                let is_target = match &prop_target.binding {
+                                    oxc_ast::ast::AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::AssignmentTargetWithDefault(with_default),
+                            ) => {
+                                // Check if this member expression is the binding
+                                let is_target = match &with_default.binding {
+                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::AssignmentTargetWithDefault(with_default),
+                            ) => {
+                                let is_target = match &with_default.binding {
+                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::StaticMemberExpression(member_expr),
+                                AstKind::AssignmentTargetRest(rest_target),
+                            ) => {
+                                // Check if this member expression is the target
+                                let is_target = match &rest_target.target {
+                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            (
+                                AstKind::ComputedMemberExpression(member_expr),
+                                AstKind::AssignmentTargetRest(rest_target),
+                            ) => {
+                                let is_target = match &rest_target.target {
+                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                    _ => false,
+                                };
+                                if is_target {
+                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
+                                        let ref_node = ctx.nodes().get_node(reference.node_id());
+                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                            if obj_ident.span == ref_ident.span {
+                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -132,10 +471,11 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(&property_name)))
             && !ctx.scoping().has_binding(ident.reference_id())
         {
-            return expr
+            let is_first_arg = expr
                 .arguments
                 .first()
                 .is_some_and(|argument| argument.span() == current_node.kind().span());
+            return is_first_arg;
         }
     }
 
