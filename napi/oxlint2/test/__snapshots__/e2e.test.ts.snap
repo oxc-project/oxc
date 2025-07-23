@@ -366,14 +366,14 @@ exports[`oxlint2 CLI > should work with multiple rules 1`] = `
    \`----
   help: Remove the debugger statement
 
-  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+  x basic-custom-plugin(no-debugger-2): Unexpected Debugger Statement
    ,-[index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | 
    \`----
 
-  x basic-custom-plugin(no-debugger-2): Unexpected Debugger Statement
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^

@@ -1,14 +1,14 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
 import { DATA_POINTER_POS_32, SOURCE_LEN_POS_32 } from './generated/constants.cjs';
+import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
-// Import lazy visitor from `oxc-parser`.
+// Import methods and objects from `oxc-parser`.
 // Use `require` not `import` as `oxc-parser` uses `require` internally,
 // and need to make sure get same instance of modules as it uses internally,
 // otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
 const require = createRequire(import.meta.url);
 const { TOKEN } = require('../../parser/raw-transfer/lazy-common.js'),
-  { Visitor, getVisitorsArr } = require('../../parser/raw-transfer/visitor.js'),
   walkProgram = require('../../parser/generated/lazy/walk.js');
 
 // --------------------
@@ -115,12 +115,17 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   }
 
   // Get visitors for this file from all rules
-  const visitors = ruleIds.map(
-    ruleId => registeredRules[ruleId].create(new Context(ruleId, filePath)),
-  );
-  const visitor = new Visitor(
-    visitors.length === 1 ? visitors[0] : combineVisitors(visitors),
-  );
+  initCompiledVisitor();
+  for (const ruleId of ruleIds) {
+    const visitor = registeredRules[ruleId].create(new Context(ruleId, filePath));
+    addVisitorToCompiled(visitor);
+  }
+  const needsVisit = finalizeCompiledVisitor();
+
+  // Skip visiting AST if no visitors visit any nodes.
+  // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
+  // e.g. file extension is not one the rule acts on.
+  if (!needsVisit) return '[]';
 
   // Visit AST
   const programPos = buffer.uint32[DATA_POINTER_POS_32],
@@ -130,36 +135,12 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   const sourceIsAscii = sourceText.length === sourceByteLen;
   const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
 
-  walkProgram(programPos, ast, getVisitorsArr(visitor));
+  walkProgram(programPos, ast, compiledVisitor);
 
   // Send diagnostics back to Rust
   const ret = JSON.stringify(diagnostics);
   diagnostics.length = 0;
   return ret;
-}
-
-/**
- * Combine multiple visitor objects into a single visitor object.
- * @param {Array<Object>} visitors - Array of visitor objects
- * @returns {Object} - Combined visitor object
- */
-function combineVisitors(visitors) {
-  const combinedVisitor = {};
-  for (const visitor of visitors) {
-    for (const nodeType of Object.keys(visitor)) {
-      if (!(nodeType in combinedVisitor)) {
-        combinedVisitor[nodeType] = function(node) {
-          for (const v of visitors) {
-            if (typeof v[nodeType] === 'function') {
-              v[nodeType](node);
-            }
-          }
-        };
-      }
-    }
-  }
-
-  return combinedVisitor;
 }
 
 /**
