@@ -30,6 +30,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -72,6 +73,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
+    suppression::{SuppressionEntry, SuppressionFile, SuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };

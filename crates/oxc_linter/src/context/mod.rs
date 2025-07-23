@@ -226,6 +226,24 @@ impl<'a> LintContext<'a> {
         if self.parent.disable_directives().contains(self.current_rule_name, message.span()) {
             return;
         }
+
+        // Check bulk suppression
+        if let Some(suppression_manager) = &self.parent.suppression_manager {
+            let mut suppression_manager = suppression_manager.borrow_mut();
+            if suppression_manager.is_suppressed(
+                &self.parent.file_path,
+                self.current_plugin_prefix,
+                self.current_rule_name,
+            ) {
+                // Record that we found this violation (for count tracking)
+                suppression_manager.record_violation(
+                    &self.parent.file_path,
+                    self.current_plugin_prefix,
+                    self.current_rule_name,
+                );
+                return;
+            }
+        }
         message.error = message
             .error
             .with_error_code(self.current_plugin_prefix, self.current_rule_name)

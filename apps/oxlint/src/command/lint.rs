@@ -53,6 +53,9 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
@@ -425,6 +428,22 @@ pub enum ReportUnusedDirectives {
 pub struct InlineConfigOptions {
     #[bpaf(external)]
     pub report_unused_directives: ReportUnusedDirectives,
+}
+
+/// Bulk Suppression Options
+#[derive(Debug, Clone, Bpaf)]
+pub struct SuppressionOptions {
+    /// Generate suppressions for all current violations
+    #[bpaf(switch, hide_usage)]
+    pub suppress_all: bool,
+
+    /// Remove entries for violations that no longer exist
+    #[bpaf(switch, hide_usage)]
+    pub prune_suppressions: bool,
+    
+    /// Path to the suppression file (default: oxlint-suppressions.json)
+    #[bpaf(argument("PATH"), hide_usage)]
+    pub suppression_file: Option<PathBuf>,
 }
 
 #[cfg(test)]

@@ -19,6 +19,7 @@ use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
+    suppression::SuppressionManager,
 };
 
 use super::{LintContext, plugin_name_to_prefix};
@@ -146,6 +147,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// Bulk suppression manager for suppressing violations based on counts.
+    pub(super) suppression_manager: Option<Rc<RefCell<SuppressionManager>>>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -162,6 +165,17 @@ impl<'a> ContextHost<'a> {
         sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
+    ) -> Self {
+        Self::with_suppression_manager(file_path, semantic, module_record, options, config, None)
+    }
+
+    pub fn with_suppression_manager<P: AsRef<Path>>(
+        file_path: P,
+        semantic: Rc<Semantic<'a>>,
+        module_record: Arc<ModuleRecord>,
+        options: LintOptions,
+        config: Arc<LintConfig>,
+        suppression_manager: Option<Rc<RefCell<SuppressionManager>>>,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 
@@ -180,6 +194,7 @@ impl<'a> ContextHost<'a> {
             file_path,
             config,
             frameworks: options.framework_hints,
+            suppression_manager,
         }
         .sniff_for_frameworks()
     }
