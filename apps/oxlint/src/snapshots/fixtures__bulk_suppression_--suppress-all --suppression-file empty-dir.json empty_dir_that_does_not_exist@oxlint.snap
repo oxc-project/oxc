@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --suppress-all --suppression-file empty-dir.json empty_dir_that_does_not_exist
+working directory: fixtures/bulk_suppression
+----------
+Generated suppression file: empty-dir.json
+----------
+CLI result: LintSucceeded
+----------

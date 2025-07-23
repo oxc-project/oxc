@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --prune-suppressions --suppression-file non-existent.json .
+working directory: fixtures/bulk_suppression/temp_test
+----------
+Pruned suppression file: non-existent.json
+----------
+CLI result: LintSucceeded
+----------
