@@ -30,7 +30,12 @@ pub type ExternalLinterCb = Arc<
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum PluginLoadResult {
-    Success { name: String, offset: usize, rules: Vec<String> },
+    #[serde(rename_all = "camelCase")]
+    Success {
+        name: String,
+        offset: usize,
+        rule_names: Vec<String>,
+    },
     Failure(String),
 }
 

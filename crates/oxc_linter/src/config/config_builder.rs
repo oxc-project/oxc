@@ -475,8 +475,8 @@ impl ConfigStoreBuilder {
         }?;
 
         match result {
-            PluginLoadResult::Success { name, offset, rules } => {
-                external_plugin_store.register_plugin(plugin_path, name, offset, rules);
+            PluginLoadResult::Success { name, offset, rule_names } => {
+                external_plugin_store.register_plugin(plugin_path, name, offset, rule_names);
                 Ok(())
             }
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {

@@ -37,7 +37,7 @@ impl ExternalPluginStore {
         plugin_path: String,
         plugin_name: String,
         offset: usize,
-        rules: Vec<String>,
+        rule_names: Vec<String>,
     ) {
         let newly_inserted = self.registered_plugin_paths.insert(plugin_path);
         assert!(newly_inserted, "register_plugin: plugin already registered");
@@ -54,7 +54,7 @@ impl ExternalPluginStore {
             self.rules.len()
         );
 
-        for rule_name in rules {
+        for rule_name in rule_names {
             let rule_id = self.rules.push(ExternalRule { name: rule_name.clone(), plugin_id });
             self.plugins[plugin_id].rules.insert(rule_name, rule_id);
         }
