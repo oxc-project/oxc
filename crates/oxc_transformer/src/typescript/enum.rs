@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
-use oxc_allocator::{TakeIn, Vec as ArenaVec};
+use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -19,7 +19,7 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 use crate::{context::TraverseCtx, state::TransformState};
 
 /// enum member values (or None if it can't be evaluated at build time) keyed by names
-type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue>>;
+type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
 
 pub struct TypeScriptEnum<'a> {
     enums: FxHashMap<Atom<'a>, PrevMembers<'a>>,
@@ -223,9 +223,9 @@ impl<'a> TypeScriptEnum<'a> {
 
             let init = if let Some(initializer) = &mut member.initializer {
                 let constant_value =
-                    self.computed_constant_value(initializer, &previous_enum_members);
+                    self.computed_constant_value(initializer, &previous_enum_members, ctx);
 
-                previous_enum_members.insert(member_name, constant_value.clone());
+                previous_enum_members.insert(member_name, constant_value);
 
                 // prev_constant_value = constant_value
 
@@ -260,7 +260,7 @@ impl<'a> TypeScriptEnum<'a> {
                     ConstantValue::Number(value) => {
                         let value = value + 1.0;
                         let constant_value = ConstantValue::Number(value);
-                        prev_constant_value = Some(constant_value.clone());
+                        prev_constant_value = Some(constant_value);
                         previous_enum_members.insert(member_name, Some(constant_value));
                         Self::get_initializer_expr(value, ctx)
                     }
@@ -350,10 +350,10 @@ impl<'a> TypeScriptEnum<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-enum ConstantValue {
+#[derive(Debug, Clone, Copy)]
+enum ConstantValue<'a> {
     Number(f64),
-    String(String),
+    String(Atom<'a>),
 }
 
 impl<'a> TypeScriptEnum<'a> {
@@ -363,22 +363,23 @@ impl<'a> TypeScriptEnum<'a> {
         &self,
         expr: &Expression<'a>,
         prev_members: &PrevMembers<'a>,
-    ) -> Option<ConstantValue> {
-        self.evaluate(expr, prev_members)
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        self.evaluate(expr, prev_members, ctx)
     }
 
     fn evaluate_ref(
         &self,
         expr: &Expression<'a>,
         prev_members: &PrevMembers<'a>,
-    ) -> Option<ConstantValue> {
+    ) -> Option<ConstantValue<'a>> {
         match expr {
             match_member_expression!(Expression) => {
                 let expr = expr.to_member_expression();
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
-                members.get(property).cloned()?
+                *members.get(property)?
             }
             Expression::Identifier(ident) => {
                 if ident.name == "Infinity" {
@@ -388,7 +389,7 @@ impl<'a> TypeScriptEnum<'a> {
                 }
 
                 if let Some(value) = prev_members.get(&ident.name) {
-                    return value.clone();
+                    return *value;
                 }
 
                 // TODO:
@@ -406,33 +407,40 @@ impl<'a> TypeScriptEnum<'a> {
         &self,
         expr: &Expression<'a>,
         prev_members: &PrevMembers<'a>,
-    ) -> Option<ConstantValue> {
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
         match expr {
             Expression::Identifier(_)
             | Expression::ComputedMemberExpression(_)
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_) => self.evaluate_ref(expr, prev_members),
-            Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, prev_members),
-            Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, prev_members),
+            Expression::BinaryExpression(expr) => {
+                self.eval_binary_expression(expr, prev_members, ctx)
+            }
+            Expression::UnaryExpression(expr) => {
+                self.eval_unary_expression(expr, prev_members, ctx)
+            }
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
+            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value)),
             Expression::TemplateLiteral(lit) => {
                 let value = if let Some(quasi) = lit.single_quasi() {
-                    quasi.to_string()
+                    quasi
                 } else {
-                    let mut value = String::new();
+                    let mut value = StringBuilder::new_in(ctx.ast.allocator);
                     for (quasi, expr) in lit.quasis.iter().zip(&lit.expressions) {
                         value.push_str(&quasi.value.cooked.unwrap_or(quasi.value.raw));
-                        if let ConstantValue::String(str) = self.evaluate(expr, prev_members)? {
+                        if let ConstantValue::String(str) =
+                            self.evaluate(expr, prev_members, ctx)?
+                        {
                             value.push_str(&str);
                         }
                     }
-                    value
+                    Atom::from(value.into_str())
                 };
                 Some(ConstantValue::String(value))
             }
             Expression::ParenthesizedExpression(expr) => {
-                self.evaluate(&expr.expression, prev_members)
+                self.evaluate(&expr.expression, prev_members, ctx)
             }
             _ => None,
         }
@@ -443,9 +451,10 @@ impl<'a> TypeScriptEnum<'a> {
         &self,
         expr: &BinaryExpression<'a>,
         prev_members: &PrevMembers<'a>,
-    ) -> Option<ConstantValue> {
-        let left = self.evaluate(&expr.left, prev_members)?;
-        let right = self.evaluate(&expr.right, prev_members)?;
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        let left = self.evaluate(&expr.left, prev_members, ctx)?;
+        let right = self.evaluate(&expr.right, prev_members, ctx)?;
 
         if matches!(expr.operator, BinaryOperator::Addition)
             && (matches!(left, ConstantValue::String(_))
@@ -453,15 +462,17 @@ impl<'a> TypeScriptEnum<'a> {
         {
             let left_string = match left {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
+                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
             };
 
             let right_string = match right {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => v.to_js_string(),
+                ConstantValue::Number(v) => ctx.ast.atom(&v.to_js_string()),
             };
 
-            return Some(ConstantValue::String(format!("{left_string}{right_string}")));
+            return Some(ConstantValue::String(
+                ctx.ast.atom_from_strs_array([&left_string, &right_string]),
+            ));
         }
 
         let left = match left {
@@ -507,8 +518,9 @@ impl<'a> TypeScriptEnum<'a> {
         &self,
         expr: &UnaryExpression<'a>,
         prev_members: &PrevMembers<'a>,
-    ) -> Option<ConstantValue> {
-        let value = self.evaluate(&expr.argument, prev_members)?;
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        let value = self.evaluate(&expr.argument, prev_members, ctx)?;
 
         let value = match value {
             ConstantValue::Number(value) => value,
