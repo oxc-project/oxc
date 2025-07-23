@@ -212,42 +212,35 @@ fn check_loop_usage<'a>(
     else {
         return;
     };
-    // Traverse up to the AssignmentExpression where the identifier is being written to
-    let mut current_node = ctx.nodes().get_node(write_reference.node_id());
-    let mut found_assignment = None;
-    for _ in 0..5 {
-        // limit to 5 hops to avoid infinite loops
-        if let AstKind::AssignmentExpression(expr) = current_node.kind() {
-            if let Some(simple_target) = expr.left.as_simple_assignment_target() {
-                if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
-                    simple_target
-                {
-                    let scoping = ctx.semantic().scoping();
-                    let reference = scoping.get_reference(ident.reference_id());
-                    if let Some(symbol_id) = reference.symbol_id() {
-                        if symbol_id == referenced_symbol_id {
-                            found_assignment = Some(current_node);
-                            break;
-                        }
-                    }
+    // Directly check if the parent is an AssignmentExpression with the correct left-hand identifier
+    let parent_node = ctx.nodes().parent_node(write_reference.node_id());
+
+    let AstKind::AssignmentExpression(expr) = parent_node.kind() else {
+        return;
+    };
+
+    if let Some(simple_target) = expr.left.as_simple_assignment_target() {
+        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
+            simple_target
+        {
+            let scoping = ctx.semantic().scoping();
+            let reference = scoping.get_reference(ident.reference_id());
+            if let Some(symbol_id) = reference.symbol_id() {
+                if symbol_id != referenced_symbol_id {
+                    return;
                 }
+            } else {
+                return;
             }
+        } else {
+            return;
         }
-        // Traverse up, break if at root
-        let parent = ctx.nodes().parent_node(current_node.id());
-        if parent.id() == current_node.id() {
-            break;
-        }
-        current_node = parent;
+    } else {
+        return;
     }
-    let Some(assignment_expr_node) = found_assignment else {
-        return;
-    };
-    let AstKind::AssignmentExpression(assignment_expr) = assignment_expr_node.kind() else {
-        return;
-    };
+
     // Now check the right side for array/object expression containing the spread
-    let right_expr = assignment_expr.right.get_inner_expression();
+    let right_expr = expr.right.get_inner_expression();
     match right_expr {
         Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) => {}
