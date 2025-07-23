@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SuppressionFile {
@@ -14,10 +14,7 @@ pub struct SuppressionEntry {
 
 impl Default for SuppressionFile {
     fn default() -> Self {
-        Self {
-            version: "0.1.0".to_string(),
-            suppressions: HashMap::new(),
-        }
+        Self { version: "0.1.0".to_string(), suppressions: HashMap::new() }
     }
 }
 

@@ -20,10 +20,7 @@ impl Default for SuppressionManager {
 
 impl SuppressionManager {
     pub fn new() -> Self {
-        Self {
-            suppressions_by_file: HashMap::new(),
-            counts: HashMap::new(),
-        }
+        Self { suppressions_by_file: HashMap::new(), counts: HashMap::new() }
     }
 
     pub fn load(path: &Path) -> Result<Self, OxcDiagnostic> {
@@ -39,10 +36,7 @@ impl SuppressionManager {
             OxcDiagnostic::error(format!("Failed to parse suppression file: {err}"))
         })?;
 
-        Ok(Self {
-            suppressions_by_file: suppression_file.suppressions,
-            counts: HashMap::new(),
-        })
+        Ok(Self { suppressions_by_file: suppression_file.suppressions, counts: HashMap::new() })
     }
 
     pub fn save(&self, path: &Path) -> Result<(), OxcDiagnostic> {
@@ -57,7 +51,9 @@ impl SuppressionManager {
 
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|err| {
-                OxcDiagnostic::error(format!("Failed to create directory for suppression file: {err}"))
+                OxcDiagnostic::error(format!(
+                    "Failed to create directory for suppression file: {err}"
+                ))
             })?;
         }
 
@@ -85,10 +81,8 @@ impl SuppressionManager {
         if let Some(file_suppressions) = self.suppressions_by_file.get(&file_key) {
             if let Some(entry) = file_suppressions.get(&rule_key) {
                 // Check if we've already seen this many violations for this rule in this file
-                let current_count = self.counts
-                    .get(&file_key)
-                    .and_then(|rules| rules.get(&rule_key))
-                    .unwrap_or(&0);
+                let current_count =
+                    self.counts.get(&file_key).and_then(|rules| rules.get(&rule_key)).unwrap_or(&0);
                 return *current_count < entry.count;
             }
         }
@@ -107,7 +101,13 @@ impl SuppressionManager {
             .or_insert(1);
     }
 
-    pub fn add_suppression(&mut self, file_path: &Path, plugin_prefix: &str, rule_name: &str, count: u32) {
+    pub fn add_suppression(
+        &mut self,
+        file_path: &Path,
+        plugin_prefix: &str,
+        rule_name: &str,
+        count: u32,
+    ) {
         let rule_key = self.create_rule_key(plugin_prefix, rule_name);
         let file_key = self.normalize_file_path(file_path);
 
@@ -117,14 +117,16 @@ impl SuppressionManager {
             .insert(rule_key, SuppressionEntry { count });
     }
 
-    pub fn get_suppression_count(&self, file_path: &Path, plugin_prefix: &str, rule_name: &str) -> Option<u32> {
+    pub fn get_suppression_count(
+        &self,
+        file_path: &Path,
+        plugin_prefix: &str,
+        rule_name: &str,
+    ) -> Option<u32> {
         let rule_key = self.create_rule_key(plugin_prefix, rule_name);
         let file_key = self.normalize_file_path(file_path);
 
-        self.suppressions_by_file
-            .get(&file_key)?
-            .get(&rule_key)
-            .map(|entry| entry.count)
+        self.suppressions_by_file.get(&file_key)?.get(&rule_key).map(|entry| entry.count)
     }
 
     pub fn reset_counts(&mut self) {
@@ -135,10 +137,8 @@ impl SuppressionManager {
         // Remove suppressions that have no actual violations found
         self.suppressions_by_file.retain(|file_path, rules| {
             rules.retain(|rule_key, suppression_entry| {
-                let actual_count = self.counts
-                    .get(file_path)
-                    .and_then(|rules| rules.get(rule_key))
-                    .unwrap_or(&0);
+                let actual_count =
+                    self.counts.get(file_path).and_then(|rules| rules.get(rule_key)).unwrap_or(&0);
                 *actual_count > 0 && *actual_count <= suppression_entry.count
             });
             !rules.is_empty()
@@ -149,7 +149,10 @@ impl SuppressionManager {
         self.suppressions_by_file.keys().cloned().collect()
     }
 
-    pub fn get_suppressions_for_file(&self, file_path: &Path) -> Option<&HashMap<String, SuppressionEntry>> {
+    pub fn get_suppressions_for_file(
+        &self,
+        file_path: &Path,
+    ) -> Option<&HashMap<String, SuppressionEntry>> {
         let file_key = self.normalize_file_path(file_path);
         self.suppressions_by_file.get(&file_key)
     }
