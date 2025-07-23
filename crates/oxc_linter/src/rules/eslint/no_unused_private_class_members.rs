@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::AstKind;
+use oxc_ast::ast::AssignmentOperator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
@@ -170,10 +171,11 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
             }
             // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
             (AstKind::PrivateFieldExpression(_), AstKind::AssignmentExpression(assign_expr)) => {
+                // Right-hand side of assignment is a read
                 if assign_expr.right.span() == curr.span() {
                     return true;
                 }
-                use oxc_ast::ast::AssignmentOperator;
+                // Compound assignment result used in a value context is a read
                 if assign_expr.operator != AssignmentOperator::Assign {
                     if let Some((_, grandparent)) = nodes
                         .ancestors(parent.id())
@@ -190,13 +192,13 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                             | AstKind::ArrayExpression(_)
                             | AstKind::ObjectProperty(_)
                             | AstKind::JSXExpressionContainer(_)
-                            | AstKind::Argument(_) => {
-                                return true;
-                            }
+                            | AstKind::Argument(_) => return true,
                             _ => {}
                         }
                     }
                 }
+                // Not a read otherwise
+                return false;
             }
             // ForIn/ForOf: only right-hand side is a read
             (AstKind::PrivateFieldExpression(_), AstKind::ForInStatement(for_in)) => {
