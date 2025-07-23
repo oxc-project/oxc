@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
+    ast::{AssignmentTarget, TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -126,11 +126,27 @@ impl PreferJestMocked {
 
 fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     outermost_paren_parent(node, ctx).is_some_and(|parent| {
+        let parent_kind = parent.kind();
+        // Disallow fix if parent is AssignmentExpression and node is the left-hand side
+        if let AstKind::AssignmentExpression(assign_expr) = parent_kind {
+            match (&assign_expr.left, node.kind()) {
+                (AssignmentTarget::TSAsExpression(lhs), AstKind::TSAsExpression(ts_expr)) => {
+                    if std::ptr::eq(&**lhs, ts_expr) {
+                        return false;
+                    }
+                }
+                (AssignmentTarget::TSTypeAssertion(lhs), AstKind::TSTypeAssertion(ts_assert)) => {
+                    if std::ptr::eq(&**lhs, ts_assert) {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
         !matches!(
-            parent.kind(),
+            parent_kind,
             AstKind::IdentifierReference(_)
                 | AstKind::ComputedMemberExpression(_)
-                | AstKind::StaticMemberExpression(_)
                 | AstKind::PrivateFieldExpression(_)
         )
     })
