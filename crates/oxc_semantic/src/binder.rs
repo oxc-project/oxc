@@ -10,8 +10,7 @@ use crate::SemanticBuilder;
 use crate::checker::is_function_part_of_if_statement;
 
 pub trait Binder<'a> {
-    #[expect(unused_variables)]
-    fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
+    fn bind(&self, builder: &mut SemanticBuilder<'a>);
 }
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
