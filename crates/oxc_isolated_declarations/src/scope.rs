@@ -53,6 +53,12 @@ impl<'a> ScopeTree<'a> {
         scope.references.contains_key(name)
     }
 
+    /// Check if the current scope has a value reference for the given name.
+    pub fn has_value_reference(&self, name: &str) -> bool {
+        let scope = self.levels.last().unwrap();
+        scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
+    }
+
     fn add_binding(&mut self, name: Atom<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
