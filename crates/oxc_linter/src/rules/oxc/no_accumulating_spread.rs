@@ -184,8 +184,8 @@ fn check_reduce_usage<'a>(
         if let AstKind::CallExpression(call_expr) = parent.kind() {
             if is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2)) {
                 ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
+                return;
             }
-            return;
         }
     }
 }
@@ -201,60 +201,54 @@ fn check_loop_usage<'a>(
     let AstKind::VariableDeclaration(declaration) = declaration_node.kind() else {
         return;
     };
-    // if the accumulator's declaration is not a `let`, then we know it's never
-    // reassigned, hence cannot be a violation of the rule
     if !matches!(declaration.kind, VariableDeclarationKind::Let) {
         return;
     }
-
     let AstKind::VariableDeclarator(declarator) = declarator.kind() else {
         return;
     };
-
     let Some(write_reference) =
         ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())
     else {
         return;
     };
-
-    let assignment_target = ctx.nodes().parent_node(write_reference.node_id());
-
-    let AstKind::IdentifierReference(_) = assignment_target.kind() else { return };
-
-    let assignment_expr = ctx.nodes().parent_node(assignment_target.id());
-
-    if !matches!(
-        assignment_expr.kind(),
-        AstKind::AssignmentTargetPropertyIdentifier(_)
-            | AstKind::ArrayAssignmentTarget(_)
-            | AstKind::ObjectAssignmentTarget(_)
-            | AstKind::AssignmentExpression(_)
-    ) {
-        return;
-    }
-
-    let parent_kind = ctx.nodes().parent_kind(assignment_expr.id());
-
-    let assignment_expression_right_inner_expr_option = match parent_kind {
-        AstKind::AssignmentExpression(expr) => Some(&expr.right),
-        AstKind::ExpressionStatement(expr) => {
-            // if we have an expression statement wrapping an inner assignment expression, return the inner assignment expression's right property.
-            if let Expression::AssignmentExpression(x) = &expr.expression {
-                Some(&x.right)
-            } else {
-                None
+    // Traverse up to the AssignmentExpression where the identifier is being written to
+    let mut current_node = ctx.nodes().get_node(write_reference.node_id());
+    let mut found_assignment = None;
+    for _ in 0..5 {
+        // limit to 5 hops to avoid infinite loops
+        if let AstKind::AssignmentExpression(expr) = current_node.kind() {
+            if let Some(simple_target) = expr.left.as_simple_assignment_target() {
+                if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
+                    simple_target
+                {
+                    let scoping = ctx.semantic().scoping();
+                    let reference = scoping.get_reference(ident.reference_id());
+                    if let Some(symbol_id) = reference.symbol_id() {
+                        if symbol_id == referenced_symbol_id {
+                            found_assignment = Some(current_node);
+                            break;
+                        }
+                    }
+                }
             }
         }
-        _ => None,
-    };
-
-    let Some(assignment_expression_right_inner_expr) =
-        assignment_expression_right_inner_expr_option.map(Expression::get_inner_expression)
-    else {
+        // Traverse up, break if at root
+        let parent = ctx.nodes().parent_node(current_node.id());
+        if parent.id() == current_node.id() {
+            break;
+        }
+        current_node = parent;
+    }
+    let Some(assignment_expr_node) = found_assignment else {
         return;
     };
-
-    match assignment_expression_right_inner_expr {
+    let AstKind::AssignmentExpression(assignment_expr) = assignment_expr_node.kind() else {
+        return;
+    };
+    // Now check the right side for array/object expression containing the spread
+    let right_expr = assignment_expr.right.get_inner_expression();
+    match right_expr {
         Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) => {}
         Expression::ObjectExpression(object_expr)
@@ -267,7 +261,7 @@ fn check_loop_usage<'a>(
             if !parent.kind().span().contains_inclusive(declaration.span)
                 && parent.kind().span().contains_inclusive(spread_span)
             {
-                match assignment_expression_right_inner_expr {
+                match right_expr {
                     Expression::ArrayExpression(_) => {
                         ctx.diagnostic(loop_spread_likely_array_diagnostic(
                             declarator.id.span(),
