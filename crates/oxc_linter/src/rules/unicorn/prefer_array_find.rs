@@ -247,6 +247,10 @@ fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
         AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Delete,
+        // After removing SimpleAssignmentTarget, check for assignment targets
+        AstKind::ArrayAssignmentTarget(_)
+        | AstKind::ObjectAssignmentTarget(_)
+        | AstKind::AssignmentTargetWithDefault(_) => true,
         _ => false,
     }
 }

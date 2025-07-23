@@ -212,7 +212,27 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::AssignmentTargetPropertyProperty(assign_target) => {
             assign_target.span.contains_inclusive(node.span())
         }
-        AstKind::AssignmentExpression(_) => true,
+        AstKind::AssignmentExpression(assign_expr) => {
+            // Check if this member expression is the direct assignment target
+            // this.bar = value -> should be flagged (spans should match exactly)
+            // this.bar.baz = value -> should NOT be flagged (this.bar is just the object)
+            let left_span = assign_expr.left.span();
+            let node_span = node.span();
+
+            // If spans are exactly the same, it's a direct assignment
+            if left_span == node_span {
+                return true;
+            }
+
+            // If assignment target starts at the same position but is longer,
+            // then our node is part of a longer chain (like this.bar in this.bar.baz)
+            if left_span.start == node_span.start && left_span.end > node_span.end {
+                return false;
+            }
+
+            // For other cases, don't treat as write
+            false
+        }
         _ => false,
     }
 }
