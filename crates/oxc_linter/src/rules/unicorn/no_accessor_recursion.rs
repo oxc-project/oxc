@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_accessor_recursion_diagnostic(span: Span, kind: &str) -> OxcDiagnostic {
     let method_kind = match kind {
@@ -186,55 +186,67 @@ impl Rule for NoAccessorRecursion {
 // Check if the property is written
 // e.g. "this.bar = value"
 fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = nth_outermost_paren_parent(node, ctx, 1) else {
-        return false;
-    };
-    match parent.kind() {
-        // e.g. "++this.bar"
-        AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-            argument.span() == node.span()
-        }
-        // e.g. "this.bar = 1"
-        AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
-            assign_target.span() == node.span()
-        }
-        // e.g. "[this.bar] = array"
-        AstKind::ArrayAssignmentTarget(assign_target) => {
-            assign_target.span.contains_inclusive(node.span())
-        }
-        AstKind::AssignmentTargetWithDefault(assign_target) => {
-            assign_target.span.contains_inclusive(node.span())
-        }
-        // e.g. "({property: this.bar} = object)"
-        AstKind::ObjectAssignmentTarget(assign_target) => {
-            assign_target.span.contains_inclusive(node.span())
-        }
-        AstKind::AssignmentTargetPropertyProperty(assign_target) => {
-            assign_target.span.contains_inclusive(node.span())
-        }
-        AstKind::AssignmentExpression(assign_expr) => {
-            // Check if this member expression is the direct assignment target
-            // this.bar = value -> should be flagged (spans should match exactly)
-            // this.bar.baz = value -> should NOT be flagged (this.bar is just the object)
-            let left_span = assign_expr.left.span();
-            let node_span = node.span();
-
-            // If spans are exactly the same, it's a direct assignment
-            if left_span == node_span {
-                return true;
+    // Check a few parent levels up for assignment contexts
+    for ancestor in ctx.nodes().ancestors(node.id()).take(3) {
+        match ancestor.kind() {
+            // e.g. "++this.bar"
+            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
+                if argument.span() == node.span() {
+                    return true;
+                }
             }
-
-            // If assignment target starts at the same position but is longer,
-            // then our node is part of a longer chain (like this.bar in this.bar.baz)
-            if left_span.start == node_span.start && left_span.end > node_span.end {
-                return false;
+            // e.g. "this.bar = 1"
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+                if assign_target.span() == node.span() {
+                    return true;
+                }
             }
-
-            // For other cases, don't treat as write
-            false
+            // e.g. "[this.bar] = array"
+            AstKind::ArrayAssignmentTarget(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            // e.g. "({property: this.bar} = object)"
+            AstKind::ObjectAssignmentTarget(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            // Main assignment expression check
+            AstKind::AssignmentExpression(assign_expr) => {
+                if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
+                    let is_target = match simple_target {
+                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        _ => false,
+                    };
+                    if is_target {
+                        return true;
+                    }
+                }
+            }
+            _ => {}
         }
-        _ => false,
     }
+    false
 }
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
