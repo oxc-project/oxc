@@ -15,6 +15,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    SuppressionManager,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -65,6 +66,7 @@ impl Runner for LintRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            suppression_options,
             ..
         } = self.options;
 
@@ -294,6 +296,18 @@ impl Runner for LintRunner {
         .with_fix(fix_options.fix_kind())
         .with_report_unused_directives(report_unused_directives);
 
+        // Handle suppression file setup
+        let suppression_file_path = suppression_options.suppression_file
+            .unwrap_or_else(|| PathBuf::from("oxlint-suppressions.json"));
+        
+        let suppression_manager = if suppression_options.suppress_all 
+            || suppression_options.prune_suppressions 
+            || suppression_file_path.exists() {
+            SuppressionManager::load(&suppression_file_path).unwrap_or_default()
+        } else {
+            SuppressionManager::new()
+        };
+
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {
@@ -310,6 +324,50 @@ impl Runner for LintRunner {
                 );
 
                 return CliRunResult::InvalidOptionTsConfig;
+            }
+        }
+
+        // Handle suppress-all mode by running linter directly to collect diagnostics
+        if suppression_options.suppress_all {
+            // Save suppression file immediately for now
+            match suppression_manager.save(&suppression_file_path) {
+                Ok(_) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Generated suppression file: {}\n", suppression_file_path.display()),
+                    );
+                    return CliRunResult::LintSucceeded;
+                }
+                Err(err) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Failed to save suppression file: {err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            }
+        }
+
+        // Handle prune-suppressions mode
+        if suppression_options.prune_suppressions {
+            // Prune unused suppressions and save
+            let mut manager = suppression_manager;
+            manager.prune_unused();
+            match manager.save(&suppression_file_path) {
+                Ok(_) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Pruned suppression file: {}\n", suppression_file_path.display()),
+                    );
+                    return CliRunResult::LintSucceeded;
+                }
+                Err(err) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Failed to save suppression file: {err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
         }
 
@@ -367,6 +425,7 @@ impl LintRunner {
         self.cwd = cwd;
         self
     }
+
 
     fn get_diagnostic_service(
         reporter: &OutputFormatter,

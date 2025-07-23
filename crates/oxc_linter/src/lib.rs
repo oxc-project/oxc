@@ -26,6 +26,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod utils;
 
 pub mod loader;
@@ -56,6 +57,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
+    suppression::{SuppressionEntry, SuppressionFile, SuppressionManager},
     utils::read_to_arena_str,
     utils::read_to_string,
 };
