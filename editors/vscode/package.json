@@ -114,7 +114,16 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
+          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration."
+        },
+        "oxc.tsConfigPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null,
+          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin."
         },
         "oxc.unusedDisableDirectives": {
           "type": "string",
