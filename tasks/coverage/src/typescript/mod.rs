@@ -140,6 +140,27 @@ static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     // TODO: More not-supported error codes here
     "2315",  // Type 'U' is not generic.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
+    "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
+    "4025", // Exported variable 'b' has or is using private name 'a'.
+    "4032", // Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
+    "4081", // Exported type alias 'MyClass' has or is using private name 'myClass'.
+    "4094", // Property '_assertIsStripped' of exported anonymous class type may not be private or protected.
+    "4104", // The type 'readonly string[]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+    "4105", // Private or protected member 'a' cannot be accessed on a type parameter.
+    "4109", // Type arguments for 'NumArray' circularly reference themselves.
+    "4110", // Tuple type arguments circularly reference themselves.
+    "4111", // Property 'foo' comes from an index signature, so it must be accessed with ['foo'].
+    "4112", // This member cannot have an 'override' modifier because its containing class 'C' does not extend another class.
+    "4113", // This member cannot have an 'override' modifier because it is not declared in the base class 'B'.
+    "4114", // This member must have an 'override' modifier because it overrides a member in the base class 'B'.
+    "4115", // This parameter property must have an 'override' modifier because it overrides a member in base class 'B'.
+    "4116", // This member must have an 'override' modifier because it overrides an abstract method that is declared in the base class 'AB'.
+    "4117", // This member cannot have an 'override' modifier because it is not declared in the base class 'A'. Did you mean 'doSomething'?
+    "4118", // The type of this node cannot be serialized because its property '[timestampSymbol]' cannot be serialized.
+    "4119", // This member must have a JSDoc comment with an '@override' tag because it overrides a member in the base class 'A'.
+    "4121", // This member cannot have a JSDoc comment with an '@override' tag because its containing class 'C' does not extend another class.
+    "4122", // This member cannot have a JSDoc comment with an '@override' tag because it is not declared in the base class 'A'.
+    "4123", // This member cannot have a JSDoc comment with an 'override' tag because it is not declared in the base class 'A'. Did you mean 'doSomething'?
     "5009", // Cannot find the common subdirectory path for the input files.
     "5052", // Option 'checkJs' cannot be specified without specifying option 'allowJs'.
     "5053", // Option 'mapRoot' cannot be specified with option 'inlineSourceMap'.
