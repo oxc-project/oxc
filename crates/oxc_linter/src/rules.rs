@@ -206,6 +206,7 @@ mod typescript {
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
+    pub mod no_floating_promises;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
     pub mod no_misused_new;
@@ -959,6 +960,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_type_definitions,
     typescript::consistent_type_imports,
     typescript::explicit_function_return_type,
+    typescript::no_floating_promises,
     typescript::no_inferrable_types,
     typescript::no_confusing_non_null_assertion,
     typescript::no_duplicate_enum_values,
@@ -1101,4 +1103,11 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+}
+
+impl RuleEnum {
+    pub fn is_tsgolint_rule(&self) -> bool {
+        // TODO: Codegen this?
+        matches!(self, Self::TypescriptNoFloatingPromises(_))
+    }
 }
