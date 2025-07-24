@@ -159,8 +159,14 @@ impl Rule for RequireAwait {
 
 #[expect(clippy::cast_possible_truncation)]
 fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
-    let end = start + 5;
-    let async_key_span = Span::new(start, end);
+    let source_text = ctx.source_text();
+    let source_from_start = &source_text[(start as usize)..];
+
+    // Find the position of "async" keyword from the start position
+    let async_pos = source_from_start.find("async").unwrap_or(0);
+    let async_start = start + async_pos as u32;
+    let async_end = async_start + 5;
+    let async_key_span = Span::new(async_start, async_end);
 
     // debug assertions
     #[cfg(debug_assertions)]
@@ -173,7 +179,7 @@ fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
     }
 
     let mut offset: u32 = 0;
-    for c in ctx.source_text()[(end as usize)..].chars() {
+    for c in ctx.source_text()[(async_end as usize)..].chars() {
         if !c.is_whitespace() {
             break;
         }
@@ -304,6 +310,7 @@ fn test() {
         ),
         ("async function O(){r}", "function O(){r}"),
         ("s={expoí:async function(){{}}}", "s={expoí:function(){{}}}"),
+        ("class foo { private async bar() { x() } }", "class foo { private bar() { x() } }"),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)
