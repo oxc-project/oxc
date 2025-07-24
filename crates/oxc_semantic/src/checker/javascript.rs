@@ -186,16 +186,29 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+            // println!("node_kind: {:?}", node_kind);
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
                 AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::AssignmentExpression(_)
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                m if m.is_member_expression_kind() => break,
+                AstKind::AssignmentExpression(assign_expr) => {
+                    // only throw error if arguments or eval are being assigned to
+                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
+                        &assign_expr.left
+                    {
+                        if target_ident.name == ident.name {
+                            return ctx
+                                .error(unexpected_identifier_assign(&ident.name, ident.span));
+                        }
+                    }
+                }
+                m if m.is_member_expression_kind() => {
+                    break;
+                }
                 _ => {}
             }
         }
