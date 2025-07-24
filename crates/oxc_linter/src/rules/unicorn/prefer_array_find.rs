@@ -167,14 +167,12 @@ impl Rule for PreferArrayFind {
                                         {
                                             destructuring_nodes.push(reference);
                                         }
-                                    } else if let Some(simple_target) =
+                                    } else if let Some(oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
                                         assignment_expr.left.as_simple_assignment_target()
                                     {
                                         // Check for simple reassignment: items = something
-                                        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = simple_target {
-                                            if ident.span == ctx.nodes().get_node(reference.node_id()).span() {
-                                                is_used_elsewhere = true; // Variable is being reassigned
-                                            }
+                                        if ident.span == ctx.nodes().get_node(reference.node_id()).span() {
+                                            is_used_elsewhere = true; // Variable is being reassigned
                                         }
                                     }
                                 }
@@ -252,7 +250,6 @@ fn is_filter_call(call_expr: &CallExpression) -> bool {
 
 fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     match ctx.nodes().parent_kind(node.id()) {
-        AstKind::ArrayPattern(_) | AstKind::IdentifierReference(_) => true,
         AstKind::AssignmentExpression(expr) => expr.left.span() == node.span(),
         AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
         AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
@@ -260,7 +257,9 @@ fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         // After removing SimpleAssignmentTarget, check for assignment targets
         AstKind::ArrayAssignmentTarget(_)
         | AstKind::ObjectAssignmentTarget(_)
-        | AstKind::AssignmentTargetWithDefault(_) => true,
+        | AstKind::AssignmentTargetWithDefault(_)
+        | AstKind::ArrayPattern(_)
+        | AstKind::IdentifierReference(_) => true,
         _ => false,
     }
 }

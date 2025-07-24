@@ -100,12 +100,10 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 fn find_variable_declaration_scope(ctx: &LintContext, variable_name: &str) -> Option<ScopeId> {
     for ast_node in ctx.nodes().iter() {
         if let AstKind::VariableDeclarator(declarator) = ast_node.kind() {
-            if let Some(init) = &declarator.init {
-                if let Expression::ArrayExpression(_) = init {
-                    if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
-                        if binding.name == variable_name {
-                            return Some(ast_node.scope_id());
-                        }
+            if let Some(Expression::ArrayExpression(_)) = &declarator.init {
+                if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
+                    if binding.name == variable_name {
+                        return Some(ast_node.scope_id());
                     }
                 }
             }
@@ -146,12 +144,10 @@ fn find_loop_body_scope(ctx: &LintContext, parent: &AstNode) -> Option<(ScopeId,
 fn find_variable_declaration_span(ctx: &LintContext, variable_name: &str) -> Option<Span> {
     for ast_node in ctx.nodes().iter() {
         if let AstKind::VariableDeclarator(declarator) = ast_node.kind() {
-            if let Some(init) = &declarator.init {
-                if let Expression::ArrayExpression(_) = init {
-                    if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
-                        if binding.name == variable_name {
-                            return Some(ast_node.span());
-                        }
+            if let Some(Expression::ArrayExpression(_)) = &declarator.init {
+                if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
+                    if binding.name == variable_name {
+                        return Some(ast_node.span());
                     }
                 }
             }
