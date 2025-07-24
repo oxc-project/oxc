@@ -809,7 +809,7 @@ fn generate_struct(
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
                 const enterExit = visitors[{node_type_id}];
-                let node, enter, exit;
+                let node, enter, exit = null;
                 if (enterExit !== null) {{
                     ({{ enter, exit }} = enterExit);
                     node = new {struct_name}(pos, ast);
@@ -818,7 +818,7 @@ fn generate_struct(
 
                 {walk_stmts}
 
-                if (exit) exit(node);
+                if (exit !== null) exit(node);
             }}
         ");
 
