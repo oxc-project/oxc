@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 180/299
+Passed: 180/300
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -502,7 +502,17 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (44/46)
+# babel-plugin-transform-react-jsx (44/47)
+* refresh/import-after-component/input.js
+Missing ScopeId
+Missing ReferenceId: "useFoo"
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+Symbol reference IDs mismatch for "useFoo":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(7)]
+rebuilt        : SymbolId(1): [ReferenceId(6), ReferenceId(11), ReferenceId(12)]
+
 * refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
 x Output mismatch
 
