@@ -6,7 +6,7 @@ arguments: -c fixtures/no_console_off/eslintrc.json fixtures/no_console_off/test
 working directory: 
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 87 rules using 1 threads.
+Finished in <variable>ms on 1 file with 88 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
