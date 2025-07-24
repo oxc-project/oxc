@@ -189,6 +189,13 @@ impl Rule for ExplicitModuleBoundaryTypes {
                 if let Some(decl) = &export.declaration {
                     let mut checker = ExplicitTypesChecker::new(self, ctx);
                     walk::walk_declaration(&mut checker, decl);
+                } else {
+                    let mut checker = ExplicitTypesChecker::new(self, ctx);
+                    for specifier in &export.specifiers {
+                        if let ModuleExportName::IdentifierReference(id) = &specifier.local {
+                            Self::run_on_identifier_reference(ctx, id, &mut checker);
+                        }
+                    }
                 }
             }
             AstKind::TSExportAssignment(export) => {
@@ -232,25 +239,7 @@ impl ExplicitModuleBoundaryTypes {
         let mut checker = ExplicitTypesChecker::new(self, ctx);
         match get_typed_inner_expression(expr) {
             Expression::Identifier(id) => {
-                let s = ctx.scoping();
-                let Some(symbol_id) = s.get_reference(id.reference_id()).symbol_id() else {
-                    return;
-                };
-                let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
-                match decl.kind() {
-                    AstKind::VariableDeclaration(it) => {
-                        walk::walk_variable_declaration(&mut checker, it);
-                    }
-                    AstKind::VariableDeclarator(it) => {
-                        checker.visit_variable_declarator(it);
-                        // walk::walk_variable_declarator(&mut checker, it)
-                    }
-                    AstKind::Function(it) => {
-                        walk::walk_function(&mut checker, it, ScopeFlags::Function);
-                    }
-                    AstKind::Class(it) => walk::walk_class(&mut checker, it),
-                    _ => {}
-                }
+                Self::run_on_identifier_reference(ctx, id, &mut checker);
             }
             Expression::ArrowFunctionExpression(arrow) => {
                 walk::walk_arrow_function_expression(&mut checker, arrow);
@@ -269,6 +258,32 @@ impl ExplicitModuleBoundaryTypes {
                     self.run_on_exported_expression_inner(ctx, &el.value, false);
                 }
             }
+            _ => {}
+        }
+    }
+
+    fn run_on_identifier_reference<'a>(
+        ctx: &LintContext<'a>,
+        id: &IdentifierReference<'a>,
+        checker: &mut ExplicitTypesChecker<'a, '_>,
+    ) {
+        let s = ctx.scoping();
+        let Some(symbol_id) = s.get_reference(id.reference_id()).symbol_id() else {
+            return;
+        };
+        let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
+        match decl.kind() {
+            AstKind::VariableDeclaration(it) => {
+                walk::walk_variable_declaration(checker, it);
+            }
+            AstKind::VariableDeclarator(it) => {
+                checker.visit_variable_declarator(it);
+                // walk::walk_variable_declarator(&mut checker, it)
+            }
+            AstKind::Function(it) => {
+                walk::walk_function(checker, it, ScopeFlags::Function);
+            }
+            AstKind::Class(it) => walk::walk_class(checker, it),
             _ => {}
         }
     }
@@ -1803,20 +1818,16 @@ mod test {
             ",
                 None,
             ),
-            // FIXME: resolve to last write reference
-            // This test case requires tracking variable reassignments and checking the
-            // type of the last assignment before export, not the first assignment.
-            // Currently not implemented due to complexity.
-            // (
-            //     "
-            // let test = arg => argl;
-            // test = (): void => {
-            //   return;
-            // };
-            // export { test };
-            // ",
-            //     None,
-            // ),
+            (
+                "
+            let test = arg => argl;
+            test = (): void => {
+              return;
+            };
+            export { test };
+            ",
+                None,
+            ),
             (
                 "
             export const foo =
