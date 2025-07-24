@@ -1941,7 +1941,6 @@ mod test {
 
     #[test]
     fn rule_typescript_angle_bracket_type_assertions() {
-        // Test TypeScript angle bracket type assertions that only work in .ts files, not .tsx
         let pass = vec![
             (
                 "const x = <Foo>(() => {});",
@@ -1971,13 +1970,11 @@ mod test {
             ),
         ];
 
-        let fail: Vec<(&'static str, Option<Value>, Option<Value>, Option<PathBuf>)> = vec![];
-
         Tester::new(
             ExplicitModuleBoundaryTypes::NAME,
             ExplicitModuleBoundaryTypes::PLUGIN,
             pass,
-            fail,
+            vec![],
         )
         .test();
     }
