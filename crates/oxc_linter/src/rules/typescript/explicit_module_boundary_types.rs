@@ -656,6 +656,7 @@ mod test {
     use super::{Config, ExplicitModuleBoundaryTypes};
     use crate::{RuleMeta as _, rule::Rule as _, tester::Tester};
     use serde_json::{Value, json};
+    use std::path::PathBuf;
 
     #[test]
     fn config() {
@@ -844,11 +845,6 @@ mod test {
                 "const x = (() => {}) as Foo;",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
             ),
-            // FIXME: move to Tester using ".ts"
-            // (
-            //     "const x = <Foo,>(() => {});",
-            //     Some(json!([{ "allowTypedFunctionExpressions": true }])),
-            // ),
             (
                 "
             export const x = {
@@ -857,15 +853,6 @@ mod test {
             ",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
             ),
-            // FIXME: move to Tester using ".ts"
-            // (
-            //     "
-            //     export const x = <Foo>{
-            //       foo: () => {},
-            //     };
-            //     ",
-            //     Some(json!([{ "allowTypedFunctionExpressions": true }])),
-            // ),
             (
                 "
             export const x: Foo = {
@@ -882,14 +869,6 @@ mod test {
             ",
                 Some(json!([{ "allowTypedFunctionExpressions": true }])),
             ),
-            // (
-            //     "
-            //     export const x = <Foo>{
-            //       foo: { bar: () => {} },
-            //     };
-            //     ",
-            //     Some(json!([{ "allowTypedFunctionExpressions": true }])),
-            // ),
             (
                 "
             export const x: Foo = {
@@ -1964,5 +1943,48 @@ mod test {
             fail,
         )
         .test_and_snapshot();
+    }
+
+    #[test]
+    fn rule_typescript_angle_bracket_type_assertions() {
+        // Test TypeScript angle bracket type assertions that only work in .ts files, not .tsx
+        let pass = vec![
+            (
+                "const x = <Foo>(() => {});",
+                Some(json!([{ "allowTypedFunctionExpressions": true }])),
+                None,
+                Some(PathBuf::from("test.ts")),
+            ),
+            (
+                "
+                export const x = <Foo>{
+                  foo: () => {},
+                };
+                ",
+                Some(json!([{ "allowTypedFunctionExpressions": true }])),
+                None,
+                Some(PathBuf::from("test.ts")),
+            ),
+            (
+                "
+                export const x = <Foo>{
+                  foo: { bar: () => {} },
+                };
+                ",
+                Some(json!([{ "allowTypedFunctionExpressions": true }])),
+                None,
+                Some(PathBuf::from("test.ts")),
+            ),
+        ];
+
+        let fail: Vec<(&'static str, Option<Value>, Option<Value>, Option<PathBuf>)> = vec![];
+
+        Tester::new(
+            ExplicitModuleBoundaryTypes::NAME,
+            ExplicitModuleBoundaryTypes::PLUGIN,
+            pass,
+            fail,
+        )
+        .test();
     }
 }
