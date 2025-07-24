@@ -195,15 +195,13 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 }
                 // Check for assignment expressions where this identifier is the direct target
                 AstKind::AssignmentExpression(assign_expr) => {
-                    if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
-                        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
-                            target_ident,
-                        ) = simple_target
-                        {
-                            if target_ident.span == ident.span {
-                                return ctx
-                                    .error(unexpected_identifier_assign(&ident.name, ident.span));
-                            }
+                    if let Some(oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                        target_ident,
+                    )) = assign_expr.left.as_simple_assignment_target()
+                    {
+                        if target_ident.span == ident.span {
+                            return ctx
+                                .error(unexpected_identifier_assign(&ident.name, ident.span));
                         }
                     }
                 }
