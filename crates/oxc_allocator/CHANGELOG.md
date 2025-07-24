@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 🚜 Refactor
+
+- 124d376 allocator: Remove unnecessary `Send` impl for `FixedSizeAllocator` (#12426) (overlookmotel)
+- c375981 napi/oxlint: Simplify atomic operations (#12425) (overlookmotel)
+- c1b2f48 napi/oxlint: Prevent lint warning in release mode (#12408) (overlookmotel)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### 🚀 Features

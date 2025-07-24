@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 💥 BREAKING CHANGES
+
+- ccbcf3e transformer, minifier, syntax: [**BREAKING**] Remove `ESTarget::ES5` (#12448) (Dunqing)
+
+### 🚀 Features
+
+- dee25f4 ast: Add `pife` field to `Function` (#12469) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 7c2d2c6 transformer/top-level-statements: Should not inject statements after non-import statement (#12463) (Dunqing)
+- dcb245c transformer/typescript: Incorrect evaluation of `TemplateLiteral` in enum (#12456) (Dunqing)
+- 986c48e transformer/decorator: Transformed decorators should be injected after class-properties has run (#12418) (Dunqing)
+- c4a2d79 transformer/typescript: Should remove `abstract` field early (#12417) (Dunqing)
+
+### 🚜 Refactor
+
+- 3541739 transformer/typescript: Take a `Vec` rather than take elements of `Vec` one by one (#12462) (Dunqing)
+- 93a5b76 transformer/typescript: Simplify evaulating the of value an enum member without an initialzier (#12461) (Dunqing)
+
+### ⚡ Performance
+
+- f32c816 transformer/typescript: Store `Atom` rather than `String` for `ConstantValue::String` (#12458) (Dunqing)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### 🚀 Features

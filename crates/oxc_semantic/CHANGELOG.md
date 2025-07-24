@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 🚜 Refactor
+
+- 2874ec4 semantic: Remove redundant default implementation for `Binder::binder` (#12447) (Dunqing)
+
+
 
 ## [0.77.2] - 2025-07-17
 
