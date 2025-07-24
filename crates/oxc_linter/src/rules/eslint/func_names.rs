@@ -244,9 +244,8 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             }
         }
         AstKind::ArrayAssignmentTarget(target) => {
-            for element in &target.elements {
-                if let Some(AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(default)) =
-                    element
+            for element in (&target.elements).into_iter().flatten() {
+                if let AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(default) = element
                 {
                     let result =
                         matches!(default.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
@@ -258,7 +257,6 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             }
             false
         }
-        AstKind::Argument(_) => false,
         _ => false,
     }
 }
@@ -406,9 +404,8 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
             | AstKind::TSSatisfiesExpression(_) => {}
             AstKind::ExpressionStatement(stmt) => {
                 if let Expression::AssignmentExpression(assign) = &stmt.expression {
-                    if assign.left.is_member_expression() {
-                        return assign.left.get_identifier_name().map(Cow::Borrowed);
-                    } else if matches!(assign.left, AssignmentTarget::AssignmentTargetIdentifier(_))
+                    if assign.left.is_member_expression()
+                        || matches!(assign.left, AssignmentTarget::AssignmentTargetIdentifier(_))
                     {
                         return assign.left.get_identifier_name().map(Cow::Borrowed);
                     }

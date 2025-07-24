@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement,
-        ForStatement, VariableDeclarationKind,
+        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, ForInStatement,
+        ForOfStatement, ForStatement, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -219,17 +219,11 @@ fn check_loop_usage<'a>(
         return;
     };
 
-    if let Some(simple_target) = expr.left.as_simple_assignment_target() {
-        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
-            simple_target
-        {
-            let scoping = ctx.semantic().scoping();
-            let reference = scoping.get_reference(ident.reference_id());
-            if let Some(symbol_id) = reference.symbol_id() {
-                if symbol_id != referenced_symbol_id {
-                    return;
-                }
-            } else {
+    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &expr.left {
+        let scoping = ctx.semantic().scoping();
+        let reference = scoping.get_reference(ident.reference_id());
+        if let Some(symbol_id) = reference.symbol_id() {
+            if symbol_id != referenced_symbol_id {
                 return;
             }
         } else {

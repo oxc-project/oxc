@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression, Expression,
-        FormalParameters, JSXAttributeItem, JSXElementName,
+        AssignmentTarget, BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression,
+        Expression, FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -385,20 +385,12 @@ fn is_function_maybe_reassigned<'a>(
 
         // Check if this reference is on the left side of an assignment
         let parent_node = ctx.nodes().parent_node(reference.node_id());
-        match parent_node.kind() {
-            AstKind::AssignmentExpression(assignment) => {
-                // Check if the function identifier is the left-hand side of assignment
-                if let Some(simple_target) = assignment.left.as_simple_assignment_target() {
-                    if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
-                        simple_target
-                    {
-                        if ident.span == reference_node.span() {
-                            return true; // Function is being reassigned
-                        }
-                    }
+        if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
+            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left {
+                if ident.span == reference_node.span() {
+                    return true; // Function is being reassigned
                 }
             }
-            _ => {}
         }
     }
     false
