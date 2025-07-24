@@ -222,15 +222,10 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         target_kind: &AssignmentTarget,
         reference_id: ReferenceId,
     ) -> bool {
-        match target_kind {
-            AssignmentTarget::AssignmentTargetIdentifier(id) => id.reference_id() == reference_id,
-            target => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(id) = target {
-                    id.reference_id() == reference_id
-                } else {
-                    false
-                }
-            }
+        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
+            id.reference_id() == reference_id
+        } else {
+            false
         }
     }
 
