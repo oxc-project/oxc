@@ -215,6 +215,11 @@ impl Rule for ArrayType {
                     ctx,
                 );
             }
+            AstKind::TSTypeParameterInstantiation(ts_type_param_instantiation) => {
+                for param in &ts_type_param_instantiation.params {
+                    check(param, default_config, readonly_config, ctx);
+                }
+            }
             _ => {}
         }
     }
@@ -1256,6 +1261,36 @@ fn test() {
         ("type x = Array<number>[]", None),
         ("const arr: Array<Array<number>>[] = [];", None),
         ("export function fn4(arr: Array<number>[]) { return arr; }", None),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<{name: string}[]>([]);",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<Array<{name: string}>>([]);",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<string[]>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<(string | number)[]>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<readonly string[]>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<ReadonlyArray<string>>([]);",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
@@ -1787,6 +1822,48 @@ fn test() {
             "let a: Promise<string[]> = Promise.resolve([]);",
             "let a: Promise<Array<string>> = Promise.resolve([]);",
             Some(serde_json::json!([{"default": "generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<{name: string}[]>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<Array<{name: string}>>([]);",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<Array<{name: string}>>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<{name: string}[]>([]);",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<string[]>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<Array<string>>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<(string | number)[]>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<Array<string | number>>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<readonly string[]>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<ReadonlyArray<string>>([]);",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<ReadonlyArray<string>>([]);",
+            "function testFn<T>(param: T) { return param; }
+export const test2 = testFn<readonly string[]>([]);",
+            Some(serde_json::json!([{"default":"array"}])),
         ),
     ];
 
