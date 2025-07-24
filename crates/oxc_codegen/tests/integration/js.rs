@@ -421,6 +421,10 @@ fn pife() {
     test_minify_same("foo((()=>0));");
     test_same("(() => 0)();\n");
     test_minify_same("(()=>0)();");
+    test_same("foo((function() {\n\treturn 0;\n}));\n");
+    test_minify_same("foo((function(){return0}));");
+    test_same("(function() {\n\treturn 0;\n})();\n");
+    test_minify_same("(function(){return0})();");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422

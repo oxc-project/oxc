@@ -232,8 +232,10 @@ impl<'a> ParserImpl<'a> {
             self.ast.expression_sequence(expr_span, expressions)
         };
 
-        if let Expression::ArrowFunctionExpression(arrow_expr) = &mut expression {
-            arrow_expr.pife = true;
+        match &mut expression {
+            Expression::ArrowFunctionExpression(arrow_expr) => arrow_expr.pife = true,
+            Expression::FunctionExpression(func_expr) => func_expr.pife = true,
+            _ => {}
         }
 
         if self.options.preserve_parens {

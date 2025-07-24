@@ -1928,9 +1928,9 @@ Object.defineProperty(__vite_ssr_exports__, 'default', {
                return __vite_ssr_export_default__;
        }
 });
-const __vite_ssr_export_default__ = function getRandom() {
+const __vite_ssr_export_default__ = (function getRandom() {
   return Math.random();
-};
+});
 ",
         );
 

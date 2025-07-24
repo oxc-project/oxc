@@ -557,9 +557,9 @@ fn test_pure_comment() {
     test("(function* () {})", "(function* () {});\n");
     test("(function* foo() {})", "(function* foo() {});\n");
 
-    test("new (function() {})", "new function() {}();\n");
-    test("new (function() {})()", "new function() {}();\n");
-    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new function() {}();\n");
+    test("new (function() {})", "new (function() {})();\n");
+    test("new (function() {})()", "new (function() {})();\n");
+    test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new (function() {})();\n");
 
     test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
     test(
