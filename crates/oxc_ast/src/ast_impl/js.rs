@@ -434,11 +434,20 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     }
 }
 
-impl ObjectPropertyKind<'_> {
+impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadProperty(_))
+    }
+
+    /// Returns [`Some`] for non-spread [object properties](ObjectProperty).
+    #[inline]
+    pub fn as_property(&self) -> Option<&ObjectProperty<'a>> {
+        match self {
+            Self::ObjectProperty(prop) => Some(prop),
+            Self::SpreadProperty(_) => None,
+        }
     }
 }
 
