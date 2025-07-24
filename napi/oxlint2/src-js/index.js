@@ -75,6 +75,8 @@ class Context {
   // Index into `ruleIds` sent from Rust. Set before calling `rule`'s `create` method.
   #ruleIndex;
   // Absolute path of file being linted. Set before calling `rule`'s `create` method.
+  filename;
+  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
   physicalFilename;
 
   /**
@@ -117,6 +119,7 @@ class Context {
      */
     setupContextForFile = (context, ruleIndex, filePath) => {
       context.#ruleIndex = ruleIndex;
+      context.filename = filePath;
       context.physicalFilename = filePath;
     };
   }

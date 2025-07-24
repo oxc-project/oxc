@@ -21,6 +21,11 @@ export default {
         });
 
         context.report({
+          message: `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+
+        context.report({
           message: `physicalFilename: ${relativePath(context.physicalFilename)}`,
           node: SPAN,
         });
