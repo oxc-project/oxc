@@ -5,7 +5,7 @@ use std::{
 
 use itertools::Itertools;
 use oxc_resolver::Resolver;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_span::{CompactStr, format_compact_str};
 
@@ -21,7 +21,11 @@ use crate::{
     rules::RULES,
 };
 
-use super::{Config, categories::OxlintCategories};
+use super::{
+    Config,
+    categories::OxlintCategories,
+    config_store::{ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides},
+};
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
@@ -144,35 +148,36 @@ impl ConfigStoreBuilder {
 
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
+        // Collect external plugins from both base config and overrides
+        let mut external_plugins = FxHashSet::default();
+
         if let Some(base_plugins) = oxlintrc.plugins.as_ref() {
-            let mut external_plugins = base_plugins.external.clone();
-            for r#override in &oxlintrc.overrides {
-                if let Some(override_plugins) = &r#override.plugins {
-                    external_plugins.extend(override_plugins.external.iter().cloned());
-                }
+            external_plugins.extend(base_plugins.external.iter().cloned());
+        }
+
+        for r#override in &oxlintrc.overrides {
+            if let Some(override_plugins) = &r#override.plugins {
+                external_plugins.extend(override_plugins.external.iter().cloned());
             }
+        }
 
-            if !external_plugins.is_empty() {
-                let external_linter =
-                    external_linter.ok_or(ConfigBuilderError::NoExternalLinterConfigured)?;
+        if !external_plugins.is_empty() {
+            let external_linter =
+                external_linter.ok_or(ConfigBuilderError::NoExternalLinterConfigured)?;
 
-                let resolver = Resolver::default();
+            let resolver = Resolver::default();
 
-                #[expect(
-                    clippy::missing_panics_doc,
-                    reason = "oxlintrc.path is always a file path"
-                )]
-                let oxlintrc_dir = oxlintrc.path.parent().unwrap();
+            #[expect(clippy::missing_panics_doc, reason = "oxlintrc.path is always a file path")]
+            let oxlintrc_dir = oxlintrc.path.parent().unwrap();
 
-                for plugin_specifier in &external_plugins {
-                    Self::load_external_plugin(
-                        oxlintrc_dir,
-                        plugin_specifier,
-                        external_linter,
-                        &resolver,
-                        external_plugin_store,
-                    )?;
-                }
+            for plugin_specifier in &external_plugins {
+                Self::load_external_plugin(
+                    oxlintrc_dir,
+                    plugin_specifier,
+                    external_linter,
+                    &resolver,
+                    external_plugin_store,
+                )?;
             }
         }
         let plugins = oxlintrc.plugins.unwrap_or_default();
@@ -320,11 +325,19 @@ impl ConfigStoreBuilder {
     /// re-configured, while those that are not are added. Affects rules where `query` returns
     /// `true`.
     fn get_all_rules(&self) -> Vec<RuleEnum> {
-        if self.config.plugins.builtin.is_all() {
+        self.get_all_rules_for_plugins(None)
+    }
+
+    fn get_all_rules_for_plugins(&self, override_plugins: Option<&LintPlugins>) -> Vec<RuleEnum> {
+        let mut builtin_plugins = if let Some(override_plugins) = override_plugins {
+            self.config.plugins.builtin | override_plugins.builtin
+        } else {
+            self.config.plugins.builtin
+        };
+
+        if builtin_plugins.is_all() {
             RULES.clone()
         } else {
-            let mut builtin_plugins = self.plugins().builtin;
-
             // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
             if builtin_plugins.contains(BuiltinLintPlugins::VITEST) {
                 builtin_plugins = builtin_plugins.union(BuiltinLintPlugins::JEST);
@@ -359,7 +372,13 @@ impl ConfigStoreBuilder {
         }
     }
 
-    pub fn build(self) -> Config {
+    /// Builds a [`Config`] from the current state of the builder.
+    /// # Errors
+    /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
+    pub fn build(
+        mut self,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Result<Config, ConfigBuilderError> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -369,6 +388,11 @@ impl ConfigStoreBuilder {
         if plugins.contains(BuiltinLintPlugins::VITEST) {
             plugins = plugins.union(BuiltinLintPlugins::JEST);
         }
+
+        let overrides = std::mem::take(&mut self.overrides);
+        let resolved_overrides = self
+            .resolve_overrides(overrides, external_plugin_store)
+            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -380,7 +404,47 @@ impl ConfigStoreBuilder {
         let mut external_rules: Vec<_> = self.external_rules.into_iter().collect();
         external_rules.sort_unstable_by_key(|(r, _)| *r);
 
-        Config::new(rules, external_rules, self.categories, self.config, self.overrides)
+        Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
+    }
+
+    fn resolve_overrides(
+        &self,
+        overrides: OxlintOverrides,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+        let resolved = overrides
+            .into_iter()
+            .map(|override_config| {
+                let mut builtin_rules = Vec::new();
+                let mut external_rules = Vec::new();
+                let mut rules_map = FxHashMap::default();
+                let mut external_rules_map = FxHashMap::default();
+
+                let all_rules = self.get_all_rules_for_plugins(override_config.plugins.as_ref());
+
+                // Resolve rules for this override
+                override_config.rules.override_rules(
+                    &mut rules_map,
+                    &mut external_rules_map,
+                    &all_rules,
+                    external_plugin_store,
+                )?;
+
+                // Convert to vectors
+                builtin_rules.extend(rules_map.into_iter());
+                external_rules.extend(external_rules_map.into_iter());
+
+                Ok(ResolvedOxlintOverride {
+                    files: override_config.files,
+                    env: override_config.env,
+                    globals: override_config.globals,
+                    plugins: override_config.plugins,
+                    rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(ResolvedOxlintOverrides::new(resolved))
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -707,8 +771,11 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.builtin.set(BuiltinLintPlugins::TYPESCRIPT, false);
 
-        let linter =
-            ConfigStoreBuilder::default().with_builtin_plugins(desired_plugins.builtin).build();
+        let external_plugin_store = ExternalPluginStore::default();
+        let linter = ConfigStoreBuilder::default()
+            .with_builtin_plugins(desired_plugins.builtin)
+            .build(&external_plugin_store)
+            .unwrap();
         for (rule, _) in linter.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -1129,7 +1196,8 @@ mod test {
             &mut external_plugin_store,
         )
         .unwrap()
-        .build()
+        .build(&external_plugin_store)
+        .unwrap()
     }
 
     fn config_store_from_str(s: &str) -> Config {
@@ -1141,6 +1209,7 @@ mod test {
             &mut external_plugin_store,
         )
         .unwrap()
-        .build()
+        .build(&external_plugin_store)
+        .unwrap()
     }
 }
