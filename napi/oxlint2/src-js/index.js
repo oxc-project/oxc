@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
-import { DATA_POINTER_POS_32, SOURCE_LEN_POS_32 } from './generated/constants.cjs';
+import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from './generated/constants.cjs';
 import { getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -167,8 +167,9 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    const programPos = buffer.uint32[DATA_POINTER_POS_32],
-      sourceByteLen = buffer.uint32[SOURCE_LEN_POS_32];
+    const { uint32 } = buffer,
+      programPos = uint32[DATA_POINTER_POS_32],
+      sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
     const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
     const sourceIsAscii = sourceText.length === sourceByteLen;

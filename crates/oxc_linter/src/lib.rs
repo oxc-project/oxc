@@ -247,13 +247,11 @@ impl Linter {
         // `external_linter` always exists when `oxlint2` feature is enabled
         let external_linter = self.external_linter.as_ref().unwrap();
 
-        // Write offset of `Program` and source text length in metadata at end of buffer
+        // Write offset of `Program` in metadata at end of buffer
         let program = semantic.nodes().program().unwrap();
         let program_offset = ptr::from_ref(program) as u32;
-        #[expect(clippy::cast_possible_truncation)]
-        let source_len = program.source_text.len() as u32;
 
-        let metadata = RawTransferMetadata::new(program_offset, source_len);
+        let metadata = RawTransferMetadata::new(program_offset);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
@@ -318,10 +316,8 @@ struct RawTransferMetadata2 {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
-    /// Offset of `u32` containing source text length within buffer.
-    pub(crate) source_len: u32,
     /// Padding to pad struct to size 16.
-    pub(crate) _padding: u32,
+    pub(crate) _padding: u64,
 }
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
@@ -329,8 +325,8 @@ use RawTransferMetadata2 as RawTransferMetadata;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, source_len: u32) -> Self {
-        Self { data_offset, is_ts: false, source_len, _padding: 0 }
+    pub fn new(data_offset: u32) -> Self {
+        Self { data_offset, is_ts: false, _padding: 0 }
     }
 }
 
