@@ -51,18 +51,18 @@ async function loadPluginImpl(path) {
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
   const pluginName = plugin.meta.name;
-  let ruleId = registeredRules.length;
+  const offset = registeredRules.length;
   const ruleNames = [];
-  const ret = { name: pluginName, offset: ruleId, ruleNames };
 
   for (const [ruleName, rule] of Object.entries(plugin.rules)) {
     ruleNames.push(ruleName);
-    registeredRules.push({ rule, context: new Context(ruleId, `${pluginName}/${ruleName}`) });
-    ruleId++;
+    registeredRules.push({ rule, context: new Context(`${pluginName}/${ruleName}`) });
   }
 
-  return JSON.stringify({ Success: ret });
+  return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
 }
+
+let setupContextForFile;
 
 /**
  * Context class.
@@ -70,20 +70,18 @@ async function loadPluginImpl(path) {
  * Each rule has its own `Context` object. It is passed to that rule's `create` function.
  */
 class Context {
-  // Rule ID. Index into `registeredRules` array.
-  #ruleId;
   // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
   id;
+  // Index into `ruleIds` sent from Rust. Set before calling `rule`'s `create` method.
+  #ruleIndex;
   // Absolute path of file being linted. Set before calling `rule`'s `create` method.
   physicalFilename;
 
   /**
    * @constructor
-   * @param {number} ruleId - Rule ID
    * @param {string} fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
-  constructor(ruleId, fullRuleName) {
-    this.#ruleId = ruleId;
+  constructor(fullRuleName) {
     this.id = fullRuleName;
   }
 
@@ -100,8 +98,27 @@ class Context {
     diagnostics.push({
       message: diagnostic.message,
       loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-      externalRuleId: this.#ruleId,
+      ruleIndex: this.#ruleIndex,
     });
+  }
+
+  static {
+    /**
+     * Update a `Context` with file-specific data.
+     *
+     * We have to define this function within class body, as it's not possible to set private property
+     * `#ruleIndex` from outside the class.
+     * We don't use a normal class method, because we don't want to expose this to user.
+     *
+     * @param {Context} context - `Context` object
+     * @param {number} ruleIndex - Index of this rule within `ruleIds` passed from Rust
+     * @param {string} filePath - Absolute path of file being linted
+     * @returns {undefined}
+     */
+    setupContextForFile = (context, ruleIndex, filePath) => {
+      context.#ruleIndex = ruleIndex;
+      context.physicalFilename = filePath;
+    };
   }
 }
 
@@ -154,9 +171,10 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
-  for (const ruleId of ruleIds) {
+  for (let i = 0; i < ruleIds.length; i++) {
+    const ruleId = ruleIds[i];
     const { rule: { create }, context } = registeredRules[ruleId];
-    context.physicalFilename = filePath;
+    setupContextForFile(context, i, filePath);
     const visitor = create(context);
     addVisitorToCompiled(visitor);
   }

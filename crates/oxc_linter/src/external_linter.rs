@@ -42,7 +42,7 @@ pub enum PluginLoadResult {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintResult {
-    pub external_rule_id: u32,
+    pub rule_index: u32,
     pub message: String,
     pub loc: Loc,
 }

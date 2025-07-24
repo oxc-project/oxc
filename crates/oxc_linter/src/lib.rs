@@ -266,33 +266,18 @@ impl Linter {
         match result {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
-                    match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id) {
-                        Some((plugin_name, rule_name)) => {
-                            ctx_host.push_diagnostic(Message::new(
-                                // TODO: `error` isn't right, we need to get the severity from `external_rules`
-                                OxcDiagnostic::error(diagnostic.message)
-                                    .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
-                                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                    .with_severity(
-                                        (*external_rules
-                                            .iter()
-                                            .find(|(rule_id, _)| {
-                                                rule_id.raw() == diagnostic.external_rule_id
-                                            })
-                                            .map(|(_, severity)| severity)
-                                            .expect(
-                                                "external rule must exist when resolving severity",
-                                            ))
-                                        .into(),
-                                    ),
-                                PossibleFixes::None,
-                            ));
-                        }
-                        None => {
-                            // TODO: report diagnostic, this should be unreachable
-                            debug_assert!(false);
-                        }
-                    }
+                    let (external_rule_id, severity) =
+                        external_rules[diagnostic.rule_index as usize];
+                    let (plugin_name, rule_name) =
+                        self.config.resolve_plugin_rule_names(external_rule_id);
+
+                    ctx_host.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        PossibleFixes::None,
+                    ));
                 }
             }
             Err(_err) => {

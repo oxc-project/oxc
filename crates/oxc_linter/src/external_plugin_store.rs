@@ -79,11 +79,13 @@ impl ExternalPluginStore {
         })
     }
 
-    pub fn resolve_plugin_rule_names(&self, external_rule_id: u32) -> Option<(&str, &str)> {
-        let external_rule = self.rules.get(ExternalRuleId::from_raw(external_rule_id))?;
+    pub fn resolve_plugin_rule_names(
+        &self,
+        external_rule_id: ExternalRuleId,
+    ) -> (/* plugin name */ &str, /* rule name */ &str) {
+        let external_rule = &self.rules[external_rule_id];
         let plugin = &self.plugins[external_rule.plugin_id];
-
-        Some((&plugin.name, &external_rule.name))
+        (&plugin.name, &external_rule.name)
     }
 }
 

@@ -286,7 +286,10 @@ impl ConfigStore {
     }
 
     #[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
-    pub(crate) fn resolve_plugin_rule_names(&self, external_rule_id: u32) -> Option<(&str, &str)> {
+    pub(crate) fn resolve_plugin_rule_names(
+        &self,
+        external_rule_id: ExternalRuleId,
+    ) -> (/* plugin name */ &str, /* rule name */ &str) {
         self.external_plugin_store.resolve_plugin_rule_names(external_rule_id)
     }
 }
