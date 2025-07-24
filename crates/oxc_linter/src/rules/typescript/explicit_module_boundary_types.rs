@@ -16,13 +16,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use smallvec::SmallVec;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    // fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    utils::default_true,
-};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::default_true};
 
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
@@ -801,7 +795,7 @@ mod test {
             export function test(): void {
               nested();
               return;
-            
+
               function nested() {}
             }
             ",
@@ -880,7 +874,7 @@ mod test {
             (
                 "
             type MethodType = () => void;
-            
+
             export class App {
               public method: MethodType = () => {};
             }
@@ -975,12 +969,12 @@ mod test {
                 "
             export class Accumulator {
               private count: number = 0;
-            
+
               public accumulate(fn: () => number): void {
                 this.count += fn();
               }
             }
-            
+
             new Accumulator().accumulate(() => 1);
             ",
                 Some(json!([{ "allowTypedFunctionExpressions": true, }])),
@@ -1000,7 +994,7 @@ mod test {
               type: string;
               value: number;
             }
-            
+
             export const func = (value: number) =>
               ({ type: 'X', value }) as const satisfies R;
             ",
@@ -1012,7 +1006,7 @@ mod test {
               type: string;
               value: number;
             }
-            
+
             export const func = (value: number) =>
               ({ type: 'X', value }) as const satisfies R satisfies R;
             ",
@@ -1024,7 +1018,7 @@ mod test {
               type: string;
               value: number;
             }
-            
+
             export const func = (value: number) =>
               ({ type: 'X', value }) as const satisfies R satisfies R satisfies R;
             ",
@@ -1066,7 +1060,7 @@ mod test {
               [`prop`]() {}
               [null]() {}
               [`${v}`](): void {}
-            
+
               foo = () => {
                 bar: 5;
               };
@@ -1085,7 +1079,7 @@ mod test {
             (
                 "
                     export type Ensurer = (blocks: TFBlock[]) => TFBlock[];
-            
+
                     export const myEnsurer: Ensurer = blocks => {
                       return blocks;
                     };
@@ -1231,11 +1225,11 @@ mod test {
               function b() {}
               const x = () => {};
               (function () {});
-            
+
               function c() {
                 return () => {};
               }
-            
+
               return;
             }
             ",
@@ -1253,13 +1247,13 @@ mod test {
               (function () {
                 (function () {});
               });
-            
+
               function c() {
                 return () => {
                   (function () {});
                 };
               }
-            
+
               return;
             }
             ",
@@ -1366,7 +1360,7 @@ mod test {
             (
                 "
             type Buz = () => (n: number) => string;
-            
+
             export const buz: Buz = () => n => String(n);
                 ",
                 None,
@@ -1393,7 +1387,7 @@ mod test {
             interface Foo {
               f: (x: boolean) => boolean;
             }
-            
+
             export const a: Foo[] = [
               {
                 f: (x: boolean) => x,
@@ -1407,7 +1401,7 @@ mod test {
             interface Foo {
               f: (x: boolean) => boolean;
             }
-            
+
             export const a: Foo = {
               f: (x: boolean) => x,
             };
@@ -1490,7 +1484,7 @@ mod test {
               public a = () => {};
               public b = function () {};
               public c = function test() {};
-            
+
               static d = () => {};
               static e = function () {};
             }
@@ -1590,7 +1584,7 @@ mod test {
               type: string;
               value: number;
             }
-            
+
             export const func = (value: number) =>
               ({ type: 'X', value }) as const satisfies R;
             ",
