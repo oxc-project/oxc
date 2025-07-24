@@ -18,11 +18,11 @@
 
 ## ⚓ Oxc
 
-The Oxidation Compiler is creating a collection of high-performance tools for JavaScript and TypeScript.
+The Oxidation Compiler is a collection of high-performance tools for JavaScript and TypeScript.
 
-Oxc is building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
+We are building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
 
-See more at [oxc.rs](https://oxc.rs)!
+For more information, please check out the documentation at [oxc.rs](https://oxc.rs).
 
 ## VoidZero Inc.
 
@@ -34,9 +34,21 @@ If you have requirements for JavaScript tools at scale, please [get in touch](ht
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
 - [Nova engine](https://trynova.dev) uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rolldown][rolldown], [Biome][biome] and [swc-node](https://github.com/swc-project/swc-node) uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown][rolldown], [swc-node](https://github.com/swc-project/swc-node) and [knip](https://github.com/webpro-nl/knip) use the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 - ...[and many more](https://oxc.rs/docs/guide/projects.html)
+
+## ✍️ Contribute
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
+
+Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
+
+If you are unable to contribute by code, you can still participate by:
+
+- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
+- Join us on [Discord][discord-url].
+- [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
 ## ⚡️ Linter Quick Start
 
@@ -175,7 +187,7 @@ The resolver is production-ready and is currently being used in [Rolldown][rolld
 
 A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
 
-TypeScript and React transforms are complete. See [Milestone 2](https://github.com/oxc-project/oxc/issues/2859) for current goals.
+TypeScript, React, ES6 transforms are complete.
 
 [oxc-transform][npm-napi-transform] can be used for experimentation.
 
@@ -203,6 +215,8 @@ by porting all test cases from well-known minifiers such as [google-closure-comp
 Preliminary results indicate that we are on track to achieve our objectives.
 With the Oxc minifier, you can expect faster minification times without sacrificing compression quality.
 
+See [minification benchmarks](https://github.com/privatenumber/minification-benchmarks) for comparisons.
+
 ### 🔸 Formatter
 
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
@@ -228,18 +242,6 @@ We spend half of our time on strengthening the test infrastructure to prevent pr
 - End to end 3000 top npm packages
 
 ---
-
-## ✍️ Contribute
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
-
-Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
-
-If you are unable to contribute by code, you can still participate by:
-
-- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
-- Join us on [Discord][discord-url].
-- [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
 ## 📚 Learning Resources
 
