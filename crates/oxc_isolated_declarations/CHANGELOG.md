@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 🐛 Bug Fixes
+
+- 9a9d78d isolated-declarations: Transformed parameter property has an incorrect type annotation (#12450) (Dunqing)
+- 89da027 isolated-declarations: Incorrect error when exported type is locally shadowed by an unexported variable (#12466) (Dunqing)
+
+
 
 
 ## [0.77.1] - 2025-07-16

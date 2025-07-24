@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 🚜 Refactor
+
+- 1cf08c0 minifier: Make DCE remove more code to align with rollup (#12427) (Boshen)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### ⚡ Performance

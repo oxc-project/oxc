@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.78.0] - 2025-07-24
+
+### 🚀 Features
+
+- c135beb codegen: Keep function expression PIFEs (#12470) (sapphi-red)
+- f6e2f29 minifier: Remove unused class declaration (#12419) (Boshen)
+
+### 🚜 Refactor
+
+- 6838948 minifier: Remove change detection based on function changes (#12429) (Boshen)
+- 1cf08c0 minifier: Make DCE remove more code to align with rollup (#12427) (Boshen)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### 🚀 Features
