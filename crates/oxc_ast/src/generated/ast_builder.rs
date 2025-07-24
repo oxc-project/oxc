@@ -726,7 +726,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`Expression::FunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`Expression::FunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -744,8 +744,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn expression_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn expression_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -760,6 +761,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -768,7 +770,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure(
+        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -782,6 +784,7 @@ impl<'a> AstBuilder<'a> {
             body,
             scope_id,
             pure,
+            pife,
         ))
     }
 
@@ -3879,7 +3882,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`Declaration::FunctionDeclaration`] with `scope_id` and `pure`.
+    /// Build a [`Declaration::FunctionDeclaration`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -3897,8 +3900,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn declaration_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn declaration_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -3913,6 +3917,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Declaration<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -3921,7 +3926,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure(
+        Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -3935,6 +3940,7 @@ impl<'a> AstBuilder<'a> {
             body,
             scope_id,
             pure,
+            pife,
         ))
     }
 
@@ -5739,6 +5745,7 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
             pure: Default::default(),
+            pife: Default::default(),
         }
     }
 
@@ -5799,10 +5806,10 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Function`] with `scope_id` and `pure`.
+    /// Build a [`Function`] with `scope_id` and `pure` and `pife`.
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_function_with_scope_id_and_pure`] instead.
+    /// use [`AstBuilder::alloc_function_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5818,8 +5825,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5834,6 +5842,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5856,13 +5865,14 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
             pure,
+            pife,
         }
     }
 
-    /// Build a [`Function`] with `scope_id` and `pure`, and store it in the memory arena.
+    /// Build a [`Function`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5878,8 +5888,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn alloc_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn alloc_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5894,6 +5905,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5903,7 +5915,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Box::new_in(
-            self.function_with_scope_id_and_pure(
+            self.function_with_scope_id_and_pure_and_pife(
                 span,
                 r#type,
                 id,
@@ -5917,6 +5929,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
             self.allocator,
         )
@@ -7951,7 +7964,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`ExportDefaultDeclarationKind::FunctionDeclaration`] with `scope_id` and `pure`.
+    /// Build an [`ExportDefaultDeclarationKind::FunctionDeclaration`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -7969,8 +7982,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure<
+    pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure_and_pife<
         T1,
         T2,
         T3,
@@ -7991,6 +8005,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -8000,7 +8015,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(
-            self.alloc_function_with_scope_id_and_pure(
+            self.alloc_function_with_scope_id_and_pure_and_pife(
                 span,
                 r#type,
                 id,
@@ -8014,6 +8029,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
         )
     }

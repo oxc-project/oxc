@@ -114,7 +114,7 @@ impl<'a> TypeScriptEnum<'a> {
             ctx,
         );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
-        let callee = ctx.ast.expression_function_with_scope_id_and_pure(
+        let callee = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -127,6 +127,7 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
             Some(body),
             func_scope_id,
+            false,
             false,
         );
 

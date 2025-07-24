@@ -569,7 +569,7 @@ const _: () = {
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
 
-    // Padding: 7 bytes
+    // Padding: 6 bytes
     assert!(size_of::<Function>() == 96);
     assert!(align_of::<Function>() == 8);
     assert!(offset_of!(Function, span) == 0);
@@ -585,6 +585,7 @@ const _: () = {
     assert!(offset_of!(Function, body) == 72);
     assert!(offset_of!(Function, scope_id) == 80);
     assert!(offset_of!(Function, pure) == 88);
+    assert!(offset_of!(Function, pife) == 89);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);
@@ -2160,7 +2161,7 @@ const _: () = {
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
 
-    // Padding: 3 bytes
+    // Padding: 2 bytes
     assert!(size_of::<Function>() == 60);
     assert!(align_of::<Function>() == 4);
     assert!(offset_of!(Function, span) == 0);
@@ -2176,6 +2177,7 @@ const _: () = {
     assert!(offset_of!(Function, body) == 44);
     assert!(offset_of!(Function, scope_id) == 48);
     assert!(offset_of!(Function, pure) == 56);
+    assert!(offset_of!(Function, pife) == 57);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);

@@ -6511,6 +6511,7 @@ pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, retur
 pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 pub(crate) const OFFSET_FUNCTION_PURE: usize = offset_of!(Function, pure);
+pub(crate) const OFFSET_FUNCTION_PIFE: usize = offset_of!(Function, pife);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6595,6 +6596,11 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
     #[inline]
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
     }
 }
 
@@ -6689,6 +6695,11 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
@@ -6781,6 +6792,11 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
     #[inline]
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
     }
 }
 
@@ -6875,6 +6891,11 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
@@ -6968,6 +6989,11 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
@@ -7060,6 +7086,11 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
     #[inline]
     pub fn pure(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pife(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PIFE) as *const bool) }
     }
 }
 

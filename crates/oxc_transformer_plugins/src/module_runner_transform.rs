@@ -738,7 +738,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement));
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
-        ctx.ast.expression_function_with_scope_id_and_pure(
+        ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             r#type,
             None,
@@ -751,6 +751,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             NONE,
             Some(body),
             scope_id,
+            false,
             false,
         )
     }

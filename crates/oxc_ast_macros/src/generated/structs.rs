@@ -106,7 +106,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("ObjectAssignmentTarget", StructDetails { field_order: None }),
         (
             "Function",
-            StructDetails { field_order: Some(&[0, 8, 1, 9, 10, 11, 2, 3, 4, 5, 6, 7, 12]) },
+            StructDetails { field_order: Some(&[0, 8, 1, 9, 10, 11, 2, 3, 4, 5, 6, 7, 12, 13]) },
         ),
         ("TSObjectKeyword", StructDetails { field_order: None }),
         ("CharacterClassRange", StructDetails { field_order: None }),

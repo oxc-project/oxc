@@ -1058,6 +1058,7 @@ impl ContentEq for Function<'_> {
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.pure, &other.pure)
+            && ContentEq::content_eq(&self.pife, &other.pife)
     }
 }
 

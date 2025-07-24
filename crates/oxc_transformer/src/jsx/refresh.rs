@@ -620,21 +620,23 @@ impl<'a> ReactRefresh<'a, '_> {
                 )),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function = Argument::from(ctx.ast.expression_function_with_scope_id_and_pure(
-                SPAN,
-                FunctionType::FunctionExpression,
-                None,
-                false,
-                false,
-                false,
-                NONE,
-                NONE,
-                formal_parameters,
-                NONE,
-                Some(function_body),
-                scope_id,
-                false,
-            ));
+            let function =
+                Argument::from(ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
+                    SPAN,
+                    FunctionType::FunctionExpression,
+                    None,
+                    false,
+                    false,
+                    false,
+                    NONE,
+                    NONE,
+                    formal_parameters,
+                    NONE,
+                    Some(function_body),
+                    scope_id,
+                    false,
+                    false,
+                ));
             arguments.push(function);
         }
 

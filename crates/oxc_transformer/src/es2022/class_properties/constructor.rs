@@ -367,7 +367,7 @@ impl<'a> ClassProperties<'a, '_> {
         // `<inits>; return this;`
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
-        let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
+        let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -385,6 +385,7 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
             super_func_scope_id,
+            false,
             false,
         );
 
