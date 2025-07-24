@@ -224,23 +224,12 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     ) -> bool {
         match target_kind {
             AssignmentTarget::AssignmentTargetIdentifier(id) => id.reference_id() == reference_id,
-            // After SimpleAssignmentTarget removal, check simple assignment targets
             target => {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id) = target {
                     id.reference_id() == reference_id
                 } else {
                     false
                 }
-                // if let Some(simple_target) = target.as_simple_assignment_target() {
-                //     match simple_target {
-                //         SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
-                //             id.reference_id() == reference_id
-                //         }
-                //         _ => false,
-                //     }
-                // } else {
-                //     false
-                // }
             }
         }
     }
