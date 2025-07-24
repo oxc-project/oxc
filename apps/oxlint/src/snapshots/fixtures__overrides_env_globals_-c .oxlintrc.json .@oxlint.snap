@@ -24,15 +24,6 @@ working directory: fixtures/overrides_env_globals
  3 | $ = 'abc';
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'globalThis' should not be modified.
-   ,-[test.ts:2:1]
- 1 | // for env detection
- 2 | globalThis = 'abc';
-   : ^^^^^|^^^^
-   :      `-- Read-only global 'globalThis' should not be modified.
- 3 | $ = 'abc';
-   `----
-
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global '$' should not be modified.
    ,-[test.js:3:1]
  2 | globalThis = 'abc';
@@ -48,6 +39,15 @@ working directory: fixtures/overrides_env_globals
  6 | Foo = 'readable';
    : ^|^
    :  `-- Read-only global 'Foo' should not be modified.
+   `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'globalThis' should not be modified.
+   ,-[test.ts:2:1]
+ 1 | // for env detection
+ 2 | globalThis = 'abc';
+   : ^^^^^|^^^^
+   :      `-- Read-only global 'globalThis' should not be modified.
+ 3 | $ = 'abc';
    `----
 
 Found 5 warnings and 0 errors.
