@@ -134,15 +134,7 @@ mod test_implementation {
 
             self.diagnostics.sort_by_cached_key(|diagnostic| {
                 let info = Info::new(diagnostic);
-                (
-                    info.filename,
-                    info.start.line,
-                    info.start.column,
-                    info.end.line,
-                    info.end.column,
-                    info.rule_id,
-                    info.message,
-                )
+                (info.filename, info.start, info.end, info.rule_id, info.message)
             });
 
             for diagnostic in &self.diagnostics {

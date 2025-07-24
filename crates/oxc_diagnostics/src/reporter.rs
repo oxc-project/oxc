@@ -101,7 +101,7 @@ pub struct Info {
     pub rule_id: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct InfoPosition {
     pub line: usize,
     pub column: usize,
