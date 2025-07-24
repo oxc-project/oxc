@@ -26,9 +26,9 @@ fn targets() {
     }
 
     // Test transformation for very low targets.
-    let options = TransformOptions::from(ESTarget::ES5);
+    let options = TransformOptions::from(ESTarget::ES2015);
     let options_node = TransformOptions {
-        env: EnvOptions::from_browserslist_query("node 0.10").unwrap(),
+        env: EnvOptions::from_browserslist_query("node 6").unwrap(),
         ..TransformOptions::default()
     };
     for case in cases {

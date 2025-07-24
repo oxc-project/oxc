@@ -7,7 +7,6 @@ use cow_utils::CowUtils;
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[expect(missing_docs)]
 pub enum ESTarget {
-    ES5,
     ES2015,
     ES2016,
     ES2017,
@@ -28,7 +27,7 @@ impl FromStr for ESTarget {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.cow_to_ascii_lowercase().as_ref() {
-            "es5" => Ok(Self::ES5),
+            "es5" => Err(String::from("ES5 is not yet supported.")),
             "es6" | "es2015" => Ok(Self::ES2015),
             "es2016" => Ok(Self::ES2016),
             "es2017" => Ok(Self::ES2017),
@@ -49,7 +48,6 @@ impl FromStr for ESTarget {
 impl fmt::Display for ESTarget {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Self::ES5 => "es5",
             Self::ES2015 => "es2015",
             Self::ES2016 => "es2016",
             Self::ES2017 => "es2017",

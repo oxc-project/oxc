@@ -1,22 +1,17 @@
 ---
 source: crates/oxc_transformer/tests/integrations/es_target.rs
 ---
-########## 0 es5
-() => {}
-----------
-(function() {});
-
-########## 1 es6
+########## 0 es6
 a ** b
 ----------
 Math.pow(a, b);
 
-########## 2 es2015
+########## 1 es2015
 a ** b
 ----------
 Math.pow(a, b);
 
-########## 3 es2016
+########## 2 es2016
 async function foo() {}
 ----------
 import _asyncToGenerator from '@oxc-project/runtime/helpers/asyncToGenerator';
@@ -28,35 +23,35 @@ function _foo() {
 	return _foo.apply(this, arguments);
 }
 
-########## 4 es2017
+########## 3 es2017
 ({ ...x })
 ----------
 import _objectSpread from '@oxc-project/runtime/helpers/objectSpread2';
 _objectSpread({}, x);
 
-########## 5 es2018
+########## 4 es2018
 try {} catch {}
 ----------
 try {} catch (_unused) {}
 
-########## 6 es2019
+########## 5 es2019
 a?.b
 ----------
 var _a;
 (_a = a) === null || _a === void 0 ? void 0 : _a.b;
 
-########## 7 es2019
+########## 6 es2019
 a ?? b
 ----------
 var _a;
 (_a = a) !== null && _a !== void 0 ? _a : b;
 
-########## 8 es2020
+########## 7 es2020
 a ||= b
 ----------
 a || (a = b);
 
-########## 9 es2019
+########## 8 es2019
 1n ** 2n
 ----------
 
@@ -75,13 +70,13 @@ a || (a = b);
    :       ^^
    `----
 
-########## 10 es2021
+########## 9 es2021
 class foo { static {} }
 ----------
 class foo {}
 (() => {})();
 
-########## 11 es2021
+########## 10 es2021
 class Foo { #a; }
 ----------
 import _classPrivateFieldInitSpec from '@oxc-project/runtime/helpers/classPrivateFieldInitSpec';
