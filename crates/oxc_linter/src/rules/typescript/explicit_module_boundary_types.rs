@@ -205,7 +205,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
                 match &export.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                         let mut checker = ExplicitTypesChecker::new(self, ctx);
-                        walk::walk_function(&mut checker, func, ScopeFlags::Function);
+                        checker.visit_function(func, ScopeFlags::Function);
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                         let mut checker = ExplicitTypesChecker::new(self, ctx);
@@ -375,6 +375,10 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         // This is a simplified implementation - a proper implementation would only skip
         // functions that are actually part of an overload set
         if self.rule.allow_overload_functions {
+            return;
+        }
+
+        if func.body.is_none() {
             return;
         }
 

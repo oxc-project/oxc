@@ -94,12 +94,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │               public b = function () {};
  5 │               public c = function test() {};
    ·                                   ────
- 6 │             
+ 6 │ 
    ╰────
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:7:22]
- 6 │             
+ 6 │ 
  7 │               static d = () => {};
    ·                      ─
  8 │               static e = function () {};
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:7:26]
- 6 │             
+ 6 │ 
  7 │             export const func = (value: number) =>
    ·                          ────
  8 │               ({ type: 'X', value }) as const satisfies R;
@@ -517,6 +517,22 @@ source: crates/oxc_linter/src/tester.rs
  3 │             test = (): void => {
    ╰────
 
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
+   ╭─[explicit_module_boundary_types.tsx:2:24]
+ 1 │ 
+ 2 │             let test = arg => argl;
+   ·                        ───
+ 3 │             test = (): void => {
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:2:17]
+ 1 │ 
+ 2 │             let test = arg => argl;
+   ·                 ────
+ 3 │             test = (): void => {
+   ╰────
+
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
  1 │ 
@@ -631,6 +647,30 @@ source: crates/oxc_linter/src/tester.rs
  6 │               func2() {
    ·               ─────
  7 │                 return 0;
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:4:29]
+ 3 │             export function test(a: number): number;
+ 4 │             export function test(a: unknown) {
+   ·                             ────
+ 5 │               return a;
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:4:37]
+ 3 │             export default function test(a: number): number;
+ 4 │             export default function test(a: unknown) {
+   ·                                     ────
+ 5 │               return a;
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:4:28]
+ 3 │             export default function (a: number): number;
+ 4 │             export default function (a: unknown) {
+   ·                            ────────
+ 5 │               return a;
    ╰────
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
