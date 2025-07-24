@@ -217,15 +217,6 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
         }
         AstKind::ExpressionStatement(expr_stmt) => {
             if let Expression::AssignmentExpression(expression) = &expr_stmt.expression {
-                // Handle cases like Foo.prototype.bar = function() {}
-                // if matches!(expression.left, AssignmentTarget::StaticMemberExpression(_)) {
-                //     let result = is_same_function(&expression.right, function);
-                //     println!(
-                //         "DEBUG: ExpressionStatement with StaticMemberExpression result: {}",
-                //         result
-                //     );
-                //     return result;
-                // }
                 // Handle cases like foo = function() {}
                 matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
                     && is_same_function(&expression.right, function)
