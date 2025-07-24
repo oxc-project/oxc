@@ -190,6 +190,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 // Only check for actual assignment contexts, not member expression access
                 AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentExpression(_)
                 | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
