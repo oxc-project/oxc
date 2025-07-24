@@ -8,6 +8,7 @@ mod keep_var;
 mod options;
 mod peephole;
 mod state;
+mod symbol_value;
 
 #[cfg(test)]
 mod tester;

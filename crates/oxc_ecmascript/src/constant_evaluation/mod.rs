@@ -99,6 +99,20 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     }
 }
 
+impl<'a, T: ConstantEvaluation<'a>> ConstantEvaluation<'a> for Option<T> {
+    fn evaluate_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<ConstantValue<'a>> {
+        self.as_ref().and_then(|t| t.evaluate_value(ctx))
+    }
+
+    fn evaluate_value_to(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+        target_ty: Option<ValueType>,
+    ) -> Option<ConstantValue<'a>> {
+        self.as_ref().and_then(|t| t.evaluate_value_to(ctx, target_ty))
+    }
+}
+
 impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
     fn evaluate_value_to(
         &self,
