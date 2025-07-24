@@ -218,13 +218,14 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct FixResult<'a> {
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
     pub messages: Vec<Message<'a>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes<'a>,
