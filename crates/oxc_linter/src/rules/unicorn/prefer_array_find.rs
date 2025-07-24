@@ -158,6 +158,7 @@ impl Rule for PreferArrayFind {
                                     }
                                 }
                                 AstKind::AssignmentExpression(assignment_expr) => {
+                                    // Check for array destructuring: [foo] = items
                                     if let AssignmentTarget::ArrayAssignmentTarget(target) =
                                         &assignment_expr.left
                                     {
@@ -165,6 +166,15 @@ impl Rule for PreferArrayFind {
                                             && target.elements[0].is_some()
                                         {
                                             destructuring_nodes.push(reference);
+                                        }
+                                    } else if let Some(simple_target) =
+                                        assignment_expr.left.as_simple_assignment_target()
+                                    {
+                                        // Check for simple reassignment: items = something
+                                        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = simple_target {
+                                            if ident.span == ctx.nodes().get_node(reference.node_id()).span() {
+                                                is_used_elsewhere = true; // Variable is being reassigned
+                                            }
                                         }
                                     }
                                 }
