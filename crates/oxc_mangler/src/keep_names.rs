@@ -113,7 +113,19 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
         let parent_node = self.ast_nodes.parent_node(node.id());
         match parent_node.kind() {
-            // TODO: investigate if all these need to be checked from SimpleAssignmentTarget
+            // Check for direct assignment: foo = function() {}
+            AstKind::AssignmentExpression(assign_expr) => {
+                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
+                    && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+            }
+            // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                Self::is_assignment_target_id_of_specific_reference(
+                    &assign_target.binding,
+                    reference_id,
+                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+            }
+            // Legacy logic for wrapped expressions (may still be needed for some cases)
             AstKind::IdentifierReference(_)
             | AstKind::TSAsExpression(_)
             | AstKind::TSSatisfiesExpression(_)
@@ -210,10 +222,26 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         target_kind: &AssignmentTarget,
         reference_id: ReferenceId,
     ) -> bool {
-        if let AssignmentTarget::AssignmentTargetIdentifier(id) = target_kind {
-            id.reference_id() == reference_id
-        } else {
-            false
+        match target_kind {
+            AssignmentTarget::AssignmentTargetIdentifier(id) => id.reference_id() == reference_id,
+            // After SimpleAssignmentTarget removal, check simple assignment targets
+            target => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id) = target {
+                    id.reference_id() == reference_id
+                } else {
+                    false
+                }
+                // if let Some(simple_target) = target.as_simple_assignment_target() {
+                //     match simple_target {
+                //         SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
+                //             id.reference_id() == reference_id
+                //         }
+                //         _ => false,
+                //     }
+                // } else {
+                //     false
+                // }
+            }
         }
     }
 
