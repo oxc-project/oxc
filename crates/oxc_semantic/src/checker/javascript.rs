@@ -187,20 +187,28 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
-                // TODO: investigate if all these need to be checked from SimpleAssignmentTarget
-                AstKind::IdentifierReference(_)
-                | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::TSTypeAssertion(_)
-                | AstKind::ComputedMemberExpression(_)
-                | AstKind::StaticMemberExpression(_)
-                // END OF CHANGES
-                | AstKind::ObjectAssignmentTarget(_)
+                // Only check for actual assignment contexts, not member expression access
+                AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
+                // Check for assignment expressions where this identifier is the direct target
+                AstKind::AssignmentExpression(assign_expr) => {
+                    if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
+                        if let oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                            target_ident,
+                        ) = simple_target
+                        {
+                            if target_ident.span == ident.span {
+                                return ctx
+                                    .error(unexpected_identifier_assign(&ident.name, ident.span));
+                            }
+                        }
+                    }
+                }
+                // Stop traversing if we hit a member expression - this means the identifier
+                // is the object being accessed, not being assigned to (e.g., arguments['map'])
                 m if m.is_member_expression_kind() => break,
                 _ => {}
             }
