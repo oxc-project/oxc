@@ -446,7 +446,7 @@ impl<'a> ObjectPropertyKind<'a> {
     pub fn as_property(&self) -> Option<&ObjectProperty<'a>> {
         match self {
             Self::ObjectProperty(prop) => Some(prop),
-            _ => None,
+            Self::SpreadProperty(_) => None,
         }
     }
 }

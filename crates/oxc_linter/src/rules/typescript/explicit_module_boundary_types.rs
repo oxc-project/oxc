@@ -49,7 +49,7 @@ impl Deref for ExplicitModuleBoundaryTypes {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     /// Whether to ignore arguments that are explicitly typed as `any`.
