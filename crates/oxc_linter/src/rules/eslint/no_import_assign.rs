@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{AssignmentTargetMaybeDefault, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, SymbolId};
@@ -239,18 +242,17 @@ impl Rule for NoImportAssign {
                                     }
                                 }
                             }
-                            // --- NEW LOGIC: destructuring assignment targets ---
                             (
                                 AstKind::StaticMemberExpression(member_expr),
                                 AstKind::ArrayAssignmentTarget(array_target),
                             ) => {
                                 // Check if this member expression is one of the elements
                                 if array_target.elements.iter().any(|el| {
-                                    if let Some(el) = el.as_ref() {
-                                        match el {
-                                            oxc_ast::ast::AssignmentTargetMaybeDefault::StaticMemberExpression(expr) => expr.span == parent_node.span(),
-                                            _ => false,
-                                        }
+                                    if let Some(
+                                        AssignmentTargetMaybeDefault::StaticMemberExpression(expr),
+                                    ) = el.as_ref()
+                                    {
+                                        expr.span == parent_node.span()
                                     } else {
                                         false
                                     }
@@ -274,11 +276,13 @@ impl Rule for NoImportAssign {
                                 AstKind::ArrayAssignmentTarget(array_target),
                             ) => {
                                 if array_target.elements.iter().any(|el| {
-                                    if let Some(el) = el.as_ref() {
-                                        match el {
-                                            oxc_ast::ast::AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
-                                            _ => false,
-                                        }
+                                    if let Some(
+                                        AssignmentTargetMaybeDefault::ComputedMemberExpression(
+                                            expr,
+                                        ),
+                                    ) = el.as_ref()
+                                    {
+                                        expr.span == parent_node.span()
                                     } else {
                                         false
                                     }
@@ -350,15 +354,21 @@ impl Rule for NoImportAssign {
                             ) => {
                                 // Check if this member expression is the binding
                                 let is_target = match &with_default.binding {
-                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(
+                                        expr,
+                                    ) => expr.span == parent_node.span(),
                                     _ => false,
                                 };
                                 if is_target {
                                     if let Expression::Identifier(obj_ident) = &member_expr.object {
                                         let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
                                             if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
                                             }
                                         }
                                     }
@@ -369,15 +379,21 @@ impl Rule for NoImportAssign {
                                 AstKind::AssignmentTargetWithDefault(with_default),
                             ) => {
                                 let is_target = match &with_default.binding {
-                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(
+                                        expr,
+                                    ) => expr.span == parent_node.span(),
                                     _ => false,
                                 };
                                 if is_target {
                                     if let Expression::Identifier(obj_ident) = &member_expr.object {
                                         let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
                                             if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
                                             }
                                         }
                                     }
@@ -389,15 +405,21 @@ impl Rule for NoImportAssign {
                             ) => {
                                 // Check if this member expression is the target
                                 let is_target = match &rest_target.target {
-                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(expr) => expr.span == parent_node.span(),
+                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(
+                                        expr,
+                                    ) => expr.span == parent_node.span(),
                                     _ => false,
                                 };
                                 if is_target {
                                     if let Expression::Identifier(obj_ident) = &member_expr.object {
                                         let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
                                             if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
                                             }
                                         }
                                     }
@@ -408,15 +430,21 @@ impl Rule for NoImportAssign {
                                 AstKind::AssignmentTargetRest(rest_target),
                             ) => {
                                 let is_target = match &rest_target.target {
-                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
+                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(
+                                        expr,
+                                    ) => expr.span == parent_node.span(),
                                     _ => false,
                                 };
                                 if is_target {
                                     if let Expression::Identifier(obj_ident) = &member_expr.object {
                                         let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+                                        if let AstKind::IdentifierReference(ref_ident) =
+                                            ref_node.kind()
+                                        {
                                             if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+                                                ctx.diagnostic(no_import_assign_diagnostic(
+                                                    parent_node.span(),
+                                                ));
                                             }
                                         }
                                     }

@@ -131,12 +131,12 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         if let AstKind::AssignmentExpression(assign_expr) = parent_kind {
             match (&assign_expr.left, node.kind()) {
                 (AssignmentTarget::TSAsExpression(lhs), AstKind::TSAsExpression(ts_expr)) => {
-                    if std::ptr::eq(&**lhs, ts_expr) {
+                    if lhs.span() == ts_expr.span() {
                         return false;
                     }
                 }
                 (AssignmentTarget::TSTypeAssertion(lhs), AstKind::TSTypeAssertion(ts_assert)) => {
-                    if std::ptr::eq(&**lhs, ts_assert) {
+                    if lhs.span() == ts_assert.span() {
                         return false;
                     }
                 }

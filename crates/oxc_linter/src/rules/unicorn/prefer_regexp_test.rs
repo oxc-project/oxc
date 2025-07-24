@@ -289,13 +289,8 @@ impl Rule for PreferRegexpTest {
                     AstKind::LogicalExpression(_) => {
                         // Check if the LogicalExpression is part of an assignment or variable declaration
                         let current = parent;
-                        while let Some(ancestor) = outermost_paren_parent(current, ctx) {
+                        if let Some(ancestor) = outermost_paren_parent(current, ctx) {
                             match ancestor.kind() {
-                                AstKind::VariableDeclarator(_)
-                                | AstKind::AssignmentExpression(_) => {
-                                    // This is part of an assignment, don't flag
-                                    return;
-                                }
                                 AstKind::LogicalExpression(_)
                                 | AstKind::UnaryExpression(_)
                                 | AstKind::IfStatement(_)
@@ -304,7 +299,6 @@ impl Rule for PreferRegexpTest {
                                 | AstKind::ForStatement(_)
                                 | AstKind::ConditionalExpression(_) => {
                                     // This is a boolean context, flag the violation
-                                    break;
                                 }
                                 _ => {
                                     // Not a boolean context, don't flag

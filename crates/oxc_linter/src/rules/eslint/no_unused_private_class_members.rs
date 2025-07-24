@@ -135,27 +135,6 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::ObjectAssignmentTarget(_)
                 | AstKind::IdentifierReference(_),
             ) => {}
-            // Write-only contexts
-            (
-                AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::IdentifierReference(_),
-                AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
-                | AstKind::AssignmentTargetPropertyProperty(_),
-            ) => {
-                return false;
-            }
-            // Assignment and update expressions are writes
-            (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_))
-            | (_, AstKind::UpdateExpression(_)) => {
-                return false;
-            }
             // All these are read contexts for private fields
             (
                 AstKind::PrivateFieldExpression(_),
