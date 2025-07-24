@@ -190,23 +190,10 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 // Only check for actual assignment contexts, not member expression access
                 AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                // Check for assignment expressions where this identifier is the direct target
-                AstKind::AssignmentExpression(assign_expr) => {
-                    if let Some(oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
-                        target_ident,
-                    )) = assign_expr.left.as_simple_assignment_target()
-                    {
-                        if target_ident.span == ident.span {
-                            return ctx
-                                .error(unexpected_identifier_assign(&ident.name, ident.span));
-                        }
-                    }
-                }
-                // Stop traversing if we hit a member expression - this means the identifier
-                // is the object being accessed, not being assigned to (e.g., arguments['map'])
                 m if m.is_member_expression_kind() => break,
                 _ => {}
             }
