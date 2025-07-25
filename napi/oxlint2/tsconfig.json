@@ -3,6 +3,8 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "noImplicitAny": true,
+    "skipLibCheck": true
   }
 }
