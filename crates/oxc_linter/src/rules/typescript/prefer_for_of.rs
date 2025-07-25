@@ -221,7 +221,7 @@ fn prevents_for_of_conversion_direct_usage(grand_parent: &AstNode, parent: &AstN
     }
 }
 
-/// Check if arr[i] usage prevents for-of conversion
+/// Check if array item access prevents for-of conversion
 fn prevents_for_of_array_access(
     parent: &AstNode,
     grand_parent: &AstNode,
