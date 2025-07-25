@@ -165,11 +165,10 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(&property_name)))
             && !ctx.scoping().has_binding(ident.reference_id())
         {
-            let is_first_arg = expr
+            return expr
                 .arguments
                 .first()
                 .is_some_and(|argument| argument.span() == current_node.kind().span());
-            return is_first_arg;
         }
     }
 
