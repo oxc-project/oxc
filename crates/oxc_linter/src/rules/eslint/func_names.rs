@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
-        BindingPatternKind, Expression, Function, FunctionType, PropertyKind,
+        AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
+        FunctionType, PropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -205,47 +205,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
                     return true;
                 }
             }
-            false
-        }
-        AstKind::ParenthesizedExpression(parenthesized) => {
-            if let Expression::AssignmentExpression(expression) = &parenthesized.expression {
-                matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
-                    && is_same_function(&expression.right, function)
-            } else {
-                false
-            }
-        }
-        AstKind::ExpressionStatement(expr_stmt) => {
-            if let Expression::AssignmentExpression(expression) = &expr_stmt.expression {
-                // Handle cases like foo = function() {}
-                matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
-                    && is_same_function(&expression.right, function)
-            } else {
-                false
-            }
-        }
-        AstKind::AssignmentTargetPropertyProperty(property) => {
-            if let AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) =
-                &property.binding
-            {
-                matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
-                    && is_same_function(&target.init, function)
-            } else {
-                false
-            }
-        }
-        AstKind::ArrayAssignmentTarget(target) => {
-            for element in (&target.elements).into_iter().flatten() {
-                if let AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(default) = element
-                {
-                    let result =
-                        matches!(default.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
-                            && is_same_function(&default.init, function);
-                    if result {
-                        return true;
-                    }
-                }
-            }
+
             false
         }
         _ => false,
@@ -393,15 +353,6 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
             | AstKind::TSAsExpression(_)
             | AstKind::TSNonNullExpression(_)
             | AstKind::TSSatisfiesExpression(_) => {}
-            AstKind::ExpressionStatement(stmt) => {
-                if let Expression::AssignmentExpression(assign) = &stmt.expression {
-                    if assign.left.is_member_expression()
-                        || matches!(assign.left, AssignmentTarget::AssignmentTargetIdentifier(_))
-                    {
-                        return assign.left.get_identifier_name().map(Cow::Borrowed);
-                    }
-                }
-            }
             AstKind::AssignmentExpression(assign) => {
                 return assign.left.get_identifier_name().map(Cow::Borrowed);
             }
@@ -414,6 +365,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
             AstKind::PropertyDefinition(prop) => {
                 return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
             }
+
             _ => return None,
         }
     }
