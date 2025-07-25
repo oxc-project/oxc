@@ -203,7 +203,7 @@ use Kind::*;
 impl Kind {
     #[inline]
     pub fn is_eof(self) -> bool {
-        matches!(self, Eof)
+        self == Eof
     }
 
     #[inline]
@@ -268,7 +268,7 @@ impl Kind {
     /// `IdentifierName`
     #[inline]
     pub fn is_identifier_name(self) -> bool {
-        matches!(self, Ident) || self.is_any_keyword()
+        self == Ident || self.is_any_keyword()
     }
 
     /// Check the succeeding token of a `let` keyword.
@@ -310,7 +310,7 @@ impl Kind {
 
     #[inline]
     pub fn is_identifier_or_keyword(self) -> bool {
-        self.is_literal_property_name() || matches!(self, Self::PrivateIdentifier)
+        self.is_literal_property_name() || self == Self::PrivateIdentifier
     }
 
     #[inline]
@@ -321,17 +321,21 @@ impl Kind {
     #[rustfmt::skip]
     #[inline]
     pub fn is_assignment_operator(self) -> bool {
-        matches!(self, Eq | PlusEq | MinusEq | StarEq | SlashEq | PercentEq | ShiftLeftEq | ShiftRightEq
-            | ShiftRight3Eq | Pipe2Eq | Amp2Eq | PipeEq | CaretEq | AmpEq | Question2Eq
-            | Star2Eq)
+        matches!(
+            self,
+            Eq | PlusEq | MinusEq | StarEq | SlashEq | PercentEq | ShiftLeftEq | ShiftRightEq
+            | ShiftRight3Eq | Pipe2Eq | Amp2Eq | PipeEq | CaretEq | AmpEq | Question2Eq | Star2Eq
+        )
     }
 
     #[rustfmt::skip]
     #[inline]
     pub fn is_binary_operator(self) -> bool {
-        matches!(self, Eq2 | Neq | Eq3 | Neq2 | LAngle | LtEq | RAngle | GtEq | ShiftLeft | ShiftRight
-            | ShiftRight3 | Plus | Minus | Star | Slash | Percent | Pipe | Caret | Amp | In
-            | Instanceof | Star2)
+        matches!(
+            self,
+            Eq2 | Neq | Eq3 | Neq2 | LAngle | LtEq | RAngle | GtEq | ShiftLeft | ShiftRight | ShiftRight3
+            | Plus | Minus | Star | Slash | Percent | Pipe | Caret | Amp | In | Instanceof | Star2
+        )
     }
 
     #[inline]
@@ -361,10 +365,13 @@ impl Kind {
     #[rustfmt::skip]
     #[inline]
     pub fn is_reserved_keyword(self) -> bool {
-        matches!(self, Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
+        matches!(
+            self,
+            Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
             | Delete | Do | Else | Enum | Export | Extends | False | Finally | For | Function | If
             | Import | In | Instanceof | New | Null | Return | Super | Switch | This | Throw
-            | True | Try | Typeof | Var | Void | While | With | Yield)
+            | True | Try | Typeof | Var | Void | While | With | Yield
+        )
     }
 
     #[rustfmt::skip]
@@ -376,12 +383,13 @@ impl Kind {
     #[rustfmt::skip]
     #[inline]
     pub fn is_contextual_keyword(self) -> bool {
-        matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
-            | Assert | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module
-            | Namespace | Never | Out | Readonly | Require | Number | Object | Satisfies | String
-            | Symbol | Type | Undefined | Unique | Unknown | Using | Global | BigInt | Override
-            | Source | Defer
-            )
+        matches!(
+            self,
+            Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts | Assert
+            | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module | Namespace
+            | Never | Out | Readonly | Require | Number | Object | Satisfies | String | Symbol | Type
+            | Undefined | Unique | Unknown | Using | Global | BigInt | Override | Source | Defer
+        )
     }
 
     #[rustfmt::skip]
@@ -398,8 +406,11 @@ impl Kind {
     #[rustfmt::skip]
     #[inline]
     pub fn is_modifier_kind(self) -> bool {
-        matches!(self, Abstract | Accessor | Async | Const | Declare
-          | In | Out | Public | Private | Protected | Readonly | Static | Override)
+        matches!(
+            self,
+            Abstract | Accessor | Async | Const | Declare
+            | In | Out | Public | Private | Protected | Readonly | Static | Override
+        )
     }
 
     #[inline]
