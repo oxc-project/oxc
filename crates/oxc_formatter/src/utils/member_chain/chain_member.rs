@@ -63,16 +63,6 @@ impl<'a, 'b> ChainMember<'a, 'b> {
         matches!(self, Self::CallExpression { .. })
     }
 
-    pub(crate) fn syntax(&self) -> Span {
-        match self {
-            Self::StaticMember(e) => e.span,
-            Self::CallExpression { expression, .. } => expression.span,
-            Self::ComputedMember(e) => e.span,
-            Self::TSNonNullExpression(e) => e.span,
-            Self::Node(node) => node.span(),
-        }
-    }
-
     pub const fn is_computed_expression(&self) -> bool {
         matches!(self, Self::ComputedMember { .. })
     }

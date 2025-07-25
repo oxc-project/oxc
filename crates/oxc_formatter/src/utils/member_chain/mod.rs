@@ -6,15 +6,19 @@ use crate::{
     JsLabels, best_fitting,
     formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
     generated::ast_nodes::{AstNode, AstNodes},
-    utils::member_chain::{
-        chain_member::{CallExpressionPosition, ChainMember},
-        groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
-        simple_argument::SimpleArgument,
+    utils::{
+        call_expression::is_test_call_expression,
+        is_long_curried_call,
+        member_chain::{
+            chain_member::{CallExpressionPosition, ChainMember},
+            groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
+            simple_argument::SimpleArgument,
+        },
     },
     write,
 };
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 #[derive(Debug, Clone)]
 pub(crate) struct MemberChain<'a, 'b> {
@@ -155,14 +159,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             return Ok(true);
         }
 
-        let has_empty_line_inside_tail =
-            self.tail.iter().skip(1).any(|group| group.needs_empty_line_before());
-
-        if has_empty_line_inside_tail {
-            return Ok(true);
-        }
-
-        Ok(false)
+        Ok(self.tail.iter().skip(1).any(|group| group.needs_empty_line_before(f)))
     }
 
     /// We retrieve all the call expressions inside the group and we check if
@@ -182,13 +179,31 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// Returns an iterator over all members in the member chain
-    fn members(&self) -> impl DoubleEndedIterator<Item = &ChainMember<'a, 'b>> {
+    fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
         self.head.members().iter().chain(self.tail.members())
+    }
+
+    fn has_comments(&self, f: &Formatter<'_, 'a>) -> bool {
+        let comments = f.comments();
+
+        for member in self.members() {
+            if matches!(
+                member,
+                ChainMember::StaticMember(member)
+                    if comments.has_comments_between(member.object().span().end, member.property().span.start)
+            ) {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
 impl<'a, 'b> Format<'a> for MemberChain<'a, 'b> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let has_comments = self.has_comments(f);
+
         let format_one_line = format_with(|f| {
             let mut joiner = f.join();
 
@@ -198,13 +213,19 @@ impl<'a, 'b> Format<'a> for MemberChain<'a, 'b> {
             joiner.finish()
         });
 
-        if self.tail.len() <= 1 {
-            return write!(f, [group(&format_one_line)]);
+        if self.tail.len() <= 1 && !has_comments {
+            return if is_long_curried_call(&self.root.parent) {
+                write!(f, [format_one_line])
+            } else if is_test_call_expression(&self.root) && self.head.members().len() >= 2 {
+                write!(f, [self.head, soft_line_indent_or_space(&self.tail)])
+            } else {
+                write!(f, [group(&format_one_line)])
+            };
         }
 
         let format_tail = format_with(|f| {
             for group in self.tail.iter() {
-                if group.needs_empty_line_before() {
+                if group.needs_empty_line_before(f) {
                     write!(f, [empty_line()])?;
                 } else {
                     write!(f, [hard_line_break()])?;
@@ -221,7 +242,7 @@ impl<'a, 'b> Format<'a> for MemberChain<'a, 'b> {
                 write!(f, [group(&format_expanded)])
             } else {
                 let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(|group| group.needs_empty_line_before());
+                    self.tail.first().is_some_and(|group| group.needs_empty_line_before(f));
 
                 if has_empty_line_before_tail || self.last_group().will_break(f)? {
                     write!(f, [expand_parent()])?;

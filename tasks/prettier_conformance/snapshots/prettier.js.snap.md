@@ -59,7 +59,7 @@ js compatibility: 434/699 (62.09%)
 | js/comments/function-declaration.js | 💥💥 | 68.29% |
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 80.82% |
-| js/comments/issues.js | 💥💥 | 75.00% |
+| js/comments/issues.js | 💥💥 | 80.29% |
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
 | js/comments/jsdoc.js | 💥💥 | 47.83% |
@@ -151,7 +151,7 @@ js compatibility: 434/699 (62.09%)
 | js/member/conditional.js | 💥 | 0.00% |
 | js/method-chain/bracket_0-1.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 85.29% |
-| js/method-chain/comment.js | 💥 | 36.67% |
+| js/method-chain/comment.js | 💥 | 40.35% |
 | js/method-chain/complex-args.js | 💥 | 50.00% |
 | js/method-chain/conditional.js | 💥 | 43.14% |
 | js/method-chain/first_long.js | 💥 | 96.97% |

@@ -4,6 +4,7 @@ use crate::{
     generated::ast_nodes::AstNode,
     write,
 };
+use oxc_span::GetSpan;
 use std::cell::RefCell;
 
 #[derive(Default)]
@@ -229,8 +230,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         })
     }
 
-    pub(super) fn needs_empty_line_before(&self) -> bool {
-        // This logic requires trivia access, which is not available in oxc
+    pub(super) fn needs_empty_line_before(&self, f: &Formatter) -> bool {
         false
     }
 }
