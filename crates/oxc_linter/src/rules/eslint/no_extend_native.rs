@@ -146,7 +146,13 @@ fn get_define_property_call<'a>(
     for parent in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = parent.kind() {
             if is_define_property_call(call_expr) {
-                return Some(parent);
+                // Check if the prototype access is the first argument
+                if let Some(first_arg) = call_expr.arguments.first() {
+                    let arg_span = first_arg.span();
+                    if arg_span.contains_inclusive(node.span()) {
+                        return Some(parent);
+                    }
+                }
             }
         }
     }
@@ -197,6 +203,8 @@ fn get_property_assignment<'a>(
             AstKind::ComputedMemberExpression(computed_expr)
                 if computed_expr.object.span().contains_inclusive(node.span()) => {}
             AstKind::StaticMemberExpression(_) | AstKind::SimpleAssignmentTarget(_) => {}
+            AstKind::ParenthesizedExpression(_) => {}
+            AstKind::ChainExpression(_) => {}
             _ => return None,
         }
     }
@@ -213,7 +221,6 @@ fn get_prototype_property_accessed<'a>(
         return None;
     };
     let parent = ctx.nodes().parent_node(node.id());
-    let mut prototype_node = Some(parent);
     match parent.kind() {
         prop_access_expr if prop_access_expr.is_member_expression_kind() => {
             let prop_name = prop_access_expr
@@ -222,14 +229,15 @@ fn get_prototype_property_accessed<'a>(
             if prop_name != "prototype" {
                 return None;
             }
+            // Check if this member expression is wrapped in a ChainExpression
             let grandparent_node = ctx.nodes().parent_node(parent.id());
-
             if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-                let grandparent_parent = ctx.nodes().parent_node(grandparent_node.id());
-                prototype_node = Some(grandparent_parent);
+                // Return the ChainExpression, not its parent
+                Some(grandparent_node)
+            } else {
+                // Return the MemberExpression
+                Some(parent)
             }
-
-            prototype_node
         }
         _ => None,
     }

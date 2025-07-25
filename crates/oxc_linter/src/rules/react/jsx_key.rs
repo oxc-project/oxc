@@ -159,7 +159,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
-    let mut argument = None;
+    let argument = None;
 
     while !matches!(node.kind(), AstKind::Program(_)) {
         let parent = ctx.nodes().parent_node(node.id());

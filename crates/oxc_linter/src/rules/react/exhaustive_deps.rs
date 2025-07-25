@@ -1293,58 +1293,54 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if matches!(it.object.get_inner_expression(), Expression::CallExpression(_))
             || self.skip_reporting_dependency
         {
+            let cur_skip_reporting_dependency = self.skip_reporting_dependency;
+            self.skip_reporting_dependency = true;
             self.visit_expression(&it.object);
+            self.skip_reporting_dependency = cur_skip_reporting_dependency;
             return;
         }
-
-        let is_parent_call_expr =
-            self.stack.last().is_some_and(|&ty| ty == AstType::CallExpression);
 
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {
                 if let Some(source) = source {
-                    if is_parent_call_expr {
-                        self.found_dependencies.insert(source);
-                    } else {
-                        let new_chain = Vec::from([it.property.name]);
+                    let new_chain = Vec::from([it.property.name]);
 
-                        let mut destructured_props: Vec<Atom<'a>> = vec![];
-                        let mut did_see_ref = false;
-                        let needs_full_chain = self
-                            .iter_destructure_bindings(|id| {
-                                if let Cow::Borrowed(id) = id {
-                                    if id == "current" {
-                                        did_see_ref = true;
-                                    } else {
-                                        destructured_props.push(id.into());
-                                    }
+                    let mut destructured_props: Vec<Atom<'a>> = vec![];
+                    let mut did_see_ref = false;
+                    let needs_full_chain = self
+                        .iter_destructure_bindings(|id| {
+                            if let Cow::Borrowed(id) = id {
+                                if id == "current" {
+                                    did_see_ref = true;
                                 } else {
-                                    // todo
+                                    destructured_props.push(id.into());
                                 }
-                            })
-                            .unwrap_or(true);
+                            } else {
+                                // todo
+                            }
+                        })
+                        .unwrap_or(true);
 
-                        let symbol_id =
-                            self.semantic.scoping().get_reference(source.reference_id).symbol_id();
-                        if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                    let symbol_id =
+                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
+                    if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name,
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: [source.chain.clone(), new_chain].concat(),
+                            symbol_id,
+                        });
+                    } else {
+                        for prop in destructured_props {
                             self.found_dependencies.insert(Dependency {
                                 name: source.name,
                                 reference_id: source.reference_id,
                                 span: source.span,
-                                chain: [source.chain.clone(), new_chain].concat(),
+                                chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
+                                    .concat(),
                                 symbol_id,
                             });
-                        } else {
-                            for prop in destructured_props {
-                                self.found_dependencies.insert(Dependency {
-                                    name: source.name,
-                                    reference_id: source.reference_id,
-                                    span: source.span,
-                                    chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
-                                        .concat(),
-                                    symbol_id,
-                                });
-                            }
                         }
                     }
                 }

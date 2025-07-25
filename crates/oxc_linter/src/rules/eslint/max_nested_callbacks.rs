@@ -1,16 +1,10 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
-use crate::{
-    AstNode,
-    ast_util::{is_function_node, iter_outer_expressions},
-    context::LintContext,
-    rule::Rule,
-};
+use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
 
 fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Too many nested callbacks ({num}). Maximum allowed is {max}."))
@@ -142,7 +136,7 @@ impl Rule for MaxNestedCallbacks {
     }
 }
 
-fn is_callback<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+fn is_callback<'a>(node: &AstNode<'a>, _semantic: &Semantic<'a>) -> bool {
     is_function_node(node)
     // TODO:
     // && matches!(iter_outer_expressions(semantic, node.id()).next(), Some(AstKind::Argument(_)))
