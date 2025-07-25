@@ -284,13 +284,10 @@ fn is_argument_only_used_in_recursion<'a>(
             return false;
         };
 
-        match call_arg {
-            Argument::Identifier(ident) => {
-                if ident.name != arg.name {
-                    return false;
-                }
+        if let Argument::Identifier(ident) = call_arg {
+            if ident.name != arg.name {
+                return false;
             }
-            _ => {}
         }
 
         if !is_recursive_call(call_expr, function_symbol_id, ctx) {
