@@ -188,10 +188,7 @@ fn check_namespace_member_assignment(
         return;
     }
 
-    let obj_ident = match member_expr {
-        Expression::Identifier(ident) => ident,
-        _ => return,
-    };
+    let Expression::Identifier(obj_ident) = member_expr else { return };
 
     let ref_node = ctx.nodes().get_node(reference.node_id());
     if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
