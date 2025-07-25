@@ -98,22 +98,17 @@ impl Rule for NoUnusedPrivateClassMembers {
                     continue;
                 }
 
-                if element.is_private {
-                    let mut found = false;
-                    for ident in ctx.classes().iter_private_identifiers(class_id) {
-                        let is_property = element.kind.is_property();
-                        let read = !is_property || is_read(ident.id, ctx.nodes());
-                        if read && ident.element_ids.contains(&element_id) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if !found {
-                        ctx.diagnostic(no_unused_private_class_members_diagnostic(
-                            &element.name,
-                            element.span,
-                        ));
-                    }
+                if element.is_private
+                    && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
+                        // If the element is a property, it must be read.
+                        (!element.kind.is_property() || is_read(ident.id, ctx.nodes()))
+                            && ident.element_ids.contains(&element_id)
+                    })
+                {
+                    ctx.diagnostic(no_unused_private_class_members_diagnostic(
+                        &element.name,
+                        element.span,
+                    ));
                 }
             }
         });
@@ -136,16 +131,7 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::IdentifierReference(_),
             ) => {}
             // All these are read contexts for private fields
-            (
-                AstKind::PrivateFieldExpression(_),
-                AstKind::ReturnStatement(_)
-                | AstKind::CallExpression(_)
-                | AstKind::BinaryExpression(_)
-                | AstKind::VariableDeclarator(_)
-                | AstKind::ExpressionStatement(_)
-                | AstKind::PropertyDefinition(_)
-                | AstKind::Argument(_),
-            ) => {
+            (AstKind::PrivateFieldExpression(_), parent_kind) if is_value_context(&parent_kind) => {
                 return true;
             }
             // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
@@ -155,26 +141,10 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                     return true;
                 }
                 // Compound assignment result used in a value context is a read
-                if assign_expr.operator != AssignmentOperator::Assign {
-                    if let Some((_, grandparent)) = nodes
-                        .ancestors(parent.id())
-                        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
-                        .next()
-                    {
-                        match grandparent.kind() {
-                            AstKind::CallExpression(_)
-                            | AstKind::ReturnStatement(_)
-                            | AstKind::VariableDeclarator(_)
-                            | AstKind::ExpressionStatement(_)
-                            | AstKind::BinaryExpression(_)
-                            | AstKind::PropertyDefinition(_)
-                            | AstKind::ArrayExpression(_)
-                            | AstKind::ObjectProperty(_)
-                            | AstKind::JSXExpressionContainer(_)
-                            | AstKind::Argument(_) => return true,
-                            _ => {}
-                        }
-                    }
+                if assign_expr.operator != AssignmentOperator::Assign
+                    && is_compound_assignment_read(parent.id(), nodes)
+                {
+                    return true;
                 }
                 // Not a read otherwise
                 return false;
@@ -205,6 +175,32 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         }
     }
     true
+}
+
+/// Check if the given AST kind represents a context where a value is being read/used
+fn is_value_context(kind: &AstKind) -> bool {
+    matches!(
+        kind,
+        AstKind::ReturnStatement(_)
+            | AstKind::CallExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::VariableDeclarator(_)
+            | AstKind::ExpressionStatement(_)
+            | AstKind::PropertyDefinition(_)
+            | AstKind::ArrayExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::JSXExpressionContainer(_)
+            | AstKind::Argument(_)
+    )
+}
+
+/// Check if a compound assignment result is being used in a value context
+fn is_compound_assignment_read(parent_id: NodeId, nodes: &AstNodes) -> bool {
+    nodes
+        .ancestors(parent_id)
+        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+        .next()
+        .is_some_and(|(_, grandparent)| is_value_context(&grandparent.kind()))
 }
 
 #[test]
