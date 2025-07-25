@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, UnaryOperator,
+        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression,
+        SimpleAssignmentTarget, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -167,11 +168,14 @@ impl Rule for PreferArrayFind {
                                         {
                                             destructuring_nodes.push(reference);
                                         }
-                                    } else if let Some(oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
-                                        assignment_expr.left.as_simple_assignment_target()
+                                    } else if let Some(
+                                        SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
+                                    ) = assignment_expr.left.as_simple_assignment_target()
                                     {
                                         // Check for simple reassignment: items = something
-                                        if ident.span == ctx.nodes().get_node(reference.node_id()).span() {
+                                        if ident.span
+                                            == ctx.nodes().get_node(reference.node_id()).span()
+                                        {
                                             is_used_elsewhere = true; // Variable is being reassigned
                                         }
                                     }
@@ -254,7 +258,6 @@ fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
         AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Delete,
-        // After removing SimpleAssignmentTarget, check for assignment targets
         AstKind::ArrayAssignmentTarget(_)
         | AstKind::ObjectAssignmentTarget(_)
         | AstKind::AssignmentTargetWithDefault(_)
