@@ -20,7 +20,7 @@ use crate::{
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, Span};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct MemberChain<'a, 'b> {
     root: &'b AstNode<'a, CallExpression<'a>>,
     head: MemberChainGroup<'a, 'b>,
@@ -70,6 +70,19 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             }
             Some(first_group) => first_group,
         };
+
+        let has_comment = first_group.members().first().is_some_and(|member| {
+            matches!(member, ChainMember::StaticMember(expression)
+                if f.context().comments().has_comments_between(
+                    expression.object().span().end,
+                    expression.property().span.start
+                )
+            )
+        });
+
+        if has_comment {
+            return false;
+        }
 
         let has_computed_property =
             first_group.members().first().is_some_and(|member| member.is_computed_expression());
@@ -141,10 +154,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             }
 
             any_complex_args = any_complex_args || !has_simple_arguments(call);
-        }
 
-        if calls_count > 2 && any_complex_args {
-            return Ok(true);
+            if calls_count > 2 && any_complex_args {
+                return Ok(true);
+            }
         }
 
         if self.last_call_breaks(f)? && any_has_function_like_argument {
@@ -167,7 +180,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
         let last_group = self.last_group();
 
-        if let Some(ChainMember::CallExpression { .. }) = last_group.members().last() {
+        if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
             last_group.will_break(f)
         } else {
             Ok(false)
@@ -238,12 +251,13 @@ impl<'a, 'b> Format<'a> for MemberChain<'a, 'b> {
         let format_expanded = format_with(|f| write!(f, [self.head, indent(&group(&format_tail))]));
 
         let format_content = format_with(|f| {
-            if self.groups_should_break(f)? {
+            if has_comments || self.groups_should_break(f)? {
+                dbg!(&self.head);
                 write!(f, [group(&format_expanded)])
             } else {
+                // TODO: Comment out the following code without any effect in Biome.
                 let has_empty_line_before_tail =
                     self.tail.first().is_some_and(|group| group.needs_empty_line_before(f));
-
                 if has_empty_line_before_tail || self.last_group().will_break(f)? {
                     write!(f, [expand_parent()])?;
                 }
@@ -400,21 +414,20 @@ fn is_factory(token: &str) -> bool {
     }
 }
 
-/* Maybe unnecessary
-
 /// Here we check if the length of the groups exceeds the cutoff or there are comments
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342
-pub fn is_member_call_chain<'a>(expression: AstNode<'a, CallExpression<'a>>) -> FormatResult<bool> {
-    let chain = MemberChain::from_call_expression(expression)?;
+pub fn is_member_call_chain<'a, 'b>(
+    expression: &'b AstNode<'a, CallExpression<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> FormatResult<bool> {
+    let chain = MemberChain::from_call_expression(&expression, f)?;
 
-    Ok(chain.tail.is_member_call_chain(&chain.root.allocator))
+    Ok(chain.tail.is_member_call_chain(f))
 }
 
-*/
-
 fn has_short_name(name: &Atom, tab_width: u8) -> bool {
-    name.as_str().len() <= u8::from(tab_width) as usize
+    name.as_str().len() <= tab_width as usize
 }
 
 struct ChainMembersIterator<'a, 'b> {
@@ -478,7 +491,6 @@ impl<'a, 'b> Iterator for ChainMembersIterator<'a, 'b> {
 
             AstNodes::ComputedMemberExpression(expr) => {
                 self.next = Some(expr.object());
-
                 ChainMember::ComputedMember(expr)
             }
 

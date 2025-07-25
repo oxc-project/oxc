@@ -1,5 +1,5 @@
 use crate::{
-    formatter::{Format, FormatResult, Formatter, prelude::*},
+    formatter::{Format, FormatResult, Formatter, prelude::*, trivia::FormatLeadingComments},
     generated::ast_nodes::AstNode,
     write,
 };
@@ -72,16 +72,30 @@ impl<'a, 'b> Format<'a> for ChainMember<'a, 'b> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
             Self::StaticMember(e) => {
-                write!(f, [e.optional().then_some("?"), ".", e.property()])
+                write!(
+                    f,
+                    [
+                        FormatLeadingComments::Comments(
+                            f.context().comments().comments_before(e.property().span().start)
+                        ),
+                        e.optional().then_some("?"),
+                        ".",
+                        e.property()
+                    ]
+                )?;
+                e.format_trailing_comments(f)
             }
 
             Self::TSNonNullExpression(e) => {
-                write!(f, ["!",])
+                e.format_leading_comments(f)?;
+                write!(f, ["!"])?;
+                e.format_trailing_comments(f)
             }
 
             Self::CallExpression { expression, position } => match *position {
-                CallExpressionPosition::Start => write!(f, [expression]),
+                CallExpressionPosition::Start => write!(f, expression),
                 CallExpressionPosition::Middle => {
+                    expression.format_leading_comments(f);
                     write!(
                         f,
                         [
@@ -89,7 +103,8 @@ impl<'a, 'b> Format<'a> for ChainMember<'a, 'b> {
                             expression.type_arguments(),
                             expression.arguments()
                         ]
-                    )
+                    );
+                    expression.format_trailing_comments(f)
                 }
                 CallExpressionPosition::End => {
                     write!(
@@ -103,7 +118,9 @@ impl<'a, 'b> Format<'a> for ChainMember<'a, 'b> {
                 }
             },
             Self::ComputedMember(e) => {
-                write!(f, [e.optional().then_some("?"), "[", e.expression(), "]"])
+                e.format_leading_comments(f)?;
+                write!(f, [e.optional().then_some("?"), "[", e.expression(), "]"])?;
+                e.format_trailing_comments(f)
             }
             Self::Node(node) => write!(f, node),
         }

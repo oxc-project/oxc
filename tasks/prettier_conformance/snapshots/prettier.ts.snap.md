@@ -1,4 +1,4 @@
-ts compatibility: 243/573 (42.41%)
+ts compatibility: 244/573 (42.58%)
 
 # Failed
 
@@ -246,7 +246,6 @@ ts compatibility: 243/573 (42.41%)
 | typescript/method/method-signature.ts | 💥 | 93.75% |
 | typescript/method/semi.ts | 💥 | 42.86% |
 | typescript/method/type_literal_optional_method.ts | 💥 | 0.00% |
-| typescript/method-chain/comment.ts | 💥 | 0.00% |
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/module/namespace_function.ts | 💥 | 66.67% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |

@@ -2,9 +2,10 @@ use super::chain_member::ChainMember;
 use crate::{
     formatter::{Format, FormatResult, Formatter, prelude::*},
     generated::ast_nodes::AstNode,
+    parentheses::NeedsParentheses,
     write,
 };
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use std::cell::RefCell;
 
 #[derive(Default)]
@@ -69,7 +70,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
 /// Groups following on the head group.
 ///
 /// May be empty if all members are part of the head group
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(super) struct TailChainGroups<'a, 'b> {
     groups: Vec<MemberChainGroup<'a, 'b>>,
 }
@@ -136,7 +137,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over the groups.
-    pub(super) fn iter(&self) -> impl DoubleEndedIterator<Item = &MemberChainGroup<'a, 'b>> {
+    pub(super) fn iter(&self) -> impl Iterator<Item = &MemberChainGroup<'a, 'b>> {
         self.groups.iter()
     }
 
@@ -155,7 +156,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Returns an iterator over all members
-    pub(super) fn members(&self) -> impl DoubleEndedIterator<Item = &ChainMember<'a, 'b>> {
+    pub(super) fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
         self.groups.iter().flat_map(|group| group.members().iter())
     }
 }
@@ -166,7 +167,7 @@ impl<'a, 'b> Format<'a> for TailChainGroups<'a, 'b> {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub(super) struct MemberChainGroup<'a, 'b> {
     members: Vec<ChainMember<'a, 'b>>,
 
@@ -231,7 +232,41 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
     }
 
     pub(super) fn needs_empty_line_before(&self, f: &Formatter) -> bool {
-        false
+        // TODO: Needs to consider there is a comment around the `?`, `.` or `[` character.
+        let first = self.members.first();
+        let result = first.is_some_and(|first| match first {
+            ChainMember::StaticMember(expression) => {
+                let object_end = expression.object().span().end;
+                let operator_byte = if expression.optional { b'?' } else { b'.' };
+                let operator_position = f.source_text().as_bytes()[(object_end as usize)..]
+                    .iter()
+                    .position(|&b| b == operator_byte)
+                    .unwrap();
+
+                let start = object_end + operator_position as u32;
+                let end = start + if expression.optional { 2 } else { 1 };
+                let operator_span = Span::new(start, end);
+
+                get_lines_before(operator_span, f) > 1
+            }
+            ChainMember::ComputedMember(expression) => {
+                let object_end = expression.object().span().end;
+                let operator_byte = b'[';
+                let operator_position = f.source_text().as_bytes()[(object_end as usize)..]
+                    .iter()
+                    .position(|&b| b == operator_byte)
+                    .unwrap();
+
+                let start = object_end + operator_position as u32;
+                let end = start + 1;
+                let operator_span = Span::new(start, end);
+
+                get_lines_before(operator_span, f) > 1
+            }
+            _ => false,
+        });
+
+        result
     }
 }
 
@@ -267,10 +302,14 @@ impl<'a, 'b> Format<'a> for FormatMemberChainGroup<'a, 'b> {
 
         let last = group.members.last();
 
-        let needs_parens = last.is_some_and(|last| {
-            // This logic requires parentheses info, which is not fully implemented in oxc
-            false
+        let needs_parens = last.is_some_and(|last| match last {
+            ChainMember::StaticMember(expression) => expression.needs_parentheses(f),
+            ChainMember::ComputedMember(expression) => expression.needs_parentheses(f),
+            _ => false,
         });
+
+        // TODO: the assert here is for checking whether `needs_parens` check is unnecessary.
+        debug_assert!(!needs_parens);
 
         let format_entries = format_with(|f| f.join().entries(group.members.iter()).finish());
 

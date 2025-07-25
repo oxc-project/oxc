@@ -103,6 +103,10 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                     .unprinted_comments()
                     .iter()
                     .take_while(|comment| comment.span.end <= span.start);
+
+                if leading_comments.clone().count() > 0 {
+                    dbg!(span);
+                }
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -208,6 +212,15 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
+                if (f
+                    .context()
+                    .comments()
+                    .get_trailing_comments(enclosing_node, preceding_node, *following_node)
+                    .len()
+                    > 0)
+                {
+                    // dbg!(enclosing_node, preceding_node, *following_node,);
+                }
                 format_trailing_comments_impl(
                     f.context().comments().get_trailing_comments(
                         enclosing_node,
