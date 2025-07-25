@@ -454,7 +454,8 @@ mod test {
     #[test]
     fn fold_number_nan() {
         test("foo(Number.NaN)", "foo(NaN)");
-        test_same("let Number; foo(Number.NaN)");
+        test_same("var Number; foo(Number.NaN)");
+        test_same("let Number; foo((void 0).NaN)");
     }
 
     #[test]

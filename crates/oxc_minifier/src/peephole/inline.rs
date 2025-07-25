@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
@@ -10,11 +10,12 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(&self, decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
-        // Skip if not `const` variable.
-        if !ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
+        // Skip for `var` declarations, due to TDZ problems.
+        if decl.kind.is_var() {
             return;
         }
-        let Some(value) = decl.init.evaluate_value(ctx) else { return };
+        let value =
+            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx));
         ctx.init_value(symbol_id, value);
     }
 
@@ -33,7 +34,11 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.write_references_count > 0 {
             return;
         }
-        *expr = ctx.value_to_expr(expr.span(), symbol_value.constant.clone());
+        if symbol_value.for_statement_init {
+            return;
+        }
+        let Some(cv) = &symbol_value.initialized_constant else { return };
+        *expr = ctx.value_to_expr(expr.span(), cv.clone());
         ctx.state.changed = true;
     }
 }

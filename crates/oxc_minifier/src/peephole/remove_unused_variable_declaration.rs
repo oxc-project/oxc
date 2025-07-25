@@ -1,3 +1,4 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
@@ -88,37 +89,47 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_assignment_expression(
         &self,
-        _e: &mut Expression<'a>,
-        _ctx: &mut Ctx<'a, '_>,
+        e: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
-        // let Expression::AssignmentExpression(assign_expr) = e else { return false };
-        // if matches!(
-        // ctx.state.options.unused,
-        // CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
-        // ) {
-        // return false;
-        // }
-        // let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
-        // assign_expr.left.as_simple_assignment_target()
-        // else {
-        // return false;
-        // };
-        // if Self::keep_top_level_var_in_script_mode(ctx) {
-        // return false;
-        // }
-        // let Some(reference_id) = ident.reference_id.get() else { return false };
-        // let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
-        // return false;
-        // };
-        // // Keep error for assigning to `const foo = 1; foo = 2`.
-        // if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
-        // return false;
-        // }
-        // if !ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.flags().is_read()) {
-        // return false;
-        // }
-        // *e = assign_expr.right.take_in(ctx.ast);
-        // state.changed = true;
+        let Expression::AssignmentExpression(assign_expr) = e else { return false };
+        if matches!(
+            ctx.state.options.unused,
+            CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
+        ) {
+            return false;
+        }
+        let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
+            assign_expr.left.as_simple_assignment_target()
+        else {
+            return false;
+        };
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return false;
+        }
+        let Some(reference_id) = ident.reference_id.get() else { return false };
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return false;
+        };
+        // Keep error for assigning to `const foo = 1; foo = 2`.
+        if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
+            return false;
+        }
+        let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+            return false;
+        };
+        // Cannot remove assignment to live bindings: `export let foo; foo = 1;`.
+        if symbol_value.exported {
+            return false;
+        }
+        if symbol_value.read_references_count > 0 {
+            return false;
+        }
+        if symbol_value.for_statement_init {
+            return false;
+        }
+        *e = assign_expr.right.take_in(ctx.ast);
+        ctx.state.changed = true;
         false
     }
 
@@ -180,23 +191,39 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn remove_unused_assignment_expression() {
         let options = CompressOptions::smallest();
-        test_options("var x = 1; x = 2;", "", &options);
-        test_options("var x = 1; x = 2;", "", &options);
-        test_options("var x = 1; x = foo();", "foo()", &options);
-        test_same_options("export let foo; foo = 0;", &options);
+        // Vars are not handled yet due to TDZ.
+        test_same_options("var x = 1; x = 2;", &options);
+        test_same_options("var x = 1; x = foo();", &options);
+        test_same_options("export var foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
         test_same_options("function foo() { return t = x(); } foo();", &options);
+        test_same_options("function foo() { var t; return t = x(); } foo();", &options);
+        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+        test_options("let x = 1; x = 2;", "", &options);
+        test_options("let x = 1; x = foo();", "foo()", &options);
+        test_same_options("export let foo; foo = 0;", &options);
+        test_same_options("let x = 1; x = 2, foo(x)", &options);
+        test_same_options("function foo() { return t = x(); } foo();", &options);
         test_options(
-            "function foo() { var t; return t = x(); } foo();",
-            "function foo() { return x(); } foo();",
+            "function foo() { let t; return t = x(); } foo();",
+            "function foo() { return x() } foo()",
             &options,
         );
-        test_options(
-            "function foo(t) { return t = x(); } foo();",
-            "function foo(t) { return x(); } foo();",
+        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+        test_same_options("for(let i;;) foo(i)", &options);
+        test_same_options("for(let i in []) foo(i)", &options);
+
+        test_options("var a; ({ a: a } = {})", "var a; ({ a } = {})", &options);
+        test_options("var a; b = ({ a: a })", "var a; b = ({ a })", &options);
+
+        test_options("let foo = {}; foo = 1", "", &options);
+
+        test_same_options(
+            "let bracketed = !1; for(;;) bracketed = !bracketed, log(bracketed)",
             &options,
         );
 
@@ -204,9 +231,8 @@ mod test {
         let source_type = SourceType::cjs();
         test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
         test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
-        test_options_source_type(
-            "function foo() { var x = 1; x = 2; bar() } foo()",
-            "function foo() { bar() } foo()",
+        test_same_options_source_type(
+            "function foo() { var x = 1; x = 2, bar() } foo()",
             source_type,
             &options,
         );
