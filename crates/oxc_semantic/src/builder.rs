@@ -611,7 +611,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg - must be above directives as directives are in cfg */
 
-        // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
+        // Don't call `enter_node` here as `Program` is a special case - node has itself as `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This avoids `Nodes::add_node` having to handle the special case.
         // We can also skip calling `self.enter_kind`, `self.record_ast_node`
