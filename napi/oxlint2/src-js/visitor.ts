@@ -332,6 +332,7 @@ function mergeVisitFns(visitFns) {
     mergers.push(merger);
   } else {
     merger = mergers[numVisitFns];
+    // @ts-expect-error
     if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
   }
 
