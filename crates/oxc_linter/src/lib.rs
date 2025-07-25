@@ -248,7 +248,7 @@ impl Linter {
         let external_linter = self.external_linter.as_ref().unwrap();
 
         // Write offset of `Program` in metadata at end of buffer
-        let program = semantic.nodes().program().unwrap();
+        let program = semantic.nodes().program();
         let program_offset = ptr::from_ref(program) as u32;
 
         let metadata = RawTransferMetadata::new(program_offset);

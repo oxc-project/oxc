@@ -185,12 +185,10 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the [`Program`] that's also the root of the AST.
-    ///
-    /// Returns [`None`] if root node isn't set. This will never happen if you
-    /// are obtaining an [`AstNodes`] that has already been constructed.
     #[inline]
-    pub fn program(&self) -> Option<&'a Program<'a>> {
-        self.program
+    pub fn program(&self) -> &'a Program<'a> {
+        #[expect(clippy::missing_panics_doc, reason = "self.program is always `Some`")]
+        self.program.as_ref().unwrap()
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
