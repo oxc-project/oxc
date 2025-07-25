@@ -436,6 +436,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
             AstNodes::ComputedMemberExpression(_)
                 | AstNodes::StaticMemberExpression(_)
                 | AstNodes::PrivateFieldExpression(_)
+                | AstNodes::IdentifierReference(_)
         )
     }
 }
