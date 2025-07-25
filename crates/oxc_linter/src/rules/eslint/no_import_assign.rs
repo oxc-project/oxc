@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTargetMaybeDefault, Expression},
+    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, SymbolId};
+use oxc_semantic::{AstNode, NodeId, Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
@@ -86,369 +86,35 @@ impl Rule for NoImportAssign {
                                 }
                             }
                         }
-                        // --- NEW LOGIC: assignment to namespace property ---
-                        // Only report if the reference is the object of the member expression
-                        match (expr, parent_parent_kind) {
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::AssignmentExpression(assign_expr),
-                            ) => {
-                                if assign_expr.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
+                        // Check for assignment to namespace property
+                        match expr {
+                            AstKind::StaticMemberExpression(member_expr) => {
+                                let condition_met = is_assignment_condition_met(
+                                    &parent_parent_kind,
+                                    parent_node.span(),
+                                    true, // is_static
+                                );
+                                check_namespace_member_assignment(
+                                    &member_expr.object,
+                                    parent_node,
+                                    reference,
+                                    ctx,
+                                    condition_met,
+                                );
                             }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::UpdateExpression(update_expr),
-                            ) => {
-                                if update_expr.argument.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::AssignmentExpression(assign_expr),
-                            ) => {
-                                if assign_expr.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::UpdateExpression(update_expr),
-                            ) => {
-                                if update_expr.argument.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            // --- NEW LOGIC: for-in/of left side ---
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::ForInStatement(for_in),
-                            ) => {
-                                if for_in.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::ForOfStatement(for_of),
-                            ) => {
-                                if for_of.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::ForInStatement(for_in),
-                            ) => {
-                                if for_in.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::ForOfStatement(for_of),
-                            ) => {
-                                if for_of.left.span() == parent_node.span() {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::ArrayAssignmentTarget(array_target),
-                            ) => {
-                                // Check if this member expression is one of the elements
-                                if array_target.elements.iter().any(|el| {
-                                    if let Some(
-                                        AssignmentTargetMaybeDefault::StaticMemberExpression(expr),
-                                    ) = el.as_ref()
-                                    {
-                                        expr.span == parent_node.span()
-                                    } else {
-                                        false
-                                    }
-                                }) {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::ArrayAssignmentTarget(array_target),
-                            ) => {
-                                if array_target.elements.iter().any(|el| {
-                                    if let Some(
-                                        AssignmentTargetMaybeDefault::ComputedMemberExpression(
-                                            expr,
-                                        ),
-                                    ) = el.as_ref()
-                                    {
-                                        expr.span == parent_node.span()
-                                    } else {
-                                        false
-                                    }
-                                }) {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::AssignmentTargetPropertyProperty(prop_target),
-                            ) => {
-                                // Check if this member expression is the binding
-                                let is_target = match &prop_target.binding {
-                                    oxc_ast::ast::AssignmentTargetMaybeDefault::StaticMemberExpression(expr) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::AssignmentTargetPropertyProperty(prop_target),
-                            ) => {
-                                let is_target = match &prop_target.binding {
-                                    oxc_ast::ast::AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::AssignmentTargetWithDefault(with_default),
-                            ) => {
-                                // Check if this member expression is the binding
-                                let is_target = match &with_default.binding {
-                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(
-                                        expr,
-                                    ) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::AssignmentTargetWithDefault(with_default),
-                            ) => {
-                                let is_target = match &with_default.binding {
-                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(
-                                        expr,
-                                    ) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::StaticMemberExpression(member_expr),
-                                AstKind::AssignmentTargetRest(rest_target),
-                            ) => {
-                                // Check if this member expression is the target
-                                let is_target = match &rest_target.target {
-                                    oxc_ast::ast::AssignmentTarget::StaticMemberExpression(
-                                        expr,
-                                    ) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            (
-                                AstKind::ComputedMemberExpression(member_expr),
-                                AstKind::AssignmentTargetRest(rest_target),
-                            ) => {
-                                let is_target = match &rest_target.target {
-                                    oxc_ast::ast::AssignmentTarget::ComputedMemberExpression(
-                                        expr,
-                                    ) => expr.span == parent_node.span(),
-                                    _ => false,
-                                };
-                                if is_target {
-                                    if let Expression::Identifier(obj_ident) = &member_expr.object {
-                                        let ref_node = ctx.nodes().get_node(reference.node_id());
-                                        if let AstKind::IdentifierReference(ref_ident) =
-                                            ref_node.kind()
-                                        {
-                                            if obj_ident.span == ref_ident.span {
-                                                ctx.diagnostic(no_import_assign_diagnostic(
-                                                    parent_node.span(),
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
+                            AstKind::ComputedMemberExpression(member_expr) => {
+                                let condition_met = is_assignment_condition_met(
+                                    &parent_parent_kind,
+                                    parent_node.span(),
+                                    false, // is_static
+                                );
+                                check_namespace_member_assignment(
+                                    &member_expr.object,
+                                    parent_node,
+                                    reference,
+                                    ctx,
+                                    condition_met,
+                                );
                             }
                             _ => {}
                         }
@@ -508,6 +174,86 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
     }
 
     false
+}
+
+/// Helper to check if a namespace member expression is being assigned to
+fn check_namespace_member_assignment(
+    member_expr: &Expression,
+    parent_node: &AstNode,
+    reference: &Reference,
+    ctx: &LintContext,
+    condition_met: bool,
+) {
+    if !condition_met {
+        return;
+    }
+
+    let obj_ident = match member_expr {
+        Expression::Identifier(ident) => ident,
+        _ => return,
+    };
+
+    let ref_node = ctx.nodes().get_node(reference.node_id());
+    if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
+        if obj_ident.span == ref_ident.span {
+            ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
+        }
+    }
+}
+
+/// Helper to determine if assignment condition is met for different parent kinds
+fn is_assignment_condition_met(
+    parent_parent_kind: &AstKind,
+    parent_node_span: Span,
+    is_static: bool,
+) -> bool {
+    match parent_parent_kind {
+        AstKind::AssignmentExpression(assign) => assign.left.span() == parent_node_span,
+        AstKind::UpdateExpression(update) => update.argument.span() == parent_node_span,
+        AstKind::ForInStatement(for_in) => for_in.left.span() == parent_node_span,
+        AstKind::ForOfStatement(for_of) => for_of.left.span() == parent_node_span,
+        AstKind::ArrayAssignmentTarget(array_target) => {
+            array_target.elements.iter().any(|el| match el.as_ref() {
+                Some(AssignmentTargetMaybeDefault::StaticMemberExpression(expr)) if is_static => {
+                    expr.span == parent_node_span
+                }
+                Some(AssignmentTargetMaybeDefault::ComputedMemberExpression(expr))
+                    if !is_static =>
+                {
+                    expr.span == parent_node_span
+                }
+                _ => false,
+            })
+        }
+        AstKind::AssignmentTargetPropertyProperty(prop_target) => match &prop_target.binding {
+            AssignmentTargetMaybeDefault::StaticMemberExpression(expr) if is_static => {
+                expr.span == parent_node_span
+            }
+            AssignmentTargetMaybeDefault::ComputedMemberExpression(expr) if !is_static => {
+                expr.span == parent_node_span
+            }
+            _ => false,
+        },
+        AstKind::AssignmentTargetWithDefault(with_default) => match &with_default.binding {
+            AssignmentTarget::StaticMemberExpression(expr) if is_static => {
+                expr.span == parent_node_span
+            }
+            AssignmentTarget::ComputedMemberExpression(expr) if !is_static => {
+                expr.span == parent_node_span
+            }
+            _ => false,
+        },
+        AstKind::AssignmentTargetRest(rest_target) => match &rest_target.target {
+            AssignmentTarget::StaticMemberExpression(expr) if is_static => {
+                expr.span == parent_node_span
+            }
+            AssignmentTarget::ComputedMemberExpression(expr) if !is_static => {
+                expr.span == parent_node_span
+            }
+            _ => false,
+        },
+        _ => false,
+    }
 }
 
 #[test]
