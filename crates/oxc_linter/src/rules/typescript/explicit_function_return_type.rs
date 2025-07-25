@@ -514,16 +514,12 @@ fn is_setter(node: &AstNode) -> bool {
     }
 }
 
+// TODO(camc314): inline this function
 fn get_parent_node<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let parent = outermost_paren_parent(node, ctx)?;
-    match parent.kind() {
-        // TODO:
-        // AstKind::Argument(_) => outermost_paren_parent(parent, ctx),
-        _ => Some(parent),
-    }
+    outermost_paren_parent(node, ctx)
 }
 
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
