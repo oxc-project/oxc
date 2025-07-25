@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-ts compatibility: 242/573 (42.23%)
-=======
-ts compatibility: 219/573 (38.22%)
->>>>>>> a57c0a965 (update prettier snapshot)
+ts compatibility: 232/573 (40.49%)
 
 # Failed
 
@@ -59,18 +55,11 @@ ts compatibility: 219/573 (38.22%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
 | typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 93.33% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
-<<<<<<< HEAD
-| typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
-| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
-| typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 79.17% |
-=======
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 62.71% |
-| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 60.98% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 60.00% |
 | typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 62.00% |
+| typescript/arrow/16067.ts | 💥💥 | 73.47% |
 | typescript/arrow/arrow_regression.ts | 💥💥 | 71.43% |
->>>>>>> a57c0a965 (update prettier snapshot)
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 64.57% |
@@ -90,14 +79,9 @@ ts compatibility: 219/573 (38.22%)
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/assignment/issue-3122.ts | 💥 | 92.86% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
-<<<<<<< HEAD
 | typescript/cast/as-const.ts | 💥 | 60.00% |
-| typescript/cast/generic-cast.ts | 💥 | 38.82% |
-=======
-| typescript/cast/as-const.ts | 💥 | 54.55% |
-| typescript/cast/generic-cast.ts | 💥 | 38.16% |
+| typescript/cast/generic-cast.ts | 💥 | 38.06% |
 | typescript/cast/hug-args.ts | 💥 | 87.50% |
->>>>>>> a57c0a965 (update prettier snapshot)
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
@@ -218,11 +202,7 @@ ts compatibility: 219/573 (38.22%)
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
-<<<<<<< HEAD
-=======
-| typescript/destructuring/destructuring.ts | 💥 | 75.00% |
 | typescript/end-of-line/multiline.ts | 💥💥💥 | 82.61% |
->>>>>>> a57c0a965 (update prettier snapshot)
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/enum/enum.ts | 💥 | 52.17% |
 | typescript/enum/multiline.ts | 💥 | 0.00% |
@@ -301,13 +281,8 @@ ts compatibility: 219/573 (38.22%)
 | typescript/rest/rest.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 60.87% |
-<<<<<<< HEAD
-| typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 86.36% |
-=======
 | typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 64.52% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 65.12% |
->>>>>>> a57c0a965 (update prettier snapshot)
+| typescript/satisfies-operators/assignment.ts | 💥💥 | 68.18% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 93.33% |
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
@@ -358,10 +333,7 @@ ts compatibility: 219/573 (38.22%)
 | typescript/typeparams/long-function-arg.ts | 💥 | 56.41% |
 | typescript/typeparams/tagged-template-expression.ts | 💥 | 75.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
-<<<<<<< HEAD
-=======
-| typescript/typeparams/print-width-120/issue-7542.tsx | 💥 | 40.00% |
->>>>>>> a57c0a965 (update prettier snapshot)
+| typescript/typeparams/print-width-120/issue-7542.tsx | 💥 | 47.37% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
 | typescript/union/inlining.ts | 💥 | 29.92% |
