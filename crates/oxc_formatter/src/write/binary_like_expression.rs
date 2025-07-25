@@ -161,7 +161,6 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                         | AstNodes::ThrowStatement(_)
                         | AstNodes::CallExpression(_)
                         | AstNodes::ImportExpression(_)
-                        // TODO: | AstNodes::Argument(_)
                         | AstNodes::MetaProperty(_)
                 )
             }
