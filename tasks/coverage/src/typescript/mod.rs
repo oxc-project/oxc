@@ -59,6 +59,9 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             "TransportStream.ts",
             // Emits TS5052 (complains compilerOptions are invalid, which we do not support), also implies TS2564 but not emitted
             "esDecorators-emitDecoratorMetadata.ts",
+            // These tests just check `let` as variable name under `target:es6`
+            "downlevelLetConst6.ts",
+            "VariableDeclaration6_es6.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
@@ -138,7 +141,27 @@ impl Case for TypeScriptCase {
 // spellchecker:off
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     // TODO: More not-supported error codes here
-    "2315",  // Type 'U' is not generic.
+    "2011",  // Cannot convert 'string' to 'number'.
+    "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
+    "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
+    "2301", // Initializer of instance member variable 'y' cannot reference identifier 'aaa' declared in the constructor.
+    "2302", // Static members cannot reference class type parameters.
+    "2303", // Circular definition of import alias 'A'.
+    "2304", // Cannot find name 'a'.
+    "2305", // Module '"./b"' has no exported member 'default'.
+    "2306", // File '/node_modules/@types/react/index.d.ts' is not a module.
+    "2307", // Cannot find module './SubModule' or its corresponding type declarations.
+    "2308", // Module "./b" has already exported a member named '__foo'. Consider explicitly re-exporting to resolve the ambiguity.
+    "2310", // Type 'M2' recursively references itself as a base type.
+    "2312", // An interface can only extend an object type or intersection of object types with statically known members.
+    "2313", // Type parameter 'K' has a circular constraint.
+    "2314", // Generic type 'Array<T>' requires 1 type argument(s).
+    "2315", // Type 'D' is not generic.
+    "2317", // Global type 'Array' must have 1 type parameter(s).
+    "2318", // Cannot find global type 'AsyncDisposable'.
+    "2320", // Interface 'Z' cannot simultaneously extend types 'X' and 'Y'.
+    "2322", // Type 'number' is not assignable to type 'string'.
+    "2328", // Types of parameters 'f' and 'f' are incompatible.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.
