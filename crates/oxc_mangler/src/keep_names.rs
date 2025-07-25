@@ -125,7 +125,6 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                     reference_id,
                 ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
             }
-            // Legacy logic for wrapped expressions (may still be needed for some cases)
             AstKind::IdentifierReference(_)
             | AstKind::TSAsExpression(_)
             | AstKind::TSSatisfiesExpression(_)
