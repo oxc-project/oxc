@@ -415,17 +415,9 @@ impl<'a> Symbol<'_, 'a> {
                     return false;
                 }
                 AstKind::CallExpression(call_expr)
-                    if call_expr
-                        .arguments
-                        .first()
-                        .map(|arg| arg.span().start)
-                        .zip(call_expr.arguments.last())
-                        .map(|(start, arg)| Span::new(start, arg.span().end))
-                        .is_some_and(|args_span| {
-                            args_span.contains_inclusive(
-                                self.nodes().get_node(reference.node_id()).span(),
-                            )
-                        }) =>
+                    if call_expr.arguments_span().is_some_and(|span| {
+                        span.contains_inclusive(self.nodes().get_node(reference.node_id()).span())
+                    }) =>
                 {
                     return false;
                 }
