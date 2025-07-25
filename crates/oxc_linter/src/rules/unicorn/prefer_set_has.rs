@@ -1,12 +1,12 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPatternKind, Expression, MemberExpression, Statement, VariableDeclarationKind},
+    ast::{Expression, MemberExpression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -97,150 +97,32 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
     }
 }
 
-fn find_variable_declaration_scope(ctx: &LintContext, variable_name: &str) -> Option<ScopeId> {
-    for ast_node in ctx.nodes().iter() {
-        if let AstKind::VariableDeclarator(declarator) = ast_node.kind() {
-            if let Some(Expression::ArrayExpression(_)) = &declarator.init {
-                if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
-                    if binding.name == variable_name {
-                        return Some(ast_node.scope_id());
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-fn find_loop_body_scope(ctx: &LintContext, parent: &AstNode) -> Option<(ScopeId, Span)> {
-    match parent.kind() {
-        AstKind::WhileStatement(while_stmt) => {
-            if let Statement::BlockStatement(block) = &while_stmt.body {
-                for ast_node in ctx.nodes().iter() {
-                    if let AstKind::BlockStatement(_) = ast_node.kind() {
-                        if ast_node.span() == block.span {
-                            return Some((ast_node.scope_id(), block.span));
-                        }
-                    }
-                }
-            }
-        }
-        AstKind::DoWhileStatement(do_while_stmt) => {
-            if let Statement::BlockStatement(block) = &do_while_stmt.body {
-                for ast_node in ctx.nodes().iter() {
-                    if let AstKind::BlockStatement(_) = ast_node.kind() {
-                        if ast_node.span() == block.span {
-                            return Some((ast_node.scope_id(), block.span));
-                        }
-                    }
-                }
-            }
-        }
-        _ => {}
-    }
-    None
-}
-
-fn find_variable_declaration_span(ctx: &LintContext, variable_name: &str) -> Option<Span> {
-    for ast_node in ctx.nodes().iter() {
-        if let AstKind::VariableDeclarator(declarator) = ast_node.kind() {
-            if let Some(Expression::ArrayExpression(_)) = &declarator.init {
-                if let BindingPatternKind::BindingIdentifier(binding) = &declarator.id.kind {
-                    if binding.name == variable_name {
-                        return Some(ast_node.span());
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-fn is_variable_declared_outside_loop(
-    ctx: &LintContext,
-    variable_name: &str,
-    declaration_scope: ScopeId,
-    loop_body_scope: Option<(ScopeId, Span)>,
-) -> bool {
-    // If no loop body scope found, assume variable is declared outside
-    let Some((loop_body_scope, loop_body_span)) = loop_body_scope else {
-        return true;
-    };
-
-    // If scopes match, check if variable declaration span is inside the loop body span
-    if declaration_scope == loop_body_scope {
-        let Some(var_decl_span) = find_variable_declaration_span(ctx, variable_name) else {
-            return true;
-        };
-
-        // Check if variable declaration is inside the loop body
-        return !(var_decl_span.start >= loop_body_span.start
-            && var_decl_span.end <= loop_body_span.end);
-    }
-
-    // If scopes don't match, check if variable declaration span is inside the loop body span
-    let Some(var_decl_span) = find_variable_declaration_span(ctx, variable_name) else {
-        return true;
-    };
-
-    // Check if variable declaration is inside the loop body
-    !(var_decl_span.start >= loop_body_span.start && var_decl_span.end <= loop_body_span.end)
-}
-
 fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) -> bool {
     let mut was_in_root_scope = node.scope_id() == root_scope_id;
-
-    // Check ancestors for functions and loops
+    let mut is_multiple = false;
     for parent in ctx.nodes().ancestors(node.id()) {
         let parent_scope = parent.scope_id();
-
-        // Check if we've moved to a different scope
         if was_in_root_scope && parent_scope != root_scope_id {
-            was_in_root_scope = false;
+            is_multiple = false;
+            break;
         }
-
+        was_in_root_scope = parent_scope == root_scope_id;
         let parent_kind = parent.kind();
-
-        // Check for iteration statements and functions
         if matches!(
             parent_kind,
             AstKind::ForOfStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+                | AstKind::ArrowFunctionExpression(_)
                 | AstKind::Function(_)
         ) {
-            return true;
-        }
-
-        // Check for while/do-while loops
-        if matches!(parent_kind, AstKind::WhileStatement(_) | AstKind::DoWhileStatement(_)) {
-            if let AstKind::IdentifierReference(ident) = node.kind() {
-                let variable_name = &ident.name;
-
-                // Find variable declaration scope
-                let Some(declaration_scope) = find_variable_declaration_scope(ctx, variable_name)
-                else {
-                    return true;
-                };
-
-                // Find loop body scope
-                let loop_body_info = find_loop_body_scope(ctx, parent);
-
-                // Check if variable is declared outside the loop
-                if is_variable_declared_outside_loop(
-                    ctx,
-                    variable_name,
-                    declaration_scope,
-                    loop_body_info,
-                ) {
-                    return true;
-                }
-            }
+            is_multiple = true;
+            break;
         }
     }
-
-    // If ancestor traversal didn't find loops, check if we're in a different scope
-    node.scope_id() != root_scope_id
+    is_multiple
 }
 
 impl Rule for PreferSetHas {
@@ -257,7 +139,9 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if !is_kind_of_array_expr(init) {
+        let is_kind_of_array = is_kind_of_array_expr(init);
+
+        if !is_kind_of_array {
             return;
         }
 
@@ -275,8 +159,8 @@ impl Rule for PreferSetHas {
         {
             return;
         }
-
         let symbol_table = ctx.scoping();
+
         let mut references = symbol_table.get_resolved_references(symbol_id).peekable();
 
         let Ok(len) = references.try_len() else {
@@ -294,6 +178,7 @@ impl Rule for PreferSetHas {
             };
 
             let node = ctx.nodes().get_node(reference.node_id());
+
             if !is_multiple_calls(node, ctx, root_scope) {
                 return;
             }
