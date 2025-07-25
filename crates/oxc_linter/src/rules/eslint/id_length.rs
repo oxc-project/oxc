@@ -292,48 +292,9 @@ impl IdLength {
             AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                // Only check property names in member expressions if properties == Always
-                if self.properties != PropertyKind::Always {
+                if !self.should_check_member_expression_property(parent_node, ctx) {
                     return;
                 }
-
-                // Check if this member expression is on the left side of an assignment
-                let parent_kind = ctx.nodes().parent_kind(parent_node.id());
-
-                if matches!(parent_kind, AstKind::AssignmentExpression(_)) {
-                    // Check if this member expression is the left operand of the assignment
-                    if let AstKind::AssignmentExpression(assignment) = parent_kind {
-                        // Check if this node is the left operand (not the right)
-                        if assignment.left.span() == parent_node.span() {
-                            // This is a left-side assignment, check the property
-                        } else {
-                            // This is a right-side assignment, skip it
-                            return;
-                        }
-                    } else {
-                        // This is a right-side assignment, skip it
-                        return;
-                    }
-                } else if matches!(parent_kind, AstKind::AssignmentTargetPropertyProperty(_)) {
-                    // This is a member expression in a destructuring pattern
-                    // Check if it's the value of a property in an ObjectPattern
-                } else {
-                    // Not an assignment or destructuring, skip it
-                    return;
-                }
-
-                // Only check the rightmost property in a chain if properties == Always
-                let grandparent_kind = ctx.nodes().parent_kind(parent_node.id());
-                if matches!(
-                    grandparent_kind,
-                    AstKind::StaticMemberExpression(_)
-                        | AstKind::ComputedMemberExpression(_)
-                        | AstKind::PrivateFieldExpression(_)
-                ) {
-                    // This is an intermediate property, not the rightmost
-                    return;
-                }
-                // If it's not an intermediate property, it's the rightmost, so check it
             }
             property_key if property_key.is_property_key() => {
                 let property_key = property_key.as_property_key_kind().unwrap();
@@ -459,6 +420,37 @@ impl IdLength {
 
     fn is_too_short(&self, ident_length: usize) -> bool {
         ident_length < usize::try_from(self.min).unwrap_or(0)
+    }
+
+    fn should_check_member_expression_property(&self, node: &AstNode, ctx: &LintContext) -> bool {
+        // Only check property names in member expressions if properties == Always
+        if self.properties != PropertyKind::Always {
+            return false;
+        }
+
+        // Check if this member expression is on the left side of an assignment
+        let parent_kind = ctx.nodes().parent_kind(node.id());
+
+        let is_valid_context = if let AstKind::AssignmentExpression(assignment) = parent_kind {
+            // Check if this node is the left operand (not the right)
+            assignment.left.span() == node.span()
+        } else {
+            // Allow destructuring patterns
+            matches!(parent_kind, AstKind::AssignmentTargetPropertyProperty(_))
+        };
+
+        if !is_valid_context {
+            return false;
+        }
+
+        // Only check the rightmost property in a chain
+        let grandparent_kind = ctx.nodes().parent_kind(node.id());
+        !matches!(
+            grandparent_kind,
+            AstKind::StaticMemberExpression(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+        )
     }
 }
 
