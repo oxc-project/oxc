@@ -129,18 +129,8 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         let parent_kind = parent.kind();
         // Disallow fix if parent is AssignmentExpression and node is the left-hand side
         if let AstKind::AssignmentExpression(assign_expr) = parent_kind {
-            match (&assign_expr.left, node.kind()) {
-                (AssignmentTarget::TSAsExpression(lhs), AstKind::TSAsExpression(ts_expr)) => {
-                    if lhs.span() == ts_expr.span() {
-                        return false;
-                    }
-                }
-                (AssignmentTarget::TSTypeAssertion(lhs), AstKind::TSTypeAssertion(ts_assert)) => {
-                    if lhs.span() == ts_assert.span() {
-                        return false;
-                    }
-                }
-                _ => {}
+            if is_left_hand_side_of_assignment(&assign_expr.left, node) {
+                return false;
             }
         }
         !matches!(
@@ -150,6 +140,11 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
                 | AstKind::PrivateFieldExpression(_)
         )
     })
+}
+
+/// Check if the current node is the left-hand side of an assignment expression
+fn is_left_hand_side_of_assignment(assignment_target: &AssignmentTarget, node: &AstNode) -> bool {
+    assignment_target.span() == node.span()
 }
 
 #[test]
