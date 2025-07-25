@@ -1,4 +1,4 @@
-ts compatibility: 242/573 (42.23%)
+ts compatibility: 243/573 (42.41%)
 
 # Failed
 
@@ -60,14 +60,14 @@ ts compatibility: 242/573 (42.23%)
 | typescript/array/comment.ts | 💥 | 87.50% |
 | typescript/arrow/16067.ts | 💥💥 | 79.17% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/array-pattern.ts | 💥 | 0.00% |
-| typescript/as/as.ts | 💥 | 64.57% |
-| typescript/as/assignment2.ts | 💥 | 91.18% |
+| typescript/as/as.ts | 💥 | 62.99% |
+| typescript/as/assignment.ts | 💥 | 86.67% |
+| typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
-| typescript/as/long-identifiers.ts | 💥 | 88.89% |
+| typescript/as/long-identifiers.ts | 💥 | 81.48% |
 | typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
-| typescript/as/ternary.ts | 💥 | 45.00% |
+| typescript/as/ternary.ts | 💥 | 42.50% |
 | typescript/assert/comment.ts | 💥 | 0.00% |
 | typescript/assert/index.ts | 💥 | 75.00% |
 | typescript/assignment/issue-10846.ts | 💥 | 23.73% |
@@ -77,7 +77,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 60.00% |
-| typescript/cast/generic-cast.ts | 💥 | 38.82% |
+| typescript/cast/generic-cast.ts | 💥 | 39.60% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
@@ -113,7 +113,6 @@ ts compatibility: 242/573 (42.23%)
 | typescript/compiler/ClassDeclaration22.ts | 💥 | 50.00% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 50.00% |
 | typescript/compiler/castOfAwait.ts | 💥 | 87.50% |
-| typescript/compiler/castParentheses.ts | 💥 | 63.64% |
 | typescript/compiler/castTest.ts | 💥 | 93.33% |
 | typescript/compiler/checkInfiniteExpansionTermination.ts | 💥 | 80.00% |
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
@@ -264,7 +263,6 @@ ts compatibility: 242/573 (42.23%)
 | typescript/optional-variance/with-jsx.tsx | 💥 | 57.38% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/predicate-types/predicate-types.ts | 💥 | 50.00% |
-| typescript/prettier-ignore/issue-14238.ts | 💥 | 50.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 58.49% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 5.56% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
@@ -274,7 +272,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 60.87% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 86.36% |
+| typescript/satisfies-operators/assignment.ts | 💥💥 | 72.73% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 93.33% |
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
@@ -284,7 +282,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 68.18% |
 | typescript/satisfies-operators/template-literal.ts | 💥💥 | 14.29% |
-| typescript/satisfies-operators/ternary.ts | 💥💥 | 45.00% |
+| typescript/satisfies-operators/ternary.ts | 💥💥 | 42.50% |
 | typescript/satisfies-operators/types-comments.ts | 💥✨ | 33.33% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
 | typescript/static-blocks/multiple.ts | 💥 | 33.33% |
@@ -334,4 +332,5 @@ ts compatibility: 242/573 (42.23%)
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 3.39% |
 | typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 16.51% |
 | typescript/union/single-type/single-type.ts | 💥 | 33.33% |
+| typescript/update-expression/update-expressions.ts | 💥 | 81.25% |
 | typescript/webhost/webtsc.ts | 💥 | 95.85% |
