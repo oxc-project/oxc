@@ -65,6 +65,10 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'regexp/no-empty-character-class', // handled by eslint/no-empty-character-class
 
   // not supported as it requires parsing the vue template
+  'vue/no-lone-template',
+  'vue/no-v-html',
+  'vue/this-in-template',
+
   'vue/array-bracket-newline',
   'vue/array-bracket-spacing',
   'vue/array-element-newline',
@@ -106,19 +110,99 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'vue/max-lines-per-block',
   'vue/multiline-html-element-content-newline',
   'vue/mustache-interpolation-spacing',
+  'vue/new-line-between-multi-line-property', // stylistic rule
+  'vue/no-bare-strings-in-template',
+  'vue/no-child-content',
+  'vue/no-console',
+  'vue/no-constant-condition',
+  'vue/no-custom-modifiers-on-v-model',
+  'vue/no-deprecated-filter',
+  'vue/no-deprecated-functional-template',
+  'vue/no-deprecated-html-element-is',
+  'vue/no-deprecated-inline-template',
+  'vue/no-deprecated-router-link-tag-prop',
+  'vue/no-deprecated-scope-attribute',
+  'vue/no-deprecated-slot-attribute',
+  'vue/no-deprecated-slot-scope-attribute',
+  'vue/no-deprecated-v-bind-sync',
+  'vue/no-deprecated-v-is',
+  'vue/no-deprecated-v-on-native-modifier',
+  'vue/no-deprecated-v-on-number-modifiers',
   'vue/no-dupe-v-else-if',
+  'vue/no-duplicate-attr-inheritance',
+  'vue/no-duplicate-attributes',
+  'vue/no-empty-component-block',
+  'vue/no-empty-pattern',
+  'vue/no-extra-parens', // stylistic rule + template parsing
+  'vue/no-implicit-coercion',
+  'vue/no-loss-of-precision',
   'vue/no-multi-spaces',
+  'vue/no-multiple-objects-in-class',
+  'vue/no-multiple-template-root',
+  'vue/no-parsing-error',
+  'vue/no-restricted-block',
+  'vue/no-restricted-class',
+  'vue/no-restricted-html-elements',
+  'vue/no-restricted-static-attribute',
+  'vue/no-restricted-syntax',
+  'vue/no-restricted-v-bind',
+  'vue/no-restricted-v-on',
+  'vue/no-root-v-if',
   'vue/no-spaces-around-equal-signs-in-attribute',
+  'vue/no-sparse-arrays',
+  'vue/no-static-inline-styles',
+  'vue/no-template-key',
   'vue/no-template-shadow',
+  'vue/no-template-target-blank',
+  'vue/no-textarea-mustache',
+  'vue/no-undef-components',
+  'vue/no-unsupported-features', // can not be up to date with vue versions + template parsing
+  'vue/no-unused-components',
+  'vue/no-unused-refs',
+  'vue/no-unused-vars',
+  'vue/no-use-v-else-with-v-for',
+  'vue/no-use-v-if-with-v-for',
+  'vue/no-useless-concat',
+  'vue/no-useless-mustaches',
+  'vue/no-useless-template-attributes',
+  'vue/no-useless-v-bind',
+  'vue/no-v-text-v-html-on-component',
+  'vue/no-v-text',
   'vue/no-v-for-template-key',
-  'vue/no-v-model-argument',
+  'vue/object-curly-newline', // stylistic rule + template parsing
+  'vue/object-curly-spacing', // stylistic rule + template parsing
+  'vue/object-property-newline', // stylistic rule + template parsing
+  'vue/object-shorthand',
+  'vue/operator-linebreak', // stylistic rule + template parsing
+  'vue/padding-line-between-blocks', // stylistic rule + template parsing
+  'vue/padding-line-between-tags', // stylistic rule + template parsing
+  'vue/padding-lines-in-component-definition', // stylistic rule
+  'vue/prefer-separate-static-class',
+  'vue/prefer-template',
+  'vue/prefer-true-attribute-shorthand',
+  'vue/quote-props',
+  'vue/require-component-is',
   'vue/require-explicit-emits',
+  'vue/require-explicit-slots',
+  'vue/require-toggle-inside-transition',
+  'vue/require-v-for-key',
+  'vue/restricted-component-names',
   'vue/singleline-html-element-content-newline',
+  'vue/slot-name-casing',
+  'vue/space-in-parens', // stylistic rule + template parsing
+  'vue/space-infix-ops', // stylistic rule + template parsing
+  'vue/space-unary-ops', // stylistic rule + template parsing
+  'vue/template-curly-spacing', // stylistic rule + template parsing
+  'vue/use-v-on-exact',
   'vue/v-bind-style',
+  'vue/v-for-delimiter-style',
+  'vue/v-if-else-key',
   'vue/v-on-event-hyphenation',
+  'vue/v-on-handler-style',
   'vue/v-on-style',
   'vue/v-slot-style',
-  'vue/valid-v-bind-sync',
+  'vue/valid-attribute-name',
+  'vue/valid-template-root',
   'vue/valid-v-bind',
   'vue/valid-v-cloak',
   'vue/valid-v-else-if',
@@ -135,6 +219,10 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'vue/valid-v-show',
   'vue/valid-v-slot',
   'vue/valid-v-text',
+
+  'vue/no-v-for-template-key-on-child',
+  'vue/no-v-model-argument',
+  'vue/valid-v-bind-sync',
 ]);
 
 /**
