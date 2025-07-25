@@ -207,65 +207,119 @@ fn check_loop_usage<'a>(
     let AstKind::VariableDeclarator(declarator) = declarator.kind() else {
         return;
     };
-    let Some(write_reference) =
-        ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())
+
+    let Some(assignment_expr) = find_assignment_expression(referenced_symbol_id, ctx) else {
+        return;
+    };
+
+    let Some(expression_type) =
+        get_spread_containing_expression_type(&assignment_expr.right, spread_span)
     else {
         return;
     };
-    // Directly check if the parent is an AssignmentExpression with the correct left-hand identifier
+
+    emit_loop_diagnostic_if_in_loop(
+        spread_node_id,
+        declarator.id.span(),
+        spread_span,
+        declaration.span,
+        expression_type,
+        ctx,
+    );
+}
+
+/// Find the assignment expression that writes to the referenced symbol
+fn find_assignment_expression<'a>(
+    referenced_symbol_id: SymbolId,
+    ctx: &LintContext<'a>,
+) -> Option<&'a oxc_ast::ast::AssignmentExpression<'a>> {
+    let write_reference =
+        ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())?;
     let parent_node = ctx.nodes().parent_node(write_reference.node_id());
 
-    let AstKind::AssignmentExpression(expr) = parent_node.kind() else {
-        return;
-    };
+    if let AstKind::AssignmentExpression(expr) = parent_node.kind() {
+        // Verify this assignment is to our symbol
+        if is_assignment_to_symbol(&expr.left, referenced_symbol_id, ctx) {
+            return Some(expr);
+        }
+    }
+    None
+}
 
-    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &expr.left {
+/// Check if the assignment target is our referenced symbol
+fn is_assignment_to_symbol(
+    assignment_target: &AssignmentTarget,
+    referenced_symbol_id: SymbolId,
+    ctx: &LintContext,
+) -> bool {
+    if let AssignmentTarget::AssignmentTargetIdentifier(ident) = assignment_target {
         let scoping = ctx.semantic().scoping();
         let reference = scoping.get_reference(ident.reference_id());
-        if let Some(symbol_id) = reference.symbol_id() {
-            if symbol_id != referenced_symbol_id {
-                return;
-            }
-        } else {
-            return;
-        }
+        reference.symbol_id() == Some(referenced_symbol_id)
     } else {
-        return;
+        false
     }
+}
 
-    // Now check the right side for array/object expression containing the spread
-    let right_expr = expr.right.get_inner_expression();
-    match right_expr {
+#[derive(Debug, Clone, Copy)]
+enum SpreadExpressionType {
+    Array,
+    Object,
+}
+
+/// Determine if the expression contains the spread and return its type
+fn get_spread_containing_expression_type(
+    expr: &Expression,
+    spread_span: Span,
+) -> Option<SpreadExpressionType> {
+    let inner_expr = expr.get_inner_expression();
+    match inner_expr {
         Expression::ArrayExpression(array_expr)
-            if array_expr.span.contains_inclusive(spread_span) => {}
+            if array_expr.span.contains_inclusive(spread_span) =>
+        {
+            Some(SpreadExpressionType::Array)
+        }
         Expression::ObjectExpression(object_expr)
-            if object_expr.span.contains_inclusive(spread_span) => {}
-        _ => return,
+            if object_expr.span.contains_inclusive(spread_span) =>
+        {
+            Some(SpreadExpressionType::Object)
+        }
+        _ => None,
     }
+}
 
+/// Emit appropriate diagnostic if the spread is within a loop
+fn emit_loop_diagnostic_if_in_loop(
+    spread_node_id: NodeId,
+    declarator_span: Span,
+    spread_span: Span,
+    declaration_span: Span,
+    expression_type: SpreadExpressionType,
+    ctx: &LintContext,
+) {
     for parent in ctx.nodes().ancestors(spread_node_id) {
         if let Some(loop_span) = get_loop_span(parent.kind()) {
-            if !parent.kind().span().contains_inclusive(declaration.span)
-                && parent.kind().span().contains_inclusive(spread_span)
+            let parent_span = parent.kind().span();
+            if !parent_span.contains_inclusive(declaration_span)
+                && parent_span.contains_inclusive(spread_span)
             {
-                match right_expr {
-                    Expression::ArrayExpression(_) => {
+                match expression_type {
+                    SpreadExpressionType::Array => {
                         ctx.diagnostic(loop_spread_likely_array_diagnostic(
-                            declarator.id.span(),
+                            declarator_span,
                             spread_span,
                             loop_span,
                         ));
                     }
-                    Expression::ObjectExpression(_) => {
+                    SpreadExpressionType::Object => {
                         ctx.diagnostic(loop_spread_likely_object_diagnostic(
-                            declarator.id.span(),
+                            declarator_span,
                             spread_span,
                             loop_span,
                         ));
                     }
-                    // we check above that the expression is either an array or object expression
-                    _ => unreachable!(),
                 }
+                return;
             }
         }
     }
