@@ -149,7 +149,6 @@ impl GetterReturn {
     /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
         let parent = ctx.nodes().parent_node(node.id());
-        dbg!(parent);
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
                 if matches!(mdef.kind, MethodDefinitionKind::Get) {
