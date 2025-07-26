@@ -1,8 +1,10 @@
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::AssignmentOperator};
+use oxc_ast::AstKind;
+use oxc_ast::ast::AssignmentOperator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodes, NodeId};
+use oxc_span::GetSpan;
 use oxc_span::Span;
 use oxc_syntax::class::ElementKind;
 
@@ -118,68 +120,87 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
         nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
-            (member_expr, AstKind::SimpleAssignmentTarget(_))
+            // Skip member expressions in identifier context
+            (member_expr, AstKind::IdentifierReference(_))
                 if member_expr.is_member_expression_kind() => {}
+            // Skip identifier references in assignment targets
             (
-                AstKind::SimpleAssignmentTarget(_),
+                AstKind::IdentifierReference(_),
                 AstKind::ArrayAssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_),
+                | AstKind::IdentifierReference(_),
             ) => {}
-            (
-                AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_),
-                AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
-                | AstKind::AssignmentTargetPropertyProperty(_),
-            ) => return false,
-            (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(assign_expr)) => {
-                if matches!(assign_expr.operator, AssignmentOperator::Assign) {
-                    return false;
-                }
-
-                // if an assignment expression is inside a call expression, it should be considered a read.
-                let is_parent_inside_call_expression =
-                    nodes.ancestors(parent.id()).any(|grand_parent_node| {
-                        matches!(grand_parent_node.kind(), AstKind::CallExpression(_))
-                    });
-
-                if is_parent_inside_call_expression {
+            // All these are read contexts for private fields
+            (AstKind::PrivateFieldExpression(_), parent_kind) if is_value_context(&parent_kind) => {
+                return true;
+            }
+            // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
+            (AstKind::PrivateFieldExpression(_), AstKind::AssignmentExpression(assign_expr)) => {
+                // Right-hand side of assignment is a read
+                if assign_expr.right.span() == curr.span() {
                     return true;
                 }
-
-                if matches!(
-                    assign_expr.operator,
-                    AssignmentOperator::LogicalOr
-                        | AssignmentOperator::LogicalAnd
-                        | AssignmentOperator::LogicalNullish
-                ) {
-                    return !matches!(
-                        nodes.parent_kind(parent.id()),
-                        AstKind::ExpressionStatement(_)
-                    );
+                // Compound assignment result used in a value context is a read
+                if assign_expr.operator != AssignmentOperator::Assign
+                    && is_compound_assignment_read(parent.id(), nodes)
+                {
+                    return true;
                 }
-
+                // Not a read otherwise
                 return false;
             }
-            (
-                AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_),
-                AstKind::AssignmentExpression(_),
-            )
-            | (_, AstKind::UpdateExpression(_)) => {
-                return !matches!(nodes.parent_kind(parent.id()), AstKind::ExpressionStatement(_));
+            // ForIn/ForOf: only right-hand side is a read
+            (AstKind::PrivateFieldExpression(_), AstKind::ForInStatement(for_in)) => {
+                if for_in.right.span() == curr.span() {
+                    return true;
+                }
             }
-            _ => return true,
+            (AstKind::PrivateFieldExpression(_), AstKind::ForOfStatement(for_of)) => {
+                if for_of.right.span() == curr.span() {
+                    return true;
+                }
+            }
+            // AssignmentTargetPropertyProperty: only computed property name is a read
+            (
+                AstKind::PrivateFieldExpression(_),
+                AstKind::AssignmentTargetPropertyProperty(prop),
+            ) => {
+                if prop.computed && prop.name.span() == curr.span() {
+                    return true;
+                }
+            }
+            _ => {
+                return false;
+            }
         }
     }
-
     true
+}
+
+/// Check if the given AST kind represents a context where a value is being read/used
+fn is_value_context(kind: &AstKind) -> bool {
+    matches!(
+        kind,
+        AstKind::ReturnStatement(_)
+            | AstKind::CallExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::VariableDeclarator(_)
+            | AstKind::ExpressionStatement(_)
+            | AstKind::PropertyDefinition(_)
+            | AstKind::ArrayExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::JSXExpressionContainer(_)
+            | AstKind::Argument(_)
+    )
+}
+
+/// Check if a compound assignment result is being used in a value context
+fn is_compound_assignment_read(parent_id: NodeId, nodes: &AstNodes) -> bool {
+    nodes
+        .ancestors(parent_id)
+        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+        .next()
+        .is_some_and(|(_, grandparent)| is_value_context(&grandparent.kind()))
 }
 
 #[test]

@@ -171,10 +171,14 @@ impl Rule for Namespace {
 
                 match parent.kind() {
                     member if member.is_member_expression_kind() => {
-                        if matches!(
-                            ctx.nodes().parent_kind(parent.id()),
-                            AstKind::SimpleAssignmentTarget(_)
-                        ) {
+                        let parent_kind = ctx.nodes().parent_kind(parent.id());
+                        let is_assignment = match parent_kind {
+                            AstKind::AssignmentExpression(assign_expr) => {
+                                assign_expr.left.span() == parent.span()
+                            }
+                            _ => false,
+                        };
+                        if is_assignment || matches!(parent_kind, AstKind::IdentifierReference(_)) {
                             ctx.diagnostic(assignment(member.span(), name));
                         }
 

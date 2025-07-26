@@ -431,7 +431,15 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::SimpleAssignmentTarget(_))
+        matches!(
+            self.parent,
+            AstNodes::ComputedMemberExpression(_)
+                | AstNodes::StaticMemberExpression(_)
+                | AstNodes::PrivateFieldExpression(_)
+                | AstNodes::IdentifierReference(_)
+                | AstNodes::AssignmentExpression(_)
+                | AstNodes::AssignmentTargetWithDefault(_)
+        )
     }
 }
 
@@ -689,7 +697,14 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
 }
 
 fn ts_as_or_satisfies_needs_parens(parent: &AstNodes<'_>) -> bool {
-    matches!(parent, AstNodes::SimpleAssignmentTarget(_))
+    matches!(
+        parent,
+        AstNodes::ComputedMemberExpression(_)
+            | AstNodes::StaticMemberExpression(_)
+            | AstNodes::PrivateFieldExpression(_)
+            | AstNodes::AssignmentExpression(_)
+            | AstNodes::AssignmentTargetWithDefault(_)
+    )
 }
 
 fn is_class_extends(parent: &AstNodes<'_>, span: Span) -> bool {

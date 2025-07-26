@@ -19,25 +19,25 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
             "flags": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "num",
-            "node_id": 8
+            "node_id": 7
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 1,
             "name": "num",
-            "node_id": 12
+            "node_id": 10
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 2,
             "name": "num",
-            "node_id": 16
+            "node_id": 13
           },
           {
             "flags": "ReferenceFlags(Read | Write)",
             "id": 3,
             "name": "num",
-            "node_id": 20
+            "node_id": 16
           }
         ]
       },
@@ -51,25 +51,25 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-express
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "obj",
-            "node_id": 32
+            "node_id": 27
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "obj",
-            "node_id": 38
+            "node_id": 32
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "obj",
-            "node_id": 44
+            "node_id": 37
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 7,
             "name": "obj",
-            "node_id": 50
+            "node_id": 42
           }
         ]
       }
