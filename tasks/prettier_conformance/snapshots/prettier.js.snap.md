@@ -1,4 +1,4 @@
-js compatibility: 436/699 (62.37%)
+js compatibility: 437/699 (62.52%)
 
 # Failed
 
@@ -15,7 +15,6 @@ js compatibility: 436/699 (62.37%)
 | js/assignment/issue-15534.js | 💥 | 25.00% |
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
-| js/assignment/lone-arg.js | 💥 | 86.49% |
 | js/assignment/sequence.js | 💥 | 71.43% |
 | js/assignment-comments/function.js | 💥 | 92.73% |
 | js/async/inline-await.js | 💥 | 25.00% |

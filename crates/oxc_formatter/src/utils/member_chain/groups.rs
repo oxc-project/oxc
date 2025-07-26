@@ -133,7 +133,7 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     /// This function is the inverse of the prettier function
     /// [Prettier applies]: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342
     pub(crate) fn is_member_call_chain(&self, f: &Formatter) -> bool {
-        self.groups.len() > 1 || self.has_comments(f)
+        self.groups.len() > 1
     }
 
     /// Returns an iterator over the groups.

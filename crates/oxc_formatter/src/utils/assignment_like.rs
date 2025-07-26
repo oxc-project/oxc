@@ -699,8 +699,9 @@ fn is_poorly_breakable_member_or_call_chain<'a, 'b>(
     }
 
     for call_expression in call_expressions {
-        if is_member_call_chain(&call_expression, f)
-            .is_ok_and(|is_member_call_chain| is_member_call_chain)
+        if f.comments().has_comments_in_span(call_expression.span)
+            || is_member_call_chain(&call_expression, f)
+                .is_ok_and(|is_member_call_chain| is_member_call_chain)
         {
             return false;
         }
