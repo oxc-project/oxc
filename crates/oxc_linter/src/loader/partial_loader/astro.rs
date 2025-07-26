@@ -2,7 +2,7 @@ use memchr::memmem::Finder;
 
 use oxc_span::{SourceType, Span};
 
-use crate::loader::JavaScriptSource;
+use crate::{frameworks::FrameworkOptions, loader::JavaScriptSource};
 
 use super::{SCRIPT_END, SCRIPT_START};
 
@@ -47,7 +47,7 @@ impl<'a> AstroPartialLoader<'a> {
         // move start to the end of the ASTRO_SPLIT
         let start = start + ASTRO_SPLIT.len() as u32;
         let js_code = Span::new(start, end).source_text(self.source_text);
-        Some(JavaScriptSource::partial(js_code, SourceType::ts(), start))
+        Some(JavaScriptSource::partial(js_code, SourceType::ts(), FrameworkOptions::None, start))
     }
 
     /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
@@ -94,6 +94,7 @@ impl<'a> AstroPartialLoader<'a> {
             results.push(JavaScriptSource::partial(
                 &self.source_text[js_start..js_end],
                 SourceType::ts(),
+                FrameworkOptions::None,
                 js_start as u32,
             ));
         }

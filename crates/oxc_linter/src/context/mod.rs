@@ -17,6 +17,7 @@ use crate::{
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    frameworks::FrameworkOptions,
 };
 
 mod host;
@@ -112,6 +113,10 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn module_record(&self) -> &ModuleRecord {
         self.parent.module_record()
+    }
+
+    pub fn frameworks_options(&self) -> &FrameworkOptions {
+        &self.parent.frameworks_options
     }
 
     /// Get the control flow graph for the current program.

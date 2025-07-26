@@ -50,7 +50,7 @@ pub use crate::{
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
-    frameworks::FrameworkFlags,
+    frameworks::{FrameworkFlags, FrameworkOptions},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -127,12 +127,19 @@ impl Linter {
         path: &Path,
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
+        framework_options: FrameworkOptions,
         allocator: &Allocator,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
+        let ctx_host = Rc::new(ContextHost::new(
+            path,
+            semantic,
+            module_record,
+            self.options,
+            config,
+            framework_options,
+        ));
 
         let rules = rules
             .iter()

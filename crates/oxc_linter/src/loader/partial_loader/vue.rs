@@ -2,6 +2,8 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
+use crate::frameworks::FrameworkOptions;
+
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
 pub struct VuePartialLoader<'a> {
@@ -52,6 +54,7 @@ impl<'a> VuePartialLoader<'a> {
 
         // parse `lang`
         let lang = Self::extract_lang_attribute(content);
+        let is_setup = content.contains("setup"); // check if "setup" is present, does not check if its inside an attribute
 
         let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
         if !lang.contains('x') {
@@ -70,7 +73,12 @@ impl<'a> VuePartialLoader<'a> {
         let source_text = &self.source_text[js_start..js_end];
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
-        Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
+        Some(JavaScriptSource::partial(
+            source_text,
+            source_type,
+            if is_setup { FrameworkOptions::VueSetup } else { FrameworkOptions::None },
+            js_start as u32,
+        ))
     }
 
     fn extract_lang_attribute(content: &str) -> &str {
@@ -115,6 +123,8 @@ impl<'a> VuePartialLoader<'a> {
 mod test {
     use oxc_span::SourceType;
 
+    use crate::FrameworkOptions;
+
     use super::{JavaScriptSource, VuePartialLoader};
 
     fn parse_vue(source_text: &str) -> JavaScriptSource<'_> {
@@ -132,6 +142,7 @@ mod test {
         "#;
 
         let result = parse_vue(source_text);
+        assert_eq!(result.framework_options, FrameworkOptions::None);
         assert_eq!(result.source_text, r#" console.log("hi") "#);
     }
 
@@ -229,7 +240,9 @@ mod test {
         let sources = VuePartialLoader::new(source_text).parse();
         assert_eq!(sources.len(), 2);
         assert_eq!(sources[0].source_text, "a");
+        assert_eq!(sources[0].framework_options, FrameworkOptions::None);
         assert_eq!(sources[1].source_text, "b");
+        assert_eq!(sources[1].framework_options, FrameworkOptions::VueSetup);
     }
 
     #[test]

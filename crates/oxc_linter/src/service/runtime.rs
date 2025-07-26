@@ -25,6 +25,7 @@ use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 use crate::{
     Fixer, Linter, Message,
     fixer::PossibleFixes,
+    frameworks::FrameworkOptions,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_arena_str,
@@ -524,6 +525,7 @@ impl Runtime {
                                 path,
                                 Rc::new(section.semantic.unwrap()),
                                 Arc::clone(&module_record),
+                                section.source.framework_options,
                                 allocator_guard,
                             ),
                             Err(errors) => errors
@@ -640,6 +642,7 @@ impl Runtime {
                                     Path::new(&module.path),
                                     Rc::new(section.semantic.unwrap()),
                                     Arc::clone(&module_record),
+                                    section.source.framework_options,
                                     allocator_guard,
                                 ),
                             };
@@ -763,6 +766,7 @@ impl Runtime {
                                         Path::new(&module.path),
                                         Rc::new(section.semantic.unwrap()),
                                         Arc::clone(&module_record),
+                                        section.source.framework_options,
                                         allocator_guard,
                                     ),
                                     Err(errors) => errors
@@ -893,8 +897,9 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+        let section_sources = PartialLoader::parse(ext, source_text).unwrap_or_else(|| {
+            vec![JavaScriptSource::partial(source_text, source_type, FrameworkOptions::None, 0)]
+        });
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
