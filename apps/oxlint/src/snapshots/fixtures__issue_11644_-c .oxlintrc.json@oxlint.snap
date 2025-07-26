@@ -1,13 +1,12 @@
 ---
 source: apps/oxlint/src/tester.rs
-assertion_line: 96
 ---
 ########## 
 arguments: -c .oxlintrc.json
 working directory: fixtures/issue_11644
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 159 rules using 1 threads.
+Finished in <variable>ms on 1 file with 160 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

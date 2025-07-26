@@ -11,10 +11,13 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic, Severity,
+};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    ResolvedLinterState, read_to_string,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -22,6 +25,10 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    tsgolint::{
+        MessageType, TsGoLintInput, TsGoLintInputFile, TsGoLintState, parse_tsgolint_output,
+        try_find_tsgolint_executable,
+    },
     walk::Walk,
 };
 
@@ -280,19 +287,47 @@ impl Runner for LintRunner {
 
         let lint_config = config_builder.build();
 
+        // Enable type-aware linting if `--tsconfig` is passed
+        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        let type_aware = basic_options.tsconfig.is_some();
+
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
+        let (mut diagnostic_service, tx_error) =
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let linter = Linter::new(
-            LintOptions::default(),
-            ConfigStore::new(lint_config, nested_configs, external_plugin_store),
-            self.external_linter,
-        )
-        .with_fix(fix_options.fix_kind())
-        .with_report_unused_directives(report_unused_directives);
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        let tsgolint_state = if type_aware {
+            Some(TsGoLintState {
+                error_sender: tx_error.clone(),
+                config_store: config_store.clone(),
+                executable_path: try_find_tsgolint_executable(options.cwd())
+                    .unwrap_or(PathBuf::from("tsgolint")),
+                cwd: options.cwd().to_path_buf(),
+                paths: paths.clone(),
+                rules: config_store
+                    .rules()
+                    .iter()
+                    .filter_map(|(rule, status)| {
+                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                            Some((*status, rule.clone()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+            })
+        } else {
+            None
+        };
+
+        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+            .with_fix(fix_options.fix_kind())
+            .with_report_unused_directives(report_unused_directives);
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -313,12 +348,153 @@ impl Runner for LintRunner {
             }
         }
 
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-
         let number_of_rules = linter.number_of_rules();
 
         let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
+
+        if type_aware
+            && let Some(tsgolint_state) = tsgolint_state
+            && let Some(tsconfig) = tsconfig
+            && !tsgolint_state.rules.is_empty()
+            && !tsgolint_state.paths.is_empty()
+        {
+            // Feed JSON into STDIN of tsgolint in this format:
+            // ```
+            // {
+            //   "files": [
+            //     {
+            //       "file_path": "/absolute/path/to/file.ts",
+            //       "rules": ["rule-1", "another-rule"]
+            //     }
+            //   ]
+            // }
+            // ```
+            let json_input = TsGoLintInput {
+                files: tsgolint_state
+                    .paths
+                    .iter()
+                    .map(|path| TsGoLintInputFile {
+                        file_path: path.to_string_lossy().to_string(),
+                        rules: tsgolint_state
+                            .rules
+                            .iter()
+                            .map(|(_, r)| r.name().to_owned())
+                            .collect(),
+                    })
+                    .collect(),
+            };
+
+            let handler = std::thread::spawn(move || {
+                // `./tsgolint headless --tsconfig /path/to/project/tsconfig.json --cwd /path/to/project
+                let child = std::process::Command::new(tsgolint_state.executable_path)
+                    .arg("headless")
+                    .arg("--tsconfig")
+                    .arg(tsconfig)
+                    .arg("--cwd")
+                    .arg(&tsgolint_state.cwd)
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .spawn();
+
+                let Ok(mut child) = child else {
+                    // For now, silently ignore errors if `tsgolint` does not appear to be installed, or cannot
+                    // be spawned correctly.
+                    return Ok(());
+                };
+
+                let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+                std::thread::spawn(move || {
+                    let json =
+                        serde_json::to_string(&json_input).expect("Failed to serialize JSON");
+
+                    stdin.write_all(json.as_bytes()).expect("Failed to write to tsgolint stdin");
+                });
+
+                // TODO: Stream diagnostics as they are emitted, rather than waiting
+                let output = child.wait_with_output().expect("Failed to wait for tsgolint process");
+
+                match parse_tsgolint_output(&output.stdout) {
+                    Ok(parsed) => {
+                        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> =
+                            FxHashMap::default();
+                        let mut severities: FxHashMap<String, Option<AllowWarnDeny>> =
+                            FxHashMap::default();
+
+                        let mut oxc_diagnostics: FxHashMap<PathBuf, Vec<OxcDiagnostic>> =
+                            FxHashMap::default();
+                        for tsgolint_diagnostic in parsed {
+                            // For now, ignore any `tsgolint` errors.
+                            if tsgolint_diagnostic.r#type == MessageType::Error {
+                                continue;
+                            }
+
+                            let path = tsgolint_diagnostic.file_path.clone();
+                            let resolved_config = resolved_configs
+                                .entry(path.clone())
+                                .or_insert_with(|| tsgolint_state.config_store.resolve(&path));
+
+                            let rule = tsgolint_diagnostic.rule.clone();
+                            let severity = severities.entry(rule).or_insert_with(|| {
+                                resolved_config.rules.iter().find_map(|(rule, status)| {
+                                    if rule.name() == tsgolint_diagnostic.rule {
+                                        Some(*status)
+                                    } else {
+                                        None
+                                    }
+                                })
+                            });
+
+                            let oxc_diagnostic: OxcDiagnostic = tsgolint_diagnostic.into();
+                            let Some(severity) = severity else {
+                                // If the severity is not found, we should not report the diagnostic
+                                continue;
+                            };
+                            let oxc_diagnostic =
+                                oxc_diagnostic.with_severity(if *severity == AllowWarnDeny::Deny {
+                                    Severity::Error
+                                } else {
+                                    Severity::Warning
+                                });
+
+                            oxc_diagnostics.entry(path.clone()).or_default().push(oxc_diagnostic);
+                        }
+
+                        for (file_path, diagnostics) in oxc_diagnostics {
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                tsgolint_state.cwd.clone(),
+                                file_path.clone(),
+                                &read_to_string(&file_path).unwrap_or_else(|_| String::new()),
+                                0,
+                                diagnostics,
+                            );
+                            tsgolint_state
+                                .error_sender
+                                .send((file_path.clone(), diagnostics))
+                                .expect("Failed to send diagnostic");
+                        }
+
+                        Ok(())
+                    }
+
+                    Err(err) => Err(format!("Failed to parse tsgolint output: {err}")),
+                }
+            });
+
+            match handler.join() {
+                Ok(Ok(())) => {
+                    // Successfully ran tsgolint
+                }
+                Ok(Err(err)) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
+                    return CliRunResult::TsGoLintError;
+                }
+                Err(err) => {
+                    print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+        }
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
@@ -1194,5 +1370,11 @@ mod test {
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsgolint() {
+        let args = &["fixtures/tsgolint", "--tsconfig", "fixtures/tsgolint/tsconfig.json"];
+        Tester::new().test_and_snapshot(args);
     }
 }

@@ -16,8 +16,8 @@ const rootManifest = JSON.parse(
 );
 
 const LIBC_MAPPING = {
-  'gnu': 'glibc',
-  'musl': 'musl',
+  gnu: 'glibc',
+  musl: 'musl',
 };
 
 function generateNativePackage(target) {
@@ -51,10 +51,7 @@ function generateNativePackage(target) {
     cpu: [arch],
     ...libc,
     publishConfig: {
-      executableFiles: [
-        'oxlint',
-        'oxc_language_server',
-      ],
+      executableFiles: ['oxlint', 'oxc_language_server'],
     },
   };
 
@@ -65,7 +62,10 @@ function generateNativePackage(target) {
   // Copy the binary
   const ext = platform === 'win32' ? '.exe' : '';
 
-  const oxlintBinSource = resolve(REPO_ROOT, `${OXLINT_BIN_NAME}-${target}${ext}`);
+  const oxlintBinSource = resolve(
+    REPO_ROOT,
+    `${OXLINT_BIN_NAME}-${target}${ext}`,
+  );
   const oxlintBinTarget = resolve(packageRoot, `${OXLINT_BIN_NAME}${ext}`);
 
   const oxlsBinSource = resolve(REPO_ROOT, `${OXLS_BIN_NAME}-${target}${ext}`);
@@ -92,8 +92,9 @@ function writeManifest() {
     rootManifest.version,
   ]);
 
-  manifestData['version'] = rootManifest.version;
-  manifestData['optionalDependencies'] = Object.fromEntries(nativePackages);
+  manifestData.version = rootManifest.version;
+  manifestData.optionalDependencies = Object.fromEntries(nativePackages);
+  manifestData.optionalDependencies['oxlint-tsgolint'] = '*';
 
   console.log(`Update manifest ${manifestPath}`);
   const content = JSON.stringify(manifestData);

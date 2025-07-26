@@ -64,7 +64,7 @@ working directory: fixtures/report_unused_directives
     `----
 
 Found 7 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 88 rules using 1 threads.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
