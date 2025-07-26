@@ -74,45 +74,30 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
     }
 
     fn is_simple_call_like_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(any_expression) = self {
-            if any_expression.is_call_like_expression() {
-                let mut is_import_call_expression = false;
-                let mut is_simple_callee = false;
-                let arguments = match any_expression {
-                    Expression::NewExpression(expr) => {
-                        let callee = &expr.callee;
-                        is_simple_callee = Self::from(callee).is_simple_impl(depth);
-                        &expr.arguments
-                    }
-                    Expression::CallExpression(expr) => {
-                        let callee = &expr.callee;
-                        is_simple_callee = Self::from(callee).is_simple_impl(depth);
-                        &expr.arguments
-                    }
-                    // Expression::ImportExpression(expr) => {
-                    //     is_import_call_expression = true;
-                    //     expr.arguments
-                    // }
-                    _ => unreachable!("The check is done inside `is_call_like_expression`"),
-                };
+        let Self::Expression(expr) = self else {
+            return false;
+        };
 
-                if !is_import_call_expression && !is_simple_callee {
-                    return false;
-                }
+        let mut is_simple_callee = false;
 
-                // This is a little awkward, but because we _increment_
-                // depth, we need to add it to the left and compare to the
-                // max we allow (2), versus just comparing `len <= depth`.
-                arguments.len() + usize::from(depth) <= 2
-                    && arguments
-                        .iter()
-                        .all(|argument| Self::new(argument).is_simple_impl(depth + 1))
-            } else {
-                false
+        let (callee, arguments) = match expr {
+            Expression::NewExpression(expr) => (&expr.callee, &expr.arguments),
+            Expression::CallExpression(expr) => (&expr.callee, &expr.arguments),
+            Expression::ImportExpression(expr) => {
+                return depth < 2 && expr.options.is_none();
             }
-        } else {
-            false
+            _ => return false,
+        };
+
+        if !Self::from(callee).is_simple_impl(depth) {
+            return false;
         }
+
+        // This is a little awkward, but because we _increment_
+        // depth, we need to add it to the left and compare to the
+        // max we allow (2), versus just comparing `len <= depth`.
+        arguments.len() + usize::from(depth) <= 2
+            && arguments.iter().all(|argument| Self::new(argument).is_simple_impl(depth + 1))
     }
 
     fn is_simple_member_expression(&self, depth: u8) -> bool {
