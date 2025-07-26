@@ -34,7 +34,7 @@ exports[`oxlint2 CLI > should load a custom plugin 1`] = `
   help: Remove the debugger statement
 
 Found 1 warning and 1 error.
-Finished in Xms on 1 file using X threads."
+Finished in Xms on 2 files using X threads."
 `;
 
 exports[`oxlint2 CLI > should load a custom plugin when configured in overrides 1`] = `
@@ -53,7 +53,7 @@ exports[`oxlint2 CLI > should load a custom plugin when configured in overrides 
   help: Remove the debugger statement
 
 Found 1 warning and 1 error.
-Finished in Xms on 1 file using X threads."
+Finished in Xms on 2 files using X threads."
 `;
 
 exports[`oxlint2 CLI > should load a custom plugin with multiple files 1`] = `
@@ -319,7 +319,7 @@ exports[`oxlint2 CLI > should load a custom plugin with multiple files 1`] = `
   help: Remove the debugger statement
 
 Found 20 warnings and 20 errors.
-Finished in Xms on 20 files using X threads."
+Finished in Xms on 21 files using X threads."
 `;
 
 exports[`oxlint2 CLI > should receive data via \`context\` 1`] = `
@@ -395,7 +395,7 @@ exports[`oxlint2 CLI > should report the correct severity when using a custom pl
   help: Remove the debugger statement
 
 Found 2 warnings and 0 errors.
-Finished in Xms on 1 file using X threads."
+Finished in Xms on 2 files using X threads."
 `;
 
 exports[`oxlint2 CLI > should work with multiple rules 1`] = `
@@ -430,5 +430,5 @@ exports[`oxlint2 CLI > should work with multiple rules 1`] = `
    \`----
 
 Found 1 warning and 3 errors.
-Finished in Xms on 1 file using X threads."
+Finished in Xms on 2 files using X threads."
 `;

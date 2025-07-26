@@ -119,15 +119,6 @@ impl Runner for LintRunner {
                     builder.add(&pattern).unwrap();
                 }
             }
-            if !oxlintrc.ignore_patterns.is_empty() {
-                let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
-                oxlintrc.ignore_patterns =
-                    Self::adjust_ignore_patterns(&self.cwd, &oxlint_wd, oxlintrc.ignore_patterns);
-                for pattern in &oxlintrc.ignore_patterns {
-                    let pattern = format!("!{pattern}");
-                    builder.add(&pattern).unwrap();
-                }
-            }
 
             let builder = builder.build().unwrap();
 
@@ -518,30 +509,6 @@ impl LintRunner {
             Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
             Ok(None)
-        }
-    }
-
-    fn adjust_ignore_patterns(
-        base: &PathBuf,
-        path: &PathBuf,
-        ignore_patterns: Vec<String>,
-    ) -> Vec<String> {
-        if base == path {
-            ignore_patterns
-        } else {
-            let relative_ignore_path =
-                path.strip_prefix(base).map_or_else(|_| PathBuf::from("."), Path::to_path_buf);
-
-            ignore_patterns
-                .into_iter()
-                .map(|pattern| {
-                    let prefix_len = pattern.bytes().take_while(|&c| c == b'!').count();
-                    let (prefix, pattern) = pattern.split_at(prefix_len);
-
-                    let adjusted_path = relative_ignore_path.join(pattern);
-                    format!("{prefix}{}", adjusted_path.to_string_lossy().cow_replace('\\', "/"))
-                })
-                .collect()
         }
     }
 }
@@ -1031,21 +998,6 @@ mod test {
         let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives", "test.js"];
 
         Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_adjust_ignore_patterns() {
-        let base = PathBuf::from("/project/root");
-        let path = PathBuf::from("/project/root/src");
-        let ignore_patterns =
-            vec![String::from("target"), String::from("!dist"), String::from("!!dist")];
-
-        let adjusted_patterns = LintRunner::adjust_ignore_patterns(&base, &path, ignore_patterns);
-
-        assert_eq!(
-            adjusted_patterns,
-            vec![String::from("src/target"), String::from("!src/dist"), String::from("!!src/dist")]
-        );
     }
 
     #[test]
