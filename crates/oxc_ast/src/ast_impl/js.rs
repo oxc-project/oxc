@@ -341,7 +341,7 @@ impl<'a> Expression<'a> {
     /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
-            && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+            || matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
     /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
