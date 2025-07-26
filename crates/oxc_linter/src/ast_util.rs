@@ -209,7 +209,7 @@ pub fn get_enclosing_function<'a, 'b>(
 }
 
 /// Returns if `arg` is the `n`th (0-indexed) argument of `call`.
-pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
+pub fn _is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
     let nth = &call.arguments[n];
     nth.span() == arg.span()
 }

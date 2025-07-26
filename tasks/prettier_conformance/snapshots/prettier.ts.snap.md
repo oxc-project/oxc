@@ -1,4 +1,4 @@
-ts compatibility: 242/573 (42.23%)
+ts compatibility: 232/573 (40.49%)
 
 # Failed
 
@@ -55,29 +55,33 @@ ts compatibility: 242/573 (42.23%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
 | typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 93.33% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
-| typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
-| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
+| typescript/argument-expansion/argument_expansion.ts | 💥 | 62.71% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 60.00% |
 | typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 79.17% |
+| typescript/arrow/16067.ts | 💥💥 | 73.47% |
+| typescript/arrow/arrow_regression.ts | 💥💥 | 71.43% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 64.57% |
-| typescript/as/assignment2.ts | 💥 | 91.18% |
+| typescript/as/assignment.ts | 💥 | 86.67% |
+| typescript/as/assignment2.ts | 💥 | 85.29% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
 | typescript/as/long-identifiers.ts | 💥 | 88.89% |
 | typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
 | typescript/as/ternary.ts | 💥 | 45.00% |
 | typescript/assert/comment.ts | 💥 | 0.00% |
-| typescript/assert/index.ts | 💥 | 75.00% |
+| typescript/assert/index.ts | 💥 | 60.71% |
 | typescript/assignment/issue-10846.ts | 💥 | 23.73% |
 | typescript/assignment/issue-10848.tsx | 💥 | 41.38% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
 | typescript/assignment/issue-12413.ts | 💥 | 3.03% |
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
+| typescript/assignment/issue-3122.ts | 💥 | 92.86% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 60.00% |
-| typescript/cast/generic-cast.ts | 💥 | 38.82% |
+| typescript/cast/generic-cast.ts | 💥 | 38.06% |
+| typescript/cast/hug-args.ts | 💥 | 87.50% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
@@ -114,7 +118,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 50.00% |
 | typescript/compiler/castOfAwait.ts | 💥 | 87.50% |
 | typescript/compiler/castParentheses.ts | 💥 | 63.64% |
-| typescript/compiler/castTest.ts | 💥 | 93.33% |
+| typescript/compiler/castTest.ts | 💥 | 90.00% |
 | typescript/compiler/checkInfiniteExpansionTermination.ts | 💥 | 80.00% |
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
@@ -178,7 +182,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/custom/typeParameters/callAndConstructSignatureLong.ts | 💥 | 18.18% |
 | typescript/custom/typeParameters/functionTypeLong.ts | 💥 | 50.00% |
 | typescript/custom/typeParameters/typeParametersLong.ts | 💥 | 0.00% |
-| typescript/custom/typeParameters/variables.ts | 💥 | 91.80% |
+| typescript/custom/typeParameters/variables.ts | 💥 | 85.25% |
 | typescript/declare/declare_class_fields.ts | 💥 | 91.67% |
 | typescript/declare/declare_enum.ts | 💥 | 0.00% |
 | typescript/declare/declare_function.ts | 💥 | 44.44% |
@@ -198,6 +202,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
+| typescript/end-of-line/multiline.ts | 💥💥💥 | 82.61% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/enum/enum.ts | 💥 | 52.17% |
 | typescript/enum/multiline.ts | 💥 | 0.00% |
@@ -209,7 +214,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/function-type/single-parameter.ts | 💥 | 50.00% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
 | typescript/functional-composition/pipe-function-calls-with-comments.ts | 💥 | 77.08% |
-| typescript/functional-composition/pipe-function-calls.ts | 💥 | 41.67% |
+| typescript/functional-composition/pipe-function-calls.ts | 💥 | 37.04% |
 | typescript/generic/arrow-return-type.ts | 💥 | 80.77% |
 | typescript/generic/issue-6899.ts | 💥 | 21.05% |
 | typescript/generic/object-method.ts | 💥 | 72.73% |
@@ -239,7 +244,10 @@ ts compatibility: 242/573 (42.23%)
 | typescript/keyword-types/conditional-types.ts | 💥 | 16.67% |
 | typescript/keywords/keywords-2.ts | 💥 | 79.41% |
 | typescript/keywords/keywords.ts | 💥 | 83.33% |
-| typescript/last-argument-expansion/decorated-function.tsx | 💥 | 26.55% |
+| typescript/last-argument-expansion/break.ts | 💥 | 76.47% |
+| typescript/last-argument-expansion/decorated-function.tsx | 💥 | 23.01% |
+| typescript/last-argument-expansion/edge_case.ts | 💥 | 70.00% |
+| typescript/last-argument-expansion/forward-ref.tsx | 💥 | 62.96% |
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 60.00% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
@@ -273,12 +281,13 @@ ts compatibility: 242/573 (42.23%)
 | typescript/rest/rest.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 60.87% |
-| typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 86.36% |
+| typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 64.52% |
+| typescript/satisfies-operators/assignment.ts | 💥💥 | 68.18% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 93.33% |
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/gt-lt.ts | 💥💥 | 0.00% |
+| typescript/satisfies-operators/hug-args.ts | 💥💥 | 50.00% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 30.00% |
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 16.67% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
@@ -294,7 +303,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
 | typescript/template-literals/expressions.ts | 💥 | 0.00% |
 | typescript/ternaries/indent.ts | 💥 | 21.28% |
-| typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
+| typescript/test-declarations/test_declarations.ts | 💥💥 | 25.00% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 76.77% |
 | typescript/trailing-comma/type-arguments.ts | 💥💥💥 | 10.53% |
@@ -317,13 +326,14 @@ ts compatibility: 242/573 (42.23%)
 | typescript/type-arguments-bit-shift-left-like/4.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 82.32% |
+| typescript/typeparams/class-method.ts | 💥 | 61.33% |
 | typescript/typeparams/const.ts | 💥 | 86.15% |
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 21.74% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |
-| typescript/typeparams/long-function-arg.ts | 💥 | 66.67% |
+| typescript/typeparams/long-function-arg.ts | 💥 | 56.41% |
 | typescript/typeparams/tagged-template-expression.ts | 💥 | 75.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
+| typescript/typeparams/print-width-120/issue-7542.tsx | 💥 | 47.37% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
 | typescript/union/inlining.ts | 💥 | 29.92% |

@@ -165,7 +165,8 @@ fn check_parents<'a>(
         | AstKind::IfStatement(_)
         | AstKind::ConditionalExpression(_)
         | AstKind::LogicalExpression(_) => {
-            return check_parents(parent_node, visited, InConditional(true), ctx);
+            return InConditional(true);
+            // return check_parents(parent_node, visited, InConditional(true), ctx);
         }
         AstKind::Function(function) => {
             let Some(ident) = &function.id else {
