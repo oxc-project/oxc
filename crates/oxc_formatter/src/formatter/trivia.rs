@@ -103,6 +103,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                     .unprinted_comments()
                     .iter()
                     .take_while(|comment| comment.span.end <= span.start);
+
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),

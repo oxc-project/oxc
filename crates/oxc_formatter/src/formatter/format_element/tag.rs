@@ -259,7 +259,7 @@ impl PartialEq for LabelId {
 }
 
 impl LabelId {
-    pub fn of<T: Label>(label: &T) -> Self {
+    pub fn of<T: Label>(label: T) -> Self {
         Self {
             value: label.id(),
             #[cfg(debug_assertions)]

@@ -30,7 +30,7 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::identifier::{ZWNBSP, is_identifier_name, is_line_terminator};
 
 use crate::{
-    format_args,
+    JsLabels, format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::*,
@@ -41,12 +41,12 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
-    utils::{assignment_like::AssignmentLike, write_arguments_multi_line},
-    write,
-    write::{
-        call_arguments::is_test_call_expression,
-        parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
+    utils::{
+        assignment_like::AssignmentLike, call_expression::is_test_call_expression,
+        member_chain::MemberChain, write_arguments_multi_line,
     },
+    write,
+    write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
 };
 
 use self::{
@@ -318,8 +318,113 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), ".", self.property()])
+        let is_member_chain = {
+            let mut recording = f.start_recording();
+            write!(recording, [self.object()])?;
+            recording.stop().has_label(LabelId::of(JsLabels::MemberChain))
+        };
+
+        let layout = layout(self, is_member_chain)?;
+
+        match layout {
+            StaticMemberLayout::NoBreak => {
+                let format_no_break =
+                    format_with(|f| write!(f, [operator_token(self.optional()), self.property()]));
+
+                if is_member_chain {
+                    write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)])
+                } else {
+                    write!(f, [format_no_break])
+                }
+            }
+            StaticMemberLayout::BreakAfterObject => {
+                write!(
+                    f,
+                    [group(&indent(&format_args![
+                        soft_line_break(),
+                        operator_token(self.optional()),
+                        self.property(),
+                    ]))]
+                )
+            }
+        }
     }
+}
+
+#[derive(Debug, Copy, Clone)]
+enum StaticMemberLayout {
+    /// Forces that there's no line break between the object, operator, and member
+    NoBreak,
+
+    /// Breaks the static member expression after the object if the whole expression doesn't fit on a single line
+    BreakAfterObject,
+}
+
+fn operator_token(optional: bool) -> &'static str {
+    if optional { "?." } else { "." }
+}
+
+fn layout<'a>(
+    node: &AstNode<'a, StaticMemberExpression<'a>>,
+    is_member_chain: bool,
+) -> FormatResult<StaticMemberLayout> {
+    let parent = node.parent;
+    let object = &node.object;
+
+    let is_nested = match parent {
+        AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
+            let no_break = match object {
+                Expression::CallExpression(call_expression) => {
+                    !call_expression.arguments.is_empty()
+                }
+                Expression::TSNonNullExpression(non_null_assertion) => {
+                    match &non_null_assertion.expression {
+                        Expression::CallExpression(call_expression) => {
+                            !call_expression.arguments.is_empty()
+                        }
+                        _ => false,
+                    }
+                }
+                _ => false,
+            };
+
+            if no_break || is_member_chain {
+                return Ok(StaticMemberLayout::NoBreak);
+            }
+            true
+        }
+        AstNodes::StaticMemberExpression(_) | AstNodes::ComputedMemberExpression(_) => true,
+        _ => false,
+    };
+
+    if !is_nested && matches!(object, Expression::Identifier(_)) {
+        return Ok(StaticMemberLayout::NoBreak);
+    }
+
+    let mut first_non_static_member_ancestor = parent;
+    while matches!(
+        first_non_static_member_ancestor,
+        AstNodes::StaticMemberExpression(_)
+            | AstNodes::ComputedMemberExpression(_)
+            // Skip it
+            | AstNodes::SimpleAssignmentTarget(_)
+    ) {
+        first_non_static_member_ancestor = first_non_static_member_ancestor.parent();
+    }
+
+    let layout = match first_non_static_member_ancestor {
+        AstNodes::NewExpression(_) => StaticMemberLayout::NoBreak,
+        AstNodes::AssignmentExpression(assignment) => {
+            if matches!(assignment.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+                StaticMemberLayout::BreakAfterObject
+            } else {
+                StaticMemberLayout::NoBreak
+            }
+        }
+        _ => StaticMemberLayout::BreakAfterObject,
+    };
+
+    Ok(layout)
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
@@ -343,8 +448,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             )
         }) && !callee.needs_parentheses(f)
         {
-            // TODO
-            write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
+            MemberChain::from_call_expression(&self, f)?.fmt(f)
         } else {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])

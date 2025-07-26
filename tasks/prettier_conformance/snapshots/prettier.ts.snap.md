@@ -1,4 +1,4 @@
-ts compatibility: 242/573 (42.23%)
+ts compatibility: 244/573 (42.58%)
 
 # Failed
 
@@ -11,18 +11,18 @@ ts compatibility: 242/573 (42.23%)
 | jsx/comments/in-tags.js | 💥 | 46.81% |
 | jsx/comments/jsx-tag-comment-after-prop.js | 💥 | 42.11% |
 | jsx/comments/like-a-comment-in-jsx-text.js | 💥 | 0.00% |
-| jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 45.33% |
+| jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 39.38% |
 | jsx/escape/nbsp.js | 💥 | 70.00% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 44.00% |
 | jsx/fragment/fragment.js | 💥 | 78.57% |
 | jsx/ignore/jsx_ignore.js | 💥 | 67.31% |
-| jsx/jsx/array-iter.js | 💥💥💥💥 | 24.53% |
+| jsx/jsx/array-iter.js | 💥💥💥💥 | 25.49% |
 | jsx/jsx/arrow.js | 💥💥💥💥 | 32.26% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
-| jsx/jsx/await.js | 💥💥💥💥 | 15.00% |
+| jsx/jsx/await.js | 💥💥💥💥 | 14.63% |
 | jsx/jsx/conditional-expression.js | 💥💥💥💥 | 64.10% |
-| jsx/jsx/expression.js | 💥💥💥💥 | 35.78% |
+| jsx/jsx/expression.js | 💥💥💥💥 | 36.36% |
 | jsx/jsx/flow_fix_me.js | 💥💥💥💥 | 0.00% |
 | jsx/jsx/html_escape.js | 💥💥✨✨ | 16.67% |
 | jsx/jsx/hug.js | 💥💥💥💥 | 29.03% |
@@ -34,8 +34,8 @@ ts compatibility: 242/573 (42.23%)
 | jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/jsx/return-statement.js | 💥💥💥💥 | 74.47% |
 | jsx/jsx/spacing.js | 💥💥💥💥 | 40.00% |
-| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 26.67% |
-| jsx/last-line/last_line.js | 💥💥 | 44.51% |
+| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 25.00% |
+| jsx/last-line/last_line.js | 💥💥 | 38.75% |
 | jsx/last-line/single_prop_multiline_string.js | 💥💥 | 22.88% |
 | jsx/multiline-assign/test.js | 💥 | 28.00% |
 | jsx/newlines/test.js | 💥 | 35.29% |
@@ -49,7 +49,7 @@ ts compatibility: 242/573 (42.23%)
 | jsx/spread/child.js | 💥 | 33.33% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 21.58% |
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
-| jsx/text-wrap/test.js | 💥 | 33.71% |
+| jsx/text-wrap/test.js | 💥 | 33.68% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 72.00% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
@@ -82,6 +82,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/test2.ts | 💥 | 56.25% |
 | typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 44.44% |
@@ -208,8 +209,6 @@ ts compatibility: 242/573 (42.23%)
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/single-parameter.ts | 💥 | 50.00% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
-| typescript/functional-composition/pipe-function-calls-with-comments.ts | 💥 | 77.08% |
-| typescript/functional-composition/pipe-function-calls.ts | 💥 | 41.67% |
 | typescript/generic/arrow-return-type.ts | 💥 | 80.77% |
 | typescript/generic/issue-6899.ts | 💥 | 21.05% |
 | typescript/generic/object-method.ts | 💥 | 72.73% |
@@ -247,7 +246,6 @@ ts compatibility: 242/573 (42.23%)
 | typescript/method/method-signature.ts | 💥 | 93.75% |
 | typescript/method/semi.ts | 💥 | 42.86% |
 | typescript/method/type_literal_optional_method.ts | 💥 | 0.00% |
-| typescript/method-chain/comment.ts | 💥 | 0.00% |
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/module/namespace_function.ts | 💥 | 66.67% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
@@ -293,7 +291,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
 | typescript/template-literals/expressions.ts | 💥 | 0.00% |
-| typescript/ternaries/indent.ts | 💥 | 21.28% |
+| typescript/ternaries/indent.ts | 💥 | 29.47% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 76.77% |
@@ -317,7 +315,7 @@ ts compatibility: 242/573 (42.23%)
 | typescript/type-arguments-bit-shift-left-like/4.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 82.32% |
+| typescript/typeparams/class-method.ts | 💥 | 84.18% |
 | typescript/typeparams/const.ts | 💥 | 86.15% |
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 21.74% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |
