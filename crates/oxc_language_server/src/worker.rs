@@ -125,6 +125,7 @@ impl WorkspaceWorker {
 
     fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
         old_options.config_path != new_options.config_path
+            || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind() != new_options.fix_kind()
             || old_options.unused_disable_directives != new_options.unused_disable_directives
