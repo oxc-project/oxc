@@ -252,7 +252,6 @@ impl<'a, 'b> Format<'a> for MemberChain<'a, 'b> {
 
         let format_content = format_with(|f| {
             if has_comments || self.groups_should_break(f)? {
-                dbg!(&self.head);
                 write!(f, [group(&format_expanded)])
             } else {
                 // TODO: Comment out the following code without any effect in Biome.
