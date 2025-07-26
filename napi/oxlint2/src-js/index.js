@@ -176,9 +176,9 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   initCompiledVisitor();
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i];
-    const { rule: { create }, context } = registeredRules[ruleId];
+    const { rule, context } = registeredRules[ruleId];
     setupContextForFile(context, i, filePath);
-    const visitor = create(context);
+    const visitor = rule.create(context);
     addVisitorToCompiled(visitor);
   }
   const needsVisit = finalizeCompiledVisitor();
