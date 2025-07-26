@@ -159,7 +159,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
-    let argument = None;
+    let mut argument: Option<&Argument<'_>> = None;
 
     while !matches!(node.kind(), AstKind::Program(_)) {
         let parent = ctx.nodes().parent_node(node.id());
@@ -179,15 +179,55 @@ fn is_in_array_or_iter<'a, 'b>(
                 if is_outside_containing_function {
                     return None;
                 }
+
+                // Check if this arrow function is an argument to a TARGET_METHOD call
+                if let AstKind::CallExpression(call) = ctx.nodes().parent_kind(parent.id()) {
+                    if let Some(member_expr) =
+                        call.callee.without_parentheses().as_member_expression()
+                    {
+                        if let Some((_, ident)) = member_expr.static_property_info() {
+                            if TARGET_METHODS.contains(&ident) {
+                                if let Some(found_arg) = call.arguments.iter().find(|arg| match arg
+                                {
+                                    Argument::SpreadElement(_) => false,
+                                    _ => arg.to_expression().span() == arrow_expr.span,
+                                }) {
+                                    argument = Some(found_arg);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 is_outside_containing_function = true;
             }
-            AstKind::Function(_) => {
+            AstKind::Function(func) => {
                 if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
                     return None;
                 }
                 if is_outside_containing_function {
                     return None;
                 }
+
+                // Check if this function is an argument to a TARGET_METHOD call
+                if let AstKind::CallExpression(call) = ctx.nodes().parent_kind(parent.id()) {
+                    if let Some(member_expr) =
+                        call.callee.without_parentheses().as_member_expression()
+                    {
+                        if let Some((_, ident)) = member_expr.static_property_info() {
+                            if TARGET_METHODS.contains(&ident) {
+                                if let Some(found_arg) = call.arguments.iter().find(|arg| match arg
+                                {
+                                    Argument::SpreadElement(_) => false,
+                                    _ => arg.to_expression().span() == func.span,
+                                }) {
+                                    argument = Some(found_arg);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
@@ -223,10 +263,59 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
             }
-            // TODO:
-            // AstKind::Argument(arg) => {
-            //     argument = Some(arg);
-            // }
+            // Handle non-function expressions that could be arguments (like literals, identifiers, etc.)
+            // TODO: look for opportunity to simplify this
+            AstKind::BooleanLiteral(_)
+            | AstKind::NullLiteral(_)
+            | AstKind::NumericLiteral(_)
+            | AstKind::BigIntLiteral(_)
+            | AstKind::RegExpLiteral(_)
+            | AstKind::StringLiteral(_)
+            | AstKind::TemplateLiteral(_)
+            | AstKind::IdentifierReference(_)
+            | AstKind::MetaProperty(_)
+            | AstKind::Super(_)
+            | AstKind::AssignmentExpression(_)
+            | AstKind::AwaitExpression(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::Class(_)
+            | AstKind::ComputedMemberExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::ImportExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::NewExpression(_)
+            | AstKind::ObjectExpression(_)
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::PrivateFieldExpression(_)
+            | AstKind::SequenceExpression(_)
+            | AstKind::StaticMemberExpression(_)
+            | AstKind::TaggedTemplateExpression(_)
+            | AstKind::ThisExpression(_)
+            | AstKind::UnaryExpression(_)
+            | AstKind::UpdateExpression(_)
+            | AstKind::YieldExpression(_)
+            | AstKind::PrivateInExpression(_) => {
+                // Check if this expression is directly an argument to a TARGET_METHOD call
+                if let AstKind::CallExpression(call) = ctx.nodes().parent_kind(parent.id()) {
+                    if let Some(member_expr) =
+                        call.callee.without_parentheses().as_member_expression()
+                    {
+                        if let Some((_, ident)) = member_expr.static_property_info() {
+                            if TARGET_METHODS.contains(&ident) {
+                                let current_span = parent.kind().span();
+                                if let Some(found_arg) = call.arguments.iter().find(|arg| match arg
+                                {
+                                    Argument::SpreadElement(_) => false,
+                                    _ => arg.to_expression().span() == current_span,
+                                }) {
+                                    argument = Some(found_arg);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
         node = parent;
