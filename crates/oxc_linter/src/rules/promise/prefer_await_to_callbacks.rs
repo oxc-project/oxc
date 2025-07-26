@@ -77,7 +77,10 @@ impl Rule for PreferAwaitToCallbacks {
                         .as_member_expression()
                         .and_then(MemberExpression::static_property_name);
 
-                    if matches!(callee_property_name, Some("on" | "once" | "addEventListener" | "removeEventListener")) {
+                    if matches!(
+                        callee_property_name,
+                        Some("on" | "once" | "addEventListener" | "removeEventListener")
+                    ) {
                         return;
                     }
 
