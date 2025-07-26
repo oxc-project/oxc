@@ -166,7 +166,21 @@ impl<'a> Lexer<'a> {
         self.context = context;
     }
 
-    /// Main entry point
+    /// Read first token in file.
+    pub fn first_token(&mut self) -> Token {
+        // HashbangComment ::
+        //     `#!` SingleLineCommentChars?
+        let kind = if let Some([b'#', b'!']) = self.peek_2_bytes() {
+            // SAFETY: Next 2 bytes are `#!`
+            unsafe { self.read_hashbang_comment() }
+        } else {
+            self.read_next_token()
+        };
+        self.finish_next(kind)
+    }
+
+    /// Read next token in file.
+    /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
         let kind = self.read_next_token();
         self.finish_next(kind)
@@ -273,6 +287,7 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
+    #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
         self.trivia_builder.has_pure_comment = false;
         self.trivia_builder.has_no_side_effects_comment = false;
