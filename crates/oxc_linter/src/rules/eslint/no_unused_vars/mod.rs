@@ -78,11 +78,13 @@ declare_oxc_lint!(
     /// functions, etc.
     ///
     /// #### Ignored Files
-    /// This rule ignores `.d.ts` files and `.vue` files entirely. Variables,
-    /// classes, interfaces, and types declared in `.d.ts` files are generally
-    /// used by other files, which are not checked by Oxlint. Since Oxlint does
-    /// not support parsing Vue templates, this rule cannot tell if a variable
-    /// is used or unused in a Vue file.
+    /// This rule ignores `.d.ts` files. Variables, classes, interfaces, and types
+    /// declared in `.d.ts` files are generally used by other files, which are not
+    /// checked by Oxlint.
+    ///
+    /// This rule ignores `.vue` files that are not using `lang="tsx", or `lang="jsx"`.
+    /// Since Oxlint does not support parsing Vue templates, this rule cannot tell
+    /// if a variable is used or unused in a Vue file.
     ///
     /// #### Exported
     ///
@@ -217,13 +219,22 @@ impl Rule for NoUnusedVars {
     fn should_run(&self, ctx: &ContextHost) -> bool {
         // ignore .d.ts and vue/svelte/astro files.
         // 1. declarations have side effects (they get merged together)
-        // 2. vue/svelte/astro scripts declare variables that get used in the template, which
-        //    we can't detect
-        !ctx.source_type().is_typescript_definition()
-            && !ctx
-                .file_path()
-                .extension()
-                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
+        if ctx.source_type().is_typescript_definition() {
+            return false;
+        }
+
+        // 2. svelte/astro scripts declare variables that get used in the template we can't detect
+        if ctx.file_path().extension().is_some_and(|ext| ext == "svelte" || ext == "astro") {
+            return false;
+        }
+
+        // 2. vue scripts declare variables that get used in the template we can't detect, so we only
+        // support tsx/jsx where templates are not used
+        if ctx.file_path().extension().is_some_and(|ext| ext == "vue") && !ctx.source_type().is_jsx() {
+            return false;
+        }
+
+        return true;
     }
 }
 
