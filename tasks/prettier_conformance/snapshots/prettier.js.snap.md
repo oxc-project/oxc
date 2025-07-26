@@ -1,4 +1,4 @@
-js compatibility: 437/699 (62.52%)
+js compatibility: 440/699 (62.95%)
 
 # Failed
 
@@ -150,12 +150,9 @@ js compatibility: 437/699 (62.52%)
 | js/member/conditional.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 85.29% |
 | js/method-chain/comment.js | 💥 | 78.33% |
-| js/method-chain/complex-args.js | 💥 | 50.00% |
 | js/method-chain/conditional.js | 💥 | 43.14% |
 | js/method-chain/first_long.js | 💥 | 96.97% |
-| js/method-chain/issue-4125.js | 💥 | 94.80% |
 | js/method-chain/pr-7889.js | 💥 | 33.33% |
-| js/method-chain/print-width-120/constructor.js | 💥 | 50.00% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
 | js/no-semi/class.js | 💥✨ | 46.55% |
 | js/no-semi/comments.js | 💥✨ | 36.36% |
