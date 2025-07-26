@@ -551,7 +551,6 @@ impl<'a> Format<'a> for AssignmentLike<'a, '_> {
                     self.write_operator(f)?;
                 }
 
-                #[expect(clippy::match_same_arms)]
                 match layout {
                     AssignmentLikeLayout::OnlyLeft => Ok(()),
                     AssignmentLikeLayout::Fluid => {

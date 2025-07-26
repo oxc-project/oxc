@@ -868,7 +868,7 @@ fn format_signature<'a, 'b>(
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
-            write!(recording, cached_signature)?;
+            write!(recording, [cached_signature])?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);

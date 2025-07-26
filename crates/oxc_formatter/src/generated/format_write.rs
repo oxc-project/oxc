@@ -15,7 +15,6 @@ use crate::{
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Expression<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -356,7 +355,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Expression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -393,7 +391,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPropertyKind<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -419,7 +416,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPropertyKind<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PropertyKey<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -456,7 +452,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, PropertyKey<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, MemberExpression<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -490,7 +485,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MemberExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Argument<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = allocator.alloc(AstNodes::Argument(transmute_self(self)));
@@ -519,7 +513,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Argument<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -551,7 +544,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
@@ -612,7 +604,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -638,7 +629,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -667,7 +657,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetProperty<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -693,7 +682,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetProperty<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ChainElement<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -730,7 +718,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ChainElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Statement<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -906,7 +893,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Statement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Declaration<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -980,7 +966,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Declaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForStatementInit<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1009,7 +994,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatementInit<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForStatementLeft<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1038,7 +1022,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatementLeft<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingPatternKind<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1080,7 +1063,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPatternKind<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ClassElement<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1130,7 +1112,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ModuleDeclaration<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1188,7 +1169,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ModuleDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1222,7 +1202,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttributeKey<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1248,7 +1227,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttributeKey<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1293,7 +1271,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ModuleExportName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1327,7 +1304,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ModuleExportName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXElementName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1377,7 +1353,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXElementName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1411,7 +1386,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpression<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1440,7 +1414,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpression<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeItem<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1466,7 +1439,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeItem<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1492,7 +1464,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeValue<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1534,7 +1505,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttributeValue<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXChild<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1584,7 +1554,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXChild<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMemberName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1626,7 +1595,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMemberName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteral<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1684,7 +1652,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteral<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSType<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -1990,7 +1957,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleElement<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2027,7 +1993,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleElement<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2061,7 +2026,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSSignature<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2111,7 +2075,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSignature<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicateName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2137,7 +2100,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicateName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2163,7 +2125,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2189,7 +2150,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
@@ -2218,7 +2178,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleReference<'a>> {
-    #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
