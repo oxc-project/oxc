@@ -9,7 +9,7 @@ use crate::{
     config::LintConfig,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
-    frameworks,
+    frameworks::{self, FrameworkOptions},
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
@@ -63,6 +63,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
+    pub(super) frameworks_options: FrameworkOptions,
 }
 
 impl<'a> ContextHost<'a> {
@@ -74,6 +76,7 @@ impl<'a> ContextHost<'a> {
         module_record: Arc<ModuleRecord>,
         options: LintOptions,
         config: Arc<LintConfig>,
+        frameworks_options: FrameworkOptions,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 
@@ -98,6 +101,7 @@ impl<'a> ContextHost<'a> {
             file_path,
             config,
             frameworks: options.framework_hints,
+            frameworks_options,
         }
         .sniff_for_frameworks()
     }

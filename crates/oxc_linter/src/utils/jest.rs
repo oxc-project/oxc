@@ -311,7 +311,7 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::{ContextHost, ModuleRecord, options::LintOptions};
+    use crate::{ContextHost, ModuleRecord, frameworks::FrameworkOptions, options::LintOptions};
 
     #[test]
     fn test_is_jest_file() {
@@ -329,6 +329,7 @@ mod test {
                 Arc::new(ModuleRecord::default()),
                 LintOptions::default(),
                 Arc::default(),
+                FrameworkOptions::None,
             ))
             .spawn_for_test()
         };
