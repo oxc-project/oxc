@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-import-aliases): Unexpected import alias
+   ╭─[no_import_aliases.tsx:1:1]
+ 1 │ import values = require("values");
+   · ──────────────────────────────────
+   ╰────
+  help: Import aliases are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider using regular import syntax instead.
+
+  ⚠ typescript-eslint(no-import-aliases): Unexpected import alias
+   ╭─[no_import_aliases.tsx:1:1]
+ 1 │ import values = Values;
+   · ───────────────────────
+   ╰────
+  help: Import aliases are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider using regular import syntax instead.
+
+  ⚠ typescript-eslint(no-import-aliases): Unexpected import alias
+   ╭─[no_import_aliases.tsx:1:1]
+ 1 │ import utils = MyNamespace.Utils;
+   · ─────────────────────────────────
+   ╰────
+  help: Import aliases are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider using regular import syntax instead.
+
+  ⚠ typescript-eslint(no-import-aliases): Unexpected import alias
+   ╭─[no_import_aliases.tsx:1:8]
+ 1 │ export import values = require("values");
+   ·        ──────────────────────────────────
+   ╰────
+  help: Import aliases are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider using regular import syntax instead.
+
+  ⚠ typescript-eslint(no-import-aliases): Unexpected import alias
+   ╭─[no_import_aliases.tsx:1:19]
+ 1 │ module MyModule { import values = require("values"); }
+   ·                   ──────────────────────────────────
+   ╰────
+  help: Import aliases are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider using regular import syntax instead.

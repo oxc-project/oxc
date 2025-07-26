@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-parameter-properties): Unexpected parameter property
+   ╭─[no_parameter_properties.tsx:4:21]
+ 3 │                 constructor(
+ 4 │                     private value: number,
+   ·                     ─────────────────────
+ 5 │                 ) {}
+   ╰────
+  help: Parameter properties are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider declaring the property separately.
+
+  ⚠ typescript-eslint(no-parameter-properties): Unexpected parameter property
+   ╭─[no_parameter_properties.tsx:4:21]
+ 3 │                 constructor(
+ 4 │                     readonly value: number,
+   ·                     ──────────────────────
+ 5 │                 ) {}
+   ╰────
+  help: Parameter properties are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider declaring the property separately.
+
+  ⚠ typescript-eslint(no-parameter-properties): Unexpected parameter property
+   ╭─[no_parameter_properties.tsx:4:21]
+ 3 │                 constructor(
+ 4 │                     public value: number,
+   ·                     ────────────────────
+ 5 │                 ) {}
+   ╰────
+  help: Parameter properties are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider declaring the property separately.
+
+  ⚠ typescript-eslint(no-parameter-properties): Unexpected parameter property
+   ╭─[no_parameter_properties.tsx:4:21]
+ 3 │                 constructor(
+ 4 │                     protected value: number,
+   ·                     ───────────────────────
+ 5 │                 ) {}
+   ╰────
+  help: Parameter properties are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider declaring the property separately.
+
+  ⚠ typescript-eslint(no-parameter-properties): Unexpected parameter property
+   ╭─[no_parameter_properties.tsx:4:21]
+ 3 │                 constructor(
+ 4 │                     private readonly value: number,
+   ·                     ──────────────────────────────
+ 5 │                 ) {}
+   ╰────
+  help: Parameter properties are not erasable syntax and are incompatible with TypeScript's --erasableSyntaxOnly flag. Consider declaring the property separately.
