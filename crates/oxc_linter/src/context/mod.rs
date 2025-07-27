@@ -442,6 +442,10 @@ impl<'a> LintContext<'a> {
     pub fn frameworks(&self) -> FrameworkFlags {
         self.parent.frameworks
     }
+
+    pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
+        self.parent.other_file_hosts()
+    }
 }
 
 /// Gets the prefixed plugin name, given the short plugin name.
