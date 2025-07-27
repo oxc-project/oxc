@@ -28,7 +28,6 @@ pub struct ContextSubHost<'a> {
     /// `eslint-disable` or `eslint-disable-next-line`.
     pub(super) disable_directives: Rc<DisableDirectives<'a>>,
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
-    #[expect(dead_code)]
     pub(super) framework_options: FrameworkOptions,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
@@ -74,7 +73,25 @@ impl<'a> ContextSubHost<'a> {
             framework_options: frameworks_options,
         }
     }
+
+    /// Shared reference to the [`Semantic`] analysis
+    #[inline]
+    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+        &self.semantic
+    }
+
+    /// Shared reference to the [`ModuleRecord`]
+    #[inline]
+    pub fn module_record(&self) -> &ModuleRecord {
+        &self.module_record
+    }
+
+    /// Shared reference to the [`DisableDirectives`]
+    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+        &self.disable_directives
+    }
 }
+
 /// Stores shared information about a file being linted.
 ///
 /// When linting a file, there are a number of shared resources that are
@@ -360,6 +377,19 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn frameworks(&self) -> FrameworkFlags {
         self.frameworks
+    }
+
+    pub fn frameworks_options(&self) -> FrameworkOptions {
+        self.current_sub_host().framework_options
+    }
+
+    pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
+        self.sub_hosts
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| *index != *self.current_sub_host_index.borrow())
+            .map(|(_, sub_host)| sub_host)
+            .collect()
     }
 }
 
