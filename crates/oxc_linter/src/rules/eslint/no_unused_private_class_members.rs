@@ -191,6 +191,9 @@ fn is_value_context(kind: &AstKind) -> bool {
             | AstKind::ObjectProperty(_)
             | AstKind::JSXExpressionContainer(_)
             | AstKind::Argument(_)
+            | AstKind::ChainExpression(_)
+            | AstKind::StaticMemberExpression(_)
+            | AstKind::ComputedMemberExpression(_)
     )
 }
 
