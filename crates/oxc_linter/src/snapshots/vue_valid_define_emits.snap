@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
+   ╭─[valid_define_emits.tsx:5:12]
+ 4 │                     const def = { notify: null }
+ 5 │                     defineEmits(def)
+   ·                     ────────────────
+ 6 │                   </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ vue(valid-define-emits): `defineEmits` has both a type-only emit and an argument.
+   ╭─[valid_define_emits.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineEmits<(e: 'notify')=>void>({ submit: null })
+   ·                     ──────────────────────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: remove the argument for better type inference.
+
+  ⚠ vue(valid-define-emits): `defineEmits` has been called multiple times.
+   ╭─[valid_define_emits.tsx:5:12]
+ 4 │                     defineEmits({ notify: null })
+ 5 │                     defineEmits({ submit: null })
+   ·                     ─────────────────────────────
+ 6 │                   </script>
+   ╰────
+  help: combine all events into a single `defineEmits` call.
+
+  ⚠ vue(valid-define-emits): Custom events are not defined.
+   ╭─[valid_define_emits.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineEmits()
+   ·                     ─────────────
+ 5 │                   </script>
+   ╰────
+  help: Define at least one event in `defineEmits`.
