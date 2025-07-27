@@ -31,7 +31,7 @@ working directory: fixtures/extends_config
   help: Remove the debugger statement
 
 Found 3 warnings and 0 errors.
-Finished in <variable>ms on 4 files with 87 rules using 1 threads.
+Finished in <variable>ms on 4 files with 88 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
