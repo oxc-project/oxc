@@ -181,7 +181,13 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_declaration_symbol_id, function_name, function_body, reporter_span) =
+        let (
+            function_declaration_symbol_id,
+            function_name,
+            function_body,
+            reporter_span,
+            function_scope_id,
+        ) =
             match node.kind() {
                 AstKind::Function(function) => {
                     if function.is_typescript_syntax() {
@@ -215,6 +221,7 @@ impl Rule for ConsistentFunctionScoping {
                                 Span::sized(function.span.start, 8),
                                 |func_binding_ident| func_binding_ident.span,
                             ),
+                            func_scope_id,
                         )
                     } else if let Some(function_id) = &function.id {
                         (
@@ -222,6 +229,7 @@ impl Rule for ConsistentFunctionScoping {
                             Some(function_id.name),
                             function_body,
                             function_id.span(),
+                            func_scope_id,
                         )
                     } else {
                         return;
@@ -237,6 +245,7 @@ impl Rule for ConsistentFunctionScoping {
                         Some(binding_ident.name),
                         &arrow_function.body,
                         binding_ident.span(),
+                        arrow_function.scope_id(),
                     )
                 }
                 _ => return,
@@ -273,10 +282,8 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         let parent_scope_ids = {
-            let mut current_scope_id =
-                ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
+            let mut current_scope_id = function_scope_id;
             let mut parent_scope_ids = FxHashSet::default();
-            parent_scope_ids.insert(current_scope_id);
             while let Some(parent_scope_id) = ctx.scoping().scope_parent_id(current_scope_id) {
                 parent_scope_ids.insert(parent_scope_id);
                 current_scope_id = parent_scope_id;
@@ -749,6 +756,7 @@ fn test() {
             ",
             None,
         ),
+        ("function outer() { { let x; var inner = () => x; } return inner; }", None),
     ];
 
     let fail = vec![
