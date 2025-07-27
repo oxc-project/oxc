@@ -276,7 +276,7 @@ impl Runner for LintRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
         let lint_config = config_builder.build();
 
@@ -294,24 +294,7 @@ impl Runner for LintRunner {
         .with_fix(fix_options.fix_kind())
         .with_report_unused_directives(report_unused_directives);
 
-        let tsconfig = basic_options.tsconfig;
-        if let Some(path) = tsconfig.as_ref() {
-            if path.is_file() {
-                options = options.with_tsconfig(path);
-            } else {
-                let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
 
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "The tsconfig file {:?} does not exist, Please provide a valid tsconfig file.\n",
-                        path.to_string_lossy().cow_replace('\\', "/")
-                    ),
-                );
-
-                return CliRunResult::InvalidOptionTsConfig;
-            }
-        }
 
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
@@ -820,14 +803,7 @@ mod test {
         Tester::new().test_and_snapshot(args);
     }
 
-    #[test]
-    fn test_tsconfig_option() {
-        // passed
-        Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
 
-        // failed
-        Tester::new().test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
-    }
 
     #[test]
     fn test_enable_vitest_rule_without_plugin() {
@@ -920,11 +896,132 @@ mod test {
     }
 
     #[test]
-    fn test_overrides() {
-        let args_1 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"];
-        let args_2 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"];
-        let args_3 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"];
-        Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+    fn test_print_rules() {
+        Tester::new().test(&["--rules"]);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_root() {
+        // Test that files in the root use the root tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/test_root_file.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_app() {
+        // Test that files in packages/app use the app's tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/packages/app/src/main.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_lib() {
+        // Test that files in packages/lib use the lib's tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/packages/lib/src/helper.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_lib_tests() {
+        // Test that files in packages/lib/tests still use the lib's tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/packages/lib/tests/lib.test.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_multiple_files() {
+        // Test multiple files from different directories
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/test_root_file.ts",
+            "fixtures/tsconfig_discovery/packages/app/src/main.ts",
+            "fixtures/tsconfig_discovery/packages/lib/src/helper.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_cross_module() {
+        // Test cross-module imports with different tsconfig contexts
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/packages/app/src/cross_module.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_discovery_bad_import() {
+        // Test that imports fail when path alias is not defined in the file's tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_discovery/.oxlintrc.json",
+            "fixtures/tsconfig_discovery/packages/lib/src/bad_import.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_workspace_test_file() {
+        // Test the edge case where foo.test.ts should use the workspace root tsconfig
+        // not src/tsconfig.json (which excludes test files)
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_workspace/.oxlintrc.json",
+            "fixtures/tsconfig_workspace/src/foo.test.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_workspace_regular_file() {
+        // Test that regular source files use src/tsconfig.json
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_workspace/.oxlintrc.json",
+            "fixtures/tsconfig_workspace/src/bar.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsconfig_workspace_both_files() {
+        // Test both files together to ensure each uses the correct tsconfig
+        let args = &[
+            "--import-plugin",
+            "-c",
+            "fixtures/tsconfig_workspace/.oxlintrc.json",
+            "fixtures/tsconfig_workspace/src/foo.test.ts",
+            "fixtures/tsconfig_workspace/src/bar.ts",
+        ];
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]

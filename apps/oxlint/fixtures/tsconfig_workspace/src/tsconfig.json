@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "outDir": "../dist",
+        "baseUrl": ".",
+        "paths": {
+            "@src/*": ["./*"]
+        }
+    },
+    "exclude": ["**/*.test.ts"]
+}

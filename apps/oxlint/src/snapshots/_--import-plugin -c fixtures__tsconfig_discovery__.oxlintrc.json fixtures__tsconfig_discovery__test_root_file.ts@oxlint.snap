@@ -1,0 +1,23 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --import-plugin -c fixtures/tsconfig_discovery/.oxlintrc.json fixtures/tsconfig_discovery/test_root_file.ts
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Identifier 'libFunction' is imported but never used.
+   ,-[fixtures/tsconfig_discovery/test_root_file.ts:5:10]
+ 4 | // This import should fail because @lib is not defined in root tsconfig
+ 5 | import { libFunction } from '@lib/index';
+   :          ^^^^^|^^^^^
+   :               `-- 'libFunction' is imported here
+ 6 | 
+   `----
+  help: Consider removing this import.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

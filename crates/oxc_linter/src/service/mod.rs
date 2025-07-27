@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    path::{Path, PathBuf},
+    path::Path,
     sync::Arc,
 };
 
@@ -18,9 +18,7 @@ pub mod offset_to_position;
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
-    /// TypeScript `tsconfig.json` path for reading path alias and project references
-    tsconfig: Option<PathBuf>,
-
+    /// Whether to enable cross-module resolution.
     cross_module: bool,
 }
 
@@ -30,23 +28,10 @@ impl LintServiceOptions {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
+        Self { cwd: cwd.into(), cross_module: false }
     }
 
-    #[inline]
-    #[must_use]
-    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
-    where
-        T: Into<PathBuf>,
-    {
-        let tsconfig = tsconfig.into();
-        // Should this be canonicalized?
-        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
-        debug_assert!(tsconfig.is_file());
 
-        self.tsconfig = Some(tsconfig);
-        self
-    }
 
     #[inline]
     #[must_use]

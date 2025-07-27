@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --import-plugin -c fixtures/tsconfig_discovery/.oxlintrc.json fixtures/tsconfig_discovery/packages/app/src/cross_module.ts
+working directory: 
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

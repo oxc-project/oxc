@@ -1,0 +1,32 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --import-plugin -c fixtures/tsconfig_discovery/.oxlintrc.json fixtures/tsconfig_discovery/packages/lib/tests/lib.test.ts
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'result' is declared but never used. Unused variables should start with a '_'.
+   ,-[fixtures/tsconfig_discovery/packages/lib/tests/lib.test.ts:6:7]
+ 5 | // Test that would fail if wrong tsconfig is used
+ 6 | const result = libFunction();
+   :       ^^^|^^
+   :          `-- 'result' is declared here
+ 7 | const helperResult = helper();
+   `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'helperResult' is declared but never used. Unused variables should start with a '_'.
+   ,-[fixtures/tsconfig_discovery/packages/lib/tests/lib.test.ts:7:7]
+ 6 | const result = libFunction();
+ 7 | const helperResult = helper();
+   :       ^^^^^^|^^^^^
+   :             `-- 'helperResult' is declared here
+   `----
+  help: Consider removing this declaration.
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

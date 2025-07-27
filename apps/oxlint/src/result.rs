@@ -4,7 +4,7 @@ use std::process::{ExitCode, Termination};
 pub enum CliRunResult {
     None,
     InvalidOptionConfig,
-    InvalidOptionTsConfig,
+
     InvalidOptionSeverityWithoutFilter,
     InvalidOptionSeverityWithoutPluginName,
     InvalidOptionSeverityWithoutRuleName,
@@ -32,7 +32,7 @@ impl Termination for CliRunResult {
             | Self::LintNoWarningsAllowed
             | Self::LintMaxWarningsExceeded
             | Self::InvalidOptionConfig
-            | Self::InvalidOptionTsConfig
+
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
             | Self::InvalidOptionSeverityWithoutRuleName => ExitCode::FAILURE,

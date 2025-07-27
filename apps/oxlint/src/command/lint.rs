@@ -76,10 +76,6 @@ pub struct BasicOptions {
     #[bpaf(long, short, argument("./oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
-    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
-    #[bpaf(argument("./tsconfig.json"), hide_usage)]
-    pub tsconfig: Option<PathBuf>,
-
     /// Initialize oxlint configuration with default values
     #[bpaf(switch, hide_usage)]
     pub init: bool,
@@ -228,7 +224,6 @@ pub struct EnablePlugins {
     pub typescript_plugin: OverrideToggle,
 
     /// Enable the experimental import plugin and detect ESM problems.
-    /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
 

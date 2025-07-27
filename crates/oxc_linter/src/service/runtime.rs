@@ -5,7 +5,7 @@ use std::{
     mem::take,
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{Arc, mpsc},
+    sync::{Arc, Mutex, mpsc},
 };
 
 use indexmap::IndexSet;
@@ -40,7 +40,12 @@ pub struct Runtime {
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
     pub(super) linter: Linter,
-    resolver: Option<Resolver>,
+    /// Cache of resolvers per tsconfig path
+    resolver_cache: Arc<Mutex<FxHashMap<Option<PathBuf>, Arc<Resolver>>>>,
+    /// Cache of tsconfig paths for directories
+    tsconfig_cache: Arc<Mutex<FxHashMap<PathBuf, Option<PathBuf>>>>,
+    /// Whether cross-module resolution is enabled
+    cross_module: bool,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 
@@ -179,15 +184,14 @@ impl Runtime {
         allocator_pool: AllocatorPool,
         options: LintServiceOptions,
     ) -> Self {
-        let resolver = options.cross_module.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
         Self {
             allocator_pool,
             cwd: options.cwd,
             paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher),
             linter,
-            resolver,
+            resolver_cache: Arc::new(Mutex::new(FxHashMap::default())),
+            tsconfig_cache: Arc::new(Mutex::new(FxHashMap::default())),
+            cross_module: options.cross_module,
             file_system: Box::new(OsFileSystem),
         }
     }
@@ -205,7 +209,51 @@ impl Runtime {
         self
     }
 
-    fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
+    /// Find the tsconfig.json file for a given file path by walking up the directory tree
+    fn find_tsconfig_for_file(&self, file_path: &Path) -> Option<PathBuf> {
+        // Check cache first
+        if let Some(dir) = file_path.parent() {
+            if let Ok(cache) = self.tsconfig_cache.lock() {
+                if let Some(cached) = cache.get(dir) {
+                    return cached.clone();
+                }
+            }
+        }
+        
+        let mut current_dir = file_path.parent()?;
+        let result = loop {
+            let tsconfig_path = current_dir.join("tsconfig.json");
+            if tsconfig_path.is_file() {
+                break Some(tsconfig_path);
+            }
+            
+            // Stop at the cwd or root directory
+            if current_dir == self.cwd.as_ref() || current_dir.parent().is_none() {
+                break None;
+            }
+            
+            current_dir = current_dir.parent()?;
+        };
+        
+        // Cache the result
+        if let Some(dir) = file_path.parent() {
+            if let Ok(mut cache) = self.tsconfig_cache.lock() {
+                cache.insert(dir.to_path_buf(), result.clone());
+            }
+        }
+        
+        result
+    }
+
+    /// Get or create a resolver for the given tsconfig path
+    fn get_or_create_resolver(&self, tsconfig_path: Option<PathBuf>) -> Arc<Resolver> {
+        let mut cache = self.resolver_cache.lock().unwrap();
+        cache.entry(tsconfig_path.clone()).or_insert_with(|| {
+            Arc::new(Self::create_resolver(tsconfig_path))
+        }).clone()
+    }
+
+    fn create_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
         use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
         let tsconfig = tsconfig_path.and_then(|path| {
             path.is_file().then_some(TsconfigOptions {
@@ -272,7 +320,7 @@ impl Runtime {
         tx_error: &'a DiagnosticSender,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
-        if self.resolver.is_none() {
+        if !self.cross_module {
             self.paths.par_iter().for_each(|path| {
                 let output = self.process_path(path, check_syntax_errors, tx_error);
                 let Some(entry) =
@@ -962,8 +1010,12 @@ impl Runtime {
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
-        // If import plugin is enabled.
-        if let Some(resolver) = &self.resolver {
+        // If cross-module resolution is enabled.
+        if self.cross_module {
+            // Find the tsconfig for this file
+            let tsconfig_path = self.find_tsconfig_for_file(path);
+            let resolver = self.get_or_create_resolver(tsconfig_path);
+            
             // Retrieve all dependent modules from this module.
             let dir = path.parent().unwrap();
             resolved_module_requests = module_record

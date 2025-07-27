@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "../dist/test",
+        "baseUrl": ".",
+        "paths": {
+            "@src/*": ["./*"],
+            "@test/*": ["./*"]
+        }
+    },
+    "include": ["**/*.test.ts"],
+    "references": [
+        { "path": "./tsconfig.json" }
+    ]
+}

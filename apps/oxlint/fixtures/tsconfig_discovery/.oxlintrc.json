@@ -1,0 +1,7 @@
+{
+  "plugins": ["import"],
+  "rules": {
+    "import/no-unresolved": "error",
+    "import/no-extraneous-dependencies": "error"
+  }
+}

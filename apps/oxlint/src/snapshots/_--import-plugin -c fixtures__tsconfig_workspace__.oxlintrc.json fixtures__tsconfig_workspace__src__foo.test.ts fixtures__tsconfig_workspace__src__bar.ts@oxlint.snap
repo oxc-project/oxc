@@ -1,0 +1,23 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --import-plugin -c fixtures/tsconfig_workspace/.oxlintrc.json fixtures/tsconfig_workspace/src/foo.test.ts fixtures/tsconfig_workspace/src/bar.ts
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Identifier 'testHelper' is imported but never used.
+   ,-[fixtures/tsconfig_workspace/src/bar.ts:6:10]
+ 5 | // This import should fail if the correct tsconfig is used
+ 6 | import { testHelper } from '@test/test-helper';
+   :          ^^^^^|^^^^
+   :               `-- 'testHelper' is imported here
+ 7 | 
+   `----
+  help: Consider removing this import.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 2 files with 52 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
