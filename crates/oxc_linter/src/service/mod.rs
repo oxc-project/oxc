@@ -1,8 +1,4 @@
-use std::{
-    ffi::OsStr,
-    path::Path,
-    sync::Arc,
-};
+use std::{ffi::OsStr, path::Path, sync::Arc};
 
 use oxc_diagnostics::DiagnosticSender;
 
@@ -30,8 +26,6 @@ impl LintServiceOptions {
     {
         Self { cwd: cwd.into(), cross_module: false }
     }
-
-
 
     #[inline]
     #[must_use]

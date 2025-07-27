@@ -294,8 +294,6 @@ impl Runner for LintRunner {
         .with_fix(fix_options.fix_kind())
         .with_report_unused_directives(report_unused_directives);
 
-
-
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
@@ -802,8 +800,6 @@ mod test {
         let args = &["fixtures/svelte/debugger.svelte"];
         Tester::new().test_and_snapshot(args);
     }
-
-
 
     #[test]
     fn test_enable_vitest_rule_without_plugin() {
