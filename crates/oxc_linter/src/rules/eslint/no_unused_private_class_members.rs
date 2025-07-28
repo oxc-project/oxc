@@ -195,6 +195,8 @@ fn is_value_context(kind: &AstKind) -> bool {
             | AstKind::StaticMemberExpression(_)
             | AstKind::ComputedMemberExpression(_)
             | AstKind::TemplateLiteral(_)
+            | AstKind::UnaryExpression(_)
+            | AstKind::IfStatement(_)
     )
 }
 
