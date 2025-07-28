@@ -53,7 +53,7 @@ importers:
         version: 3.7.1
       memfs:
         specifier: ^4.17.2
-        version: 4.22.1
+        version: 4.23.0
       moment:
         specifier: ^2.30.1
         version: 2.30.1
@@ -1211,8 +1211,8 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
-  memfs@4.22.1:
-    resolution: {integrity: sha512-uycbtnFiSEgN+bD+UUoM4yjcZGc0N/XGxgvpag+LiHE5AgDPjMq+0n4vQqKAA/dinEWqk0DeYSVZbSearHDYzw==}
+  memfs@4.23.0:
+    resolution: {integrity: sha512-SucHN2lcWf0jrnw+jP6FoVW6l/zGJiXfNMdApZzG0x/0mAIMdwAeR5mjfsCH5U3BoqpUEtqzz+dSQSO0H/eqxg==}
     engines: {node: '>= 4.0.0'}
 
   merge-descriptors@2.0.0:
@@ -3051,7 +3051,7 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  memfs@4.22.1:
+  memfs@4.23.0:
     dependencies:
       '@jsonjoy.com/json-pack': 1.4.0(tslib@2.8.1)
       '@jsonjoy.com/util': 1.8.0(tslib@2.8.1)
