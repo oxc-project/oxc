@@ -630,8 +630,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
                 if !self.rule.allow_arguments_explicitly_typed_as_any
                     && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
                 {
-                    // todo
-                    // if name.is_some_and(|n| self.rule.is_allowed_name(&n))
                     self.ctx.diagnostic(func_argument_is_explicitly_any(it.span));
                 }
                 return;
@@ -646,8 +644,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
             {
-                // todo
-                // if name.is_some_and(|n| self.rule.is_allowed_name(&n))
                 self.ctx.diagnostic(func_argument_is_explicitly_any(it.span));
             }
             return;
