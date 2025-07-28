@@ -160,6 +160,12 @@ mod test {
         test_options("var x = foo", "foo", &options);
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
+        // TypeError
+        test_options(
+            "var x = class extends (() => {}) {}",
+            "(class extends (() => {}) {})",
+            &options,
+        );
     }
 
     #[test]

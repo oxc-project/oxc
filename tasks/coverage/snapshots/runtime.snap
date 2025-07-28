@@ -2,7 +2,7 @@ commit: 4b5d36ab
 
 runtime Summary:
 AST Parsed     : 18254/18254 (100.00%)
-Positive Passed: 17310/18254 (94.83%)
+Positive Passed: 17309/18254 (94.82%)
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: obj['f'] descriptor should be enumerable; obj['f'] descriptor should be writable
 
@@ -2183,6 +2183,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-assigned.js
+Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-grouped.js
 Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all

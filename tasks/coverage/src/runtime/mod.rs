@@ -201,7 +201,7 @@ impl Test262RuntimeCase {
         };
 
         let mut text = Codegen::new()
-            .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+            .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })
             .with_scoping(symbol_table)
             .build(&program)
             .code;

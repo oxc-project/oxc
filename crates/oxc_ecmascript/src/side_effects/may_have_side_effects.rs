@@ -357,7 +357,11 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
         // Example cases: `class A extends 0 {}`, `class A extends (async function() {}) {}`
         // Considering these cases is difficult and requires to de-opt most classes with a super class.
         // To allow classes with a super class to be removed, we ignore this side effect.
-        if self.super_class.as_ref().is_some_and(|sup| sup.may_have_side_effects(ctx)) {
+        if self.super_class.as_ref().is_some_and(|sup| {
+            // `(class C extends (() => {}))` is TypeError.
+            matches!(sup.without_parentheses(), Expression::ArrowFunctionExpression(_))
+                || sup.may_have_side_effects(ctx)
+        }) {
             return true;
         }
 
