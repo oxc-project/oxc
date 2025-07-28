@@ -343,8 +343,13 @@ fn test() {
          }",
         r"class ChildProcess extends EventEmitter { #stdioObject; #createStdioObject() {} get stdio() { return (this.#stdioObject ??= this.#createStdioObject()); } }",
         "export class Foo { readonly #select = 123; override render() { return html`foo=${this.#select}`; } }",
-        " export class Foo { #listened = false; bar() { if (!this.#listened) return; this.#listened = false; } } ",
+        "export class Foo { #listened = false; bar() { if (!this.#listened) return; this.#listened = false; } } ",
         "export class RichText { #verticalScrollContainer; init() { const verticalScrollContainer = this.#verticalScrollContainer || (this.#verticalScrollContainer = this.verticalScrollContainerGetter?.() || null); } }",
+        "class Foo  { #a = false; on() { return this.#a ? [data] : data; } set setA(value) { this.#a = value; } }",
+        "class WeakReference { #i = 0; inc() { return ++this.#i; }; dec() { return --this.#i; } }",
+        "class Foo { #d; constructor(d) { this.#d = d || kDefaultD; } get getD(): string { return this.#d!; } }",
+        "class F { #o; initialize(output) { this.#o = output; } text(e) { return this.#o!.text(e); } }",
+        "class Foo { #a; constructor(a) { this.#a = a; }; b(b?: string): this { this.#a!.setB(b); return this; } resetA() { this.#a = undefined; } }",
     ];
 
     let fail = vec![
