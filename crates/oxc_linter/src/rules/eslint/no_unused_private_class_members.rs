@@ -1,11 +1,9 @@
 use itertools::Itertools;
-use oxc_ast::AstKind;
-use oxc_ast::ast::AssignmentOperator;
+use oxc_ast::{AstKind, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodes, NodeId};
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_semantic::{AstNode, NodeId, Semantic};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
@@ -101,7 +99,7 @@ impl Rule for NoUnusedPrivateClassMembers {
                 if element.is_private
                     && !ctx.classes().iter_private_identifiers(class_id).any(|ident| {
                         // If the element is a property, it must be read.
-                        (!element.kind.is_property() || is_read(ident.id, ctx.nodes()))
+                        (!element.kind.is_property() || is_read(ident.id, ctx.semantic()))
                             && ident.element_ids.contains(&element_id)
                     })
                 {
@@ -115,9 +113,22 @@ impl Rule for NoUnusedPrivateClassMembers {
     }
 }
 
-fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
-    for (curr, parent) in
-        nodes.ancestors(current_node_id).tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
+    for (curr, parent) in semantic
+        .nodes()
+        .ancestors(current_node_id)
+        .filter(|parent| {
+            !matches!(
+                parent.kind(),
+                AstKind::ParenthesizedExpression(_)
+                    | AstKind::TSAsExpression(_)
+                    | AstKind::TSSatisfiesExpression(_)
+                    | AstKind::TSInstantiationExpression(_)
+                    | AstKind::TSNonNullExpression(_)
+                    | AstKind::TSTypeAssertion(_)
+            )
+        })
+        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
             // Skip member expressions in identifier context
@@ -131,7 +142,7 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::IdentifierReference(_),
             ) => {}
             // All these are read contexts for private fields
-            (AstKind::PrivateFieldExpression(_), parent_kind) if is_value_context(&parent_kind) => {
+            (AstKind::PrivateFieldExpression(_), _) if is_value_context(parent, semantic) => {
                 return true;
             }
             // AssignmentExpression: right-hand side is a read, compound assignment result in value context is a read
@@ -142,7 +153,7 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 }
                 // Compound assignment result used in a value context is a read
                 if assign_expr.operator != AssignmentOperator::Assign
-                    && is_compound_assignment_read(parent.id(), nodes)
+                    && is_compound_assignment_read(parent.id(), semantic)
                 {
                     return true;
                 }
@@ -169,6 +180,14 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                     return true;
                 }
             }
+            (
+                AstKind::PrivateFieldExpression(_),
+                AstKind::ConditionalExpression(conditional_expr),
+            ) => {
+                if conditional_expr.test.span() == curr.span() {
+                    return true;
+                }
+            }
             _ => {
                 return false;
             }
@@ -178,36 +197,46 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
 }
 
 /// Check if the given AST kind represents a context where a value is being read/used
-fn is_value_context(kind: &AstKind) -> bool {
-    matches!(
-        kind,
+fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
+    match kind.kind() {
         AstKind::ReturnStatement(_)
-            | AstKind::CallExpression(_)
-            | AstKind::BinaryExpression(_)
-            | AstKind::VariableDeclarator(_)
-            | AstKind::ExpressionStatement(_)
-            | AstKind::PropertyDefinition(_)
-            | AstKind::ArrayExpression(_)
-            | AstKind::ObjectProperty(_)
-            | AstKind::JSXExpressionContainer(_)
-            | AstKind::Argument(_)
-            | AstKind::ChainExpression(_)
-            | AstKind::StaticMemberExpression(_)
-            | AstKind::ComputedMemberExpression(_)
-            | AstKind::TemplateLiteral(_)
-            | AstKind::UnaryExpression(_)
-            | AstKind::IfStatement(_)
-            | AstKind::LogicalExpression(_)
-    )
+        | AstKind::CallExpression(_)
+        | AstKind::BinaryExpression(_)
+        | AstKind::VariableDeclarator(_)
+        | AstKind::PropertyDefinition(_)
+        | AstKind::ArrayExpression(_)
+        | AstKind::ObjectProperty(_)
+        | AstKind::JSXExpressionContainer(_)
+        | AstKind::Argument(_)
+        | AstKind::ChainExpression(_)
+        | AstKind::StaticMemberExpression(_)
+        | AstKind::ComputedMemberExpression(_)
+        | AstKind::TemplateLiteral(_)
+        | AstKind::UnaryExpression(_)
+        | AstKind::IfStatement(_)
+        | AstKind::LogicalExpression(_) => true,
+        AstKind::ParenthesizedExpression(_)
+        | AstKind::TSAsExpression(_)
+        | AstKind::TSSatisfiesExpression(_)
+        | AstKind::TSInstantiationExpression(_)
+        | AstKind::TSNonNullExpression(_)
+        | AstKind::TSTypeAssertion(_)
+        | AstKind::UpdateExpression(_) => {
+            is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
+        }
+
+        _ => false,
+    }
 }
 
 /// Check if a compound assignment result is being used in a value context
-fn is_compound_assignment_read(parent_id: NodeId, nodes: &AstNodes) -> bool {
-    nodes
+fn is_compound_assignment_read(parent_id: NodeId, semantic: &Semantic) -> bool {
+    semantic
+        .nodes()
         .ancestors(parent_id)
         .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
         .next()
-        .is_some_and(|(_, grandparent)| is_value_context(&grandparent.kind()))
+        .is_some_and(|(_, grandparent)| is_value_context(grandparent, semantic))
 }
 
 #[test]
@@ -373,7 +402,8 @@ fn test() {
         "export class Foo { readonly #select = 123; override render() { return html`foo=${this.#select}`; } }",
         "export class Foo { #listened = false; bar() { if (!this.#listened) return; this.#listened = false; } } ",
         "export class RichText { #verticalScrollContainer; init() { const verticalScrollContainer = this.#verticalScrollContainer || (this.#verticalScrollContainer = this.verticalScrollContainerGetter?.() || null); } }",
-        "class Foo  { #a = false; on() { return this.#a ? [data] : data; } set setA(value) { this.#a = value; } }",
+        "class Foo { #a = false; on(data) { return this.#a ? [data] : data; } set setA(value) { this.#a = value; } }",
+        "class Foo { #a = false; on(data) { return this.#a ? [data] : data; } }",
         "class WeakReference { #i = 0; inc() { return ++this.#i; }; dec() { return --this.#i; } }",
         "class Foo { #d; constructor(d) { this.#d = d || kDefaultD; } get getD(): string { return this.#d!; } }",
         "class F { #o; initialize(output) { this.#o = output; } text(e) { return this.#o!.text(e); } }",
