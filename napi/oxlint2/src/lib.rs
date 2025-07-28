@@ -22,6 +22,20 @@ mod generated {
 use generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
 #[napi]
+pub type JsLoadPluginCb = ThreadsafeFunction<
+    // Arguments
+    String, // Absolute path of plugin file
+    // Return value
+    Promise<String>, // `PluginLoadResult`, serialized to JSON
+    // Arguments (repeated)
+    String,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+#[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
@@ -40,19 +54,19 @@ pub type JsLintFileCb = ThreadsafeFunction<
     false,
 >;
 
-#[napi]
-pub type JsLoadPluginCb = ThreadsafeFunction<
-    // Arguments
-    String, // Absolute path of plugin file
-    // Return value
-    Promise<String>, // `PluginLoadResult`, serialized to JSON
-    // Arguments (repeated)
-    String,
-    // Error status
-    Status,
-    // CalleeHandled
-    false,
->;
+fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |plugin_name| {
+        Box::pin({
+            let cb = Arc::clone(&cb);
+            async move {
+                let result = cb.call_async(plugin_name).await?.into_future().await?;
+                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
+                Ok(plugin_load_result)
+            }
+        })
+    })
+}
 
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
@@ -152,20 +166,6 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             Ok(Err(e)) => Err(format!("Callback reported error: {e}").into()),
             Err(e) => Err(format!("Callback did not respond: {e}").into()),
         }
-    })
-}
-
-fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    let cb = Arc::new(cb);
-    Arc::new(move |plugin_name| {
-        Box::pin({
-            let cb = Arc::clone(&cb);
-            async move {
-                let result = cb.call_async(plugin_name).await?.into_future().await?;
-                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
-                Ok(plugin_load_result)
-            }
-        })
     })
 }
 
