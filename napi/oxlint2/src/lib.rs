@@ -5,7 +5,7 @@ use std::{
 
 use napi::{
     Status,
-    bindgen_prelude::{Promise, Uint8Array},
+    bindgen_prelude::{FnArgs, Promise, Uint8Array},
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
@@ -23,19 +23,34 @@ use generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
 #[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
-    (String, u32, Option<Uint8Array>, Vec<u32>),
-    String, /* Vec<LintFileResult> */
-    (String, u32, Option<Uint8Array>, Vec<u32>),
+    // Arguments
+    FnArgs<(
+        String,             // Absolute path of file to lint
+        u32,                // Buffer ID
+        Option<Uint8Array>, // Buffer (optional)
+        Vec<u32>,           // Array of rule IDs
+    )>,
+    // Return value
+    String, // `Vec<LintFileResult>`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>)>,
+    // Error status
     Status,
+    // CalleeHandled
     false,
 >;
 
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
-    String, /* PluginName */
-    Promise<String /* PluginLoadResult */>,
-    String, /* PluginName */
+    // Arguments
+    String, // Absolute path of plugin file
+    // Return value
+    Promise<String>, // `PluginLoadResult`, serialized to JSON
+    // Arguments (repeated)
+    String,
+    // Error status
     Status,
+    // CalleeHandled
     false,
 >;
 
@@ -113,7 +128,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
         // Send data to JS
         let status = cb.call_with_return_value(
-            (file_path, buffer_id, buffer, rule_ids),
+            FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {

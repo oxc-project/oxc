@@ -190,16 +190,7 @@ const diagnostics: DiagnosticReport[] = [];
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 // Run rules on a file.
-//
-// TODO(camc314): why do we have to destructure here?
-// In `./bindings.d.ts`, it doesn't indicate that we have to
-// (typed as `(filePath: string, bufferId: number, buffer: Uint8Array | undefined | null, ruleIds: number[])`).
-function lintFile([filePath, bufferId, buffer, ruleIds]: [
-  string,
-  number,
-  Uint8Array | undefined | null,
-  number[],
-]) {
+function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | undefined | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -274,8 +265,6 @@ function lintFile([filePath, bufferId, buffer, ruleIds]: [
 // --------------------
 
 // Call Rust, passing `loadPlugin` and `lintFile` as callbacks
-// TODO(camc314): why is there a `@ts-expect-error` here?
-// @ts-expect-error
 const success = await lint(loadPlugin, lintFile);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
