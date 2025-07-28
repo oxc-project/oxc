@@ -186,7 +186,6 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-            // println!("node_kind: {:?}", node_kind);
             match node_kind {
                 // Only check for actual assignment contexts, not member expression access
                 AstKind::ObjectAssignmentTarget(_)
