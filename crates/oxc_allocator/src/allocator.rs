@@ -8,6 +8,14 @@ use bumpalo::Bump;
 
 use oxc_data_structures::assert_unchecked;
 
+#[cfg(feature = "track_allocations")]
+use std::sync::atomic::{
+    AtomicUsize,
+    Ordering::{Relaxed, SeqCst},
+};
+#[cfg(feature = "track_allocations")]
+static NUM_ALLOC: AtomicUsize = AtomicUsize::new(0);
+
 /// A bump-allocated memory arena.
 ///
 /// # Anatomy of an Allocator
@@ -276,6 +284,10 @@ impl Allocator {
     pub fn alloc<T>(&self, val: T) -> &mut T {
         const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.fetch_add(1, Relaxed);
+        }
         self.bump.alloc(val)
     }
 
@@ -297,6 +309,10 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.fetch_add(1, Relaxed);
+        }
         self.bump.alloc_str(src)
     }
 
@@ -317,6 +333,10 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.fetch_add(1, Relaxed);
+        }
         self.bump.alloc_slice_copy(src)
     }
 
@@ -329,6 +349,10 @@ impl Allocator {
     ///
     /// Panics if reserving space matching `layout` fails.
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.fetch_add(1, Relaxed);
+        }
         self.bump.alloc_layout(layout)
     }
 
@@ -378,6 +402,11 @@ impl Allocator {
             isize::try_from(total_len).is_ok(),
             "attempted to create a string longer than `isize::MAX` bytes"
         );
+
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.fetch_add(1, Relaxed);
+        }
 
         // Create actual `&str` in a separate function, to ensure that `alloc_concat_strs_array`
         // is inlined, so that compiler has knowledge to remove the overflow checks above.
@@ -471,6 +500,10 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
+        #[cfg(feature = "track_allocations")]
+        {
+            NUM_ALLOC.store(0, SeqCst);
+        }
         self.bump.reset();
     }
 
@@ -569,6 +602,12 @@ impl Allocator {
             bytes += size;
         }
         bytes
+    }
+
+    /// Returns the total number of allocations that have been made in this [`Allocator`] instance.
+    #[cfg(feature = "track_allocations")]
+    pub fn num_alloc() -> usize {
+        NUM_ALLOC.load(SeqCst)
     }
 
     /// Get inner [`bumpalo::Bump`].

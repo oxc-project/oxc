@@ -48,3 +48,5 @@ default = ["regular_expression"]
 regular_expression = ["dep:oxc_regular_expression"]
 # Expose Lexer for benchmarks
 benchmarking = []
+# Enable tracking arena and system allocations
+track_allocations = ["oxc_allocator/track_allocations"]
