@@ -195,12 +195,12 @@ impl Runtime {
     pub fn with_file_system(
         &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &Self {
+    ) -> &mut Self {
         self.file_system = file_system;
         self
     }
 
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &Self {
+    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
         self.paths = paths.into_iter().collect();
         self
     }

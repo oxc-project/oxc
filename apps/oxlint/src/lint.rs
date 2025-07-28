@@ -321,14 +321,14 @@ impl LintRunner {
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
             let mut lint_service = LintService::new(linter, allocator_pool, options);
-            let _ = lint_service.with_paths(paths);
+            lint_service.with_paths(paths);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
             // This reads the source text into start of allocator, instead of the end.
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
             {
                 use crate::raw_fs::RawTransferFileSystem;
-                let _ = lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
 
             lint_service.run(&tx_error);
