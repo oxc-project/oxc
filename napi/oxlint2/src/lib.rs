@@ -158,13 +158,13 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
         );
 
         if status != Status::Ok {
-            return Err(format!("Failed to schedule callback: {status:?}").into());
+            return Err(format!("Failed to schedule callback: {status:?}"));
         }
 
         match rx.recv() {
             Ok(Ok(x)) => Ok(x),
-            Ok(Err(e)) => Err(format!("Callback reported error: {e}").into()),
-            Err(e) => Err(format!("Callback did not respond: {e}").into()),
+            Ok(Err(e)) => Err(format!("Callback reported error: {e}")),
+            Err(e) => Err(format!("Callback did not respond: {e}")),
         }
     })
 }
