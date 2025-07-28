@@ -54,7 +54,7 @@ interface Plugin {
 }
 
 // Absolute paths of plugins which have been loaded
-const registeredPluginPaths = new Set();
+const registeredPluginPaths = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, passed to `lintFile`.
