@@ -61,7 +61,7 @@ pub struct ExternalLinter {
 }
 
 impl ExternalLinter {
-    pub fn new(run: ExternalLinterCb, load_plugin: ExternalLinterLoadPluginCb) -> Self {
+    pub fn new(load_plugin: ExternalLinterLoadPluginCb, run: ExternalLinterCb) -> Self {
         Self { load_plugin, run }
     }
 }

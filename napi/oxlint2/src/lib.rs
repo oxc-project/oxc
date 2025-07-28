@@ -161,5 +161,5 @@ pub async fn lint(load_plugin: JsLoadPluginCb, run: JsRunCb) -> bool {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_run = wrap_run(run);
 
-    oxlint_lint(Some(ExternalLinter::new(rust_run, rust_load_plugin))).report() == ExitCode::SUCCESS
+    oxlint_lint(Some(ExternalLinter::new(rust_load_plugin, rust_run))).report() == ExitCode::SUCCESS
 }
