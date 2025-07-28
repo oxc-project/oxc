@@ -194,7 +194,6 @@ impl AstKind<'_> {
         use std::borrow::Cow;
 
         const COMPUTED: Cow<'static, str> = Cow::Borrowed("<computed>");
-        const UNKNOWN: Cow<'static, str> = Cow::Borrowed("<unknown>");
         const ANONYMOUS: Cow<'static, str> = Cow::Borrowed("<anonymous>");
         const DESTRUCTURE: Cow<'static, str> = Cow::Borrowed("<destructure>");
 
@@ -303,10 +302,6 @@ impl AstKind<'_> {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
             Self::Argument(_) => "Argument".into(),
-            Self::SimpleAssignmentTarget(a) => {
-                format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
-                    .into()
-            }
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),

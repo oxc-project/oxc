@@ -55,7 +55,6 @@ pub enum AstNodes<'a> {
     LogicalExpression(&'a AstNode<'a, LogicalExpression<'a>>),
     ConditionalExpression(&'a AstNode<'a, ConditionalExpression<'a>>),
     AssignmentExpression(&'a AstNode<'a, AssignmentExpression<'a>>),
-    SimpleAssignmentTarget(&'a AstNode<'a, SimpleAssignmentTarget<'a>>),
     ArrayAssignmentTarget(&'a AstNode<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
@@ -2343,7 +2342,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => n.span(),
             Self::ConditionalExpression(n) => n.span(),
             Self::AssignmentExpression(n) => n.span(),
-            Self::SimpleAssignmentTarget(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
@@ -2536,7 +2534,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => n.parent,
             Self::ConditionalExpression(n) => n.parent,
             Self::AssignmentExpression(n) => n.parent,
-            Self::SimpleAssignmentTarget(n) => n.parent,
             Self::ArrayAssignmentTarget(n) => n.parent,
             Self::ObjectAssignmentTarget(n) => n.parent,
             Self::AssignmentTargetRest(n) => n.parent,
@@ -2729,7 +2726,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => SiblingNode::from(n.inner),
             Self::ConditionalExpression(n) => SiblingNode::from(n.inner),
             Self::AssignmentExpression(n) => SiblingNode::from(n.inner),
-            Self::SimpleAssignmentTarget(n) => n.parent.as_sibling_node(),
             Self::ArrayAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::ObjectAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetRest(n) => SiblingNode::from(n.inner),
@@ -2922,7 +2918,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(_) => "LogicalExpression",
             Self::ConditionalExpression(_) => "ConditionalExpression",
             Self::AssignmentExpression(_) => "AssignmentExpression",
-            Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget",
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget",
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
@@ -4897,12 +4892,15 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
         let parent = self.parent;
         let node = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
-                AstNodes::SimpleAssignmentTarget(self.allocator.alloc(AstNode {
-                    inner: it.to_simple_assignment_target(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_simple_assignment_target(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
                 return self
@@ -4930,7 +4928,7 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTarget<'a>> {
 impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {

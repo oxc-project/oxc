@@ -1791,8 +1791,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
-        let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
-        self.enter_node(kind);
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
         if !self.current_reference_flags.is_write() {
@@ -1819,7 +1817,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_member_expression(it.to_member_expression());
             }
         }
-        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property_identifier(

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
+    ast::{AssignmentTarget, TSAsExpression, TSType, TSTypeAssertion, TSTypeName, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -125,8 +125,26 @@ impl PreferJestMocked {
 }
 
 fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    outermost_paren_parent(node, ctx)
-        .is_some_and(|parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
+    outermost_paren_parent(node, ctx).is_some_and(|parent| {
+        let parent_kind = parent.kind();
+        // Disallow fix if parent is AssignmentExpression and node is the left-hand side
+        if let AstKind::AssignmentExpression(assign_expr) = parent_kind {
+            if is_left_hand_side_of_assignment(&assign_expr.left, node) {
+                return false;
+            }
+        }
+        !matches!(
+            parent_kind,
+            AstKind::IdentifierReference(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+        )
+    })
+}
+
+/// Check if the current node is the left-hand side of an assignment expression
+fn is_left_hand_side_of_assignment(assignment_target: &AssignmentTarget, node: &AstNode) -> bool {
+    assignment_target.span() == node.span()
 }
 
 #[test]

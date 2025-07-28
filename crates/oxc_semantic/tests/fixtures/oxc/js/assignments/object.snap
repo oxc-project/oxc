@@ -25,13 +25,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/object.js
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "read",
-            "node_id": 28
+            "node_id": 26
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "read",
-            "node_id": 29
+            "node_id": 27
           }
         ]
       },
@@ -45,13 +45,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/object.js
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "write",
-            "node_id": 18
+            "node_id": 17
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 3,
             "name": "write",
-            "node_id": 25
+            "node_id": 23
           }
         ]
       }
