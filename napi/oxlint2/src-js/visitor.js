@@ -72,7 +72,7 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import types from '../../parser/generated/lazy/types.js';
+import types from '../dist/parser/generated/lazy/types.cjs';
 
 const { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } = types;
 
@@ -190,7 +190,9 @@ export function initCompiledVisitor() {
  */
 export function addVisitorToCompiled(visitor) {
   if (visitor === null || typeof visitor !== 'object') {
-    throw new TypeError('Visitor returned from `create` method must be an object');
+    throw new TypeError(
+      'Visitor returned from `create` method must be an object',
+    );
   }
 
   // Exit if is empty visitor
@@ -203,14 +205,18 @@ export function addVisitorToCompiled(visitor) {
   for (let name of keys) {
     const visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
-      throw new TypeError(`'${name}' property of visitor object is not a function`);
+      throw new TypeError(
+        `'${name}' property of visitor object is not a function`,
+      );
     }
 
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in visitor object`);
+    if (typeId === void 0) {
+      throw new Error(`Unknown node type '${name}' in visitor object`);
+    }
 
     const existing = compiledVisitor[typeId];
     if (typeId < LEAF_NODE_TYPES_COUNT) {
@@ -230,13 +236,15 @@ export function addVisitorToCompiled(visitor) {
         }
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
-        compiledVisitor[typeId] = isExit ? [existing, visitFn] : [visitFn, existing];
+        compiledVisitor[typeId] = isExit
+          ? [existing, visitFn]
+          : [visitFn, existing];
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {
       // Not leaf node - store enter+exit pair
       if (existing === null) {
-        const enterExit = compiledVisitor[typeId] = getEnterExitObject();
+        const enterExit = (compiledVisitor[typeId] = getEnterExitObject());
         if (isExit) {
           enterExit.exit = visitFn;
         } else {
@@ -332,7 +340,9 @@ function mergeVisitFns(visitFns) {
     mergers.push(merger);
   } else {
     merger = mergers[numVisitFns];
-    if (merger === null) merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    if (merger === null) {
+      merger = mergers[numVisitFns] = createMerger(numVisitFns);
+    }
   }
 
   // Merge functions
@@ -366,22 +376,22 @@ function createMerger(fnCount) {
 const mergers = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
-  (visit1, visit2) => node => {
+  (visit1, visit2) => (node) => {
     visit1(node);
     visit2(node);
   },
-  (visit1, visit2, visit3) => node => {
+  (visit1, visit2, visit3) => (node) => {
     visit1(node);
     visit2(node);
     visit3(node);
   },
-  (visit1, visit2, visit3, visit4) => node => {
+  (visit1, visit2, visit3, visit4) => (node) => {
     visit1(node);
     visit2(node);
     visit3(node);
     visit4(node);
   },
-  (visit1, visit2, visit3, visit4, visit5) => node => {
+  (visit1, visit2, visit3, visit4, visit5) => (node) => {
     visit1(node);
     visit2(node);
     visit3(node);

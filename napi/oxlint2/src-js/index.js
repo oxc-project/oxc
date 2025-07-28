@@ -9,8 +9,8 @@ import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCom
 // and need to make sure get same instance of modules as it uses internally,
 // otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
 const require = createRequire(import.meta.url);
-const { TOKEN } = require('../../parser/raw-transfer/lazy-common.js'),
-  walkProgram = require('../../parser/generated/lazy/walk.js');
+const { TOKEN } = require('../dist/parser/raw-transfer/lazy-common.cjs'),
+  walkProgram = require('../dist/parser/generated/lazy/walk.cjs');
 
 // --------------------
 // Plugin loading
@@ -42,7 +42,9 @@ async function loadPlugin(path) {
 
 async function loadPluginImpl(path) {
   if (registeredPluginPaths.has(path)) {
-    return JSON.stringify({ Failure: 'This plugin has already been registered' });
+    return JSON.stringify({
+      Failure: 'This plugin has already been registered',
+    });
   }
 
   const { default: plugin } = await import(path);
@@ -56,7 +58,10 @@ async function loadPluginImpl(path) {
 
   for (const [ruleName, rule] of Object.entries(plugin.rules)) {
     ruleNames.push(ruleName);
-    registeredRules.push({ rule, context: new Context(`${pluginName}/${ruleName}`) });
+    registeredRules.push({
+      rule,
+      context: new Context(`${pluginName}/${ruleName}`),
+    });
   }
 
   return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
@@ -194,7 +199,14 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
 
     const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
     const sourceIsAscii = sourceText.length === sourceByteLen;
-    const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
+    const ast = {
+      buffer,
+      sourceText,
+      sourceByteLen,
+      sourceIsAscii,
+      nodes: new Map(),
+      token: TOKEN,
+    };
 
     walkProgram(programPos, ast, compiledVisitor);
   }
