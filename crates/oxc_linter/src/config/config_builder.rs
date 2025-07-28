@@ -354,7 +354,9 @@ impl ConfigStoreBuilder {
             if let Some(existing_rule) = self.rules.get_mut(rule) {
                 *existing_rule = severity;
             } else {
-                self.rules.insert(rule.clone(), severity);
+                // Use read_json with empty config to apply rule defaults
+                let configured_rule = rule.read_json(serde_json::Value::Null);
+                self.rules.insert(configured_rule, severity);
             }
         }
     }
@@ -1142,5 +1144,32 @@ mod test {
         )
         .unwrap()
         .build()
+    }
+
+    #[test]
+    fn test_rule_defaults_applied_via_categories() {
+        // Test that rules enabled via categories get their default configuration applied
+        let config = config_store_from_str(
+            r#"
+            {
+                "plugins": ["typescript"],
+                "categories": {
+                    "restriction": "error"
+                }
+            }
+            "#,
+        );
+
+        // typescript/no-explicit-any should be enabled with default configuration
+        let no_explicit_any_rule = config
+            .rules()
+            .iter()
+            .find(|(r, _)| r.name() == "no-explicit-any" && r.plugin_name() == "typescript")
+            .map(|(r, _)| r);
+
+        assert!(
+            no_explicit_any_rule.is_some(),
+            "typescript/no-explicit-any should be enabled when restriction category is set"
+        );
     }
 }
