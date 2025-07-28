@@ -342,6 +342,9 @@ fn test() {
             }
          }",
         r"class ChildProcess extends EventEmitter { #stdioObject; #createStdioObject() {} get stdio() { return (this.#stdioObject ??= this.#createStdioObject()); } }",
+        "export class Foo { readonly #select = 123; override render() { return html`foo=${this.#select}`; } }",
+        " export class Foo { #listened = false; bar() { if (!this.#listened) return; this.#listened = false; } } ",
+        "export class RichText { #verticalScrollContainer; init() { const verticalScrollContainer = this.#verticalScrollContainer || (this.#verticalScrollContainer = this.verticalScrollContainerGetter?.() || null); } }",
     ];
 
     let fail = vec![
