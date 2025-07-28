@@ -34,7 +34,7 @@ jobs:
 
       - run: cargo ck
 
-      - uses: rust-lang/crates-io-auth-action@v1
+      - uses: rust-lang/crates-io-auth-action@e919bc7605cde86df457cf5b93c5e103838bd879 # v1.0.1
         id: auth
 
       - name: Run
