@@ -2,12 +2,11 @@ mod command;
 mod lint;
 mod output_formatter;
 mod result;
-mod runner;
 mod tester;
 mod walk;
 
 pub mod cli {
-    pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
+    pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
 }
 
 pub use oxc_linter::{
@@ -21,7 +20,7 @@ mod raw_fs;
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-use cli::{CliRunResult, LintRunner, Runner};
+use cli::{CliRunResult, LintRunner};
 use std::{ffi::OsStr, io::BufWriter};
 
 pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {

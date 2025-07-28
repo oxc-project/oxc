@@ -1,8 +1,6 @@
 #[cfg(test)]
 use crate::cli::{LintRunner, lint_command};
 #[cfg(test)]
-use crate::runner::Runner;
-#[cfg(test)]
 use cow_utils::CowUtils;
 #[cfg(test)]
 use lazy_regex::Regex;

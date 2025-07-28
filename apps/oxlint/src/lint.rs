@@ -20,7 +20,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
+    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -32,10 +32,8 @@ pub struct LintRunner {
     external_linter: Option<ExternalLinter>,
 }
 
-impl Runner for LintRunner {
-    type Options = LintCommand;
-
-    fn new(options: Self::Options, external_linter: Option<ExternalLinter>) -> Self {
+impl LintRunner {
+    pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
@@ -43,7 +41,7 @@ impl Runner for LintRunner {
         }
     }
 
-    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
