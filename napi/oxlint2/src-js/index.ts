@@ -222,6 +222,7 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
 // --------------------
 
 // Call Rust, passing `loadPlugin` and `lintFile` as callbacks
+// @ts-expect-error
 const success = await lint(loadPlugin, lintFile);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
