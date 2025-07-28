@@ -171,6 +171,7 @@ class Context {
 // --------------------
 // Running rules
 // --------------------
+
 interface BufferWithArrays extends Uint8Array {
   uint32: Uint32Array;
   float64: Float64Array;
