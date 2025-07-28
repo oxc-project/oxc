@@ -10,7 +10,8 @@ pub mod cli {
 }
 
 pub use oxc_linter::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult,
 };
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]

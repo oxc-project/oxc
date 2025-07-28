@@ -12,8 +12,8 @@ use napi_derive::napi;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxlint::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
-    lint as oxlint_lint,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult, lint as oxlint_lint,
 };
 
 mod generated {
@@ -22,9 +22,9 @@ mod generated {
 use generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
 #[napi]
-pub type JsRunCb = ThreadsafeFunction<
+pub type JsLintFileCb = ThreadsafeFunction<
     (String, u32, Option<Uint8Array>, Vec<u32>),
-    String, /* Vec<LintResult> */
+    String, /* Vec<LintFileResult> */
     (String, u32, Option<Uint8Array>, Vec<u32>),
     Status,
     false,
@@ -39,7 +39,7 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     false,
 >;
 
-fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
+fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
     Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
         let cb = Arc::clone(&cb);
@@ -117,7 +117,7 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {
-                    Ok(r) => match serde_json::from_str::<Vec<LintResult>>(r) {
+                    Ok(r) => match serde_json::from_str::<Vec<LintFileResult>>(r) {
                         Ok(v) => tx.send(Ok(v)),
                         Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
                     },
@@ -157,9 +157,10 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(load_plugin: JsLoadPluginCb, run: JsRunCb) -> bool {
+pub async fn lint(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
-    let rust_run = wrap_run(run);
+    let rust_lint_file = wrap_lint_file(lint_file);
 
-    oxlint_lint(Some(ExternalLinter::new(rust_load_plugin, rust_run))).report() == ExitCode::SUCCESS
+    oxlint_lint(Some(ExternalLinter::new(rust_load_plugin, rust_lint_file))).report()
+        == ExitCode::SUCCESS
 }
