@@ -94,9 +94,9 @@ export declare class PrivateConstructorWithOverloads {
 	private constructor();
 }
 export declare class PrivateConstructorWithOptionalParameters {
-	publicOptional?: boolean;
+	publicOptional?: boolean | undefined;
 	private privateOptional?;
-	readonly readonlyOptional?: number;
+	readonly readonlyOptional?: number | undefined;
 	private constructor();
 }
 export declare class PrivateConstructorWithRestParameters {
