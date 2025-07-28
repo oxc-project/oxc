@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// TODO(camc314): we need to generate `.d.ts` file for this module.
+// @ts-expect-error
 import types from '../../parser/generated/lazy/types.js';
 import {
   addVisitorToCompiled,
@@ -16,7 +18,7 @@ describe('compile visitor', () => {
 
   it('throws if visitor is not an object', () => {
     const expectedErr = new TypeError('Visitor returned from `create` method must be an object');
-    expect(() => addVisitorToCompiled()).toThrow(expectedErr);
+    expect(() => (addVisitorToCompiled as any)()).toThrow(expectedErr);
     expect(() => addVisitorToCompiled(null)).toThrow(expectedErr);
     expect(() => addVisitorToCompiled(undefined)).toThrow(expectedErr);
     expect(() => addVisitorToCompiled(true)).toThrow(expectedErr);

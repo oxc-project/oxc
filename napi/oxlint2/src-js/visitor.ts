@@ -72,6 +72,8 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
+// TODO(camc314): we need to generate `.d.ts` file for this module.
+// @ts-expect-error
 import types from '../dist/parser/generated/lazy/types.cjs';
 
 const { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } = types;
@@ -85,7 +87,7 @@ const { isArray } = Array;
 // not "holey" (hash map). This is critical, as looking up elements in this array is a very hot path
 // during AST visitation, and holey arrays are much slower.
 // https://v8.dev/blog/elements-kinds
-export const compiledVisitor = [];
+export const compiledVisitor: any[] = [];
 
 for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
   compiledVisitor.push(null);
@@ -96,9 +98,9 @@ for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
 // Filled with `0` initially up to maximum size they could ever need to be so:
 // 1. These arrays never need to grow.
 // 2. V8 treats these arrays as "PACKED_SMI_ELEMENTS".
-const mergedLeafVisitorTypeIds = [],
-  mergedEnterVisitorTypeIds = [],
-  mergedExitVisitorTypeIds = [];
+const mergedLeafVisitorTypeIds: number[] = [],
+  mergedEnterVisitorTypeIds: number[] = [],
+  mergedExitVisitorTypeIds: number[] = [];
 
 for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   mergedLeafVisitorTypeIds.push(0);
@@ -123,7 +125,7 @@ let hasActiveVisitors = false;
 //
 // `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
 // It may point to the end of the cache array.
-const enterExitObjectCache = [];
+const enterExitObjectCache: any[] = [];
 let enterExitObjectCacheNextIndex = 0;
 
 function getEnterExitObject() {
@@ -131,7 +133,7 @@ function getEnterExitObject() {
     return enterExitObjectCache[enterExitObjectCacheNextIndex++];
   }
 
-  const enterExit = { enter: null, exit: null };
+  const enterExit: any = { enter: null, exit: null };
   enterExitObjectCache.push(enterExit);
   enterExitObjectCacheNextIndex++;
   return enterExit;
@@ -147,10 +149,10 @@ function getEnterExitObject() {
 //
 // `visitFnArrayCacheNextIndex` is the index of first array in cache which is currently unused.
 // It may point to the end of the cache array.
-const visitFnArrayCache = [];
+const visitFnArrayCache: any[][] = [];
 let visitFnArrayCacheNextIndex = 0;
 
-function createVisitFnArray(visit1, visit2) {
+function createVisitFnArray(visit1: any, visit2: any): any[] {
   if (visitFnArrayCacheNextIndex < visitFnArrayCache.length) {
     const arr = visitFnArrayCache[visitFnArrayCacheNextIndex++];
     arr.push(visit1, visit2);
@@ -165,9 +167,8 @@ function createVisitFnArray(visit1, visit2) {
 
 /**
  * Initialize compiled visitor, ready for calls to `addVisitor`.
- * @returns {undefined}
  */
-export function initCompiledVisitor() {
+export function initCompiledVisitor(): void {
   // Reset `compiledVisitor` array after previous compilation
   for (let i = 0; i < NODE_TYPES_COUNT; i++) {
     compiledVisitor[i] = null;
@@ -185,10 +186,9 @@ export function initCompiledVisitor() {
 /**
  * Add a visitor to compiled visitor.
  *
- * @param {Object} visitor - Visitor object
- * @returns {undefined}
+ * @param visitor - Visitor object
  */
-export function addVisitorToCompiled(visitor) {
+export function addVisitorToCompiled(visitor: any): void {
   if (visitor === null || typeof visitor !== 'object') {
     throw new TypeError(
       'Visitor returned from `create` method must be an object',
@@ -251,23 +251,25 @@ export function addVisitorToCompiled(visitor) {
           enterExit.enter = visitFn;
         }
       } else if (isExit) {
-        let { exit } = existing;
+        const enterExitObj = existing;
+        let { exit } = enterExitObj;
         if (exit === null) {
-          existing.exit = visitFn;
+          enterExitObj.exit = visitFn;
         } else if (isArray(exit)) {
           exit.push(visitFn);
         } else {
-          existing.exit = createVisitFnArray(exit, visitFn);
+          enterExitObj.exit = createVisitFnArray(exit, visitFn);
           mergedExitVisitorTypeIds.push(typeId);
         }
       } else {
-        let { enter } = existing;
+        const enterExitObj = existing;
+        let { enter } = enterExitObj;
         if (enter === null) {
-          existing.enter = visitFn;
+          enterExitObj.enter = visitFn;
         } else if (isArray(enter)) {
           enter.push(visitFn);
         } else {
-          existing.enter = createVisitFnArray(enter, visitFn);
+          enterExitObj.enter = createVisitFnArray(enter, visitFn);
           mergedEnterVisitorTypeIds.push(typeId);
         }
       }
@@ -327,11 +329,11 @@ export function finalizeCompiledVisitor() {
  * @param {Array<function>} visitFns - Array of visit functions
  * @returns {function} - Function which calls all of `visitFns` in turn.
  */
-function mergeVisitFns(visitFns) {
+function mergeVisitFns(visitFns: Function[]): any {
   const numVisitFns = visitFns.length;
 
   // Get or create merger for merging `numVisitFns` functions
-  let merger;
+  let merger: any;
   if (mergers.length <= numVisitFns) {
     while (mergers.length < numVisitFns) {
       mergers.push(null);
@@ -361,7 +363,7 @@ function mergeVisitFns(visitFns) {
  * @param {number} fnCount - Number of functions to be merged
  * @returns {function} - Function to merge `fnCount` functions
  */
-function createMerger(fnCount) {
+function createMerger(fnCount: number): any {
   const args = [];
   let body = 'return node=>{';
   for (let i = 1; i <= fnCount; i++) {
@@ -370,29 +372,29 @@ function createMerger(fnCount) {
   }
   body += '}';
   args.push(body);
-  return new Function(...args);
+  return new Function(...args) as any;
 }
 
 // Pre-defined mergers for merging up to 5 functions
 const mergers = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
-  (visit1, visit2) => (node) => {
+  (visit1: any, visit2: any) => (node: any) => {
     visit1(node);
     visit2(node);
   },
-  (visit1, visit2, visit3) => (node) => {
+  (visit1: any, visit2: any, visit3: any) => (node: any) => {
     visit1(node);
     visit2(node);
     visit3(node);
   },
-  (visit1, visit2, visit3, visit4) => (node) => {
+  (visit1: any, visit2: any, visit3: any, visit4: any) => (node: any) => {
     visit1(node);
     visit2(node);
     visit3(node);
     visit4(node);
   },
-  (visit1, visit2, visit3, visit4, visit5) => (node) => {
+  (visit1: any, visit2: any, visit3: any, visit4: any, visit5: any) => (node: any) => {
     visit1(node);
     visit2(node);
     visit3(node);

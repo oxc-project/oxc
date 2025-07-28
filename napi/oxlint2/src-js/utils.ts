@@ -9,12 +9,12 @@
  * * `err` is an object with a getter for `message` property which throws.
  * * `err` has a getter for `message` property which returns a different value each time it's accessed.
  *
- * @param {*} err - Error
- * @returns {string} - Error message
+ * @param err - Error
+ * @returns Error message
  */
-export function getErrorMessage(err) {
+export function getErrorMessage(err: unknown): string {
   try {
-    const { message } = err;
+    const { message } = err as undefined | { message: string };
     if (typeof message === 'string' && message !== '') return message;
   } catch {}
 
