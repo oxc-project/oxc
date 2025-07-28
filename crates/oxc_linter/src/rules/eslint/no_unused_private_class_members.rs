@@ -197,6 +197,7 @@ fn is_value_context(kind: &AstKind) -> bool {
             | AstKind::TemplateLiteral(_)
             | AstKind::UnaryExpression(_)
             | AstKind::IfStatement(_)
+            | AstKind::LogicalExpression(_)
     )
 }
 
