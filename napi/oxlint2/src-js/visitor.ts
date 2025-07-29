@@ -198,9 +198,7 @@ export function initCompiledVisitor(): void {
  */
 export function addVisitorToCompiled(visitor: Visitor): void {
   if (visitor === null || typeof visitor !== 'object') {
-    throw new TypeError(
-      'Visitor returned from `create` method must be an object',
-    );
+    throw new TypeError('Visitor returned from `create` method must be an object');
   }
 
   // Exit if is empty visitor
@@ -213,18 +211,14 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   for (let name of keys) {
     const visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
-      throw new TypeError(
-        `'${name}' property of visitor object is not a function`,
-      );
+      throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
 
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
     const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) {
-      throw new Error(`Unknown node type '${name}' in visitor object`);
-    }
+    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in visitor object`);
 
     const existing = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
     if (typeId < LEAF_NODE_TYPES_COUNT) {
