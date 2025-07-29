@@ -8,14 +8,6 @@ use bumpalo::Bump;
 
 use oxc_data_structures::assert_unchecked;
 
-#[cfg(feature = "track_allocations")]
-use std::sync::atomic::{
-    AtomicUsize,
-    Ordering::{Relaxed, SeqCst},
-};
-#[cfg(feature = "track_allocations")]
-static NUM_ALLOC: AtomicUsize = AtomicUsize::new(0);
-
 /// A bump-allocated memory arena.
 ///
 /// # Anatomy of an Allocator
@@ -223,6 +215,9 @@ static NUM_ALLOC: AtomicUsize = AtomicUsize::new(0);
 #[derive(Default)]
 pub struct Allocator {
     bump: Bump,
+    /// Used to track the total number of allocations made in this allocator when the `track_allocations` feature is enabled.
+    #[cfg(feature = "track_allocations")]
+    num_alloc: std::sync::atomic::AtomicUsize,
 }
 
 impl Allocator {
@@ -249,7 +244,11 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
-        Self { bump: Bump::new() }
+        Self {
+            bump: Bump::new(),
+            #[cfg(feature = "track_allocations")]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 
     /// Create a new [`Allocator`] with specified capacity.
@@ -260,7 +259,11 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { bump: Bump::with_capacity(capacity) }
+        Self {
+            bump: Bump::with_capacity(capacity),
+            #[cfg(feature = "track_allocations")]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
@@ -285,9 +288,8 @@ impl Allocator {
         const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.fetch_add(1, Relaxed);
-        }
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc(val)
     }
 
@@ -310,9 +312,8 @@ impl Allocator {
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.fetch_add(1, Relaxed);
-        }
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_str(src)
     }
 
@@ -334,9 +335,8 @@ impl Allocator {
     #[inline(always)]
     pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.fetch_add(1, Relaxed);
-        }
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_slice_copy(src)
     }
 
@@ -350,9 +350,8 @@ impl Allocator {
     /// Panics if reserving space matching `layout` fails.
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.fetch_add(1, Relaxed);
-        }
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_layout(layout)
     }
 
@@ -404,9 +403,7 @@ impl Allocator {
         );
 
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.fetch_add(1, Relaxed);
-        }
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 
         // Create actual `&str` in a separate function, to ensure that `alloc_concat_strs_array`
         // is inlined, so that compiler has knowledge to remove the overflow checks above.
@@ -501,9 +498,8 @@ impl Allocator {
     #[inline(always)]
     pub fn reset(&mut self) {
         #[cfg(feature = "track_allocations")]
-        {
-            NUM_ALLOC.store(0, SeqCst);
-        }
+        self.num_alloc.store(0, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.reset();
     }
 
@@ -606,8 +602,8 @@ impl Allocator {
 
     /// Returns the total number of allocations that have been made in this [`Allocator`] instance.
     #[cfg(feature = "track_allocations")]
-    pub fn num_alloc() -> usize {
-        NUM_ALLOC.load(SeqCst)
+    pub fn num_alloc(&self) -> usize {
+        self.num_alloc.load(std::sync::atomic::Ordering::SeqCst)
     }
 
     /// Get inner [`bumpalo::Bump`].
@@ -631,7 +627,11 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) fn from_bump(bump: Bump) -> Self {
-        Self { bump }
+        Self {
+            bump,
+            #[cfg(feature = "track_allocations")]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 }
 

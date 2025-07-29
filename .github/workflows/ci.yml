@@ -314,7 +314,8 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         run: |
           cargo allocs
-          git diff --exit-code
+          git diff --exit-code ||
+          (echo 'Allocations have changed. Run the `cargo allocs` command to update the allocation snapshot, otherwise please fix the regression.' && exit 1)
 
   ast_changes:
     name: AST Changes

@@ -24,4 +24,3 @@ oxc_tasks_common = { workspace = true }
 
 humansize = { workspace = true }
 mimalloc-safe = { workspace = true }
-
