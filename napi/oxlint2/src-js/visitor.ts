@@ -241,8 +241,8 @@ export function addVisitorToCompiled(visitor: Visitor): void {
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
         (compiledVisitor[typeId] as CompilingLeafVisitorEntry) = isExit
-          ? [existing as unknown as VisitFn, visitFn]
-          : [visitFn, existing as unknown as VisitFn];
+          ? createVisitFnArray(existing as unknown as VisitFn, visitFn)
+          : createVisitFnArray(visitFn, existing as unknown as VisitFn);
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {
