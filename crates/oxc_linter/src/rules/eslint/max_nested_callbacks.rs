@@ -144,7 +144,10 @@ impl Rule for MaxNestedCallbacks {
 
 fn is_callback<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
     is_function_node(node)
-        && matches!(iter_outer_expressions(semantic, node.id()).next(), Some(AstKind::Argument(_)))
+        && matches!(
+            iter_outer_expressions(semantic.nodes(), node.id()).next(),
+            Some(AstKind::Argument(_))
+        )
 }
 
 #[test]

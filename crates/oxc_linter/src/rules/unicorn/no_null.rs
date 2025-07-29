@@ -180,7 +180,7 @@ impl Rule for NoNull {
             return;
         };
 
-        let mut parents = iter_outer_expressions(ctx, node.id());
+        let mut parents = iter_outer_expressions(ctx.nodes(), node.id());
         let Some(parent_kind) = parents.next() else {
             ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)

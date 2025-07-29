@@ -475,8 +475,7 @@ impl ExplicitFunctionReturnType {
 
 // check function is IIFE (Immediately Invoked Function Expression)
 fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) =
-        iter_outer_expressions(ctx.semantic(), node.id()).next()
+    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
     else {
         return false;
     };
