@@ -72,13 +72,21 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import type { Node, VisitFn } from './types.ts';
+import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
 
 const { isArray } = Array;
+
+// Types for temporary state of entries of `compiledVisitor`
+// between calling `initCompiledVisitor` and `finalizeCompiledVisitor`.
+type CompilingLeafVisitorEntry = VisitFn | VisitFn[] | null;
+type CompilingNonLeafVisitorEntry = {
+  enter: VisitFn | VisitFn[] | null;
+  exit: VisitFn | VisitFn[] | null;
+} | null;
 
 // Compiled visitor used for visiting each file.
 // Same array is reused for each file.
@@ -87,7 +95,7 @@ const { isArray } = Array;
 // not "holey" (hash map). This is critical, as looking up elements in this array is a very hot path
 // during AST visitation, and holey arrays are much slower.
 // https://v8.dev/blog/elements-kinds
-export const compiledVisitor: any[] = [];
+export const compiledVisitor: CompiledVisitorEntry[] = [];
 
 for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
   compiledVisitor.push(null);
@@ -125,15 +133,15 @@ let hasActiveVisitors = false;
 //
 // `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
 // It may point to the end of the cache array.
-const enterExitObjectCache: any[] = [];
+const enterExitObjectCache: EnterExit[] = [];
 let enterExitObjectCacheNextIndex = 0;
 
-function getEnterExitObject() {
+function getEnterExitObject(): EnterExit {
   if (enterExitObjectCacheNextIndex < enterExitObjectCache.length) {
     return enterExitObjectCache[enterExitObjectCacheNextIndex++];
   }
 
-  const enterExit: any = { enter: null, exit: null };
+  const enterExit: EnterExit = { enter: null, exit: null };
   enterExitObjectCache.push(enterExit);
   enterExitObjectCacheNextIndex++;
   return enterExit;
@@ -149,10 +157,10 @@ function getEnterExitObject() {
 //
 // `visitFnArrayCacheNextIndex` is the index of first array in cache which is currently unused.
 // It may point to the end of the cache array.
-const visitFnArrayCache: any[][] = [];
+const visitFnArrayCache: VisitFn[][] = [];
 let visitFnArrayCacheNextIndex = 0;
 
-function createVisitFnArray(visit1: any, visit2: any): any[] {
+function createVisitFnArray(visit1: VisitFn, visit2: VisitFn): VisitFn[] {
   if (visitFnArrayCacheNextIndex < visitFnArrayCache.length) {
     const arr = visitFnArrayCache[visitFnArrayCacheNextIndex++];
     arr.push(visit1, visit2);
@@ -188,7 +196,7 @@ export function initCompiledVisitor(): void {
  *
  * @param visitor - Visitor object
  */
-export function addVisitorToCompiled(visitor: any): void {
+export function addVisitorToCompiled(visitor: Visitor): void {
   if (visitor === null || typeof visitor !== 'object') {
     throw new TypeError(
       'Visitor returned from `create` method must be an object',
@@ -218,9 +226,11 @@ export function addVisitorToCompiled(visitor: any): void {
       throw new Error(`Unknown node type '${name}' in visitor object`);
     }
 
-    const existing = compiledVisitor[typeId];
+    const existing = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
     if (typeId < LEAF_NODE_TYPES_COUNT) {
-      // Leaf node - store just 1 function, not enter+exit pair
+      // Leaf node - store just 1 function, not enter+exit pair.
+      // Note: `existing` here is actually `CompilingLeafVisitorEntry`, but can't tell TS compiler that
+      // without adding some code which would add (small) runtime cost.
       if (existing === null) {
         compiledVisitor[typeId] = visitFn;
       } else if (isArray(existing)) {
@@ -236,9 +246,9 @@ export function addVisitorToCompiled(visitor: any): void {
         }
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
-        compiledVisitor[typeId] = isExit
-          ? [existing, visitFn]
-          : [visitFn, existing];
+        (compiledVisitor[typeId] as CompilingLeafVisitorEntry) = isExit
+          ? [existing as unknown as VisitFn, visitFn]
+          : [visitFn, existing as unknown as VisitFn];
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {
@@ -251,25 +261,23 @@ export function addVisitorToCompiled(visitor: any): void {
           enterExit.enter = visitFn;
         }
       } else if (isExit) {
-        const enterExitObj = existing;
-        let { exit } = enterExitObj;
+        const { exit } = existing;
         if (exit === null) {
-          enterExitObj.exit = visitFn;
+          existing.exit = visitFn;
         } else if (isArray(exit)) {
           exit.push(visitFn);
         } else {
-          enterExitObj.exit = createVisitFnArray(exit, visitFn);
+          existing.exit = createVisitFnArray(exit, visitFn);
           mergedExitVisitorTypeIds.push(typeId);
         }
       } else {
-        const enterExitObj = existing;
-        let { enter } = enterExitObj;
+        const { enter } = existing;
         if (enter === null) {
-          enterExitObj.enter = visitFn;
+          existing.enter = visitFn;
         } else if (isArray(enter)) {
           enter.push(visitFn);
         } else {
-          enterExitObj.enter = createVisitFnArray(enter, visitFn);
+          existing.enter = createVisitFnArray(enter, visitFn);
           mergedEnterVisitorTypeIds.push(typeId);
         }
       }
@@ -290,15 +298,15 @@ export function finalizeCompiledVisitor() {
   // Merge visit functions for node types which have multiple visitors from different rules,
   // or enter+exit functions for leaf nodes
   for (const typeId of mergedLeafVisitorTypeIds) {
-    compiledVisitor[typeId] = mergeVisitFns(compiledVisitor[typeId]);
+    compiledVisitor[typeId] = mergeVisitFns(compiledVisitor[typeId] as unknown as VisitFn[]);
   }
   for (const typeId of mergedEnterVisitorTypeIds) {
-    const enterExit = compiledVisitor[typeId];
-    enterExit.enter = mergeVisitFns(enterExit.enter);
+    const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
+    enterExit.enter = mergeVisitFns(enterExit.enter as VisitFn[]);
   }
   for (const typeId of mergedExitVisitorTypeIds) {
-    const enterExit = compiledVisitor[typeId];
-    enterExit.exit = mergeVisitFns(enterExit.exit);
+    const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
+    enterExit.exit = mergeVisitFns(enterExit.exit as VisitFn[]);
   }
 
   // Reset state, ready for next time

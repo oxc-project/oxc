@@ -9,3 +9,14 @@ export type VisitFn = (node: Node) => void;
 // AST node type.
 // We'll make this type a union later on.
 export type Node = Object;
+
+// Element of compiled visitor array.
+// * `VisitFn | null` for leaf nodes.
+// * `EnterExit | null` for non-leaf nodes.
+export type CompiledVisitorEntry = VisitFn | EnterExit | null;
+
+// Enter+exit pair, for non-leaf nodes in compiled visitor.
+export interface EnterExit {
+  enter: VisitFn | null;
+  exit: VisitFn | null;
+}
