@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.9.0] - 2025-07-29
+
+### 💥 BREAKING CHANGES
+
+- 5a7e72a semantic: [**BREAKING**] `AstNodes::program` return `&Program` not `Option<&Program>` (#12515) (overlookmotel)
+
+### 🚀 Features
+
+- 3489ce0 linter: Add `typescript-eslint/explicit-module-boundary-types` (#12402) (Don Isaac)
+
+### 🐛 Bug Fixes
+
+- 0fd3e87 linter: Default options for `eslint/yoda` (#12540) (Sysix)
+- 724776f linter: Default options for `unicorn/switch-case-braces` (#12539) (Sysix)
+- fda45ea linter/promise/prefer-await-to-callbacks: False positive for `addEventListener` (#12537) (Copilot)
+- 1a710e3 linter/array-type: Fix more false negatives (#12501) (camc314)
+- 2b5bf98 linter: Consistent-function-scoping false positive with hoisted var declarations (#12523) (camc314)
+- 209d006 linter: Parse vue lang attribute without quotes (#12517) (Sysix)
+- 85a34ce linter/array-type: False negative with arrays in generic args (#12500) (camc314)
+- 98c1fbb linter/require-await: Improve async keyword detection in get_delete_span function (#12494) (camc314)
+- 7c75dba linter/require-await: Improve span calculation for object properties (#12490) (camc314)
+- 2b261cf linter/exhaustive-deps: False positive in exhaustive deps (#12471) (camc314)
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+- 7af38e1 napi/oxlint: Simplify `ExternalLinterLintFileCb` type (#12572) (overlookmotel)
+- 543fd53 napi/oxlint: Rename `run` to `lintFile` (#12567) (overlookmotel)
+- 0179c86 napi/oxlint: Reverse args of `ExternalLinter::new` (#12566) (overlookmotel)
+- 491c401 linter: Remove `#[must_use]` from `LintService::with_*` methods (#12560) (overlookmotel)
+- bea652f linter: Add `vue` and `regex` to `BuiltinLintPlugins` (#12542) (Sysix)
+- aa9dd21 linter/no-eval: Get source type from `Semantic` (#12514) (overlookmotel)
+- 8c8c8bc napi/oxlint: Diagnostics communicate which rule via rule index, not rule ID (#12482) (overlookmotel)
+- e2d9b4d fixer: Add Debug trait to PossibleFixes and Message structs (#12493) (camc314)
+- f0b1f0d napi/oxlint, napi/parser: Remove source length from `RawTransferMetadata` (#12483) (overlookmotel)
+- 7e4959a napi/oxlint: Rename `rules` to `ruleNames` (#12477) (overlookmotel)
+- 7a0da04 diagnostics: Remove Option wrapper from MPSC channel and sender field (#12467) (camc314)
+
+### 🧪 Testing
+
+- 56468c7 linter/no-unused-private-class-members: Add more test cases (#12569) (camc314)
+- 191a164 linter/no-unused-private-class-members: Add more test cases (#12563) (camc314)
+
+
 ## [1.8.0] - 2025-07-22
 
 ### 🚀 Features
