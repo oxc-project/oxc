@@ -72,6 +72,8 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
+import type { Node, VisitFn } from './types.ts';
+
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
@@ -324,14 +326,14 @@ export function finalizeCompiledVisitor() {
  * `mergers` contains pre-defined functions to merge up to 5 visit functions.
  * Merger functions for merging more than 5 visit functions are created dynamically on demand.
  *
- * @param {Array<function>} visitFns - Array of visit functions
- * @returns {function} - Function which calls all of `visitFns` in turn.
+ * @param visitFns - Array of visit functions
+ * @returns Function which calls all of `visitFns` in turn.
  */
-function mergeVisitFns(visitFns: Function[]): any {
+function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
   const numVisitFns = visitFns.length;
 
   // Get or create merger for merging `numVisitFns` functions
-  let merger: any;
+  let merger: Merger;
   if (mergers.length <= numVisitFns) {
     while (mergers.length < numVisitFns) {
       mergers.push(null);
@@ -352,13 +354,15 @@ function mergeVisitFns(visitFns: Function[]): any {
   return mergedFn;
 }
 
+type Merger = (...visitFns: VisitFn[]) => VisitFn;
+
 /**
  * Create a merger function that merges `fnCount` functions.
  *
- * @param {number} fnCount - Number of functions to be merged
- * @returns {function} - Function to merge `fnCount` functions
+ * @param fnCount - Number of functions to be merged
+ * @returns Function to merge `fnCount` functions
  */
-function createMerger(fnCount: number): any {
+function createMerger(fnCount: number): Merger {
   const args = [];
   let body = 'return node=>{';
   for (let i = 1; i <= fnCount; i++) {
@@ -367,29 +371,29 @@ function createMerger(fnCount: number): any {
   }
   body += '}';
   args.push(body);
-  return new Function(...args) as any;
+  return new Function(...args) as Merger;
 }
 
 // Pre-defined mergers for merging up to 5 functions
-const mergers = [
+const mergers: (Merger | null)[] = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
-  (visit1: any, visit2: any) => (node: any) => {
+  (visit1: VisitFn, visit2: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
   },
-  (visit1: any, visit2: any, visit3: any) => (node: any) => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);
   },
-  (visit1: any, visit2: any, visit3: any, visit4: any) => (node: any) => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);
     visit4(node);
   },
-  (visit1: any, visit2: any, visit3: any, visit4: any, visit5: any) => (node: any) => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn, visit5: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);

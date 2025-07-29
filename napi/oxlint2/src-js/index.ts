@@ -9,6 +9,8 @@ import {
 import { getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
+import type { Visitor } from './types.ts';
+
 // Import methods and objects from `oxc-parser`.
 // Use `require` not `import` as `oxc-parser` uses `require` internally,
 // and need to make sure get same instance of modules as it uses internally,
@@ -34,10 +36,6 @@ interface DiagnosticReport {
   message: string;
   loc: { start: number; end: number };
   ruleIndex: number;
-}
-
-interface Visitor {
-  [key: string]: (node: any) => void;
 }
 
 interface Rule {
