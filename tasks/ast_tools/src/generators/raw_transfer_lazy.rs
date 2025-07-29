@@ -211,10 +211,13 @@ fn generate(
             {non_leaf_node_type_ids_map}
         ]);
 
+        const NODE_TYPES_COUNT = {nodes_count},
+            LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
+
         module.exports = {{
             NODE_TYPE_IDS_MAP,
-            NODE_TYPES_COUNT: {nodes_count},
-            LEAF_NODE_TYPES_COUNT: {leaf_nodes_count},
+            NODE_TYPES_COUNT,
+            LEAF_NODE_TYPES_COUNT,
         }};
     ");
 

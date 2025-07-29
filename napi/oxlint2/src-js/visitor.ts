@@ -74,9 +74,7 @@
 
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
-import types from '../dist/parser/generated/lazy/types.cjs';
-
-const { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } = types;
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
 
 const { isArray } = Array;
 
