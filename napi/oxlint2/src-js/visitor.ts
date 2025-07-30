@@ -88,6 +88,7 @@ type CompilingNonLeafVisitorEntry = {
   enter: VisitFn | VisitFn[] | null;
   exit: VisitFn | VisitFn[] | null;
 } | null;
+type CompilingVisitor = Array<CompilingLeafVisitorEntry | CompilingNonLeafVisitorEntry>;
 
 // Compiled visitor used for visiting each file.
 // Same array is reused for each file.
@@ -221,7 +222,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     const typeId = NODE_TYPE_IDS_MAP.get(name);
     if (typeId === void 0) throw new Error(`Unknown node type '${name}' in visitor object`);
 
-    const existing = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
+    const existing = (compiledVisitor as CompilingVisitor)[typeId];
     if (typeId < LEAF_NODE_TYPES_COUNT) {
       // Leaf node - store just 1 function, not enter+exit pair
       assertIs<CompilingLeafVisitorEntry>(existing);
@@ -241,13 +242,15 @@ export function addVisitorToCompiled(visitor: Visitor): void {
         }
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
-        (compiledVisitor[typeId] as CompilingLeafVisitorEntry) = isExit
+        (compiledVisitor as CompilingVisitor)[typeId] = isExit
           ? createVisitFnArray(existing, visitFn)
           : createVisitFnArray(visitFn, existing);
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {
       // Not leaf node - store enter+exit pair
+      assertIs<CompilingNonLeafVisitorEntry>(existing);
+
       if (existing === null) {
         const enterExit = compiledVisitor[typeId] = getEnterExitObject();
         if (isExit) {
