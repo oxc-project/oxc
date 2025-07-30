@@ -519,6 +519,53 @@ impl<'a> MemberExpressionKind<'a> {
             Self::PrivateField(member_expr) => member_expr.optional,
         }
     }
+
+    /// Given a [`MemberExpressionKind`] and [`AstKind`] representing its parent node,
+    /// returns `true` if the member expression is assigned to.
+    ///
+    /// Note: `parent` must be the parent node of the member expression.
+    /// This method does not check that, and may return incorrect results if it's not.
+    pub fn is_assigned_to_in_parent(&self, parent: &AstKind<'a>) -> bool {
+        #[expect(clippy::match_same_arms)]
+        match parent {
+            // `x.y++`, `--x.y`
+            // `UpdateExpression` has only 1 field containing child node - `argument`.
+            AstKind::UpdateExpression(_) => true,
+            // `[x.y] = arr`
+            // `ArrayAssignmentTarget` has only 1 field containing child nodes - `elements`.
+            AstKind::ArrayAssignmentTarget(_) => true,
+            // `[...x.y] = arr`, `({ ...x.y } = obj)`
+            // `AssignmentTargetRest` has only 1 field containing child node - `target`.
+            AstKind::AssignmentTargetRest(_) => true,
+            // `x.y = value`
+            // Only match if member expr is on left
+            // - not on right e.g. `assignee = x.y`.
+            AstKind::AssignmentExpression(assign_expr) => {
+                assign_expr.left.address() == self.address()
+            }
+            // `[x.y = value] = arr`, `({ prop: x.y = value } = obj)`
+            // Only match if member expr is the assignee
+            // - not the default value e.g. `[assignee = x.y] = arr`.
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `({ prop: x.y } = obj)`
+            // Only match if member expr is the assignee
+            // - not computed prop key e.g. `({ [x.y]: assignee } = obj)`.
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `for (x.y in obj)`
+            // Only match if member expr is on left
+            // - not object being iterated e.g. `for (assignee in x.y)`
+            AstKind::ForInStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            // `for (x.y of obj)`
+            // Only match if member expr is on left
+            // - not array being iterated e.g. `for (assignee of x.y)`
+            AstKind::ForOfStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            _ => false,
+        }
+    }
 }
 
 impl GetSpan for MemberExpressionKind<'_> {
