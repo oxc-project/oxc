@@ -189,25 +189,23 @@ const diagnostics: DiagnosticReport[] = [];
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 // Run rules on a file.
-function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | undefined | null, ruleIds: number[]) {
+function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
   // TODO: Is this enough to guarantee soundness?
-  let processedBuffer: BufferWithArrays | null;
-  if (buffer !== null && buffer !== undefined) {
+  if (buffer === null) {
+    // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
+    buffer = buffers[bufferId]!;
+  } else {
     const { buffer: arrayBuffer, byteOffset } = buffer;
-    const bufferWithArrays = buffer as BufferWithArrays;
-    bufferWithArrays.uint32 = new Uint32Array(arrayBuffer, byteOffset);
-    bufferWithArrays.float64 = new Float64Array(arrayBuffer, byteOffset);
+    (buffer as BufferWithArrays).uint32 = new Uint32Array(arrayBuffer, byteOffset);
+    (buffer as BufferWithArrays).float64 = new Float64Array(arrayBuffer, byteOffset);
 
-    while (buffers.length <= bufferId) {
+    for (let i = bufferId - buffers.length; i >= 0; i--) {
       buffers.push(null);
     }
-    buffers[bufferId] = bufferWithArrays;
-    processedBuffer = bufferWithArrays;
-  } else {
-    processedBuffer = buffers[bufferId];
+    buffers[bufferId] = buffer as BufferWithArrays;
   }
 
   if (typeof filePath !== 'string' || filePath.length === 0) {
@@ -232,17 +230,15 @@ function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | undef
   // Skip this if no visitors visit any nodes.
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
-  if (needsVisit && processedBuffer) {
-    const { uint32 } = processedBuffer,
+  if (needsVisit) {
+    const { uint32 } = buffer as BufferWithArrays,
       programPos = uint32[DATA_POINTER_POS_32],
       sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
-    const sourceText = textDecoder.decode(
-      processedBuffer.subarray(0, sourceByteLen),
-    );
+    const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
     const sourceIsAscii = sourceText.length === sourceByteLen;
     const ast = {
-      buffer: processedBuffer,
+      buffer,
       sourceText,
       sourceByteLen,
       sourceIsAscii,
