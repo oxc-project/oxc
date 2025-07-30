@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_map, phf_set};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
 
@@ -44,18 +43,21 @@ declare_oxc_lint!(
     correctness
 );
 
-static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
-    "checkbox" => phf_set!{"aria-checked"},
-    "radio" => phf_set!{"aria-checked"},
-    "menuitemcheckbox" => phf_set!{"aria-checked"},
-    "menuitemradio" => phf_set!{"aria-checked"},
-    "combobox" => phf_set!{"aria-controls", "aria-expanded"},
-    "tab" => phf_set!{"aria-selected"},
-    "slider" => phf_set!{"aria-valuemax", "aria-valuemin", "aria-valuenow"},
-    "scrollbar" => phf_set!{"aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-orientation", "aria-controls"},
-    "heading" => phf_set!{"aria-level"},
-    "option" => phf_set!{"aria-selected"},
-};
+static ROLE_TO_REQUIRED_ARIA_PROPS: &[(&str, &[&str])] = &[
+    ("checkbox", &["aria-checked"]),
+    ("combobox", &["aria-controls", "aria-expanded"]),
+    ("heading", &["aria-level"]),
+    ("menuitemcheckbox", &["aria-checked"]),
+    ("menuitemradio", &["aria-checked"]),
+    ("option", &["aria-selected"]),
+    ("radio", &["aria-checked"]),
+    (
+        "scrollbar",
+        &["aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-orientation", "aria-controls"],
+    ),
+    ("slider", &["aria-valuemax", "aria-valuemin", "aria-valuenow"]),
+    ("tab", &["aria-selected"]),
+];
 
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -71,8 +73,8 @@ impl Rule for RoleHasRequiredAriaProps {
             };
             let roles = role_values.value.split_whitespace();
             for role in roles {
-                if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
-                    for prop in props {
+                if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.iter().find(|r| r.0 == role) {
+                    for prop in props.1 {
                         if has_jsx_prop_ignore_case(jsx_el, prop).is_none() {
                             ctx.diagnostic(role_has_required_aria_props_diagnostic(
                                 attr.span, role, prop,
