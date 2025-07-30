@@ -1946,6 +1946,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
         self.current_reference_flags = ReferenceFlags::empty();
     }
+
+    fn visit_ts_property_signature(&mut self, it: &TSPropertySignature<'a>) {
+        let kind = AstKind::TSPropertySignature(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_property_key(&it.key);
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
+        self.leave_node(kind);
+        self.current_reference_flags = ReferenceFlags::empty();
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2075,11 +2087,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
+        #[expect(clippy::single_match)]
         match kind {
-            AstKind::TSPropertySignature(_) => {
-                // Clear the reference flags that may have been set when entering the node.
-                self.current_reference_flags = ReferenceFlags::empty();
-            }
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
