@@ -2,6 +2,8 @@ pub mod chain_member;
 pub mod groups;
 pub mod simple_argument;
 
+use std::iter;
+
 use crate::{
     JsLabels, best_fitting,
     formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
@@ -33,16 +35,17 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let parent = &call_expression.parent;
-        let mut chain_members = ChainMembersIterator::new(call_expression).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression).collect::<Vec<_>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
-        let (head_group, remaining_members) =
-            split_members_into_head_and_remaining_groups(chain_members);
+        let remaining_members_start_index = get_split_index_of_head_and_tail_groups(&chain_members);
 
         // `flattened_items` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
-        let tail_groups = compute_remaining_groups(remaining_members);
+        let tail_groups =
+            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+        let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
 
@@ -241,12 +244,8 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
     }
 }
 
-/// Splits the members into two groups:
-/// * The head group that contains all nodes that are not a sequence of: `[ StaticMemberExpression -> AnyNode + CallExpression ]`
-/// * The remaining members
-fn split_members_into_head_and_remaining_groups<'a, 'b>(
-    mut members: Vec<ChainMember<'a, 'b>>,
-) -> (MemberChainGroup<'a, 'b>, Vec<ChainMember<'a, 'b>>) {
+/// Returns the index where the head group ends and the tail groups begin.
+fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> usize {
     // This where we apply the first two points explained in the description of the main public function.
     // We want to keep iterating over the items until we have call expressions
     // - `something()()()()`
@@ -269,7 +268,7 @@ fn split_members_into_head_and_remaining_groups<'a, 'b>(
             index + 1
         });
 
-    let first_group_end_index = if members.first().is_some_and(ChainMember::is_call_expression) {
+    if members.first().is_some_and(ChainMember::is_call_expression) {
         non_call_or_array_member_access_start
     } else {
         // Take as many member access chains as possible
@@ -289,14 +288,13 @@ fn split_members_into_head_and_remaining_groups<'a, 'b>(
             });
 
         non_call_or_array_member_access_start + member_end
-    };
-
-    let remaining = members.split_off(first_group_end_index);
-    (MemberChainGroup::from(members), remaining)
+    }
 }
 
 /// computes groups coming after the first group
-fn compute_remaining_groups<'a, 'b>(members: Vec<ChainMember<'a, 'b>>) -> TailChainGroups<'a, 'b> {
+fn compute_remaining_groups<'a, 'b>(
+    members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
@@ -304,10 +302,10 @@ fn compute_remaining_groups<'a, 'b>(members: Vec<ChainMember<'a, 'b>>) -> TailCh
         match member {
             // [0] should be appended at the end of the group instead of the
             // beginning of the next one
-            ChainMember::ComputedMember { .. } if is_computed_array_member_access(&member) => {
+            ChainMember::ComputedMember(_) if is_computed_array_member_access(&member) => {
                 groups_builder.start_or_continue_group(member);
             }
-            ChainMember::StaticMember { .. } | ChainMember::ComputedMember { .. } => {
+            ChainMember::StaticMember(_) | ChainMember::ComputedMember(_) => {
                 // if we have seen a CallExpression, we want to close the group.
                 // The resultant group will be something like: [ . , then, () ];
                 // `.` and `then` belong to the previous StaticMemberExpression,
@@ -324,7 +322,7 @@ fn compute_remaining_groups<'a, 'b>(members: Vec<ChainMember<'a, 'b>>) -> TailCh
                 groups_builder.start_or_continue_group(member);
                 has_seen_call_expression = true;
             }
-            ChainMember::TSNonNullExpression { .. } => {
+            ChainMember::TSNonNullExpression(_) => {
                 groups_builder.start_or_continue_group(member);
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
@@ -379,23 +377,15 @@ fn has_short_name(name: &Atom, tab_width: u8) -> bool {
     name.as_str().len() <= tab_width as usize
 }
 
-struct ChainMembersIterator<'a, 'b> {
-    root: Option<&'b AstNode<'a, CallExpression<'a>>>,
-    next: Option<&'b AstNode<'a, Expression<'a>>>,
-}
+fn chain_members_iter<'a, 'b>(
+    root: &'b AstNode<'a, CallExpression<'a>>,
+) -> impl Iterator<Item = ChainMember<'a, 'b>> {
+    let mut is_root = true;
+    let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
 
-impl<'a, 'b> ChainMembersIterator<'a, 'b> {
-    fn new(root: &'b AstNode<'a, CallExpression<'a>>) -> Self {
-        Self { root: Some(root), next: None }
-    }
-}
-
-impl<'a, 'b> Iterator for ChainMembersIterator<'a, 'b> {
-    type Item = ChainMember<'a, 'b>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut handle_call_expression =
-            |root: bool,
+    iter::from_fn(move || {
+        let handle_call_expression =
+            |position: CallExpressionPosition,
              expr: &'b AstNode<'a, CallExpression<'a>>,
              next: &mut Option<&'b AstNode<'a, Expression<'a>>>| {
                 let callee = expr.callee();
@@ -411,42 +401,47 @@ impl<'a, 'b> Iterator for ChainMembersIterator<'a, 'b> {
                     *next = Some(callee);
                 }
 
-                let position = if root {
-                    CallExpressionPosition::End
-                } else if !is_chain {
-                    CallExpressionPosition::Start
-                } else {
-                    CallExpressionPosition::Middle
-                };
-
                 ChainMember::CallExpression { expression: expr, position }
             };
 
-        if let Some(root) = self.root.take() {
-            return Some(handle_call_expression(true, root, &mut self.next));
+        if is_root {
+            is_root = false;
+            return Some(handle_call_expression(CallExpressionPosition::End, root, &mut next));
         }
 
-        let expression = self.next.take()?;
+        let expression = next.take()?;
 
         let member = match expression.as_ast_nodes() {
-            AstNodes::CallExpression(expr) => handle_call_expression(false, expr, &mut self.next),
+            AstNodes::CallExpression(expr) => {
+                let callee = expr.callee();
+                let is_chain = matches!(
+                    callee.as_ref(),
+                    Expression::StaticMemberExpression(_)
+                        | Expression::ComputedMemberExpression(_)
+                        | Expression::CallExpression(_)
+                );
+                let position = if is_chain {
+                    CallExpressionPosition::Middle
+                } else {
+                    CallExpressionPosition::Start
+                };
+                handle_call_expression(position, expr, &mut next)
+            }
             AstNodes::StaticMemberExpression(expr) => {
-                self.next = Some(expr.object());
+                next = Some(expr.object());
                 ChainMember::StaticMember(expr)
             }
             AstNodes::ComputedMemberExpression(expr) => {
-                self.next = Some(expr.object());
+                next = Some(expr.object());
                 ChainMember::ComputedMember(expr)
             }
             AstNodes::TSNonNullExpression(expr) => {
-                self.next = Some(expr.expression());
+                next = Some(expr.expression());
                 ChainMember::TSNonNullExpression(expr)
             }
             _ => ChainMember::Node(expression),
         };
 
         Some(member)
-    }
+    })
 }
-
-impl std::iter::FusedIterator for ChainMembersIterator<'_, '_> {}
