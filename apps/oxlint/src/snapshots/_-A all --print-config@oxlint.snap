@@ -5,43 +5,12 @@ source: apps/oxlint/src/tester.rs
 arguments: -A all --print-config
 working directory: 
 ----------
-{
-  "plugins": [
-    "unicorn",
-    "typescript",
-    "oxc"
-  ],
-  "categories": {},
-  "rules": {},
-  "settings": {
-    "jsx-a11y": {
-      "polymorphicPropName": null,
-      "components": {}
-    },
-    "next": {
-      "rootDir": []
-    },
-    "react": {
-      "formComponents": [],
-      "linkComponents": []
-    },
-    "jsdoc": {
-      "ignorePrivate": false,
-      "ignoreInternal": false,
-      "ignoreReplacesDocs": true,
-      "overrideReplacesDocs": true,
-      "augmentsExtendsReplacesDocs": false,
-      "implementsReplacesDocs": false,
-      "exemptDestructuredRootsFromChecks": false,
-      "tagNamePreference": {}
-    }
-  },
-  "env": {
-    "builtin": true
-  },
-  "globals": {},
-  "ignorePatterns": []
-}
+Failed to parse configuration file.
+
+  x invalid config file <cwd>/fixtures/config_error_tests/extends_node_modules_errors/invalid_json/node_modules/broken-config/index.json: Failed to parse
+  | eslint config <cwd>/fixtures/config_error_tests/extends_node_modules_errors/invalid_json/node_modules/broken-config/index.json.
+  | trailing characters at line 8 column 1
+
 ----------
-CLI result: PrintConfigResult
+CLI result: InvalidOptionConfig
 ----------

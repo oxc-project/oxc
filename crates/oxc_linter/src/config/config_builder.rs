@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::Resolver;
+use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::FxHashMap;
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -102,36 +102,28 @@ impl ConfigStoreBuilder {
             config: Oxlintrc,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             let path = config.path.clone();
-            let root_path = path.parent();
             let extends = config.extends.clone();
             let mut extended_paths = Vec::new();
 
+            let resolver = Resolver::new(ResolveOptions {
+                extensions: vec![".json".into()],
+                main_fields: vec!["main".into()],
+                ..ResolveOptions::default()
+            });
+
             let mut oxlintrc = config;
 
-            for path in extends.iter().rev() {
-                if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                    // `eslint:` and `plugin:` named configs are not supported
-                    continue;
-                }
-                // if path does not include a ".", then we will heuristically skip it since it
-                // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
-                    continue;
-                }
+            for extend_path in extends.iter().rev() {
+                let resolved_path = resolve_extends_path(extend_path, &path, &resolver)?;
 
-                let path = match root_path {
-                    Some(p) => &p.join(path),
-                    None => path,
-                };
-
-                let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
+                let extends_oxlintrc = Oxlintrc::from_file(&resolved_path).map_err(|e| {
                     ConfigBuilderError::InvalidConfigFile {
-                        file: path.display().to_string(),
+                        file: resolved_path.display().to_string(),
                         reason: e.to_string(),
                     }
                 })?;
 
-                extended_paths.push(path.clone());
+                extended_paths.push(resolved_path);
 
                 let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
 
@@ -555,6 +547,75 @@ impl Display for ConfigBuilderError {
 }
 
 impl std::error::Error for ConfigBuilderError {}
+
+/// Resolves an extends path to a file path.
+///
+/// Handles:
+/// - Relative paths (./config, ../config)
+/// - Absolute paths (/path/to/config)
+/// - Node modules (eslint-config-airbnb, @company/eslint-config)
+/// - Package subpaths (eslint-config-airbnb/base)
+///
+/// Returns None for unsupported named configs (eslint:, plugin:)
+fn resolve_extends_path(
+    extend_path: &Path,
+    config_path: &Path,
+    resolver: &Resolver,
+) -> Result<PathBuf, ConfigBuilderError> {
+    let path_str = extend_path.to_string_lossy();
+    let root_path = config_path.parent();
+
+    // Return error for eslint: and plugin: named configs
+    if path_str.starts_with("eslint:") || path_str.starts_with("plugin:") {
+        return Err(ConfigBuilderError::InvalidConfigFile {
+            file: config_path.display().to_string(),
+            reason: format!("Named config '{path_str}' is not supported"),
+        });
+    }
+
+    // Check if this is a relative or absolute path
+    let is_relative_or_absolute = path_str.starts_with('.') || path_str.starts_with('/');
+
+    if is_relative_or_absolute {
+        return match root_path {
+            Some(p) => Ok(p.join(extend_path)),
+            None => Ok(extend_path.to_path_buf()),
+        };
+    }
+
+    let potential_path = match root_path {
+        Some(p) => p.join(extend_path),
+        None => extend_path.to_path_buf(),
+    };
+
+    if potential_path.exists() {
+        return Ok(potential_path);
+    }
+
+    let base_dir = root_path.unwrap_or(Path::new("."));
+
+    let path = if let Ok(resolution) = resolver.resolve(base_dir, &path_str) {
+        resolution.into_path_buf()
+    } else {
+        let with_oxlintrc = format!("{path_str}/.oxlintrc.json");
+        if let Ok(resolution) = resolver.resolve(base_dir, &with_oxlintrc) {
+            resolution.into_path_buf()
+        } else {
+            // 2. Try with index.json
+            let with_index = format!("{path_str}/index.json");
+            if let Ok(resolution) = resolver.resolve(base_dir, &with_index) {
+                resolution.into_path_buf()
+            } else {
+                return Err(ConfigBuilderError::InvalidConfigFile {
+                    file: config_path.display().to_string(),
+                    reason: format!("Failed to resolve extends '{path_str}'"),
+                });
+            }
+        }
+    };
+
+    Ok(path)
+}
 
 #[cfg(test)]
 mod test {
@@ -1101,23 +1162,39 @@ mod test {
     }
 
     #[test]
-    fn test_not_extends_named_configs() {
-        // For now, test that extending named configs is just ignored
-        let config = config_store_from_str(
+    fn test_extends_named_configs_error() {
+        // Test that named configs return an error
+        let result = config_store_from_str_result(
             r#"
         {
-            "extends": [
-                "next/core-web-vitals",
-                "eslint:recommended",
-                "plugin:@typescript-eslint/strict-type-checked",
-                "prettier",
-                "plugin:unicorn/recommended"
-            ]
+            "extends": ["eslint:recommended"]
         }
         "#,
         );
-        assert_eq!(*config.plugins(), LintPlugins::default());
-        assert!(config.rules().is_empty());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ConfigBuilderError::InvalidConfigFile { .. }));
+        if let ConfigBuilderError::InvalidConfigFile { reason, .. } = err {
+            assert!(reason.contains("Named config 'eslint:recommended' is not supported"));
+        }
+
+        // Test plugin: prefix
+        let result = config_store_from_str_result(
+            r#"
+        {
+            "extends": ["plugin:@typescript-eslint/recommended"]
+        }
+        "#,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        if let ConfigBuilderError::InvalidConfigFile { reason, .. } = err {
+            assert!(
+                reason.contains(
+                    "Named config 'plugin:@typescript-eslint/recommended' is not supported"
+                )
+            );
+        }
     }
 
     fn config_store_from_path(path: &str) -> Config {
@@ -1133,6 +1210,10 @@ mod test {
     }
 
     fn config_store_from_str(s: &str) -> Config {
+        config_store_from_str_result(s).unwrap()
+    }
+
+    fn config_store_from_str_result(s: &str) -> Result<Config, ConfigBuilderError> {
         let mut external_plugin_store = ExternalPluginStore::default();
         ConfigStoreBuilder::from_oxlintrc(
             true,
@@ -1140,7 +1221,6 @@ mod test {
             None,
             &mut external_plugin_store,
         )
-        .unwrap()
-        .build()
+        .map(super::ConfigStoreBuilder::build)
     }
 }
