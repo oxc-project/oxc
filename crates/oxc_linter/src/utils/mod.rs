@@ -29,7 +29,7 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
+static VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -67,7 +67,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
 ];
 
 // List of Eslint rules that have Typescript equivalents.
-const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
+static TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
     "class-methods-use-this",
     "default-param-last",
     "init-declarations",
