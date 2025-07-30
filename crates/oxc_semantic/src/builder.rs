@@ -2216,10 +2216,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-
-
-
-
             AstKind::TSTypeReference(_) => {
                 // type A = B;
                 //          ^
@@ -2242,8 +2238,6 @@ impl<'a> SemanticBuilder<'a> {
             _ => {}
         }
     }
-
-
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
