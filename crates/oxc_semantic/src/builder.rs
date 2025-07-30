@@ -2195,6 +2195,52 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_ts_type_reference(&mut self, it: &TSTypeReference<'a>) {
+        let kind = AstKind::TSTypeReference(self.alloc(it));
+        self.enter_node(kind);
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.visit_span(&it.span);
+        self.visit_ts_type_name(&it.type_name);
+        if let Some(type_parameters) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_parameters);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        let kind = AstKind::IdentifierReference(self.alloc(it));
+        self.enter_node(kind);
+        self.reference_identifier(it);
+        self.visit_span(&it.span);
+        self.leave_node(kind);
+    }
+
+    fn visit_yield_expression(&mut self, it: &YieldExpression<'a>) {
+        let kind = AstKind::YieldExpression(self.alloc(it));
+        self.enter_node(kind);
+        self.set_function_node_flags(NodeFlags::HasYield);
+        self.visit_span(&it.span);
+        if let Some(argument) = &it.argument {
+            self.visit_expression(argument);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        let kind = AstKind::CallExpression(self.alloc(it));
+        self.enter_node(kind);
+        if !it.optional && it.callee.is_specific_id("eval") {
+            self.scoping.scope_flags_mut(self.current_scope_id).insert(ScopeFlags::DirectEval);
+        }
+        self.visit_span(&it.span);
+        self.visit_expression(&it.callee);
+        if let Some(type_parameters) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_parameters);
+        }
+        self.visit_arguments(&it.arguments);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2214,33 +2260,6 @@ impl<'a> SemanticBuilder<'a> {
             }
         });
         /* cfg */
-
-        match kind {
-
-
-
-
-            AstKind::TSTypeReference(_) => {
-                // type A = B;
-                //          ^
-                self.current_reference_flags = ReferenceFlags::Type;
-            }
-            AstKind::IdentifierReference(ident) => {
-                self.reference_identifier(ident);
-            }
-
-            AstKind::YieldExpression(_) => {
-                self.set_function_node_flags(NodeFlags::HasYield);
-            }
-            AstKind::CallExpression(call_expr) => {
-                if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
-                    self.scoping
-                        .scope_flags_mut(self.current_scope_id)
-                        .insert(ScopeFlags::DirectEval);
-                }
-            }
-            _ => {}
-        }
     }
 
 
