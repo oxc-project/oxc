@@ -13,8 +13,8 @@ mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_declaration;
 mod remove_unused_expression;
-mod remove_unused_variable_declaration;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
