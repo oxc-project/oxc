@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- b877039 minifier: Inline `const` variables that are only used once (#12488) (Boshen)
+
+### 🐛 Bug Fixes
+
+- fe9c8e1 minifier: Do not remove non-plain empty functions (#12573) (Boshen)
+
+
 
 
 
