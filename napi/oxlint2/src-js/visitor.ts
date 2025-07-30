@@ -72,11 +72,11 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
-
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
+
+import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
 const { isArray } = Array;
 
