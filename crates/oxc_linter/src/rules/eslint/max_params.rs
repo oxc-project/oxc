@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::TSType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -20,6 +20,7 @@ pub struct MaxParams(Box<MaxParamsConfig>);
 #[derive(Debug, Clone)]
 pub struct MaxParamsConfig {
     max: usize,
+    count_void_this: bool,
 }
 
 impl std::ops::Deref for MaxParams {
@@ -32,7 +33,7 @@ impl std::ops::Deref for MaxParams {
 
 impl Default for MaxParamsConfig {
     fn default() -> Self {
-        Self { max: 3 }
+        Self { max: 3, count_void_this: false }
     }
 }
 
@@ -88,6 +89,15 @@ declare_oxc_lint!(
     ///
     /// For example `{ "max": 4 }` would mean that having a function take four
     /// parameters is allowed which overrides the default of three.
+    ///
+    /// ### countVoidThis
+    ///
+    /// `{ "countVoidThis": boolean }`
+    ///
+    /// This option is for counting the `this` parameter if it is of type `void`.
+    ///
+    /// For example `{ "countVoidThis": true }` would mean that having a function
+    /// take a `this` parameter of type `void` is counted towards the maximum number of parameters.
     MaxParams,
     eslint,
     style
@@ -101,15 +111,19 @@ impl Rule for MaxParams {
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            Self(Box::new(MaxParamsConfig { max }))
+            Self(Box::new(MaxParamsConfig { max, count_void_this: false }))
         } else {
             let max = config
                 .and_then(|config| config.get("max"))
                 .and_then(Value::as_number)
                 .and_then(serde_json::Number::as_u64)
                 .map_or(3, |v| usize::try_from(v).unwrap_or(3));
+            let count_void_this = config
+                .and_then(|config| config.get("countVoidThis"))
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
 
-            Self(Box::new(MaxParamsConfig { max }))
+            Self(Box::new(MaxParamsConfig { max, count_void_this }))
         }
     }
 
@@ -119,23 +133,31 @@ impl Rule for MaxParams {
                 if !function.is_declaration() & !function.is_expression() {
                     return;
                 }
+                let params = &function.params;
+                let mut real_len = params.items.len();
+                if let Some(this_params) = &function.this_param {
+                    let is_void_this = this_params
+                        .type_annotation
+                        .as_ref()
+                        .is_some_and(|t| matches!(t.type_annotation, TSType::TSVoidKeyword(_)));
+                    if self.count_void_this || !is_void_this {
+                        real_len += 1;
+                    }
+                }
 
-                if function.params.items.len() > self.max {
+                if real_len > self.max {
                     if let Some(id) = &function.id {
                         let function_name = id.name.as_str();
                         let error_msg = format!(
                             "Function '{}' has too many parameters ({}). Maximum allowed is {}.",
-                            function_name,
-                            function.params.items.len(),
-                            self.max
+                            function_name, real_len, self.max
                         );
                         let span = function.params.span;
                         ctx.diagnostic(max_params_diagnostic(&error_msg, span));
                     } else {
                         let error_msg = format!(
                             "Function has too many parameters ({}). Maximum allowed is {}.",
-                            function.params.items.len(),
-                            self.max
+                            real_len, self.max
                         );
                         let span = function.params.span;
                         ctx.diagnostic(max_params_diagnostic(&error_msg, span));
@@ -168,6 +190,23 @@ fn test() {
         ("var test = (a, b, c) => {};", Some(serde_json::json!([3]))),
         ("var test = function test(a, b, c) {};", Some(serde_json::json!([3]))),
         ("var test = function(a, b, c) {};", Some(serde_json::json!([{ "max": 3 }]))),
+        (
+            "function testD(this: void, a) {}",
+            Some(serde_json::json!([{ "max": 2, "countVoidThis": true }])),
+        ),
+        (
+            "function testD(this: void, a, b) {}",
+            Some(serde_json::json!([{ "max": 2, "countVoidThis": false }])),
+        ),
+        ("const testE = function (this: void, a) {}", Some(serde_json::json!([1]))),
+        (
+            "const testE = function (this: void, a) {}",
+            Some(serde_json::json!([{ "max": 2, "countVoidThis": false }])),
+        ),
+        (
+            "const testE = function (this: any, a) {}",
+            Some(serde_json::json!([{ "max": 2, "countVoidThis": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -185,6 +224,28 @@ fn test() {
 			              // Just to make it longer
 			            }",
             Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "function testD(this: void, a, b) {}",
+            Some(serde_json::json!([{ "max": 2, "countVoidThis": true }])),
+        ),
+        (
+            "
+                class Foo { method(this: void, a) {} }
+            ",
+            Some(serde_json::json!([{ "max": 1, "countVoidThis": true }])),
+        ),
+        (
+            "const testE = function (this: void, a) {}",
+            Some(serde_json::json!([{ "max": 1, "countVoidThis": true }])),
+        ),
+        (
+            "const testE = function (this: any, a) {}",
+            Some(serde_json::json!([{ "max": 1, "countVoidThis": true }])),
+        ),
+        (
+            "const testE = function (this: any, a) {}",
+            Some(serde_json::json!([{ "max": 1, "countVoidThis": false }])),
         ),
     ];
 
