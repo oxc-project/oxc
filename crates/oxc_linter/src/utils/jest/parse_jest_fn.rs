@@ -106,9 +106,8 @@ pub fn parse_jest_fn_call<'a>(
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
-            return None;
-        }
+        // Jest validation removed entirely for binary size optimization
+        // All Jest-like function calls will be processed by rules
 
         if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
             return None;
@@ -295,14 +294,7 @@ pub struct ExpectFnCallOptions<'a, 'b> {
     pub ctx: &'b LintContext<'a>,
 }
 
-// If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
-fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
-    // Build the chain string by joining members with dots
-    let chain_str = members.join(".");
-    
-    // Perfect hash lookup in the compile-time generated set
-    VALID_JEST_FN_CALL_CHAINS.contains(&chain_str.as_str())
-}
+// Jest validation removed entirely for binary size optimization
 
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
@@ -559,57 +551,5 @@ fn recurse_extend_node_chain<'a>(
     }
 }
 
-static VALID_JEST_FN_CALL_CHAINS: phf::Set<&'static str> = phf::phf_set! {
-    "afterAll",
-    "afterEach",
-    "beforeAll",
-    "beforeEach",
-    "bench",
-    "describe",
-    "describe.each",
-    "describe.only",
-    "describe.only.each",
-    "describe.skip",
-    "describe.skip.each",
-    "fdescribe",
-    "fdescribe.each",
-    "fit",
-    "fit.each",
-    "fit.failing",
-    "it",
-    "it.concurrent",
-    "it.concurrent.each",
-    "it.concurrent.only.each",
-    "it.concurrent.skip.each",
-    "it.each",
-    "it.failing",
-    "it.only",
-    "it.only.each",
-    "it.only.failing",
-    "it.skip",
-    "it.skip.each",
-    "it.skip.failing",
-    "it.todo",
-    "test",
-    "test.concurrent",
-    "test.concurrent.each",
-    "test.concurrent.only.each",
-    "test.concurrent.skip.each",
-    "test.each",
-    "test.failing",
-    "test.only",
-    "test.only.each",
-    "test.only.failing",
-    "test.skip",
-    "test.skip.each",
-    "test.skip.failing",
-    "test.todo",
-    "xdescribe",
-    "xdescribe.each",
-    "xit",
-    "xit.each",
-    "xit.failing",
-    "xtest",
-    "xtest.each",
-    "xtest.failing",
-};
+// Validation removed for binary size optimization as suggested by @Dunqing
+// All Jest-like function calls will be accepted for rule processing
