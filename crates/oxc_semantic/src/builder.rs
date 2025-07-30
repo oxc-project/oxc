@@ -597,7 +597,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.check_syntax_error {
             checker::check(kind, self);
         }
-        self.leave_kind(kind);
         self.pop_ast_node();
     }
 
@@ -2056,26 +2055,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn leave_kind(&mut self, kind: AstKind<'a>) {
-        match kind {
-            AstKind::Class(_) => {
-                self.current_node_flags -= NodeFlags::Class;
-                self.class_table_builder.pop_class();
-            }
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.pop();
-            }
-            AstKind::CatchParameter(_) => {
-                self.resolve_references_for_current_scope();
-            }
-            AstKind::TSTypeQuery(_) | AstKind::TSPropertySignature(_) => {
-                // Clear the reference flags that may have been set when entering the node.
-                self.current_reference_flags = ReferenceFlags::empty();
-            }
-            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
-            _ => {}
-        }
-    }
+
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
