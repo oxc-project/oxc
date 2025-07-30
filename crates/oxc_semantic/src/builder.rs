@@ -1936,6 +1936,56 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&it.expression);
         self.leave_node(kind);
     }
+
+    fn visit_import_specifier(&mut self, it: &ImportSpecifier<'a>) {
+        let kind = AstKind::ImportSpecifier(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_module_export_name(&it.imported);
+        self.visit_binding_identifier(&it.local);
+        self.leave_node(kind);
+    }
+
+    fn visit_import_default_specifier(&mut self, it: &ImportDefaultSpecifier<'a>) {
+        let kind = AstKind::ImportDefaultSpecifier(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.local);
+        self.leave_node(kind);
+    }
+
+    fn visit_import_namespace_specifier(&mut self, it: &ImportNamespaceSpecifier<'a>) {
+        let kind = AstKind::ImportNamespaceSpecifier(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.local);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_import_equals_declaration(&mut self, it: &TSImportEqualsDeclaration<'a>) {
+        let kind = AstKind::TSImportEqualsDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.id);
+        self.visit_ts_module_reference(&it.module_reference);
+        self.leave_node(kind);
+    }
+
+    fn visit_variable_declarator(&mut self, it: &VariableDeclarator<'a>) {
+        let kind = AstKind::VariableDeclarator(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_pattern(&it.id);
+        if let Some(init) = &it.init {
+            self.visit_expression(init);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -1957,21 +2007,7 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ImportSpecifier(specifier) => {
-                specifier.bind(self);
-            }
-            AstKind::ImportDefaultSpecifier(specifier) => {
-                specifier.bind(self);
-            }
-            AstKind::ImportNamespaceSpecifier(specifier) => {
-                specifier.bind(self);
-            }
-            AstKind::TSImportEqualsDeclaration(decl) => {
-                decl.bind(self);
-            }
-            AstKind::VariableDeclarator(decl) => {
-                decl.bind(self);
-            }
+
 
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
