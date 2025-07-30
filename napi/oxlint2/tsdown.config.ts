@@ -17,4 +17,7 @@ export default defineConfig({
     // These are generated (also used by oxc-parser, so we'll copy them separately)
     /..\/parser\/.*/,
   ],
+  // At present only compress syntax.
+  // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
+  minify: { compress: true },
 });
