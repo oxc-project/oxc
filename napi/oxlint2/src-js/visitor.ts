@@ -75,6 +75,7 @@
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
+import { assertIs } from './utils.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
@@ -222,9 +223,9 @@ export function addVisitorToCompiled(visitor: Visitor): void {
 
     const existing = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
     if (typeId < LEAF_NODE_TYPES_COUNT) {
-      // Leaf node - store just 1 function, not enter+exit pair.
-      // Note: `existing` here is actually `CompilingLeafVisitorEntry`, but can't tell TS compiler that
-      // without adding some code which would add (small) runtime cost.
+      // Leaf node - store just 1 function, not enter+exit pair
+      assertIs<CompilingLeafVisitorEntry>(existing);
+
       if (existing === null) {
         compiledVisitor[typeId] = visitFn;
       } else if (isArray(existing)) {
@@ -241,8 +242,8 @@ export function addVisitorToCompiled(visitor: Visitor): void {
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
         (compiledVisitor[typeId] as CompilingLeafVisitorEntry) = isExit
-          ? createVisitFnArray(existing as unknown as VisitFn, visitFn)
-          : createVisitFnArray(visitFn, existing as unknown as VisitFn);
+          ? createVisitFnArray(existing, visitFn)
+          : createVisitFnArray(visitFn, existing);
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {

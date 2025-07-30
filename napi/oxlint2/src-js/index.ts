@@ -6,7 +6,7 @@ import {
   // TODO(camc314): we need to generate `.d.ts` file for this module.
   // @ts-expect-error
 } from './generated/constants.cjs';
-import { getErrorMessage } from './utils.js';
+import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 import type { Visitor } from './types.ts';
@@ -198,15 +198,17 @@ function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null,
     // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
     buffer = buffers[bufferId]!;
   } else {
+    assertIs<BufferWithArrays>(buffer);
     const { buffer: arrayBuffer, byteOffset } = buffer;
-    (buffer as BufferWithArrays).uint32 = new Uint32Array(arrayBuffer, byteOffset);
-    (buffer as BufferWithArrays).float64 = new Float64Array(arrayBuffer, byteOffset);
+    buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
+    buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 
     for (let i = bufferId - buffers.length; i >= 0; i--) {
       buffers.push(null);
     }
-    buffers[bufferId] = buffer as BufferWithArrays;
+    buffers[bufferId] = buffer;
   }
+  assertIs<BufferWithArrays>(buffer);
 
   if (typeof filePath !== 'string' || filePath.length === 0) {
     throw new Error('expected filePath to be a non-zero length string');
@@ -231,7 +233,7 @@ function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null,
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    const { uint32 } = buffer as BufferWithArrays,
+    const { uint32 } = buffer,
       programPos = uint32[DATA_POINTER_POS_32],
       sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
