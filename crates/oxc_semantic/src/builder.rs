@@ -2059,9 +2059,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-
-
-
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
             }
@@ -2121,8 +2118,6 @@ impl<'a> SemanticBuilder<'a> {
             _ => {}
         }
     }
-
-
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
