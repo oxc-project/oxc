@@ -43,7 +43,7 @@ use crate::{
     parentheses::NeedsParentheses,
     utils::{
         assignment_like::AssignmentLike, call_expression::is_test_call_expression,
-        write_arguments_multi_line,
+        member_chain::MemberChain, write_arguments_multi_line,
     },
     write,
     write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
@@ -343,8 +343,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             )
         }) && !callee.needs_parentheses(f)
         {
-            // TODO
-            write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
+            MemberChain::from_call_expression(self, f).fmt(f)
         } else {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])

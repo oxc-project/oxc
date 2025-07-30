@@ -45,6 +45,21 @@ impl<'a> Comments<'a> {
         &self.comments[..self.printed_count]
     }
 
+    /// Returns comments that are before the given `pos`.
+    pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if comment.span.end > pos {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
     /// Returns the comments that after the given `start` position, even if they were already printed.
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let mut index = self.printed_count;
