@@ -1986,6 +1986,58 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_node(kind);
     }
+
+    fn visit_class_body(&mut self, it: &ClassBody<'a>) {
+        let kind = AstKind::ClassBody(self.alloc(it));
+        self.enter_node(kind);
+        self.class_table_builder.declare_class_body(it, self.current_node_id, &self.nodes);
+        self.visit_span(&it.span);
+        for element in &it.body {
+            self.visit_class_element(element);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
+        let kind = AstKind::PrivateIdentifier(self.alloc(it));
+        self.enter_node(kind);
+        self.class_table_builder.add_private_identifier_reference(
+            it,
+            self.current_node_id,
+            &self.nodes,
+        );
+        self.visit_span(&it.span);
+        self.leave_node(kind);
+    }
+
+    fn visit_binding_rest_element(&mut self, it: &BindingRestElement<'a>) {
+        let kind = AstKind::BindingRestElement(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_pattern(&it.argument);
+        self.leave_node(kind);
+    }
+
+    fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
+        let kind = AstKind::FormalParameter(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_decorators(&it.decorators);
+        self.visit_binding_pattern(&it.pattern);
+        self.leave_node(kind);
+    }
+
+    fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
+        let kind = AstKind::CatchParameter(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_pattern(&it.pattern);
+        self.resolve_references_for_current_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2009,29 +2061,7 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
 
 
-            AstKind::ClassBody(body) => {
-                self.class_table_builder.declare_class_body(
-                    body,
-                    self.current_node_id,
-                    &self.nodes,
-                );
-            }
-            AstKind::PrivateIdentifier(ident) => {
-                self.class_table_builder.add_private_identifier_reference(
-                    ident,
-                    self.current_node_id,
-                    &self.nodes,
-                );
-            }
-            AstKind::BindingRestElement(element) => {
-                element.bind(self);
-            }
-            AstKind::FormalParameter(param) => {
-                param.bind(self);
-            }
-            AstKind::CatchParameter(param) => {
-                param.bind(self);
-            }
+
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
             }
