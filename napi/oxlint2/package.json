@@ -11,7 +11,7 @@
     "build-napi-test": "pnpm run build-napi --profile coverage --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release",
     "build-js": "node scripts/build.js",
-    "test": "tsc && vitest"
+    "test": "tsc && vitest --dir ./test run"
   },
   "engines": {
     "node": ">=20.0.0"
