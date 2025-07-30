@@ -26,10 +26,6 @@ impl<'a> PeepholeOptimizations {
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return;
         };
-        // Only inline single reference (for now).
-        if symbol_value.read_references_count > 1 {
-            return;
-        }
         // Skip if there are write references.
         if symbol_value.write_references_count > 0 {
             return;
@@ -38,8 +34,17 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };
-        *expr = ctx.value_to_expr(expr.span(), cv.clone());
-        ctx.state.changed = true;
+        if symbol_value.read_references_count == 1
+            || match cv {
+                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
+                ConstantValue::BigInt(_) => false,
+                ConstantValue::String(s) => s.len() <= 3,
+                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
+            }
+        {
+            *expr = ctx.value_to_expr(expr.span(), cv.clone());
+            ctx.state.changed = true;
+        }
     }
 }
 
@@ -47,7 +52,7 @@ impl<'a> PeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions,
-        tester::{test_options, test_same},
+        tester::{test_options, test_same_options},
     };
 
     #[test]
@@ -55,6 +60,43 @@ mod test {
         let options = CompressOptions::smallest();
         test_options("const foo = 1; log(foo)", "log(1)", &options);
         test_options("export const foo = 1; log(foo)", "export const foo = 1; log(1)", &options);
-        test_same("const foo = 1; log(foo), log(foo)");
+
+        test_options("let foo = 1; log(foo)", "log(1)", &options);
+        test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
+    }
+
+    #[test]
+    fn small_value() {
+        let options = CompressOptions::smallest();
+        test_options("const foo = 999; log(foo), log(foo)", "log(999), log(999)", &options);
+        test_options("const foo = -99; log(foo), log(foo)", "log(-99), log(-99)", &options);
+        test_same_options("const foo = 1000; log(foo), log(foo)", &options);
+        test_same_options("const foo = -100; log(foo), log(foo)", &options);
+
+        test_same_options("const foo = 0n; log(foo), log(foo)", &options);
+
+        test_options("const foo = 'aaa'; log(foo), log(foo)", "log('aaa'), log('aaa')", &options);
+        test_same_options("const foo = 'aaaa'; log(foo), log(foo)", &options);
+
+        test_options("const foo = true; log(foo), log(foo)", "log(!0), log(!0)", &options);
+        test_options("const foo = false; log(foo), log(foo)", "log(!1), log(!1)", &options);
+        test_options(
+            "const foo = undefined; log(foo), log(foo)",
+            "log(void 0), log(void 0)",
+            &options,
+        );
+        test_options("const foo = null; log(foo), log(foo)", "log(null), log(null)", &options);
+
+        test_options(
+            r#"
+            const o = 'o';
+            const d = 'd';
+            const boolean = false;
+            var frag = `<p autocapitalize="${`w${o}r${d}s`}" contenteditable="${boolean}"/>`;
+            console.log(frag);
+            "#,
+            r#"var frag = '<p autocapitalize="words" contenteditable="false"/>';console.log(frag)"#,
+            &options,
+        );
     }
 }
