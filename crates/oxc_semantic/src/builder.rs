@@ -2038,6 +2038,86 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.resolve_references_for_current_scope();
         self.leave_node(kind);
     }
+
+    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+        let kind = AstKind::TSModuleDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_ts_module_declaration_name(&it.id);
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if it.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive) {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &it.scope_id,
+        );
+
+        if let Some(body) = &it.body {
+            self.visit_ts_module_declaration_body(body);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_type_alias_declaration(&mut self, it: &TSTypeAliasDeclaration<'a>) {
+        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.id);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_ts_type(&it.type_annotation);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.id);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_ts_interface_heritages(&it.extends);
+        self.visit_ts_interface_body(&it.body);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
+        let kind = AstKind::TSEnumDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        // TODO: const enum?
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.id);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        self.visit_ts_enum_body(&it.body);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_enum_member(&mut self, it: &TSEnumMember<'a>) {
+        let kind = AstKind::TSEnumMember(self.alloc(it));
+        self.enter_node(kind);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_ts_enum_member_name(&it.id);
+        if let Some(initializer) = &it.initializer {
+            self.visit_expression(initializer);
+        }
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -2062,22 +2142,7 @@ impl<'a> SemanticBuilder<'a> {
 
 
 
-            AstKind::TSModuleDeclaration(module_declaration) => {
-                module_declaration.bind(self);
-            }
-            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
-                type_alias_declaration.bind(self);
-            }
-            AstKind::TSInterfaceDeclaration(interface_declaration) => {
-                interface_declaration.bind(self);
-            }
-            AstKind::TSEnumDeclaration(enum_declaration) => {
-                enum_declaration.bind(self);
-                // TODO: const enum?
-            }
-            AstKind::TSEnumMember(enum_member) => {
-                enum_member.bind(self);
-            }
+
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
