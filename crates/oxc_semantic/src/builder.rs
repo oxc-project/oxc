@@ -2055,8 +2055,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-
-
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);
