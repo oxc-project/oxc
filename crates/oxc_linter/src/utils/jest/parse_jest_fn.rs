@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::Ordering};
+use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_ast::{
@@ -297,21 +297,11 @@ pub struct ExpectFnCallOptions<'a, 'b> {
 
 // If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
 fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
-    VALID_JEST_FN_CALL_CHAINS
-        .binary_search_by(|chain| {
-            chain
-                .iter()
-                .zip(members.iter())
-                .find_map(|(&chain, member)| {
-                    let ordering = chain.cmp(member.as_ref());
-                    if ordering != Ordering::Equal {
-                        return Some(ordering);
-                    }
-                    None
-                })
-                .unwrap_or(Ordering::Equal)
-        })
-        .is_ok()
+    // Build the chain string by joining members with dots
+    let chain_str = members.join(".");
+    
+    // Binary search in the sorted array of chain strings
+    VALID_JEST_FN_CALL_CHAINS.binary_search(&chain_str.as_str()).is_ok()
 }
 
 fn resolve_to_jest_fn<'a>(
@@ -569,58 +559,60 @@ fn recurse_extend_node_chain<'a>(
     }
 }
 
-// sorted list for binary search.
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 52] = [
-    ["afterAll", "", "", ""],
-    ["afterEach", "", "", ""],
-    ["beforeAll", "", "", ""],
-    ["beforeEach", "", "", ""],
-    ["bench", "", "", ""],
-    ["describe", "", "", ""],
-    ["describe", "each", "", ""],
-    ["describe", "only", "", ""],
-    ["describe", "only", "each", ""],
-    ["describe", "skip", "", ""],
-    ["describe", "skip", "each", ""],
-    ["fdescribe", "", "", ""],
-    ["fdescribe", "each", "", ""],
-    ["fit", "", "", ""],
-    ["fit", "each", "", ""],
-    ["fit", "failing", "", ""],
-    ["it", "", "", ""],
-    ["it", "concurrent", "", ""],
-    ["it", "concurrent", "each", ""],
-    ["it", "concurrent", "only", "each"],
-    ["it", "concurrent", "skip", "each"],
-    ["it", "each", "", ""],
-    ["it", "failing", "", ""],
-    ["it", "only", "", ""],
-    ["it", "only", "each", ""],
-    ["it", "only", "failing", ""],
-    ["it", "skip", "", ""],
-    ["it", "skip", "each", ""],
-    ["it", "skip", "failing", ""],
-    ["it", "todo", "", ""],
-    ["test", "", "", ""],
-    ["test", "concurrent", "", ""],
-    ["test", "concurrent", "each", ""],
-    ["test", "concurrent", "only", "each"],
-    ["test", "concurrent", "skip", "each"],
-    ["test", "each", "", ""],
-    ["test", "failing", "", ""],
-    ["test", "only", "", ""],
-    ["test", "only", "each", ""],
-    ["test", "only", "failing", ""],
-    ["test", "skip", "", ""],
-    ["test", "skip", "each", ""],
-    ["test", "skip", "failing", ""],
-    ["test", "todo", "", ""],
-    ["xdescribe", "", "", ""],
-    ["xdescribe", "each", "", ""],
-    ["xit", "", "", ""],
-    ["xit", "each", "", ""],
-    ["xit", "failing", "", ""],
-    ["xtest", "", "", ""],
-    ["xtest", "each", "", ""],
-    ["xtest", "failing", "", ""],
+// More compact representation of valid Jest function call chains.
+// Each entry is a string where components are separated by dots.
+// Empty strings represent single-component chains.
+const VALID_JEST_FN_CALL_CHAINS: [&str; 52] = [
+    "afterAll",
+    "afterEach",
+    "beforeAll",
+    "beforeEach",
+    "bench",
+    "describe",
+    "describe.each",
+    "describe.only",
+    "describe.only.each",
+    "describe.skip",
+    "describe.skip.each",
+    "fdescribe",
+    "fdescribe.each",
+    "fit",
+    "fit.each",
+    "fit.failing",
+    "it",
+    "it.concurrent",
+    "it.concurrent.each",
+    "it.concurrent.only.each",
+    "it.concurrent.skip.each",
+    "it.each",
+    "it.failing",
+    "it.only",
+    "it.only.each",
+    "it.only.failing",
+    "it.skip",
+    "it.skip.each",
+    "it.skip.failing",
+    "it.todo",
+    "test",
+    "test.concurrent",
+    "test.concurrent.each",
+    "test.concurrent.only.each",
+    "test.concurrent.skip.each",
+    "test.each",
+    "test.failing",
+    "test.only",
+    "test.only.each",
+    "test.only.failing",
+    "test.skip",
+    "test.skip.each",
+    "test.skip.failing",
+    "test.todo",
+    "xdescribe",
+    "xdescribe.each",
+    "xit",
+    "xit.each",
+    "xit.failing",
+    "xtest",
+    "xtest.each",
+    "xtest.failing",
 ];
