@@ -2007,8 +2007,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-
-
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
@@ -2091,8 +2089,6 @@ impl<'a> SemanticBuilder<'a> {
             _ => {}
         }
     }
-
-
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
