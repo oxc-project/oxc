@@ -1,4 +1,4 @@
-js compatibility: 441/699 (63.09%)
+js compatibility: 443/699 (63.38%)
 
 # Failed
 
@@ -145,13 +145,11 @@ js compatibility: 441/699 (63.09%)
 | js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/member/conditional.js | 💥 | 0.00% |
-| js/method-chain/bracket_0-1.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
 | js/method-chain/comment.js | 💥 | 78.33% |
 | js/method-chain/conditional.js | 💥 | 43.14% |
 | js/method-chain/first_long.js | 💥 | 96.97% |
 | js/method-chain/pr-7889.js | 💥 | 33.33% |
-| js/method-chain/square_0.js | 💥 | 53.33% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
 | js/no-semi/class.js | 💥✨ | 46.55% |
 | js/no-semi/comments.js | 💥✨ | 36.36% |
