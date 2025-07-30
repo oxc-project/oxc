@@ -1,4 +1,4 @@
-js compatibility: 438/699 (62.66%)
+js compatibility: 439/699 (62.80%)
 
 # Failed
 
@@ -124,7 +124,6 @@ js compatibility: 438/699 (62.66%)
 | js/for/in.js | 💥 | 50.00% |
 | js/for/parentheses.js | 💥 | 72.00% |
 | js/for-of/async-identifier.js | 💥 | 90.00% |
-| js/functional-composition/ramda_compose.js | 💥 | 92.47% |
 | js/identifier/for-of/await.js | 💥 | 33.33% |
 | js/identifier/for-of/let.js | 💥 | 61.54% |
 | js/identifier/parentheses/let.js | 💥💥 | 79.55% |

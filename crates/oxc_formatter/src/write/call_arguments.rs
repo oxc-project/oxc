@@ -56,12 +56,14 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let (is_commonjs_or_amd_call, is_test_call) =
-            if let AstNodes::CallExpression(call) = self.parent {
-                (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
-            } else {
-                (false, false)
-            };
+        let call_expression =
+            if let AstNodes::CallExpression(call) = self.parent { Some(call) } else { None };
+
+        let (is_commonjs_or_amd_call, is_test_call) = if let Some(call) = call_expression {
+            (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
+        } else {
+            (false, false)
+        };
 
         let is_first_arg_string_literal_or_template = self.len() != 2
             || matches!(
@@ -105,7 +107,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
             write_grouped_arguments(self, group_layout, f)
-        } else if is_long_curried_call(self.parent) {
+        } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             write!(
                 f,
                 [
