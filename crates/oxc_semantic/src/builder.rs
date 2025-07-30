@@ -666,6 +666,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(break_target) = &stmt.label {
+            // SAFETY: references to arena-allocated objects are valid for the lifetime of the arena
+            self.unused_labels.reference(unsafe {
+                std::mem::transmute::<&Atom<'a>, &'a Atom<'a>>(&break_target.name)
+            });
             self.visit_label_identifier(break_target);
         }
 
@@ -680,6 +684,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
+        self.current_node_flags |= NodeFlags::Class;
+        if class.is_declaration() {
+            class.bind(self);
+        }
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
@@ -705,7 +713,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_class_body(&class.body);
 
         self.leave_scope();
+        self.current_node_flags -= NodeFlags::Class;
         self.leave_node(kind);
+        self.class_table_builder.pop_class();
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
@@ -751,6 +761,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(continue_target) = &stmt.label {
+            // SAFETY: references to arena-allocated objects are valid for the lifetime of the arena
+            self.unused_labels.reference(unsafe {
+                std::mem::transmute::<&Atom<'a>, &'a Atom<'a>>(&continue_target.name)
+            });
             self.visit_label_identifier(continue_target);
         }
 
@@ -1213,6 +1227,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.unused_labels.add(stmt.label.name.as_str());
 
         /* cfg */
         let label = &stmt.label.name;
@@ -1555,9 +1570,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 .resolve_with_upper_label();
         });
         /* cfg */
+
+        self.unused_labels.mark_unused(self.current_node_id);
         self.leave_node(kind);
     }
-
     fn visit_with_statement(&mut self, stmt: &WithStatement<'a>) {
         let kind = AstKind::WithStatement(self.alloc(stmt));
         self.enter_node(kind);
@@ -1606,6 +1622,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.function_stack.push(self.current_node_id);
+        if func.is_declaration() {
+            func.bind(self);
+        }
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -1681,6 +1701,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.function_stack.pop();
         self.leave_node(kind);
     }
 
@@ -1700,6 +1721,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
+        self.function_stack.push(self.current_node_id);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
@@ -1761,6 +1783,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.function_stack.pop();
         self.leave_node(kind);
         self.leave_scope();
     }
@@ -1949,21 +1972,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
-            AstKind::Function(func) => {
-                self.function_stack.push(self.current_node_id);
-                if func.is_declaration() {
-                    func.bind(self);
-                }
-            }
-            AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.push(self.current_node_id);
-            }
-            AstKind::Class(class) => {
-                self.current_node_flags |= NodeFlags::Class;
-                if class.is_declaration() {
-                    class.bind(self);
-                }
-            }
+
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
@@ -2032,15 +2041,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::LabeledStatement(stmt) => {
-                self.unused_labels.add(stmt.label.name.as_str());
-            }
-            AstKind::ContinueStatement(ContinueStatement { label, .. })
-            | AstKind::BreakStatement(BreakStatement { label, .. }) => {
-                if let Some(label) = &label {
-                    self.unused_labels.reference(&label.name);
-                }
-            }
+
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flags(NodeFlags::HasYield);
             }
