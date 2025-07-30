@@ -511,7 +511,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
                     if node.type_arguments.is_some() {
                         return false;
                     }
-                    if let TSTypeName::IdentifierReference(_) = &node.type_name {
+                    if node.type_name.is_identifier() || node.type_name.is_qualified_name() {
                         return true;
                     }
                     return false;
@@ -970,9 +970,17 @@ export const test = testFn<{name: string}>({name: 'test'});",
 const instance = new MyClass<number>(42);",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/12605
+        ("let a: factories.User[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: factories.TT.User[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        (
+            "let z: readonly factories.User[] = [];",
+            Some(serde_json::json!([{"readonly":"array-simple"}])),
+        ),
     ];
 
     let fail = vec![
+        ("let a: factories.User[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
         ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array"}]))),
         ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array"}]))),
         ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array"}]))),
