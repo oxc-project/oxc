@@ -204,7 +204,7 @@ function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null,
     processedBuffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
     processedBuffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 
-    while (buffers.length <= bufferId) {
+    for (let i = bufferId - buffers.length; i >= 0; i--) {
       buffers.push(null);
     }
     buffers[bufferId] = processedBuffer;
