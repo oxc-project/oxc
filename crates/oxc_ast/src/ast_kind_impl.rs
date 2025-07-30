@@ -184,6 +184,65 @@ impl<'a> AstKind<'a> {
             Expression::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
         }
     }
+
+    /// Given an [`AstKind`] which is an [`IdentifierReference`], and [`AstKind`] representing its parent node,
+    /// returns `true` if the identifier is assigned to.
+    ///
+    /// Note: `parent` must be the parent node of the identifier, and `self` must be an `IdentifierReference`.
+    /// This method does not check those things, and may return incorrect results if either is not true.
+    //
+    // This method's implementation is identical to `MemberExpressionKind::is_assigned_to_in_parent`
+    // except for addition of `AssignmentTargetPropertyIdentifier`.
+    pub fn ident_reference_is_assigned_to_in_parent(&self, parent: &AstKind<'a>) -> bool {
+        debug_assert!(matches!(self, AstKind::IdentifierReference(_)));
+
+        #[expect(clippy::match_same_arms)]
+        match parent {
+            // `ident++`, `--ident`
+            // `UpdateExpression` has only 1 field containing child node - `argument`.
+            AstKind::UpdateExpression(_) => true,
+            // `[ident] = arr`
+            // `ArrayAssignmentTarget` has only 1 field containing child nodes - `elements`.
+            AstKind::ArrayAssignmentTarget(_) => true,
+            // `[...ident] = arr`, `({ ...ident } = obj)`
+            // `AssignmentTargetRest` has only 1 field containing child node - `target`.
+            AstKind::AssignmentTargetRest(_) => true,
+            // `ident = value`
+            // Only match if ident is on left
+            // - not on right e.g. `assignee = ident`.
+            AstKind::AssignmentExpression(assign_expr) => {
+                assign_expr.left.address() == self.address()
+            }
+            // `[ident = value] = arr`, `({ prop: ident = value } = obj)`
+            // Only match if ident is the assignee
+            // - not the default value e.g. `[assignee = ident] = arr`.
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `({ ident } = obj)`
+            // Only match if ident is the assignee
+            // - not the default value e.g. `({ assignee = ident } = obj)`.
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+                let binding = &assign_target.binding;
+                Address::from_ptr(binding) == self.address()
+            }
+            // `({ prop: ident } = obj)`
+            // Only match if ident is the assignee
+            // - not computed prop key e.g. `({ [ident]: assignee } = obj)`.
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `for (ident in obj)`
+            // Only match if ident is on left
+            // - not object being iterated e.g. `for (assignee in ident)`
+            AstKind::ForInStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            // `for (ident of obj)`
+            // Only match if ident is on left
+            // - not array being iterated e.g. `for (assignee of ident)`
+            AstKind::ForOfStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            _ => false,
+        }
+    }
 }
 
 impl AstKind<'_> {
