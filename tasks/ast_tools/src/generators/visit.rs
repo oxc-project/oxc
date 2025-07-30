@@ -10,7 +10,7 @@ use crate::{
     output::{Output, output_path},
     schema::{
         Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, VecDef,
-        extensions::visit::{Scope, VisitorNames},
+        extensions::visit::{Scope, StructVisitorNames, VisitorNames},
     },
     utils::{create_ident, create_ident_tokens, create_safe_ident},
 };
@@ -101,7 +101,7 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         // `#[ast(visit)]` on struct
         (AttrPart::None, AttrLocation::StructAstAttr(struct_def)) => {
             struct_def.visit.visitor_names =
-                Some(VisitorNames::from_snake_name(&struct_def.snake_name()));
+                Some(StructVisitorNames::from_snake_name(&struct_def.snake_name()));
         }
         // `#[ast(visit)]` on enum
         (AttrPart::None, AttrLocation::EnumAstAttr(enum_def)) => {
@@ -336,7 +336,7 @@ impl<'s> VisitBuilder<'s> {
 
 /// Generate visitors.
 impl VisitBuilder<'_> {
-    /// Generate `visit_*` methods and `walk_*` functions for a struct.
+    /// Generate `visit_*` methods, `walk_*` functions, and `walk_children_*` functions for a struct.
     ///
     /// Also generates functions for types of struct fields.
     fn generate_struct_visitor(&mut self, struct_def: &StructDef) {
@@ -347,6 +347,7 @@ impl VisitBuilder<'_> {
         let struct_ty = struct_def.ty(self.schema);
         let visit_fn_ident = visitor_names.visitor_ident();
         let walk_fn_ident = visitor_names.walk_ident();
+        let walk_children_fn_ident = visitor_names.walk_children_ident();
 
         // Get additional params
         let (extra_params, extra_args): (TokenStream, TokenStream) = struct_def
@@ -443,20 +444,32 @@ impl VisitBuilder<'_> {
 
         self.walk_fns.extend(quote! {
             ///@@line_break
-            #maybe_inline_attr
+            #[inline]
             pub fn #walk_fn_ident<'a, V: Visit<'a>>(visitor: &mut V, it: &#struct_ty #extra_params) {
                 #enter_node
-                #field_visits
+                #walk_children_fn_ident(visitor, it #extra_args);
                 #leave_node
+            }
+
+            ///@@line_break
+            #maybe_inline_attr
+            pub fn #walk_children_fn_ident<'a, V: Visit<'a>>(visitor: &mut V, it: &#struct_ty #extra_params) {
+                #field_visits
             }
         });
         self.walk_mut_fns.extend(quote! {
             ///@@line_break
-            #maybe_inline_attr
+            #[inline]
             pub fn #walk_fn_ident<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut #struct_ty #extra_params) {
                 #enter_node_mut
-                #field_visits_mut
+                #walk_children_fn_ident(visitor, it #extra_args);
                 #leave_node_mut
+            }
+
+            ///@@line_break
+            #maybe_inline_attr
+            pub fn #walk_children_fn_ident<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut #struct_ty #extra_params) {
+                #field_visits_mut
             }
         });
     }

@@ -7,7 +7,7 @@ use crate::utils::create_safe_ident;
 pub struct VisitStruct {
     /// Name of `visit_*` method and `walk_*` function.
     /// `None` if this struct is not visited.
-    pub visitor_names: Option<VisitorNames>,
+    pub visitor_names: Option<StructVisitorNames>,
     pub visit_args: Vec<(String, String)>,
     pub scope: Option<Scope>,
     /// `true` if this type has a scope, or any of its fields contain a scope.
@@ -24,7 +24,7 @@ impl VisitStruct {
     ///
     /// [`Ident`]: struct@Ident
     pub fn visitor_ident(&self) -> Option<Ident> {
-        self.visitor_names.as_ref().map(VisitorNames::visitor_ident)
+        self.visitor_names.as_ref().map(StructVisitorNames::visitor_ident)
     }
 }
 
@@ -89,6 +89,7 @@ pub struct VisitorNames {
 }
 
 impl VisitorNames {
+    /// Create [`VisitorNames`].
     pub fn from_snake_name(snake_name: &str) -> Self {
         Self { visit: format!("visit_{snake_name}"), walk: format!("walk_{snake_name}") }
     }
@@ -107,6 +108,49 @@ impl VisitorNames {
     pub fn walk_ident(&self) -> Ident {
         // Walk function names cannot be reserved words, as they begin with `walk_`
         create_safe_ident(&self.walk)
+    }
+}
+
+/// Names for visitor method, walk function, and walk children function.
+#[derive(Debug)]
+pub struct StructVisitorNames {
+    pub visit: String,
+    pub walk: String,
+    pub walk_children: String,
+}
+
+impl StructVisitorNames {
+    /// Create [`StructVisitorNames`].
+    pub fn from_snake_name(snake_name: &str) -> Self {
+        Self {
+            visit: format!("visit_{snake_name}"),
+            walk: format!("walk_{snake_name}"),
+            walk_children: format!("walk_children_{snake_name}"),
+        }
+    }
+
+    /// Get name of visitor method as an [`Ident`].
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn visitor_ident(&self) -> Ident {
+        // Visitor method names cannot be reserved words, as they begin with `visit_`
+        create_safe_ident(&self.visit)
+    }
+
+    /// Get name of walk function as an [`Ident`].
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn walk_ident(&self) -> Ident {
+        // Walk function names cannot be reserved words, as they begin with `walk_`
+        create_safe_ident(&self.walk)
+    }
+
+    /// Get name of walk children function as an [`Ident`].
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn walk_children_ident(&self) -> Ident {
+        // Walk children function names cannot be reserved words, as they begin with `walk_children_`
+        create_safe_ident(&self.walk_children)
     }
 }
 
