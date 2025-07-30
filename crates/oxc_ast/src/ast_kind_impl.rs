@@ -1,4 +1,6 @@
 #![expect(missing_docs)] // FIXME
+
+use oxc_allocator::{Address, GetAddress};
 use oxc_span::{Atom, GetSpan};
 
 use super::{AstKind, ast::*};
@@ -525,6 +527,17 @@ impl GetSpan for MemberExpressionKind<'_> {
             Self::Computed(member_expr) => member_expr.span,
             Self::Static(member_expr) => member_expr.span,
             Self::PrivateField(member_expr) => member_expr.span,
+        }
+    }
+}
+
+impl GetAddress for MemberExpressionKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Computed(member_expr) => Address::from_ptr(member_expr),
+            Self::Static(member_expr) => Address::from_ptr(member_expr),
+            Self::PrivateField(member_expr) => Address::from_ptr(member_expr),
         }
     }
 }
