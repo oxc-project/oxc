@@ -651,6 +651,7 @@ impl<'a> Symbol<'_, 'a> {
                         AstKind::CallExpression(_)
                             | AstKind::AwaitExpression(_)
                             | AstKind::YieldExpression(_)
+                            | AstKind::ChainExpression(_)
                     ) {
                         continue;
                     }

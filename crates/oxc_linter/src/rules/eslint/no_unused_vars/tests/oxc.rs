@@ -277,6 +277,13 @@ fn test_vars_discarded_reads() {
                 return (yield fn(), 1);
             }
         }",
+        // https://github.com/oxc-project/oxc/issues/12592
+        "export const Foo = ({ onDismiss }) => {
+            const { remove } = useToaster();
+            return (
+                <button onClick={() => (onDismiss?.(), remove())}>x</button>
+            );
+        };",
     ];
 
     let fail = vec![
