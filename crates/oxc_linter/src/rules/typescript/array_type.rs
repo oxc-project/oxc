@@ -973,6 +973,10 @@ const instance = new MyClass<number>(42);",
         // https://github.com/oxc-project/oxc/issues/12605
         ("let a: factories.User[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
         ("let a: factories.TT.User[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        (
+            "let z: readonly factories.User[] = [];",
+            Some(serde_json::json!([{"readonly":"array-simple"}])),
+        ),
     ];
 
     let fail = vec![
