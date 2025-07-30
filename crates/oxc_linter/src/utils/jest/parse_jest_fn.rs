@@ -300,8 +300,8 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
     // Build the chain string by joining members with dots
     let chain_str = members.join(".");
     
-    // Binary search in the sorted array of chain strings
-    VALID_JEST_FN_CALL_CHAINS.binary_search(&chain_str.as_str()).is_ok()
+    // Perfect hash lookup in the compile-time generated set
+    VALID_JEST_FN_CALL_CHAINS.contains(&chain_str.as_str())
 }
 
 fn resolve_to_jest_fn<'a>(
@@ -559,10 +559,7 @@ fn recurse_extend_node_chain<'a>(
     }
 }
 
-// More compact representation of valid Jest function call chains.
-// Each entry is a string where components are separated by dots.
-// Empty strings represent single-component chains.
-const VALID_JEST_FN_CALL_CHAINS: [&str; 52] = [
+static VALID_JEST_FN_CALL_CHAINS: phf::Set<&'static str> = phf::phf_set! {
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -615,4 +612,4 @@ const VALID_JEST_FN_CALL_CHAINS: [&str; 52] = [
     "xtest",
     "xtest.each",
     "xtest.failing",
-];
+};
