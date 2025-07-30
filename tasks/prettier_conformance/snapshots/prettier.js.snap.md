@@ -1,4 +1,4 @@
-js compatibility: 439/699 (62.80%)
+js compatibility: 441/699 (63.09%)
 
 # Failed
 
@@ -29,8 +29,6 @@ js compatibility: 439/699 (62.80%)
 | js/chain-expression/issue-15785-1.js | 💥 | 78.26% |
 | js/chain-expression/issue-15785-2.js | 💥 | 66.67% |
 | js/chain-expression/issue-15785-3.js | 💥 | 50.00% |
-| js/chain-expression/issue-15912.js | 💥 | 0.00% |
-| js/chain-expression/issue-15916.js | 💥 | 47.06% |
 | js/chain-expression/member-expression.js | 💥 | 45.83% |
 | js/chain-expression/test-3.js | 💥 | 75.00% |
 | js/chain-expression/test.js | 💥 | 25.00% |

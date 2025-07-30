@@ -104,6 +104,9 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                     self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
                 Expression::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
+                Expression::ChainExpression(chain) => {
+                    self.is_simple_chain_element(&chain.expression, depth)
+                }
                 _ => false,
             },
             Self::Assignment(SimpleAssignmentTarget::AssignmentTargetIdentifier(_)) => true,
@@ -151,6 +154,28 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
         Self::from(callee).is_simple_impl(depth)
             && arguments.len() + usize::from(depth) <= 2
             && arguments.iter().all(|argument| Self::new(argument).is_simple_impl(depth + 1))
+    }
+
+    #[inline]
+    fn is_simple_chain_element(&self, element: &'b ChainElement<'a>, depth: u8) -> bool {
+        match element {
+            ChainElement::CallExpression(call) => {
+                self.is_simple_call_like(&call.callee, &call.arguments, depth)
+            }
+            ChainElement::TSNonNullExpression(assertion) => {
+                Self::from(&assertion.expression).is_simple_impl(depth)
+            }
+            ChainElement::StaticMemberExpression(static_expression) => {
+                Self::from(&static_expression.object).is_simple_impl(depth)
+            }
+            ChainElement::ComputedMemberExpression(computed_expression) => {
+                Self::from(&computed_expression.expression).is_simple_impl(depth)
+                    && Self::from(&computed_expression.object).is_simple_impl(depth)
+            }
+            ChainElement::PrivateFieldExpression(private_field) => {
+                Self::from(&private_field.object).is_simple_impl(depth)
+            }
+        }
     }
 }
 
