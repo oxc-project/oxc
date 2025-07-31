@@ -490,7 +490,6 @@ pub fn check_function_declaration<'a>(
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
 pub fn check_function_declaration_in_labeled_statement<'a>(
     body: &Statement<'a>,
-
     ctx: &SemanticBuilder<'a>,
 ) {
     if let Statement::FunctionDeclaration(decl) = body {
@@ -509,7 +508,6 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
                     | AstKind::DoWhileStatement(_)
                     | AstKind::WithStatement(_)
                     | AstKind::IfStatement(_) => break,
-
                     _ => return,
                 }
             }
