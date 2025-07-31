@@ -1495,7 +1495,7 @@ impl<'a> Dummy<'a> for ExportDefaultDeclaration<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            exported: Dummy::dummy(allocator),
+            default_span: Dummy::dummy(allocator),
             declaration: Dummy::dummy(allocator),
         }
     }

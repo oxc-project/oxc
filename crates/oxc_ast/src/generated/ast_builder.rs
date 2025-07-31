@@ -7181,18 +7181,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
+    /// * `default_span`: Span of the `default` keyword
     /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
+        default_span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
         ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
             span,
-            exported,
+            default_span,
             declaration,
         ))
     }
@@ -7839,16 +7839,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
+    /// * `default_span`: Span of the `default` keyword
     /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
+        default_span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, exported, declaration }
+        ExportDefaultDeclaration { span, default_span, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7858,16 +7858,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
+    /// * `default_span`: Span of the `default` keyword
     /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
+        default_span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
+        Box::new_in(
+            self.export_default_declaration(span, default_span, declaration),
+            self.allocator,
+        )
     }
 
     /// Build an [`ExportAllDeclaration`].

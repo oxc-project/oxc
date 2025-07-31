@@ -8948,14 +8948,8 @@ impl<'a> GetSpan for AstNode<'a, ExportNamedDeclaration<'a>> {
 
 impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
     #[inline]
-    pub fn exported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
-        let following_node = Some(SiblingNode::from(&self.inner.declaration));
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.exported,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
-            following_node,
-        })
+    pub fn default_span(&self) -> Span {
+        self.inner.default_span
     }
 
     #[inline]

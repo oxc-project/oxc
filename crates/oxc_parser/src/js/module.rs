@@ -543,11 +543,11 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        let exported = self.parse_keyword_identifier(Kind::Default);
+        let default_span = self.cur_token().span();
+        self.bump_remap(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
-        let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        self.ast.alloc_export_default_declaration(span, exported, declaration)
+        self.ast.alloc_export_default_declaration(span, default_span, declaration)
     }
 
     fn parse_export_default_declaration_kind(

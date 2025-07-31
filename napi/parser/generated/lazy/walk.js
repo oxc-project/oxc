@@ -2437,7 +2437,7 @@ function walkExportDefaultDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExportDefaultDeclarationKind(pos + 64, ast, visitors);
+  walkExportDefaultDeclarationKind(pos + 16, ast, visitors);
 
   if (exit !== null) exit(node);
 }

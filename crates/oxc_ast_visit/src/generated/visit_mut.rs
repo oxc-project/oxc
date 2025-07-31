@@ -2911,7 +2911,7 @@ pub mod walk_mut {
         let kind = AstType::ExportDefaultDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_module_export_name(&mut it.exported);
+        visitor.visit_span(&mut it.default_span);
         visitor.visit_export_default_declaration_kind(&mut it.declaration);
         visitor.leave_node(kind);
     }
