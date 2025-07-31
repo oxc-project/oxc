@@ -169,7 +169,8 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                         }
                         break;
                     }
-                    AstKind::Function(_) => break,
+                    // `let` is permitted as function name or function param (including arrow functions)
+                    AstKind::Function(_) | AstKind::FormalParameter(_) => break,
                     _ => {}
                 }
             }
