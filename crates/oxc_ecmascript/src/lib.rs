@@ -11,6 +11,7 @@ mod array_join;
 mod is_less_than;
 mod math_abs;
 mod math_floor_ceil;
+mod math_round_max_min;
 mod string_char_at;
 mod string_char_code_at;
 mod string_includes;
@@ -21,6 +22,7 @@ mod string_starts_ends_with;
 mod string_substring;
 mod string_to_big_int;
 mod string_to_number;
+mod string_trim_repeat;
 mod to_big_int;
 mod to_boolean;
 mod to_int_32;
@@ -45,6 +47,7 @@ pub use self::{
     is_simple_parameter_list::IsSimpleParameterList,
     math_abs::MathAbs,
     math_floor_ceil::{MathFloor, MathCeil},
+    math_round_max_min::{MathRound, MathMax, MathMin, math_max_values, math_min_values},
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
     string_char_at::{StringCharAt, StringCharAtResult},
@@ -57,6 +60,7 @@ pub use self::{
     string_substring::StringSubstring,
     string_to_big_int::StringToBigInt,
     string_to_number::StringToNumber,
+    string_trim_repeat::{StringRepeat, StringTrim, StringTrimStart, StringTrimEnd},
     to_big_int::ToBigInt,
     to_boolean::ToBoolean,
     to_int_32::ToInt32,
