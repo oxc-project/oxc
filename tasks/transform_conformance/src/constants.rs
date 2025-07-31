@@ -1,4 +1,4 @@
-pub const PLUGINS: &[&str] = &[
+pub static PLUGINS: &[&str] = &[
     "babel-preset-env",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
@@ -65,7 +65,7 @@ pub const PLUGINS: &[&str] = &[
     "plugin-styled-components",
 ];
 
-pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+pub static PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-classes",
     "transform-destructuring",
@@ -75,7 +75,7 @@ pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-react-constant-elements",
 ];
 
-pub const SKIP_TESTS: &[&str] = &[
+pub static SKIP_TESTS: &[&str] = &[
     // Shouldn't report in transformer
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",

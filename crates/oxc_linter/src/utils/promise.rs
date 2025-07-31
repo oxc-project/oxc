@@ -1,7 +1,7 @@
 use oxc_ast::ast::CallExpression;
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-pub const PROMISE_STATIC_METHODS: [&str; 7] =
+pub static PROMISE_STATIC_METHODS: [&str; 7] =
     ["all", "allSettled", "any", "race", "reject", "resolve", "withResolvers"];
 
 pub fn is_promise(call_expr: &CallExpression) -> Option<String> {

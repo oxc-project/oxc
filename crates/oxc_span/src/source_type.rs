@@ -101,7 +101,7 @@ impl ContentEq for SourceType {
 }
 
 /// Valid file extensions.
-pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub static VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 /// Valid file extension.
 #[derive(Clone, Copy, PartialEq, Eq)]

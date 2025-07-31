@@ -2,7 +2,7 @@ use std::ffi::OsString;
 
 use bpaf::{Bpaf, doc::Style};
 
-pub const NO_IGNORE_HELP: &[(&str, Style)] = &[
+pub static NO_IGNORE_HELP: &[(&str, Style)] = &[
     ("Disables excluding of files from .eslintignore files, ", Style::Text),
     ("--ignore-path", Style::Literal),
     (" flags and ", Style::Text),

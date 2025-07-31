@@ -95,7 +95,7 @@ impl Rule for NoArrayForEach {
     }
 }
 
-pub const IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
+pub static IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
 
 #[test]
 fn test() {

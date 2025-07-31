@@ -1,4 +1,4 @@
-pub const IGNORE_TESTS: &[&str] = &[
+pub static IGNORE_TESTS: &[&str] = &[
     // Copied from Biome
     // https://github.com/biomejs/biome/blob/cd1c8ec4249e8df8d221393586d664537c9fddb2/crates/biome_formatter_test/src/diff_report.rs#L105
     // ----------------------------------------------------------------------------------------------------------------------------------
