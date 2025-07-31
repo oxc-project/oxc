@@ -1,5 +1,5 @@
 use oxc_ast::{AstKind, ast::*};
-use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
+use oxc_semantic::{AstNode, AstNodes, NodeId, ReferenceId, Scoping, SymbolId};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -74,8 +74,8 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
 
     fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
         self.scoping.get_resolved_reference_ids(symbol_id).into_iter().any(|reference_id| {
-            let node = self.ast_nodes.get_node(self.scoping.get_reference(*reference_id).node_id());
-            self.is_name_set_reference_node(node, *reference_id)
+            let node_id = self.scoping.get_reference(*reference_id).node_id();
+            self.is_name_set_reference_node(node_id, *reference_id)
         })
     }
 
@@ -110,9 +110,9 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         }
     }
 
-    fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
-        let parent_node = self.ast_nodes.parent_node(node.id());
-        match parent_node.kind() {
+    fn is_name_set_reference_node(&self, node_id: NodeId, reference_id: ReferenceId) -> bool {
+        let parent_node_id = self.ast_nodes.parent_id(node_id);
+        match self.ast_nodes.kind(parent_node_id) {
             // Check for direct assignment: foo = function() {}
             AstKind::AssignmentExpression(assign_expr) => {
                 Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
@@ -133,7 +133,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             | AstKind::ComputedMemberExpression(_)
             | AstKind::PrivateFieldExpression(_)
             | AstKind::StaticMemberExpression(_) => {
-                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node.id());
+                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node_id);
 
                 match grand_parent_node_kind {
                     AstKind::AssignmentExpression(assign_expr) => {
