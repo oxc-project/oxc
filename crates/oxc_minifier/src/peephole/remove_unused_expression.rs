@@ -1064,8 +1064,11 @@ mod test {
         );
         test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
-        test_same_options("for(let i;;) foo(i)", &options);
-        test_same_options("for(let i in []) foo(i)", &options);
+        // For loops
+        test_same_options("for (let i;;) foo(i)", &options);
+        test_same_options("for (let i in []) foo(i)", &options);
+        test_same_options("for (let element of list) element && (element.foo = bar)", &options);
+        test_same_options("for (let key in obj) key && (obj[key] = bar)", &options);
 
         test_options("var a; ({ a: a } = {})", "var a; ({ a } = {})", &options);
         test_options("var a; b = ({ a: a })", "var a; b = ({ a })", &options);
