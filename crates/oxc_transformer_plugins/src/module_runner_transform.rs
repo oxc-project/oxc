@@ -629,7 +629,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
-        if !ctx.scoping().get_resolved_reference_ids(symbol_id).is_empty() {
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
