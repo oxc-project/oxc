@@ -679,6 +679,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
+        self.current_node_flags |= NodeFlags::Class;
+        if class.is_declaration() {
+            class.bind(self);
+        }
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
@@ -705,6 +709,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.current_node_flags -= NodeFlags::Class;
+        self.class_table_builder.pop_class();
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
@@ -1957,12 +1963,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
             }
-            AstKind::Class(class) => {
-                self.current_node_flags |= NodeFlags::Class;
-                if class.is_declaration() {
-                    class.bind(self);
-                }
-            }
+
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
@@ -2056,10 +2057,6 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Class(_) => {
-                self.current_node_flags -= NodeFlags::Class;
-                self.class_table_builder.pop_class();
-            }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
