@@ -21,6 +21,14 @@ static ASCII_ID_START_TABLE: SafeByteMatchTable =
 static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
+// Optimized table that matches non-identifier bytes more efficiently
+// This includes all bytes that would terminate an ASCII identifier
+static ASCII_ID_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| {
+    !matches!(b, 
+        b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'$'
+    )
+});
+
 #[inline]
 fn is_identifier_start_ascii_byte(byte: u8) -> bool {
     ASCII_ID_START_TABLE.matches(byte)
@@ -52,10 +60,10 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { self.source.position().add(1) };
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of identifier using optimized table
         let next_byte = byte_search! {
             lexer: self,
-            table: NOT_ASCII_ID_CONTINUE_TABLE,
+            table: ASCII_ID_END_TABLE,
             start: after_first,
             handle_eof: {
                 // Return identifier minus its first char.

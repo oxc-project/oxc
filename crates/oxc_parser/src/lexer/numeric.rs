@@ -2,7 +2,14 @@ use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::diagnostics;
 
-use super::{Kind, Lexer, Span};
+use super::{
+    Kind, Lexer, Span,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+};
+
+// Table for matching non-digits (used to find end of digit sequence)
+static NOT_DECIMAL_DIGIT_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| !matches!(b, b'0'..=b'9'));
 
 impl Lexer<'_> {
     /// 12.9.3 Numeric Literals with `0` prefix
@@ -140,14 +147,45 @@ impl Lexer<'_> {
     }
 
     fn read_decimal_digits_after_first_digit(&mut self) {
+        // Fast path: Use batch search to skip over consecutive digits
+        let start_pos = self.source.position();
+        
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_DECIMAL_DIGIT_TABLE,
+            start: start_pos,
+            handle_eof: {
+                // All remaining characters are digits
+                return;
+            },
+        };
+        
+        // Handle special cases that aren't digits
+        match next_byte {
+            b'_' => {
+                // Numeric separator - handle this case byte by byte
+                self.consume_char();
+                self.token.set_has_separator(true);
+                if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
+                    self.consume_char();
+                    // Continue with the slower path that handles separators
+                    self.read_decimal_digits_after_first_digit_with_separators();
+                } else {
+                    self.unexpected_err();
+                }
+            }
+            _ => {
+                // End of digit sequence - we're done
+            }
+        }
+    }
+    
+    // Slower path for when we encounter numeric separators
+    fn read_decimal_digits_after_first_digit_with_separators(&mut self) {
         while let Some(b) = self.peek_byte() {
             match b {
                 b'_' => {
                     self.consume_char();
-                    // NOTE: it looks invalid numeric tokens are still parsed.
-                    // This seems to be a waste. It also requires us to put this
-                    // call here instead of after we ensure the next character
-                    // is an ASCII digit
                     self.token.set_has_separator(true);
                     if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();

@@ -5,7 +5,9 @@
 //! * `byte_search!` macro searches source text for first byte matching a byte table.
 
 /// Batch size for searching
-pub const SEARCH_BATCH_SIZE: usize = 32;
+/// Increased to 128 to process more data per iteration while staying within
+/// typical L1 cache line size. Larger batches reduce loop overhead.
+pub const SEARCH_BATCH_SIZE: usize = 128;
 
 /// Byte matcher lookup table.
 ///
