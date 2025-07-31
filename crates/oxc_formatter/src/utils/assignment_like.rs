@@ -477,9 +477,13 @@ fn should_break_after_operator<'a>(
         Expression::LogicalExpression(logical) => {
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
-        Expression::ConditionalExpression(conditional) => {
-            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::can_inline_logical_expr(logical))
-        }
+        Expression::ConditionalExpression(conditional) => match &conditional.test {
+            Expression::BinaryExpression(_) => true,
+            Expression::LogicalExpression(logical) => {
+                !BinaryLikeExpression::can_inline_logical_expr(logical)
+            }
+            _ => false,
+        },
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
 
         _ => {

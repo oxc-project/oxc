@@ -1,5 +1,6 @@
 pub mod assignment_like;
 pub mod call_expression;
+pub mod conditional;
 pub mod member_chain;
 
 use oxc_allocator::Address;

@@ -43,7 +43,7 @@ use crate::{
     parentheses::NeedsParentheses,
     utils::{
         assignment_like::AssignmentLike, call_expression::is_test_call_expression,
-        member_chain::MemberChain, write_arguments_multi_line,
+        conditional::ConditionalLike, member_chain::MemberChain, write_arguments_multi_line,
     },
     write,
     write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
@@ -428,20 +428,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LogicalExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                self.test(),
-                space(),
-                "?",
-                space(),
-                self.consequent(),
-                space(),
-                ":",
-                space(),
-                self.alternate()
-            ]
-        )
+        ConditionalLike::ConditionalExpression(self).fmt(f)
     }
 }
 
@@ -1943,18 +1930,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                self.check_type(),
-                " extends ",
-                self.extends_type(),
-                " ? ",
-                self.true_type(),
-                " : ",
-                self.false_type()
-            ]
-        )
+        ConditionalLike::TSConditionalType(self).fmt(f)
     }
 }
 
