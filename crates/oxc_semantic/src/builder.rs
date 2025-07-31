@@ -1611,6 +1611,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.function_stack.push(self.current_node_id);
+        if func.is_declaration() {
+            func.bind(self);
+        }
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -1687,6 +1691,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.function_stack.pop();
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
@@ -1705,6 +1710,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
+        self.function_stack.push(self.current_node_id);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
@@ -1767,6 +1773,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_node(kind);
+        self.function_stack.pop();
         self.leave_scope();
     }
 
@@ -1954,15 +1961,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
-            AstKind::Function(func) => {
-                self.function_stack.push(self.current_node_id);
-                if func.is_declaration() {
-                    func.bind(self);
-                }
-            }
-            AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.push(self.current_node_id);
-            }
 
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
@@ -2057,9 +2055,6 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.pop();
-            }
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
