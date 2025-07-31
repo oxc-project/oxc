@@ -557,39 +557,37 @@ fn recurse_extend_node_chain<'a>(
 
 fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
     use std::iter;
-    
+
     let mut members = members.iter().map(AsRef::as_ref);
 
     let Some(first) = members.next() else {
         return false;
     };
-    
+
     let second = members.next();
-    
+
     match first {
         // Simple root functions that should not have any modifiers
-        "beforeAll" | "afterAll" | "beforeEach" | "afterEach" | "bench" => {
-            second.is_none()
-        }
-        
-        // describe variants that can have modifiers  
+        "beforeAll" | "afterAll" | "beforeEach" | "afterEach" | "bench" => second.is_none(),
+
+        // describe variants that can have modifiers
         "describe" | "fdescribe" | "xdescribe" => {
             let Some(second) = second else { return true };
-            
-            iter::once(second).chain(members).any(|member| {
-                matches!(member, "only" | "skip" | "each")
-            })
+
+            iter::once(second)
+                .chain(members)
+                .any(|member| matches!(member, "only" | "skip" | "each"))
         }
-        
+
         // it/test variants that can have modifiers
         "it" | "test" | "fit" | "xit" | "xtest" => {
             let Some(second) = second else { return true };
-            
+
             iter::once(second).chain(members).any(|member| {
                 matches!(member, "only" | "skip" | "each" | "concurrent" | "failing" | "todo")
             })
         }
-        
+
         _ => false,
     }
 }
@@ -603,7 +601,7 @@ mod jest_validation_tests {
     fn test_is_valid_jest_call() {
         let valid_calls = [
             "afterAll",
-            "afterEach", 
+            "afterEach",
             "beforeAll",
             "beforeEach",
             "bench",
@@ -655,12 +653,12 @@ mod jest_validation_tests {
             "xtest.each",
             "xtest.failing",
         ];
-        
+
         for call in valid_calls {
             let members: Vec<Cow<str>> = call.split('.').map(Cow::from).collect();
             assert!(is_valid_jest_call(&members), "Failed for valid call: {call}");
         }
-        
+
         // Test some invalid calls
         let invalid_calls = [
             "describe.invalid",
@@ -669,7 +667,7 @@ mod jest_validation_tests {
             "unknown",
             "test.invalid.method",
         ];
-        
+
         for call in invalid_calls {
             let members: Vec<Cow<str>> = call.split('.').map(Cow::from).collect();
             assert!(!is_valid_jest_call(&members), "Should fail for invalid call: {call}");
