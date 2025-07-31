@@ -84,6 +84,21 @@ impl<'a> Comments<'a> {
         }
     }
 
+    pub fn comments_between(&self, start: u32, end: u32) -> &'a [Comment] {
+        let comments = self.comments_after(start);
+
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let mut index = 0;
+        while index < comments.len() - 1 && comments[index].span.end < end {
+            index += 1;
+        }
+
+        if comments[index].span.end < end { &comments[..=index] } else { &comments[..index] }
+    }
+
     #[inline]
     pub fn filter_comments_in_span(&self, span: Span) -> impl Iterator<Item = &Comment> {
         self.comments

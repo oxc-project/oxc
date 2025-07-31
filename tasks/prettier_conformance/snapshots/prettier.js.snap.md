@@ -1,4 +1,4 @@
-js compatibility: 458/699 (65.52%)
+js compatibility: 461/699 (65.95%)
 
 # Failed
 
@@ -57,7 +57,7 @@ js compatibility: 458/699 (65.52%)
 | js/comments/jsx.js | 💥💥 | 41.63% |
 | js/comments/last-arg.js | 💥💥 | 80.65% |
 | js/comments/multi-comments.js | 💥✨ | 44.74% |
-| js/comments/return-statement.js | 💥💥 | 64.56% |
+| js/comments/return-statement.js | 💥💥 | 89.35% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
 | js/comments/template-literal.js | 💥💥 | 30.43% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
@@ -136,7 +136,7 @@ js compatibility: 458/699 (65.52%)
 | js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
-| js/method-chain/comment.js | 💥 | 89.26% |
+| js/method-chain/comment.js | 💥 | 97.56% |
 | js/method-chain/conditional.js | 💥 | 85.19% |
 | js/method-chain/pr-7889.js | 💥 | 33.33% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
@@ -152,13 +152,12 @@ js compatibility: 458/699 (65.52%)
 | js/object-property-ignore/issue-5678.js | 💥💥💥 | 52.50% |
 | js/objects/right-break.js | 💥 | 70.27% |
 | js/optional-chaining/chaining.js | 💥 | 59.77% |
-| js/optional-chaining/comments.js | 💥 | 84.78% |
+| js/optional-chaining/comments.js | 💥 | 97.87% |
 | js/preserve-line/member-chain.js | 💥 | 92.19% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/return/comment.js | 💥 | 60.53% |
 | js/sequence-break/break.js | 💥 | 53.45% |
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/strings/escaped.js | 💥💥 | 73.68% |
@@ -189,8 +188,6 @@ js compatibility: 458/699 (65.52%)
 | js/test-declarations/jest-each.js | 💥💥 | 67.65% |
 | js/test-declarations/optional.js | 💥💥 | 0.00% |
 | js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
-| js/throw_statement/binaryish.js | 💥 | 23.81% |
-| js/throw_statement/comment.js | 💥 | 40.00% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
 | js/try/catch.js | 💥 | 52.63% |

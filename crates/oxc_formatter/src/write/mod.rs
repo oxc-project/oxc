@@ -11,6 +11,7 @@ mod function;
 mod object_like;
 mod object_pattern_like;
 mod parameter_list;
+mod return_or_throw_statement;
 mod semicolon;
 mod type_parameters;
 mod utils;
@@ -804,35 +805,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "return")?;
-        if let Some(argument) = self.argument() {
-            let is_binary_like_or_sequence_expression = matches!(
-                argument.as_ref(),
-                Expression::BinaryExpression(_)
-                    | Expression::LogicalExpression(_)
-                    | Expression::SequenceExpression(_)
-            );
-            write!(f, space())?;
-            if is_binary_like_or_sequence_expression {
-                // If the argument is a binary-like expression or sequence expression, we need to wrap it in parentheses
-                write!(
-                    f,
-                    [group(&format_args!(
-                        if_group_breaks(&text("(")),
-                        soft_block_indent(&argument),
-                        if_group_breaks(&text(")"))
-                    ))]
-                )
-            } else {
-                write!(f, argument)
-            }?;
-        }
-        write!(f, OptionalSemicolon)
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
@@ -958,12 +930,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
         } else {
             write!(f, [space(), body])
         }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["throw ", self.argument(), OptionalSemicolon])
     }
 }
 
