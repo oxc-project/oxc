@@ -1909,6 +1909,7 @@ version = "0.79.1"
 dependencies = [
  "num-bigint",
  "num-traits",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_span",
  "oxc_syntax",

@@ -4,6 +4,7 @@ use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+use oxc_allocator::Vec;
 use oxc_ast::{AstBuilder, ast::*};
 
 use crate::{
@@ -11,6 +12,8 @@ use crate::{
     is_less_than::is_less_than,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
     to_numeric::ToNumeric,
+    StringCharAt, StringCharAtResult, StringCharCodeAt, 
+    StringIndexOf, StringLastIndexOf, StringSubstring,
 };
 
 mod equality_comparison;
@@ -164,6 +167,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::SequenceExpression(e) => {
                 // For sequence expression, the value is the value of the RHS.
                 e.expressions.last().and_then(|e| e.evaluate_value_to(ctx, target_ty))
@@ -516,4 +520,211 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
             _ => None,
         }
     }
+}
+
+impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
+    fn evaluate_value_to(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+        _target_ty: Option<ValueType>,
+    ) -> Option<ConstantValue<'a>> {
+        try_fold_known_global_methods(&self.callee, &self.arguments, ctx)
+    }
+}
+
+fn try_fold_known_global_methods<'a>(
+    callee: &Expression<'a>,
+    arguments: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    let (name, object) = match callee {
+        Expression::StaticMemberExpression(member) if !member.optional => {
+            (member.property.name.as_str(), &member.object)
+        }
+        Expression::ComputedMemberExpression(member) if !member.optional => {
+            match &member.expression {
+                Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                _ => return None,
+            }
+        }
+        _ => return None,
+    };
+    match name {
+        "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
+            try_fold_string_casing(arguments, name, object, ctx)
+        }
+        "substring" | "slice" => {
+            try_fold_string_substring_or_slice(arguments, object, ctx)
+        }
+        "indexOf" | "lastIndexOf" => {
+            try_fold_string_index_of(arguments, name, object, ctx)
+        }
+        "charAt" => try_fold_string_char_at(arguments, object, ctx),
+        "charCodeAt" => try_fold_string_char_code_at(arguments, object, ctx),
+        "startsWith" => try_fold_starts_with(arguments, object, ctx),
+        _ => None,
+    }
+}
+
+fn try_fold_string_casing<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    name: &str,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if !args.is_empty() {
+        return None;
+    }
+
+    let value = match object {
+        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+        Expression::Identifier(ident) => {
+            ident
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
+                .and_then(ConstantValue::into_string)?
+        }
+        _ => return None,
+    };
+
+    let result = match name {
+        "toLowerCase" => value.to_lowercase(),
+        "toUpperCase" => value.to_uppercase(), 
+        "trim" => value.trim().to_string(),
+        "trimStart" => value.trim_start().to_string(),
+        "trimEnd" => value.trim_end().to_string(),
+        _ => return None,
+    };
+    Some(ConstantValue::String(Cow::Owned(result)))
+}
+
+fn try_fold_string_index_of<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    name: &str,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() >= 3 {
+        return None;
+    }
+    let Expression::StringLiteral(s) = object else { return None };
+    let search_value = match args.first() {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_string_value(ctx)?)
+        }
+        None => None,
+    };
+    let search_start_index = match args.get(1) {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_number_value(ctx)?)
+        }
+        None => None,
+    };
+    
+    let result = match name {
+        "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
+        "lastIndexOf" => {
+            s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+        }
+        _ => unreachable!(),
+    };
+    Some(ConstantValue::Number(result as f64))
+}
+
+fn try_fold_string_substring_or_slice<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() > 2 {
+        return None;
+    }
+    let Expression::StringLiteral(s) = object else { return None };
+    let start_idx = match args.first() {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_number_value(ctx)?)
+        }
+        None => None,
+    };
+    let end_idx = match args.get(1) {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_number_value(ctx)?)
+        }
+        None => None,
+    };
+    if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
+        || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
+    {
+        return None;
+    }
+    if let (Some(start), Some(end)) = (start_idx, end_idx) {
+        if start > end {
+            return None;
+        }
+    }
+    
+    Some(ConstantValue::String(Cow::Owned(
+        s.value.as_str().substring(start_idx, end_idx)
+    )))
+}
+
+fn try_fold_string_char_at<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() > 1 {
+        return None;
+    }
+    let Expression::StringLiteral(s) = object else { return None };
+    let char_at_index = match args.first() {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_number_value(ctx)?)
+        }
+        None => None,
+    };
+    
+    let result = match s.value.as_str().char_at(char_at_index) {
+        StringCharAtResult::Value(c) => c.to_string(),
+        StringCharAtResult::InvalidChar(_) => return None,
+        StringCharAtResult::OutOfRange => String::new(),
+    };
+    Some(ConstantValue::String(Cow::Owned(result)))
+}
+
+fn try_fold_string_char_code_at<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    let Expression::StringLiteral(s) = object else { return None };
+    let char_at_index = match args.first() {
+        Some(Argument::SpreadElement(_)) => return None,
+        Some(arg @ match_expression!(Argument)) => {
+            Some(arg.to_expression().get_side_free_number_value(ctx)?)
+        }
+        None => None,
+    };
+    
+    let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
+    Some(ConstantValue::Number(value))
+}
+
+fn try_fold_starts_with<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    _ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() != 1 {
+        return None;
+    }
+    let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
+    let Expression::StringLiteral(s) = object else { return None };
+    Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
