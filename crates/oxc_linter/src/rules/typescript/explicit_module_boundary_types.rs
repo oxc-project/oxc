@@ -542,6 +542,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
 
+    fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
+        // ignore
+    }
+
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
         walk::walk_class_body(self, class.body.as_ref());
@@ -1470,6 +1474,11 @@ mod test {
             }
             ",
                 Some(json!([{ "allowOverloadFunctions": true, }])),
+            ),
+            ("React.useEffect(() => { test() }, []);", None),
+            (
+                "const ex = () => (args: { fn: (arg: string) => void }) => args; export const Test = ex()({ fn: () => {} });",
+                None,
             ),
         ];
 
