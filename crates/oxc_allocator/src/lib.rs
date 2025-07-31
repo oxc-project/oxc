@@ -107,7 +107,7 @@ use pool_fixed_size::FixedSizeAllocatorMetadata;
     target_pointer_width = "64",
     target_endian = "little"
 ))]
-pub use pool_fixed_size::free_fixed_size_allocator;
+pub use pool_fixed_size::{FixedSizeAllocator, free_fixed_size_allocator};
 
 pub use pool::{AllocatorGuard, AllocatorPool};
 

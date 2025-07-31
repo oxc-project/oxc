@@ -20,7 +20,7 @@ function deserialize(buffer, sourceTextInput, sourceByteLenInput) {
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
 
-  const data = deserializeRawTransferData(uint32[536870902]);
+  const data = deserializeProgram(uint32[536870902]);
 
   uint8 =
     uint32 =

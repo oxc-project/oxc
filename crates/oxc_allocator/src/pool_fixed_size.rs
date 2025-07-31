@@ -274,8 +274,13 @@ impl FixedSizeAllocator {
         Self { allocator }
     }
 
+    /// Get [`Allocator`] wrapped by this [`FixedSizeAllocator`].
+    pub fn get(&self) -> &Allocator {
+        &self.allocator
+    }
+
     /// Reset this [`FixedSizeAllocator`].
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         // Set cursor back to end
         self.allocator.reset();
 
