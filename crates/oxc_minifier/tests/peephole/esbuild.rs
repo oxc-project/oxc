@@ -1480,8 +1480,8 @@ fn test_remove_dead_expr() {
     test("123n", "");
     test("'abc'", "'abc';");
     test("0; 'abc'", "");
-    test("'abc'; 'use strict'", "'abc';'use strict';");
-    test("function f() { 'abc'; 'use strict' }", "function f() { 'abc'; 'use strict';}");
+    test("'abc'; 'use strict'", "'abc';");
+    test("function f() { 'abc'; 'use strict' }", "function f() { 'abc'; }");
     test("this", "");
     test("/regex/", "");
     test("(function() {})", "");

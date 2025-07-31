@@ -9,7 +9,7 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 mod options;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use napi::Either;
 use napi_derive::napi;
@@ -58,7 +58,13 @@ pub fn minify(
 
     let allocator = Allocator::default();
 
-    let source_type = SourceType::from_path(&filename).unwrap_or_default();
+    let source_type = if options.module == Some(true) {
+        SourceType::mjs()
+    } else if Path::new(&filename).extension().is_some_and(|ext| ext == "js") {
+        SourceType::cjs()
+    } else {
+        SourceType::from_path(&filename).unwrap_or_default()
+    };
 
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
     let mut program = parser_ret.program;
