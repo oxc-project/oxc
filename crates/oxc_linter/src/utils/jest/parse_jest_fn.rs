@@ -14,7 +14,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     utils::jest::{JestFnKind, JestGeneralFnKind, PossibleJestNode},
-    utils::valid_vitest_fn::is_valid_vitest_call,
+    utils::valid_vitest_fn::is_valid_test_fn_call,
 };
 
 pub fn parse_jest_fn_call<'a>(
@@ -107,10 +107,10 @@ pub fn parse_jest_fn_call<'a>(
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
         if ctx.frameworks().is_vitest() {
-            if !is_valid_vitest_call(&call_chains) {
+            if !is_valid_test_fn_call(&call_chains) {
                 return None;
             }
-        } else if !is_valid_jest_call(&call_chains) {
+        } else if !is_valid_test_fn_call(&call_chains) {
             return None;
         }
 
@@ -555,50 +555,13 @@ fn recurse_extend_node_chain<'a>(
 // Validation removed for binary size optimization as suggested by @Dunqing
 // All Jest-like function calls will be accepted for rule processing
 
-fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
-    use std::iter;
-
-    let mut members = members.iter().map(AsRef::as_ref);
-
-    let Some(first) = members.next() else {
-        return false;
-    };
-
-    let second = members.next();
-
-    match first {
-        // Simple root functions that should not have any modifiers
-        "beforeAll" | "afterAll" | "beforeEach" | "afterEach" | "bench" => second.is_none(),
-
-        // describe variants that can have modifiers
-        "describe" | "fdescribe" | "xdescribe" => {
-            let Some(second) = second else { return true };
-
-            iter::once(second)
-                .chain(members)
-                .any(|member| matches!(member, "only" | "skip" | "each"))
-        }
-
-        // it/test variants that can have modifiers
-        "it" | "test" | "fit" | "xit" | "xtest" => {
-            let Some(second) = second else { return true };
-
-            iter::once(second).chain(members).any(|member| {
-                matches!(member, "only" | "skip" | "each" | "concurrent" | "failing" | "todo")
-            })
-        }
-
-        _ => false,
-    }
-}
-
 #[cfg(test)]
 mod jest_validation_tests {
-    use super::*;
     use std::borrow::Cow;
+    use crate::utils::valid_vitest_fn::is_valid_test_fn_call;
 
     #[test]
-    fn test_is_valid_jest_call() {
+    fn test_is_valid_test_fn_call() {
         let valid_calls = [
             "afterAll",
             "afterEach",
@@ -652,11 +615,36 @@ mod jest_validation_tests {
             "xtest",
             "xtest.each",
             "xtest.failing",
+            // Vitest-specific patterns
+            "suite",
+            "suite.only",
+            "suite.skip",
+            "suite.todo",
+            "suite.concurrent",
+            "bench.only",
+            "bench.skip",
+            "bench.todo",
+            "bench.runIf",
+            "bench.skipIf",
+            "describe.runIf",
+            "describe.skipIf",
+            "describe.sequential",
+            "describe.shuffle",
+            "it.fails",
+            "it.extend",
+            "it.runIf",
+            "it.skipIf",
+            "it.sequential",
+            "test.fails",
+            "test.extend",
+            "test.runIf",
+            "test.skipIf",
+            "test.sequential",
         ];
 
         for call in valid_calls {
             let members: Vec<Cow<str>> = call.split('.').map(Cow::from).collect();
-            assert!(is_valid_jest_call(&members), "Failed for valid call: {call}");
+            assert!(is_valid_test_fn_call(&members), "Failed for valid call: {call}");
         }
 
         // Test some invalid calls
@@ -670,7 +658,7 @@ mod jest_validation_tests {
 
         for call in invalid_calls {
             let members: Vec<Cow<str>> = call.split('.').map(Cow::from).collect();
-            assert!(!is_valid_jest_call(&members), "Should fail for invalid call: {call}");
+            assert!(!is_valid_test_fn_call(&members), "Should fail for invalid call: {call}");
         }
     }
 }
