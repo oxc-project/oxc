@@ -1058,6 +1058,11 @@ fn test_classes() {
         }
         new Bar();
         ",
+        // Variables used in class property initializers should not be marked as unused
+        "let a = 0; class A { c = a++ } new A()",
+        "let a = 0; class A { c = a } new A()",
+        "let a = 0; class A { c = a + 1 } new A()",
+        "let a = 0, b = 1; class A { c = a; d = b++ } new A()",
     ];
 
     let fail = vec![
