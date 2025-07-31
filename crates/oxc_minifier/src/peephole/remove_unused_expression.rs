@@ -677,6 +677,7 @@ impl<'a> PeepholeOptimizations {
         // Keep the entire class if non-empty static block exists.
         for e in &c.body.body {
             match e {
+                e if e.has_decorator() => return None,
                 ClassElement::TSIndexSignature(_) => return None,
                 ClassElement::StaticBlock(block) => {
                     if !block.body.is_empty() {
@@ -1131,6 +1132,9 @@ mod test {
             "A, B, C, D",
             &options,
         );
+
+        // decorators
+        test_same_options("(class { @dec foo() {} })", &options);
 
         // TypeError
         test_same_options("(class extends (() => {}) {})", &options);
