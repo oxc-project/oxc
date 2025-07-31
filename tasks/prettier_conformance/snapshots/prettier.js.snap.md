@@ -1,4 +1,4 @@
-js compatibility: 443/699 (63.38%)
+js compatibility: 448/699 (64.09%)
 
 # Failed
 
@@ -10,7 +10,6 @@ js compatibility: 443/699 (63.38%)
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
-| js/assignment/destructuring-heuristic.js | 💥 | 39.02% |
 | js/assignment/issue-10218.js | 💥 | 52.63% |
 | js/assignment/issue-1419.js | 💥 | 28.57% |
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
@@ -56,7 +55,7 @@ js compatibility: 443/699 (63.38%)
 | js/comments/export.js | 💥💥 | 84.93% |
 | js/comments/function-declaration.js | 💥💥 | 68.29% |
 | js/comments/if.js | 💥💥 | 38.16% |
-| js/comments/issue-3532.js | 💥💥 | 80.82% |
+| js/comments/issue-3532.js | 💥💥 | 79.73% |
 | js/comments/issues.js | 💥💥 | 91.18% |
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
@@ -106,9 +105,7 @@ js compatibility: 443/699 (63.38%)
 | js/decorators/class-expression/super-class.js | 💥💥 | 14.29% |
 | js/decorators-export/after_export.js | 💥 | 50.00% |
 | js/decorators-export/before_export.js | 💥 | 88.89% |
-| js/destructuring/destructuring.js | 💥 | 82.57% |
-| js/destructuring/issue-5988.js | 💥 | 0.00% |
-| js/destructuring-ignore/ignore.js | 💥💥💥 | 77.11% |
+| js/destructuring-ignore/ignore.js | 💥💥💥 | 83.33% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/using-declarations.js | 💥 | 70.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
@@ -148,7 +145,6 @@ js compatibility: 443/699 (63.38%)
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
 | js/method-chain/comment.js | 💥 | 78.33% |
 | js/method-chain/conditional.js | 💥 | 43.14% |
-| js/method-chain/first_long.js | 💥 | 96.97% |
 | js/method-chain/pr-7889.js | 💥 | 33.33% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
 | js/no-semi/class.js | 💥✨ | 46.55% |
@@ -171,7 +167,6 @@ js compatibility: 443/699 (63.38%)
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 90.67% |
-| js/rest/trailing-commas.js | 💥 | 95.08% |
 | js/return/binaryish.js | 💥 | 90.91% |
 | js/return/comment.js | 💥 | 60.53% |
 | js/sequence-break/break.js | 💥 | 46.85% |

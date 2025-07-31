@@ -30,7 +30,7 @@ pub enum AssignmentLike<'a, 'b> {
 /// - Assignment
 /// - Object property member
 /// - Variable declaration
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentLikeLayout {
     /// This is a special layout usually used for variable declarations.
     /// This layout is hit, usually, when a variable declarator doesn't have initializer:
@@ -436,7 +436,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 }
 
-                properties.iter().any(|property| !property.value.kind.is_binding_identifier())
+                properties.iter().any(|property| {
+                    !property.shorthand || !property.value.kind.is_binding_identifier()
+                })
             }
             AssignmentLike::AssignmentExpression(assignment) => {
                 let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {

@@ -7,7 +7,7 @@ use crate::{
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     write,
 };
@@ -23,6 +23,27 @@ impl<'a> ObjectLike<'a, '_> {
         match self {
             ObjectLike::ObjectExpression(o) => o.span,
             ObjectLike::TSTypeLiteral(o) => o.span,
+        }
+    }
+
+    fn should_hug(&self) -> bool {
+        // Check if the object type is the type annotation of the only parameter in a function.
+        // This prevents breaking object properties in cases like:
+        // const fn = ({ foo }: { foo: string }) => { ... };
+        match self {
+            Self::TSTypeLiteral(node) => {
+                // Check if parent is TSTypeAnnotation
+                matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
+                    // Check if that parent is FormalParameter
+                    matches!(type_ann.parent, AstNodes::FormalParameter(param) if {
+                        // Check if that parent is FormalParameters with only one item
+                        matches!(param.parent, AstNodes::FormalParameters(params) if {
+                            params.items.len() == 1
+                        })
+                    })
+                })
+            }
+            Self::ObjectExpression(node) => false,
         }
     }
 
@@ -79,13 +100,7 @@ impl<'a> Format<'a> for ObjectLike<'a, '_> {
             // const fn = ({ foo }: { foo: string }) => { ... };
             //                      ^ do not break properties here
             // ```
-            // TODO
-            // let should_hug = self.parent::<TsTypeAnnotation>().is_some_and(|node| {
-            // node.parent::<JsFormalParameter>().is_some_and(|node| {
-            // node.parent::<JsParameterList>().is_some_and(|node| node.len() == 1)
-            // })
-            // });
-            let should_hug = false;
+            let should_hug = self.should_hug();
 
             let inner =
                 soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);

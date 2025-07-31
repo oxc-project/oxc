@@ -209,7 +209,7 @@ ts compatibility: 247/573 (43.11%)
 | typescript/generic/arrow-return-type.ts | 💥 | 80.77% |
 | typescript/generic/issue-6899.ts | 💥 | 21.05% |
 | typescript/generic/object-method.ts | 💥 | 72.73% |
-| typescript/generic/ungrouped-parameters.ts | 💥 | 66.67% |
+| typescript/generic/ungrouped-parameters.ts | 💥 | 74.07% |
 | typescript/import-export/type-modifier.ts | 💥 | 66.67% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
 | typescript/index-signature/index-signature.ts | 💥 | 75.00% |
@@ -235,7 +235,7 @@ ts compatibility: 247/573 (43.11%)
 | typescript/keyword-types/conditional-types.ts | 💥 | 16.67% |
 | typescript/keywords/keywords-2.ts | 💥 | 79.41% |
 | typescript/keywords/keywords.ts | 💥 | 83.33% |
-| typescript/last-argument-expansion/decorated-function.tsx | 💥 | 26.55% |
+| typescript/last-argument-expansion/decorated-function.tsx | 💥 | 23.64% |
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 60.00% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
@@ -290,7 +290,7 @@ ts compatibility: 247/573 (43.11%)
 | typescript/ternaries/indent.ts | 💥 | 29.79% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
-| typescript/trailing-comma/trailing.ts | 💥💥💥 | 76.77% |
+| typescript/trailing-comma/trailing.ts | 💥💥💥 | 87.66% |
 | typescript/trailing-comma/type-arguments.ts | 💥💥💥 | 10.53% |
 | typescript/trailing-comma/type-parameters-vs-arguments.ts | 💥💥💥 | 66.67% |
 | typescript/tsx/generic-component.tsx | 💥 | 40.00% |
