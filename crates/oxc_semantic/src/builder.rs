@@ -1243,6 +1243,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.unused_labels.mark_unused(self.current_node_id);
         self.leave_node(kind);
     }
 
@@ -2062,7 +2063,6 @@ impl<'a> SemanticBuilder<'a> {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }
