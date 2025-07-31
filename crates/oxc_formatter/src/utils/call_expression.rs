@@ -24,6 +24,11 @@ use crate::generated::ast_nodes::{AstNode, AstNodes};
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
 pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
+    // TODO: This is not compatible with Biome, but compatible with Prettier.
+    if call.optional {
+        return false;
+    }
+
     let callee = &call.callee;
     let arguments = &call.arguments;
 

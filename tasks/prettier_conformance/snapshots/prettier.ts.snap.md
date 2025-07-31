@@ -79,8 +79,8 @@ ts compatibility: 247/573 (43.11%)
 | typescript/cast/as-const.ts | 💥 | 60.00% |
 | typescript/cast/generic-cast.ts | 💥 | 39.60% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
-| typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
-| typescript/chain-expression/member-expression.ts | 💥 | 31.34% |
+| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
+| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |

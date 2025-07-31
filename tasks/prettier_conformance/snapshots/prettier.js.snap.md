@@ -1,4 +1,4 @@
-js compatibility: 461/699 (65.95%)
+js compatibility: 468/699 (66.95%)
 
 # Failed
 
@@ -18,13 +18,7 @@ js compatibility: 461/699 (65.95%)
 | js/binary-expressions/jsx_parent.js | 💥 | 33.85% |
 | js/binary-expressions/return.js | 💥 | 90.00% |
 | js/call/first-argument-expansion/jsx.js | 💥 | 0.00% |
-| js/chain-expression/call-expression.js | 💥 | 42.86% |
-| js/chain-expression/issue-15785-1.js | 💥 | 78.26% |
-| js/chain-expression/issue-15785-2.js | 💥 | 66.67% |
 | js/chain-expression/issue-15785-3.js | 💥 | 50.00% |
-| js/chain-expression/member-expression.js | 💥 | 45.83% |
-| js/chain-expression/test-3.js | 💥 | 75.00% |
-| js/chain-expression/test.js | 💥 | 25.00% |
 | js/class-comment/class-property.js | 💥 | 30.77% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/class-comment/superclass.js | 💥 | 57.83% |
@@ -151,7 +145,7 @@ js compatibility: 461/699 (65.95%)
 | js/object-property-ignore/ignore.js | 💥💥💥 | 84.78% |
 | js/object-property-ignore/issue-5678.js | 💥💥💥 | 52.50% |
 | js/objects/right-break.js | 💥 | 70.27% |
-| js/optional-chaining/chaining.js | 💥 | 59.77% |
+| js/optional-chaining/chaining.js | 💥 | 72.41% |
 | js/optional-chaining/comments.js | 💥 | 97.87% |
 | js/preserve-line/member-chain.js | 💥 | 92.19% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
@@ -186,7 +180,6 @@ js compatibility: 461/699 (65.95%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | js/test-declarations/jest-each-template-string.js | 💥💥 | 27.78% |
 | js/test-declarations/jest-each.js | 💥💥 | 67.65% |
-| js/test-declarations/optional.js | 💥💥 | 0.00% |
 | js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |

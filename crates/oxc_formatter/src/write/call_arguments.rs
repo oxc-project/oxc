@@ -141,6 +141,11 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     }
 
     let mut has_seen_function_like = false;
+    let is_call_expression_with_arrow_or_function = |call: &CallExpression| {
+        call.arguments.iter().any(|arg| {
+            matches!(arg, Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+        })
+    };
 
     for arg in args {
         match arg {
@@ -150,15 +155,15 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                 }
                 has_seen_function_like = true;
             }
+            Argument::ChainExpression(chain) => {
+                return if let ChainElement::CallExpression(call) = &chain.expression {
+                    is_call_expression_with_arrow_or_function(call)
+                } else {
+                    false
+                };
+            }
             Argument::CallExpression(call) => {
-                if call.arguments.iter().any(|arg| {
-                    matches!(
-                        arg,
-                        Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_)
-                    )
-                }) {
-                    return true;
-                }
+                return is_call_expression_with_arrow_or_function(call);
             }
             _ => {}
         }
@@ -523,6 +528,9 @@ fn can_group_arrow_function_expression_argument(
         | Expression::JSXFragment(_) => true,
         Expression::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
+        }
+        Expression::ChainExpression(chain) => {
+            matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
         }
         Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
         _ => false,

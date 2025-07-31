@@ -326,7 +326,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        match self.parent {
+            AstNodes::CallExpression(call) => true,
+            AstNodes::NewExpression(new) => true,
+            AstNodes::StaticMemberExpression(member) => true,
+            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            _ => false,
+        }
     }
 }
 
