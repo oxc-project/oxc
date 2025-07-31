@@ -1,28 +1,103 @@
-# Minifier
+# OXC JavaScript Minifier
 
-A JavaScript minifier has three components:
+A high-performance JavaScript minifier written in Rust that reduces code size through various optimization techniques.
 
-1. compressor
-2. mangler
-3. printer
+## Architecture
 
-## Compressor
+The JavaScript minifier consists of three main components that work together:
 
-The compressor is responsible for rewriting statements and expressions for minimal text output.
-[Terser](https://github.com/terser/terser) is a good place to start for learning the fundamentals.
+1. **Compressor** - Rewrites statements and expressions for minimal output
+2. **Mangler** - Shortens variable and function names 
+3. **Printer** - Removes whitespace and formats the final output
 
-## Mangler
+```
+JavaScript Source → Parser → AST → Compressor → Mangler → Printer → Minified Output
+```
 
-The mangler implementation is part of the `SymbolTable` residing in `oxc_semantic`.
-It is responsible for shortening variables. Its algorithm should be gzip friendly.
+## Usage
 
-The printer is also responsible for printing out the shortened variable names.
+### Basic Usage
 
-## Printer
+```rust
+use oxc_allocator::Allocator;
+use oxc_ast::ast::Program;
+use oxc_minifier::{Minifier, MinifierOptions};
 
-The printer is responsible for removing whitespace from the source text.
+let allocator = Allocator::default();
+let mut program: Program = /* your parsed AST */;
 
-### Assumptions
+let minifier = Minifier::new(MinifierOptions::default());
+let result = minifier.build(&allocator, &mut program);
+```
+
+### Custom Options
+
+```rust
+use oxc_minifier::{CompressOptions, MangleOptions, MinifierOptions};
+
+let options = MinifierOptions {
+    mangle: Some(MangleOptions::default()),
+    compress: Some(CompressOptions {
+        drop_console: true,
+        dead_code_elimination: true,
+        ..Default::default()
+    }),
+};
+
+let minifier = Minifier::new(options);
+```
+
+## Components
+
+### Compressor
+
+The compressor applies various optimizations to reduce code size:
+
+- **Peephole Optimizations**: Local code transformations (constant folding, dead code elimination)
+- **Control Flow Optimization**: Simplifies conditional statements and loops
+- **Expression Minimization**: Reduces complex expressions to simpler forms
+- **Dead Code Elimination**: Removes unreachable code
+
+The compressor is heavily inspired by [Terser](https://github.com/terser/terser) and implements similar optimization strategies.
+
+### Mangler
+
+The mangler is integrated with `oxc_semantic` and provides:
+
+- Variable name shortening with scope awareness
+- Gzip-friendly name generation
+- Preservation of semantic correctness
+- Support for keep lists to preserve specific names
+
+### Printer
+
+The printer handles the final output formatting:
+- Whitespace removal
+- Comment stripping  
+- Optimal character encoding
+- Source map generation (when enabled)
+
+## Optimization Techniques
+
+### Peephole Optimizations
+
+The minifier applies numerous peephole optimizations in multiple passes:
+
+- **Constant Folding**: Evaluates constant expressions at compile time
+- **Dead Code Elimination**: Removes unreachable or unused code
+- **Expression Minimization**: Simplifies boolean expressions and conditions
+- **Statement Fusion**: Combines related statements for better compression
+- **Method Replacement**: Replaces known methods with shorter equivalents
+
+### Control Flow Optimization
+
+- **Conditional Simplification**: Reduces complex if/else chains
+- **Loop Optimization**: Simplifies for/while loop structures
+- **Early Exit Minimization**: Optimizes return/break/continue statements
+
+## Safety Assumptions
+
+The minifier makes several assumptions about the input code to enable aggressive optimizations:
 
 - [Properties of the global object defined in the ECMAScript spec](https://tc39.es/ecma262/multipage/global-object.html#sec-global-object) behaves the same as in the spec
   - Examples of properties: `Infinity`, `parseInt`, `Object`, `Promise.resolve`
@@ -42,6 +117,26 @@ The printer is responsible for removing whitespace from the source text.
 - Invalid super class error does not happen
   - Examples that breaks this assumption: `const v = []; class A extends v {}`
 
-## Terser Tests
+## Testing
 
-The fixtures are copied from https://github.com/terser/terser/tree/v5.9.0/test/compress
+The minifier includes comprehensive tests based on:
+
+- **Terser Test Suite**: Fixtures copied from [Terser v5.9.0](https://github.com/terser/terser/tree/v5.9.0/test/compress)
+- **Custom Test Cases**: OXC-specific optimizations and edge cases
+- **Integration Tests**: End-to-end minification workflows
+
+Run tests with:
+```bash
+cargo test --package oxc_minifier
+```
+
+## Contributing
+
+When adding new optimizations:
+
+1. Add comprehensive test cases covering edge cases
+2. Document the optimization with clear examples
+3. Ensure the optimization is safe and doesn't change semantics
+4. Follow the existing code patterns and naming conventions
+
+See the individual peephole optimization modules for examples of well-documented optimizations.

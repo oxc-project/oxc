@@ -1,4 +1,36 @@
 #![expect(clippy::print_stdout)]
+//! # Complete Minifier Example
+//!
+//! This example demonstrates how to use the full OXC minifier with both
+//! compression and mangling enabled. It supports various command-line options
+//! to control the minification process.
+//!
+//! ## Usage
+//!
+//! ```bash
+//! # Basic minification with default settings
+//! cargo run --example minifier test.js
+//!
+//! # Enable identifier mangling
+//! cargo run --example minifier --mangle test.js  
+//!
+//! # Remove all whitespace
+//! cargo run --example minifier --nospace test.js
+//!
+//! # Generate source maps
+//! cargo run --example minifier --sourcemap test.js
+//!
+//! # Test stability by running twice
+//! cargo run --example minifier --twice test.js
+//! ```
+//!
+//! ## Options
+//!
+//! - `--mangle`: Enable identifier shortening
+//! - `--nospace`: Remove all unnecessary whitespace
+//! - `--sourcemap`: Generate source maps for debugging
+//! - `--twice`: Run minification twice to test stability
+
 use std::path::{Path, PathBuf};
 
 use base64::{Engine, prelude::BASE64_STANDARD};

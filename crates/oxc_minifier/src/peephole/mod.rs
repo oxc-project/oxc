@@ -1,3 +1,35 @@
+//! Peephole optimizations for JavaScript minification.
+//!
+//! This module contains various local optimizations that examine small sections of code
+//! (typically a few AST nodes) and replace them with more efficient equivalents.
+//!
+//! ## Optimization Categories
+//!
+//! ### Expression Optimizations
+//! - [`fold_constants`]: Evaluates constant expressions at compile time
+//! - [`minimize_conditions`]: Simplifies boolean expressions and conditions
+//! - [`minimize_logical_expression`]: Optimizes logical AND/OR operations
+//! - [`minimize_not_expression`]: Reduces negation operations
+//!
+//! ### Statement Optimizations  
+//! - [`minimize_if_statement`]: Simplifies conditional statements
+//! - [`minimize_for_statement`]: Optimizes loop structures
+//! - [`remove_dead_code`]: Eliminates unreachable code
+//! - [`remove_unused_declaration`]: Removes unused variable declarations
+//!
+//! ### Property Access Optimizations
+//! - [`convert_to_dotted_properties`]: Converts bracket notation to dot notation when safe
+//! - [`replace_known_methods`]: Replaces known method calls with shorter equivalents
+//!
+//! ### Cleanup Optimizations
+//! - [`remove_unused_expression`]: Removes expressions without side effects
+//! - [`substitute_alternate_syntax`]: Uses shorter syntax alternatives
+//!
+//! ## Fixed-Point Iteration
+//!
+//! Most optimizations are applied in a fixed-point loop using [`PeepholeOptimizations`],
+//! which continues applying optimizations until no more changes are made.
+
 #![allow(clippy::unused_self)]
 
 mod convert_to_dotted_properties;
@@ -33,6 +65,20 @@ use crate::{
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
+/// Coordinates peephole optimizations in a fixed-point iteration.
+///
+/// This struct manages the application of various peephole optimizations,
+/// continuing to apply them until no more changes are made to the AST.
+/// This ensures that all possible optimizations are applied, even when
+/// one optimization enables another.
+///
+/// ## Fixed-Point Algorithm
+///
+/// The optimizer runs in a loop where:
+/// 1. All enabled optimizations are applied to the AST
+/// 2. If any optimization made changes, repeat from step 1
+/// 3. If no changes were made, optimization is complete
+/// 4. A maximum iteration limit prevents infinite loops
 pub struct PeepholeOptimizations {
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
@@ -43,10 +89,17 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
+    /// Creates a new peephole optimization coordinator.
     pub fn new() -> Self {
         Self { iteration: 0, changed: false }
     }
 
+    /// Applies optimizations once to the program.
+    ///
+    /// This performs a single pass of all peephole optimizations.
+    /// Use [`run_in_loop`] for fixed-point iteration.
+    ///
+    /// [`run_in_loop`]: Self::run_in_loop
     pub fn build(
         &mut self,
         program: &mut Program<'a>,
@@ -55,6 +108,16 @@ impl<'a> PeepholeOptimizations {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
+    /// Applies optimizations repeatedly until no more changes are made.
+    ///
+    /// This is the main entry point for peephole optimization. It runs
+    /// optimizations in a loop until the AST reaches a fixed point where
+    /// no more optimizations can be applied.
+    ///
+    /// # Arguments
+    ///
+    /// * `program` - The JavaScript AST to optimize (modified in-place)
+    /// * `ctx` - Traversal context containing semantic information
     pub fn run_in_loop(
         &mut self,
         program: &mut Program<'a>,

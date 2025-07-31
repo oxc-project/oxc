@@ -1,4 +1,32 @@
 #![expect(clippy::print_stdout)]
+//! # Identifier Mangling Example
+//!
+//! This example demonstrates using only the mangling phase of the minifier
+//! to shorten variable and function names. This is useful when you want
+//! to reduce identifier length without other code transformations.
+//!
+//! ## Usage
+//!
+//! ```bash
+//! # Basic identifier mangling
+//! cargo run --example mangler test.js
+//!
+//! # Keep function and class names for debugging
+//! cargo run --example mangler --keep-names test.js
+//!
+//! # Enable debug mode for readable shortened names
+//! cargo run --example mangler --debug test.js
+//!
+//! # Test stability by running twice
+//! cargo run --example mangler --twice test.js
+//! ```
+//!
+//! ## Options
+//!
+//! - `--keep-names`: Preserve function and class names
+//! - `--debug`: Use readable shortened names (a, b, c, ... instead of random)
+//! - `--twice`: Run mangling twice to test stability
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;

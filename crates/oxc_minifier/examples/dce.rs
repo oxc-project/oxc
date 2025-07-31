@@ -1,4 +1,30 @@
 #![expect(clippy::print_stdout)]
+//! # Dead Code Elimination Example
+//!
+//! This example demonstrates using only the compression phase of the minifier,
+//! specifically focusing on dead code elimination (DCE). This is useful when
+//! you want to remove unreachable code without other optimizations.
+//!
+//! ## Usage
+//!
+//! ```bash
+//! # Basic dead code elimination
+//! cargo run --example dce test.js
+//!
+//! # Remove whitespace as well
+//! cargo run --example dce --nospace test.js
+//!
+//! # Test stability by running twice  
+//! cargo run --example dce --twice test.js
+//! ```
+//!
+//! ## What it does
+//!
+//! - Removes unreachable code after return/throw statements
+//! - Eliminates unused variable declarations
+//! - Removes impossible conditional branches
+//! - Cleans up empty statements and blocks
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;
