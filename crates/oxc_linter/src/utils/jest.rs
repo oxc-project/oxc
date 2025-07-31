@@ -20,7 +20,7 @@ pub use crate::utils::jest::parse_jest_fn::{
 
 mod parse_jest_fn;
 
-static JEST_METHOD_NAMES: [&str; 18] = [
+const JEST_METHOD_NAMES: [&str; 18] = [
     "afterAll",
     "afterEach",
     "beforeAll",
