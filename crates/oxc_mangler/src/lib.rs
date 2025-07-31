@@ -333,7 +333,7 @@ impl<'t> Mangler<'t> {
             reusable_slots.clear();
             // Pre-allocate space for reusable slots to avoid multiple allocations
             reusable_slots.reserve(tmp_bindings.len());
-            
+
             // Collect reusable slots more efficiently by avoiding repeated contains() calls
             let scope_index = scope_id.index();
             reusable_slots.extend(
@@ -390,12 +390,14 @@ impl<'t> Mangler<'t> {
 
                 // Calculate the scope ids that this symbol is alive in.
                 // Pre-allocate with reasonable estimate to avoid reallocations
-                let mut lived_scope_ids = Vec::with_capacity_in(used_scope_ids.len() * 4, temp_allocator);
+                let mut lived_scope_ids =
+                    Vec::with_capacity_in(used_scope_ids.len() * 4, temp_allocator);
                 for used_scope_id in used_scope_ids {
                     lived_scope_ids.extend(
-                        scoping.scope_ancestors(used_scope_id)
+                        scoping
+                            .scope_ancestors(used_scope_id)
                             .take_while(|s_id| *s_id != scope_id)
-                            .map(oxc_index::Idx::index)
+                            .map(oxc_index::Idx::index),
                     );
                 }
 
@@ -458,10 +460,10 @@ impl<'t> Mangler<'t> {
         // Pre-allocate with estimated sizes to avoid reallocations
         let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
         let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
-        
+
         // Pre-compute root bindings map for faster lookup (currently not used, but kept for future optimization)
         let _root_bindings = scoping.get_bindings(scoping.root_scope_id());
-        
+
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
             &reserved_names.into_iter().chunk_by(InlineString::len)
@@ -507,13 +509,13 @@ impl<'t> Mangler<'t> {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
         let mut frequencies = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
-        
+
         // Initialize all slots at once to avoid repeated allocations
         frequencies.extend((0..total_number_of_slots).map(|_| SlotFrequency::new(temp_allocator)));
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            
+
             // Early exit conditions grouped together for better branch prediction
             if (scoping.symbol_scope_id(symbol_id) == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id)))
@@ -522,7 +524,7 @@ impl<'t> Mangler<'t> {
             {
                 continue;
             }
-            
+
             let index = slot;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
