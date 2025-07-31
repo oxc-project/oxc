@@ -1,16 +1,18 @@
-mod class_tester;
-mod expect;
-mod symbol_tester;
 use std::sync::Arc;
 
-pub use class_tester::ClassTester;
-pub use expect::Expect;
 use itertools::Itertools;
+
 use oxc_allocator::Allocator;
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn, dot::DebugDot};
 use oxc_span::SourceType;
+
+mod class_tester;
+mod expect;
+mod symbol_tester;
+pub use class_tester::ClassTester;
+pub use expect::Expect;
 pub use symbol_tester::SymbolTester;
 
 #[must_use]

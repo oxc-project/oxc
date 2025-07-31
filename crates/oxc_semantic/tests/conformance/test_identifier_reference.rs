@@ -4,8 +4,9 @@ use oxc_semantic::{NodeId, Reference};
 use oxc_span::GetSpan;
 use oxc_syntax::reference::ReferenceId;
 
-use super::{ConformanceTest, TestResult};
 use crate::Semantic;
+
+use super::{ConformanceTest, TestResult};
 
 /// Tests reflexivity between [`IdentifierReference`] AST nodes and their corresponding
 /// [`Reference`]s.

@@ -5,16 +5,16 @@ use std::{
     mem,
 };
 
-use oxc_allocator::Address;
-use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
+use oxc_data_structures::stack::Stack;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
