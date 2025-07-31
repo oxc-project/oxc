@@ -141,7 +141,7 @@ fn is_node_not_function(expr: &Expression) -> bool {
     }
 }
 
-const IGNORED: &[&[&str]] = &[
+static IGNORED: &[&[&str]] = &[
     &["lodash", "every"],
     &["_", "every"],
     &["underscore", "every"],

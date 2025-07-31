@@ -73,10 +73,10 @@ pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
     }
 }
 
-const ROUTER_HANDLER_METHOD_NAMES: [&str; 9] =
+static ROUTER_HANDLER_METHOD_NAMES: [&str; 9] =
     ["all", "delete", "get", "head", "options", "patch", "post", "put", "use"];
 
-const COMMON_REQUEST_NAMES: [&str; 3] = ["r", "req", "request"];
+static COMMON_REQUEST_NAMES: [&str; 3] = ["r", "req", "request"];
 fn is_req_param(param: &FormalParameter) -> bool {
     param
         .pattern
@@ -84,7 +84,7 @@ fn is_req_param(param: &FormalParameter) -> bool {
         .is_some_and(|id| COMMON_REQUEST_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_RESPONSE_NAMES: [&str; 3] = ["s", "res", "response"];
+static COMMON_RESPONSE_NAMES: [&str; 3] = ["s", "res", "response"];
 fn is_res_param(param: &FormalParameter) -> bool {
     param
         .pattern
@@ -92,12 +92,12 @@ fn is_res_param(param: &FormalParameter) -> bool {
         .is_some_and(|id| COMMON_RESPONSE_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_NEXT_NAMES: [&str; 2] = ["n", "next"];
+static COMMON_NEXT_NAMES: [&str; 2] = ["n", "next"];
 fn is_next_param(param: &FormalParameter) -> bool {
     param.pattern.get_identifier_name().is_some_and(|id| COMMON_NEXT_NAMES.contains(&id.as_str()))
 }
 
-const COMMON_ERROR_NAMES: [&str; 4] = ["e", "err", "error", "exception"];
+static COMMON_ERROR_NAMES: [&str; 4] = ["e", "err", "error", "exception"];
 fn is_error_param(param: &FormalParameter) -> bool {
     param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(&id.as_str()))
 }

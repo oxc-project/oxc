@@ -17,7 +17,7 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
 }
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+static LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
 const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0]; // 0xEF
 
 const MIN_ESCAPED_STR_LEN: usize = 16;

@@ -173,7 +173,7 @@ impl Rule for ValidTypeof {
     }
 }
 
-const VALID_TYPES: [&str; 8] =
+static VALID_TYPES: [&str; 8] =
     ["bigint", "boolean", "function", "number", "object", "string", "symbol", "undefined"];
 
 #[test]

@@ -10,7 +10,7 @@ use oxc_span::Span;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
-const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
+static ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
     "concat",
     "copyWithin",
     "fill",

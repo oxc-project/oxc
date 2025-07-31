@@ -15,7 +15,7 @@ use crate::{
 use super::define_generator;
 
 /// Semantic ID types.
-const SEMANTIC_ID_TYPES: [&str; 3] = ["ScopeId", "SymbolId", "ReferenceId"];
+static SEMANTIC_ID_TYPES: [&str; 3] = ["ScopeId", "SymbolId", "ReferenceId"];
 
 /// Generator for methods to get/set semantic IDs on structs which have them.
 pub struct GetIdGenerator;

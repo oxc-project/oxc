@@ -39,7 +39,7 @@ use super::define_generator;
 /// These 2 should continue to be blacklisted for now.
 ///
 /// See also: <https://github.com/oxc-project/oxc/issues/11490>
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
+static STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
 
 /// Enums to create an `AstKind` for.
 ///
@@ -48,7 +48,7 @@ const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
 /// Ideally we don't want any enums to have `AstKind`s.
 /// We are working towards removing all the items from this list.
 /// <https://github.com/oxc-project/oxc/issues/11490>
-const ENUMS_WHITE_LIST: &[&str] = &["Argument"];
+static ENUMS_WHITE_LIST: &[&str] = &["Argument"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;

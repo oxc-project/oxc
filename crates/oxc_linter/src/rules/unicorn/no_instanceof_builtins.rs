@@ -16,9 +16,9 @@ fn no_instanceof_builtins_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const PRIMITIVE_WRAPPERS: &[&str] = &["String", "Number", "Boolean", "BigInt", "Symbol"];
+static PRIMITIVE_WRAPPERS: &[&str] = &["String", "Number", "Boolean", "BigInt", "Symbol"];
 
-const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
+static STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
     "Error",
     "EvalError",

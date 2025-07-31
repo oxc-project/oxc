@@ -61,7 +61,7 @@ declare_oxc_lint!(
     restriction
 );
 
-const EMPTY_TAGS: [&str; 18] = [
+static EMPTY_TAGS: [&str; 18] = [
     "abstract",
     "async",
     "generator",

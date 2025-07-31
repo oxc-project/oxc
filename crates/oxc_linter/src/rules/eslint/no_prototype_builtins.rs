@@ -46,7 +46,7 @@ declare_oxc_lint!(
     pedantic
 );
 
-const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
+static DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
 
 impl Rule for NoPrototypeBuiltins {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

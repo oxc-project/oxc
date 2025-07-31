@@ -35,7 +35,7 @@ fn invalid_sandbox_combination_prop(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const ALLOWED_VALUES: [&str; 14] = [
+static ALLOWED_VALUES: [&str; 14] = [
     "downloads-without-user-activation",
     "downloads",
     "forms",

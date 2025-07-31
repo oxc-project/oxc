@@ -278,7 +278,7 @@ impl Case for EstreeTypescriptCase {
         // Some of these should parse correctly, but the cause is not related to ESTree serialization,
         // so they're not relevant here. If we fix them, that'll register in the parser snapshot.
         // TODO: If we fix any of these in parser, remove them from the list below.
-        const PARSE_ERROR_PATHS: &[&str] = &[
+        static PARSE_ERROR_PATHS: &[&str] = &[
             // Fails because fixture is not loaded as an ESM module (bug in tester)
             "typescript/tests/cases/compiler/arrayFromAsync.ts",
             // Differences between TS's recoverable parser and Oxc's non-recoverable parser
@@ -291,7 +291,7 @@ impl Case for EstreeTypescriptCase {
 
         // Skip tests where `@typescript-eslint/parser` is incorrect, and we can't massage the AST
         // to align with it
-        const INCORRECT_PATHS: &[&str] = &[
+        static INCORRECT_PATHS: &[&str] = &[
             // TS-ESLint includes `\r` in `raw` field of `TemplateElement`.
             // This is incorrect - `\r` should be converted to `\n`, as both Acorn and Espree do.
             // This matches the `raw` value that you get at runtime in a tagged template in JS.
@@ -307,7 +307,7 @@ impl Case for EstreeTypescriptCase {
         // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
         // field is (correctly) not `null` in these cases.
         // `napi/parser` contains tests for correct parsing of hashbangs.
-        const HASHBANG_PATHS: &[&str] = &[
+        static HASHBANG_PATHS: &[&str] = &[
             "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
             "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
             "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",

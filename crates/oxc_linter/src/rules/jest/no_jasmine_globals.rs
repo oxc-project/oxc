@@ -41,7 +41,7 @@ declare_oxc_lint!(
     conditional_fix
 );
 
-const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
+static NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
 const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
 const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 

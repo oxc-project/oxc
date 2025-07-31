@@ -124,10 +124,10 @@ impl Rule for NextScriptForGa {
     }
 }
 
-const SUPPORTED_SRCS: [&str; 2] =
+static SUPPORTED_SRCS: [&str; 2] =
     ["www.google-analytics.com/analytics.js", "www.googletagmanager.com/gtag/js"];
 
-const SUPPORTED_HTML_CONTENT_URLS: [&str; 2] =
+static SUPPORTED_HTML_CONTENT_URLS: [&str; 2] =
     ["www.google-analytics.com/analytics.js", "www.googletagmanager.com/gtm.js"];
 
 fn get_dangerously_set_inner_html_prop_value<'a>(

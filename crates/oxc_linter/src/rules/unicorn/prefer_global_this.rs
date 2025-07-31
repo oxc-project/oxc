@@ -119,7 +119,7 @@ fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_
     obj_ident.span == node.kind().span()
 }
 
-const WEB_WORKER_SPECIFIC_APIS: &[&str] = &[
+static WEB_WORKER_SPECIFIC_APIS: &[&str] = &[
     // https://html.spec.whatwg.org/multipage/workers.html#the-workerglobalscope-common-interface
     "addEventListener",
     "removeEventListener",
@@ -139,7 +139,7 @@ const WEB_WORKER_SPECIFIC_APIS: &[&str] = &[
     "onconnect",
 ];
 
-const WINDOW_SPECIFIC_APIS: &[&str] = &[
+static WINDOW_SPECIFIC_APIS: &[&str] = &[
     // Properties and methods
     // https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-window-object
     "name",
@@ -215,7 +215,7 @@ const WINDOW_SPECIFIC_APIS: &[&str] = &[
 ];
 
 //  Allow `on<event>` where <event> is in the windowSpecificEvents set from reference implementation.
-const WINDOW_SPECIFIC_EVENTS: &[&str] = &[
+static WINDOW_SPECIFIC_EVENTS: &[&str] = &[
     "resize",
     "blur",
     "focus",

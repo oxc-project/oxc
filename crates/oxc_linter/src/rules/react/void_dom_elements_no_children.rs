@@ -62,7 +62,7 @@ declare_oxc_lint!(
     correctness
 );
 
-const VOID_DOM_ELEMENTS: [&str; 16] = [
+static VOID_DOM_ELEMENTS: [&str; 16] = [
     "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem",
     "meta", "param", "source", "track", "wbr",
 ];

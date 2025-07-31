@@ -572,7 +572,7 @@ impl<'a> ReactRefresh<'a, '_> {
             // Encode to base64 string directly in arena, without an intermediate string allocation
             #[expect(clippy::items_after_statements)]
             const ZEROS_STR: &str = {
-                const ZEROS_BYTES: [u8; ENCODED_LEN] = [0; ENCODED_LEN];
+                static ZEROS_BYTES: [u8; ENCODED_LEN] = [0; ENCODED_LEN];
                 match str::from_utf8(&ZEROS_BYTES) {
                     Ok(s) => s,
                     Err(_) => unreachable!(),

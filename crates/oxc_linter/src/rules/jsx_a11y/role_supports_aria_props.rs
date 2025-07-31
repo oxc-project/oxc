@@ -159,7 +159,7 @@ fn get_implicit_role<'a>(
     VALID_ARIA_ROLES.contains(implicit_role).then_some(implicit_role)
 }
 
-const ALERT_ETC_PROPS: &[AriaProperty] = &[
+static ALERT_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -179,7 +179,7 @@ const ALERT_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const ALERTDIALOG_ETC_PROPS: &[AriaProperty] = &[
+static ALERTDIALOG_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -200,7 +200,7 @@ const ALERTDIALOG_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const APPLICATION_ETC_PROPS: &[AriaProperty] = &[
+static APPLICATION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -226,7 +226,7 @@ const APPLICATION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const ARTICLE_PROPS: &[AriaProperty] = &[
+static ARTICLE_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -248,7 +248,7 @@ const ARTICLE_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const BUTTON_PROPS: &[AriaProperty] = &[
+static BUTTON_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -272,7 +272,7 @@ const BUTTON_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const CAPTION_ETC_PROPS: &[AriaProperty] = &[
+static CAPTION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -290,7 +290,7 @@ const CAPTION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const CELL_PROPS: &[AriaProperty] = &[
+static CELL_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::ColIndex,
@@ -314,7 +314,7 @@ const CELL_PROPS: &[AriaProperty] = &[
     AriaProperty::RowSpan,
 ];
 
-const CHECKBOX_PROPS: &[AriaProperty] = &[
+static CHECKBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Checked,
@@ -341,7 +341,7 @@ const CHECKBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const COLUMN_HEADER_ROW_HEADER_PROPS: &[AriaProperty] = &[
+static COLUMN_HEADER_ROW_HEADER_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::ColIndex,
@@ -374,7 +374,7 @@ const COLUMN_HEADER_ROW_HEADER_PROPS: &[AriaProperty] = &[
     AriaProperty::Sort,
 ];
 
-const COMBOBOX_PROPS: &[AriaProperty] = &[
+static COMBOBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::AutoComplete,
@@ -402,7 +402,7 @@ const COMBOBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const COMPOSITE_GROUP_PROPS: &[AriaProperty] = &[
+static COMPOSITE_GROUP_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -424,7 +424,7 @@ const COMPOSITE_GROUP_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const CONTENTINFO_ETC_PROPS: &[AriaProperty] = &[
+static CONTENTINFO_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -444,7 +444,7 @@ const CONTENTINFO_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const DOC_ABSTRACT_ETC_PROPS: &[AriaProperty] = &[
+static DOC_ABSTRACT_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -469,7 +469,7 @@ const DOC_ABSTRACT_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const DOC_BIBLOENTRY_ETC_PROPS: &[AriaProperty] = &[
+static DOC_BIBLOENTRY_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -497,7 +497,7 @@ const DOC_BIBLOENTRY_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const DOC_BIBLIOREF_ETC_PROPS: &[AriaProperty] = &[
+static DOC_BIBLIOREF_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -522,7 +522,7 @@ const DOC_BIBLIOREF_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const DOC_PAGE_BREAK_PROPS: &[AriaProperty] = &[
+static DOC_PAGE_BREAK_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -548,7 +548,7 @@ const DOC_PAGE_BREAK_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const GRID_PROPS: &[AriaProperty] = &[
+static GRID_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -574,7 +574,7 @@ const GRID_PROPS: &[AriaProperty] = &[
     AriaProperty::RowCount,
 ];
 
-const GRIDCELL_PROPS: &[AriaProperty] = &[
+static GRIDCELL_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::ColIndex,
@@ -605,7 +605,7 @@ const GRIDCELL_PROPS: &[AriaProperty] = &[
     AriaProperty::Selected,
 ];
 
-const HEADING_PROPS: &[AriaProperty] = &[
+static HEADING_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -626,7 +626,7 @@ const HEADING_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const INPUT_PROPS: &[AriaProperty] = &[
+static INPUT_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -647,7 +647,7 @@ const INPUT_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const INSERTION_ETC_PROPS: &[AriaProperty] = &[
+static INSERTION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -665,7 +665,7 @@ const INSERTION_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const LINK_PROPS: &[AriaProperty] = &[
+static LINK_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -688,7 +688,7 @@ const LINK_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const LISTBOX_PROPS: &[AriaProperty] = &[
+static LISTBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -717,7 +717,7 @@ const LISTBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const LISTITEM_PROPS: &[AriaProperty] = &[
+static LISTITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -740,7 +740,7 @@ const LISTITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const MARK_PROPS: &[AriaProperty] = &[
+static MARK_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::BrailleLabel,
     AriaProperty::BrailleRoleDescription,
@@ -763,7 +763,7 @@ const MARK_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const MENU_ETC_PROPS: &[AriaProperty] = &[
+static MENU_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -786,7 +786,7 @@ const MENU_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const MENUITEM_PROPS: &[AriaProperty] = &[
+static MENUITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -811,7 +811,7 @@ const MENUITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const MENUITEMCHECKBOX_ETC_PROPS: &[AriaProperty] = &[
+static MENUITEMCHECKBOX_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Checked,
@@ -841,7 +841,7 @@ const MENUITEMCHECKBOX_ETC_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const METER_PROGRESSBAR_PROPS: &[AriaProperty] = &[
+static METER_PROGRESSBAR_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -865,7 +865,7 @@ const METER_PROGRESSBAR_PROPS: &[AriaProperty] = &[
     AriaProperty::ValueText,
 ];
 
-const OPTION_PROPS: &[AriaProperty] = &[
+static OPTION_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Checked,
@@ -889,7 +889,7 @@ const OPTION_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const RADIO_PROPS: &[AriaProperty] = &[
+static RADIO_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Checked,
@@ -913,7 +913,7 @@ const RADIO_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const RADIOGROUP_PROPS: &[AriaProperty] = &[
+static RADIOGROUP_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -940,7 +940,7 @@ const RADIOGROUP_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const RANGE_PROPS: &[AriaProperty] = &[
+static RANGE_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -963,7 +963,7 @@ const RANGE_PROPS: &[AriaProperty] = &[
     AriaProperty::ValueNow,
 ];
 
-const ROW_PROPS: &[AriaProperty] = &[
+static ROW_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -992,7 +992,7 @@ const ROW_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const SCROLLBAR_SEPARATOR_PROPS: &[AriaProperty] = &[
+static SCROLLBAR_SEPARATOR_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -1018,7 +1018,7 @@ const SCROLLBAR_SEPARATOR_PROPS: &[AriaProperty] = &[
     AriaProperty::ValueText,
 ];
 
-const SEARCHBOX_TEXTBOX_PROPS: &[AriaProperty] = &[
+static SEARCHBOX_TEXTBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::AutoComplete,
@@ -1048,7 +1048,7 @@ const SEARCHBOX_TEXTBOX_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const SLIDER_PROPS: &[AriaProperty] = &[
+static SLIDER_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -1078,7 +1078,7 @@ const SLIDER_PROPS: &[AriaProperty] = &[
     AriaProperty::ValueText,
 ];
 
-const SPINBUTTON_PROPS: &[AriaProperty] = &[
+static SPINBUTTON_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -1108,7 +1108,7 @@ const SPINBUTTON_PROPS: &[AriaProperty] = &[
     AriaProperty::ValueText,
 ];
 
-const TAB_PROPS: &[AriaProperty] = &[
+static TAB_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Controls,
@@ -1134,7 +1134,7 @@ const TAB_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-const TABLE_PROPS: &[AriaProperty] = &[
+static TABLE_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::ColCount,
@@ -1156,7 +1156,7 @@ const TABLE_PROPS: &[AriaProperty] = &[
     AriaProperty::RowCount,
 ];
 
-const TABLIST_PROPS: &[AriaProperty] = &[
+static TABLIST_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -1181,7 +1181,7 @@ const TABLIST_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const TREE_PROPS: &[AriaProperty] = &[
+static TREE_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -1208,7 +1208,7 @@ const TREE_PROPS: &[AriaProperty] = &[
     AriaProperty::RoleDescription,
 ];
 
-const TREEGRID_PROPS: &[AriaProperty] = &[
+static TREEGRID_PROPS: &[AriaProperty] = &[
     AriaProperty::ActiveDescendant,
     AriaProperty::Atomic,
     AriaProperty::Busy,
@@ -1237,7 +1237,7 @@ const TREEGRID_PROPS: &[AriaProperty] = &[
     AriaProperty::RowCount,
 ];
 
-const TREEITEM_PROPS: &[AriaProperty] = &[
+static TREEITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::Atomic,
     AriaProperty::Busy,
     AriaProperty::Checked,

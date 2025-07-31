@@ -333,7 +333,7 @@ fn as_primitive_array(schema: &SchemaObject) -> Option<&SchemaObject> {
 /// `Some(schema)`.
 fn as_primitive(schema: &SchemaObject) -> Option<&SchemaObject> {
     // null intentionally omitted
-    const PRIMITIVE_TYPES: [InstanceType; 4] =
+    static PRIMITIVE_TYPES: [InstanceType; 4] =
         [InstanceType::Boolean, InstanceType::Integer, InstanceType::Number, InstanceType::String];
 
     let is_primitive = !schema.is_ref()

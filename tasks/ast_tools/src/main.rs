@@ -263,7 +263,7 @@ const NAPI_OXLINT_PACKAGE_PATH: &str = "napi/oxlint2";
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
 
 /// Derives (for use with `#[generate_derive]`)
-const DERIVES: &[&(dyn Derive + Sync)] = &[
+static DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveCloneIn,
     &derives::DeriveDummy,
     &derives::DeriveTakeIn,
@@ -275,7 +275,7 @@ const DERIVES: &[&(dyn Derive + Sync)] = &[
 ];
 
 /// Code generators
-const GENERATORS: &[&(dyn Generator + Sync)] = &[
+static GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AssertLayouts,
     &generators::AstKindGenerator,
     &generators::AstBuilderGenerator,
@@ -292,7 +292,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
 ];
 
 /// Attributes on structs and enums (not including those defined by derives/generators)
-const ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
+static ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
 
 type Result<R> = std::result::Result<R, ()>;
 

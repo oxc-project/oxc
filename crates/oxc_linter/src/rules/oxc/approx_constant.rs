@@ -59,7 +59,7 @@ impl Rule for ApproxConstant {
     }
 }
 
-const KNOWN_CONSTS: [(f64, &str, usize); 8] = [
+static KNOWN_CONSTS: [(f64, &str, usize); 8] = [
     (f64::E, "E", 4),
     (f64::LN_10, "LN10", 4),
     (f64::LN_2, "LN2", 4),

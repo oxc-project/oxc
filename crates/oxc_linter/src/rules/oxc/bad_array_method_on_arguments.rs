@@ -78,7 +78,7 @@ impl Rule for BadArrayMethodOnArguments {
 
 /// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`
 #[rustfmt::skip]
-const ARRAY_METHODS: [&str; 32] = [
+static ARRAY_METHODS: [&str; 32] = [
     "@@iterator",
     "at",
     "concat", "copyWithin",

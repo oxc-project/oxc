@@ -41,8 +41,8 @@ impl std::ops::Deref for ImgRedundantAlt {
     }
 }
 
-const COMPONENTS_FIXED_TO_VALIDATE: [&str; 1] = ["img"];
-const REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
+static COMPONENTS_FIXED_TO_VALIDATE: [&str; 1] = ["img"];
+static REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
 impl Default for ImgRedundantAltConfig {
     fn default() -> Self {
         Self {

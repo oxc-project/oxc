@@ -316,7 +316,7 @@ declare_oxc_lint!(
     conditional_fix_suggestion
 );
 
-const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
+static MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Self {

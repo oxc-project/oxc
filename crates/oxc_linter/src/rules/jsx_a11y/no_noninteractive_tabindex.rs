@@ -82,14 +82,14 @@ declare_oxc_lint!(
 );
 
 // https://html.spec.whatwg.org/multipage/dom.html#interactive-content
-const INTERACTIVE_HTML_ELEMENTS: [&str; 12] = [
+static INTERACTIVE_HTML_ELEMENTS: [&str; 12] = [
     "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select",
     "textarea", "video",
 ];
 
 // https://www.w3.org/TR/wai-aria/#widget_roles
 // NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
-const INTERACTIVE_HTML_ROLES: [&str; 19] = [
+static INTERACTIVE_HTML_ROLES: [&str; 19] = [
     "button",
     "checkbox",
     "gridcell",

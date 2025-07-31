@@ -289,9 +289,9 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
 }
 
 /// `LS` character as UTF-8 bytes.
-const LS_BYTES: [u8; 3] = to_bytes(LS);
+static LS_BYTES: [u8; 3] = to_bytes(LS);
 /// `PS` character as UTF-8 bytes.
-const PS_BYTES: [u8; 3] = to_bytes(PS);
+static PS_BYTES: [u8; 3] = to_bytes(PS);
 
 const _: () = assert!(LS_BYTES[0] == 0xE2);
 const _: () = assert!(PS_BYTES[0] == 0xE2);
@@ -299,14 +299,14 @@ const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
 const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// `NBSP` character as UTF-8 bytes.
-const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
+static NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
 const _: () = assert!(NBSP_BYTES[0] == 0xC2);
 const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+static LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
 const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
+static LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
     [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
 
 /// Escape codes.

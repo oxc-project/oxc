@@ -246,7 +246,7 @@ declare_oxc_lint!(
     safe_fixes_and_dangerous_suggestions
 );
 
-const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
+static HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
     fn from_configuration(value: serde_json::Value) -> Self {

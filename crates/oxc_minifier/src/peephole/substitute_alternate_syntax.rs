@@ -1104,7 +1104,7 @@ impl<'a> LatePeepholeOptimizations {
     ) -> Option<&'static str> {
         // These delimiters are chars that appears a lot in the program
         // therefore probably have a small Huffman encoding.
-        const DELIMITERS: [&str; 5] = [".", ",", "(", ")", " "];
+        static DELIMITERS: [&str; 5] = [".", ",", "(", ")", " "];
 
         let is_all_length_1 = strings.clone().all(|s| s.len() == 1);
         if is_all_length_1 {

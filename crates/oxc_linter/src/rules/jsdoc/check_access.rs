@@ -56,7 +56,7 @@ declare_oxc_lint!(
     restriction
 );
 
-const ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];
+static ACCESS_LEVELS: [&str; 4] = ["package", "private", "protected", "public"];
 
 impl Rule for CheckAccess {
     fn run_once(&self, ctx: &LintContext) {

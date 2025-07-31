@@ -92,7 +92,7 @@ impl Rule for NoUselessFallbackInSpread {
 }
 
 fn can_fix(left: &Expression<'_>) -> bool {
-    const BANNED_IDENTIFIERS: [&str; 3] = ["undefined", "NaN", "Infinity"];
+    static BANNED_IDENTIFIERS: [&str; 3] = ["undefined", "NaN", "Infinity"];
     match left.without_parentheses() {
         Expression::Identifier(ident) => !BANNED_IDENTIFIERS.contains(&ident.name.as_str()),
         Expression::LogicalExpression(expr) => can_fix(&expr.left),

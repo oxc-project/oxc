@@ -635,7 +635,7 @@ impl<'a> StyledComponents<'a, '_> {
     fn get_file_hash(&self) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
-            const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
+            static BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 
             num %= 36_u64.pow(6); // 36^6, to ensure the result is <= 6 characters long.
 

@@ -146,7 +146,7 @@ const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf::phf_set![
     "WeakSet",
 ];
 
-const DISALLOW_NEW_FOR_BUILTINS: [&str; 5] = ["BigInt", "Boolean", "Number", "Symbol", "String"];
+static DISALLOW_NEW_FOR_BUILTINS: [&str; 5] = ["BigInt", "Boolean", "Number", "Symbol", "String"];
 
 #[test]
 fn test() {

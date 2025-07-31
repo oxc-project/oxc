@@ -241,10 +241,10 @@ fn check_array_callback_methods(
     first_param_name == returned_ident
 }
 
-const NATIVE_COERCION_FUNCTION_NAMES: [&str; 5] =
+static NATIVE_COERCION_FUNCTION_NAMES: [&str; 5] =
     ["BigInt", "Boolean", "Number", "String", "Symbol"];
 
-const ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: [&str; 7] =
+static ARRAY_METHODS_WITH_BOOLEAN_CALLBACK: [&str; 7] =
     ["every", "filter", "find", "findIndex", "findLast", "findLastIndex", "some"];
 
 #[test]
