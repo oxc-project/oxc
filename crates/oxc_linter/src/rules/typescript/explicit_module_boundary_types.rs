@@ -546,6 +546,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         // ignore
     }
 
+    fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
+        // ignore
+    }
+
     fn visit_class(&mut self, class: &Class<'a>) {
         let had_id = self.with_target_binding(class.id.as_ref());
         walk::walk_class_body(self, class.body.as_ref());
@@ -1478,6 +1482,10 @@ mod test {
             ("React.useEffect(() => { test() }, []);", None),
             (
                 "const ex = () => (args: { fn: (arg: string) => void }) => args; export const Test = ex()({ fn: () => {} });",
+                None,
+            ),
+            (
+                "function ErrorTrackingRules(): JSX.Element { return (<BindLogic><DndContext onDragEnd={({ active, over }) => { /**/ }}></DndContext></BindLogic>); }; export default ErrorTrackingRules;",
                 None,
             ),
         ];
