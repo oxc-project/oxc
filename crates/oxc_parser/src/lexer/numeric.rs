@@ -2,7 +2,15 @@ use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::diagnostics;
 
-use super::{Kind, Lexer, Span};
+use super::{
+    Kind, Lexer, Span,
+    branchless_numeric::{
+        is_decimal_digit_branchless, is_binary_digit_branchless, 
+        is_octal_digit_branchless, is_hex_digit_branchless,
+        scan_decimal_digits, scan_binary_digits, scan_octal_digits, scan_hex_digits,
+        scan_digits_with_separators,
+    },
+};
 
 impl Lexer<'_> {
     /// 12.9.3 Numeric Literals with `0` prefix
@@ -43,41 +51,42 @@ impl Lexer<'_> {
     // Inline into the 3 calls from `read_zero` so that value of `kind` is known
     // and `kind.matches_number_byte` can be statically reduced to just the match arm
     // that applies for this specific kind. `matches_number_byte` is also marked `#[inline]`.
+    // Now optimized with branchless digit checking.
     #[inline]
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
         self.consume_char();
 
-        if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
-            self.consume_char();
-        } else {
+        let remaining = self.source.remaining().as_bytes();
+        if remaining.is_empty() {
             self.unexpected_err();
             self.advance_to_end();
             return Kind::Eof;
         }
 
-        while let Some(b) = self.peek_byte() {
-            match b {
-                b'_' => {
-                    self.consume_char();
-                    // NOTE: it looks invalid numeric tokens are still parsed.
-                    // This seems to be a waste. It also requires us to put this
-                    // call here instead of after we ensure the next character
-                    // is a number character
-                    self.token.set_has_separator(true);
-                    if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
-                        self.consume_char();
-                    } else {
-                        self.unexpected_err();
-                        self.advance_to_end();
-                        return Kind::Eof;
-                    }
-                }
-                b if kind.matches_number_byte(b) => {
-                    self.consume_char();
-                }
-                _ => break,
-            }
+        // Use branchless digit scanning based on the kind
+        let (digit_count, consumed) = match kind {
+            Kind::Binary => scan_digits_with_separators(remaining, is_binary_digit_branchless),
+            Kind::Octal => scan_digits_with_separators(remaining, is_octal_digit_branchless),
+            Kind::Hex => scan_digits_with_separators(remaining, is_hex_digit_branchless),
+            _ => unreachable!(),
+        };
+
+        if digit_count == 0 {
+            self.unexpected_err();
+            self.advance_to_end();
+            return Kind::Eof;
         }
+
+        // Check if we consumed any separators
+        if consumed > digit_count {
+            self.token.set_has_separator(true);
+        }
+
+        // Advance past all consumed characters
+        for _ in 0..consumed {
+            self.consume_char();
+        }
+
         self.next_ascii_byte_eq(b'n');
         self.check_after_numeric_literal(kind)
     }
@@ -128,39 +137,57 @@ impl Lexer<'_> {
         kind
     }
 
+    /// Optimized function to read decimal digits using branchless operations.
     fn read_decimal_digits(&mut self) {
-        if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-            self.consume_char();
-        } else {
+        let remaining = self.source.remaining().as_bytes();
+        
+        if remaining.is_empty() || !is_decimal_digit_branchless(remaining[0]) {
             self.unexpected_err();
             return;
         }
 
-        self.read_decimal_digits_after_first_digit();
+        // Use branchless scanning for better performance
+        let (digit_count, consumed) = scan_digits_with_separators(remaining, is_decimal_digit_branchless);
+        
+        if digit_count == 0 {
+            self.unexpected_err();
+            return;
+        }
+
+        // Check if we consumed any separators
+        if consumed > digit_count {
+            self.token.set_has_separator(true);
+        }
+
+        // Advance past all consumed characters
+        for _ in 0..consumed {
+            self.consume_char();
+        }
     }
 
+    /// Optimized function to read decimal digits after the first digit.
     fn read_decimal_digits_after_first_digit(&mut self) {
-        while let Some(b) = self.peek_byte() {
-            match b {
-                b'_' => {
-                    self.consume_char();
-                    // NOTE: it looks invalid numeric tokens are still parsed.
-                    // This seems to be a waste. It also requires us to put this
-                    // call here instead of after we ensure the next character
-                    // is an ASCII digit
-                    self.token.set_has_separator(true);
-                    if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-                        self.consume_char();
-                    } else {
-                        self.unexpected_err();
-                        return;
-                    }
-                }
-                b'0'..=b'9' => {
-                    self.consume_char();
-                }
-                _ => break,
-            }
+        let remaining = self.source.remaining().as_bytes();
+        
+        if remaining.is_empty() {
+            return;
+        }
+
+        // Use branchless scanning for better performance
+        let (digit_count, consumed) = scan_digits_with_separators(remaining, is_decimal_digit_branchless);
+        
+        if consumed == 0 {
+            return; // No more digits
+        }
+
+        // Check if we consumed any separators
+        if consumed > digit_count {
+            self.token.set_has_separator(true);
+        }
+
+        // Advance past all consumed characters
+        for _ in 0..consumed {
+            self.consume_char();
         }
     }
 

@@ -1,6 +1,7 @@
 use super::{
     Kind, Lexer,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    simd_search::{skip_ascii_whitespace_simd, skip_ascii_whitespace_fallback},
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
@@ -11,10 +12,26 @@ impl Lexer<'_> {
         self.token.set_is_on_new_line(true);
         self.trivia_builder.handle_newline();
 
-        // Indentation is common after a line break.
-        // Consume it, along with any further line breaks.
-        // Irregular line breaks and whitespace are not consumed.
-        // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
+        // Use SIMD-optimized whitespace skipping for better performance
+        let remaining = self.source.remaining().as_bytes();
+        let consumed = if remaining.len() >= 32 {
+            // Use SIMD for larger chunks
+            skip_ascii_whitespace_simd(remaining)
+        } else {
+            // Use fallback for small chunks to avoid SIMD overhead
+            skip_ascii_whitespace_fallback(remaining)
+        };
+
+        // Advance the source by the number of whitespace bytes consumed
+        if consumed > 0 {
+            for _ in 0..consumed {
+                if self.source.next_char().is_none() {
+                    break;
+                }
+            }
+        }
+
+        // Fall back to original implementation for any remaining irregular whitespace
         byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,

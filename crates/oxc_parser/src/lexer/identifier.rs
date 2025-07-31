@@ -11,19 +11,23 @@ use crate::diagnostics;
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    simd_search::{
+        scan_ascii_identifier_simd, scan_ascii_identifier_fallback,
+        is_ascii_id_start_branchless, is_ascii_id_continue_branchless,
+    },
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
 static ASCII_ID_START_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
+    safe_byte_match_table!(|b| is_ascii_id_start_branchless(b));
 
 static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
+    safe_byte_match_table!(|b| !is_ascii_id_continue_branchless(b));
 
 #[inline]
 fn is_identifier_start_ascii_byte(byte: u8) -> bool {
-    ASCII_ID_START_TABLE.matches(byte)
+    is_ascii_id_start_branchless(byte)
 }
 
 impl<'a> Lexer<'a> {
@@ -37,60 +41,66 @@ impl<'a> Lexer<'a> {
     /// JS syntax also allows Unicode identifiers and escapes (e.g. `\u{FF}`) in identifiers,
     /// but they are very rare in practice. So this fast path will handle 99% of JS code.
     ///
-    /// When Unicode or an escape is encountered, this function de-opts to paths which handle those
-    /// cases, but those paths are marked `#[cold]` to keep the ASCII fast path as fast as possible.
-    ///
-    /// The fast path uses pointers and unsafe code to minimize bounds checks etc.
-    /// The functions it delegates to for uncommon cases are both more complex, and less critical,
-    /// so they stick to safe code only.
+    /// This version uses SIMD optimizations for maximum performance.
     ///
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
-        // Advance past 1st byte.
-        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
-        let after_first = unsafe { self.source.position().add(1) };
+        let start_pos = self.source.position();
+        let remaining = self.source.remaining().as_bytes();
 
-        // Consume bytes which are part of identifier
-        let next_byte = byte_search! {
-            lexer: self,
-            table: NOT_ASCII_ID_CONTINUE_TABLE,
-            start: after_first,
-            handle_eof: {
-                // Return identifier minus its first char.
-                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
-                // of `after_first` which could be after current position.
-                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
-            },
+        // Use SIMD to scan the entire identifier in one go
+        let identifier_len = if remaining.len() >= 32 {
+            // Use SIMD for larger identifiers
+            scan_ascii_identifier_simd(remaining, true)
+        } else {
+            // Use fallback for small identifiers to avoid SIMD overhead
+            scan_ascii_identifier_fallback(remaining, true)
         };
 
-        // Found a matching byte.
-        // Either end of identifier found, or a Unicode char, or `\` escape.
-        // Handle uncommon cases in cold branches to keep the common ASCII path
-        // as fast as possible.
-        if !next_byte.is_ascii() {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_tail_unicode(start_pos)[1..]
-            });
-        }
-        if next_byte == b'\\' {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_backslash(start_pos, false)[1..]
-            });
+        if identifier_len == 0 {
+            // Not a valid identifier start, return empty string
+            return "";
         }
 
-        // Return identifier minus its first char.
-        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
-        // Searching only proceeds in forwards direction, so `lexer.source.position()`
-        // cannot be before `after_first`.
-        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+        // Check if we consumed the entire identifier or hit a non-ASCII/escape character
+        if identifier_len < remaining.len() {
+            let next_byte = remaining[identifier_len];
+            
+            // Handle Unicode and escape sequences in cold branch
+            if !next_byte.is_ascii() {
+                return cold_branch(|| {
+                    // Advance past ASCII portion
+                    for _ in 0..identifier_len {
+                        self.source.next_char();
+                    }
+                    &self.identifier_tail_unicode(start_pos)[identifier_len..]
+                });
+            }
+            if next_byte == b'\\' {
+                return cold_branch(|| {
+                    // Advance past ASCII portion
+                    for _ in 0..identifier_len {
+                        self.source.next_char();
+                    }
+                    &self.identifier_backslash(start_pos, false)[identifier_len..]
+                });
+            }
+        }
+
+        // Advance source past the identifier
+        for _ in 0..identifier_len {
+            self.source.next_char();
+        }
+
+        // Return identifier minus its first char
+        // SAFETY: We know the identifier length from SIMD scan
+        let identifier_text = unsafe { 
+            self.source.str_from_pos_to_current_unchecked(start_pos)
+        };
+        
+        &identifier_text[1..]
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
