@@ -15,6 +15,24 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Constant Folding
     ///
+    /// Evaluates constant expressions at compile time to reduce code size.
+    /// This optimization replaces expressions that can be computed statically
+    /// with their result values.
+    ///
+    /// ## Examples
+    ///
+    /// ```javascript
+    /// // Before
+    /// var x = 1 + 2;
+    /// var y = "hello" + " world";
+    /// var z = true && false;
+    ///
+    /// // After  
+    /// var x = 3;
+    /// var y = "hello world";
+    /// var z = false;
+    /// ```
+    ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
     pub fn fold_constants_exit_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         match expr {

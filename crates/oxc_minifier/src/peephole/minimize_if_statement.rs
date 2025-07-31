@@ -9,6 +9,26 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Minimize If Statements
+    ///
+    /// Transforms if statements to use shorter equivalent forms when possible.
+    /// This includes converting if-else chains to conditional expressions,
+    /// removing unnecessary blocks, and optimizing boolean logic.
+    ///
+    /// ## Examples
+    ///
+    /// ```javascript
+    /// // Before
+    /// if (condition) {
+    ///     return a;
+    /// } else {
+    ///     return b;
+    /// }
+    ///
+    /// // After
+    /// return condition ? a : b;
+    /// ```
+    ///
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
         &self,

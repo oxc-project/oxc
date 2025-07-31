@@ -11,6 +11,29 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 
 /// Remove Dead Code from the AST.
 ///
+/// Eliminates unreachable code and unused declarations to reduce bundle size.
+/// This optimization removes code that can never be executed or variables
+/// that are never referenced.
+///
+/// ## Examples
+///
+/// ```javascript
+/// // Before
+/// function test() {
+///     return 42;
+///     console.log('unreachable'); // Dead code after return
+/// }
+///
+/// if (false) {
+///     console.log('never executed'); // Dead code in impossible branch
+/// }
+///
+/// // After
+/// function test() {
+///     return 42;
+/// }
+/// ```
+///
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.

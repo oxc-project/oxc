@@ -10,6 +10,23 @@ use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
+/// Simplifies boolean expressions and conditional statements to reduce code size.
+/// This optimization applies boolean algebra rules to create shorter equivalent expressions.
+///
+/// ## Examples
+///
+/// ```javascript
+/// // Before
+/// if (!!x) { ... }
+/// if (x == true) { ... }  
+/// if (x != false) { ... }
+///
+/// // After
+/// if (x) { ... }
+/// if (x) { ... }
+/// if (x) { ... }
+/// ```
+///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
