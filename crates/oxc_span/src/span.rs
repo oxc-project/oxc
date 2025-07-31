@@ -387,6 +387,63 @@ impl Span {
         Self::new(self.start, end)
     }
 
+    /// Create a [`Span`] that has its start and end position moved to the left by
+    /// `offset` bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// let moved = a.move_left(5);
+    /// assert_eq!(moved, Span::new(0, 5));
+    ///
+    /// // Moving the start over 0 is logical error that will panic in debug builds.
+    /// std::panic::catch_unwind(|| {
+    ///    moved.move_left(5);
+    /// });
+    /// ```
+    #[must_use]
+    pub const fn move_left(self, offset: u32) -> Self {
+        let start = self.start.saturating_sub(offset);
+        #[cfg(debug_assertions)]
+        if start == 0 {
+            debug_assert!(self.start == offset, "Cannot move span past zero length");
+        }
+        Self::new(start, self.end.saturating_sub(offset))
+    }
+
+    /// Create a [`Span`] that has its start and end position moved to the right by
+    /// `offset` bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// let moved = a.move_right(5);
+    /// assert_eq!(moved, Span::new(10, 15));
+    ///
+    /// // Moving the end over `u32::MAX` is logical error that will panic in debug builds.
+    /// std::panic::catch_unwind(|| {
+    ///    moved.move_right(u32::MAX);
+    /// });
+    /// ```
+    #[must_use]
+    pub const fn move_right(self, offset: u32) -> Self {
+        let end = self.end.saturating_add(offset);
+        #[cfg(debug_assertions)]
+        if end == u32::MAX {
+            debug_assert!(
+                u32::MAX.saturating_sub(offset) == self.end,
+                "Cannot move span past `u32::MAX` length"
+            );
+        }
+        Self::new(self.start.saturating_add(offset), end)
+    }
+
     /// Get a snippet of text from a source string that the [`Span`] covers.
     ///
     /// # Example
@@ -714,6 +771,39 @@ mod test {
     fn test_shrink_past_start() {
         let span = Span::new(5, 10);
         let _ = span.shrink(5);
+    }
+
+    #[test]
+    fn test_move_left() {
+        let span = Span::new(5, 10);
+        assert_eq!(span.move_left(1), Span::new(4, 9));
+        assert_eq!(span.move_left(2), Span::new(3, 8));
+        assert_eq!(span.move_left(5), Span::new(0, 5));
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot move span past zero length")]
+    fn test_move_past_start() {
+        let span = Span::new(5, 10);
+        let _ = span.move_left(6);
+    }
+
+    #[test]
+    fn test_move_right() {
+        let span: Span = Span::new(5, 10);
+        assert_eq!(span.move_right(1), Span::new(6, 11));
+        assert_eq!(span.move_right(2), Span::new(7, 12));
+        assert_eq!(
+            span.move_right(u32::MAX.saturating_sub(10)),
+            Span::new(u32::MAX.saturating_sub(5), u32::MAX)
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot move span past `u32::MAX` length")]
+    fn test_move_past_end() {
+        let span = Span::new(u32::MAX.saturating_sub(2), u32::MAX.saturating_sub(1));
+        let _ = span.move_right(2);
     }
 }
 
