@@ -1596,6 +1596,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_function_graph_ix = cfg.current_node_ix;
@@ -1607,8 +1609,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
         self.function_stack.push(self.current_node_id);
@@ -1696,6 +1696,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
         let (current_node_ix, error_harness, function_graph_ix) = control_flow!(self, |cfg| {
             let current_node_ix = cfg.current_node_ix;
             cfg.push_finalization_stack();
@@ -1706,8 +1708,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
         self.function_stack.push(self.current_node_id);
