@@ -51,7 +51,7 @@ impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, 
             .get_reference(reference_id)
             .symbol_id()
             .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0)
+            .filter(|sv| sv.write_references_count == 0 && !sv.for_statement_init)
             .and_then(|sv| sv.initialized_constant.as_ref())
             .cloned()
     }
