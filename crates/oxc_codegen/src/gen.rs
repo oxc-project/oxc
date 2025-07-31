@@ -58,6 +58,7 @@ impl Gen for Program<'_> {
 
 impl Gen for Hashbang<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_str("#!");
         p.print_str(self.value.as_str());
         p.print_hard_newline();
@@ -1427,7 +1428,9 @@ impl Gen for ArrayExpressionElement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
-            Self::Elision(_span) => {}
+            Self::Elision(elision) => {
+                p.add_source_mapping(elision.span);
+            }
             _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
@@ -2407,6 +2410,7 @@ impl Gen for JSXAttribute<'_> {
 
 impl Gen for JSXEmptyExpression {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_comments_at(self.span.end);
     }
 }

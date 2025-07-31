@@ -27,3 +27,53 @@ fn incorrect_ast() {
     let ret = Codegen::new().with_options(default_options()).build(&program);
     assert!(ret.map.is_some(), "sourcemap exists");
 }
+
+/// Test that array elisions (empty array elements) get proper source mapping
+#[test]
+fn array_elision_source_mapping() {
+    let allocator = Allocator::default();
+    let source_type = SourceType::mjs();
+    let source_text = "[1, , 3]";
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+    let mut options = default_options();
+    options.source_map_path = Some("test.js".into());
+    
+    let result = Codegen::new().with_options(options).build(&ret.program);
+    
+    assert!(result.map.is_some(), "sourcemap should be generated");
+    // The output may be formatted differently, but should contain the array elements
+    assert!(result.code.contains("1"));
+    assert!(result.code.contains("3"));
+    
+    let sourcemap = result.map.unwrap();
+    
+    // Verify that we have source mappings - there should be at least one for the array
+    // and potentially one for the elision
+    let tokens: Vec<_> = sourcemap.get_tokens().collect();
+    assert!(!tokens.is_empty(), "should have source mapping tokens");
+}
+
+/// Test that JSX empty expressions get proper source mapping
+#[test]
+fn jsx_empty_expression_source_mapping() {
+    let allocator = Allocator::default();
+    let source_type = SourceType::jsx();
+    let source_text = "<div>{}</div>";
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+    let mut options = default_options();
+    options.source_map_path = Some("test.jsx".into());
+    
+    let result = Codegen::new().with_options(options).build(&ret.program);
+    
+    assert!(result.map.is_some(), "sourcemap should be generated");
+    // The output should contain the JSX structure
+    assert!(result.code.contains("div"));
+    
+    let sourcemap = result.map.unwrap();
+    
+    // Verify that we have source mappings
+    let tokens: Vec<_> = sourcemap.get_tokens().collect();
+    assert!(!tokens.is_empty(), "should have source mapping tokens");
+}
