@@ -46,9 +46,9 @@ fn test_resolver_cache_clearing_integration() {
     // This test verifies that the resolver cache clearing functionality
     // compiles and can be called without panicking.
     // The actual memory leak fix is in Runtime::run_source() method.
-    
+
     use oxc_resolver::{ResolveOptions, Resolver};
-    
+
     // Create a resolver similar to how it's done in Runtime::get_resolver
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into(), ".ts".into(), ".jsx".into(), ".tsx".into()],
@@ -56,10 +56,10 @@ fn test_resolver_cache_clearing_integration() {
         condition_names: vec!["module".into(), "import".into()],
         ..ResolveOptions::default()
     });
-    
+
     // Test that clear_cache can be called without panicking
     resolver.clear_cache();
-    
+
     // If we reach here, the clear_cache method works correctly
     println!("Resolver cache clearing integration test passed");
 }
