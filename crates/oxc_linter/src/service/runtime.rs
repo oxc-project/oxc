@@ -733,6 +733,15 @@ impl Runtime {
         //     }
         // }
 
+        // Clear resolver cache to prevent memory leaks in language server usage.
+        // The resolver caches filesystem metadata globally, which can accumulate
+        // indefinitely when processing files repeatedly in a language server context.
+        // Clearing after each run prevents unbounded memory growth while still
+        // allowing caching within a single linting session.
+        if let Some(resolver) = &self.resolver {
+            resolver.clear_cache();
+        }
+
         messages.into_inner().unwrap()
     }
 
