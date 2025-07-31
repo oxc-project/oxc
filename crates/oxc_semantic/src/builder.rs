@@ -257,8 +257,6 @@ impl<'a> SemanticBuilder<'a> {
             stats.assert_accurate(actual_stats);
         }
 
-        let comments = self.alloc(&program.comments);
-
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
@@ -272,7 +270,7 @@ impl<'a> SemanticBuilder<'a> {
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
-            comments,
+            comments: &program.comments,
             irregular_whitespaces: [].into(),
             nodes: self.nodes,
             scoping: self.scoping,
