@@ -6,7 +6,6 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use miette::LabeledSpan;
 use percent_encoding::AsciiSet;
 #[cfg(not(windows))]
 use std::fs::canonicalize as strict_canonicalize;
@@ -122,7 +121,6 @@ impl DiagnosticService {
         cwd: C,
         path: P,
         source_text: &str,
-        source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
         // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
@@ -141,29 +139,7 @@ impl DiagnosticService {
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
             .into_iter()
-            .map(|diagnostic| {
-                if source_start == 0 {
-                    return diagnostic.with_source_code(Arc::clone(&source));
-                }
-
-                match &diagnostic.labels {
-                    None => diagnostic.with_source_code(Arc::clone(&source)),
-                    Some(labels) => {
-                        let new_labels = labels
-                            .iter()
-                            .map(|labeled_span| {
-                                LabeledSpan::new(
-                                    labeled_span.label().map(std::string::ToString::to_string),
-                                    labeled_span.offset() + source_start as usize,
-                                    labeled_span.len(),
-                                )
-                            })
-                            .collect::<Vec<_>>();
-
-                        diagnostic.with_labels(new_labels).with_source_code(Arc::clone(&source))
-                    }
-                }
-            })
+            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
             .collect()
     }
 
