@@ -4,9 +4,9 @@ use oxc_syntax::identifier::is_identifier_name;
 
 use crate::ctx::Ctx;
 
-use super::LatePeepholeOptimizations;
+use super::PeepholeOptimizations;
 
-impl<'a> LatePeepholeOptimizations {
+impl<'a> PeepholeOptimizations {
     /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
     /// syntax, where possible. Dot syntax is more compact.
     ///

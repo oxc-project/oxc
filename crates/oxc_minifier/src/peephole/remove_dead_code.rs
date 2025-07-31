@@ -7,7 +7,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::PeepholeOptimizations;
 
 /// Remove Dead Code from the AST.
 ///
@@ -565,9 +565,7 @@ impl<'a> PeepholeOptimizations {
             _ => false,
         }
     }
-}
 
-impl<'a> LatePeepholeOptimizations {
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut Ctx<'a, '_>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
