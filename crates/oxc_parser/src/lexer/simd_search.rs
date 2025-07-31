@@ -67,22 +67,20 @@ pub fn skip_ascii_whitespace_simd(bytes: &[u8]) -> usize {
     while pos + 32 <= len {
         unsafe {
             let chunk = _mm256_loadu_si256(bytes.as_ptr().add(pos) as *const __m256i);
-            
+
             // Create masks for each whitespace character
             let spaces = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b' ' as i8));
             let tabs = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b'\t' as i8));
             let newlines = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b'\n' as i8));
             let returns = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b'\r' as i8));
-            
+
             // Combine all whitespace masks
-            let whitespace = _mm256_or_si256(
-                _mm256_or_si256(spaces, tabs),
-                _mm256_or_si256(newlines, returns)
-            );
-            
+            let whitespace =
+                _mm256_or_si256(_mm256_or_si256(spaces, tabs), _mm256_or_si256(newlines, returns));
+
             // Get bitmask of matches
             let mask = _mm256_movemask_epi8(whitespace) as u32;
-            
+
             if mask == 0xFFFFFFFF {
                 // All 32 bytes are whitespace, continue
                 pos += 32;
@@ -128,12 +126,12 @@ pub fn scan_ascii_identifier_simd(bytes: &[u8], start_char: bool) -> usize {
     }
 
     let mut pos = 0;
-    
+
     // Check first character if it's a start character
     if start_char && !is_ascii_id_start_branchless(bytes[0]) {
         return 0;
     }
-    
+
     if start_char {
         pos = 1;
     }
@@ -142,7 +140,7 @@ pub fn scan_ascii_identifier_simd(bytes: &[u8], start_char: bool) -> usize {
     while pos + 32 <= bytes.len() {
         unsafe {
             let chunk = _mm256_loadu_si256(bytes.as_ptr().add(pos) as *const __m256i);
-            
+
             // Check for valid identifier continuation characters
             // Create ranges for a-z, A-Z, 0-9
             let lower_a = _mm256_set1_epi8(b'a' as i8);
@@ -153,31 +151,31 @@ pub fn scan_ascii_identifier_simd(bytes: &[u8], start_char: bool) -> usize {
             let digit_9 = _mm256_set1_epi8(b'9' as i8);
             let underscore = _mm256_set1_epi8(b'_' as i8);
             let dollar = _mm256_set1_epi8(b'$' as i8);
-            
+
             // Check ranges
             let is_lower = _mm256_and_si256(
                 _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(lower_a, _mm256_set1_epi8(1))),
-                _mm256_cmpgt_epi8(_mm256_add_epi8(lower_z, _mm256_set1_epi8(1)), chunk)
+                _mm256_cmpgt_epi8(_mm256_add_epi8(lower_z, _mm256_set1_epi8(1)), chunk),
             );
             let is_upper = _mm256_and_si256(
                 _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(upper_a, _mm256_set1_epi8(1))),
-                _mm256_cmpgt_epi8(_mm256_add_epi8(upper_z, _mm256_set1_epi8(1)), chunk)
+                _mm256_cmpgt_epi8(_mm256_add_epi8(upper_z, _mm256_set1_epi8(1)), chunk),
             );
             let is_digit = _mm256_and_si256(
                 _mm256_cmpgt_epi8(chunk, _mm256_sub_epi8(digit_0, _mm256_set1_epi8(1))),
-                _mm256_cmpgt_epi8(_mm256_add_epi8(digit_9, _mm256_set1_epi8(1)), chunk)
+                _mm256_cmpgt_epi8(_mm256_add_epi8(digit_9, _mm256_set1_epi8(1)), chunk),
             );
             let is_underscore = _mm256_cmpeq_epi8(chunk, underscore);
             let is_dollar = _mm256_cmpeq_epi8(chunk, dollar);
-            
+
             // Combine all valid identifier character masks
             let valid = _mm256_or_si256(
                 _mm256_or_si256(_mm256_or_si256(is_lower, is_upper), is_digit),
-                _mm256_or_si256(is_underscore, is_dollar)
+                _mm256_or_si256(is_underscore, is_dollar),
             );
-            
+
             let mask = _mm256_movemask_epi8(valid) as u32;
-            
+
             if mask == 0xFFFFFFFF {
                 // All 32 bytes are valid identifier characters
                 pos += 32;
@@ -201,7 +199,7 @@ pub fn scan_ascii_identifier_fallback(bytes: &[u8], start_char: bool) -> usize {
     }
 
     let mut pos = 0;
-    
+
     // Check first character if it's a start character
     if start_char {
         if !is_ascii_id_start_branchless(bytes[0]) {
@@ -218,7 +216,7 @@ pub fn scan_ascii_identifier_fallback(bytes: &[u8], start_char: bool) -> usize {
             break;
         }
     }
-    
+
     pos
 }
 
@@ -231,20 +229,20 @@ pub fn scan_string_content_simd(bytes: &[u8], quote: u8) -> usize {
     }
 
     let mut pos = 0;
-    
+
     while pos + 32 <= bytes.len() {
         unsafe {
             let chunk = _mm256_loadu_si256(bytes.as_ptr().add(pos) as *const __m256i);
-            
+
             // Look for quote character and backslash
             let quotes = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(quote as i8));
             let backslashes = _mm256_cmpeq_epi8(chunk, _mm256_set1_epi8(b'\\' as i8));
-            
+
             // Combine masks
             let terminators = _mm256_or_si256(quotes, backslashes);
-            
+
             let mask = _mm256_movemask_epi8(terminators) as u32;
-            
+
             if mask == 0 {
                 // No terminators found in this chunk
                 pos += 32;

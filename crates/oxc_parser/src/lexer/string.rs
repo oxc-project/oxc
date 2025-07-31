@@ -7,7 +7,7 @@ use crate::diagnostics;
 use super::{
     Kind, Lexer, LexerContext, Span, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
-    simd_search::{scan_string_content_simd, scan_string_content_fallback},
+    simd_search::{scan_string_content_fallback, scan_string_content_simd},
 };
 
 /// Convert `char` to UTF-8 bytes array.
@@ -88,12 +88,7 @@ macro_rules! handle_string_literal_simd {
             b'\\' => {
                 // Found escape sequence - use cold path for complex handling
                 cold_branch(|| {
-                    handle_string_literal_escape!(
-                        $lexer,
-                        $delimiter,
-                        $escaped_table,
-                        content_start
-                    )
+                    handle_string_literal_escape!($lexer, $delimiter, $escaped_table, content_start)
                 })
             }
             _ => {

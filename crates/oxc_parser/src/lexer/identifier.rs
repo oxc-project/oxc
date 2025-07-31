@@ -12,8 +12,8 @@ use super::{
     Kind, Lexer, SourcePosition, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
     simd_search::{
-        scan_ascii_identifier_simd, scan_ascii_identifier_fallback,
-        is_ascii_id_start_branchless, is_ascii_id_continue_branchless,
+        is_ascii_id_continue_branchless, is_ascii_id_start_branchless,
+        scan_ascii_identifier_fallback, scan_ascii_identifier_simd,
     },
 };
 
@@ -67,7 +67,7 @@ impl<'a> Lexer<'a> {
         // Check if we consumed the entire identifier or hit a non-ASCII/escape character
         if identifier_len < remaining.len() {
             let next_byte = remaining[identifier_len];
-            
+
             // Handle Unicode and escape sequences in cold branch
             if !next_byte.is_ascii() {
                 return cold_branch(|| {
@@ -96,10 +96,8 @@ impl<'a> Lexer<'a> {
 
         // Return identifier minus its first char
         // SAFETY: We know the identifier length from SIMD scan
-        let identifier_text = unsafe { 
-            self.source.str_from_pos_to_current_unchecked(start_pos)
-        };
-        
+        let identifier_text = unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) };
+
         &identifier_text[1..]
     }
 

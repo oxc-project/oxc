@@ -1,7 +1,7 @@
 use super::{
     Kind, Lexer,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
-    simd_search::{skip_ascii_whitespace_simd, skip_ascii_whitespace_fallback},
+    simd_search::{skip_ascii_whitespace_fallback, skip_ascii_whitespace_simd},
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =

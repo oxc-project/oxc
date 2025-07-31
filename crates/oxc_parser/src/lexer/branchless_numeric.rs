@@ -224,7 +224,7 @@ mod tests {
         assert_eq!(digits, 6);
         assert_eq!(total, 7);
 
-        let input = b"123_";  // Trailing underscore should be excluded
+        let input = b"123_"; // Trailing underscore should be excluded
         let (digits, total) = scan_digits_with_separators(input, is_decimal_digit_branchless);
         assert_eq!(digits, 3);
         assert_eq!(total, 3);

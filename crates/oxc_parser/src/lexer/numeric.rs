@@ -5,10 +5,9 @@ use crate::diagnostics;
 use super::{
     Kind, Lexer, Span,
     branchless_numeric::{
-        is_decimal_digit_branchless, is_binary_digit_branchless, 
-        is_octal_digit_branchless, is_hex_digit_branchless,
-        scan_decimal_digits, scan_binary_digits, scan_octal_digits, scan_hex_digits,
-        scan_digits_with_separators,
+        is_binary_digit_branchless, is_decimal_digit_branchless, is_hex_digit_branchless,
+        is_octal_digit_branchless, scan_binary_digits, scan_decimal_digits,
+        scan_digits_with_separators, scan_hex_digits, scan_octal_digits,
     },
 };
 
@@ -140,15 +139,16 @@ impl Lexer<'_> {
     /// Optimized function to read decimal digits using branchless operations.
     fn read_decimal_digits(&mut self) {
         let remaining = self.source.remaining().as_bytes();
-        
+
         if remaining.is_empty() || !is_decimal_digit_branchless(remaining[0]) {
             self.unexpected_err();
             return;
         }
 
         // Use branchless scanning for better performance
-        let (digit_count, consumed) = scan_digits_with_separators(remaining, is_decimal_digit_branchless);
-        
+        let (digit_count, consumed) =
+            scan_digits_with_separators(remaining, is_decimal_digit_branchless);
+
         if digit_count == 0 {
             self.unexpected_err();
             return;
@@ -168,14 +168,15 @@ impl Lexer<'_> {
     /// Optimized function to read decimal digits after the first digit.
     fn read_decimal_digits_after_first_digit(&mut self) {
         let remaining = self.source.remaining().as_bytes();
-        
+
         if remaining.is_empty() {
             return;
         }
 
         // Use branchless scanning for better performance
-        let (digit_count, consumed) = scan_digits_with_separators(remaining, is_decimal_digit_branchless);
-        
+        let (digit_count, consumed) =
+            scan_digits_with_separators(remaining, is_decimal_digit_branchless);
+
         if consumed == 0 {
             return; // No more digits
         }
