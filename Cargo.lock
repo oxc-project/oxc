@@ -2158,6 +2158,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_parallel_test"
+version = "0.1.0"
+dependencies = [
+ "bpaf",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "tokio",
+]
+
+[[package]]
 name = "oxc_parser"
 version = "0.80.0"
 dependencies = [
