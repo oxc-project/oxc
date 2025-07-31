@@ -1218,6 +1218,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.unused_labels.add(stmt.label.name.as_str());
 
         /* cfg */
         let label = &stmt.label.name;
@@ -2030,9 +2031,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
-            }
-            AstKind::LabeledStatement(stmt) => {
-                self.unused_labels.add(stmt.label.name.as_str());
             }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
