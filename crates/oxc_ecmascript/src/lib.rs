@@ -9,10 +9,15 @@ mod prop_name;
 // Abstract Operations
 mod array_join;
 mod is_less_than;
+mod math_abs;
+mod math_floor_ceil;
 mod string_char_at;
 mod string_char_code_at;
+mod string_includes;
 mod string_index_of;
 mod string_last_index_of;
+mod string_slice;
+mod string_starts_ends_with;
 mod string_substring;
 mod string_to_big_int;
 mod string_to_number;
@@ -24,6 +29,8 @@ mod to_number;
 mod to_numeric;
 mod to_primitive;
 mod to_string;
+mod to_uint_16;
+mod to_uint_32;
 
 // other
 mod to_integer_index;
@@ -36,12 +43,17 @@ pub use self::{
     array_join::ArrayJoin,
     bound_names::BoundNames,
     is_simple_parameter_list::IsSimpleParameterList,
+    math_abs::MathAbs,
+    math_floor_ceil::{MathFloor, MathCeil},
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
     string_char_at::{StringCharAt, StringCharAtResult},
     string_char_code_at::StringCharCodeAt,
+    string_includes::StringIncludes,
     string_index_of::StringIndexOf,
     string_last_index_of::StringLastIndexOf,
+    string_slice::StringSlice,
+    string_starts_ends_with::{StringStartsWith, StringEndsWith},
     string_substring::StringSubstring,
     string_to_big_int::StringToBigInt,
     string_to_number::StringToNumber,
@@ -52,4 +64,6 @@ pub use self::{
     to_number::ToNumber,
     to_primitive::ToPrimitive,
     to_string::ToJsString,
+    to_uint_16::ToUint16,
+    to_uint_32::ToUint32,
 };
