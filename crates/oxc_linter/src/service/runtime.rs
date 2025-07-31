@@ -773,7 +773,12 @@ impl Runtime {
                                         .collect(),
                                 }
                                 .into_iter()
-                                .map(|message| message.clone_in(allocator)),
+                                .map(|mut message| {
+                                    if section.source.start != 0 {
+                                        message.move_offset(section.source.start);
+                                    }
+                                    message.clone_in(allocator)
+                                }),
                             );
                         }
                     },

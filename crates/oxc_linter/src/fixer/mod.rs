@@ -291,6 +291,35 @@ impl<'a> Message<'a> {
         };
         Self { error, span: Span::new(start, end), fixes, fixed: false }
     }
+
+    /// move the offset of all spans to the right
+    pub fn move_offset(&mut self, offset: u32) -> &mut Self {
+        if offset == 0 {
+            return self;
+        }
+
+        self.span = self.span.move_right(offset);
+
+        if let Some(labels) = &mut self.error.labels {
+            for label in labels {
+                label.set_span_offset(label.offset().saturating_add(offset as usize));
+            }
+        }
+
+        match &mut self.fixes {
+            PossibleFixes::None => {}
+            PossibleFixes::Single(fix) => {
+                fix.span = fix.span.move_right(offset);
+            }
+            PossibleFixes::Multiple(fixes) => {
+                for fix in fixes {
+                    fix.span = fix.span.move_right(offset);
+                }
+            }
+        }
+
+        self
+    }
 }
 
 impl From<Message<'_>> for OxcDiagnostic {
