@@ -292,6 +292,10 @@ impl<'a> ContextHost<'a> {
     pub fn frameworks(&self) -> FrameworkFlags {
         self.frameworks
     }
+
+    pub fn frameworks_options(&self) -> FrameworkOptions {
+        self.frameworks_options
+    }
 }
 
 impl<'a> From<ContextHost<'a>> for Vec<Message<'a>> {
