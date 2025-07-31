@@ -19,6 +19,8 @@
     "pnpm-lock.yaml",
     "napi/oxlint2/src-js/bindings.js",
     "napi/oxlint2/src-js/bindings.d.ts",
+    "napi/parallel-test/src-js/bindings.js",
+    "napi/parallel-test/src-js/bindings.d.ts",
     "napi/{transform,minify,playground}/index.js",
     "napi/{parser,transform,minify,playground}/index.d.ts",
     "napi/{parser,transform,minify,playground}/*.wasi-browser.js",
