@@ -20,7 +20,7 @@ use crate::{
 };
 
 mod host;
-pub use host::ContextHost;
+pub use host::{ContextHost, ContextSubHost};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
@@ -106,7 +106,7 @@ impl<'a> LintContext<'a> {
     /// Refer to [`Semantic`]'s documentation for more information.
     #[inline]
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
-        &self.parent.semantic
+        self.parent.semantic()
     }
 
     #[inline]
@@ -119,19 +119,19 @@ impl<'a> LintContext<'a> {
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe { self.parent.semantic.cfg().unwrap_unchecked() }
+        unsafe { self.parent.semantic().cfg().unwrap_unchecked() }
     }
 
     /// List of all disable directives in the file being linted.
     #[inline]
-    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
-        &self.parent.disable_directives
+    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+        self.parent.disable_directives()
     }
 
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.parent.semantic.source_text())
+        span.source_text(self.parent.semantic().source_text())
     }
 
     /// Path to the file currently being linted.
@@ -222,7 +222,7 @@ impl<'a> LintContext<'a> {
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message<'a>) {
-        if self.parent.disable_directives.contains(self.current_rule_name, message.span()) {
+        if self.parent.disable_directives().contains(self.current_rule_name, message.span()) {
             return;
         }
         message.error = message
