@@ -71,7 +71,7 @@ pub struct ContextHost<'a> {
     /// Some rules (like vue) need the information of the other entries.
     pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
     /// The current index which will be linted.
-    current_sub_host_index: usize,
+    current_sub_host_index: RefCell<usize>,
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across a single file.
@@ -111,7 +111,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             sub_hosts,
-            current_sub_host_index: 0,
+            current_sub_host_index: RefCell::new(0),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
@@ -123,7 +123,7 @@ impl<'a> ContextHost<'a> {
 
     /// The current [`ContextSubHost`]
     fn current_sub_host(&self) -> &ContextSubHost<'a> {
-        &self.sub_hosts[self.current_sub_host_index]
+        &self.sub_hosts[*self.current_sub_host_index.borrow()]
     }
 
     /// Shared reference to the [`Semantic`] analysis of current script block.
@@ -174,6 +174,12 @@ impl<'a> ContextHost<'a> {
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, diagnostics: Vec<Message<'a>>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    // move the context to the next sub host
+    pub fn next_sub_host(&self) -> bool {
+        *self.current_sub_host_index.borrow_mut() += 1;
+        self.sub_hosts.get(*self.current_sub_host_index.borrow()).is_some()
     }
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
