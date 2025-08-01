@@ -473,7 +473,8 @@ mod jsx_a11y {
 }
 
 mod oxc {
-    pub mod approx_constant;
+        pub mod no_duplicate_code;
+pub mod approx_constant;
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
@@ -884,6 +885,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
     oxc::missing_throw,
+    oxc::no_duplicate_code,
     oxc::no_accumulating_spread,
     oxc::no_async_await,
     oxc::no_async_endpoint_handlers,

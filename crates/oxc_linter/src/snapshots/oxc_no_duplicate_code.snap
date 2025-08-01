@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(no-duplicate-code): Duplicated code block detected
+    ╭─[no_duplicate_code.tsx:2:9]
+  1 │     
+  2 │ ╭─▶         function processUserA() {
+  3 │ │               user.lastSeen = new Date();
+  4 │ │               user.status = 'online';
+  5 │ │               saveUser(user);
+  6 │ ├─▶         }
+    · ╰──── Original code block is here
+  7 │ ╭─▶         function processUserB() {
+  8 │ │               user.lastSeen = new Date();
+  9 │ │               user.status = 'online';
+ 10 │ │               saveUser(user);
+ 11 │ ├─▶         }
+    · ╰──── This code block is duplicated
+ 12 │             
+    ╰────
+  help: Consider extracting the duplicated code into a reusable function
+
+  ⚠ oxc(no-duplicate-code): Duplicated code block detected
+    ╭─[no_duplicate_code.tsx:2:9]
+  1 │     
+  2 │ ╭─▶         function handleSuccess() {
+  3 │ │               logger.info('Operation successful');
+  4 │ │               metrics.increment('success');
+  5 │ │               notify.send('completed');
+  6 │ ├─▶         }
+    · ╰──── Original code block is here
+  7 │ ╭─▶         function handleComplete() {
+  8 │ │               logger.info('Operation successful');
+  9 │ │               metrics.increment('success');
+ 10 │ │               notify.send('completed');
+ 11 │ ├─▶         }
+    · ╰──── This code block is duplicated
+ 12 │             
+    ╰────
+  help: Consider extracting the duplicated code into a reusable function
