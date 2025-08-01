@@ -67,7 +67,7 @@ impl Default for CodeBuffer {
 }
 
 impl CodeBuffer {
-    /// Create a new empty [`CodeBuffer`].
+    /// Create a new [`CodeBuffer`].
     ///
     /// # Example
     /// ```
@@ -83,7 +83,7 @@ impl CodeBuffer {
         Self::default()
     }
 
-    /// Create a new [`CodeBuffer`] with specified indentation configuration.
+    /// Create a new [`CodeBuffer`] with specified indentation.
     ///
     /// # Example
     /// ```
@@ -98,7 +98,7 @@ impl CodeBuffer {
         Self { buf: Vec::new(), indent_char, indent_width }
     }
 
-    /// Create a new, empty [`CodeBuffer`] with the specified capacity.
+    /// Create a new [`CodeBuffer`] with the specified capacity.
     ///
     /// The buffer will be able to hold at least `capacity` bytes without reallocating.
     /// This method is allowed to allocate for more bytes than `capacity`.
@@ -108,7 +108,7 @@ impl CodeBuffer {
     /// minimum *capacity* specified, the buffer will have a zero *length*.
     ///
     /// # Panics
-    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    /// Panics if `capacity` exceeds `isize::MAX` bytes.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
@@ -118,10 +118,17 @@ impl CodeBuffer {
         }
     }
 
-    /// Create a new, empty [`CodeBuffer`] with the specified capacity and indentation configuration.
+    /// Create a new [`CodeBuffer`] with the specified capacity and indentation.
+    ///
+    /// The buffer will be able to hold at least `capacity` bytes without reallocating.
+    /// This method is allowed to allocate for more bytes than `capacity`.
+    /// If `capacity` is 0, the buffer will not allocate.
+    ///
+    /// It is important to note that although the returned buffer has the
+    /// minimum *capacity* specified, the buffer will have a zero *length*.
     ///
     /// # Panics
-    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    /// Panics if `capacity` exceeds `isize::MAX` bytes.
     #[inline]
     pub fn with_capacity_and_indent(
         capacity: usize,
@@ -475,8 +482,7 @@ impl CodeBuffer {
     /// Print `depth` levels of indentation into the buffer.
     ///
     /// Uses the configured indentation character and width.
-    /// For tabs: prints `depth * indent_width` tab characters.
-    /// For spaces: prints `depth * indent_width` space characters.
+    /// Prints `depth * indent_width` indent characters.
     ///
     /// Optimized on assumption that more than 16 characters of indentation is rare.
     ///
