@@ -1,4 +1,3 @@
----
 name: Copilot Setup Steps
 
 # This workflow defines the setup steps that GitHub Copilot agents will use
@@ -7,6 +6,15 @@ name: Copilot Setup Steps
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
 
 permissions: {}
 
@@ -15,57 +23,19 @@ jobs:
     name: Setup Development Environment for Copilot
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository
-      - name: Checkout repository
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d
-        # v1.3.1
-
-      # Setup Rust toolchain with the version specified in rust-toolchain.toml
-      - name: Setup Rust toolchain
-        uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d
-        # v1.0.0
+      # Checkout full repo for git history.
+      - uses: actions/checkout@v4
         with:
-          save-cache: false
+          persist-credentials: false
 
-      # Setup Node.js with the version specified in .node-version
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        # v4.4.0
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
-          node-version-file: .node-version
+          cache-key: copilot
+          save-cache: ${{ github.ref_name == 'main' }}
+          tools: just,watchexec-cli,cargo-insta,typos-cli,cargo-shear,dprint
 
-      # Setup pnpm package manager
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
-        # v3.0.0
-        with:
-          version: 10.13.1
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
-      # Install just command runner
-      - name: Install just command runner
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh |
-            bash -s -- --to ~/.local/bin
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      # Install cargo-binstall for faster binary installations
-      - name: Install cargo-binstall
-        run: |
-          curl -L --proto '=https' --tlsv1.2 -sSf \
-            https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh \
-            | bash
-
-      # Install required cargo tools using cargo-binstall for speed
-      - name: Install development tools
-        run: |
-          cargo binstall --no-confirm watchexec-cli cargo-insta typos-cli \
-            cargo-shear dprint
-
-      # Install Node.js dependencies
-      - name: Install Node.js dependencies
-        run: pnpm install
-
-      # Verify installation by running basic commands
       - name: Verify installations
         run: |
           echo "=== Rust toolchain ==="
@@ -89,13 +59,11 @@ jobs:
           echo "=== Project commands ==="
           just --list
 
-      # Run a quick build check to ensure everything is working
       - name: Quick build check
         run: |
           cargo check --quiet
           echo "✅ Rust build check passed"
 
-      # Display completion message
       - name: Setup complete
         run: |
           echo "🎉 Development environment setup complete!"
