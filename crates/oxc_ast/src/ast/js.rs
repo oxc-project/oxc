@@ -2457,12 +2457,12 @@ pub enum ImportPhase {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ImportDeclarationSpecifier<'a> {
-    /// import {imported} from "source"
-    /// import {imported as local} from "source"
+    /// `import {imported} from "source";`
+    /// `import {imported as local} from "source";`
     ImportSpecifier(Box<'a, ImportSpecifier<'a>>) = 0,
-    /// import local from "source"
+    /// `import local from "source";`
     ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>) = 1,
-    /// import * as local from "source"
+    /// `import * as local from "source";`
     ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
 }
 
