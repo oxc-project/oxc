@@ -15,6 +15,7 @@ use oxc_span::{SourceType, Span};
 use crate::{UniquePromise, diagnostics};
 
 mod branchless_numeric;
+mod branchless_utils;
 mod byte_handlers;
 mod comment;
 mod identifier;
@@ -25,7 +26,6 @@ mod numeric;
 mod punctuation;
 mod regex;
 mod search;
-mod simd_search;
 mod source;
 mod string;
 mod template;

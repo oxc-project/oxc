@@ -11,9 +11,9 @@ use crate::diagnostics;
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
-    simd_search::{
+    branchless_utils::{
         is_ascii_id_continue_branchless, is_ascii_id_start_branchless,
-        scan_ascii_identifier_fallback, scan_ascii_identifier_simd,
+        scan_ascii_identifier,
     },
 };
 
@@ -50,14 +50,8 @@ impl<'a> Lexer<'a> {
         let start_pos = self.source.position();
         let remaining = self.source.remaining().as_bytes();
 
-        // Use SIMD to scan the entire identifier in one go
-        let identifier_len = if remaining.len() >= 32 {
-            // Use SIMD for larger identifiers
-            scan_ascii_identifier_simd(remaining, true)
-        } else {
-            // Use fallback for small identifiers to avoid SIMD overhead
-            scan_ascii_identifier_fallback(remaining, true)
-        };
+        // Use branchless scanning to get the identifier length
+        let identifier_len = scan_ascii_identifier(remaining, true);
 
         if identifier_len == 0 {
             // Not a valid identifier start, return empty string

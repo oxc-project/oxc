@@ -1,6 +1,6 @@
 //! Branchless and optimized numeric parsing functions.
 
-use super::simd_search::ascii_hex_digit_branchless;
+use super::branchless_utils::ascii_hex_digit_branchless;
 
 /// Branchless function to check if a byte is a decimal digit.
 #[inline]
