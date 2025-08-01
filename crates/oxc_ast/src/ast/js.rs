@@ -320,7 +320,7 @@ pub struct ArrayExpression<'a> {
 }
 
 inherit_variants! {
-/// Represents a element in an array literal.
+/// Represents an element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///

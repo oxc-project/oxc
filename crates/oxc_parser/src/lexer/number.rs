@@ -135,7 +135,7 @@ const fn binary_byte_to_value(b: u8) -> u8 {
     b & 1
 }
 
-/// NOTE: bit shifting here is is safe and much faster than f64::mul_add.
+/// NOTE: bit shifting here is safe and much faster than f64::mul_add.
 /// It's safe because we're sure this number is an integer - if it wasn't, it
 /// would be a [`Kind::Float`] instead. It's fast because shifting usually takes
 /// 1 clock cycle on the ALU, while multiplication+addition uses the FPU and is
