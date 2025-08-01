@@ -9,7 +9,7 @@ use crate::{
     config::LintConfig,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
-    frameworks,
+    frameworks::{self, FrameworkOptions},
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
@@ -27,12 +27,23 @@ pub struct ContextSubHost<'a> {
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
     pub(super) disable_directives: Rc<DisableDirectives<'a>>,
+    // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
+    #[expect(dead_code)]
+    pub(super) framework_options: FrameworkOptions,
 }
 
 impl<'a> ContextSubHost<'a> {
+    pub fn new(semantic: Rc<Semantic<'a>>, module_record: Arc<ModuleRecord>) -> Self {
+        Self::new_with_framework_options(semantic, module_record, FrameworkOptions::Default)
+    }
+
     /// # Panics
     /// If `semantic.cfg()` is `None`.
-    pub fn new(semantic: Rc<Semantic<'a>>, module_record: Arc<ModuleRecord>) -> Self {
+    pub fn new_with_framework_options(
+        semantic: Rc<Semantic<'a>>,
+        module_record: Arc<ModuleRecord>,
+        frameworks_options: FrameworkOptions,
+    ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
         assert!(
@@ -43,7 +54,12 @@ impl<'a> ContextSubHost<'a> {
         let disable_directives =
             DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
 
-        Self { semantic, module_record, disable_directives: Rc::new(disable_directives) }
+        Self {
+            semantic,
+            module_record,
+            disable_directives: Rc::new(disable_directives),
+            framework_options: frameworks_options,
+        }
     }
 }
 /// Stores shared information about a file being linted.
