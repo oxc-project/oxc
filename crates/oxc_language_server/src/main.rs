@@ -18,13 +18,11 @@ use tower_lsp_server::{
     },
 };
 
-use crate::{
-    capabilities::Capabilities,
-    code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
-    commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-    options::{Options, Run, WorkspaceOption},
-    worker::WorkspaceWorker,
-};
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
+use options::{Options, Run, WorkspaceOption};
+use worker::WorkspaceWorker;
 
 mod capabilities;
 mod code_actions;

@@ -2,14 +2,13 @@ use std::cell::RefCell;
 
 use oxc_span::{GetSpan, Span};
 
+use super::chain_member::ChainMember;
 use crate::{
     formatter::{Format, FormatResult, Formatter, prelude::*},
     generated::ast_nodes::AstNode,
     parentheses::NeedsParentheses,
     write,
 };
-
-use super::chain_member::ChainMember;
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
