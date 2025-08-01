@@ -1936,7 +1936,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// See `expression` for whether this arrow expression returns an expression.
+    /// See `expression` field for whether this arrow expression returns an expression.
     // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
     #[estree(via = ArrowFunctionExpressionBody)]
     pub body: Box<'a, FunctionBody<'a>>,
