@@ -46,7 +46,7 @@ impl<const CAPACITY: usize, Len: UnsignedInt> InlineString<CAPACITY, Len> {
         );
     };
 
-    /// Create empty [`InlineString`].
+    /// Create an empty [`InlineString`].
     #[inline]
     pub fn new() -> Self {
         const { Self::ASSERTS };
