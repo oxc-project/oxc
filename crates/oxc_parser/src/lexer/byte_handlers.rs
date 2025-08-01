@@ -210,27 +210,33 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
+    
+    // Branchless approach: read ahead 2 bytes and use pattern matching
     if let Some(next_2_bytes) = lexer.peek_2_bytes() {
-        match next_2_bytes[0] {
-            b'=' => {
-                if next_2_bytes[1] == b'=' {
-                    lexer.consume_2_chars();
-                    Kind::Neq2
-                } else {
-                    lexer.consume_char();
-                    Kind::Neq
-                }
+        match next_2_bytes {
+            [b'=', b'='] => {
+                // !== (three-byte token)
+                lexer.consume_2_chars();
+                Kind::Neq2
             }
-            _ => Kind::Bang
+            [b'=', _] => {
+                // != (two-byte token)
+                lexer.consume_char();
+                Kind::Neq
+            }
+            _ => {
+                // ! (single-byte token)
+                Kind::Bang
+            }
         }
     } else {
-        // At EOF, or only 1 byte left
+        // Fallback for EOF or single byte remaining
         match lexer.peek_byte() {
             Some(b'=') => {
                 lexer.consume_char();
                 Kind::Neq
             }
-            _ => Kind::Bang
+            _ => Kind::Bang,
         }
     }
 });
@@ -277,16 +283,43 @@ ascii_byte_handler!(PRC(lexer) {
 // &
 ascii_byte_handler!(AMP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'&') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Amp2Eq
-        } else {
-            Kind::Amp2
+    
+    // Branchless approach: read ahead 2 bytes and use pattern matching
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes {
+            [b'&', b'='] => {
+                // &&= (three-byte token)
+                lexer.consume_2_chars();
+                Kind::Amp2Eq
+            }
+            [b'&', _] => {
+                // && (two-byte token)
+                lexer.consume_char();
+                Kind::Amp2
+            }
+            [b'=', _] => {
+                // &= (two-byte token)
+                lexer.consume_char();
+                Kind::AmpEq
+            }
+            _ => {
+                // & (single-byte token)
+                Kind::Amp
+            }
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::AmpEq
     } else {
-        Kind::Amp
+        // Fallback for EOF or single byte remaining
+        match lexer.peek_byte() {
+            Some(b'&') => {
+                lexer.consume_char();
+                Kind::Amp2
+            }
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::AmpEq
+            }
+            _ => Kind::Amp,
+        }
     }
 });
 
@@ -305,28 +338,61 @@ ascii_byte_handler!(PNC(lexer) {
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'*') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Star2Eq
-        } else {
-            Kind::Star2
+    
+    // Branchless approach: read ahead 2 bytes and use pattern matching
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes {
+            [b'*', b'='] => {
+                // **= (three-byte token)
+                lexer.consume_2_chars();
+                Kind::Star2Eq
+            }
+            [b'*', _] => {
+                // ** (two-byte token)
+                lexer.consume_char();
+                Kind::Star2
+            }
+            [b'=', _] => {
+                // *= (two-byte token)
+                lexer.consume_char();
+                Kind::StarEq
+            }
+            _ => {
+                // * (single-byte token)
+                Kind::Star
+            }
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::StarEq
     } else {
-        Kind::Star
+        // Fallback for EOF or single byte remaining
+        match lexer.peek_byte() {
+            Some(b'*') => {
+                lexer.consume_char();
+                Kind::Star2
+            }
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::StarEq
+            }
+            _ => Kind::Star,
+        }
     }
 });
 
 // +
 ascii_byte_handler!(PLS(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'+') {
-        Kind::Plus2
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PlusEq
-    } else {
-        Kind::Plus
+    
+    // Branchless approach: read ahead for better prediction
+    match lexer.peek_byte() {
+        Some(b'+') => {
+            lexer.consume_char();
+            Kind::Plus2
+        }
+        Some(b'=') => {
+            lexer.consume_char();
+            Kind::PlusEq
+        }
+        _ => Kind::Plus,
     }
 });
 
@@ -404,16 +470,45 @@ ascii_byte_handler!(LSS(lexer) {
 // =
 ascii_byte_handler!(EQL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Eq3
-        } else {
-            Kind::Eq2
+
+    // Branchless approach: read ahead 2 bytes and use pattern matching
+    // This reduces branch misprediction by batching decisions
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        // Handle the most common patterns first to improve branch prediction
+        match next_2_bytes {
+            [b'=', b'='] => {
+                // === (three-byte token)
+                lexer.consume_2_chars();
+                Kind::Eq3
+            }
+            [b'=', _] => {
+                // == (two-byte token)
+                lexer.consume_char();
+                Kind::Eq2
+            }
+            [b'>', _] => {
+                // => (two-byte token)
+                lexer.consume_char();
+                Kind::Arrow
+            }
+            _ => {
+                // = (single-byte token)
+                Kind::Eq
+            }
         }
-    } else if lexer.next_ascii_byte_eq(b'>') {
-        Kind::Arrow
     } else {
-        Kind::Eq
+        // Fallback for EOF or single byte remaining
+        match lexer.peek_byte() {
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::Eq2
+            }
+            Some(b'>') => {
+                lexer.consume_char();
+                Kind::Arrow
+            }
+            _ => Kind::Eq,
+        }
     }
 });
 
@@ -428,26 +523,31 @@ ascii_byte_handler!(GTR(lexer) {
 ascii_byte_handler!(QST(lexer) {
     lexer.consume_char();
 
+    // Branchless approach: read ahead 2 bytes and use pattern matching
     if let Some(next_2_bytes) = lexer.peek_2_bytes() {
-        match next_2_bytes[0] {
-            b'?' => {
-                if next_2_bytes[1] == b'=' {
-                    lexer.consume_2_chars();
-                    Kind::Question2Eq
-                } else {
-                    lexer.consume_char();
-                    Kind::Question2
-                }
+        match next_2_bytes {
+            [b'?', b'='] => {
+                // ??= (three-byte token)
+                lexer.consume_2_chars();
+                Kind::Question2Eq
             }
-            // parse `?.1` as `?` `.1`
-            b'.' if !next_2_bytes[1].is_ascii_digit() => {
+            [b'?', _] => {
+                // ?? (two-byte token)
+                lexer.consume_char();
+                Kind::Question2
+            }
+            // Parse `?.1` as `?` `.1` (special case for optional chaining)
+            [b'.', next] if !next.is_ascii_digit() => {
                 lexer.consume_char();
                 Kind::QuestionDot
             }
-            _ => Kind::Question,
+            _ => {
+                // ? (single-byte token)
+                Kind::Question
+            }
         }
     } else {
-        // At EOF, or only 1 byte left
+        // Fallback for EOF or single byte remaining
         match lexer.peek_byte() {
             Some(b'?') => {
                 lexer.consume_char();
@@ -511,20 +611,42 @@ ascii_byte_handler!(BEO(lexer) {
 ascii_byte_handler!(PIP(lexer) {
     lexer.consume_char();
 
-    match lexer.peek_byte() {
-        Some(b'|') => {
-            lexer.consume_char();
-            if lexer.next_ascii_byte_eq(b'=') {
+    // Branchless approach: read ahead 2 bytes and use pattern matching
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes {
+            [b'|', b'='] => {
+                // ||= (three-byte token)
+                lexer.consume_2_chars();
                 Kind::Pipe2Eq
-            } else {
+            }
+            [b'|', _] => {
+                // || (two-byte token)
+                lexer.consume_char();
                 Kind::Pipe2
             }
+            [b'=', _] => {
+                // |= (two-byte token)
+                lexer.consume_char();
+                Kind::PipeEq
+            }
+            _ => {
+                // | (single-byte token)
+                Kind::Pipe
+            }
         }
-        Some(b'=') => {
-            lexer.consume_char();
-            Kind::PipeEq
+    } else {
+        // Fallback for EOF or single byte remaining
+        match lexer.peek_byte() {
+            Some(b'|') => {
+                lexer.consume_char();
+                Kind::Pipe2
+            }
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::PipeEq
+            }
+            _ => Kind::Pipe,
         }
-        _ => Kind::Pipe
     }
 });
 
