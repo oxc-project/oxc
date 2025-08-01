@@ -153,8 +153,61 @@ jobs:
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir
 
+  # Sharded because these tests are slow
   test-napi:
     name: Test NAPI
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        component:
+          - oxlint2
+          - parser
+          - playground
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+              - '!crates/oxc_language_server/**'
+              - '!editors/**'
+      # Submodules only needed for parser tests
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true' && matrix.component == 'parser'
+        with:
+          babel: false
+          prettier: false
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi-${{ matrix.component }}
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        name: Build
+        working-directory: napi/${{ matrix.component }}
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build-test
+      - if: steps.filter.outputs.src == 'true' && matrix.component != 'playground'
+        name: Run tests
+        working-directory: napi/${{ matrix.component }}
+        env:
+          RUN_RAW_TESTS: "true"
+        run: |
+          pnpm run test
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          git diff --exit-code # Must commit everything
+
+  # Includes transformer and minifier
+  test-napi-e2e:
+    name: Test NAPI (e2e)
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -167,32 +220,43 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-        with:
-          babel: false
-          prettier: false
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
-          cache-key: napi
+          cache-key: napi-e2e
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
-        name: Run tests in workspace
-        env:
-          RUN_RAW_TESTS: "true"
+        name: Install wasm32-wasip1-threads
         run: |
           rustup target add wasm32-wasip1-threads
+      - if: steps.filter.outputs.src == 'true'
+        name: Build transformer
+        working-directory: napi/transform
+        run: |
           pnpm run build-test
+      - if: steps.filter.outputs.src == 'true'
+        name: Run transformer tests
+        working-directory: napi/transform
+        run: |
+          pnpm run test
+      - if: steps.filter.outputs.src == 'true'
+        name: Build minifier
+        working-directory: napi/minify
+        run: |
+          pnpm run build-test
+      - if: steps.filter.outputs.src == 'true'
+        name: Run minifier tests
+        working-directory: napi/minify
+        run: |
           pnpm run test
       - if: steps.filter.outputs.src == 'true'
         name: Run e2e tests
+        working-directory: tasks/e2e
         run: |
           pnpm install --frozen-lockfile
           pnpm run test
-        working-directory: tasks/e2e
       - if: steps.filter.outputs.src == 'true'
         run: |
           git diff --exit-code # Must commit everything
