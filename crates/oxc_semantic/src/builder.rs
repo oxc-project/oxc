@@ -1775,8 +1775,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
