@@ -43,6 +43,9 @@ pub use crate::{
     options::{CodegenOptions, CommentOptions, LegalComment},
 };
 
+// Re-export `IndentChar` from `oxc_data_structures`
+pub use oxc_data_structures::code_buffer::IndentChar;
+
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
 pub struct CodegenReturn {
@@ -171,6 +174,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
+        self.code = CodeBuffer::with_indent(options.indent_char, options.indent_width);
         self.options = options;
         self
     }
