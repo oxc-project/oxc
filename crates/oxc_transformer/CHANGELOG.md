@@ -88,7 +88,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 - 23c5951 transformer/legacy-decorator: Decorated fields with the `declare` modifier are not transformed (#12212) (Dunqing)
 - e93e4c8 transformer/styled-components: Template literal expressions order is wrong after minification (#12211) (Dunqing)
-- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absolute path (#12199) (Dunqing)
 
 ### 🚜 Refactor
 
@@ -97,7 +97,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 - 5fffa96 transformer/styled-components: Shorten code (#12215) (overlookmotel)
 - eaf1c42 transformer/styled-components: Fix typo (#12214) (overlookmotel)
 - 5ad62cd transformer/styled-components: Do not allocate temp data into arena (#12198) (overlookmotel)
-- 94796a0 transformer/styled-components: Simplify concating strs (#12183) (Dunqing)
+- 94796a0 transformer/styled-components: Simplify concatenating strs (#12183) (Dunqing)
 - 046f8d5 transformer/plugins: Short-circuit early when a call expressions is part of `ComputedMemberExpression` (#12181) (Dunqing)
 - a6ee13a transformer/plugins: Don't store `PluginOptions` (#12180) (Dunqing)
 - 466241d transformer/styled_components: Simplify code (#12175) (overlookmotel)
@@ -420,7 +420,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- dbe61c5 transformer/module-runner-transform: Remove redundant converison (#9912) (Dunqing)
+- dbe61c5 transformer/module-runner-transform: Remove redundant conversion (#9912) (Dunqing)
 - ecdfe2e transformer/using: Move work to `exit_static_block` (#9713) (camc314)
 
 ## [0.60.0] - 2025-03-18
@@ -854,7 +854,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - 10a86b9 transformer: Fix comments (#7925) (overlookmotel)
 - f4cb5d3 transformer: Clarify comment (#7918) (overlookmotel)
 - 41a1456 transformer/class-properties: Correct doc comments (#7966) (overlookmotel)
-- 18441af transformer/class-properties: Remove oudated todo for assignment expression (#7955) (Dunqing)
+- 18441af transformer/class-properties: Remove outdated todo for assignment expression (#7955) (Dunqing)
 - 1317c00 transformer/class-properties: Clarify doc comments (#7914) (overlookmotel)
 - 9989b58 transformer/class-properties: Re-order file list in doc comment (#7911) (overlookmotel)
 - 7390048 transformer/class-properties: Reformat doc comment (#7909) (overlookmotel)
@@ -966,7 +966,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Documentation
 
 - 5806942 transformer/class-properties: Correct doc comment (#7741) (overlookmotel)
-- 583b36b transformer/class-properties: Remove oudated todo (#7669) (Dunqing)
+- 583b36b transformer/class-properties: Remove outdated todo (#7669) (Dunqing)
 
 ### Refactor
 
@@ -1003,7 +1003,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - a784a82 oxc_transformer: Support jsx pragma that are long member expressions (#7538) (IWANABETHATGUY)
 - a23ce15 oxc_transformer: Replace_global_define for assignmentTarget (#7505) (IWANABETHATGUY)
-- 3539f56 transformer/class-properties: Support for transforming `TaggedTemplateExpresssion` (#7504) (Dunqing)
+- 3539f56 transformer/class-properties: Support for transforming `TaggedTemplateExpression` (#7504) (Dunqing)
 
 ### Bug Fixes
 
@@ -1233,7 +1233,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 7f1d1fe transform: Deserialize `BabelPreests::env` directly (#7051) (Boshen)
+- 7f1d1fe transform: Deserialize `BabelPresets::env` directly (#7051) (Boshen)
 - 76947e2 transform: Refactor Babel Targets (#7026) (Boshen)
 - d03e622 transformer: Do not use `AstBuilder::*_from_*` methods (#7070) (overlookmotel)
 - 9d384ad transformer: Use `identifier_reference_with_reference_id` builder method (#7056) (overlookmotel)
