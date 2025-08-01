@@ -58,6 +58,7 @@ impl Gen for Program<'_> {
 
 impl Gen for Hashbang<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_str("#!");
         p.print_str(self.value.as_str());
         p.print_hard_newline();
@@ -188,6 +189,7 @@ impl Gen for Statement<'_> {
 impl Gen for ExpressionStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -289,6 +291,7 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
 
 impl Gen for BlockStatement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_block_statement(self, ctx);
         p.print_soft_newline();
@@ -589,6 +592,7 @@ impl Gen for CatchClause<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_soft_space();
         p.print_comments_at(self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("catch");
         if let Some(param) = &self.param {
             p.print_soft_space();
@@ -663,6 +667,7 @@ impl Gen for VariableDeclaration<'_> {
 
 impl Gen for VariableDeclarator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         self.id.kind.print(p, ctx);
         if self.definite {
             p.print_ascii_byte(b'!');
