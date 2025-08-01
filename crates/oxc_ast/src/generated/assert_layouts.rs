@@ -250,14 +250,14 @@ const _: () = {
     assert!(align_of::<AssignmentTargetPattern>() == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<ArrayAssignmentTarget>() == 56);
+    assert!(size_of::<ArrayAssignmentTarget>() == 40);
     assert!(align_of::<ArrayAssignmentTarget>() == 8);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 32);
 
     // Padding: 0 bytes
-    assert!(size_of::<ObjectAssignmentTarget>() == 56);
+    assert!(size_of::<ObjectAssignmentTarget>() == 40);
     assert!(align_of::<ObjectAssignmentTarget>() == 8);
     assert!(offset_of!(ObjectAssignmentTarget, span) == 0);
     assert!(offset_of!(ObjectAssignmentTarget, properties) == 8);
@@ -1842,14 +1842,14 @@ const _: () = {
     assert!(align_of::<AssignmentTargetPattern>() == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<ArrayAssignmentTarget>() == 40);
+    assert!(size_of::<ArrayAssignmentTarget>() == 28);
     assert!(align_of::<ArrayAssignmentTarget>() == 4);
     assert!(offset_of!(ArrayAssignmentTarget, span) == 0);
     assert!(offset_of!(ArrayAssignmentTarget, elements) == 8);
     assert!(offset_of!(ArrayAssignmentTarget, rest) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<ObjectAssignmentTarget>() == 40);
+    assert!(size_of::<ObjectAssignmentTarget>() == 28);
     assert!(align_of::<ObjectAssignmentTarget>() == 4);
     assert!(offset_of!(ObjectAssignmentTarget, span) == 0);
     assert!(offset_of!(ObjectAssignmentTarget, properties) == 8);

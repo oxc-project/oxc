@@ -12855,9 +12855,13 @@ function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   );
 }
 
-function constructOptionAssignmentTargetRest(pos, ast) {
-  if (ast.buffer[pos + 8] === 51) return null;
-  return new AssignmentTargetRest(pos, ast);
+function constructBoxAssignmentTargetRest(pos, ast) {
+  return new AssignmentTargetRest(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructOptionBoxAssignmentTargetRest(pos, ast) {
+  if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
+  return constructBoxAssignmentTargetRest(pos, ast);
 }
 
 function constructVecAssignmentTargetProperty(pos, ast) {

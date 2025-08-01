@@ -861,7 +861,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[estree(append_to = elements)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 /// `{ foo }` in `({ foo } = obj);`
@@ -879,7 +879,7 @@ pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     #[estree(append_to = properties)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 /// `rest` in `[foo, ...rest] = arr;` or `({foo, ...rest} = obj);`.

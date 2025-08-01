@@ -1035,10 +1035,10 @@ unsafe fn walk_array_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         walk_assignment_target_maybe_default(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
-        as *mut Option<AssignmentTargetRest>)
+        as *mut Option<Box<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ArrayAssignmentTargetRest);
-        walk_assignment_target_rest(traverser, field as *mut _, ctx);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_array_assignment_target(&mut *node, ctx);
@@ -1060,10 +1060,10 @@ unsafe fn walk_object_assignment_target<'a, State, Tr: Traverse<'a, State>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
-        as *mut Option<AssignmentTargetRest>)
+        as *mut Option<Box<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ObjectAssignmentTargetRest);
-        walk_assignment_target_rest(traverser, field as *mut _, ctx);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_object_assignment_target(&mut *node, ctx);

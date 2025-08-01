@@ -89,7 +89,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.assignment_target_rest(span, target));
+                        rest = Some(p.ast.alloc(p.ast.assignment_target_rest(span, target)));
                         if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
                             p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
@@ -153,7 +153,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.assignment_target_rest(span, target));
+                        rest = Some(p.ast.alloc(p.ast.assignment_target_rest(span, target)));
                     } else {
                         return p.fatal_error(diagnostics::spread_last_element(spread.span));
                     }
