@@ -44,14 +44,44 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
             }
-            Expression::TSAsExpression(expr) => SimpleAssignmentTarget::TSAsExpression(expr),
+            Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSAsExpression(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
             Expression::TSSatisfiesExpression(expr) => {
-                SimpleAssignmentTarget::TSSatisfiesExpression(expr)
+                match expr.expression.get_inner_expression() {
+                    Expression::Identifier(_)
+                    | Expression::StaticMemberExpression(_)
+                    | Expression::ComputedMemberExpression(_)
+                    | Expression::PrivateFieldExpression(_) => {
+                        SimpleAssignmentTarget::TSSatisfiesExpression(expr)
+                    }
+                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                }
             }
-            Expression::TSNonNullExpression(expr) => {
-                SimpleAssignmentTarget::TSNonNullExpression(expr)
-            }
-            Expression::TSTypeAssertion(expr) => SimpleAssignmentTarget::TSTypeAssertion(expr),
+            Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSNonNullExpression(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
+            Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSTypeAssertion(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
             Expression::TSInstantiationExpression(expr) => {
                 p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
             }

@@ -49,10 +49,3 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────
    ╰────
   help: Remove the "!", or wrap the left-hand side in parentheses.
-
-  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and assignment like "a! = b", which looks very similar to not equal "a != b".
-   ╭─[no_confusing_non_null_assertion.tsx:1:1]
- 1 │ (a=b)! =c;
-   · ─────────
-   ╰────
-  help: Remove the "!", or wrap the left-hand side in parentheses.
