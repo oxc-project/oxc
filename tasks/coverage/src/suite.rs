@@ -1,26 +1,26 @@
 use std::{
     borrow::Cow,
-    fs,
-    io::{Read, Write, stdout},
+    io::{Write, stdout},
     panic::UnwindSafe,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
 };
 
-use console::Style;
-use encoding_rs::UTF_16LE;
-use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
 };
-use oxc_tasks_common::{Snapshot, normalize_path};
+use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
-use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
-use walkdir::WalkDir;
+use futures::{StreamExt, stream};
 
-use crate::{AppArgs, Driver, driver::{DriverOptions}, snap_root, workspace_root};
+use crate::{
+    AppArgs, Driver, 
+    coverage::{CoverageReport, print_diff},
+    driver::DriverOptions, 
+    snapshot_manager::SnapshotManager,
+    test_reader::TestReader,
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
@@ -33,18 +33,8 @@ pub enum TestResult {
     GenericError(/* case */ &'static str, /* error */ String),
 }
 
-pub struct CoverageReport<'a, T> {
-    failed_positives: Vec<&'a T>,
-    failed_negatives: Vec<&'a T>,
-    parsed_positives: usize,
-    passed_positives: usize,
-    passed_negatives: usize,
-    all_positives: usize,
-    all_negatives: usize,
-}
-
 /// A Test Suite is responsible for reading code from a repository
-pub trait Suite<T: Case> {
+pub trait Suite<T: Case>: Sync {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
 
@@ -61,7 +51,6 @@ pub trait Suite<T: Case> {
     }
 
     fn run_async(&mut self, args: &AppArgs) {
-        use futures::{StreamExt, stream};
         self.read_test_cases("runtime", args);
         let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
         Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());
@@ -70,11 +59,11 @@ pub trait Suite<T: Case> {
     }
 
     fn run_coverage(&self, name: &str, args: &AppArgs) {
-        let report = self.coverage_report();
+        let report = CoverageReport::from_test_cases(self.get_test_cases());
         let mut out = stdout();
-        self.print_coverage(name, args, &report, &mut out).unwrap();
+        report.print(name, args, &mut out).unwrap();
         if args.filter.is_none() {
-            self.snapshot_errors(name, &report).unwrap();
+            SnapshotManager::snapshot_errors(name, self.get_test_root(), self.get_test_cases(), &report).unwrap();
         }
     }
 
@@ -88,66 +77,8 @@ pub trait Suite<T: Case> {
     fn save_extra_test_cases(&mut self) {}
 
     fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
-        let test_path = workspace_root();
-        let cases_path = test_path.join(self.get_test_root());
-
-        let get_paths = || {
-            let filter = args.filter.as_ref();
-            WalkDir::new(&cases_path)
-                .into_iter()
-                .filter_map(Result::ok)
-                .filter(|e| !e.file_type().is_dir())
-                .filter(|e| e.file_name() != ".DS_Store")
-                .map(|e| e.path().to_owned())
-                .filter(|path| !self.skip_test_path(path))
-                .filter(|path| filter.is_none_or(|query| path.to_string_lossy().contains(query)))
-                .collect::<Vec<_>>()
-        };
-
-        let mut paths = get_paths();
-
-        // Initialize git submodule if it is empty and no filter is provided
-        if paths.is_empty() && args.filter.is_none() {
-            println!("-------------------------------------------------------");
-            println!("git submodule is empty for {name}");
-            println!("Running `just submodules` to clone the submodules");
-            println!("This may take a while.");
-            println!("-------------------------------------------------------");
-            Command::new("just")
-                .args(["submodules"])
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output()
-                .expect("failed to execute `just submodules`");
-            paths = get_paths();
-        }
-
-        // read all files, run the tests and save them
-        let cases = paths
-            .into_par_iter()
-            .map(|path| {
-                let mut code = fs::read_to_string(&path).unwrap_or_else(|_| {
-                    // TypeScript tests may contain utf_16 encoding files
-                    let file = fs::File::open(&path).unwrap();
-                    let mut content = String::new();
-                    DecodeReaderBytesBuilder::new()
-                        .encoding(Some(UTF_16LE))
-                        .build(file)
-                        .read_to_string(&mut content)
-                        .unwrap();
-                    content
-                });
-
-                let path = path.strip_prefix(&test_path).unwrap().to_owned();
-                // Remove the Byte Order Mark in some of the TypeScript files
-                if code.starts_with('\u{feff}') {
-                    code.remove(0);
-                }
-                T::new(path, code)
-            })
-            .filter(|case| !case.skip_test_case())
-            .collect::<Vec<_>>();
-
+        let reader = TestReader::new(self.get_test_root().to_path_buf());
+        let cases = reader.read_test_cases(name, args, |path| self.skip_test_path(path));
         self.save_test_cases(cases);
         if args.filter.is_none() {
             self.save_extra_test_cases();
@@ -156,119 +87,6 @@ pub trait Suite<T: Case> {
 
     fn get_test_cases_mut(&mut self) -> &mut Vec<T>;
     fn get_test_cases(&self) -> &Vec<T>;
-
-    fn coverage_report(&self) -> CoverageReport<T> {
-        let tests = self.get_test_cases();
-
-        let (negatives, positives): (Vec<_>, Vec<_>) =
-            tests.iter().partition(|case| case.should_fail());
-
-        let all_positives = positives.len();
-        let parsed_positives = positives.iter().filter(|case| case.test_parsed()).count();
-
-        let mut failed_positives =
-            positives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
-
-        failed_positives.sort_by_key(|case| case.path());
-
-        let passed_positives = all_positives - failed_positives.len();
-
-        let all_negatives = negatives.len();
-        let mut failed_negatives =
-            negatives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
-        failed_negatives.sort_by_key(|case| case.path());
-
-        let passed_negatives = all_negatives - failed_negatives.len();
-
-        CoverageReport {
-            failed_positives,
-            failed_negatives,
-            parsed_positives,
-            passed_positives,
-            passed_negatives,
-            all_positives,
-            all_negatives,
-        }
-    }
-
-    /// # Errors
-    #[expect(clippy::cast_precision_loss)]
-    fn print_coverage<W: Write>(
-        &self,
-        name: &str,
-        args: &AppArgs,
-        report: &CoverageReport<T>,
-        writer: &mut W,
-    ) -> std::io::Result<()> {
-        let CoverageReport {
-            parsed_positives,
-            passed_positives,
-            passed_negatives,
-            all_positives,
-            all_negatives,
-            ..
-        } = report;
-
-        let parsed_diff = (*parsed_positives as f64 / *all_positives as f64) * 100.0;
-        let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
-        let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
-        writer.write_all(format!("{name} Summary:\n").as_bytes())?;
-        let msg =
-            format!("AST Parsed     : {parsed_positives}/{all_positives} ({parsed_diff:.2}%)\n");
-        writer.write_all(msg.as_bytes())?;
-        let msg =
-            format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
-        writer.write_all(msg.as_bytes())?;
-        if *all_negatives > 0 {
-            let msg = format!(
-                "Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n"
-            );
-            writer.write_all(msg.as_bytes())?;
-        }
-
-        if args.should_print_detail() {
-            for case in &report.failed_negatives {
-                case.print(args, writer)?;
-            }
-            for case in &report.failed_positives {
-                case.print(args, writer)?;
-            }
-        }
-        writer.flush()?;
-        Ok(())
-    }
-
-    /// # Errors
-    fn snapshot_errors(&self, name: &str, report: &CoverageReport<T>) -> std::io::Result<()> {
-        let snapshot_path = workspace_root().join(self.get_test_root());
-
-        let show_commit = !snapshot_path.to_string_lossy().contains("misc");
-        let snapshot = Snapshot::new(&snapshot_path, show_commit);
-
-        let mut tests = self
-            .get_test_cases()
-            .iter()
-            .filter(|case| matches!(case.test_result(), TestResult::CorrectError(_, _)))
-            .collect::<Vec<_>>();
-
-        tests.sort_by_key(|case| case.path());
-
-        let mut out: Vec<u8> = vec![];
-
-        let args = AppArgs { detail: true, ..AppArgs::default() };
-        self.print_coverage(name, &args, report, &mut out)?;
-
-        for case in &tests {
-            if let TestResult::CorrectError(error, _) = &case.test_result() {
-                out.extend(error.as_bytes());
-            }
-        }
-
-        let path = snap_root().join(format!("{}.snap", name.to_lowercase()));
-        let out = String::from_utf8(out).unwrap();
-        snapshot.save(&path, &out);
-        Ok(())
-    }
 }
 
 /// A Test Case is responsible for interpreting the contents of a file
@@ -388,7 +206,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             TestResult::Mismatch(case, ast_string, expected_ast_string) => {
                 writer.write_all(format!("{case}: {path}\n",).as_bytes())?;
                 if args.diff {
-                    self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
+                    print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
                     println!("{case}: {path}");
                 }
             }
@@ -402,26 +220,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
         writer.write_all(b"\n")?;
-        Ok(())
-    }
-
-    fn print_diff<W: Write>(
-        &self,
-        writer: &mut W,
-        origin_string: &str,
-        expected_string: &str,
-    ) -> std::io::Result<()> {
-        let diff = TextDiff::from_lines(expected_string, origin_string);
-        for change in diff.iter_all_changes() {
-            let (sign, style) = match change.tag() {
-                ChangeTag::Delete => ("-", Style::new().red()),
-                ChangeTag::Insert => ("+", Style::new().green()),
-                ChangeTag::Equal => continue, // (" ", Style::new()),
-            };
-            writer.write_all(
-                format!("{}{}", style.apply_to(sign).bold(), style.apply_to(change)).as_bytes(),
-            )?;
-        }
         Ok(())
     }
 }

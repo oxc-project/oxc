@@ -16,6 +16,26 @@ pub struct CoverageReport<'a, T> {
     pub all_negatives: usize,
 }
 
+/// Print diff between two strings
+pub fn print_diff<W: Write>(
+    writer: &mut W,
+    origin_string: &str,
+    expected_string: &str,
+) -> std::io::Result<()> {
+    let diff = TextDiff::from_lines(expected_string, origin_string);
+    for change in diff.iter_all_changes() {
+        let (sign, style) = match change.tag() {
+            ChangeTag::Delete => ("-", Style::new().red()),
+            ChangeTag::Insert => ("+", Style::new().green()),
+            ChangeTag::Equal => continue, // (" ", Style::new()),
+        };
+        writer.write_all(
+            format!("{}{}", style.apply_to(sign).bold(), style.apply_to(change)).as_bytes(),
+        )?;
+    }
+    Ok(())
+}
+
 impl<'a, T: Case> CoverageReport<'a, T> {
     /// Generate coverage report from test cases
     pub fn from_test_cases(tests: &'a [T]) -> Self {
@@ -92,26 +112,6 @@ impl<'a, T: Case> CoverageReport<'a, T> {
             }
         }
         writer.flush()?;
-        Ok(())
-    }
-
-    /// Print diff between two strings
-    pub fn print_diff<W: Write>(
-        writer: &mut W,
-        origin_string: &str,
-        expected_string: &str,
-    ) -> std::io::Result<()> {
-        let diff = TextDiff::from_lines(expected_string, origin_string);
-        for change in diff.iter_all_changes() {
-            let (sign, style) = match change.tag() {
-                ChangeTag::Delete => ("-", Style::new().red()),
-                ChangeTag::Insert => ("+", Style::new().green()),
-                ChangeTag::Equal => continue, // (" ", Style::new()),
-            };
-            writer.write_all(
-                format!("{}{}", style.apply_to(sign).bold(), style.apply_to(change)).as_bytes(),
-            )?;
-        }
         Ok(())
     }
 }

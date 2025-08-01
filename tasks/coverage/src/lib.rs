@@ -1,9 +1,12 @@
 #![expect(clippy::print_stdout, clippy::disallowed_methods)]
 
 // Core
+mod coverage;
 mod runtime;
+mod snapshot_manager;
 mod suite;
 mod task_runners;
+mod test_reader;
 // Suites
 mod babel;
 mod misc;
