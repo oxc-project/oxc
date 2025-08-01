@@ -7,6 +7,7 @@
 use std::hash::Hash;
 
 use bitflags::bitflags;
+
 use oxc_allocator::{Box, CloneIn, Dummy, TakeIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
