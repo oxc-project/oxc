@@ -1,0 +1,2 @@
+class Props extends /MenuProps {
+}
