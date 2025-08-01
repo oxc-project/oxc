@@ -8,6 +8,7 @@
 #![expect(clippy::inline_always)]
 
 use std::{
+    fmt::Debug,
     hash::Hash,
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
@@ -197,6 +198,16 @@ where
     K: Eq + Hash,
     V: Eq,
 {
+}
+
+impl<K, V> Debug for HashMap<'_, K, V>
+where
+    K: Debug,
+    V: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map().entries(self.iter()).finish()
+    }
 }
 
 // Note: `Index` and `Extend` are implemented via `Deref`

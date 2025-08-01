@@ -1,8 +1,6 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use rustc_hash::FxHashMap;
-
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, HashMap, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{Atom, Span};
@@ -29,7 +27,7 @@ pub struct ModuleRecord<'a> {
     ///   export ExportFromClause FromClause
     ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: FxHashMap<Atom<'a>, Vec<'a, RequestedModule>>,
+    pub requested_modules: HashMap<'a, Atom<'a>, Vec<'a, RequestedModule>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -57,7 +55,7 @@ pub struct ModuleRecord<'a> {
     pub star_export_entries: Vec<'a, ExportEntry<'a>>,
 
     /// Local exported bindings
-    pub exported_bindings: FxHashMap<Atom<'a>, Span>,
+    pub exported_bindings: HashMap<'a, Atom<'a>, Span>,
 
     /// Dynamic import expressions `import(specifier)`.
     pub dynamic_imports: Vec<'a, DynamicImport>,
@@ -71,12 +69,12 @@ impl<'a> ModuleRecord<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
             has_module_syntax: false,
-            requested_modules: FxHashMap::default(),
+            requested_modules: HashMap::new_in(allocator),
             import_entries: Vec::new_in(allocator),
             local_export_entries: Vec::new_in(allocator),
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
-            exported_bindings: FxHashMap::default(),
+            exported_bindings: HashMap::new_in(allocator),
             dynamic_imports: Vec::new_in(allocator),
             import_metas: Vec::new_in(allocator),
         }
