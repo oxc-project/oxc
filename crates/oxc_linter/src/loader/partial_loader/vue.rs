@@ -2,6 +2,8 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
+use crate::frameworks::FrameworkOptions;
+
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
 pub struct VuePartialLoader<'a> {
@@ -52,6 +54,7 @@ impl<'a> VuePartialLoader<'a> {
 
         // parse `lang`
         let lang = Self::extract_lang_attribute(content);
+        let is_setup = content.contains("setup"); // check if "setup" is present, does not check if its inside an attribute
 
         let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
         if !lang.contains('x') {
@@ -70,7 +73,12 @@ impl<'a> VuePartialLoader<'a> {
         let source_text = &self.source_text[js_start..js_end];
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
-        Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
+        Some(JavaScriptSource::partial_with_framework_options(
+            source_text,
+            source_type,
+            if is_setup { FrameworkOptions::VueSetup } else { FrameworkOptions::Default },
+            js_start as u32,
+        ))
     }
 
     fn extract_lang_attribute(content: &str) -> &str {
