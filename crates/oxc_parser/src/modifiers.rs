@@ -382,7 +382,9 @@ impl<'a> ParserImpl<'a> {
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.
-            self.try_parse(Self::try_next_token_is_on_same_line_and_can_follow_modifier)?;
+            if !self.lookahead(Self::next_token_is_on_same_line_and_can_follow_modifier) {
+                return None;
+            }
         } else if
         // we're at the start of a static block
         (stop_on_start_of_class_static_block
@@ -399,12 +401,18 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        self.at(kind) && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+        self.at(kind) && self.lookahead(|parser| {
+            parser.next_token_can_follow_modifier();
+            true
+        })
     }
 
     fn parse_any_contextual_modifier(&mut self) -> bool {
         self.cur_kind().is_modifier_kind()
-            && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+            && self.lookahead(|parser| {
+                parser.next_token_can_follow_modifier();
+                true
+            })
     }
 
     pub(crate) fn next_token_can_follow_modifier(&mut self) {
@@ -428,11 +436,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) {
-        if !self.next_token_is_on_same_line_and_can_follow_modifier() {
-            self.set_unexpected();
-        }
-    }
 
     fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
         self.bump_any();

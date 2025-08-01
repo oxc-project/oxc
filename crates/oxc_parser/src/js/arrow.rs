@@ -192,20 +192,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
-        let checkpoint = self.checkpoint();
-        self.bump(Kind::Async);
-        // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
-        // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-        if !self.cur_token().is_on_new_line() && self.cur_kind().is_binding_identifier() {
-            // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-            self.bump_any();
-            if self.at(Kind::Arrow) {
-                self.rewind(checkpoint);
-                return true;
+        // Use lookahead to avoid checkpoint/rewind
+        self.lookahead(|parser| {
+            parser.bump(Kind::Async);
+            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
+            if !parser.cur_token().is_on_new_line() && parser.cur_kind().is_binding_identifier() {
+                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
+                parser.bump_any();
+                parser.at(Kind::Arrow)
+            } else {
+                false
             }
-        }
-        self.rewind(checkpoint);
-        false
+        })
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(

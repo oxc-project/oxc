@@ -321,19 +321,21 @@ impl<'a> ParserImpl<'a> {
             Kind::Let => {
                 // `for (let`
                 let start_span = self.start_span();
-                let checkpoint = self.checkpoint();
-                self.bump_any(); // bump `let`
-                // disallow `for (let in ...`
-                if self.cur_kind().is_after_let() {
+                // Use lookahead to check if this is a lexical declaration
+                let is_let_declaration = self.lookahead(|parser| {
+                    parser.bump_any(); // bump `let`
+                    parser.cur_kind().is_after_let()
+                });
+                
+                if is_let_declaration {
                     return self.parse_variable_declaration_for_statement(
                         span,
                         start_span,
-                        Some(VariableDeclarationKind::Let),
+                        None,
                         r#await,
                     );
                 }
-                // Should be a relatively cold branch, since most tokens after `let` will be allowed in most files
-                self.rewind(checkpoint);
+                // If not a let declaration, fall through to expression parsing
             }
             _ => {}
         }

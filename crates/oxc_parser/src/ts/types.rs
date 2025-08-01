@@ -430,14 +430,17 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                let checkpoint = self.checkpoint();
-                let asserts_start_span = self.start_span();
-                self.bump_any(); // bump `asserts`
-
-                if self.is_token_identifier_or_keyword_on_same_line() {
+                // Check if this is an asserts type predicate by looking ahead
+                let is_asserts_predicate = self.lookahead(|parser| {
+                    parser.bump_any(); // bump `asserts`
+                    parser.cur_kind().is_identifier_name() && !parser.cur_token().is_on_new_line()
+                });
+                
+                if is_asserts_predicate {
+                    let asserts_start_span = self.start_span();
+                    self.bump_any(); // bump `asserts`
                     self.parse_asserts_type_predicate(asserts_start_span)
                 } else {
-                    self.rewind(checkpoint);
                     self.parse_type_reference()
                 }
             }
@@ -446,9 +449,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
-    }
+
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
         let span = self.start_span();
