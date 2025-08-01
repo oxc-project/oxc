@@ -122,6 +122,83 @@ declare_oxc_lint!(
     /// ```ts
     /// import type { Foo } from 'Foo';
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// ```json
+    /// {
+    ///     "typescript/consistent-type-imports": [
+    ///         "error",
+    ///         {
+    ///             "prefer": "type-imports",
+    ///             "fixStyle": "separate-type-imports",
+    ///             "disallowTypeAnnotations": true
+    ///         }
+    ///     ]
+    /// }
+    /// ```
+    ///
+    /// - `prefer`: Enforce the use of type imports or disallow them
+    ///   - `"type-imports"` (default): Prefers type imports and will suggest using them over regular imports when possible
+    ///   - `"no-type-imports"`: Disallows the use of type imports and will suggest using regular imports instead
+    ///
+    /// - `fixStyle`: Determines how type imports are added when auto-fixing
+    ///   - `"separate-type-imports"` (default): Creates separate `import type` declarations
+    ///   - `"inline-type-imports"`: Uses inline `type` modifiers in existing import statements
+    ///
+    /// - `disallowTypeAnnotations`: Disallow `import()` type annotations
+    ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
+    ///   - `false`: Allows `import()` type annotations
+    ///
+    /// #### Examples with `"prefer": "type-imports"` (default)
+    ///
+    /// Examples of **incorrect** code:
+    /// ```ts
+    /// import { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```ts
+    /// import type { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// #### Examples with `"prefer": "no-type-imports"`
+    ///
+    /// Examples of **incorrect** code:
+    /// ```ts
+    /// import type { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```ts
+    /// import { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// #### Examples with `"fixStyle": "inline-type-imports"`
+    ///
+    /// When fixing type imports, this option will use inline `type` modifiers:
+    /// ```ts
+    /// // Before fixing
+    /// import { A, B } from 'foo';
+    /// type T = A;
+    /// const b = B;
+    ///
+    /// // After fixing
+    /// import { type A, B } from 'foo';
+    /// type T = A;
+    /// const b = B;
+    /// ```
+    ///
+    /// #### Examples with `"disallowTypeAnnotations": false`
+    ///
+    /// When set to `false`, allows `import()` type annotations:
+    /// ```ts
+    /// type T = import('foo').Bar;
+    /// ```
     ConsistentTypeImports,
     typescript,
     style,
