@@ -2040,7 +2040,7 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
-                // But it shouldn't be possible for `yield` to at top level - that's a parse error.
+                // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
                 *self.nodes.get_node_mut(self.current_function_node_id).flags_mut() |=
                     NodeFlags::HasYield;
             }
