@@ -63,7 +63,7 @@ pub use crate::{
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
-    context::ContextHost,
+    context::{ContextHost, ContextSubHost},
     fixer::{Fixer, Message},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
@@ -133,7 +133,7 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
+            Rc::new(ContextHost::new(path, vec![ContextSubHost::new(semantic, module_record)], self.options, config));
 
         let rules = rules
             .iter()
