@@ -360,13 +360,11 @@ impl<'a> ParserImpl<'a> {
             | Kind::Object
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
             | Kind::Null => {
-                // Fast check: only try parsing as keyword if not followed by a dot
-                if self.lexer.peek_token().kind() != Kind::Dot {
-                    if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
-                        return ty;
-                    }
+                if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
+                    ty
+                } else {
+                    self.parse_type_reference()
                 }
-                self.parse_type_reference()
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {
@@ -432,13 +430,11 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                // Check if this is an asserts type predicate by looking ahead
-                let is_asserts_predicate = self.lookahead(|parser| {
-                    parser.bump_any(); // bump `asserts`
-                    parser.cur_kind().is_identifier_name() && !parser.cur_token().is_on_new_line()
-                });
-                
-                if is_asserts_predicate {
+                // Use lookahead to check if this is an asserts type predicate
+                if self.lookahead(|parser| {
+                    parser.bump(Kind::Asserts);
+                    parser.is_token_identifier_or_keyword_on_same_line()
+                }) {
                     let asserts_start_span = self.start_span();
                     self.bump_any(); // bump `asserts`
                     self.parse_asserts_type_predicate(asserts_start_span)
@@ -451,7 +447,9 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-
+    fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
+        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
+    }
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
         let span = self.start_span();
