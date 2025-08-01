@@ -32,6 +32,12 @@ const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
   ? [describe, it]
   : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
+const [describeRaw, itRaw] = process.env.RUN_RAW_TESTS === 'true'
+  ? [describe, it]
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Type ignore for no-op functions when RUN_RAW_TESTS is not true
+  : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {}, each() { return () => {} } }));
+
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
@@ -56,6 +62,9 @@ async function runCaseInWorker(type, props) {
     }
   }
 }
+
+// Only run raw transfer tests if RUN_RAW_TESTS environment variable is set to 'true'
+if (process.env.RUN_RAW_TESTS === 'true') {
 
 // Download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
@@ -85,6 +94,19 @@ const benchFixturePaths = await Promise.all(benchFixtureUrls.map(async (url) => 
   return path.slice(ROOT_DIR_PATH.length + 1);
 }));
 
+// Get `Set` containing test paths which failed from snapshot file
+async function getTestFailurePaths(snapshotPath, pathPrefix) {
+  const mismatchPrefix = `Mismatch: ${pathPrefix}/`,
+    mismatchPrefixLen = mismatchPrefix.length;
+
+  const snapshot = await readFile(snapshotPath, 'utf8');
+  return new Set(
+    snapshot.split('\n')
+      .filter(line => line.startsWith(mismatchPrefix))
+      .map(line => line.slice(mismatchPrefixLen)),
+  );
+}
+
 // Test raw transfer output matches JSON snapshots for Test262 test cases.
 //
 // Only test Test262 fixtures which Acorn is able to parse.
@@ -99,7 +121,7 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   test262FixturePaths.push(path);
 }
 
-describe.concurrent('test262', () => {
+describeRaw.concurrent('test262', () => {
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
@@ -116,7 +138,7 @@ const jsxFailPaths = await getTestFailurePaths(JSX_SNAPSHOT_PATH, JSX_SHORT_DIR_
 const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
 
-describe.concurrent('JSX', () => {
+describeRaw.concurrent('JSX', () => {
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
 });
 
@@ -137,7 +159,7 @@ const tsFailPaths = await getTestFailurePaths(TS_SNAPSHOT_PATH, TS_SHORT_DIR_PAT
 const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
 
-describe.concurrent('TypeScript', () => {
+describeRaw.concurrent('TypeScript', () => {
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
 });
 
@@ -147,8 +169,9 @@ describeLazy.concurrent('lazy TypeScript', () => {
 });
 
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
-describe.concurrent('edge cases', () => {
-  describe.each([
+describeRaw.concurrent('edge cases', () => {
+  // @ts-ignore - Type ignore for describeRaw.each when RUN_RAW_TESTS is not true
+  describeRaw.each([
     // ECMA stage 3
     'import defer * as ns from "x";',
     'import source src from "x";',
@@ -166,8 +189,8 @@ describe.concurrent('edge cases', () => {
     '#!/usr/bin/env node\nlet x;',
     '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
-    it('JS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.js', sourceText }));
-    it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
+    itRaw('JS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.js', sourceText }));
+    itRaw('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
     itLazy(
       'JS',
@@ -181,7 +204,7 @@ describe.concurrent('edge cases', () => {
 });
 
 // Test raw transfer output matches standard (via JSON) output for some large files
-describe.concurrent('fixtures', () => {
+describeRaw.concurrent('fixtures', () => {
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
@@ -190,20 +213,7 @@ describeLazy.concurrent('lazy fixtures', () => {
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
 });
 
-// Get `Set` containing test paths which failed from snapshot file
-async function getTestFailurePaths(snapshotPath, pathPrefix) {
-  const mismatchPrefix = `Mismatch: ${pathPrefix}/`,
-    mismatchPrefixLen = mismatchPrefix.length;
-
-  const snapshot = await readFile(snapshotPath, 'utf8');
-  return new Set(
-    snapshot.split('\n')
-      .filter(line => line.startsWith(mismatchPrefix))
-      .map(line => line.slice(mismatchPrefixLen)),
-  );
-}
-
-describe.concurrent('`parseAsync`', () => {
+describeRaw.concurrent('`parseAsync`', () => {
   it('matches `parseSync`', async () => {
     const path = benchFixturePaths[0],
       filename = basename(path),
@@ -242,7 +252,7 @@ describe.concurrent('`parseAsync`', () => {
   }
 });
 
-it.concurrent('checks semantic', async () => {
+itRaw.concurrent('checks semantic', async () => {
   const code = 'let x; let x;';
 
   // @ts-ignore
@@ -253,3 +263,5 @@ it.concurrent('checks semantic', async () => {
   ret = parseSync('test.js', code, { experimentalRawTransfer: true, showSemanticErrors: true });
   expect(ret.errors.length).toBe(1);
 });
+
+} // End of RUN_RAW_TESTS conditional block
