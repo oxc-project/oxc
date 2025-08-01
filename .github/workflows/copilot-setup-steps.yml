@@ -59,11 +59,6 @@ jobs:
           echo "=== Project commands ==="
           just --list
 
-      - name: Quick build check
-        run: |
-          cargo check --quiet
-          echo "✅ Rust build check passed"
-
       - name: Setup complete
         run: |
           echo "🎉 Development environment setup complete!"
