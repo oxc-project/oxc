@@ -50,20 +50,20 @@ mod test {
         assert_eq!(f64::INFINITY.to_uint_32(), 0);
         assert_eq!(f64::NEG_INFINITY.to_uint_32(), 0);
         assert_eq!(f64::NAN.to_uint_32(), 0);
-        
+
         assert_eq!(1.0_f64.to_uint_32(), 1);
         assert_eq!((-1.0_f64).to_uint_32(), 4294967295); // 2^32 - 1
         assert_eq!(4294967295.0_f64.to_uint_32(), 4294967295);
         assert_eq!(4294967296.0_f64.to_uint_32(), 0); // 2^32 wraps to 0
         assert_eq!(4294967297.0_f64.to_uint_32(), 1); // 2^32 + 1 wraps to 1
-        
+
         // Test fractional values
         assert_eq!(1.5_f64.to_uint_32(), 1);
         assert_eq!((-1.5_f64).to_uint_32(), 4294967295);
-        
+
         // Test large values
         assert_eq!(9007199254740992.0_f64.to_uint_32(), 0); // 2^53
-        
+
         // Test integer types
         assert_eq!(42_i32.to_uint_32(), 42);
         assert_eq!((-1_i32).to_uint_32(), 4294967295);

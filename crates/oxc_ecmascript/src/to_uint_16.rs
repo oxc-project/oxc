@@ -56,17 +56,17 @@ mod test {
         assert_eq!(f64::INFINITY.to_uint_16(), 0);
         assert_eq!(f64::NEG_INFINITY.to_uint_16(), 0);
         assert_eq!(f64::NAN.to_uint_16(), 0);
-        
+
         assert_eq!(1.0_f64.to_uint_16(), 1);
         assert_eq!((-1.0_f64).to_uint_16(), 65535); // 2^16 - 1
         assert_eq!(65535.0_f64.to_uint_16(), 65535);
         assert_eq!(65536.0_f64.to_uint_16(), 0); // 2^16 wraps to 0
         assert_eq!(65537.0_f64.to_uint_16(), 1); // 2^16 + 1 wraps to 1
-        
+
         // Test fractional values
         assert_eq!(1.5_f64.to_uint_16(), 1);
         assert_eq!((-1.5_f64).to_uint_16(), 65535);
-        
+
         // Test integer types
         assert_eq!(42_i32.to_uint_16(), 42);
         assert_eq!((-1_i32).to_uint_16(), 65535);

@@ -11,24 +11,24 @@ impl StringRepeat for &str {
     fn repeat_string(&self, count: f64) -> Result<String, &'static str> {
         // 1. Let n be ? ToIntegerOrInfinity(count).
         let n = count.to_integer_or_infinity();
-        
+
         // 2. If n < 0 or n is +∞, throw a RangeError exception.
         if n < 0.0 || n == f64::INFINITY {
             return Err("RangeError: repeat count must be non-negative and finite");
         }
-        
+
         // 3. If n is 0, return the empty String.
         if n == 0.0 {
             return Ok(String::new());
         }
-        
+
         let count_usize = n as usize;
-        
+
         // Prevent excessive memory usage
         if count_usize > 1_000_000 {
             return Err("RangeError: repeat count too large");
         }
-        
+
         // 4. Return the string value that is made from n copies of S appended together.
         Ok(self.repeat(count_usize))
     }
@@ -100,7 +100,7 @@ impl StringTrimEnd for String {
 
 #[cfg(test)]
 mod test {
-    use super::{StringRepeat, StringTrim, StringTrimStart, StringTrimEnd};
+    use super::{StringRepeat, StringTrim, StringTrimEnd, StringTrimStart};
 
     #[test]
     fn test_string_repeat() {
@@ -109,20 +109,20 @@ mod test {
         assert_eq!("abc".repeat_string(1.0).unwrap(), "abc");
         assert_eq!("abc".repeat_string(3.0).unwrap(), "abcabcabc");
         assert_eq!("".repeat_string(5.0).unwrap(), "");
-        
+
         // Fractional counts (should be truncated)
         assert_eq!("ab".repeat_string(2.5).unwrap(), "abab");
-        
+
         // Error cases
         assert!("abc".repeat_string(-1.0).is_err());
         assert!("abc".repeat_string(f64::INFINITY).is_err());
-        
+
         // NaN becomes 0 after ToIntegerOrInfinity, so should succeed
         assert_eq!("abc".repeat_string(f64::NAN).unwrap(), "");
-        
+
         // Unicode support
         assert_eq!("🦀".repeat_string(3.0).unwrap(), "🦀🦀🦀");
-        
+
         // String type
         let owned = String::from("test");
         assert_eq!(owned.repeat_string(2.0).unwrap(), "testtest");
@@ -135,14 +135,14 @@ mod test {
         assert_eq!("hello".trim_string(), "hello");
         assert_eq!("  ".trim_string(), "");
         assert_eq!("".trim_string(), "");
-        
+
         // Different whitespace characters
         assert_eq!("\t\n\r hello \t\n\r".trim_string(), "hello");
         assert_eq!("\u{00A0}hello\u{00A0}".trim_string(), "hello"); // Non-breaking space
-        
+
         // Unicode support
         assert_eq!("  café  ".trim_string(), "café");
-        
+
         // String type
         let owned = String::from("  test  ");
         assert_eq!(owned.trim_string(), "test");
@@ -155,10 +155,10 @@ mod test {
         assert_eq!("hello  ".trim_start_string(), "hello  ");
         assert_eq!("  hello".trim_start_string(), "hello");
         assert_eq!("hello".trim_start_string(), "hello");
-        
+
         // Different whitespace characters
         assert_eq!("\t\n\r hello \t\n\r".trim_start_string(), "hello \t\n\r");
-        
+
         // String type
         let owned = String::from("  test");
         assert_eq!(owned.trim_start_string(), "test");
@@ -171,10 +171,10 @@ mod test {
         assert_eq!("  hello".trim_end_string(), "  hello");
         assert_eq!("hello  ".trim_end_string(), "hello");
         assert_eq!("hello".trim_end_string(), "hello");
-        
+
         // Different whitespace characters
         assert_eq!("\t\n\r hello \t\n\r".trim_end_string(), "\t\n\r hello");
-        
+
         // String type
         let owned = String::from("test  ");
         assert_eq!(owned.trim_end_string(), "test");
