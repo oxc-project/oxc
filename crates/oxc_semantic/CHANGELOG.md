@@ -769,7 +769,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.32.0] - 2024-10-19
 
-- 5200960 oxc: [**BREAKING**] Remove passing `Trivia` around (#6446) (Boshen)
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
 
 - 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
 
@@ -1367,7 +1367,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Performance
 
-- 10d1de5 semantic: Remove unnecessary allocation in builder (#3867) (DonIsaac)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+- 10d1de5 semantic: Remove uneccessary allocation in builder (#3867) (DonIsaac)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
 
 ### Refactor
 
@@ -1413,7 +1413,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - 84304b4 linter: Add a `ctx.module_record()` method (#3637) (Boshen)
 - 7d61832 semantic: Pass `Rc` by value (#3586) (overlookmotel)
-- 5793ff1 transformer: Replace `&’a Trivias` with `Rc<Trivia>` (#3580) (Dunqing)
+- 5793ff1 transformer: Replace `&’a Trivias` with `Rc<Trivias>` (#3580) (Dunqing)
 - 60cbdec traverse: `generate_uid_in_root_scope` method (#3611) (overlookmotel)
 
 ## [0.13.4] - 2024-06-07
@@ -1560,7 +1560,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 0f86333 ast: Refactor `Trivia` API - have less noise around it (#2692) (Boshen)
+- 0f86333 ast: Refactor `Trivias` API - have less noise around it (#2692) (Boshen)
 - cba1e2f ast: Import `Tsify` to shorten code (#2665) (overlookmotel)
 - 6b5723c ast: Shorten manual TS defs (#2638) (overlookmotel)- cbc2f5f Remove unused dependencies (#2718) (Boshen)- 3c1e0db Reduce `cfg_attr` boilerplate with `SerAttrs` derive (#2669) (overlookmotel)- d76ee6b "wasm" feature enable "serde" feature (#2639) (overlookmotel)- 8001b2f Make `CompactStr` immutable (#2620) (overlookmotel)- 0646bf3 Rename `CompactString` to `CompactStr` (#2619) (overlookmotel)
 

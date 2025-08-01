@@ -515,7 +515,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - a1752a0 codegen: Fix incorrect minified `return 1n` output (#8374) (Boshen)
 - 5a648bc codegen: Fix white space issue with do statements (#8348) (Boshen)
-- b6d16f4 codegen: Print parenthesis on negative bigint lit when necessary (#8258) (camc314)
+- b6d16f4 codegen: Print parenthesis on negative bigint lit when neccessary (#8258) (camc314)
 - 8ed9766 codegen: Source map builder panicked because it attempted to subtract with overflow in `search_original_line_and_column` (#8185) (Dunqing)
 - ad61e70 codegen: Print if else without block with proper indentation (#8135) (Boshen)
 

@@ -58,7 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
-- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absolute path (#12199) (Dunqing)
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
 
 ### 🚜 Refactor
 
@@ -75,7 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
-- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absolute path (#12199) (Dunqing)
+- bfd47f8 transformer/styled-components: Should use source path to generate file hash when the path is absoulte path (#12199) (Dunqing)
 
 ### 🚜 Refactor
 
