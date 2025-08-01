@@ -2352,7 +2352,10 @@ version = "0.0.0"
 dependencies = [
  "console 0.16.0",
  "oxc_span",
+ "pico-args",
  "project-root",
+ "rayon",
+ "serde_json",
  "similar",
  "ureq",
 ]
