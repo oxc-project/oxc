@@ -6,8 +6,7 @@ use super::{
     Kind, Lexer, Span,
     branchless_numeric::{
         is_binary_digit_branchless, is_decimal_digit_branchless, is_hex_digit_branchless,
-        is_octal_digit_branchless, scan_binary_digits, scan_decimal_digits,
-        scan_digits_with_separators, scan_hex_digits, scan_octal_digits,
+        is_octal_digit_branchless, scan_digits_with_separators,
     },
 };
 

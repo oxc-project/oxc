@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(scan_octal_digits(input), 3);
 
         let input = b"abcdef123";
-        assert_eq!(scan_hex_digits(input), 6);
+        assert_eq!(scan_hex_digits(input), 9);
     }
 
     #[test]

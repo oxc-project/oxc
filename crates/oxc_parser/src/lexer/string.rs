@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, LexerContext, Span, Token, cold_branch,
-    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    search::{SafeByteMatchTable, safe_byte_match_table},
     simd_search::{scan_string_content_fallback, scan_string_content_simd},
 };
 

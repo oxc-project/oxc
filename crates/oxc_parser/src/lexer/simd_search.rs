@@ -335,7 +335,7 @@ mod tests {
     fn test_whitespace_scanning() {
         let input = b"   \t\n  hello";
         let result = skip_ascii_whitespace_fallback(input);
-        assert_eq!(result, 6);
+        assert_eq!(result, 7);
 
         let input = b"hello";
         let result = skip_ascii_whitespace_fallback(input);

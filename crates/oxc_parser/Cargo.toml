@@ -41,6 +41,11 @@ memchr = { workspace = true }
 oxc_ast = { workspace = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 pico-args = { workspace = true }
+criterion2 = { workspace = true }
+
+[[bench]]
+name = "lexer_performance"
+harness = false
 
 [features]
 default = ["regular_expression"]
