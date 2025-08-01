@@ -11,11 +11,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use constants::PLUGINS;
 use indexmap::IndexMap;
-use oxc_tasks_common::{Snapshot, normalize_path, project_root};
-use test_case::{TestCase, TestCaseKind};
 use walkdir::WalkDir;
+
+use oxc_tasks_common::{Snapshot, normalize_path, project_root};
+
+use crate::{
+    constants::PLUGINS,
+    test_case::{TestCase, TestCaseKind},
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]

@@ -1,4 +1,5 @@
 use cow_utils::CowUtils;
+
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
@@ -9,17 +10,18 @@ use oxc_syntax::{
     precedence::Precedence,
 };
 
+use crate::{
+    Context, ParserImpl, diagnostics,
+    lexer::{Kind, parse_big_int, parse_float, parse_int},
+    modifiers::Modifiers,
+};
+
 use super::{
     grammar::CoverGrammar,
     operator::{
         kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
         map_unary_operator, map_update_operator,
     },
-};
-use crate::{
-    Context, ParserImpl, diagnostics,
-    lexer::{Kind, parse_big_int, parse_float, parse_int},
-    modifiers::Modifiers,
 };
 
 impl<'a> ParserImpl<'a> {
