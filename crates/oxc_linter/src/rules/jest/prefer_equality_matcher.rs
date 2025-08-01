@@ -30,10 +30,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Testing equality expressions with generic matchers like `toBe(true)` 
-    /// makes tests harder to read and understand. When tests fail, the error 
-    /// messages are less helpful because they don't show what the actual values 
-    /// were. Using specific equality matchers provides clearer test intent and 
+    /// Testing equality expressions with generic matchers like `toBe(true)`
+    /// makes tests harder to read and understand. When tests fail, the error
+    /// messages are less helpful because they don't show what the actual values
+    /// were. Using specific equality matchers provides clearer test intent and
     /// better debugging information.
     ///
     /// ### Examples

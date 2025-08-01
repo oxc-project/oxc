@@ -27,9 +27,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Using generic mock functions like `mockImplementation(() => Promise.resolve())`
-    /// or `mockReturnValue(Promise.reject())` is more verbose and less readable than 
-    /// Jest's specialized promise shorthands. The shorthand methods like 
-    /// `mockResolvedValue()` and `mockRejectedValue()` are more expressive and 
+    /// or `mockReturnValue(Promise.reject())` is more verbose and less readable than
+    /// Jest's specialized promise shorthands. The shorthand methods like
+    /// `mockResolvedValue()` and `mockRejectedValue()` are more expressive and
     /// make the test intent clearer.
     ///
     /// ### Examples

@@ -31,8 +31,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When testing function calls, it's often more valuable to assert both 
-    /// that a function was called AND what arguments it was called with. 
+    /// When testing function calls, it's often more valuable to assert both
+    /// that a function was called AND what arguments it was called with.
     /// Using `toBeCalled()` or `toHaveBeenCalled()` only verifies the function
     /// was invoked, but doesn't validate the arguments, potentially missing
     /// bugs where functions are called with incorrect parameters.

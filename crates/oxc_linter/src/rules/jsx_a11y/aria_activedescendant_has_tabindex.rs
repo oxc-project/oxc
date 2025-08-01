@@ -30,9 +30,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Elements with `aria-activedescendant` must be tabbable for users to 
-    /// navigate to them using keyboard input. Without proper tabindex, screen 
-    /// reader users cannot access the element through keyboard navigation, 
+    /// Elements with `aria-activedescendant` must be tabbable for users to
+    /// navigate to them using keyboard input. Without proper tabindex, screen
+    /// reader users cannot access the element through keyboard navigation,
     /// making the functionality inaccessible.
     ///
     /// ### Examples

@@ -24,9 +24,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The `toEqual()` matcher performs a deep equality check but ignores 
-    /// `undefined` values in objects and arrays. This can lead to false 
-    /// positives where tests pass when they should fail. `toStrictEqual()` 
+    /// The `toEqual()` matcher performs a deep equality check but ignores
+    /// `undefined` values in objects and arrays. This can lead to false
+    /// positives where tests pass when they should fail. `toStrictEqual()`
     /// provides more accurate comparison by checking for `undefined` values.
     ///
     /// ### Examples
