@@ -1,0 +1,44 @@
+[package]
+name = "oxc_binary_size"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[[bin]]
+name = "oxc_binary_size"
+test = false
+doctest = false
+
+[dependencies]
+oxc_tasks_common = { workspace = true }
+
+# For JSON serialization and file operations
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# For command line args and output formatting
+pico-args = { workspace = true }
+humansize = { workspace = true }
+
+# For subprocess execution and file operations
+tempfile = { workspace = true }
+
+# For regex operations
+regex = "1.11.1"
+
+# For colored output
+owo-colors = "4.2.2"
+
+# For error handling
+miette = { workspace = true }
+
+# For timestamps
+chrono = { version = "0.4", features = ["serde"] }

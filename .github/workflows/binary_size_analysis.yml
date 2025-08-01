@@ -1,0 +1,84 @@
+# Comprehensive binary size analysis with actionable recommendations
+
+name: Binary Size Analysis
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'apps/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'apps/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  binary-size-analysis:
+    name: Binary Size Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Setup Rust
+        uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          cache-key: warm
+          tools: cargo-bloat,cargo-llvm-lines
+
+      - name: Run Binary Size Analysis
+        shell: bash
+        run: |
+          echo "# Binary Size Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cargo run -p oxc_binary_size -- --target oxlint --features allocator --detailed >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Compare with Baseline (PR only)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          # Try to get baseline from main branch
+          git fetch origin main:main
+          git checkout main
+          
+          # Build and save baseline
+          if cargo run -p oxc_binary_size &> /dev/null; then
+            cargo run -p oxc_binary_size -- --target oxlint --features allocator --save-baseline
+            
+            # Switch back to PR branch and compare
+            git checkout ${{ github.head_ref }}
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Comparison with Main Branch" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cargo run -p oxc_binary_size -- --target oxlint --features allocator --compare >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Could not establish baseline from main branch" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate JSON Report for Artifacts
+        run: |
+          cargo run -p oxc_binary_size -- --target oxlint --features allocator --detailed --json > binary-size-report.json
+
+      - name: Upload Binary Size Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-size-report-${{ github.sha }}
+          path: binary-size-report.json
+          retention-days: 30

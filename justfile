@@ -237,3 +237,23 @@ minifier-diff:
       diff target/minifier/main/$file.js target/minifier/pr/$file.js >> diff
   done
   git checkout -
+
+# Analyze binary size of oxlint (requires cargo-bloat and cargo-llvm-lines)
+binary-size:
+  cargo run -p oxc_binary_size -- --target oxlint --features allocator
+
+# Detailed binary size analysis with function-level breakdown
+binary-size-detailed:
+  cargo run -p oxc_binary_size -- --target oxlint --features allocator --detailed
+
+# Save current binary size as baseline for future comparisons
+binary-size-baseline:
+  cargo run -p oxc_binary_size -- --target oxlint --features allocator --save-baseline
+
+# Compare current binary size with saved baseline
+binary-size-compare:
+  cargo run -p oxc_binary_size -- --target oxlint --features allocator --compare
+
+# Install tools required for binary size analysis
+install-binary-size-tools:
+  cargo install cargo-bloat cargo-llvm-lines
