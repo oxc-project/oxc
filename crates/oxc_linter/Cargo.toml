@@ -14,7 +14,29 @@ rust-version.workspace = true
 description.workspace = true
 
 [features]
-default = []
+default = ["all_rules"]
+# Enable all rule categories by default
+all_rules = ["eslint_rules", "react_rules", "jsx_a11y_rules", "typescript_rules", "import_rules", "unicorn_rules", "jest_rules", "jsdoc_rules", "nextjs_rules", "node_rules", "oxc_rules", "promise_rules", "react_perf_rules", "vitest_rules"]
+
+# Individual rule category features for fine-grained control
+eslint_rules = []
+react_rules = []
+jsx_a11y_rules = []
+typescript_rules = []
+import_rules = []
+unicorn_rules = []
+jest_rules = []
+jsdoc_rules = []
+nextjs_rules = []
+node_rules = []
+oxc_rules = []
+promise_rules = []
+react_perf_rules = []
+vitest_rules = []
+
+# Minimal build with only core ESLint rules
+minimal = ["eslint_rules", "oxc_rules"]
+
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
 oxlint2 = ["dep:oxc_ast_macros", "tokio/rt-multi-thread"]

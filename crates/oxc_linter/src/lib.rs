@@ -31,6 +31,7 @@ mod utils;
 pub mod loader;
 pub mod rules;
 pub mod table;
+pub mod optimizations;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 mod generated {

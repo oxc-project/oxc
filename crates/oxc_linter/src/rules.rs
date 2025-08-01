@@ -6,6 +6,7 @@
 //! are inside a proc macro.
 
 /// <https://github.com/import-js/eslint-plugin-import>
+#[cfg(feature = "import_rules")]
 mod import {
     pub mod consistent_type_specifier_style;
     pub mod default;
@@ -38,6 +39,7 @@ mod import {
     pub mod unambiguous;
 }
 
+#[cfg(feature = "eslint_rules")]
 mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
@@ -187,6 +189,7 @@ mod eslint {
     pub mod yoda;
 }
 
+#[cfg(feature = "typescript_rules")]
 mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
@@ -234,6 +237,7 @@ mod typescript {
     pub mod triple_slash_reference;
 }
 
+#[cfg(feature = "jest_rules")]
 mod jest {
     pub mod consistent_test_it;
     pub mod expect_expect;
@@ -286,6 +290,7 @@ mod jest {
     pub mod valid_title;
 }
 
+#[cfg(feature = "react_rules")]
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
@@ -326,6 +331,7 @@ mod react {
     pub mod void_dom_elements_no_children;
 }
 
+#[cfg(feature = "react_perf_rules")]
 mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;
@@ -333,6 +339,7 @@ mod react_perf {
     pub mod jsx_no_new_object_as_prop;
 }
 
+#[cfg(feature = "unicorn_rules")]
 mod unicorn {
     pub mod catch_error_name;
     pub mod consistent_assert;
@@ -440,6 +447,7 @@ mod unicorn {
     pub mod throw_new_error;
 }
 
+#[cfg(feature = "jsx_a11y_rules")]
 mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_ambiguous_text;
@@ -472,6 +480,7 @@ mod jsx_a11y {
     pub mod tabindex_no_positive;
 }
 
+#[cfg(feature = "oxc_rules")]
 mod oxc {
     pub mod approx_constant;
     pub mod bad_array_method_on_arguments;
@@ -499,6 +508,7 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
+#[cfg(feature = "nextjs_rules")]
 mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -524,6 +534,7 @@ mod nextjs {
 }
 
 /// <https://github.com/gajus/eslint-plugin-jsdoc>
+#[cfg(feature = "jsdoc_rules")]
 mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
@@ -545,6 +556,7 @@ mod jsdoc {
     pub mod require_yields;
 }
 
+#[cfg(feature = "promise_rules")]
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
@@ -562,6 +574,7 @@ mod promise {
     pub mod valid_params;
 }
 
+#[cfg(feature = "vitest_rules")]
 mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
@@ -571,6 +584,7 @@ mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
+#[cfg(feature = "node_rules")]
 mod node {
     pub mod no_exports_assign;
     pub mod no_new_require;
