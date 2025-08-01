@@ -131,8 +131,12 @@ impl Linter {
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let ctx_host =
-            Rc::new(ContextHost::new(path, vec![ContextSubHost::new(semantic, module_record)], self.options, config));
+        let ctx_host = Rc::new(ContextHost::new(
+            path,
+            vec![ContextSubHost::new(semantic, module_record)],
+            self.options,
+            config,
+        ));
 
         let rules = rules
             .iter()

@@ -121,21 +121,26 @@ impl<'a> ContextHost<'a> {
         .sniff_for_frameworks()
     }
 
+    /// The current [`ContextSubHost`]
+    fn current_sub_host(&self) -> &ContextSubHost<'a> {
+        &self.sub_hosts[self.current_sub_host_index]
+    }
+
     /// Shared reference to the [`Semantic`] analysis of current script block.
     #[inline]
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
-        &self.sub_hosts[self.current_sub_host_index].semantic
+        &self.current_sub_host().semantic
     }
 
     /// Shared reference to the [`ModuleRecord`] of the current script block.
     #[inline]
     pub fn module_record(&self) -> &ModuleRecord {
-        &self.sub_hosts[self.current_sub_host_index].module_record
+        &self.current_sub_host().module_record
     }
 
     /// Shared reference to the [`DisableDirectives`] of the current script block.
     pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
-        &self.sub_hosts[self.current_sub_host_index].disable_directives
+        &self.current_sub_host().disable_directives
     }
 
     /// Path to the file being linted.
