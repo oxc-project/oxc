@@ -12,6 +12,7 @@ mod is_less_than;
 mod math_abs;
 mod math_floor_ceil;
 mod math_round_max_min;
+mod same_value;
 mod string_char_at;
 mod string_char_code_at;
 mod string_includes;
@@ -25,14 +26,18 @@ mod string_to_number;
 mod string_trim_repeat;
 mod to_big_int;
 mod to_boolean;
+mod to_int_16;
 mod to_int_32;
+mod to_int_8;
 mod to_integer_or_infinity;
+mod to_length;
 mod to_number;
 mod to_numeric;
 mod to_primitive;
 mod to_string;
 mod to_uint_16;
 mod to_uint_32;
+mod to_uint_8;
 
 // other
 mod to_integer_index;
@@ -50,6 +55,7 @@ pub use self::{
     math_round_max_min::{MathRound, MathMax, MathMin, math_max_values, math_min_values},
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
+    same_value::{same_value, same_value_zero},
     string_char_at::{StringCharAt, StringCharAtResult},
     string_char_code_at::StringCharCodeAt,
     string_includes::StringIncludes,
@@ -63,11 +69,16 @@ pub use self::{
     string_trim_repeat::{StringRepeat, StringTrim, StringTrimStart, StringTrimEnd},
     to_big_int::ToBigInt,
     to_boolean::ToBoolean,
+    to_int_16::ToInt16,
     to_int_32::ToInt32,
+    to_int_8::ToInt8,
     to_integer_index::ToIntegerIndex,
+    to_integer_or_infinity::ToIntegerOrInfinity,
+    to_length::ToLength,
     to_number::ToNumber,
     to_primitive::ToPrimitive,
     to_string::ToJsString,
     to_uint_16::ToUint16,
     to_uint_32::ToUint32,
+    to_uint_8::{ToUint8, ToUint8Clamp},
 };
