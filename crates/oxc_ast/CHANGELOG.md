@@ -1431,7 +1431,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Bug Fixes
 
-- 28b934c coverage: Apply `always_strict` to test262 and typescript per the specifcation (#5555) (Boshen)
+- 28b934c coverage: Apply `always_strict` to test262 and typescript per the specification (#5555) (Boshen)
 - 0511d55 regular_expression: Report more MayContainStrings error in (nested)class (#5661) (leaysgur)
 
 ### Performance
@@ -1797,7 +1797,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
 
-- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_member` to `visit_ts_enum_member`. (#4000) (rzvxa)
 
 - 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
 
@@ -2167,8 +2167,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Bug Fixes
 
-- 2eb489e codegen: Format new expession + import expression with the correct parentheses (#2346) (Dunqing)
-- b5e43fb linter: Fix no_dupe_keys false postive on similar key names (#2291) (Boshen)
+- 2eb489e codegen: Format new expression + import expression with the correct parentheses (#2346) (Dunqing)
+- b5e43fb linter: Fix no_dupe_keys false positive on similar key names (#2291) (Boshen)
 
 ### Refactor
 
@@ -2197,7 +2197,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Bug Fixes
 
-- ea8cc98 ast: AcessorProperty is missing decorators (#2176) (Dunqing)
+- ea8cc98 ast: AccessorProperty is missing decorators (#2176) (Dunqing)
 - 2f5afff parser: Fix crash on TSTemplateLiteralType in function return position (#2089) (Boshen)
 
 ### Refactor

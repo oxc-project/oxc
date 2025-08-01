@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 ### 🚜 Refactor
 
 - 3541739 transformer/typescript: Take a `Vec` rather than take elements of `Vec` one by one (#12462) (Dunqing)
-- 93a5b76 transformer/typescript: Simplify evaulating the of value an enum member without an initialzier (#12461) (Dunqing)
+- 93a5b76 transformer/typescript: Simplify evaluating the value of an enum member without an initializer (#12461) (Dunqing)
 
 ### ⚡ Performance
 

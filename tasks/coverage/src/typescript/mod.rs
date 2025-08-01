@@ -312,18 +312,18 @@ static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "9011", // ParamDeclaeter must have an explicit type annotation with --isolatedDeclarations.
     "9012", // PropeDeclarty must have an explicit type annotation with --isolatedDeclarations.
     "9013", // ExpreDeclassion type can't be inferred with --isolatedDeclarations.
-    "9015", // ObjecDeclats that contain spread assignments can't be inferred with --isolatedDeclarations.
-    "9016", // ObjecDeclats that contain shorthand properties can't be inferred with --isolatedDeclarations.
+    "9015", // Object declarations that contain spread assignments can't be inferred with --isolatedDeclarations.
+    "9016", // Object declarations that contain shorthand properties can't be inferred with --isolatedDeclarations.
     "9017", // Only Declaconst arrays can be inferred with --isolatedDeclarations.
     "9018", // ArrayDeclas with spread elements can't inferred with --isolatedDeclarations.
     "9019", // BindiDeclang elements can't be exported directly with --isolatedDeclarations.
     "9020", // Enum Declamember initializers must be computable without references to external symbols with --isolatedDeclarations.
-    "9021", // ExtenDeclads clause can't contain an expression with --isolatedDeclarations.
+    "9021", // Extends clause can't contain an expression with --isolatedDeclarations.
     "9022", // InferDeclaence from class expressions is not supported with --isolatedDeclarations.
     "9023", // AssigDeclaning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
     "9026", // DeclaDeclaration emit for this file requires preserving this import for augmentations. This is not supported with --isolatedDeclarations.
     "9037", // DefauDeclalt exports can't be inferred with --isolatedDeclarations.
-    "9038", // CompuDeclated property names on class or object literals cannot be inferred with --isolatedDeclarations.
+    "9038", // Computed property names on class or object literals cannot be inferred with --isolatedDeclarations.
     "17004", // Cannot use JSX unless the '--jsx' flag is provided.
     "17016", // The 'jsxFragmentFactory' compiler option must be provided to use JSX fragments with the 'jsxFactory' compiler option.
     "17017", // An @jsxFrag pragma is required when using an @jsx pragma with JSX fragments.

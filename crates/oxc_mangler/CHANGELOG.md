@@ -122,7 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Refactor
 
 - c31b53f mangler: Reduce scope of `unsafe` blocks (#9321) (overlookmotel)
-- f10a6da mangler: Move base54 into seperate mod (#9278) (Cameron)
+- f10a6da mangler: Move base54 into separate mod (#9278) (Cameron)
 
 ## [0.52.0] - 2025-02-21
 

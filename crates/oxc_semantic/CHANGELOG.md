@@ -1367,7 +1367,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Performance
 
-- 10d1de5 semantic: Remove uneccessary allocation in builder (#3867) (DonIsaac)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+- 10d1de5 semantic: Remove unnecessary allocation in builder (#3867) (DonIsaac)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
 
 ### Refactor
 

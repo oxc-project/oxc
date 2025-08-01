@@ -170,7 +170,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - 34d5c00 ast/estree: Fix `ExportDefaultDeclaration` node (#10165) (therewillbecode)
 - 498b479 ast/estree: Fix `AccessorProperty` node (#10067) (therewillbecode)
 - bf90072 ast/estree: Fix `ObjectProperty` node (#10018) (therewillbecode)
-- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` variant for `estree` (#10146) (Dunqing)
 
 ## [0.62.0] - 2025-04-01
 
