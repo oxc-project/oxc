@@ -360,11 +360,13 @@ impl<'a> ParserImpl<'a> {
             | Kind::Object
             // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
             | Kind::Null => {
-                if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
-                    ty
-                } else {
-                    self.parse_type_reference()
+                // Fast check: only try parsing as keyword if not followed by a dot
+                if self.lexer.peek_token().kind() != Kind::Dot {
+                    if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
+                        return ty;
+                    }
                 }
+                self.parse_type_reference()
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
             // Kind::StarEq => {

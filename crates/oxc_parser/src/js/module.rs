@@ -573,64 +573,82 @@ impl<'a> ParserImpl<'a> {
 
         let function_span = self.start_span();
 
-        let checkpoint = self.checkpoint();
-        let mut is_abstract = false;
-        let mut is_async = false;
-        let mut is_interface = false;
+        // Use lookahead to check for abstract/async/interface modifiers
+        let (is_abstract, is_async, is_interface) = self.lookahead(|parser| {
+            let mut is_abstract = false;
+            let mut is_async = false;
+            let mut is_interface = false;
 
-        match self.cur_kind() {
-            Kind::Abstract => is_abstract = true,
-            Kind::Async => is_async = true,
-            Kind::Interface => is_interface = true,
-            _ => {}
-        }
+            match parser.cur_kind() {
+                Kind::Abstract => is_abstract = true,
+                Kind::Async => is_async = true,
+                Kind::Interface => is_interface = true,
+                _ => return (false, false, false),
+            }
+
+            parser.bump_any();
+            let cur_token = parser.cur_token();
+            let kind = cur_token.kind();
+            
+            if cur_token.is_on_new_line() {
+                return (false, false, false);
+            }
+
+            let valid = (is_abstract && kind == Kind::Class)
+                || (is_async && kind == Kind::Function)
+                || is_interface;
+            
+            if valid {
+                (is_abstract, is_async, is_interface)
+            } else {
+                (false, false, false)
+            }
+        });
 
         if is_abstract || is_async || is_interface {
             let modifier_span = self.start_span();
             self.bump_any();
             let cur_token = self.cur_token();
             let kind = cur_token.kind();
-            if !cur_token.is_on_new_line() {
-                // export default abstract class ...
-                if is_abstract && kind == Kind::Class {
-                    let modifiers = self
-                        .ast
-                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
-                    let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
-                    return ExportDefaultDeclarationKind::ClassDeclaration(
-                        self.parse_class_declaration(decl_span, &modifiers, decorators),
-                    );
-                }
+            
+            // export default abstract class ...
+            if is_abstract && kind == Kind::Class {
+                let modifiers = self
+                    .ast
+                    .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
+                let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
+                return ExportDefaultDeclarationKind::ClassDeclaration(
+                    self.parse_class_declaration(decl_span, &modifiers, decorators),
+                );
+            }
 
-                // export default async function ...
-                if is_async && kind == Kind::Function {
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                    }
-                    let mut func = self.parse_function_impl(
-                        function_span,
-                        /* r#async */ true,
-                        FunctionKind::DefaultExport,
-                    );
-                    if has_no_side_effects_comment {
-                        func.pure = true;
-                    }
-                    return ExportDefaultDeclarationKind::FunctionDeclaration(func);
+            // export default async function ...
+            if is_async && kind == Kind::Function {
+                for decorator in &decorators {
+                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
                 }
+                let mut func = self.parse_function_impl(
+                    function_span,
+                    /* r#async */ true,
+                    FunctionKind::DefaultExport,
+                );
+                if has_no_side_effects_comment {
+                    func.pure = true;
+                }
+                return ExportDefaultDeclarationKind::FunctionDeclaration(func);
+            }
 
-                // export default interface ...
-                if is_interface {
-                    for decorator in &decorators {
-                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                    }
-                    if let Declaration::TSInterfaceDeclaration(decl) =
-                        self.parse_ts_interface_declaration(modifier_span, &Modifiers::empty())
-                    {
-                        return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
-                    }
+            // export default interface ...
+            if is_interface {
+                for decorator in &decorators {
+                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                }
+                if let Declaration::TSInterfaceDeclaration(decl) =
+                    self.parse_ts_interface_declaration(modifier_span, &Modifiers::empty())
+                {
+                    return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
                 }
             }
-            self.rewind(checkpoint);
         }
 
         let kind = self.cur_kind();
