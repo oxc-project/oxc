@@ -5,22 +5,20 @@
 //! - `ancestor.rs` - Ancestor types and utilities for AST traversal
 //! - `walk.rs` - Walk functions that implement the traversal logic
 
-use cow_utils::CowUtils;
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident, quote};
+use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator, TRAVERSE_CRATE_PATH,
     output::{Output, output_path},
     schema::{
-        Def, EnumDef, FieldDef, Schema, StructDef, TypeDef,
-        extensions::visit::Scope,
+        EnumDef, Schema, StructDef, TypeDef,
     },
-    utils::{create_ident, create_ident_tokens},
+    utils::create_ident,
 };
 
-use super::{define_generator};
+use super::define_generator;
 
 /// Generator for traverse module files.
 pub struct TraverseGenerator;
@@ -55,26 +53,29 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
     // Collect all AST types that have the visit attribute
     let mut types_with_visitor = Vec::new();
     
-    for type_def in schema.types.values() {
+    for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
                 if struct_def.visit.has_visitor() {
-                    types_with_visitor.push((&struct_def.name, &struct_def.ident));
+                    let ident = create_ident(&struct_def.name);
+                    types_with_visitor.push((&struct_def.name, ident));
                 }
             }
             TypeDef::Enum(enum_def) => {
                 if enum_def.visit.has_visitor() {
-                    types_with_visitor.push((&enum_def.name, &enum_def.ident));
+                    let ident = create_ident(&enum_def.name);
+                    types_with_visitor.push((&enum_def.name, ident));
                 }
             }
             _ => {}
         }
     }
     
-    // Add special case for Statements
-    types_with_visitor.push(("Statements", &format_ident!("Vec<'a, Statement<'a>>")));
+    // Add special case for Statements - this matches what the JS script does
+    let statements_string = "Statements".to_string();
+    let statements_ident = quote!(Vec<'a, Statement<'a>>);
     
-    for (type_name, type_ident) in types_with_visitor {
+    for (type_name, type_ident) in &types_with_visitor {
         let snake_name = type_name.to_case(Case::Snake);
         let enter_method = format_ident!("enter_{}", snake_name);
         let exit_method = format_ident!("exit_{}", snake_name);
@@ -86,6 +87,18 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
             fn #exit_method(&mut self, node: &mut #type_ident, ctx: &mut TraverseCtx<'a, State>) {}
         });
     }
+    
+    // Add statements methods manually
+    let statements_snake = statements_string.to_case(Case::Snake);
+    let statements_enter = format_ident!("enter_{}", statements_snake);
+    let statements_exit = format_ident!("exit_{}", statements_snake);
+    
+    traverse_methods.extend(quote! {
+        #[inline]
+        fn #statements_enter(&mut self, node: &mut #statements_ident, ctx: &mut TraverseCtx<'a, State>) {}
+        #[inline]
+        fn #statements_exit(&mut self, node: &mut #statements_ident, ctx: &mut TraverseCtx<'a, State>) {}
+    });
 
     quote! {
         // Auto-generated code, DO NOT EDIT DIRECTLY!
@@ -105,7 +118,7 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
 }
 
 /// Generate ancestor types and utilities.
-fn generate_ancestor_types(schema: &Schema) -> TokenStream {
+fn generate_ancestor_types(_schema: &Schema) -> TokenStream {
     // This is a complex generation - for now, return a placeholder
     // that matches the expected structure
     quote! {
@@ -168,7 +181,7 @@ fn generate_walk_functions(schema: &Schema) -> TokenStream {
     let mut walk_methods = TokenStream::new();
     
     // Generate walk functions for each AST type with visitors
-    for type_def in schema.types.values() {
+    for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
                 if struct_def.visit.has_visitor() {
@@ -239,8 +252,8 @@ fn generate_walk_functions(schema: &Schema) -> TokenStream {
 }
 
 /// Generate a walk function for a struct.
-fn generate_walk_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
-    let struct_name = &struct_def.ident;
+fn generate_walk_for_struct(struct_def: &StructDef, _schema: &Schema) -> TokenStream {
+    let struct_name = create_ident(&struct_def.name);
     let snake_name = struct_def.name.to_case(Case::Snake);
     let walk_fn_name = format_ident!("walk_{}", snake_name);
     let enter_method = format_ident!("enter_{}", snake_name);
@@ -263,8 +276,8 @@ fn generate_walk_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 }
 
 /// Generate a walk function for an enum.
-fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let enum_name = &enum_def.ident;
+fn generate_walk_for_enum(enum_def: &EnumDef, _schema: &Schema) -> TokenStream {
+    let enum_name = create_ident(&enum_def.name);
     let snake_name = enum_def.name.to_case(Case::Snake);
     let walk_fn_name = format_ident!("walk_{}", snake_name);
     let enter_method = format_ident!("enter_{}", snake_name);
