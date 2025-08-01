@@ -13,8 +13,6 @@ This crate provides procedural macros that generate boilerplate code for AST nod
 - **Trait derivation**: Automatically derives common traits like `Debug`, `Clone`, etc.
 - **Code generation**: Reduces boilerplate and ensures consistency across AST types
 
-
-
 ## What the `#[ast]` Macro Does
 
 1. **Adds `#[repr(C)]`**: Ensures predictable memory layout across platforms

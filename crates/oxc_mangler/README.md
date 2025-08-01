@@ -14,8 +14,6 @@ This crate provides variable name mangling capabilities for JavaScript minificat
 - **Configurable**: Options to preserve specific names or patterns
 - **Base54 encoding**: Efficient character usage for maximum compression
 
-
-
 ## Architecture
 
 ### Mangling Strategy

@@ -15,8 +15,6 @@ This crate performs semantic analysis on JavaScript and TypeScript ASTs, buildin
 - **JSDoc parsing**: Extract and parse JSDoc comments
 - **Module analysis**: Analyze import/export relationships
 
-
-
 ## Architecture
 
 ### Semantic Analysis Pipeline

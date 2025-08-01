@@ -14,8 +14,6 @@ This crate provides a fast, spec-compliant parser for JavaScript and TypeScript 
 - **Error recovery**: Continues parsing after errors to provide complete AST
 - **Comprehensive AST**: Detailed node information with accurate source positions
 
-
-
 ## Architecture
 
 ### Parser Design

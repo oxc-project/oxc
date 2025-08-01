@@ -14,8 +14,6 @@ This crate provides comprehensive error handling and diagnostic reporting capabi
 - **Miette integration**: Compatible with the miette diagnostic ecosystem
 - **Severity levels**: Support for errors, warnings, and informational messages
 
-
-
 ## Architecture
 
 ### Diagnostic Components

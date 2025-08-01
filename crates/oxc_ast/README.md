@@ -23,8 +23,6 @@ The AST design differs from estree in several important ways:
 - **Literal specialization**: Replaces generic `Literal` with `BooleanLiteral`, `NumericLiteral`, `StringLiteral`, etc.
 - **Evaluation order**: Field order follows ECMAScript evaluation order for consistency
 
-
-
 ## Architecture
 
 The AST is designed for:

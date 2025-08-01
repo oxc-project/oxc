@@ -14,8 +14,6 @@ This crate provides sophisticated AST traversal capabilities that allow visitors
 - **Traverse context**: Rich context information during traversal
 - **Generated visitors**: Most traversal code is auto-generated for consistency
 
-
-
 ## Architecture
 
 ### Traversal Context

@@ -14,8 +14,6 @@ This crate provides a fast, ESLint-compatible linting engine with comprehensive 
 - **TypeScript support**: Full TypeScript linting with type-aware rules
 - **Plugin system**: Extensible architecture for custom rules
 
-
-
 ## Architecture
 
 ### Rule System

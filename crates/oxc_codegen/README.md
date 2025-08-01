@@ -14,8 +14,6 @@ This crate converts AST nodes back into source code strings, supporting JavaScri
 - **Comment preservation**: Maintain comments during code generation
 - **Binary expression optimization**: Intelligent parentheses insertion
 
-
-
 ## Architecture
 
 ### Code Generation Pipeline

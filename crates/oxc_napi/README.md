@@ -14,8 +14,6 @@ This crate provides Node.js bindings for oxc tools, enabling JavaScript/TypeScri
 - **Comment preservation**: Maintains comments during processing
 - **Type safety**: TypeScript definitions for all APIs
 
-
-
 ## Architecture
 
 ### UTF-8 to UTF-16 Conversion

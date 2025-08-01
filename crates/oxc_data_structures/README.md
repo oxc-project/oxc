@@ -14,8 +14,6 @@ This crate provides specialized data structures and utilities that are used thro
 - **Slice iterators**: Enhanced iteration capabilities for slices
 - **Rope data structure**: Efficient text manipulation for large documents
 
-
-
 ## Architecture
 
 These data structures are designed with specific compiler requirements in mind:

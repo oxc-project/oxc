@@ -13,8 +13,6 @@ This crate provides visitor traits and implementations for systematically traver
 - **Generated implementations**: Most visitor code is auto-generated for consistency
 - **UTF-8 to UTF-16 conversion**: Special visitors for span conversion
 
-
-
 ## Architecture
 
 The visitor pattern is designed for:

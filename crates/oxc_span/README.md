@@ -14,8 +14,6 @@ This crate provides essential utilities for managing source positions and spans 
 - **Atom interning**: Efficient string storage for identifiers
 - **Content comparison**: Semantic equality for AST nodes
 
-
-
 ## Architecture
 
 ### Span System

@@ -13,8 +13,6 @@ This crate provides specific transformation plugins that can be used independent
 - **Global defines replacement**: Replace compile-time constants
 - **Composable plugins**: Use individually or combine multiple plugins
 
-
-
 ## Architecture
 
 ### Plugin System

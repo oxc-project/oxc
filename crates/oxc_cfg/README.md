@@ -14,8 +14,6 @@ This crate provides data structures and algorithms for building and analyzing Co
 - **DOT export**: Visualize CFGs using Graphviz dot format
 - **Visitor integration**: Works with oxc visitor patterns
 
-
-
 ## Architecture
 
 ### Basic Blocks

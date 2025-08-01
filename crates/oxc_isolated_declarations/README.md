@@ -13,8 +13,6 @@ This crate implements TypeScript's isolated declarations feature, which generate
 - **Incremental builds**: Enables faster TypeScript compilation workflows
 - **Comprehensive support**: Handles classes, functions, interfaces, and complex types
 
-
-
 ## Architecture
 
 ### Isolated Declarations Concept

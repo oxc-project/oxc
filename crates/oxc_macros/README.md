@@ -13,8 +13,6 @@ This crate provides procedural macros that simplify the declaration and implemen
 - **Category management**: Organize rules into logical categories
 - **Boilerplate reduction**: Eliminates repetitive rule declaration code
 
-
-
 ## Architecture
 
 ### Macro System
