@@ -2466,26 +2466,32 @@ pub enum ImportDeclarationSpecifier<'a> {
     ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
 }
 
-// import {imported} from "source"
-// import {imported as local} from "source"
+/// Import specifier.
+///
+/// ```ts
+/// import { imported, imported2 } from "source";
+/// //       ^^^^^^^^  ^^^^^^^^^
+/// import { imported as local } from "source";
+/// //       ^^^^^^^^^^^^^^^^^
+/// import { type Foo } from "source";
+/// //       ^^^^^^^^
+/// ```
+///
+/// In the case of `import { foo }`, `imported` and `local` both are the same name,
+/// and have the same `Span`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportSpecifier<'a> {
     pub span: Span,
+    /// Imported symbol.
+    /// Can only be `IdentifierName` or `StringLiteral`.
     pub imported: ModuleExportName<'a>,
-    /// The name of the imported symbol.
-    ///
-    /// ## Example
-    /// ```ts
-    /// // local and imported name are the same
-    /// import { Foo } from 'foo';
-    /// //       ^^^
-    /// // imports can be renamed, changing the local name
-    /// import { Foo as Bar } from 'foo';
-    /// //              ^^^
-    /// ```
+    /// Binding for local symbol.
     pub local: BindingIdentifier<'a>,
+    /// Value or type.
+    /// `import { foo }`      -> `ImportOrExportKind::Value`
+    /// `import { type Bar }` -> `ImportOrExportKind::Type`
     #[ts]
     pub import_kind: ImportOrExportKind,
 }

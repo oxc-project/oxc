@@ -7482,9 +7482,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_declaration_specifier_import_specifier(
         self,
@@ -7544,9 +7544,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_specifier(
         self,
@@ -7565,9 +7565,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn alloc_import_specifier(
         self,
