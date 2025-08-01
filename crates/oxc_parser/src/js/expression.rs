@@ -741,7 +741,7 @@ impl<'a> ParserImpl<'a> {
                 });
                 
                 if is_valid_optional_chain {
-                    self.bump_any(); // consume ?.
+                    self.bump_any(); // consume ?. in main parser state
                     let kind = self.cur_kind();
                     let is_identifier_or_keyword = kind.is_identifier_or_keyword();
                     // ?.[
