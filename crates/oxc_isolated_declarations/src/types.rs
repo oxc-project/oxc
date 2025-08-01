@@ -66,7 +66,7 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    /// Convert a a computed property key to a static property key when possible
+    /// Convert a computed property key to a static property key when possible
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
             // ["string"] -> string
