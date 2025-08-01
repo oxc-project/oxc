@@ -210,7 +210,7 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    
+
     // Branchless approach: read ahead 2 bytes and use pattern matching
     if let Some(next_2_bytes) = lexer.peek_2_bytes() {
         match next_2_bytes {
@@ -283,7 +283,7 @@ ascii_byte_handler!(PRC(lexer) {
 // &
 ascii_byte_handler!(AMP(lexer) {
     lexer.consume_char();
-    
+
     // Branchless approach: read ahead 2 bytes and use pattern matching
     if let Some(next_2_bytes) = lexer.peek_2_bytes() {
         match next_2_bytes {
@@ -338,7 +338,7 @@ ascii_byte_handler!(PNC(lexer) {
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
-    
+
     // Branchless approach: read ahead 2 bytes and use pattern matching
     if let Some(next_2_bytes) = lexer.peek_2_bytes() {
         match next_2_bytes {
@@ -381,7 +381,7 @@ ascii_byte_handler!(ATR(lexer) {
 // +
 ascii_byte_handler!(PLS(lexer) {
     lexer.consume_char();
-    
+
     // Branchless approach: read ahead for better prediction
     match lexer.peek_byte() {
         Some(b'+') => {
