@@ -68,6 +68,7 @@ just check        # Check code without building
 just test         # Run tests
 just lint         # Run linting
 just doc          # Generate documentation
+just ast          # When directory `crates/oxc_ast` changes
 ```
 
 ### Building and Testing
