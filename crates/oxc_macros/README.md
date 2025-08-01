@@ -17,7 +17,7 @@ This crate provides procedural macros that simplify the declaration and implemen
 
 ### Declaring a Lint Rule
 
-```rust
+````rust
 use oxc_macros::declare_oxc_lint;
 
 declare_oxc_lint!(
@@ -47,13 +47,14 @@ impl Rule for NoUnusedVars {
         // Rule implementation
     }
 }
-```
+````
 
 ### Rule Categories
 
 Rules are organized into categories:
+
 - **correctness**: Catch bugs and incorrect code
-- **suspicious**: Flag potentially problematic patterns  
+- **suspicious**: Flag potentially problematic patterns
 - **pedantic**: Enforce best practices and style
 - **performance**: Identify performance issues
 - **restriction**: Prevent certain language features
@@ -61,16 +62,20 @@ Rules are organized into categories:
 ## Architecture
 
 ### Macro System
+
 The macros generate:
+
 - Rule struct definitions
 - Metadata for documentation generation
 - Registration code for the rule system
 - Consistent interfaces across all rules
 
 ### Documentation Generation
+
 Rule documentation is automatically extracted and used to build the oxc website documentation, ensuring that rule descriptions stay in sync with implementation.
 
 ### Benefits
+
 - **Consistency**: All rules follow the same declaration pattern
 - **Documentation**: Automatic documentation generation
 - **Type safety**: Compile-time verification of rule metadata

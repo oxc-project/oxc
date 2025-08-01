@@ -69,6 +69,7 @@ let mut module_record = ModuleRecord::new();
 ## Architecture
 
 ### Design Principles
+
 - **Shared definitions**: Avoid duplication across oxc crates
 - **Type safety**: Use newtypes for different kinds of IDs
 - **Performance**: Efficient representations for common operations
@@ -77,27 +78,33 @@ let mut module_record = ModuleRecord::new();
 ### Core Components
 
 #### Language Constants
+
 - **Keywords**: All JavaScript/TypeScript reserved words
 - **Operators**: Binary, unary, and assignment operators
 - **Tokens**: Punctuation and special symbols
 
 #### AST Utilities
+
 - **Node flags**: Metadata about AST nodes (computed properties, etc.)
 - **Traversal helpers**: Common patterns for walking AST trees
 - **Type guards**: Runtime type checking for AST nodes
 
 #### Semantic Types
+
 - **IDs**: Type-safe identifiers for nodes, symbols, scopes, references
 - **Flags**: Bitfield metadata for semantic entities
 - **Relationships**: Parent-child and reference relationships
 
 #### Module System
+
 - **Import/Export tracking**: Comprehensive module dependency analysis
 - **Resolution**: Module specifier resolution utilities
 - **Metadata**: Module type and format information
 
 ### Integration
+
 This crate serves as the foundation for:
+
 - **Parser**: Uses syntax definitions during tokenization
 - **Semantic**: Leverages ID types and flags for analysis
 - **Linter**: References operator precedence and keyword tables

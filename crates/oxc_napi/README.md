@@ -35,26 +35,33 @@ let comments = convert_utf8_to_utf16(
 ## Architecture
 
 ### UTF-8 to UTF-16 Conversion
+
 JavaScript uses UTF-16 string encoding, while Rust uses UTF-8. This crate handles the conversion:
+
 - **Span conversion**: Updates all source positions to UTF-16 offsets
 - **Comment handling**: Preserves comment positions during conversion
 - **Error mapping**: Ensures error positions are correct in JavaScript
 
 ### Node.js Integration
+
 The bindings are designed for:
+
 - **npm packages**: Used by `@oxc-project/` npm packages
 - **Build tools**: Integration with Webpack, Vite, and other bundlers
 - **Editor support**: Language server and editor extension features
 - **CLI tools**: Command-line interfaces for Node.js environments
 
 ### Error Handling
+
 Provides JavaScript-friendly error handling:
+
 - **OxcError**: Rust errors converted to JavaScript exceptions
 - **Diagnostic integration**: Rich error messages with source context
 - **Stack traces**: Proper error propagation to JavaScript
 
 ### Performance Considerations
-- **Zero-copy**: Minimizes data copying between Rust and JavaScript  
+
+- **Zero-copy**: Minimizes data copying between Rust and JavaScript
 - **Efficient conversion**: Optimized UTF-8 to UTF-16 conversion
 - **Memory management**: Proper cleanup of Rust resources
 - **Async support**: Non-blocking operations where appropriate

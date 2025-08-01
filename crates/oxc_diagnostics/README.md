@@ -61,12 +61,14 @@ let diagnostic = OxcDiagnostic::error("Syntax error")
 ## Architecture
 
 ### Diagnostic Components
+
 - **Message**: Primary error/warning description
 - **Labels**: Highlight specific source locations
 - **Help text**: Suggestions for fixing the issue
 - **Source context**: Display relevant source code sections
 
 ### Error Flow
+
 1. **Creation**: Tools create `OxcDiagnostic` instances for problems
 2. **Collection**: `DiagnosticService` aggregates diagnostics
 3. **Formatting**: Rich terminal output with colors and context

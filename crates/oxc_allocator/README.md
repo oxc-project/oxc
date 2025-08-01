@@ -31,6 +31,7 @@ vec.push(2);
 ## Architecture
 
 The allocator is designed specifically for AST processing workflows where:
+
 1. A large number of nodes are allocated during parsing
 2. All nodes have the same lifetime (tied to the AST)
 3. Memory is released all at once when the AST is dropped

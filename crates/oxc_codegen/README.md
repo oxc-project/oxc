@@ -54,12 +54,14 @@ let sourcemap = std::mem::take(codegen.sourcemap_builder()).into_sourcemap();
 ## Architecture
 
 ### Code Generation Pipeline
+
 1. **AST Traversal**: Walk through AST nodes systematically
-2. **Token Generation**: Convert nodes to appropriate tokens/strings  
+2. **Token Generation**: Convert nodes to appropriate tokens/strings
 3. **Formatting**: Apply whitespace, indentation, and style rules
 4. **Source Mapping**: Track original source positions if enabled
 
 ### Design Principles
+
 - **Correctness**: Generated code must be functionally equivalent to original
 - **Performance**: Minimize string allocations and copying
 - **Readability**: Produce clean, well-formatted output

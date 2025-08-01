@@ -37,17 +37,21 @@ if let Some(cfg) = semantic.cfg() {
 ## Architecture
 
 ### Basic Blocks
+
 The CFG organizes code into basic blocks - sequences of instructions with:
+
 - Single entry point (first instruction)
-- Single exit point (last instruction)  
+- Single exit point (last instruction)
 - No internal branches or jumps
 
 ### Graph Structure
+
 - **Nodes**: Basic blocks containing instructions
 - **Edges**: Control flow between blocks (conditional, unconditional, exception)
 - **Entry/Exit**: Special blocks for function entry and exit points
 
 ### Analysis Applications
+
 - **Dead code elimination**: Find unreachable blocks
 - **Data flow analysis**: Track variable usage across control paths
 - **Loop detection**: Identify back edges and loop structures

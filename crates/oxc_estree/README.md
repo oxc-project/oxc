@@ -46,15 +46,18 @@ let result = external_tool.process(estree_json)?;
 ## Architecture
 
 ### ESTree Specification
+
 ESTree is a community standard for representing JavaScript AST nodes. This crate ensures oxc's AST can be represented in this standard format while maintaining compatibility with the broader JavaScript tooling ecosystem.
 
 ### Design Principles
+
 - **Compatibility**: Full compatibility with ESTree specification
 - **Optional overhead**: Only included when serialization is needed
 - **Type safety**: Maintains Rust's type safety during conversion
 - **Performance**: Efficient serialization with minimal overhead
 
 ### Use Cases
+
 - **IDE integration**: Language servers communicating via JSON
 - **Tool interoperability**: Working with Babel, ESLint, and other ESTree tools
 - **Data exchange**: Transferring AST data between different systems

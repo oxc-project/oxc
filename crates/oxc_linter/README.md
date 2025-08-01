@@ -59,18 +59,21 @@ let options = LintOptions {
 ## Architecture
 
 ### Rule System
+
 - **Rule categories**: Correctness, Suspicious, Pedantic, Style, etc.
 - **Configurable severity**: Error, Warning, or Off for each rule
 - **Auto-fixing**: Many rules can automatically fix issues
 - **Plugin support**: Load external rule collections
 
 ### Performance Design
+
 - **Single AST pass**: Most rules run in a single traversal
 - **Efficient analysis**: Leverages oxc's semantic analysis
 - **Parallel execution**: Process multiple files concurrently
 - **Memory efficiency**: Uses arena allocation for optimal performance
 
 ### ESLint Compatibility
+
 - **Configuration format**: Supports ESLint config files
 - **Rule parity**: Implements behavior-compatible versions of popular rules
 - **Plugin ecosystem**: Compatible with many ESLint plugins

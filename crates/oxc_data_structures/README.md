@@ -17,6 +17,7 @@ This crate provides specialized data structures and utilities that are used thro
 ## Available Components
 
 ### Code Buffer
+
 ```rust
 use oxc_data_structures::code_buffer::CodeBuffer;
 
@@ -27,6 +28,7 @@ let code = buffer.into_string();
 ```
 
 ### Inline String
+
 ```rust
 use oxc_data_structures::inline_string::InlineString;
 
@@ -35,6 +37,7 @@ let short_string = InlineString::from("hello");
 ```
 
 ### Pointer Extensions
+
 ```rust
 use oxc_data_structures::pointer_ext::PointerExt;
 
@@ -42,6 +45,7 @@ use oxc_data_structures::pointer_ext::PointerExt;
 ```
 
 ### Slice Iterator Extensions
+
 ```rust
 use oxc_data_structures::slice_iter_ext::SliceIterExt;
 

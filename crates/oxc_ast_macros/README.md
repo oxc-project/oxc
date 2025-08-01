@@ -9,7 +9,7 @@ This crate provides procedural macros that generate boilerplate code for AST nod
 ## Key Features
 
 - **`#[ast]` attribute**: Marks types as AST nodes and generates required traits
-- **Memory layout control**: Ensures `#[repr(C)]` for predictable memory layout  
+- **Memory layout control**: Ensures `#[repr(C)]` for predictable memory layout
 - **Trait derivation**: Automatically derives common traits like `Debug`, `Clone`, etc.
 - **Code generation**: Reduces boilerplate and ensures consistency across AST types
 
@@ -44,6 +44,7 @@ pub enum Statement {
 ## Architecture
 
 This macro system enables:
+
 - **Maintainable AST**: Reduces boilerplate across hundreds of AST types
 - **Consistent layout**: Critical for performance and correctness
 - **Tool integration**: Allows `oxc_ast_tools` to generate visitor code

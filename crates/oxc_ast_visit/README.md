@@ -9,7 +9,7 @@ This crate provides visitor traits and implementations for systematically traver
 ## Key Features
 
 - **`Visit` trait**: Immutable AST traversal for analysis
-- **`VisitMut` trait**: Mutable AST traversal for transformations  
+- **`VisitMut` trait**: Mutable AST traversal for transformations
 - **Generated implementations**: Most visitor code is auto-generated for consistency
 - **UTF-8 to UTF-16 conversion**: Special visitors for span conversion
 
@@ -55,6 +55,7 @@ impl<'a> VisitMut<'a> for MyTransformer {
 ## Architecture
 
 The visitor pattern is designed for:
+
 - **Analysis**: Static analysis, linting, and code inspection
 - **Transformation**: Code modification and transpilation
 - **Consistency**: Systematic traversal of all AST nodes

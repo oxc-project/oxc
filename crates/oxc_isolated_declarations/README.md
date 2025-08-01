@@ -55,18 +55,22 @@ match declarations.build(&program) {
 ## Architecture
 
 ### Isolated Declarations Concept
+
 Isolated declarations allow generating TypeScript declaration files without full type inference by requiring that:
+
 - All exported functions have explicit return types
 - All exported variables have explicit types
 - Type information is locally available
 
 ### Implementation Details
+
 - **AST transformation**: Convert implementation AST to declaration AST
 - **Type extraction**: Extract and preserve type information
 - **Export analysis**: Determine what needs to be included in declarations
 - **Error reporting**: Provide helpful diagnostics for missing type annotations
 
 ### Benefits
+
 - **Faster builds**: No full type checking required
 - **Incremental compilation**: Each file can be processed independently
 - **Parallel processing**: Multiple files can be processed simultaneously

@@ -19,7 +19,7 @@ This crate provides comprehensive AST (Abstract Syntax Tree) node definitions th
 The AST design differs from estree in several important ways:
 
 - **Explicit identifiers**: Uses specific types like `BindingIdentifier`, `IdentifierReference`, and `IdentifierName` instead of generic `Identifier`
-- **Precise assignment targets**: `AssignmentExpression.left` uses `AssignmentTarget` instead of generic `Pattern`  
+- **Precise assignment targets**: `AssignmentExpression.left` uses `AssignmentTarget` instead of generic `Pattern`
 - **Literal specialization**: Replaces generic `Literal` with `BooleanLiteral`, `NumericLiteral`, `StringLiteral`, etc.
 - **Evaluation order**: Field order follows ECMAScript evaluation order for consistency
 
@@ -41,6 +41,7 @@ let ast = allocator.alloc(Program {
 ## Architecture
 
 The AST is designed for:
+
 - **Parse**: Efficient construction during parsing
 - **Transform**: Easy manipulation during transpilation
 - **Visit**: Systematic traversal for analysis

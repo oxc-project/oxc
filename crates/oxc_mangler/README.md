@@ -44,6 +44,7 @@ let options = MangleOptions {
 ## Architecture
 
 ### Mangling Strategy
+
 1. **Symbol Analysis**: Identify all variables and their scopes
 2. **Frequency Analysis**: Count usage to optimize for common variables
 3. **Name Generation**: Generate short names using base54 encoding
@@ -51,19 +52,25 @@ let options = MangleOptions {
 5. **Integration**: Update symbol table with new names
 
 ### Base54 Encoding
+
 Uses a character set optimized for JavaScript identifiers:
+
 - First character: `a-zA-Z_$` (54 options)
 - Subsequent characters: `a-zA-Z0-9_$` (64 options)
 - Generates shortest possible names: `a`, `b`, ..., `aa`, `ab`, etc.
 
 ### Gzip Optimization
+
 The mangling algorithm considers:
+
 - **Character frequency**: Prefer characters that compress well
 - **Repetition patterns**: Generate names that create gzip-friendly patterns
 - **Context awareness**: Consider surrounding code when choosing names
 
 ### Integration with Minifier
+
 The mangler works as part of the broader minification pipeline:
+
 1. **Parse**: Build AST from source code
 2. **Analyze**: Perform semantic analysis
 3. **Mangle**: Shorten variable names

@@ -9,7 +9,7 @@ This crate performs semantic analysis on JavaScript and TypeScript ASTs, buildin
 ## Key Features
 
 - **Symbol resolution**: Build complete symbol tables with binding information
-- **Scope analysis**: Construct scope trees following ECMAScript scoping rules  
+- **Scope analysis**: Construct scope trees following ECMAScript scoping rules
 - **Reference tracking**: Track all variable references and their relationships
 - **Control flow**: Optional control flow graph construction
 - **JSDoc parsing**: Extract and parse JSDoc comments
@@ -82,6 +82,7 @@ for scope_id in semantic.scopes().descendants(root_scope) {
 ## Architecture
 
 ### Semantic Analysis Pipeline
+
 1. **AST Traversal**: Visit all nodes to collect declarations
 2. **Scope Building**: Construct scope tree following language rules
 3. **Symbol Resolution**: Create symbol table with binding information
@@ -92,21 +93,25 @@ for scope_id in semantic.scopes().descendants(root_scope) {
 ### Key Data Structures
 
 #### Symbol Table
+
 - **Symbols**: All declared identifiers (variables, functions, classes, etc.)
 - **References**: All uses of identifiers
 - **Bindings**: Association between names and symbols in scopes
 
-#### Scope Tree  
+#### Scope Tree
+
 - **Scope hierarchy**: Nested scopes following language semantics
 - **Binding resolution**: How identifiers resolve to declarations
 - **Closure analysis**: Capture and usage patterns
 
 #### Control Flow Graph
+
 - **Basic blocks**: Sequences of statements with single entry/exit
 - **Flow edges**: Conditional and unconditional control flow
 - **Exception handling**: Try/catch/finally flow modeling
 
 ### Applications
+
 - **Linting**: Detect unused variables, undefined references, etc.
 - **Transformation**: Safe variable renaming and scope analysis
 - **Analysis**: Dead code detection, dependency analysis
