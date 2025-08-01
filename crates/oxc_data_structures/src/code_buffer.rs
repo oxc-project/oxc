@@ -517,7 +517,7 @@ impl CodeBuffer {
         }
 
         // Write 16 bytes of the indent character into buffer.
-        // On x86_64, this is 1 XMM register load + 1 XMM store (16 byte copy).
+        // On x86_64, this is 4 SIMD instructions (16 byte copy).
         // SAFETY: We checked there are at least 16 bytes spare capacity.
         unsafe {
             let ptr = self.buf.as_mut_ptr().add(len).cast::<[u8; CHUNK_SIZE]>();
