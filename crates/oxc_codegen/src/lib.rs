@@ -174,10 +174,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { Quote::Single } else { Quote::Double };
-
-        // Configure CodeBuffer with indentation settings
         self.code = CodeBuffer::with_indent(options.indent_char, options.indent_width);
-
         self.options = options;
         self
     }
@@ -474,7 +471,6 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-
         self.code.print_indent(self.indent as usize);
     }
 
