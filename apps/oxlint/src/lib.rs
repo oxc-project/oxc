@@ -1,6 +1,9 @@
 use std::{ffi::OsStr, io::BufWriter};
 
-use cli::{CliRunResult, LintRunner};
+pub use oxc_linter::{
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult,
+};
 
 mod command;
 mod lint;
@@ -13,10 +16,7 @@ pub mod cli {
     pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
 }
 
-pub use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
-};
+use cli::{CliRunResult, LintRunner};
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 mod raw_fs;

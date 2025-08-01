@@ -8,6 +8,7 @@ use lazy_regex::Regex;
 
 #[cfg(test)]
 use crate::cli::{LintRunner, lint_command};
+
 #[cfg(test)]
 pub struct Tester {
     cwd: PathBuf,

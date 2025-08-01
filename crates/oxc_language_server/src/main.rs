@@ -18,12 +18,6 @@ use tower_lsp_server::{
     },
 };
 
-use capabilities::Capabilities;
-use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
-use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
-use options::{Options, Run, WorkspaceOption};
-use worker::WorkspaceWorker;
-
 mod capabilities;
 mod code_actions;
 mod commands;
@@ -32,6 +26,12 @@ mod options;
 #[cfg(test)]
 mod tester;
 mod worker;
+
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
+use options::{Options, Run, WorkspaceOption};
+use worker::WorkspaceWorker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 

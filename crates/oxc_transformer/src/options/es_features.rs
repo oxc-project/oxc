@@ -7,6 +7,7 @@ use browserslist::Version;
 use rustc_hash::FxHashMap;
 
 use super::{Engine, EngineTargets};
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum ESFeature {
     ES5MemberExpressionLiterals,
