@@ -36,7 +36,7 @@ pub struct CodegenOptions {
 
     /// Number of characters per indentation level.
     ///
-    /// Default is `1` for tabs, `2` for spaces.
+    /// Default is `1`.
     pub indent_width: usize,
 }
 
