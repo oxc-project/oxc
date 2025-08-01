@@ -14,7 +14,6 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
-use oxc_data_structures::stack::Stack;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
@@ -66,8 +65,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
     pub(crate) current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Stack<NodeId>,
+    /// `NodeId` of current `Function` (not including arrow functions).
+    /// When not in a function, is `NodeId` of `Program`.
+    pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
@@ -121,7 +121,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
-            function_stack: Stack::with_capacity(16),
+            current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
@@ -355,12 +355,6 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
-    }
-
-    pub(crate) fn set_function_node_flags(&mut self, flags: NodeFlags) {
-        if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
-        }
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -654,6 +648,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // as scope depth must remain >= 1.
 
         self.leave_node(kind);
+
+        // Check `current_function_node_id` has been reset to as it was at start
+        debug_assert!(self.current_function_node_id == NodeId::ROOT);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -1613,10 +1610,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
-        self.function_stack.push(self.current_node_id);
+
+        let parent_function_node_id = self.current_function_node_id;
+        self.current_function_node_id = self.current_node_id;
+
         if func.is_declaration() {
             func.bind(self);
         }
+
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -1693,7 +1694,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
-        self.function_stack.pop();
+
+        self.current_function_node_id = parent_function_node_id;
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
@@ -1712,7 +1714,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
-        self.function_stack.push(self.current_node_id);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
@@ -1775,7 +1776,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_node(kind);
-        self.function_stack.pop();
         self.leave_scope();
     }
 
@@ -2039,7 +2039,10 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.set_function_node_flags(NodeFlags::HasYield);
+                // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
+                // But it shouldn't be possible for `yield` to at top level - that's a parse error.
+                *self.nodes.get_node_mut(self.current_function_node_id).flags_mut() |=
+                    NodeFlags::HasYield;
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
