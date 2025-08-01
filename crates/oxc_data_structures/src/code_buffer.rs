@@ -494,7 +494,7 @@ impl CodeBuffer {
     /// 2. Less than 16 bytes spare capacity in buffer (needs to grow).
     /// Both of these cases should be rare.
     ///
-    /// <https://godbolt.org/z/e1EP5cnPc>
+    /// <https://godbolt.org/z/zPT6Mzqsx>
     #[inline]
     pub fn print_indent(&mut self, depth: usize) {
         /// Size of chunks to write indent in.
