@@ -24,7 +24,7 @@ static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
 // Optimized table that matches non-identifier bytes more efficiently
 // This includes all bytes that would terminate an ASCII identifier
 static ASCII_ID_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| {
-    !matches!(b, 
+    !matches!(b,
         b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'$'
     )
 });

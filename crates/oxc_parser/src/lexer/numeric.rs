@@ -149,7 +149,7 @@ impl Lexer<'_> {
     fn read_decimal_digits_after_first_digit(&mut self) {
         // Fast path: Use batch search to skip over consecutive digits
         let start_pos = self.source.position();
-        
+
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_DECIMAL_DIGIT_TABLE,
@@ -159,7 +159,7 @@ impl Lexer<'_> {
                 return;
             },
         };
-        
+
         // Handle special cases that aren't digits
         match next_byte {
             b'_' => {
@@ -179,7 +179,7 @@ impl Lexer<'_> {
             }
         }
     }
-    
+
     // Slower path for when we encounter numeric separators
     fn read_decimal_digits_after_first_digit_with_separators(&mut self) {
         while let Some(b) = self.peek_byte() {

@@ -273,7 +273,7 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
-    /// 
+    ///
     /// This is a critical hot path function - inline for maximum performance
     #[inline(always)]
     fn read_next_token(&mut self) -> Kind {
