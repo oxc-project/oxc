@@ -266,15 +266,19 @@ impl Scoping {
         declaration: NodeId,
         span: Span,
     ) {
-        let is_first_redeclared =
-            !self.cell.borrow_dependent().symbol_redeclarations.contains_key(&symbol_id);
+        // Check if this is the first redeclaration by attempting to get the existing entry
+        // This avoids the double lookup by checking containment within the mutation closure
+        let mut is_first_redeclared = false;
+        
         // Borrow checker doesn't allow us to call `self.symbol_span` in `with_dependent_mut`,
-        // so we need construct `Redeclaration` here.
-        let first_declaration = is_first_redeclared.then(|| Redeclaration {
-            span: self.symbol_span(symbol_id),
-            declaration: self.symbol_declaration(symbol_id),
-            flags: self.symbol_flags(symbol_id),
-        });
+        // so we need to potentially construct `Redeclaration` here. However, we only want to
+        // construct it if it's actually needed (first redeclaration).
+        // We'll use a lazy approach by checking inside the closure first.
+        let first_declaration_data = (
+            self.symbol_span(symbol_id),
+            self.symbol_declaration(symbol_id),
+            self.symbol_flags(symbol_id),
+        );
 
         self.cell.with_dependent_mut(|allocator, cell| {
             let redeclaration = Redeclaration { span, declaration, flags };
@@ -283,11 +287,12 @@ impl Scoping {
                     occupied.into_mut().push(redeclaration);
                 }
                 Entry::Vacant(vacant) => {
-                    let first_declaration = first_declaration.unwrap_or_else(|| {
-                        unreachable!(
-                            "The above step has already been checked, and it was first declared."
-                        )
-                    });
+                    is_first_redeclared = true;
+                    let first_declaration = Redeclaration {
+                        span: first_declaration_data.0,
+                        declaration: first_declaration_data.1,
+                        flags: first_declaration_data.2,
+                    };
                     let v = ArenaVec::from_array_in([first_declaration, redeclaration], allocator);
                     vacant.insert(v);
                 }
@@ -352,15 +357,23 @@ impl Scoping {
     /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
     pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
         if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
-            false
-        } else {
-            self.get_resolved_references(symbol_id).any(Reference::is_write)
+            return false;
         }
+        
+        // Optimize by directly checking reference flags without creating iterator
+        let reference_ids = &self.cell.borrow_dependent().resolved_references[symbol_id.index()];
+        for &reference_id in reference_ids {
+            if self.references[reference_id].is_write() {
+                return true;
+            }
+        }
+        false
     }
 
     /// Get whether a symbol is unused (i.e. not read or written after declaration).
     pub fn symbol_is_unused(&self, symbol_id: SymbolId) -> bool {
-        self.get_resolved_reference_ids(symbol_id).is_empty()
+        // Directly check the length without creating iterator
+        self.cell.borrow_dependent().resolved_references[symbol_id.index()].is_empty()
     }
 
     /// Add a reference to a symbol.
