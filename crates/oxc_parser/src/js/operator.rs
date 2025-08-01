@@ -7,6 +7,7 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
+#[inline]
 pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     match kind {
         Kind::Question2 => Some(Precedence::NullishCoalescing),
@@ -28,6 +29,7 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     }
 }
 
+#[inline]
 pub fn map_binary_operator(kind: Kind) -> BinaryOperator {
     match kind {
         Kind::Eq2 => BinaryOperator::Equality,

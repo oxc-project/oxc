@@ -2,6 +2,7 @@ use super::{Kind, Lexer, Token};
 
 impl Lexer<'_> {
     /// Section 12.8 Punctuators
+    #[inline]
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek_2_bytes() == Some([b'.', b'.']) {
             self.consume_2_chars();
@@ -15,6 +16,7 @@ impl Lexer<'_> {
     }
 
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
+    #[inline]
     pub(super) fn read_left_angle(&mut self) -> Option<Kind> {
         match self.peek_byte() {
             Some(b'<') => {
@@ -37,6 +39,7 @@ impl Lexer<'_> {
     }
 
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
+    #[inline]
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
         match self.peek_byte() {
             Some(b'-') => {
@@ -64,6 +67,7 @@ impl Lexer<'_> {
         self.finish_next(kind)
     }
 
+    #[inline]
     fn read_right_angle(&mut self) -> Kind {
         if self.next_ascii_byte_eq(b'>') {
             if self.next_ascii_byte_eq(b'>') {

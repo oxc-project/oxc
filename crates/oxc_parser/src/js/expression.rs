@@ -156,6 +156,9 @@ impl<'a> ParserImpl<'a> {
     ///     `RegularExpressionLiteral`
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
+    /// 
+    /// Critical hot path for expression parsing - inline for performance
+    #[inline]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
