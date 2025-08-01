@@ -1,4 +1,4 @@
-js compatibility: 468/699 (66.95%)
+js compatibility: 469/699 (67.10%)
 
 # Failed
 
@@ -146,8 +146,7 @@ js compatibility: 468/699 (66.95%)
 | js/object-property-ignore/issue-5678.js | 💥💥💥 | 52.50% |
 | js/objects/right-break.js | 💥 | 70.27% |
 | js/optional-chaining/chaining.js | 💥 | 72.41% |
-| js/optional-chaining/comments.js | 💥 | 97.87% |
-| js/preserve-line/member-chain.js | 💥 | 92.19% |
+| js/preserve-line/member-chain.js | 💥 | 93.85% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |

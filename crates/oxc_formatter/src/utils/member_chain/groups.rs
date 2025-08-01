@@ -172,42 +172,58 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
     pub(super) fn needs_empty_line_before(&self, f: &Formatter) -> bool {
         // TODO: Needs to consider there is a comment around the `?`, `.` or `[` character.
-        let first = self.members.first();
-        first.is_some_and(|first| match first {
-            ChainMember::StaticMember(expression) => {
-                let object_end = expression.object().span().end;
-                let operator_byte = if expression.optional { b'?' } else { b'.' };
-                let operator_position = f.source_text().as_bytes()[(object_end as usize)..]
-                    .iter()
-                    .position(|&b| b == operator_byte)
-                    .unwrap();
+        let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
+            return false;
+        };
 
-                // The `source_text` length is guaranteed to be less than `u32::MAX`.
-                #[expect(clippy::cast_possible_truncation)]
-                let start = object_end + operator_position as u32;
-                let end = start + if expression.optional { 2 } else { 1 };
-                let operator_span = Span::new(start, end);
+        let source_text = f.source_text().as_bytes();
 
-                get_lines_before(operator_span, f) > 1
+        // `A \n\n/* comment . */ . / comment . */ B`
+        //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        // Check whether has more than 1 continuous new lines before the operator (`.`)
+        let start = expression.object().span().end;
+        let mut end = expression.property().span().start;
+        let mut comments = f.comments().comments_between(start, end).iter();
+        let mut last_comment_span = comments.next_back();
+
+        while start < end {
+            // Skip comments that are after the operator (`.`)
+            if let Some(last_comment) = last_comment_span
+                && last_comment.span.end == end
+            {
+                end = last_comment.span.start - 1;
+                last_comment_span = comments.next_back();
+                continue;
+            } else if matches!(source_text[end as usize], b'.') {
+                // Found the operator, stop the loop
+                break;
             }
-            ChainMember::ComputedMember(expression) => {
-                let object_end = expression.object().span().end;
-                let operator_byte = b'[';
-                let operator_position = f.source_text().as_bytes()[(object_end as usize)..]
-                    .iter()
-                    .position(|&b| b == operator_byte)
-                    .unwrap();
 
-                // The `source_text` length is guaranteed to be less than `u32::MAX`.
-                #[expect(clippy::cast_possible_truncation)]
-                let start = object_end + operator_position as u32;
-                let end = start + 1;
-                let operator_span = Span::new(start, end);
+            end -= 1;
+        }
 
-                get_lines_before(operator_span, f) > 1
+        // Skip comments that are before the operator (`.`)
+        if let Some(comment) = comments.next() {
+            end = comment.span.start;
+        }
+
+        // Count the number of continuous new lines
+        let mut new_lines_count = 0;
+        for &b in &source_text[start as usize..end as usize] {
+            if matches!(b, b'\n' | b'\r') {
+                new_lines_count += 1;
+                // If there are more than 1 continuous new lines, return true
+                if new_lines_count > 1 {
+                    return true;
+                }
+            } else if !b.is_ascii_whitespace() {
+                // Reset the counter if there is a non-new-line character,
+                // because the new lines are not continuous
+                new_lines_count = 0;
             }
-            _ => false,
-        })
+        }
+
+        false
     }
 }
 
