@@ -1,4 +1,4 @@
-use oxc_codegen::CodegenOptions;
+use oxc_codegen::{CodegenOptions, IndentChar};
 
 use crate::tester::{
     test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
@@ -603,5 +603,48 @@ fn v8_intrinsics() {
         "const p = %DebugPrint('hi')",
         "const p = %DebugPrint(\"hi\");\n",
         parse_opts,
+    );
+}
+
+#[test]
+fn indentation() {
+    // Test tabs (default)
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n\tif (nested) {\n\t\tconsole.log(\"test\");\n\t}\n}\n",
+        CodegenOptions::default(),
+    );
+
+    // Test spaces with default size (2 spaces)
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n  if (nested) {\n    console.log(\"test\");\n  }\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Space,
+            indent_width: 2,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test spaces with custom size (4 spaces)
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n    if (nested) {\n        console.log(\"test\");\n    }\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Space,
+            indent_width: 4,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test tabs with width > 1 (should use 2 tabs per level)
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n\t\tif (nested) {\n\t\t\t\tconsole.log(\"test\");\n\t\t}\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Tab,
+            indent_width: 2,
+            ..CodegenOptions::default()
+        },
     );
 }
