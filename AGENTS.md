@@ -1,6 +1,8 @@
 # AGENTS.md - AI Assistant Guide for Oxc
 
-This document provides guidance for AI assistants working with the Oxc codebase. It contains essential information about the project structure, development workflows, and best practices to help AI systems navigate and contribute to this repository effectively.
+This document provides guidance for AI assistants working with the Oxc codebase.
+It contains essential information about the project structure, development workflows,
+and best practices to help AI systems navigate and contribute to this repository effectively.
 
 ## 🚀 Project Overview
 
@@ -11,7 +13,6 @@ Oxc (The Oxidation Compiler) is a collection of high-performance tools for JavaS
 - **Formatter**: Code formatting tools
 - **Transformer**: Code transformation and compilation
 - **Minifier**: Code minification for production
-- **Resolver**: Module resolution utilities
 
 ## 📁 Repository Structure
 
@@ -37,7 +38,6 @@ The repository follows a Rust workspace structure with multiple crates:
 - **`oxc_minifier`** - Code minification
 - **`oxc_formatter`** - Code formatting
 - **`oxc_diagnostics`** - Error reporting and diagnostics
-- **`oxc_resolver`** - Module resolution
 - **`oxc`** - Main crate that ties everything together
 
 ## 🛠️ Development Workflow
@@ -50,7 +50,6 @@ The project uses several tools for development:
 - **Node.js**: Version specified in `.node-version`
 - **pnpm**: Package manager for Node.js dependencies
 - **just**: Command runner (alternative to make)
-- **Additional tools**: typos, dprint, cargo-insta, watchexec
 
 ### Common Commands
 
@@ -186,19 +185,9 @@ pnpm test
 - **Test failures**: May indicate AST changes or semantic differences
 - **Performance regressions**: Use benchmarking tools in `tasks/benchmark/`
 
-### Useful Tools
-
-- `cargo expand` - View macro expansions
-- `cargo tree` - Analyze dependency tree
-- Built-in benchmarking in `tasks/benchmark/`
-- Memory profiling tools for performance analysis
-
 ## 📚 Additional Resources
 
 - **Website**: [oxc.rs](https://oxc.rs) - Official documentation
-- **Discord**: Community discussions and support
-- **Contributing Guide**: See `CONTRIBUTING.md` for detailed guidelines
-- **Architecture Docs**: Check the website for architectural overview
 
 ## ⚠️ Important Notes
 
