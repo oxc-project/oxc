@@ -26,6 +26,11 @@ impl Idx for ColumnOffsetsId {
         Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
+    unsafe fn from_usize_unchecked(idx: usize) -> Self {
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+    }
+
     fn index(self) -> usize {
         self.0.get() as usize
     }

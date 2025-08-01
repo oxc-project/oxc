@@ -1942,8 +1942,7 @@ dependencies = [
 [[package]]
 name = "oxc_index"
 version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fa07b0cfa997730afed43705766ef27792873fdf5215b1391949fec678d2392"
+source = "git+https://github.com/oxc-project/oxc-index-vec.git?branch=copilot%2Ffix-f7ff55bb-c0de-4461-a9ca-8556a2b670a6#9a71a63d4e83dede1135d4988b2955b1d48d6f84"
 dependencies = [
  "serde",
 ]
