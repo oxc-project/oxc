@@ -608,14 +608,25 @@ fn v8_intrinsics() {
 
 #[test]
 fn indentation() {
-    // Test tabs (default)
+    // Test default - tabs with width 1
     test_options(
         "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
         "if (true) {\n\tif (nested) {\n\t\tconsole.log(\"test\");\n\t}\n}\n",
         CodegenOptions::default(),
     );
 
-    // Test spaces with default size (2 spaces)
+    // Test tabs with width 2
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n\t\tif (nested) {\n\t\t\t\tconsole.log(\"test\");\n\t\t}\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Tab,
+            indent_width: 2,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test spaces with width 2
     test_options(
         "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
         "if (true) {\n  if (nested) {\n    console.log(\"test\");\n  }\n}\n",
@@ -626,24 +637,13 @@ fn indentation() {
         },
     );
 
-    // Test spaces with custom size (4 spaces)
+    // Test spaces with width 4
     test_options(
         "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
         "if (true) {\n    if (nested) {\n        console.log(\"test\");\n    }\n}\n",
         CodegenOptions {
             indent_char: IndentChar::Space,
             indent_width: 4,
-            ..CodegenOptions::default()
-        },
-    );
-
-    // Test tabs with width > 1 (should use 2 tabs per level)
-    test_options(
-        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
-        "if (true) {\n\t\tif (nested) {\n\t\t\t\tconsole.log(\"test\");\n\t\t}\n}\n",
-        CodegenOptions {
-            indent_char: IndentChar::Tab,
-            indent_width: 2,
             ..CodegenOptions::default()
         },
     );
