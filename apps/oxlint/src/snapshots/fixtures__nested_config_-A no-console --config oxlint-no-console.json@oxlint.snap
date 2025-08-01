@@ -5,8 +5,11 @@ source: apps/oxlint/src/tester.rs
 arguments: -A no-console --config oxlint-no-console.json
 working directory: fixtures/nested_config
 ----------
-Found 0 warnings and 0 errors.
-Finished in <variable>ms on 7 files with 0 rules using 1 threads.
+Failed to parse configuration file.
+
+  x Failed to parse config <cwd>/fixtures/nested_config/oxlint-no-console.json with error Os { code: 2, kind: NotFound,
+  | message: "No such file or directory" }
+
 ----------
-CLI result: LintSucceeded
+CLI result: InvalidOptionConfig
 ----------

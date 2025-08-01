@@ -827,7 +827,13 @@ mod test {
         Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
 
         // failed
-        Tester::new().test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
+        Tester::new().test_and_snapshot(&[
+            "-c",
+            "fixtures/import/.oxlintrc.json",
+            "--no-nest",
+            "--disable-nested-config",
+            "oxc/tsconfig.json",
+        ]);
     }
 
     #[test]
@@ -910,6 +916,17 @@ mod test {
 
     #[test]
     fn test_init_config() {
+        use std::env;
+
+        // Create a temporary directory for this test
+        let temp_dir = env::temp_dir().join("oxlint_test_init_config");
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        // Change to the temporary directory
+        let original_dir = env::current_dir().unwrap();
+        env::set_current_dir(&temp_dir).unwrap();
+
+        // Run the test
         assert!(!fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
 
         let args = &["--init"];
@@ -918,6 +935,10 @@ mod test {
         assert!(fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
 
         fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
+
+        // Change back to original directory and clean up
+        env::set_current_dir(original_dir).unwrap();
+        fs::remove_dir_all(temp_dir).unwrap();
     }
 
     #[test]
@@ -1195,5 +1216,45 @@ mod test {
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_node_modules() {
+        let args = &["test.js"];
+        Tester::new().with_cwd("fixtures/extends_node_modules".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_node_modules_subpath() {
+        let args = &["test.js"];
+        Tester::new()
+            .with_cwd("fixtures/extends_node_modules/subpath_test".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_node_modules_monorepo() {
+        let args = &["test.js"];
+        Tester::new()
+            .with_cwd("fixtures/extends_node_modules_monorepo/packages/app1".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_node_modules_missing_package() {
+        let args = &["test.js", "--disable-nested-config"];
+        Tester::new()
+            .with_cwd(
+                "fixtures/config_error_tests/extends_node_modules_errors/missing_package".into(),
+            )
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_node_modules_invalid_json() {
+        let args = &["test.js", "--disable-nested-config"];
+        Tester::new()
+            .with_cwd("fixtures/config_error_tests/extends_node_modules_errors/invalid_json".into())
+            .test_and_snapshot(args);
     }
 }

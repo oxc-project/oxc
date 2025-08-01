@@ -35,6 +35,10 @@ use super::{
 /// ```json
 /// {
 ///   "$schema": "./node_modules/oxlint/configuration_schema.json",
+///   "extends": [
+///     "oxlint-config-recommended",
+///     "@company/oxlint-config"
+///   ],
 ///   "plugins": ["import", "typescript", "unicorn"],
 ///   "env": {
 ///     "browser": true
@@ -97,9 +101,14 @@ pub struct Oxlintrc {
     /// Globs to ignore during linting. These are resolved from the configuration file path.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
-    /// Paths of configuration files that this configuration file extends (inherits from). The files
-    /// are resolved relative to the location of the configuration file that contains the `extends`
-    /// property. The configuration files are merged from the first to the last, with the last file
+    /// Paths of configuration files that this configuration file extends (inherits from).
+    ///
+    /// Paths can be:
+    /// - Relative paths (starting with `.` or `/`), resolved relative to the configuration file
+    /// - Node modules (e.g., `oxlint-config-recommended`, `@company/oxlint-config`)
+    /// - Subpaths within packages (e.g., `oxlint-config-base/strict.json`)
+    ///
+    /// The configuration files are merged from the first to the last, with the last file
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,

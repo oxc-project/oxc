@@ -13,12 +13,12 @@ working directory:
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-empty-file.html\eslint-plugin-unicorn(no-empty-file)]8;;\: Empty files are not allowed.
    ,-[fixtures/linter/fix.js:1:1]
- 1 | debugger
-   : ^^^^^^^^
+ 1 | 
+   : ^
    `----
-  help: Remove the debugger statement
+  help: Delete this file or add some code to it.
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[fixtures/linter/js_as_jsx.js:1:1]
