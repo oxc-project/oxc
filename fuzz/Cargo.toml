@@ -1,0 +1,32 @@
+[package]
+name = "oxc-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+oxc_allocator = { path = "../crates/oxc_allocator" }
+oxc_ast = { path = "../crates/oxc_ast" }
+oxc_parser = { path = "../crates/oxc_parser" }
+oxc_codegen = { path = "../crates/oxc_codegen" }
+oxc_semantic = { path = "../crates/oxc_semantic" }
+oxc_span = { path = "../crates/oxc_span" }
+oxc_syntax = { path = "../crates/oxc_syntax" }
+
+[[bin]]
+name = "ast_roundtrip"
+path = "fuzz_targets/ast_roundtrip.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parser_fuzz"
+path = "fuzz_targets/parser_fuzz.rs"
+test = false
+doc = false
+bench = false
