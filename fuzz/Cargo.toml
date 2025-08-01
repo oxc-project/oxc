@@ -30,3 +30,10 @@ path = "fuzz_targets/parser_fuzz.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "ast_shrink"
+path = "fuzz_targets/ast_shrink.rs"
+test = false
+doc = false
+bench = false
