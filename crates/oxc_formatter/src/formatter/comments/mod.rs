@@ -324,6 +324,19 @@ impl<'a> Comments<'a> {
                 // Reached an own line comment, which means it is the leading comment for the next node.
                 break;
             } else if is_end_of_line_comment(comment, source_text) {
+                let first_comment_start = comments[0].span.start;
+                // TODO: Maybe we can remove this check once we complete the logic of handling comments.
+                if preceding_span.end < first_comment_start {
+                    let is_break = source_text.as_bytes()
+                        [(preceding_span.end as usize)..(first_comment_start as usize)]
+                        .iter()
+                        .any(|&b| matches!(b, b'\n' | b'\r' | b')'));
+
+                    if is_break {
+                        return &[];
+                    }
+                }
+
                 // Should be a leading comment of following node.
                 // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
                 if matches!(

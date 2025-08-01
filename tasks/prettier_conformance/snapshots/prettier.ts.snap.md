@@ -120,7 +120,7 @@ ts compatibility: 247/573 (43.11%)
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 59.46% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
-| typescript/conditional-types/comments.ts | 💥💥 | 62.45% |
+| typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditonal-types.ts | 💥💥 | 53.24% |
 | typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
@@ -170,7 +170,7 @@ ts compatibility: 247/573 (43.11%)
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/custom/computedProperties/symbol.ts | 💥 | 71.43% |
 | typescript/custom/declare/declareModifier.d.ts | 💥 | 44.44% |
-| typescript/custom/modifiers/minustoken.ts | 💥 | 16.67% |
+| typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
 | typescript/custom/modifiers/question.ts | 💥 | 0.00% |
 | typescript/custom/modifiers/readonly.ts | 💥 | 0.00% |
 | typescript/custom/module/global.ts | 💥 | 80.00% |

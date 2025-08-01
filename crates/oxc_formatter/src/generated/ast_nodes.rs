@@ -6108,7 +6108,7 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
 
     #[inline]
     pub fn alternate(&self) -> Option<&AstNode<'a, Statement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
                 inner,
@@ -6571,7 +6571,7 @@ impl<'a> GetSpan for AstNode<'a, BreakStatement<'a>> {
 impl<'a> AstNode<'a, ReturnStatement<'a>> {
     #[inline]
     pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
@@ -6798,7 +6798,7 @@ impl<'a> GetSpan for AstNode<'a, LabeledStatement<'a>> {
 impl<'a> AstNode<'a, ThrowStatement<'a>> {
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,

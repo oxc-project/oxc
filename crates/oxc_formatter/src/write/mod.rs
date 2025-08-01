@@ -34,10 +34,11 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
+        comments::is_own_line_comment,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
-        trivia::FormatLeadingComments,
+        trivia::{DanglingIndentMode, FormatDanglingComments, FormatLeadingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
@@ -738,21 +739,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            // TODO: https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L153-L257
-            // let comments = f.context().comments();
-            // let dangling_comments = comments.dangling_comments(alternate.span());
-            // let dangling_line_comment =
-            //     dangling_comments.last().is_some_and(|comment| comment.kind().is_line());
-            // let has_dangling_comments = !dangling_comments.is_empty();
+            let comments = f.context().comments().comments_before(alternate.span().start);
+            let has_dangling_comments = !comments.is_empty();
+            let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
 
-            // let trailing_line_comment = comments
-            //     .trailing_comments(consequent.span().end)
-            //     .iter()
-            //     .any(|comment| comment.kind().is_line());
-
-            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_));
-            // && !trailing_line_comment
-            // && !dangling_line_comment;
+            let else_on_same_line =
+                matches!(consequent.as_ref(), Statement::BlockStatement(_)) && !has_line_comment;
 
             if else_on_same_line {
                 write!(f, space())?;
@@ -760,15 +752,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 write!(f, hard_line_break())?;
             }
 
-            // if has_dangling_comments {
-            //     write!(f, format_dangling_comments(self.span()))?;
+            if has_dangling_comments {
+                FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
+                    .fmt(f)?;
 
-            //     if trailing_line_comment || dangling_line_comment {
-            //         write!(f, hard_line_break())?;
-            //     } else {
-            //         write!(f, space())?;
-            //     }
-            // }
+                if has_line_comment {
+                    write!(f, hard_line_break())?;
+                } else {
+                    write!(f, space())?;
+                }
+            }
 
             write!(
                 f,
