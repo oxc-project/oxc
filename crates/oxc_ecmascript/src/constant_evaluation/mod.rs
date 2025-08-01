@@ -15,6 +15,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 use oxc_ast::{AstBuilder, ast::*};
+use oxc_syntax::operator::UpdateOperator;
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
@@ -170,6 +171,74 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::SequenceExpression(e) => {
                 // For sequence expression, the value is the value of the RHS.
                 e.expressions.last().and_then(|e| e.evaluate_value_to(ctx, target_ty))
+            }
+            Expression::ParenthesizedExpression(e) => e.expression.evaluate_value_to(ctx, target_ty),
+            Expression::ConditionalExpression(e) => {
+                // Ternary operator: test ? consequent : alternate
+                match e.test.evaluate_value_to_boolean(ctx) {
+                    Some(true) => e.consequent.evaluate_value_to(ctx, target_ty),
+                    Some(false) => e.alternate.evaluate_value_to(ctx, target_ty),
+                    None => None,
+                }
+            }
+            Expression::TemplateLiteral(e) => {
+                // Only evaluate template literals with no expressions (plain string templates)
+                if !e.expressions.is_empty() {
+                    return None;
+                }
+                
+                // Concatenate all the quasi strings
+                let mut result = String::new();
+                for quasi in &e.quasis {
+                    if let Some(cooked) = &quasi.value.cooked {
+                        result.push_str(cooked.as_str());
+                    } else {
+                        // If cooked is None, the template has invalid escape sequences
+                        return None;
+                    }
+                }
+                Some(ConstantValue::String(Cow::Owned(result)))
+            }
+            Expression::AssignmentExpression(e) => {
+                // Assignment expressions return the value being assigned
+                match e.operator {
+                    AssignmentOperator::Assign => e.right.evaluate_value_to(ctx, target_ty),
+                    // For compound assignments, we can only evaluate if both operands are known constants
+                    _ => None,
+                }
+            }
+            Expression::ArrayExpression(_) => {
+                // For now, we don't evaluate array expressions to constant values
+                // as they would create object values, but we could potentially
+                // return information about their length in the future
+                None
+            }
+            Expression::UpdateExpression(e) => {
+                // For pre/post increment/decrement, we need to know the current value
+                if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &e.argument {
+                    if let Some(current_value) = ident.evaluate_value_to_number(ctx) {
+                        let new_value = match e.operator {
+                            UpdateOperator::Increment => current_value + 1.0,
+                            UpdateOperator::Decrement => current_value - 1.0,
+                        };
+                        
+                        // Return the appropriate value based on prefix/postfix
+                        let return_value = if e.prefix {
+                            new_value // Pre-increment/decrement returns new value
+                        } else {
+                            current_value // Post-increment/decrement returns old value
+                        };
+                        
+                        return Some(ConstantValue::Number(return_value));
+                    }
+                }
+                None
+            }
+            Expression::ThisExpression(_) => Some(ConstantValue::Undefined),
+            Expression::ObjectExpression(_) => {
+                // For now, we don't evaluate object expressions to constant values
+                // as they would create object values
+                None
             }
             _ => None,
         }
@@ -406,7 +475,17 @@ impl<'a> ConstantEvaluation<'a> for LogicalExpression<'a> {
                     }
                 }
             },
-            LogicalOperator::Coalesce => None,
+            LogicalOperator::Coalesce => {
+                // Nullish coalescing: a ?? b
+                // Returns the right operand if the left operand is null or undefined
+                match self.left.evaluate_value_to(ctx, target_ty) {
+                    Some(ConstantValue::Null) | Some(ConstantValue::Undefined) => {
+                        self.right.evaluate_value_to(ctx, target_ty)
+                    }
+                    Some(value) => Some(value),
+                    None => None,
+                }
+            }
         }
     }
 }
@@ -528,5 +607,241 @@ impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         call_expr::try_fold_known_global_methods(&self.callee, &self.arguments, ctx)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::borrow::Cow;
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::{AstBuilder, ast::*};
+    use oxc_span::{Atom, SPAN};
+    use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UpdateOperator};
+
+    use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
+    use crate::{
+        is_global_reference::IsGlobalReference,
+        side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+    };
+
+    struct TestCtx<'a> {
+        allocator: &'a Allocator,
+        ast: AstBuilder<'a>,
+    }
+
+    impl<'a> TestCtx<'a> {
+        fn new(allocator: &'a Allocator) -> Self {
+            let ast = AstBuilder::new(allocator);
+            Self { allocator, ast }
+        }
+    }
+
+    impl<'a> MayHaveSideEffectsContext<'a> for TestCtx<'a> {
+        fn unknown_global_side_effects(&self) -> bool {
+            false
+        }
+
+        fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
+            match ident.name.as_str() {
+                "undefined" | "NaN" | "Infinity" => Some(true),
+                _ => Some(false),
+            }
+        }
+
+        fn get_constant_value_for_reference_id(
+            &self,
+            _reference_id: oxc_syntax::reference::ReferenceId,
+        ) -> Option<ConstantValue<'a>> {
+            None
+        }
+    }
+
+    impl<'a> ConstantEvaluationCtx<'a> for TestCtx<'a> {
+        fn ast(&self) -> AstBuilder<'a> {
+            AstBuilder::new(self.allocator)
+        }
+    }
+
+    #[test]
+    fn test_parenthesized_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // (42)
+        let inner = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_parenthesized(SPAN, inner);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(42.0)));
+    }
+
+    #[test]
+    fn test_conditional_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // true ? 1 : 2
+        let test = ast.expression_boolean_literal(SPAN, true);
+        let consequent = ast.expression_numeric_literal(SPAN, 1.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let alternate = ast.expression_numeric_literal(SPAN, 2.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_conditional(SPAN, test, consequent, alternate);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(1.0)));
+
+        // false ? 1 : 2
+        let test = ast.expression_boolean_literal(SPAN, false);
+        let consequent = ast.expression_numeric_literal(SPAN, 1.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let alternate = ast.expression_numeric_literal(SPAN, 2.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_conditional(SPAN, test, consequent, alternate);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(2.0)));
+    }
+
+    #[test]
+    fn test_template_literal() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // `hello world`
+        let quasi = ast.template_element(
+            SPAN,
+            false,
+            Some(Atom::from("hello world")),
+            Atom::from("hello world"),
+        );
+        let expr = ast.expression_template_literal(
+            SPAN, 
+            ast.vec1(quasi),
+            ast.vec()
+        );
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::String(Cow::Owned("hello world".to_string()))));
+
+        // Template literal with expressions should return None
+        let quasi1 = ast.template_element(SPAN, false, Some(Atom::from("hello ")), Atom::from("hello "));
+        let quasi2 = ast.template_element(SPAN, true, Some(Atom::from("")), Atom::from(""));
+        let number_expr = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr_with_placeholder = ast.expression_template_literal(
+            SPAN,
+            ast.vec_from_iter([quasi1, quasi2]),
+            ast.vec1(number_expr)
+        );
+
+        let result = expr_with_placeholder.evaluate_value(&ctx);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_assignment_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // x = 42
+        let left = ast.simple_assignment_target_identifier_reference(SPAN, Atom::from("x"));
+        let right = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(42.0)));
+    }
+
+    #[test]
+    fn test_logical_coalesce() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // null ?? 42
+        let left = ast.expression_null_literal(SPAN);
+        let right = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_logical(SPAN, left, LogicalOperator::Coalesce, right);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(42.0)));
+
+        // undefined ?? 42
+        let left = ast.expression_identifier_reference(SPAN, Atom::from("undefined"));
+        let right = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_logical(SPAN, left, LogicalOperator::Coalesce, right);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(42.0)));
+
+        // 1 ?? 42
+        let left = ast.expression_numeric_literal(SPAN, 1.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let right = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_logical(SPAN, left, LogicalOperator::Coalesce, right);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(1.0)));
+
+        // 0 ?? 42 (0 is not null/undefined, so should return 0)
+        let left = ast.expression_numeric_literal(SPAN, 0.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let right = ast.expression_numeric_literal(SPAN, 42.0, None, oxc_ast::ast::NumberBase::Decimal);
+        let expr = ast.expression_logical(SPAN, left, LogicalOperator::Coalesce, right);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Number(0.0)));
+    }
+
+    #[test]
+    fn test_update_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // Test requires identifier to have a constant value, which our test context doesn't provide
+        // For now, we'll test that it returns None for unknown identifiers
+        let ident = ast.simple_assignment_target_identifier_reference(SPAN, Atom::from("x"));
+        let expr = ast.expression_update(SPAN, UpdateOperator::Increment, true, ident);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_this_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        let expr = ast.expression_this(SPAN);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, Some(ConstantValue::Undefined));
+    }
+
+    #[test]
+    fn test_array_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // []
+        let expr = ast.expression_array(SPAN, ast.vec(), None);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, None); // Arrays are not evaluated to constant values
+    }
+
+    #[test]
+    fn test_object_expression() {
+        let allocator = Allocator::default();
+        let ctx = TestCtx::new(&allocator);
+        let ast = AstBuilder::new(&allocator);
+
+        // {}
+        let expr = ast.expression_object(SPAN, ast.vec(), None);
+
+        let result = expr.evaluate_value(&ctx);
+        assert_eq!(result, None); // Objects are not evaluated to constant values
     }
 }
