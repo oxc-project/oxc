@@ -2556,8 +2556,8 @@ pub enum ImportAttributeKey<'a> {
 ///
 /// ```ts
 /// //       ________ specifiers
-/// `export { Foo, Bar };`
-/// `export type { Baz } from 'baz';`
+/// export { Foo, Bar };
+/// export type { Baz } from 'baz';
 /// //     ^^^^              ^^^^^
 /// // export_kind           source
 /// ```
@@ -2603,7 +2603,7 @@ pub struct ExportDefaultDeclaration<'a> {
 ///
 /// ```ts
 /// //          _______ exported
-/// `export * as numbers from '../numbers.js';`
+/// export * as numbers from '../numbers.js';
 /// //                       ^^^^^^^^^^^^^^^ source
 /// ```
 #[ast(visit)]
