@@ -1,5 +1,6 @@
-use cow_utils::CowUtils;
 use std::borrow::Cow;
+
+use cow_utils::CowUtils;
 
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;

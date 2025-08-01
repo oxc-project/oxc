@@ -1,3 +1,7 @@
+use std::cell::RefCell;
+
+use oxc_span::{GetSpan, Span};
+
 use super::chain_member::ChainMember;
 use crate::{
     formatter::{Format, FormatResult, Formatter, prelude::*},
@@ -5,8 +9,6 @@ use crate::{
     parentheses::NeedsParentheses,
     write,
 };
-use oxc_span::{GetSpan, Span};
-use std::cell::RefCell;
 
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
