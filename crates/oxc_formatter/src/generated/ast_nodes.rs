@@ -5030,7 +5030,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
         let following_node =
-            self.inner.rest.as_ref().map(SiblingNode::from).or(self.following_node);
+            self.inner.rest.as_deref().map(SiblingNode::from).or(self.following_node);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -5044,7 +5044,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
         let following_node = self.following_node;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner,
+                inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
                 following_node,
@@ -5077,7 +5077,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
         let following_node =
-            self.inner.rest.as_ref().map(SiblingNode::from).or(self.following_node);
+            self.inner.rest.as_deref().map(SiblingNode::from).or(self.following_node);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -5091,7 +5091,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
         let following_node = self.following_node;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner,
+                inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),

@@ -4150,10 +4150,10 @@ impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
     }
 
     #[inline]
-    pub fn rest(self) -> &'t Option<AssignmentTargetRest<'a>> {
+    pub fn rest(self) -> &'t Option<Box<'a, AssignmentTargetRest<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
-                as *const Option<AssignmentTargetRest<'a>>)
+                as *const Option<Box<'a, AssignmentTargetRest<'a>>>)
         }
     }
 }
@@ -4217,10 +4217,10 @@ impl<'a, 't> ObjectAssignmentTargetWithoutProperties<'a, 't> {
     }
 
     #[inline]
-    pub fn rest(self) -> &'t Option<AssignmentTargetRest<'a>> {
+    pub fn rest(self) -> &'t Option<Box<'a, AssignmentTargetRest<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
-                as *const Option<AssignmentTargetRest<'a>>)
+                as *const Option<Box<'a, AssignmentTargetRest<'a>>>)
         }
     }
 }
