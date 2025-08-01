@@ -306,7 +306,7 @@ const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
 static LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
 const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-static LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
+const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
     [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
 
 /// Escape codes.

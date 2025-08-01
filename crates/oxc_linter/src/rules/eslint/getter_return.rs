@@ -33,7 +33,7 @@ pub struct GetterReturn {
     pub allow_implicit: bool,
 }
 
-static METHODS_TO_WATCH_FOR: [(&str, &str); 4] = [
+const METHODS_TO_WATCH_FOR: [(&str, &str); 4] = [
     ("Object", "defineProperty"),
     ("Reflect", "defineProperty"),
     ("Object", "create"),

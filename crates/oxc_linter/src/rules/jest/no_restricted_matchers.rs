@@ -97,7 +97,7 @@ declare_oxc_lint!(
     style,
 );
 
-static MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
+const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
     fn from_configuration(value: serde_json::Value) -> Self {

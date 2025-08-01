@@ -231,7 +231,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
     None
 }
 
-static TARGET_METHODS: [&str; 14] = [
+const TARGET_METHODS: [&str; 14] = [
     "every",
     "filter",
     "find",

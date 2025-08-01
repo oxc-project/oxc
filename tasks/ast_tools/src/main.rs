@@ -292,7 +292,7 @@ static GENERATORS: &[&(dyn Generator + Sync)] = &[
 ];
 
 /// Attributes on structs and enums (not including those defined by derives/generators)
-static ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
+const ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
 
 type Result<R> = std::result::Result<R, ()>;
 

@@ -415,7 +415,7 @@ const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "xml:space" => "xmlSpace",
 };
 
-static DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
+const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "charset",
     "allowFullScreen",
     "webkitAllowFullScreen",

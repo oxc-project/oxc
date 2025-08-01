@@ -159,10 +159,10 @@ fn find_index_param_name_by_position<'a>(
 }
 
 // things[`${method_name}`]((thing, index) => (<Hello key={index} />));
-static SECOND_INDEX_METHODS: [&str; 8] =
+const SECOND_INDEX_METHODS: [&str; 8] =
     ["every", "filter", "find", "findIndex", "flatMap", "forEach", "map", "some"];
 
-static THIRD_INDEX_METHODS: [&str; 2] = [
+const THIRD_INDEX_METHODS: [&str; 2] = [
     // things.reduce((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);
     "reduce",
     // things.reduceRight((collection, thing, index) => (collection.concat(<Hello key={index} />)), []);

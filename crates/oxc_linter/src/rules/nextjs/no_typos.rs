@@ -52,7 +52,7 @@ declare_oxc_lint!(
     pending
 );
 
-static NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =
+const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =
     ["getStaticProps", "getStaticPaths", "getServerSideProps"];
 
 // 0 is the exact match

@@ -9,7 +9,7 @@ use oxc_span::Span;
 
 use crate::{AstNode, config::JSDocPluginSettings};
 
-pub static CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
+pub const CUSTOM_SKIP_TAG_NAMES: [&str; 6] =
     ["abstract", "class", "constructor", "interface", "type", "virtual"];
 
 pub fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {

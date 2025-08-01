@@ -120,7 +120,7 @@ impl From<&serde_json::Value> for NewCap {
     }
 }
 
-static CAPS_ALLOWED: [&str; 11] = [
+const CAPS_ALLOWED: [&str; 11] = [
     "Array", "Boolean", "Date", "Error", "Function", "Number", "Object", "RegExp", "String",
     "Symbol", "BigInt",
 ];

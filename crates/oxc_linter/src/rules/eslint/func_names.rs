@@ -372,7 +372,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
     None
 }
 
-static INVALID_NAMES: [&str; 9] =
+const INVALID_NAMES: [&str; 9] =
     ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
 
 fn is_valid_identifier_name(name: &str) -> bool {

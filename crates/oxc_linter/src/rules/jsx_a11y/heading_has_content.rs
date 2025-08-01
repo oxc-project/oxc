@@ -65,7 +65,7 @@ declare_oxc_lint!(
 );
 
 // always including <h1> thru <h6>
-static DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
+const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
     fn from_configuration(value: serde_json::Value) -> Self {

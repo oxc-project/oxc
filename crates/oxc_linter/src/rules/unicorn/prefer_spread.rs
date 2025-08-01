@@ -183,7 +183,7 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
     }
 }
 
-static IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file", "this"];
+const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file", "this"];
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(

@@ -106,7 +106,7 @@ impl Rule for ErrorMessage {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-static BUILT_IN_ERRORS: [&str; 9] = [
+const BUILT_IN_ERRORS: [&str; 9] = [
     "Error",
     "EvalError",
     "RangeError",

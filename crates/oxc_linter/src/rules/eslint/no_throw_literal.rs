@@ -67,7 +67,7 @@ declare_oxc_lint!(
     conditional_suggestion,
 );
 
-static SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
+const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
 impl Rule for NoThrowLiteral {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThrowStatement(stmt) = node.kind() else {

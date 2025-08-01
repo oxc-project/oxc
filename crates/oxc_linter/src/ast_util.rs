@@ -607,7 +607,7 @@ fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
     false
 }
 
-static METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
+const METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
     "every",
     "filter",
     "find",

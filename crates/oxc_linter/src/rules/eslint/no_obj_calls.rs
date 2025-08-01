@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 const GLOBAL_THIS: &str = "globalThis";
-static NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
+const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 fn no_obj_calls_diagnostic(obj_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{obj_name}` is not a function and cannot be called"))

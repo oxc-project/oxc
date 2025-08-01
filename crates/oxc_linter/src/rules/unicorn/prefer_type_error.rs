@@ -182,7 +182,7 @@ const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set![
     "isXMLDoc",
 ];
 
-static TYPE_CHECKING_GLOBAL_IDENTIFIERS: [&str; 2] = ["isFinite", "isNaN"];
+const TYPE_CHECKING_GLOBAL_IDENTIFIERS: [&str; 2] = ["isFinite", "isNaN"];
 
 #[test]
 fn test() {

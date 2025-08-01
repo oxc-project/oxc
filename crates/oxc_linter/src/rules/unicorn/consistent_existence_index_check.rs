@@ -70,7 +70,7 @@ declare_oxc_lint!(
     fix,
 );
 
-static METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];
+const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];
 
 impl Rule for ConsistentExistenceIndexCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

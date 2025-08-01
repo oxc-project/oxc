@@ -66,7 +66,7 @@ impl Rule for PreferJestMocked {
     }
 }
 
-static MOCK_TYPES: [&str; 4] = ["Mock", "MockedFunction", "MockedClass", "MockedObject"];
+const MOCK_TYPES: [&str; 4] = ["Mock", "MockedFunction", "MockedClass", "MockedObject"];
 
 impl PreferJestMocked {
     fn check_ts_as_expression<'a>(

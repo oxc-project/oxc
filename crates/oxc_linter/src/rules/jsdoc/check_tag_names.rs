@@ -172,9 +172,9 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "template",
 ];
 
-static JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
+const JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
 
-static ALWAYS_INVALID_TAGS_IF_TYPED: [&str; 13] = [
+const ALWAYS_INVALID_TAGS_IF_TYPED: [&str; 13] = [
     "augments",
     "callback",
     "class",
@@ -190,7 +190,7 @@ static ALWAYS_INVALID_TAGS_IF_TYPED: [&str; 13] = [
     "typedef",
 ];
 
-static OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
+const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
     "abstract",
     "access",
     "class",

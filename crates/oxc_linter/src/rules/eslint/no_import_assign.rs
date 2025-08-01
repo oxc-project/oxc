@@ -47,10 +47,10 @@ declare_oxc_lint!(
     correctness
 );
 
-static OBJECT_MUTATION_METHODS: [&str; 5] =
+const OBJECT_MUTATION_METHODS: [&str; 5] =
     ["assign", "defineProperty", "defineProperties", "freeze", "setPrototypeOf"];
 
-static REFLECT_MUTATION_METHODS: [&str; 4] =
+const REFLECT_MUTATION_METHODS: [&str; 4] =
     ["defineProperty", "deleteProperty", "set", "setPrototypeOf"];
 
 impl Rule for NoImportAssign {

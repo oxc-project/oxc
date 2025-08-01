@@ -165,7 +165,7 @@ impl<'a> Deref for Interned<'a> {
 
 const LINE_SEPARATOR: char = '\u{2028}';
 const PARAGRAPH_SEPARATOR: char = '\u{2029}';
-pub static LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARATOR];
+pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARATOR];
 
 /// Replace the line terminators matching the provided list with "\n"
 /// since its the only line break type supported by the printer
