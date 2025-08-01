@@ -43,8 +43,7 @@ use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    context::{TransformState, TraverseCtx},
 };
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
@@ -56,7 +55,7 @@ pub struct ObjectRestSpreadOptions {
 }
 
 pub struct ObjectRestSpread<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     options: ObjectRestSpreadOptions,
 
@@ -64,7 +63,7 @@ pub struct ObjectRestSpread<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformState<'a>) -> Self {
         if options.loose {
             ctx.error(OxcDiagnostic::error(
                 "Option `loose` is not implemented for object-rest-spread.",
@@ -483,7 +482,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     pub fn transform_object_expression(
         _options: ObjectRestSpreadOptions,
         expr: &mut Expression<'a>,
-        transform_ctx: &'ctx TransformCtx<'a>,
+        transform_ctx: &'ctx TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
@@ -515,7 +514,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     fn make_object_spread(
         expr: &mut Option<ArenaBox<'a, CallExpression<'a>>>,
         props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
-        transform_ctx: &'ctx TransformCtx<'a>,
+        transform_ctx: &'ctx TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
@@ -1082,7 +1081,7 @@ impl<'a> SpreadPair<'a> {
         self,
         reference_builder: &mut ReferenceBuilder<'a>,
         excluded_variable_declarators: &mut Vec<VariableDeclarator<'a>>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (BindingPatternOrAssignmentTarget<'a>, Expression<'a>) {
         let rhs = if self.has_no_properties {

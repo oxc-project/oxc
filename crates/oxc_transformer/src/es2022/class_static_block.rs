@@ -48,7 +48,7 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::TraverseCtx, state::TransformState,
+    context::TraverseCtx, context::TransformState,
     utils::ast_builder::wrap_statements_in_arrow_function_iife,
 };
 
@@ -267,7 +267,7 @@ mod test {
     use oxc_semantic::Scoping;
     use oxc_traverse::ReusableTraverseCtx;
 
-    use crate::state::TransformState;
+    use crate::context::TransformState;
 
     use super::Keys;
 

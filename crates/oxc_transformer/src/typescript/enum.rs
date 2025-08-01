@@ -16,7 +16,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{context::TraverseCtx, context::TransformState};
 
 /// enum member values (or None if it can't be evaluated at build time) keyed by names
 type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
