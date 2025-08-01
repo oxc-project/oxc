@@ -225,7 +225,7 @@ pub struct IdentifierName<'a> {
 
 /// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
 ///
-/// Represents an identifier reference, which is a reference to a variable, function, class, or object.
+/// Represents an `identifier reference`, which is a reference to a variable, function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -251,7 +251,7 @@ pub struct IdentifierReference<'a> {
 
 /// `x` in `const x = 0;`
 ///
-/// Represents a binding identifier, which is an identifier that is used to declare a variable,
+/// Represents a `binding identifier`, which is an identifier that is used to declare a variable,
 /// function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
@@ -281,7 +281,7 @@ pub struct BindingIdentifier<'a> {
 
 /// `loop` in `loop: while (true) { break loop; }`
 ///
-/// Represents a label identifier, which is an identifier that is used to label a statement.
+/// Represents a `label identifier`, which is an identifier that is used to label a statement.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -310,7 +310,7 @@ pub struct ThisExpression {
 
 /// `[1, 2, ...[3, 4], null]` in `const array = [1, 2, ...[3, 4], null];`
 ///
-/// Represents an array literal, which can include elements, spread elements, or null values.
+/// Represents an `array literal`, which can include elements, spread elements, or null values.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -320,7 +320,7 @@ pub struct ArrayExpression<'a> {
 }
 
 inherit_variants! {
-/// Represents an element in an array literal.
+/// Represents an element in an `array literal`.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -354,7 +354,7 @@ pub struct Elision {
 
 /// `{ a: 1 }` in `const obj = { a: 1 };`
 ///
-/// Represents an object literal, which can include properties, spread properties,
+/// Represents an `object literal`, which can include properties, spread properties,
 /// or computed properties.
 #[ast(visit)]
 #[derive(Debug)]
@@ -365,7 +365,7 @@ pub struct ObjectExpression<'a> {
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
 }
 
-/// Represents a property in an object literal.
+/// Represents a property in an `object literal`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -378,7 +378,7 @@ pub enum ObjectPropertyKind<'a> {
 
 /// `a: 1` in `const obj = { a: 1 };`
 ///
-/// Represents a property in an object literal.
+/// Represents a property in an `object literal`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -427,7 +427,7 @@ pub enum PropertyKind {
 
 /// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``
 ///
-/// Represents a template literal, which can include quasi elements and expression elements.
+/// Represents a `template literal`, which can include quasi elements and expression elements.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -456,7 +456,7 @@ pub struct TaggedTemplateExpression<'a> {
 
 /// `Hello, ` in `` `Hello, ${name}` ``
 ///
-/// Represents a quasi element in a template literal.
+/// Represents a quasi element in a `template literal`.
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -492,7 +492,7 @@ pub struct TemplateElementValue<'a> {
     pub cooked: Option<Atom<'a>>,
 }
 
-/// Represents a member access expression, which can include computed member access,
+/// Represents a `member access expression`, which can include computed member access,
 /// static member access, or private field access.
 ///
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
@@ -521,7 +521,7 @@ pub use match_member_expression;
 
 /// `ar[0]` in `const ar = [1, 2]; ar[0];`
 ///
-/// Represents a computed member access expression, which can include an object and an expression.
+/// Represents a `computed member access expression`, which can include an object and an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -536,7 +536,7 @@ pub struct ComputedMemberExpression<'a> {
 
 /// `console.log` in `console.log('Hello, World!');`
 ///
-/// Represents a static member access expression, which can include an object and a property.
+/// Represents a `static member access expression`, which can include an object and a property.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -550,7 +550,7 @@ pub struct StaticMemberExpression<'a> {
 
 /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
 ///
-/// Represents a private field access expression, which can include an object and a private identifier.
+/// Represents a `private field access expression`, which can include an object and a private identifier.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -565,7 +565,7 @@ pub struct PrivateFieldExpression<'a> {
 
 /// `foo()` in `function foo() { return 1; }; foo();`
 ///
-/// Represents a call expression, which can include a callee and arguments.
+/// Represents a `call expression`, which can include a callee and arguments.
 ///
 /// ## Examples
 /// ```ts
@@ -597,7 +597,7 @@ pub struct CallExpression<'a> {
 
 /// `new C()` in `class C {}; new C();`
 ///
-/// Represents a new expression, which can include a callee and arguments.
+/// Represents a `new expression`, which can include a callee and arguments.
 ///
 /// ## Example
 /// ```ts
@@ -624,7 +624,7 @@ pub struct NewExpression<'a> {
 
 /// `import.meta` in `console.log(import.meta);`
 ///
-/// Represents a meta property. The following syntaxes are supported. `import.meta`, `new.target`.
+/// Represents a `meta property`. The following syntaxes are supported. `import.meta`, `new.target`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -636,7 +636,7 @@ pub struct MetaProperty<'a> {
 
 /// `...[1, 2]` in `const arr = [...[1, 2]];`
 ///
-/// Represents a spread element, which can include an argument.
+/// Represents a `spread element`, which can include an argument.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -665,7 +665,7 @@ pub enum Argument<'a> {
 
 /// `++i` in `let i = 0; ++i;`
 ///
-/// Represents an update expression, which can include an operator and an argument.
+/// Represents an `update expression`, which can include an operator and an argument.
 /// The following syntaxes are supported: `++a`, `a++`, `--a`, `a--`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -679,7 +679,7 @@ pub struct UpdateExpression<'a> {
 
 /// `typeof` in `typeof a === "string"`
 ///
-/// Represents a unary expression, which includes an operator and an argument.
+/// Represents a `unary expression`, which includes an operator and an argument.
 /// The following syntaxes are supported: `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -693,7 +693,7 @@ pub struct UnaryExpression<'a> {
 
 /// `1 + 1` in `const two = 1 + 1;`
 ///
-/// Represents a binary expression, which include a left expression, an operator, and a right expression.
+/// Represents a `binary expression`, which include a left expression, an operator, and a right expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -717,7 +717,7 @@ pub struct PrivateInExpression<'a> {
 
 /// `||` in `const foo = bar || 2;`
 ///
-/// Represents a logical expression, which includes a left expression, an operator, and a right expression.
+/// Represents a `logical expression`, which includes a left expression, an operator, and a right expression.
 /// The following syntaxes are supported: `||`, `&&` and `??`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -731,7 +731,7 @@ pub struct LogicalExpression<'a> {
 
 /// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
 ///
-/// Represents a conditional expression, which includes a test, a consequent, and an alternate.
+/// Represents a `conditional expression`, which includes a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -744,7 +744,7 @@ pub struct ConditionalExpression<'a> {
 
 /// `foo = 1` in `let foo; foo = 1;`
 ///
-/// Represents an assignment expression, which includes an operator, a target, and an expression.
+/// Represents an `assignment expression`, which includes an operator, a target, and an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -848,7 +848,7 @@ pub use match_assignment_target_pattern;
 
 /// `[a, b]` in `[a, b] = arr;`
 ///
-/// Represents an array assignment target, which can include elements and a rest element.
+/// Represents an `array assignment target`, which can include elements and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -866,7 +866,7 @@ pub struct ArrayAssignmentTarget<'a> {
 
 /// `{ foo }` in `({ foo } = obj);`
 ///
-/// Represents an object assignment target, which can include properties and a rest element.
+/// Represents an `object assignment target`, which can include properties and a rest element.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -941,7 +941,7 @@ pub enum AssignmentTargetProperty<'a> {
 
 /// `foo` in `({ foo } = obj);`
 ///
-/// Represents an assignment target property identifier, which includes a binding,
+/// Represents an `assignment target property identifier`, which includes a binding,
 /// and an optional init expression.
 #[ast(visit)]
 #[derive(Debug)]
@@ -961,7 +961,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 
 /// `foo: bar` in `({ foo: bar } = obj);`
 ///
-/// Represents an assignment target property property, which includes a name and a binding.
+/// Represents an `assignment target property property`, which includes a name and a binding.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -992,7 +992,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 
 /// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
 ///
-/// Represents a sequence expression.
+/// Represents a `sequence expression`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1003,7 +1003,7 @@ pub struct SequenceExpression<'a> {
 
 /// `super` in `class C extends B { constructor() { super(); } }`
 ///
-/// Represents a super expression.
+/// Represents a `super expression`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1013,7 +1013,7 @@ pub struct Super {
 
 /// `await` in `await foo();`
 ///
-/// Represents an await expression, which can include an argument.
+/// Represents an `await expression`, which can include an argument.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1024,7 +1024,7 @@ pub struct AwaitExpression<'a> {
 
 /// `foo?.bar` in `foo?.bar;`
 ///
-/// Represents a chain expression, which can include an expression.
+/// Represents a `chain expression`, which can include an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1053,7 +1053,7 @@ pub enum ChainElement<'a> {
 
 /// `(a + b)` in `const res = (a + b) / c;`
 ///
-/// Represents a parenthesized expression, which can include an expression.
+/// Represents a `parenthesized expression`, which can include an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1101,7 +1101,7 @@ pub enum Statement<'a> {
 
 /// `"use strict";` in `"use strict";`
 ///
-/// Represents a directive statement, which can include a string literal.
+/// Represents a `directive statement`, which can include a string literal.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1116,7 +1116,7 @@ pub struct Directive<'a> {
 
 /// `#! /usr/bin/env node` in `#! /usr/bin/env node`
 ///
-/// Represents a hashbang directive, which can include a value.
+/// Represents a `hashbang directive`, which can include a value.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1127,7 +1127,7 @@ pub struct Hashbang<'a> {
 
 /// `{ let foo = 1; }` in `if(true) { let foo = 1; }`
 ///
-/// Represents a block statement, which can include a body.
+/// Represents a `block statement`, which can include a body.
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1173,7 +1173,7 @@ pub use match_declaration;
 
 /// `let a;` in `let a; a = 1;`
 ///
-/// Represents a variable declaration, which can include a kind, declarations, and modifiers.
+/// Represents a `variable declaration`, which can include a kind, declarations, and modifiers.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
