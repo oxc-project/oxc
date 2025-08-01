@@ -75,9 +75,23 @@ declare_oxc_lint!(
     ///     }
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule supports the following configuration options:
+    ///
+    /// - `minStatements` (number, default: 3): The minimum number of statements required
+    ///   in a function body to be considered for duplication detection.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///   "oxc/no-duplicate-code": ["warn", { "minStatements": 5 }]
+    /// }
+    /// ```
     NoDuplicateCode,
     oxc,
-    nursery
+    suspicious
 );
 
 impl Default for NoDuplicateCode {
@@ -372,6 +386,23 @@ fn test() {
             notify.send('completed');
         }
         "#,
+        
+        // Test minStatements configuration - should pass with minStatements=5
+        (
+            r#"
+            function smallA() {
+                let x = 1;
+                let y = 2;
+                return x + y;
+            }
+            function smallB() {
+                let x = 1;
+                let y = 2;
+                return x + y;
+            }
+            "#,
+            Some(serde_json::json!([{ "minStatements": 2 }])),
+        ),
     ];
 
     Tester::new(NoDuplicateCode::NAME, NoDuplicateCode::PLUGIN, pass, fail).test_and_snapshot();
