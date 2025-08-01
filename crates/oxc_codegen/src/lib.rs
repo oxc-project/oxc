@@ -44,7 +44,7 @@ pub use crate::{
 };
 
 // Re-export `IndentChar` from `oxc_data_structures`
-pub use oxc_data_structures::code_buffer::{DEFAULT_INDENT_WIDTH, IndentChar};
+pub use oxc_data_structures::code_buffer::IndentChar;
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
