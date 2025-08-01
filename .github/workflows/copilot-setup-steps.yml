@@ -1,0 +1,115 @@
+---
+name: Copilot Setup Steps
+
+# This workflow defines the setup steps that GitHub Copilot agents will use
+# to prepare the development environment for the oxc project.
+# It preinstalls tools and dependencies needed for Rust and Node.js development.
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  setup:
+    name: Setup Development Environment for Copilot
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d
+        # v1.3.1
+
+      # Setup Rust toolchain with the version specified in rust-toolchain.toml
+      - name: Setup Rust toolchain
+        uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d
+        # v1.0.0
+        with:
+          save-cache: false
+
+      # Setup Node.js with the version specified in .node-version
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        # v4.4.0
+        with:
+          node-version-file: .node-version
+
+      # Setup pnpm package manager
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+        # v3.0.0
+        with:
+          version: 10.13.1
+
+      # Install just command runner
+      - name: Install just command runner
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh |
+            bash -s -- --to ~/.local/bin
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # Install cargo-binstall for faster binary installations
+      - name: Install cargo-binstall
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf \
+            https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh \
+            | bash
+
+      # Install required cargo tools using cargo-binstall for speed
+      - name: Install development tools
+        run: |
+          cargo binstall --no-confirm watchexec-cli cargo-insta typos-cli \
+            cargo-shear dprint
+
+      # Install Node.js dependencies
+      - name: Install Node.js dependencies
+        run: pnpm install
+
+      # Verify installation by running basic commands
+      - name: Verify installations
+        run: |
+          echo "=== Rust toolchain ==="
+          rustc --version
+          cargo --version
+
+          echo "=== Node.js and pnpm ==="
+          node --version
+          pnpm --version
+
+          echo "=== Command runner ==="
+          just --version
+
+          echo "=== Development tools ==="
+          watchexec --version
+          cargo insta --version
+          typos --version
+          cargo shear --version
+          dprint --version
+
+          echo "=== Project commands ==="
+          just --list
+
+      # Run a quick build check to ensure everything is working
+      - name: Quick build check
+        run: |
+          cargo check --quiet
+          echo "✅ Rust build check passed"
+
+      # Display completion message
+      - name: Setup complete
+        run: |
+          echo "🎉 Development environment setup complete!"
+          echo "The following tools are now available:"
+          echo "  - Rust toolchain (version from rust-toolchain.toml)"
+          echo "  - Node.js and pnpm (versions from .node-version and"
+          echo "    package.json)"
+          echo "  - just command runner"
+          echo "  - Development tools: watchexec, cargo-insta, typos,"
+          echo "    cargo-shear, dprint"
+          echo "  - All Node.js dependencies installed"
+          echo ""
+          echo "You can now use 'just' commands to work with the project:"
+          echo "  - just ready   # Run all checks"
+          echo "  - just fmt     # Format code"
+          echo "  - just test    # Run tests"
+          echo "  - just lint    # Run linting"
