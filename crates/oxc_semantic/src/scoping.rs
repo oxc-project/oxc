@@ -269,7 +269,7 @@ impl Scoping {
         // Check if this is the first redeclaration by attempting to get the existing entry
         // This avoids the double lookup by checking containment within the mutation closure
         let mut is_first_redeclared = false;
-        
+
         // Borrow checker doesn't allow us to call `self.symbol_span` in `with_dependent_mut`,
         // so we need to potentially construct `Redeclaration` here. However, we only want to
         // construct it if it's actually needed (first redeclaration).
@@ -359,7 +359,7 @@ impl Scoping {
         if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
             return false;
         }
-        
+
         // Optimize by directly checking reference flags without creating iterator
         let reference_ids = &self.cell.borrow_dependent().resolved_references[symbol_id.index()];
         for &reference_id in reference_ids {
