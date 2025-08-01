@@ -5,7 +5,7 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::SPAN;
@@ -34,35 +34,14 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_known_global_methods(&self, node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
-        
+
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
-            let replacement = match constant_value {
-                ConstantValue::Number(n) => {
-                    Some(ctx.ast.expression_numeric_literal(ce.span, n, None, NumberBase::Decimal))
-                }
-                ConstantValue::String(s) => {
-                    Some(ctx.ast.expression_string_literal(ce.span, ctx.ast.atom_from_cow(&s), None))
-                }
-                ConstantValue::Boolean(b) => {
-                    Some(ctx.ast.expression_boolean_literal(ce.span, b))
-                }
-                ConstantValue::Undefined => {
-                    Some(ctx.ast.void_0(ce.span))
-                }
-                ConstantValue::Null => {
-                    Some(ctx.ast.expression_null_literal(ce.span))
-                }
-                // Skip BigInt for now
-                ConstantValue::BigInt(_) => None,
-            };
-            if let Some(replacement) = replacement {
-                ctx.state.changed = true;
-                *node = replacement;
-                return;
-            }
+            ctx.state.changed = true;
+            *node = ctx.value_to_expr(ce.span, constant_value);
+            return;
         }
-        
+
         // Handle special cases not suitable for constant evaluation
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
