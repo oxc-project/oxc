@@ -88,6 +88,23 @@ impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
     }
+
+    fn is_global_reference_ce(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
+        Some(ident.is_global_reference(self.0.scoping()))
+    }
+
+    fn get_constant_value_for_reference_id_ce(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        self.scoping()
+            .get_reference(reference_id)
+            .symbol_id()
+            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .filter(|sv| sv.write_references_count == 0 && !sv.for_statement_init)
+            .and_then(|sv| sv.initialized_constant.as_ref())
+            .cloned()
+    }
 }
 
 pub fn is_exact_int64(num: f64) -> bool {
