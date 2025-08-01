@@ -7,7 +7,7 @@ use oxc::{
 
 use crate::{
     babel::BabelCase,
-    driver::Driver,
+    driver::{Driver, DriverOptions},
     misc::MiscCase,
     suite::{Case, TestResult},
     test262::Test262Case,
@@ -23,18 +23,21 @@ fn get_result(
 ) -> TestResult {
     let mut driver = Driver {
         path: source_path.to_path_buf(),
-        transform: Some(options.unwrap_or_else(get_default_transformer_options)),
-        codegen: true,
+        options: DriverOptions {
+            transform: Some(options.unwrap_or_else(get_default_transformer_options)),
+            codegen: true,
+            ..DriverOptions::default()
+        },
         ..Driver::default()
     };
     let transformed1 = {
         driver.run(source_text, source_type);
-        driver.printed.clone()
+        driver.results.printed.clone()
     };
     // Second pass with only JavaScript syntax
     let transformed2 = {
         driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()));
-        driver.printed.clone()
+        driver.results.printed.clone()
     };
     if transformed1 == transformed2 {
         TestResult::Passed

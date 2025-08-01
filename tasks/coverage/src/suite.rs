@@ -20,7 +20,7 @@ use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{AppArgs, Driver, snap_root, workspace_root};
+use crate::{AppArgs, Driver, driver::{DriverOptions}, snap_root, workspace_root};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
@@ -326,7 +326,10 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         let mut driver = Driver {
             path: path.to_path_buf(),
-            allow_return_outside_function: self.allow_return_outside_function(),
+            options: DriverOptions {
+                allow_return_outside_function: self.allow_return_outside_function(),
+                ..DriverOptions::default()
+            },
             ..Driver::default()
         };
 
@@ -354,7 +357,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
             }
-            Err((output, driver.panicked))
+            Err((output, driver.results.panicked))
         }
     }
 

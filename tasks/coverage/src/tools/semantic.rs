@@ -7,7 +7,7 @@ use oxc::{
 
 use crate::{
     babel::BabelCase,
-    driver::Driver,
+    driver::{Driver, DriverOptions},
     misc::MiscCase,
     suite::{Case, TestResult},
     test262::Test262Case,
@@ -35,8 +35,11 @@ fn get_result(
 ) -> TestResult {
     let mut driver = Driver {
         path: source_path.to_path_buf(),
-        transform: Some(options.unwrap_or_else(get_default_transformer_options)),
-        check_semantic: true,
+        options: DriverOptions {
+            transform: Some(options.unwrap_or_else(get_default_transformer_options)),
+            check_semantic: true,
+            ..DriverOptions::default()
+        },
         ..Driver::default()
     };
 

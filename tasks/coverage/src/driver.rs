@@ -23,28 +23,38 @@ use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic
 
 use crate::suite::TestResult;
 
-#[expect(clippy::struct_excessive_bools)]
+/// Configuration options for the driver
 #[derive(Default)]
-pub struct Driver {
-    pub path: PathBuf,
-    // options
+pub struct DriverOptions {
     pub transform: Option<TransformOptions>,
     pub compress: bool,
     pub remove_whitespace: bool,
     pub codegen: bool,
     pub check_semantic: bool,
     pub allow_return_outside_function: bool,
-    // results
+}
+
+/// Test execution results
+#[derive(Default)]
+pub struct DriverResults {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
+}
+
+/// Main driver for running compilation tests
+#[derive(Default)]
+pub struct Driver {
+    pub path: PathBuf,
+    pub options: DriverOptions,
+    pub results: DriverResults,
 }
 
 impl CompilerInterface for Driver {
     fn parse_options(&self) -> ParseOptions {
         ParseOptions {
             parse_regular_expression: true,
-            allow_return_outside_function: self.allow_return_outside_function,
+            allow_return_outside_function: self.options.allow_return_outside_function,
             ..ParseOptions::default()
         }
     }
@@ -54,16 +64,16 @@ impl CompilerInterface for Driver {
     }
 
     fn transform_options(&self) -> Option<&TransformOptions> {
-        self.transform.as_ref()
+        self.options.transform.as_ref()
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::smallest)
+        self.options.compress.then(CompressOptions::smallest)
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
-        self.codegen.then(|| {
-            if self.remove_whitespace {
+        self.options.codegen.then(|| {
+            if self.options.remove_whitespace {
                 CodegenOptions::minify()
             } else {
                 CodegenOptions::default()
@@ -72,18 +82,18 @@ impl CompilerInterface for Driver {
     }
 
     fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {
-        self.errors.extend(errors);
+        self.results.errors.extend(errors);
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
-        self.panicked = *panicked;
+        self.results.panicked = *panicked;
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
         if (errors.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
-            self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
+            self.results.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
         program.to_estree_ts_json_with_fixes(false);
@@ -91,10 +101,10 @@ impl CompilerInterface for Driver {
     }
 
     fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
-        if self.check_semantic {
+        if self.options.check_semantic {
             let program = ret.semantic.nodes().program();
             if let Some(errors) = check_semantic_ids(program) {
-                self.errors.extend(errors);
+                self.results.errors.extend(errors);
                 return ControlFlow::Break(());
             }
         }
@@ -106,11 +116,11 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if self.check_semantic {
+        if self.options.check_semantic {
             if let Some(errors) =
                 check_semantic_after_transform(&transformer_return.scoping, program)
             {
-                self.errors.extend(errors);
+                self.results.errors.extend(errors);
                 return ControlFlow::Break(());
             }
         }
@@ -118,13 +128,13 @@ impl CompilerInterface for Driver {
     }
 
     fn after_codegen(&mut self, ret: CodegenReturn) {
-        self.printed = ret.code;
+        self.results.printed = ret.code;
     }
 }
 
 impl Driver {
     pub fn errors(&mut self) -> Vec<OxcDiagnostic> {
-        std::mem::take(&mut self.errors)
+        std::mem::take(&mut self.results.errors)
     }
 
     pub fn idempotency(
@@ -134,9 +144,9 @@ impl Driver {
         source_type: SourceType,
     ) -> TestResult {
         self.run(source_text, source_type);
-        let printed1 = self.printed.clone();
+        let printed1 = self.results.printed.clone();
         self.run(&printed1, source_type);
-        let printed2 = self.printed.clone();
+        let printed2 = self.results.printed.clone();
         if printed1 == printed2 {
             TestResult::Passed
         } else {
@@ -153,7 +163,8 @@ impl Driver {
         let mut uniq: FxHashSet<Span> = FxHashSet::default();
         for comment in comments {
             if !uniq.insert(comment.span) {
-                self.errors
+                self.results
+                    .errors
                     .push(OxcDiagnostic::error("Duplicate Comment").with_label(comment.span));
                 return true;
             }
@@ -208,19 +219,19 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
             Ok(pattern2) => {
                 let printed2 = pattern2.to_string();
                 if !pattern2.content_eq(pattern) {
-                    self.driver.errors.push(OxcDiagnostic::error(format!(
+                    self.driver.results.errors.push(OxcDiagnostic::error(format!(
                         "Regular Expression content mismatch for `{}`: `{pattern}` == `{pattern2}`",
                         literal.span.source_text(self.source_text)
                     )));
                 }
                 if printed1 != printed2 {
-                    self.driver.errors.push(OxcDiagnostic::error(format!(
+                    self.driver.results.errors.push(OxcDiagnostic::error(format!(
                         "Regular Expression mismatch: {printed1} {printed2}"
                     )));
                 }
             }
             Err(error) => {
-                self.driver.errors.push(OxcDiagnostic::error(format!(
+                self.driver.results.errors.push(OxcDiagnostic::error(format!(
                     "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
                     literal.span.source_text(self.source_text),
                 )));
