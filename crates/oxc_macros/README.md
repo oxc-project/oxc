@@ -13,51 +13,7 @@ This crate provides procedural macros that simplify the declaration and implemen
 - **Category management**: Organize rules into logical categories
 - **Boilerplate reduction**: Eliminates repetitive rule declaration code
 
-## Usage
 
-### Declaring a Lint Rule
-
-````rust
-use oxc_macros::declare_oxc_lint;
-
-declare_oxc_lint!(
-    /// # No Unused Variables
-    /// 
-    /// Disallow unused variables to keep code clean and prevent potential bugs.
-    ///
-    /// ## Examples
-    ///
-    /// Bad:
-    /// ```javascript
-    /// let unusedVar = 42;
-    /// ```
-    ///
-    /// Good:
-    /// ```javascript  
-    /// let usedVar = 42;
-    /// console.log(usedVar);
-    /// ```
-    NoUnusedVars,
-    correctness,  // Rule category
-    pending       // Implementation status
-);
-
-impl Rule for NoUnusedVars {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Rule implementation
-    }
-}
-````
-
-### Rule Categories
-
-Rules are organized into categories:
-
-- **correctness**: Catch bugs and incorrect code
-- **suspicious**: Flag potentially problematic patterns
-- **pedantic**: Enforce best practices and style
-- **performance**: Identify performance issues
-- **restriction**: Prevent certain language features
 
 ## Architecture
 

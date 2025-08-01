@@ -13,44 +13,7 @@ This crate provides visitor traits and implementations for systematically traver
 - **Generated implementations**: Most visitor code is auto-generated for consistency
 - **UTF-8 to UTF-16 conversion**: Special visitors for span conversion
 
-## Usage
 
-### Immutable Visitation
-
-```rust
-use oxc_ast_visit::{Visit, walk};
-use oxc_ast::ast::*;
-
-struct MyVisitor;
-
-impl<'a> Visit<'a> for MyVisitor {
-    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        println!("Found identifier: {}", ident.name);
-        walk::walk_identifier_reference(self, ident);
-    }
-}
-
-// Use the visitor
-let mut visitor = MyVisitor;
-visitor.visit_program(&program);
-```
-
-### Mutable Visitation
-
-```rust
-use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_ast::ast::*;
-
-struct MyTransformer;
-
-impl<'a> VisitMut<'a> for MyTransformer {
-    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        // Transform the identifier
-        ident.name = "transformed".into();
-        walk_mut::walk_identifier_reference_mut(self, ident);
-    }
-}
-```
 
 ## Architecture
 

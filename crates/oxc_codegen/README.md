@@ -14,42 +14,7 @@ This crate converts AST nodes back into source code strings, supporting JavaScri
 - **Comment preservation**: Maintain comments during code generation
 - **Binary expression optimization**: Intelligent parentheses insertion
 
-## Usage
 
-```rust
-use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_ast::ast::Program;
-
-let allocator = Allocator::default();
-let options = CodegenOptions::default();
-
-// Generate code from AST
-let mut codegen = Codegen::new(&allocator, &options);
-codegen.build(&program);
-
-let generated_code = codegen.into_source_text();
-println!("{}", generated_code);
-```
-
-### With Source Maps
-
-```rust
-use oxc_codegen::CodegenOptions;
-use oxc_sourcemap::SourcemapBuilder;
-
-let mut sourcemap_builder = SourcemapBuilder::default();
-let options = CodegenOptions {
-    source_map_path: Some("output.js.map".into()),
-    ..Default::default()
-};
-
-let mut codegen = Codegen::new(&allocator, &options);
-codegen.build(&program);
-
-let code = codegen.into_source_text();
-let sourcemap = std::mem::take(codegen.sourcemap_builder()).into_sourcemap();
-```
 
 ## Architecture
 

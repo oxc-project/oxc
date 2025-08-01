@@ -14,55 +14,7 @@ This crate provides a fast, spec-compliant parser for JavaScript and TypeScript 
 - **Error recovery**: Continues parsing after errors to provide complete AST
 - **Comprehensive AST**: Detailed node information with accurate source positions
 
-## Usage
 
-### Basic Parsing
-
-```rust
-use oxc_allocator::Allocator;
-use oxc_parser::{Parser, ParserReturn};
-use oxc_span::SourceType;
-
-let allocator = Allocator::default();
-let source_text = r#"
-import React from 'react';
-
-export const Component: React.FC = () => {
-    return <div>Hello World</div>;
-};
-"#;
-
-let source_type = SourceType::from_path("component.tsx").unwrap();
-let ParserReturn { program, errors, trivias, panicked } = 
-    Parser::new(&allocator, source_text, source_type).parse();
-
-if panicked {
-    eprintln!("Parser panicked - invalid syntax");
-} else if errors.is_empty() {
-    println!("Parsed successfully!");
-    // Use the AST...
-} else {
-    for error in errors {
-        eprintln!("Parse error: {}", error);
-    }
-}
-```
-
-### Source Type Detection
-
-```rust
-use oxc_span::SourceType;
-
-// Automatic detection from file extension
-let ts_type = SourceType::from_path("file.ts").unwrap();
-let jsx_type = SourceType::from_path("component.jsx").unwrap(); 
-let tsx_type = SourceType::from_path("component.tsx").unwrap();
-
-// Manual specification
-let source_type = SourceType::typescript()
-    .with_module(true)
-    .with_jsx(true);
-```
 
 ## Architecture
 

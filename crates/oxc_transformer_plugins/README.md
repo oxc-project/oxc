@@ -13,46 +13,7 @@ This crate provides specific transformation plugins that can be used independent
 - **Global defines replacement**: Replace compile-time constants
 - **Composable plugins**: Use individually or combine multiple plugins
 
-## Available Plugins
 
-### Global Variable Injection
-
-```rust
-use oxc_transformer_plugins::InjectGlobalVariablesPlugin;
-use oxc_traverse::traverse_mut;
-
-let mut plugin = InjectGlobalVariablesPlugin::new(vec![
-    ("process".to_string(), "globalThis.process".to_string()),
-    ("Buffer".to_string(), "globalThis.Buffer".to_string()),
-]);
-
-// Apply the transformation
-traverse_mut(&mut plugin, &allocator, &mut program, &mut TraverseCtx::new());
-```
-
-### Module Runner Transforms
-
-```rust
-use oxc_transformer_plugins::ModuleRunnerTransformPlugin;
-
-let mut plugin = ModuleRunnerTransformPlugin::new();
-// Transform modules for execution in different environments
-traverse_mut(&mut plugin, &allocator, &mut program, &mut TraverseCtx::new());
-```
-
-### Global Defines Replacement
-
-```rust
-use oxc_transformer_plugins::ReplaceGlobalDefinesPlugin;
-use std::collections::HashMap;
-
-let mut defines = HashMap::new();
-defines.insert("process.env.NODE_ENV".to_string(), "\"production\"".to_string());
-defines.insert("DEBUG".to_string(), "false".to_string());
-
-let mut plugin = ReplaceGlobalDefinesPlugin::new(defines);
-traverse_mut(&mut plugin, &allocator, &mut program, &mut TraverseCtx::new());
-```
 
 ## Architecture
 

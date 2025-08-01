@@ -14,25 +14,7 @@ This crate provides data structures and algorithms for building and analyzing Co
 - **DOT export**: Visualize CFGs using Graphviz dot format
 - **Visitor integration**: Works with oxc visitor patterns
 
-## Usage
 
-```rust
-use oxc_cfg::{ControlFlowGraph, visit::ControlFlowGraphVisitor};
-use oxc_semantic::Semantic;
-
-// Build CFG during semantic analysis
-let semantic = SemanticBuilder::new()
-    .with_cfg(true)  // Enable CFG construction
-    .build(&program);
-
-if let Some(cfg) = semantic.cfg() {
-    // Analyze the control flow graph
-    for block_id in cfg.basic_blocks.indices() {
-        let block = &cfg.basic_blocks[block_id];
-        println!("Block {}: {} instructions", block_id.index(), block.instructions().len());
-    }
-}
-```
 
 ## Architecture
 

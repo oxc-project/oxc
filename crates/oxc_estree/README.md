@@ -15,34 +15,6 @@ This crate provides compatibility with the ESTree AST specification, primarily f
 
 ## Usage
 
-The ESTree functionality is only available when the `serialize` feature is enabled:
-
-```toml
-[dependencies]
-oxc_estree = { version = "*", features = ["serialize"] }
-```
-
-### Serializing AST to ESTree JSON
-
-```rust
-use oxc_estree::ESTree;
-use serde_json;
-
-// Assuming you have an AST node that implements ESTree
-let json = serde_json::to_string_pretty(&ast_node)?;
-println!("{}", json);
-```
-
-### Working with ESTree-compatible Tools
-
-```rust
-// Convert oxc AST to ESTree format for use with external tools
-let estree_json = serde_json::to_value(&program)?;
-
-// Send to external tool or process with ESTree-based systems
-let result = external_tool.process(estree_json)?;
-```
-
 ## Architecture
 
 ### ESTree Specification

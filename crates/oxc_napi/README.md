@@ -14,23 +14,7 @@ This crate provides Node.js bindings for oxc tools, enabling JavaScript/TypeScri
 - **Comment preservation**: Maintains comments during processing
 - **Type safety**: TypeScript definitions for all APIs
 
-## Usage
 
-This crate is primarily used internally by oxc's Node.js packages, but can be used directly:
-
-```rust
-use oxc_napi::{convert_utf8_to_utf16, Comment, OxcError};
-use oxc_ast::ast::Program;
-use oxc_syntax::module_record::ModuleRecord;
-
-// Convert UTF-8 spans to UTF-16 for JavaScript compatibility
-let comments = convert_utf8_to_utf16(
-    source_text,
-    &mut program,
-    &mut module_record,
-    &mut errors
-);
-```
 
 ## Architecture
 

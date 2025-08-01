@@ -16,56 +16,6 @@ This crate provides shared syntax definitions, constants, and utilities used acr
 
 ## Key Components
 
-### Keywords and Identifiers
-
-```rust
-use oxc_syntax::{keyword::is_reserved_keyword, identifier::is_identifier_name};
-
-// Check if a string is a reserved keyword
-if is_reserved_keyword("function") {
-    println!("This is a reserved keyword");
-}
-
-// Validate identifier names
-if is_identifier_name("validName") {
-    println!("Valid JavaScript identifier");
-}
-```
-
-### Operators and Precedence
-
-```rust
-use oxc_syntax::{operator::BinaryOperator, precedence::Precedence};
-
-let op = BinaryOperator::Addition;
-let precedence = op.precedence();
-println!("Addition has precedence: {:?}", precedence);
-```
-
-### Node and Symbol Management
-
-```rust
-use oxc_syntax::{
-    node::{NodeId, NodeFlags},
-    symbol::{SymbolId, SymbolFlags},
-    scope::{ScopeId, ScopeFlags},
-    reference::{ReferenceId, ReferenceFlags}
-};
-
-// These types provide type-safe identifiers for semantic analysis
-let node_id: NodeId = NodeId::new(42);
-let symbol_id: SymbolId = SymbolId::new(10);
-```
-
-### Module Record
-
-```rust
-use oxc_syntax::module_record::{ModuleRecord, ExportEntry};
-
-let mut module_record = ModuleRecord::new();
-// Track imports and exports for module analysis
-```
-
 ## Architecture
 
 ### Design Principles

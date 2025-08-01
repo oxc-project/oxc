@@ -13,20 +13,7 @@ Oxc uses a bump-based memory arena for faster AST allocations. This crate provid
 - **Zero-copy data structures**: Efficient `Box`, `Vec`, `String`, and `HashMap` implementations
 - **Optimal for AST operations**: Perfect for parse-transform-emit workflows
 
-## Usage
 
-```rust
-use oxc_allocator::Allocator;
-
-// Create an allocator
-let allocator = Allocator::default();
-
-// Use it to allocate memory for AST nodes
-let boxed_value = allocator.alloc(42);
-let mut vec = allocator.alloc_vec();
-vec.push(1);
-vec.push(2);
-```
 
 ## Architecture
 

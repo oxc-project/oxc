@@ -13,26 +13,7 @@ This crate provides procedural macros that generate boilerplate code for AST nod
 - **Trait derivation**: Automatically derives common traits like `Debug`, `Clone`, etc.
 - **Code generation**: Reduces boilerplate and ensures consistency across AST types
 
-## Usage
 
-The primary macro is the `#[ast]` attribute, which should be applied to all AST node definitions:
-
-```rust
-use oxc_ast_macros::ast;
-
-#[ast]
-pub struct Program {
-    pub source_type: SourceType,
-    pub body: Vec<Statement>,
-}
-
-#[ast]  
-pub enum Statement {
-    BlockStatement(Box<BlockStatement>),
-    ExpressionStatement(Box<ExpressionStatement>),
-    // ... other variants
-}
-```
 
 ## What the `#[ast]` Macro Does
 

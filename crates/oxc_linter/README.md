@@ -14,47 +14,7 @@ This crate provides a fast, ESLint-compatible linting engine with comprehensive 
 - **TypeScript support**: Full TypeScript linting with type-aware rules
 - **Plugin system**: Extensible architecture for custom rules
 
-## Usage
 
-### Basic Linting
-
-```rust
-use oxc_allocator::Allocator;
-use oxc_linter::{Linter, LintOptions};
-use oxc_parser::{Parser, ParserReturn};
-use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
-
-let allocator = Allocator::default();
-let source_text = "const x = 1; console.log(x);";
-let source_type = SourceType::from_path("example.js").unwrap();
-
-// Parse and build semantic info
-let ParserReturn { program, .. } = Parser::new(&allocator, source_text, source_type).parse();
-let semantic = SemanticBuilder::new().build(&program);
-
-// Run linter
-let options = LintOptions::default();
-let linter = Linter::from_options(options);
-let diagnostics = linter.run(&program, &semantic);
-
-// Process diagnostics
-for diagnostic in diagnostics {
-    println!("{}", diagnostic);
-}
-```
-
-### Configuration
-
-```rust
-use oxc_linter::{LintOptions, RuleCategory};
-
-let options = LintOptions {
-    categories: RuleCategory::all(),
-    fix: true,  // Enable auto-fixing
-    ..Default::default()
-};
-```
 
 ## Architecture
 

@@ -13,44 +13,7 @@ This crate implements TypeScript's isolated declarations feature, which generate
 - **Incremental builds**: Enables faster TypeScript compilation workflows
 - **Comprehensive support**: Handles classes, functions, interfaces, and complex types
 
-## Usage
 
-```rust
-use oxc_allocator::Allocator;
-use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_parser::{Parser, ParserReturn};
-use oxc_span::SourceType;
-
-let allocator = Allocator::default();
-let source_text = r#"
-export interface User {
-    name: string;
-    age: number;
-}
-
-export function createUser(name: string, age: number): User {
-    return { name, age };
-}
-"#;
-
-let source_type = SourceType::from_path("example.ts").unwrap();
-let ParserReturn { program, .. } = Parser::new(&allocator, source_text, source_type).parse();
-
-let options = IsolatedDeclarationsOptions::default();
-let declarations = IsolatedDeclarations::new(&allocator, options);
-
-match declarations.build(&program) {
-    Ok(declaration_program) => {
-        // Generate .d.ts content from declaration_program
-        println!("Generated declarations successfully");
-    }
-    Err(errors) => {
-        for error in errors {
-            eprintln!("Declaration error: {}", error);
-        }
-    }
-}
-```
 
 ## Architecture
 

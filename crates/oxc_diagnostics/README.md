@@ -14,49 +14,7 @@ This crate provides comprehensive error handling and diagnostic reporting capabi
 - **Miette integration**: Compatible with the miette diagnostic ecosystem
 - **Severity levels**: Support for errors, warnings, and informational messages
 
-## Usage
 
-### Basic Error Creation
-
-```rust
-use oxc_diagnostics::{OxcDiagnostic, Result};
-
-fn parse_something() -> Result<()> {
-    // Create an error diagnostic
-    Err(OxcDiagnostic::error("Unexpected token")
-        .with_label("here")
-        .with_help("Try removing this token"))
-}
-```
-
-### Diagnostic Service
-
-```rust
-use oxc_diagnostics::{DiagnosticService, Error};
-
-let mut service = DiagnosticService::default();
-
-// Process errors from various sources
-let errors: Vec<Error> = vec![/* ... */];
-for error in errors {
-    service.receive(error);
-}
-
-// Format and display all collected diagnostics
-let formatted = service.format_diagnostics();
-println!("{}", formatted);
-```
-
-### With Source Context
-
-```rust
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
-
-let diagnostic = OxcDiagnostic::error("Syntax error")
-    .with_source_code(source_text)
-    .with_labels([span.label("unexpected token here")]);
-```
 
 ## Architecture
 

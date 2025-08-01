@@ -14,32 +14,7 @@ This crate provides variable name mangling capabilities for JavaScript minificat
 - **Configurable**: Options to preserve specific names or patterns
 - **Base54 encoding**: Efficient character usage for maximum compression
 
-## Usage
 
-```rust
-use oxc_mangler::{Mangler, MangleOptions};
-use oxc_semantic::Semantic;
-
-let options = MangleOptions::default();
-let mut mangler = Mangler::new(options);
-
-// Mangle variable names in the semantic analysis
-mangler.mangle(&semantic);
-
-// The semantic analysis now contains shortened variable names
-// Use with codegen to produce minified output
-```
-
-### Preserving Names
-
-```rust
-use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
-
-let options = MangleOptions {
-    keep_names: MangleOptionsKeepNames::from_vec(vec!["important_var".into()]),
-    ..Default::default()
-};
-```
 
 ## Architecture
 

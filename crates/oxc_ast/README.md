@@ -23,20 +23,7 @@ The AST design differs from estree in several important ways:
 - **Literal specialization**: Replaces generic `Literal` with `BooleanLiteral`, `NumericLiteral`, `StringLiteral`, etc.
 - **Evaluation order**: Field order follows ECMAScript evaluation order for consistency
 
-## Usage
 
-```rust
-use oxc_allocator::Allocator;
-use oxc_ast::ast::*;
-
-let allocator = Allocator::default();
-let ast = allocator.alloc(Program {
-    source_type: SourceType::default(),
-    hashbang: None,
-    directives: allocator.new_vec(),
-    body: allocator.new_vec(),
-});
-```
 
 ## Architecture
 
