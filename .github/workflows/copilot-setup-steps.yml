@@ -19,7 +19,7 @@ on:
 permissions: {}
 
 jobs:
-  setup:
+  copilot-setup-steps:
     name: Setup Development Environment for Copilot
     runs-on: ubuntu-latest
     steps:
