@@ -31,6 +31,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Having duplicate hooks in a describe block can lead to confusion and unexpected behavior.
+    /// When multiple hooks of the same type exist, they all execute in order, which can make it
+    /// difficult to understand the test setup flow and may result in redundant or conflicting
+    /// operations. This makes tests harder to maintain and debug.
     ///
     /// ### Examples
     ///
