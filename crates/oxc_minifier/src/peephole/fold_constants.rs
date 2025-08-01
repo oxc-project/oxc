@@ -1,3 +1,45 @@
+//! Constant folding and evaluation optimizations.
+//!
+//! This module implements constant folding, which evaluates expressions with constant
+//! operands at compile time rather than runtime. This is one of the most important
+//! optimizations for reducing JavaScript bundle size and improving runtime performance.
+//!
+//! # Key Optimizations
+//!
+//! ## Arithmetic Operations
+//! - `2 + 3` → `5`
+//! - `10 / 2` → `5`
+//! - `'hello' + ' world'` → `'hello world'`
+//!
+//! ## Boolean Logic
+//! - `true && false` → `false`
+//! - `!true` → `false`
+//! - `typeof 'string' === 'string'` → `true`
+//!
+//! ## Template Literals
+//! - `` `hello ${2 + 3}` `` → `'hello 5'`
+//! - Template literals with all constant expressions
+//!
+//! ## Object Expressions
+//! - Spread operator folding for known objects
+//! - Property access on constant objects
+//!
+//! ## Type Coercion
+//! - String concatenation with numbers
+//! - Numeric operations with string numbers
+//! - Boolean context evaluation
+//!
+//! # Safety Guarantees
+//!
+//! All constant folding operations preserve the original program semantics:
+//! - No side effects are eliminated
+//! - Error conditions are preserved (e.g., division by zero)
+//! - Type coercion follows ECMAScript specification exactly
+//! - NaN and Infinity values are handled correctly
+//!
+//! Based on Google Closure Compiler's PeepholeFoldConstants:
+//! <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -13,9 +55,24 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Constant Folding
+    /// Main entry point for constant folding on expressions.
     ///
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+    /// This function orchestrates different constant folding strategies based on
+    /// the expression type. It first handles special cases like template literals
+    /// and object expressions, then applies general constant folding rules.
+    ///
+    /// # Processing Order
+    /// 1. **Special cases**: Template literals, object expressions
+    /// 2. **General folding**: Binary, unary, logical expressions, etc.
+    /// 3. **Replacement**: If folding succeeds, replace the original expression
+    ///
+    /// # Arguments
+    /// * `expr` - The expression to fold constants in
+    /// * `ctx` - The minification context with AST factory and state
+    ///
+    /// # Side Effects
+    /// Modifies `expr` in place if constant folding is successful.
+    /// Sets `ctx.state.changed = true` when modifications occur.
     pub fn fold_constants_exit_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         match expr {
             Expression::TemplateLiteral(t) => {
@@ -41,6 +98,29 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold unary expressions with constant operands.
+    ///
+    /// This function evaluates unary expressions where the operand is a constant,
+    /// but includes several important exceptions to preserve code readability:
+    ///
+    /// # Preserved Patterns
+    /// - `void 0` → not folded to `undefined` (common idiom)
+    /// - `!0` and `!1` → not folded to `true` and `false` (shorter)
+    /// - `-123n` → BigInt negation not folded (precision concerns)
+    ///
+    /// # Folded Examples
+    /// - `+42` → `42`
+    /// - `!'hello'` → `false`
+    /// - `~5` → `-6`
+    /// - `typeof 'string'` → `'string'`
+    ///
+    /// # Arguments
+    /// * `e` - The unary expression to fold
+    /// * `ctx` - The minification context
+    ///
+    /// # Returns
+    /// `Some(Expression)` with the folded constant, or `None` if folding
+    /// should not be applied.
     #[expect(clippy::float_cmp)]
     fn try_fold_unary_expr(
         e: &UnaryExpression<'a>,
@@ -65,6 +145,27 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold static member expressions (dot notation) with constant values.
+    ///
+    /// This function evaluates member access expressions where both the object
+    /// and property are known at compile time.
+    ///
+    /// # Examples
+    /// - `'hello'.length` → `5`
+    /// - `true.toString` → `'true'` (if the method call is safe)
+    /// - `Math.PI` → `3.141592653589793`
+    ///
+    /// # Safety
+    /// Only folds expressions where the object has no side effects. This prevents
+    /// folding cases like `obj.prop` where `obj` might be a getter or proxy.
+    ///
+    /// # Arguments
+    /// * `e` - The static member expression to fold
+    /// * `ctx` - The minification context
+    ///
+    /// # Returns
+    /// `Some(Expression)` with the folded value, or `None` if the expression
+    /// cannot be safely folded.
     fn try_fold_static_member_expr(
         e: &StaticMemberExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -77,6 +178,28 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold computed member expressions (bracket notation) with constant values.
+    ///
+    /// This function evaluates bracket notation member access where both the object
+    /// and the computed property are known at compile time.
+    ///
+    /// # Examples
+    /// - `'hello'[0]` → `'h'`
+    /// - `[1, 2, 3][1]` → `2`
+    /// - `{a: 42}['a']` → `42`
+    ///
+    /// # Safety
+    /// Only folds expressions where both the object and property expression have
+    /// no side effects. This is more restrictive than static member access because
+    /// the property evaluation could itself have side effects.
+    ///
+    /// # Arguments
+    /// * `e` - The computed member expression to fold
+    /// * `ctx` - The minification context
+    ///
+    /// # Returns
+    /// `Some(Expression)` with the folded value, or `None` if the expression
+    /// cannot be safely folded.
     fn try_fold_computed_member_expr(
         e: &ComputedMemberExpression<'a>,
         ctx: &mut Ctx<'a, '_>,

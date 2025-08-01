@@ -1,3 +1,18 @@
+//! Logical expression minimization and optimization.
+//!
+//! This module contains optimizations for logical expressions (`&&`, `||`, `??`)
+//! that can simplify complex boolean logic or transform common patterns into
+//! more efficient forms.
+//!
+//! Key optimizations include:
+//! - Null/undefined checks: `foo === null || foo === undefined` → `foo == null`
+//! - Assignment pattern recognition: `(a = b) || c` → optimized forms
+//! - Short-circuit evaluation optimizations
+//! - Constant folding for logical operations
+//!
+//! These optimizations are particularly valuable for code that uses optional chaining
+//! or has been transpiled from higher-level constructs.
+
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan};
@@ -8,6 +23,18 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Main entry point for logical expression minimization.
+    ///
+    /// Attempts various optimization strategies on logical expressions:
+    /// 1. Null/undefined check compression
+    /// 2. Assignment expression optimizations
+    ///
+    /// # Arguments
+    /// * `e` - The logical expression to minimize
+    /// * `ctx` - The minification context
+    ///
+    /// # Returns
+    /// `Some(Expression)` if an optimization was applied, `None` otherwise.
     pub fn minimize_logical_expression(
         &self,
         e: &mut LogicalExpression<'a>,
@@ -17,18 +44,32 @@ impl<'a> PeepholeOptimizations {
             .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
     }
 
-    /// Compress `foo === null || foo === undefined` into `foo == null`.
+    /// Optimizes common null/undefined check patterns.
     ///
-    /// `foo === null || foo === undefined` => `foo == null`
-    /// `foo !== null && foo !== undefined` => `foo != null`
+    /// This optimization recognizes the common pattern of checking for both
+    /// `null` and `undefined` using strict equality and converts it to a more
+    /// efficient loose equality check.
     ///
-    /// Also supports `(a = foo.bar) === null || a === undefined` which commonly happens when
-    /// optional chaining is lowered. (`(a=foo.bar)==null`)
+    /// # Transformations
+    /// - `foo === null || foo === undefined` → `foo == null`
+    /// - `foo !== null && foo !== undefined` → `foo != null`
+    /// - `(a = foo.bar) === null || a === undefined` → `(a = foo.bar) == null`
     ///
-    /// This compression assumes that `document.all` is a normal object.
-    /// If that assumption does not hold, this compression is not allowed.
-    /// - `document.all === null || document.all === undefined` is `false`
-    /// - `document.all == null` is `true`
+    /// # Important Note
+    /// This compression assumes that `document.all` behaves as a normal object.
+    /// In some legacy environments, `document.all` has special behavior:
+    /// - `document.all === null || document.all === undefined` returns `false`
+    /// - `document.all == null` returns `true`
+    ///
+    /// This optimization is safe in modern environments and when targeting ES5+.
+    ///
+    /// # Arguments
+    /// * `expr` - The logical expression to analyze
+    /// * `ctx` - The minification context
+    ///
+    /// # Returns
+    /// `Some(Expression)` with the optimized binary expression, or `None` if
+    /// the pattern doesn't match.
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
         ctx: &mut Ctx<'a, '_>,

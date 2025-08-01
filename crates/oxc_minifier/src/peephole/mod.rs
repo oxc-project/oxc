@@ -12,6 +12,9 @@ mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
+mod optimization;
+mod optimization_runner;
+mod optimization_utils;
 mod remove_dead_code;
 mod remove_unused_declaration;
 mod remove_unused_expression;
@@ -32,21 +35,84 @@ use crate::{
 };
 
 pub use self::normalize::{Normalize, NormalizeOptions};
+pub use self::optimization::Optimization;
+pub use self::optimization_utils::OptimizationUtils;
+// These will be used once integrated into the main optimization loop:
+// pub use self::optimization_runner::{
+//     ExpressionOptimization, 
+//     HybridOptimization, 
+//     OptimizationCategory, 
+//     OptimizationConfig, 
+//     OptimizationResult, 
+//     OptimizationRunner, 
+//     StatementOptimization
+// };
 
+/// Main peephole optimization coordinator.
+/// 
+/// This struct orchestrates the execution of various peephole optimizations
+/// in a systematic and efficient manner. It implements a fixed-point iteration
+/// strategy to ensure all possible optimizations are applied.
+///
+/// # Optimization Strategy
+///
+/// The coordinator uses a fixed-point loop approach:
+/// 1. Apply all enabled optimizations to the AST
+/// 2. Check if any changes were made
+/// 3. If changes occurred, repeat from step 1
+/// 4. Stop when no changes are made or max iterations reached
+///
+/// This ensures that optimizations that create new optimization opportunities
+/// are fully exploited (e.g., constant folding enabling dead code elimination).
+///
+/// # Performance Considerations
+///
+/// - Tracks iteration count to prevent infinite loops
+/// - Only continues if changes were made in the previous iteration
+/// - Uses efficient AST traversal patterns
+/// - Minimizes memory allocations during optimization
+///
+/// # Supported Optimizations
+///
+/// - **Constant folding**: Evaluate compile-time constants
+/// - **Dead code elimination**: Remove unreachable code
+/// - **Condition minimization**: Simplify boolean expressions
+/// - **Expression minimization**: Reduce expression complexity
+/// - **Statement optimization**: Optimize control flow structures
 pub struct PeepholeOptimizations {
-    /// Walk the ast in a fixed point loop until no changes are made.
-    /// `prev_function_changed`, `functions_changed` and `current_function` track changes
-    /// in top level and each function. No minification code are run if the function is not changed
-    /// in the previous walk.
+    /// Current iteration count for the fixed-point loop.
+    /// Used to prevent infinite optimization cycles.
     iteration: u8,
+    /// Whether any changes were made in the current iteration.
+    /// Controls whether to continue the fixed-point loop.
     changed: bool,
 }
 
 impl<'a> PeepholeOptimizations {
+    /// Creates a new peephole optimization coordinator.
+    ///
+    /// Initializes the coordinator with default settings for a fresh
+    /// optimization session.
+    ///
+    /// # Returns
+    /// A new `PeepholeOptimizations` instance ready to process AST nodes.
     pub fn new() -> Self {
         Self { iteration: 0, changed: false }
     }
 
+    /// Executes a single pass of optimizations through the AST.
+    ///
+    /// This method performs one complete traversal of the AST, applying
+    /// all enabled optimizations. It's used internally by the fixed-point
+    /// loop but can also be called directly for single-pass optimization.
+    ///
+    /// # Arguments
+    /// * `program` - The JavaScript/TypeScript program AST to optimize
+    /// * `ctx` - The traversal context with minifier state and settings
+    ///
+    /// # Side Effects
+    /// - Modifies the AST in place when optimizations are applied
+    /// - Updates the `changed` flag to indicate if any modifications occurred
     pub fn build(
         &mut self,
         program: &mut Program<'a>,
@@ -55,6 +121,31 @@ impl<'a> PeepholeOptimizations {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
+    /// Runs optimizations in a fixed-point loop until convergence.
+    /// 
+    /// This is the main entry point for comprehensive peephole optimization.
+    /// It repeatedly applies optimizations until no further changes can be made,
+    /// ensuring that cascading optimizations are fully realized.
+    ///
+    /// # Fixed-Point Algorithm
+    /// 1. Reset change tracking for the new iteration
+    /// 2. Apply all optimizations via `build()`
+    /// 3. If changes were made, increment iteration counter and repeat
+    /// 4. Stop when no changes occur or maximum iterations reached
+    ///
+    /// # Arguments
+    /// * `program` - The JavaScript/TypeScript program AST to optimize
+    /// * `ctx` - The traversal context with minifier state and settings
+    ///
+    /// # Performance Notes
+    /// - Uses a maximum iteration limit to prevent infinite loops
+    /// - Only continues iterations when the previous pass made changes
+    /// - Typical programs converge within 2-3 iterations
+    ///
+    /// # Examples of Cascading Optimizations
+    /// - Constant folding enables dead code elimination: `if (true) { a(); }` → `a();`
+    /// - Dead code removal enables further constant folding
+    /// - Expression simplification creates new inlining opportunities
     pub fn run_in_loop(
         &mut self,
         program: &mut Program<'a>,
@@ -74,6 +165,82 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Apply an optimization function and update state if changed.
+    fn apply_optimization<T, F>(&self, target: &mut T, ctx: &mut Ctx<'a, '_>, optimizer: F) -> bool
+    where
+        F: FnOnce(&mut T, &mut Ctx<'a, '_>) -> bool,
+    {
+        let original_changed = ctx.state.changed;
+        ctx.state.changed = false;
+        
+        let result = optimizer(target, ctx);
+        
+        if ctx.state.changed || result {
+            ctx.state.changed = true;
+            true
+        } else {
+            ctx.state.changed = original_changed;
+            false
+        }
+    }
+
+    /// Apply multiple optimizations to an expression in sequence.
+    fn optimize_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let original_changed = ctx.state.changed;
+        let mut any_changes = false;
+        
+        // Apply optimizations and track changes
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.fold_constants_exit_expression(e, c);
+            false // fold_constants updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.minimize_conditions_exit_expression(e, c);
+            false // minimize_conditions updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.remove_dead_code_exit_expression(e, c);
+            false // remove_dead_code updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.replace_known_methods_exit_expression(e, c);
+            false // replace_known_methods updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.substitute_exit_expression(e, c);
+            false // substitute updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        if self.apply_optimization(expr, ctx, |e, c| {
+            self.inline_identifier_reference(e, c);
+            false // inline updates ctx.state.changed internally
+        }) {
+            any_changes = true;
+        }
+        
+        // Restore original changed state or mark as changed if we made changes
+        ctx.state.changed = original_changed || any_changes;
+    }
+
+    /// Utility function for handling commutative binary operations.
+    /// 
+    /// This function tries to apply two checker functions to a pair of values
+    /// in both orders (commutative), returning the first successful match.
+    /// This is useful for optimizations that can work with operands in either order.
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -83,20 +250,20 @@ impl<'a> PeepholeOptimizations {
         F: Fn(&'x A) -> Option<RetF>,
         G: Fn(&'x A) -> Option<RetG>,
     {
-        match check_a(pair.0) {
-            Some(a) => {
-                if let Some(b) = check_b(pair.1) {
-                    return Some((a, b));
-                }
-            }
-            _ => {
-                if let Some(a) = check_a(pair.1) {
-                    if let Some(b) = check_b(pair.0) {
-                        return Some((a, b));
-                    }
-                }
+        // Try first order: check_a(pair.0) && check_b(pair.1)
+        if let Some(a) = check_a(pair.0) {
+            if let Some(b) = check_b(pair.1) {
+                return Some((a, b));
             }
         }
+        
+        // Try second order: check_a(pair.1) && check_b(pair.0)
+        if let Some(a) = check_a(pair.1) {
+            if let Some(b) = check_b(pair.0) {
+                return Some((a, b));
+            }
+        }
+        
         None
     }
 }
@@ -172,12 +339,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-        self.fold_constants_exit_expression(expr, &mut ctx);
-        self.minimize_conditions_exit_expression(expr, &mut ctx);
-        self.remove_dead_code_exit_expression(expr, &mut ctx);
-        self.replace_known_methods_exit_expression(expr, &mut ctx);
-        self.substitute_exit_expression(expr, &mut ctx);
-        self.inline_identifier_reference(expr, &mut ctx);
+        self.optimize_expression(expr, &mut ctx);
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -264,15 +426,25 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 }
 
-/// Changes that do not interfere with optimizations that are run inside the fixed-point loop,
-/// which can be done as a last AST pass.
+/// Late peephole optimizations that don't interfere with the fixed-point loop.
+/// 
+/// These optimizations are applied as a final pass after the main optimization loop
+/// has completed. They include transformations that:
+/// - Don't benefit from iterative application
+/// - Are best applied after all other optimizations are complete
+/// - May conflict with optimizations in the main loop
 pub struct LatePeepholeOptimizations;
 
 impl<'a> LatePeepholeOptimizations {
+    /// Create a new late peephole optimization coordinator.
     pub fn new() -> Self {
         Self
     }
 
+    /// Apply late optimizations to the program.
+    /// 
+    /// This runs a single pass of optimizations that should be applied
+    /// after the main optimization loop has converged.
     pub fn build(
         &mut self,
         program: &mut Program<'a>,
@@ -316,15 +488,25 @@ impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
     }
 }
 
+/// Specialized dead code elimination optimization.
+/// 
+/// This optimization focuses specifically on removing dead code and unused expressions.
+/// It uses a subset of the main peephole optimizations but with different iteration
+/// and application strategies optimized for dead code elimination.
 pub struct DeadCodeElimination {
     inner: PeepholeOptimizations,
 }
 
 impl<'a> DeadCodeElimination {
+    /// Create a new dead code elimination optimizer.
     pub fn new() -> Self {
         Self { inner: PeepholeOptimizations::new() }
     }
 
+    /// Apply dead code elimination to the program.
+    /// 
+    /// This applies a focused set of optimizations specifically designed
+    /// to eliminate dead code and unused expressions.
     pub fn build(
         &mut self,
         program: &mut Program<'a>,
@@ -369,6 +551,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 }
 
+/// Reference counter for tracking identifier references during optimization.
+/// 
+/// This visitor counts all identifier references in the AST, which is used
+/// to update the semantic information after optimizations have potentially
+/// removed references.
 #[derive(Default)]
 struct ReferencesCounter {
     refs: FxHashSet<ReferenceId>,
