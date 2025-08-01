@@ -30,6 +30,14 @@ declare_oxc_lint!(
     /// specific order, which means it can be confusing if they're intermixed with test
     /// cases.
     ///
+    /// ### Why is this bad?
+    ///
+    /// When hooks are mixed with test cases, it becomes harder to understand
+    /// the test setup and execution order. This can lead to confusion about
+    /// which hooks apply to which tests and when they run. Grouping hooks at
+    /// the top of each `describe` block makes the test structure clearer and
+    /// more maintainable.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

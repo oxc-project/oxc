@@ -24,6 +24,14 @@ declare_oxc_lint!(
     /// API sugar functions to reduce the amount of boilerplate you have to write.
     /// These methods should be preferred when possible.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using generic mock functions like `mockImplementation(() => Promise.resolve())`
+    /// or `mockReturnValue(Promise.reject())` is more verbose and less readable than
+    /// Jest's specialized promise shorthands. The shorthand methods like
+    /// `mockResolvedValue()` and `mockRejectedValue()` are more expressive and
+    /// make the test intent clearer.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

@@ -29,6 +29,14 @@ declare_oxc_lint!(
     ///
     /// Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`
     ///
+    /// ### Why is this bad?
+    ///
+    /// When testing function calls, it's often more valuable to assert both
+    /// that a function was called AND what arguments it was called with.
+    /// Using `toBeCalled()` or `toHaveBeenCalled()` only verifies the function
+    /// was invoked, but doesn't validate the arguments, potentially missing
+    /// bugs where functions are called with incorrect parameters.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

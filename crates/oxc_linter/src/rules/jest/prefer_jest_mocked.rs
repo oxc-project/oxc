@@ -30,6 +30,14 @@ declare_oxc_lint!(
     /// - `jest.MockedClass`
     /// - `jest.MockedObject`
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using type assertions like `fn as jest.Mock` is a less safe approach
+    /// than using `jest.mocked()`. The `jest.mocked()` helper provides better
+    /// type safety by preserving the original function signature while adding
+    /// mock capabilities. It also makes the code more readable and explicit
+    /// about mocking intentions.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

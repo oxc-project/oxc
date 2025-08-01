@@ -52,6 +52,15 @@ declare_oxc_lint!(
     /// - Types
     /// - Calls to the standard Jest globals
     ///
+    /// ### Why is this bad?
+    ///
+    /// Having setup and teardown code outside of hooks can lead to unpredictable test
+    /// behavior. Code that runs at the top level executes when the test file is loaded,
+    /// not when tests run, which can cause issues with test isolation and make tests
+    /// dependent on execution order. Using proper hooks like `beforeEach`, `beforeAll`,
+    /// `afterEach`, and `afterAll` ensures that setup and teardown code runs at the
+    /// correct time and maintains test isolation.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

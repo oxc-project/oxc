@@ -46,6 +46,14 @@ declare_oxc_lint!(
     ///
     /// Ban specific matchers & modifiers from being used, and can suggest alternatives.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Some matchers or modifiers might be discouraged in your codebase for various reasons:
+    /// they might be deprecated, cause confusion, have performance implications, or there
+    /// might be better alternatives available. This rule allows you to enforce consistent
+    /// testing patterns by restricting certain Jest matchers and providing guidance on
+    /// preferred alternatives.
+    ///
     /// ### Examples
     ///
     /// Bans are expressed in the form of a map, with the value being either a string message to be shown,
