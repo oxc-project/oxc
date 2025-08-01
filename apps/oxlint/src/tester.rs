@@ -1,11 +1,13 @@
 #[cfg(test)]
-use crate::cli::{LintRunner, lint_command};
+use std::{env, path::PathBuf};
+
 #[cfg(test)]
 use cow_utils::CowUtils;
 #[cfg(test)]
 use lazy_regex::Regex;
+
 #[cfg(test)]
-use std::{env, path::PathBuf};
+use crate::cli::{LintRunner, lint_command};
 #[cfg(test)]
 pub struct Tester {
     cwd: PathBuf,

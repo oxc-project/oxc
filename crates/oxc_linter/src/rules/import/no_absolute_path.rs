@@ -1,3 +1,7 @@
+use std::path::Path;
+
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -5,8 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use serde_json::Value;
-use std::path::Path;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 

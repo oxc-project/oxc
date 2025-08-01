@@ -1,5 +1,6 @@
-use rustc_hash::{FxHashMap, FxHashSet};
 use std::borrow::Cow;
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
 use oxc_syntax::identifier::is_line_terminator;
