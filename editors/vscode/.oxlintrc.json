@@ -4,6 +4,6 @@
     "perf": "error"
   },
   "ignorePatterns": [
-    "**/fixtures"
+    "fixtures/**"
   ]
 }

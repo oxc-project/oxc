@@ -2000,6 +2000,7 @@ dependencies = [
  "fast-glob",
  "globset",
  "icu_segmenter",
+ "ignore",
  "indexmap",
  "insta",
  "itertools",
