@@ -28,7 +28,7 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 pub struct ValidTitleConfig {
     ignore_type_of_test_name: bool,
     ignore_type_of_describe_name: bool,
-    disallowed_words: Vec<CompactStr>,
+    disallowed_words_regex: Option<Regex>,
     ignore_space: bool,
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
     must_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
@@ -109,11 +109,21 @@ impl Rule for ValidTitle {
         let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let ignore_space = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
+        let disallowed_words: Vec<CompactStr> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
             .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
             .unwrap_or_default();
+        
+        // Pre-compile regex for disallowed words if any are specified
+        let disallowed_words_regex = if disallowed_words.is_empty() {
+            None
+        } else {
+            Regex::new(&format!(
+                r"(?iu)\b(?:{})\b",
+                disallowed_words.iter().map(|w| w.cow_replace('.', r"\.")).collect::<Vec<_>>().join("|")
+            )).ok()
+        };
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
             .and_then(compile_matcher_patterns)
@@ -125,7 +135,7 @@ impl Rule for ValidTitle {
         Self(Box::new(ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
-            disallowed_words,
+            disallowed_words_regex,
             ignore_space,
             must_not_match_patterns,
             must_match_patterns,
@@ -308,15 +318,8 @@ fn validate_title(
         Message::EmptyTitle.diagnostic(ctx, span);
     }
 
-    if !valid_title.disallowed_words.is_empty() {
-        let Ok(disallowed_words_reg) = Regex::new(&format!(
-            r"(?iu)\b(?:{})\b",
-            valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
-        )) else {
-            return;
-        };
-
-        if let Some(matched) = disallowed_words_reg.find(title) {
+    if let Some(ref regex) = valid_title.disallowed_words_regex {
+        if let Some(matched) = regex.find(title) {
             let error = format!("{} is not allowed in test title", matched.as_str());
             ctx.diagnostic(valid_title_diagnostic(
                 &error,

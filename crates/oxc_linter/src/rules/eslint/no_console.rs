@@ -10,14 +10,8 @@ use crate::{
     rule::Rule,
 };
 
-fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
-    let only_msg = if allow.is_empty() {
-        String::from("Delete this console statement.")
-    } else {
-        format!("Supported methods are: {}.", allow.join(", "))
-    };
-
-    OxcDiagnostic::warn("Unexpected console statement.").with_label(span).with_help(only_msg)
+fn no_console_diagnostic(span: Span, allow_message: String) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected console statement.").with_label(span).with_help(allow_message)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,6 +20,7 @@ pub struct NoConsole(Box<NoConsoleConfig>);
 #[derive(Debug, Default, Clone)]
 pub struct NoConsoleConfig {
     pub allow: Vec<CompactStr>,
+    pub allow_message: String, // Pre-computed message for better performance
 }
 
 impl std::ops::Deref for NoConsole {
@@ -93,15 +88,25 @@ declare_oxc_lint!(
 
 impl Rule for NoConsole {
     fn from_configuration(value: serde_json::Value) -> Self {
+        let allow: Vec<CompactStr> = value
+            .get(0)
+            .and_then(|v| v.get("allow"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
+            })
+            .unwrap_or_default();
+
+        // Pre-compute the allow message for better performance
+        let allow_message = if allow.is_empty() {
+            String::from("Delete this console statement.")
+        } else {
+            format!("Supported methods are: {}.", allow.join(", "))
+        };
+
         Self(Box::new(NoConsoleConfig {
-            allow: value
-                .get(0)
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
+            allow,
+            allow_message,
         }))
     }
 
@@ -140,7 +145,7 @@ impl Rule for NoConsole {
         let diagnostic_span = ident.span().merge(mem_span);
 
         ctx.diagnostic_with_suggestion(
-            no_console_diagnostic(diagnostic_span, &self.allow),
+            no_console_diagnostic(diagnostic_span, self.allow_message.clone()),
             |fixer| {
                 let parent = ctx.nodes().parent_node(node.id());
                 if let AstKind::CallExpression(_) = parent.kind() {

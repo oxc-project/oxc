@@ -1,3 +1,4 @@
+use rustc_hash::FxHashSet;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
     AstKind,
@@ -25,7 +26,7 @@ fn use_hook(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireHookConfig {
-    allowed_function_calls: Vec<CompactStr>,
+    allowed_function_calls: FxHashSet<CompactStr>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -162,7 +163,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireHook {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allowed_function_calls = value
+        let allowed_function_calls: FxHashSet<CompactStr> = value
             .get(0)
             .and_then(|config| config.get("allowedFunctionCalls"))
             .and_then(serde_json::Value::as_array)
