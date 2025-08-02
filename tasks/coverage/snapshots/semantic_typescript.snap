@@ -2223,7 +2223,7 @@ after transform: SymbolId(0): [ReferenceId(6), ReferenceId(8)]
 rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(5): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(6)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(5)]
 Reference symbol mismatch for "callme":
 after transform: SymbolId(2) "callme"
 rebuilt        : <None>
@@ -9039,8 +9039,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/deleteExpressionMustBeOptional.ts
 Bindings mismatch:
@@ -16890,20 +16890,20 @@ rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(7)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceErasedSignatures.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["SomeAbstractClass", "SomeBaseClass", "SomeClass", "_asyncToGenerator", "_defineProperty"]
-rebuilt        : ScopeId(0): ["SomeAbstractClass", "SomeClass", "_asyncToGenerator", "_defineProperty"]
+after transform: ScopeId(0): ["SomeAbstractClass", "SomeBaseClass", "SomeClass", "_asyncToGenerator"]
+rebuilt        : ScopeId(0): ["SomeAbstractClass", "SomeClass", "_asyncToGenerator"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(23), ScopeId(25), ScopeId(30), ScopeId(32), ScopeId(33)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(34)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(1): []
 Symbol reference IDs mismatch for "SomeAbstractClass":
 after transform: SymbolId(4): [ReferenceId(8), ReferenceId(12), ReferenceId(15), ReferenceId(18)]
-rebuilt        : SymbolId(2): [ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol reference IDs mismatch for "SomeClass":
 after transform: SymbolId(9): [ReferenceId(21), ReferenceId(23), ReferenceId(25)]
-rebuilt        : SymbolId(4): []
+rebuilt        : SymbolId(2): []
 Reference symbol mismatch for "SomeBaseClass":
 after transform: SymbolId(0) "SomeBaseClass"
 rebuilt        : <None>
@@ -19529,10 +19529,10 @@ rebuilt        : SymbolId(6): [ReferenceId(17), ReferenceId(19), ReferenceId(21)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/localTypeParameterInferencePriority.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Symbol reference IDs mismatch for "Table":
 after transform: SymbolId(4): [ReferenceId(14), ReferenceId(17), ReferenceId(22), ReferenceId(25)]
-rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(3)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["Array", "Pick", "Record"]
 rebuilt        : []
@@ -30108,14 +30108,14 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/thisConditionalOnMethodReturnOfGenericInstance.ts
 Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
 Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5)]
-rebuilt        : ScopeId(4): []
+rebuilt        : ScopeId(3): []
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(5): [ReferenceId(5), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(6)]
+rebuilt        : SymbolId(2): [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/thisExpressionOfGenericObject.ts
 Symbol reference IDs mismatch for "MyClass1":
@@ -32353,7 +32353,7 @@ after transform: SymbolId(3): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch for "Right":
 after transform: SymbolId(11): [ReferenceId(3), ReferenceId(29)]
-rebuilt        : SymbolId(5): [ReferenceId(8)]
+rebuilt        : SymbolId(5): [ReferenceId(4)]
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(19): [ReferenceId(51), ReferenceId(60)]
 rebuilt        : SymbolId(9): []
@@ -32382,7 +32382,7 @@ after transform: SymbolId(3): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch for "Right":
 after transform: SymbolId(11): [ReferenceId(3), ReferenceId(29)]
-rebuilt        : SymbolId(5): [ReferenceId(8)]
+rebuilt        : SymbolId(5): [ReferenceId(4)]
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(19): [ReferenceId(51), ReferenceId(60)]
 rebuilt        : SymbolId(9): []
@@ -34414,10 +34414,10 @@ after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "Generic":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Generic":
 after transform: SymbolId(0): Span { start: 7, end: 14 }
-rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/classTypes/indexersInClassType.ts
 Unresolved references mismatch:

@@ -261,7 +261,7 @@ impl<'a> ClassProperties<'a, '_> {
             #[expect(clippy::match_same_arms)]
             match element {
                 ClassElement::PropertyDefinition(prop) => {
-                    if !prop.r#static {
+                    if !prop.definite && !prop.r#static {
                         self.convert_instance_property(prop, &mut instance_inits, ctx);
                     }
                 }
