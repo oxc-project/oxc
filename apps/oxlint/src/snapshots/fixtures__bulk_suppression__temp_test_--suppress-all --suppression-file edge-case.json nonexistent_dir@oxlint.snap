@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --suppress-all --suppression-file edge-case.json nonexistent_dir
+working directory: fixtures/bulk_suppression/temp_test
+----------
+Generated suppression file: edge-case.json
+----------
+CLI result: LintSucceeded
+----------

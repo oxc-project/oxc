@@ -79,3 +79,4 @@ tokio = { workspace = true, optional = true }
 insta = { workspace = true }
 markdown = { workspace = true }
 project-root = { workspace = true }
+tempfile = { workspace = true }
