@@ -16,7 +16,7 @@ use napi_derive::napi;
 /// CLI arguments.
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options)]
-pub struct TestCommand {
+pub struct Options {
     /// Number of threads to use.
     /// * 0 for using as many CPU cores as system has (default).
     /// * 1 for using only 1 CPU core.
@@ -83,10 +83,10 @@ pub async fn run(start_workers: StartThreads) -> bool {
     println!("> Initializing");
 
     // Parse CLI args
-    let Some(command) = parse_options() else { return false };
+    let Some(options) = parse_options() else { return false };
 
     // Get number of threads to use
-    let thread_count = match get_threads(&command) {
+    let thread_count = match get_threads(&options) {
         Ok(thread_count) => thread_count,
         Err(err) => {
             eprintln!("{err}");
@@ -123,16 +123,16 @@ pub async fn run(start_workers: StartThreads) -> bool {
 }
 
 /// Parse options from CLI arguments.
-fn parse_options() -> Option<TestCommand> {
+fn parse_options() -> Option<Options> {
     let mut args = std::env::args_os();
     if args.next().is_some_and(|arg| arg == "node") {
         args.next();
     }
     let args = args.collect::<Vec<_>>();
 
-    let command_parser = test_command();
-    match command_parser.run_inner(&*args) {
-        Ok(command) => Some(command),
+    let options_parser = options();
+    match options_parser.run_inner(&*args) {
+        Ok(options) => Some(options),
         Err(e) => {
             e.print_message(100);
             None
@@ -148,10 +148,10 @@ fn parse_options() -> Option<TestCommand> {
 ///
 /// # Errors
 /// Returns `Err` if unable to determine number of threads.
-fn get_threads(command: &TestCommand) -> Result<u32, String> {
+fn get_threads(options: &Options) -> Result<u32, String> {
     let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
 
-    if let Some(thread_count) = command.threads {
+    if let Some(thread_count) = options.threads {
         if thread_count > 0 {
             if thread_count as usize > max_thread_count {
                 return Err(format!(
