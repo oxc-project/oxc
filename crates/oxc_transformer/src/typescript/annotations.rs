@@ -240,12 +240,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn exit_class(&mut self, class: &mut Class<'a>, _: &mut TraverseCtx<'a>) {
-        // Remove `declare` and `!` (definite assignment assertion) properties from the class body, other ts-only properties have been removed in `enter_class`.
-        // The reason that removing  properties here because the legacy-decorator plugin needs to transform
+        // Remove `declare` properties from the class body, other ts-only properties have been removed in `enter_class`.
+        // The reason that removing `declare` properties here because the legacy-decorator plugin needs to transform
         // `declare` field in the `exit_class` phase, so we have to ensure this step is run after the legacy-decorator plugin.
-        class.body.body.retain(|elem| {
-            !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare || prop.definite)
-        });
+        class
+            .body
+            .body
+            .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -353,6 +354,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         );
 
         def.accessibility = None;
+        def.definite = false;
         def.r#override = false;
         def.optional = false;
         def.readonly = false;
