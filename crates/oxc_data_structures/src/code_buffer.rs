@@ -484,22 +484,28 @@ impl CodeBuffer {
     /// Uses the configured indentation character and width.
     /// Prints `depth * indent_width` indent characters.
     ///
-    /// Optimized on assumption that more than 16 characters of indentation is rare.
+    /// Optimized on assumption that more than 32 characters of indentation is rare.
     ///
-    /// Fast path is to write 16 bytes of tabs/spaces in a single load + store,
+    /// Fast path is to write 32 bytes of tabs/spaces in a single load + store,
     /// but only advance `len` by the actual number of bytes. This avoids a `memset` function call.
     ///
     /// Take alternative slow path if either:
-    /// 1. Total characters to print > 16.
-    /// 2. Less than 16 bytes spare capacity in buffer (needs to grow).
+    /// 1. Total characters to print > 32.
+    /// 2. Less than 32 bytes spare capacity in buffer (needs to grow).
     /// Both of these cases should be rare.
     ///
-    /// <https://godbolt.org/z/zPT6Mzqsx>
+    /// We write 32 bytes because both tabs and spaces are supported.
+    /// When using spaces for indentation, it'll usually be 2 or 4 spaces per indent level,
+    /// and with 4 it only takes indent level of 5 to exceed 16 bytes. That'd be fairly common.
+    /// So we take the cost of 1 more SIMD XMM write to avoid hitting the cold path in such cases.
+    ///
+    /// <https://godbolt.org/z/P9x87q7nd>
     #[inline]
     pub fn print_indent(&mut self, depth: usize) {
         /// Size of chunks to write indent in.
-        /// 16 is largest register size (XMM) available on all x86_64 targets.
-        const CHUNK_SIZE: usize = 16;
+        /// 16 is largest register size (XMM) available on all x86_64 targets,
+        /// so writing 32 bytes takes 2 x XMM writes.
+        const CHUNK_SIZE: usize = 32;
 
         #[cold]
         #[inline(never)]
@@ -516,16 +522,16 @@ impl CodeBuffer {
             return;
         }
 
-        // Write 16 bytes of the indent character into buffer.
-        // On x86_64, this is 4 SIMD instructions (16 byte copy).
-        // SAFETY: We checked there are at least 16 bytes spare capacity.
+        // Write 32 bytes of the indent character into buffer.
+        // On x86_64, this is 5 SIMD instructions (32 byte copy).
+        // SAFETY: We checked there are at least 32 bytes spare capacity.
         unsafe {
             let ptr = self.buf.as_mut_ptr().add(len).cast::<[u8; CHUNK_SIZE]>();
             ptr.write([self.indent_char as u8; CHUNK_SIZE]);
         }
 
         // Update length of buffer.
-        // SAFETY: We checked there's at least 16 bytes spare capacity, and `bytes <= 16`,
+        // SAFETY: We checked there's at least 32 bytes spare capacity, and `bytes <= 32`,
         // so `len + bytes` cannot exceed capacity.
         // `len` cannot exceed `isize::MAX`, so `len + bytes` cannot wrap around.
         unsafe { self.buf.set_len(len + bytes) };
