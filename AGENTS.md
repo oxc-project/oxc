@@ -27,6 +27,11 @@ The repository follows a Rust workspace structure with multiple crates:
 - **`tasks/`** - Development tools, testing, and automation scripts
 - **`editors/`** - Editor integrations (VS Code extension, etc.)
 
+Start from the `crates/` directory when exploring the codebase.
+
+Sub-directories named `generated` are code generated, do not edit files in these directories.
+
+
 ### Important Crates Overview
 
 - **`oxc_parser`** - JavaScript/TypeScript parser
@@ -56,34 +61,39 @@ The project uses several tools for development:
 The project uses `just` as the primary command runner. Key commands include:
 
 ```bash
-# Initialize development environment
-just init
+# List available commands
+just --list
 
-# Run all checks (the "ready" command)
+# Run all checks
 just ready
 
 # Individual commands
-just fmt          # Format code
+just fmt          # Format code. Run after any code modifications.
 just check        # Check code without building
 just test         # Run tests
 just lint         # Run linting
 just doc          # Generate documentation
-just ast          # When directory `crates/oxc_ast` changes
+just ast          # Update generated files. Run when directory `crates/oxc_ast` changes
+just conformance  # Run conformance tests. Run when any Rust code changes.
 ```
 
 ### Building and Testing
 
+`just init` has already been run, all tools (`watchexec-cli`, `cargo-insta`, `typos-cli`, `cargo-shear`, `dprint`) are already installed, do not run `just init`.
+
+Rust and `cargo` components `clippy`, `rust-docs` and `rustfmt` has already been installed, do not install them.
+
 ```bash
-# Build all crates
-cargo build
+# Check all Rust code.
+just check
 
 # Run all tests
-cargo test
+just test
 
 # Build Node.js bindings
-pnpm build
+pnpm build-dev
 
-# Run Node.js tests
+# Run end-to-end Node.js tests
 pnpm test
 ```
 
