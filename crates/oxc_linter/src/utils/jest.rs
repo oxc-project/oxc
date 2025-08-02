@@ -328,6 +328,7 @@ mod test {
                 vec![ContextSubHost::new(
                     Rc::clone(&semantic_ret),
                     Arc::new(ModuleRecord::default()),
+                    0,
                 )],
                 LintOptions::default(),
                 Arc::default(),
