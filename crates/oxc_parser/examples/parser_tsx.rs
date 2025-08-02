@@ -1,11 +1,10 @@
-//! # TypeScript JSX Parser Example
+//! # TypeScript JSX Parsing Example
 //!
-//! This example demonstrates parsing TypeScript JSX (TSX) code using the Oxc parser.
-//! It shows how to handle React components with TypeScript type annotations.
+//! This example demonstrates parsing TypeScript files with JSX syntax.
+//! It shows how to parse a simple React component and validate the parsing results.
 //!
 //! ## Usage
 //!
-//! Run the example:
 //! ```bash
 //! cargo run -p oxc_parser --example parser_tsx
 //! ```
@@ -14,8 +13,9 @@ use oxc_allocator::Allocator;
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
-/// Example TypeScript JSX code representing a React counter component
-const SAMPLE_TSX_CODE: &str = r"
+/// Parse a TypeScript JSX file and validate the results
+fn main() {
+    let source_text = r"
 import React from 'react';
 
 /**
@@ -33,51 +33,20 @@ export const Counter: React.FC = () => {
     )
 }";
 
-fn main() {
-    println!("Parsing TypeScript JSX Example");
-    println!("==============================\n");
-
     // Memory arena where AST nodes get stored
     let allocator = Allocator::default();
-
-    // Infers TypeScript + JSX + ESM modules from the filename
+    // Infers TypeScript + JSX + ESM modules
     let source_type = SourceType::from_path("Counter.tsx").unwrap();
 
-    println!("Source type: {:?}", source_type);
-    println!("Sample code:\n{}\n", SAMPLE_TSX_CODE);
-
-    // Parse the TypeScript JSX code
     let ParserReturn {
         program,  // AST
         errors,   // Syntax errors
         panicked, // Parser encountered an error it couldn't recover from
         ..
-    } = Parser::new(&allocator, SAMPLE_TSX_CODE, source_type).parse();
+    } = Parser::new(&allocator, source_text, source_type).parse();
 
-    // Validate parsing results
-    validate_parsing_results(panicked, &errors, &program);
-
-    // Display parsing statistics
-    display_parsing_statistics(&program);
-
-    println!("✅ TypeScript JSX parsing completed successfully!");
-}
-
-/// Validate that parsing completed without critical errors
-fn validate_parsing_results(
-    panicked: bool,
-    errors: &[oxc_diagnostics::OxcDiagnostic],
-    program: &oxc_ast::ast::Program,
-) {
-    assert!(!panicked, "Parser should not panic on valid TSX code");
-    assert!(errors.is_empty(), "No syntax errors should be present in the sample code");
-    assert!(!program.body.is_empty(), "Program body should contain statements");
-}
-
-/// Display statistics about the parsed program
-fn display_parsing_statistics(program: &oxc_ast::ast::Program) {
-    println!("Parsing Statistics:");
-    println!("- Statements: {}", program.body.len());
-    println!("- Comments: {}", program.comments.len());
-    println!("- Hashbang: {:?}", program.hashbang);
+    assert!(!panicked);
+    assert!(errors.is_empty());
+    assert!(!program.body.is_empty());
+    assert_eq!(program.comments.len(), 1);
 }
