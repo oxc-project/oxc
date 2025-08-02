@@ -95,6 +95,8 @@ pub async fn run(start_workers: StartThreads) -> bool {
     };
 
     // Call JS to start worker threads
+    RUNNERS.lock().unwrap().reserve_exact(thread_count as usize);
+
     start_workers.call_async(thread_count).await.unwrap().await.unwrap();
 
     let mut runners = {
