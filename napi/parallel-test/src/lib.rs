@@ -106,7 +106,8 @@ pub async fn run(start_workers: StartThreads) -> bool {
     }
 
     // Start `rayon` thread pool with same number of threads
-    // SAFETY: TODO
+    // SAFETY: `runners` lives until the end of this function.
+    // No work occurs in thread pool after end of this function.
     unsafe { init_rayon_thread_pool(runners) };
 
     println!("> Initialized {thread_count} workers");
