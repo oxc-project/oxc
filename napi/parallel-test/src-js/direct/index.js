@@ -4,9 +4,13 @@ import { run } from '../bindings.js';
 
 const WORKER_URL = new URL('./worker.js', import.meta.url);
 
+let log = false;
+
 const workers = [];
 const success = await run(startWorkers);
 await stopWorkers();
+
+if (log) console.log('> Success:', success);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
@@ -15,10 +19,12 @@ if (!success) process.exitCode = 1;
 
 /**
  * @param {number} count - Number of workers
- * @param {boolean} log - `true` if logging is enabled
+ * @param {boolean} shouldLog - `true` if logging is enabled
  * @returns {Promise<undefined>}
  */
-function startWorkers(count, log) {
+function startWorkers(count, shouldLog) {
+  log = shouldLog;
+
   if (log) console.log('> Starting', count, 'workers');
 
   return new Promise((resolve) => {
