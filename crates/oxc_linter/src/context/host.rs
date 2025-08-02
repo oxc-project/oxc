@@ -30,11 +30,23 @@ pub struct ContextSubHost<'a> {
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
     #[expect(dead_code)]
     pub(super) framework_options: FrameworkOptions,
+    /// The source text offset of the sub host
+    #[expect(dead_code)]
+    pub(super) source_text_offset: u32,
 }
 
 impl<'a> ContextSubHost<'a> {
-    pub fn new(semantic: Rc<Semantic<'a>>, module_record: Arc<ModuleRecord>) -> Self {
-        Self::new_with_framework_options(semantic, module_record, FrameworkOptions::Default)
+    pub fn new(
+        semantic: Rc<Semantic<'a>>,
+        module_record: Arc<ModuleRecord>,
+        source_text_offset: u32,
+    ) -> Self {
+        Self::new_with_framework_options(
+            semantic,
+            module_record,
+            source_text_offset,
+            FrameworkOptions::Default,
+        )
     }
 
     /// # Panics
@@ -42,6 +54,7 @@ impl<'a> ContextSubHost<'a> {
     pub fn new_with_framework_options(
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
+        source_text_offset: u32,
         frameworks_options: FrameworkOptions,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
@@ -57,6 +70,7 @@ impl<'a> ContextSubHost<'a> {
         Self {
             semantic,
             module_record,
+            source_text_offset,
             disable_directives: Rc::new(disable_directives),
             framework_options: frameworks_options,
         }
