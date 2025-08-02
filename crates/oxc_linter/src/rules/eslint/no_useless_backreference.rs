@@ -17,13 +17,24 @@ fn no_useless_backreference_diagnostic(
     back_reference: &str,
     group: &str,
 ) -> OxcDiagnostic {
-    match problem {
-        Problem::Nested =>OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group.")).with_label(span),
-        Problem::Disjunctive => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative.")).with_label(span),
-        Problem::Forward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern.")).with_label(span),
-        Problem::Backward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind.")).with_label(span),
-        Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround.")).with_label(span),
-    }
+    let message = match problem {
+        Problem::Nested => format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group."
+        ),
+        Problem::Disjunctive => format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative."
+        ),
+        Problem::Forward => format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern."
+        ),
+        Problem::Backward => format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind."
+        ),
+        Problem::IntoNegativeLookaround => format!(
+            "Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround."
+        ),
+    };
+    OxcDiagnostic::warn(message).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

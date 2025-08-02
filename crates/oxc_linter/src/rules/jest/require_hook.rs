@@ -1,4 +1,3 @@
-use rustc_hash::FxHashSet;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
     AstKind,
@@ -8,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,

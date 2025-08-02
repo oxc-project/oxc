@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -18,7 +19,7 @@ pub struct NoHooks(Box<NoHooksConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHooksConfig {
-    allow: Vec<CompactStr>,
+    allow: FxHashSet<CompactStr>,
 }
 
 impl std::ops::Deref for NoHooks {
@@ -85,7 +86,7 @@ declare_oxc_lint!(
 
 impl Rule for NoHooks {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow = value
+        let allow: FxHashSet<CompactStr> = value
             .get(0)
             .and_then(|config| config.get("allow"))
             .and_then(serde_json::Value::as_array)

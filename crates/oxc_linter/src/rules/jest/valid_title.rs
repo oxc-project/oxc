@@ -114,15 +114,20 @@ impl Rule for ValidTitle {
             .and_then(|v| v.as_array())
             .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
             .unwrap_or_default();
-        
+
         // Pre-compile regex for disallowed words if any are specified
         let disallowed_words_regex = if disallowed_words.is_empty() {
             None
         } else {
             Regex::new(&format!(
                 r"(?iu)\b(?:{})\b",
-                disallowed_words.iter().map(|w| w.cow_replace('.', r"\.")).collect::<Vec<_>>().join("|")
-            )).ok()
+                disallowed_words
+                    .iter()
+                    .map(|w| w.cow_replace('.', r"\."))
+                    .collect::<Vec<_>>()
+                    .join("|")
+            ))
+            .ok()
         };
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))

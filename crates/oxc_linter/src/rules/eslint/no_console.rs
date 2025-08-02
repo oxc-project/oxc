@@ -92,9 +92,7 @@ impl Rule for NoConsole {
             .get(0)
             .and_then(|v| v.get("allow"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         // Pre-compute the allow message for better performance
@@ -104,10 +102,7 @@ impl Rule for NoConsole {
             format!("Supported methods are: {}.", allow.join(", "))
         };
 
-        Self(Box::new(NoConsoleConfig {
-            allow,
-            allow_message,
-        }))
+        Self(Box::new(NoConsoleConfig { allow, allow_message }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
