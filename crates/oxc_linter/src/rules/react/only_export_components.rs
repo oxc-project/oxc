@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Declaration, Expression, ExportDefaultDeclaration, ExportNamedDeclaration,
-        Program,
-    },
+    ast::{Declaration, ExportDefaultDeclaration, ExportNamedDeclaration, Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -26,8 +23,10 @@ fn named_export_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn anonymous_export_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Fast refresh can't handle anonymous components. Add a name to your export.")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Fast refresh can't handle anonymous components. Add a name to your export.",
+    )
+    .with_label(span)
 }
 
 fn local_components_diagnostic(span: Span) -> OxcDiagnostic {
@@ -56,10 +55,10 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// "Fast Refresh", also known as "hot reloading", is a feature in many modern bundlers.
-    /// If you update some React component(s) on disk, then the bundler will know to update 
+    /// If you update some React component(s) on disk, then the bundler will know to update
     /// only the impacted parts of your page -- without a full page reload.
     ///
-    /// This rule enforces that your components are structured in a way that integrations 
+    /// This rule enforces that your components are structured in a way that integrations
     /// such as react-refresh expect.
     ///
     /// ### Examples
@@ -103,10 +102,11 @@ impl Rule for OnlyExportComponents {
 
         // Check if this is a test file - skip if so
         let filename = ctx.file_path().file_name().unwrap_or_default().to_string_lossy();
-        if filename.contains(".test.") 
-            || filename.contains(".spec.") 
-            || filename.contains(".cy.") 
-            || filename.contains(".stories.") {
+        if filename.contains(".test.")
+            || filename.contains(".spec.")
+            || filename.contains(".cy.")
+            || filename.contains(".stories.")
+        {
             return;
         }
 
@@ -146,7 +146,11 @@ impl OnlyExportComponents {
                 // Handle export default declarations
                 oxc_ast::ast::Statement::ExportDefaultDeclaration(export_default) => {
                     has_exports = true;
-                    self.handle_export_default_declaration(export_default, &mut has_react_export, ctx);
+                    self.handle_export_default_declaration(
+                        export_default,
+                        &mut has_react_export,
+                        ctx,
+                    );
                 }
 
                 // Handle export named declarations
@@ -166,7 +170,10 @@ impl OnlyExportComponents {
 
                 // Check for local components (not exported)
                 oxc_ast::ast::Statement::VariableDeclaration(var_decl) => {
-                    self.check_variable_declaration_for_local_components(var_decl, &mut local_components);
+                    self.check_variable_declaration_for_local_components(
+                        var_decl,
+                        &mut local_components,
+                    );
                 }
 
                 oxc_ast::ast::Statement::FunctionDeclaration(func_decl) => {
@@ -263,7 +270,7 @@ impl OnlyExportComponents {
         // Handle named exports (export { ... })
         for specifier in &export_named.specifiers {
             let exported_name = self.extract_module_export_name(&specifier.exported);
-            
+
             if self.is_react_component_name(exported_name) {
                 *has_react_export = true;
             } else {
@@ -284,9 +291,10 @@ impl OnlyExportComponents {
                 for declarator in &var_decl.declarations {
                     if let Some(id) = declarator.id.get_binding_identifier() {
                         let name = &id.name;
-                        
+
                         if self.is_react_component_name(name)
-                            && self.can_be_react_function_component(&declarator.init) {
+                            && self.can_be_react_function_component(&declarator.init)
+                        {
                             *has_react_export = true;
                         } else if self.is_react_context_creation(&declarator.init) {
                             react_context_exports.push(id.span);
@@ -325,15 +333,19 @@ impl OnlyExportComponents {
     ) {
         for declarator in &var_decl.declarations {
             if let Some(id) = declarator.id.get_binding_identifier() {
-                if self.is_react_component_name(&id.name) 
-                    && self.can_be_react_function_component(&declarator.init) {
+                if self.is_react_component_name(&id.name)
+                    && self.can_be_react_function_component(&declarator.init)
+                {
                     local_components.push(id.span);
                 }
             }
         }
     }
 
-    fn extract_module_export_name<'a>(&self, export_name: &'a oxc_ast::ast::ModuleExportName<'a>) -> &'a str {
+    fn extract_module_export_name<'a>(
+        &self,
+        export_name: &'a oxc_ast::ast::ModuleExportName<'a>,
+    ) -> &'a str {
         match export_name {
             oxc_ast::ast::ModuleExportName::IdentifierName(ident) => &ident.name,
             oxc_ast::ast::ModuleExportName::IdentifierReference(ident) => &ident.name,
