@@ -1,8 +1,6 @@
 # Benchmarks are sharded.
 #
 # Each benchmark (parser, transformer, etc) runs in parallel in a separate job.
-# Linter benchmarks are much slower to build and run than the rest, so linter benchmark
-# is built in 1 job, and then run on each fixture in parallel in separate jobs.
 #
 # See https://docs.codspeed.io/features/sharded-benchmarks
 
@@ -43,7 +41,6 @@ defaults:
     shell: bash
 
 jobs:
-  # Build and run benchmarks for all components except linter
   benchmark:
     runs-on: ubuntu-latest
     strategy:
