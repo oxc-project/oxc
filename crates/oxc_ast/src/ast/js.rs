@@ -679,7 +679,6 @@ pub struct UpdateExpression<'a> {
 
 /// `typeof` in `typeof a === "string"`
 ///
-/// Represents a unary expression, which includes an operator and an argument.
 /// The following syntaxes are supported: `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -717,7 +716,6 @@ pub struct PrivateInExpression<'a> {
 
 /// `||` in `const foo = bar || 2;`
 ///
-/// Represents a logical expression, which includes a left expression, an operator, and a right expression.
 /// The following syntaxes are supported: `||`, `&&` and `??`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -730,8 +728,6 @@ pub struct LogicalExpression<'a> {
 }
 
 /// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
-///
-/// Represents a conditional expression, which includes a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -743,8 +739,6 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// `foo = 1` in `let foo; foo = 1;`
-///
-/// Represents an assignment expression, which includes an operator, a target, and an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -940,9 +934,6 @@ pub enum AssignmentTargetProperty<'a> {
 }
 
 /// `foo` in `({ foo } = obj);`
-///
-/// Represents an assignment target property identifier, which includes a binding,
-/// and an optional init expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -960,8 +951,6 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 }
 
 /// `foo: bar` in `({ foo: bar } = obj);`
-///
-/// Represents an assignment target property property, which includes a name and a binding.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
