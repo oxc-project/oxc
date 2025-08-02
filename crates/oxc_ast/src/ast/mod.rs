@@ -173,6 +173,8 @@
 //!
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
+// Dummy comment to run CI
+
 // Re-export AST types from other crates
 pub use oxc_span::{Atom, Language, LanguageVariant, ModuleKind, SourceType, Span};
 pub use oxc_syntax::{
