@@ -15,7 +15,7 @@ if (!success) process.exitCode = 1;
 
 /**
  * @param {number} count - Number of workers
- * @param {bool} log - `true` if logging is enabled
+ * @param {boolean} log - `true` if logging is enabled
  * @returns {Promise<undefined>}
  */
 function startWorkers(count, log) {
