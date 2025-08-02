@@ -9,6 +9,7 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
+use rayon::ThreadPoolBuilder;
 
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
@@ -72,11 +73,15 @@ pub async fn run(start_workers: StartThreads) -> bool {
         mem::take(&mut *runners)
     };
 
+    let thread_count = thread_count as usize;
     #[expect(clippy::print_stderr)]
-    if runners.len() != thread_count as usize {
+    if runners.len() != thread_count {
         eprintln!("Failed to start worker threads");
         return false;
     }
+
+    // Start `rayon` thread pool with same number of threads
+    ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
     println!("> Initialized {thread_count} workers");
 

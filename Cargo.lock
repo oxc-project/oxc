@@ -2164,6 +2164,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "rayon",
  "tokio",
 ]
 
