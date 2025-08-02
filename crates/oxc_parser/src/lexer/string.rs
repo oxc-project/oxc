@@ -1,5 +1,6 @@
 use std::cmp::max;
 
+use likely_stable::unlikely;
 use oxc_allocator::StringBuilder;
 
 use crate::diagnostics;
@@ -237,11 +238,10 @@ impl<'a> Lexer<'a> {
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
     pub(super) fn save_string(&mut self, has_escape: bool, s: &'a str) {
-        if !has_escape {
-            return;
+        if unlikely(has_escape) {
+            self.escaped_strings.insert(self.token.start(), s);
+            self.token.set_escaped(true);
         }
-        self.escaped_strings.insert(self.token.start(), s);
-        self.token.set_escaped(true);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {

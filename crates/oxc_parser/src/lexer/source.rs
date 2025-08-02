@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, marker::PhantomData, slice, str};
 
+use likely_stable::{likely, unlikely};
 use oxc_data_structures::pointer_ext::PointerExt;
 
 use crate::{MAX_LEN, UniquePromise};
@@ -146,7 +147,7 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn is_eof(&self) -> bool {
         // TODO: Use `self.remaining_bytes() == 0` instead?
-        self.ptr == self.end
+        unlikely(self.ptr == self.end)
     }
 
     /// Get current position.
@@ -368,7 +369,7 @@ impl<'a> Source<'a> {
     pub(super) fn next_char(&mut self) -> Option<char> {
         // Check not at EOF and handle ASCII bytes
         let byte = self.peek_byte()?;
-        if byte.is_ascii() {
+        if likely(byte.is_ascii()) {
             // SAFETY: We already exited if at EOF, so `ptr < end`.
             // So incrementing `ptr` cannot result in `ptr > end`.
             // Current byte is ASCII, so incremented `ptr` must be on a UTF-8 character boundary.
@@ -396,7 +397,7 @@ impl<'a> Source<'a> {
     pub(super) fn next_2_chars(&mut self) -> Option<[char; 2]> {
         // Check not at EOF and handle if 2 x ASCII bytes
         let [byte1, byte2] = self.peek_2_bytes()?;
-        if byte1.is_ascii() && byte2.is_ascii() {
+        if likely(byte1.is_ascii() && byte2.is_ascii()) {
             // SAFETY: We just checked that there are at least 2 bytes remaining,
             // and next 2 bytes are ASCII, so advancing by 2 bytes must put `ptr`
             // in bounds and on a UTF-8 character boundary
@@ -502,7 +503,7 @@ impl<'a> Source<'a> {
     pub(super) fn peek_char(&self) -> Option<char> {
         // Check not at EOF and handle ASCII bytes
         let byte = self.peek_byte()?;
-        if byte.is_ascii() {
+        if likely(byte.is_ascii()) {
             return Some(byte as char);
         }
 
@@ -535,7 +536,7 @@ impl<'a> Source<'a> {
     /// Peek next two bytes of source without consuming them.
     #[inline]
     pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
-        if self.remaining_bytes() >= 2 {
+        if likely(self.remaining_bytes() >= 2) {
             // SAFETY: The check above ensures that there are at least 2 bytes to
             // read from current position without reading past end
             let bytes = unsafe { self.position().read2() };

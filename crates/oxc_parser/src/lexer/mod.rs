@@ -7,6 +7,7 @@
 
 use rustc_hash::FxHashMap;
 
+use likely_stable::likely;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
@@ -286,7 +287,7 @@ impl<'a> Lexer<'a> {
 
             // SAFETY: `byte` is byte value at current position in source
             let kind = unsafe { self.handle_byte(byte) };
-            if kind != Kind::Skip {
+            if likely(kind != Kind::Skip) {
                 return kind;
             }
         }
