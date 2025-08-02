@@ -292,11 +292,10 @@ impl<'a> Message<'a> {
         Self { error, span: Span::new(start, end), fixes, fixed: false }
     }
 
-    /// move the offset of all spans to the right
+    /// move the offset of all spans (except fixes) to the right
+    /// for moving fixes use [`Message::move_fix_offset`].
     pub fn move_offset(&mut self, offset: u32) -> &mut Self {
-        if offset == 0 {
-            return self;
-        }
+        debug_assert!(offset != 0);
 
         self.span = self.span.move_right(offset);
 
@@ -305,6 +304,12 @@ impl<'a> Message<'a> {
                 label.set_span_offset(label.offset().saturating_add(offset as usize));
             }
         }
+
+        self
+    }
+
+    pub fn move_fix_offset(&mut self, offset: u32) -> &mut Self {
+        debug_assert!(offset != 0);
 
         match &mut self.fixes {
             PossibleFixes::None => {}
