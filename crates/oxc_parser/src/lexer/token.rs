@@ -176,7 +176,6 @@ impl Token {
         self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
         self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
     }
-
 }
 
 #[cfg(test)]

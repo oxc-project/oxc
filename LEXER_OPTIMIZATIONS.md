@@ -13,6 +13,7 @@ This document describes the performance optimizations implemented for the OXC le
 **Solution**: Replaced the complex `read_bool()` method with simple bit operations using shift and mask operations.
 
 **Before**:
+
 ```rust
 unsafe fn read_bool(&self, shift: usize) -> bool {
     let offset = if cfg!(target_endian = "little") { shift / 8 } else { 15 - (shift / 8) };
@@ -24,6 +25,7 @@ unsafe fn read_bool(&self, shift: usize) -> bool {
 ```
 
 **After**:
+
 ```rust
 pub fn is_on_new_line(&self) -> bool {
     (self.0 >> IS_ON_NEW_LINE_SHIFT) & 1 != 0
@@ -41,6 +43,7 @@ pub fn is_on_new_line(&self) -> bool {
 **Solution**: Simplified the control flow to use single-byte peeking first, reducing the number of branches and eliminating redundant code.
 
 **Before** (for `!` operator):
+
 ```rust
 if let Some(next_2_bytes) = lexer.peek_2_bytes() {
     match next_2_bytes[0] {
@@ -61,6 +64,7 @@ if let Some(next_2_bytes) = lexer.peek_2_bytes() {
 ```
 
 **After**:
+
 ```rust
 match lexer.peek_byte() {
     Some(b'=') => {
@@ -104,6 +108,7 @@ match lexer.peek_byte() {
 ## Testing
 
 All optimizations were validated with:
+
 - Parser unit tests (54 tests) - all passing
 - Full project compilation check - successful
 - No functionality changes - all existing behavior preserved
@@ -111,6 +116,7 @@ All optimizations were validated with:
 ## Expected Performance Impact
 
 The optimizations target the most frequently executed code paths in the lexer:
+
 1. Token field access happens for every token
 2. Operator parsing is very common in JavaScript code
 
