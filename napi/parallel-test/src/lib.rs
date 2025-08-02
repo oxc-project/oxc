@@ -85,43 +85,50 @@ static REGISTERED_RUNNERS_COUNT: AtomicU32 = AtomicU32::new(0);
 /// Pointer to array of `Runner`s.
 static mut RUNNERS_PTR: NonNull<Runner> = NonNull::dangling();
 
-mod runner_ptr {
+mod unsafe_ptr {
     use super::*;
 
-    /// An unsafe wrapper around a `NonNull<Runner>`.
+    /// An unsafe wrapper around a `NonNull<T>`.
     ///
     /// It's marked as `Send` and `Sync` so can be transferred across threads,
     /// unlike the `NonNull` pointer which it wraps.
     ///
     /// # SAFETY
     ///
-    /// It is the user's responsibility to ensure that the way `RunnerPtr`s are used is sound,
-    /// and that is safe to pass the `RunnerPtr` across threads.
-    #[derive(Clone, Copy)]
-    pub struct RunnerPtr(NonNull<Runner>);
+    /// It is the user's responsibility to ensure that the way `UnsafePtr`s are used is sound,
+    /// and that is safe to pass the `UnsafePtr` across threads.
+    pub struct UnsafePtr<T: ?Sized>(NonNull<T>);
 
-    impl RunnerPtr {
-        /// Create a [`RunnerPtr`].
+    impl<T: ?Sized> Clone for UnsafePtr<T> {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+
+    impl<T: ?Sized> Copy for UnsafePtr<T> {}
+
+    impl<T: ?Sized> UnsafePtr<T> {
+        /// Create an [`UnsafePtr`].
         ///
         /// # SAFETY
         /// Caller must ensure the pointer is used in a sound manner.
-        /// See docs for [`RunnerPtr`].
-        pub unsafe fn new(ptr: NonNull<Runner>) -> Self {
+        /// See docs for [`UnsafePtr`].
+        pub unsafe fn new(ptr: NonNull<T>) -> Self {
             Self(ptr)
         }
 
-        /// Unwrap [`RunnerPtr`] into the underlying `NonNull<Runner>` pointer.
-        pub fn into_inner(self) -> NonNull<Runner> {
+        /// Unwrap [`UnsafePtr`] into the underlying `NonNull<Runner>` pointer.
+        pub fn into_inner(self) -> NonNull<T> {
             self.0
         }
     }
 
     // SAFETY: See above
-    unsafe impl Send for RunnerPtr {}
+    unsafe impl<T> Send for UnsafePtr<T> {}
     // SAFETY: See above
-    unsafe impl Sync for RunnerPtr {}
+    unsafe impl<T> Sync for UnsafePtr<T> {}
 }
-use runner_ptr::RunnerPtr;
+use unsafe_ptr::UnsafePtr;
 
 thread_local! {
     /// Thread local containing pointer to JS runner function for each thread
@@ -176,9 +183,9 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
     // this function once, so no synchronisation problems
     unsafe { RUNNERS_PTR = runners_ptr };
 
-    // Wrap `runners_ptr` in a `RunnerPtr` to allow moving it over the async boundary
+    // Wrap `runners_ptr` in an `UnsafePtr` to allow moving it over the async boundary
     // SAFETY: Nothing which happens during the call to `start_workers` invalidates the pointer.
-    let runners_ptr = unsafe { RunnerPtr::new(runners_ptr) };
+    let runners_ptr = unsafe { UnsafePtr::new(runners_ptr) };
 
     // Call JS to start worker threads
     start_workers
@@ -307,7 +314,7 @@ pub unsafe fn register_worker(worker_id: u32, run: Function<(), ()>) {
 /// # SAFETY
 /// * `runners_ptr` must be valid pointer to an array of `thread_count` valid `Runner` instances.
 /// * Those `Runner` instances must remain valid until the thread pool completes all work.
-unsafe fn init_rayon_thread_pool(runners_ptr: RunnerPtr, thread_count: usize) {
+unsafe fn init_rayon_thread_pool(runners_ptr: UnsafePtr<Runner>, thread_count: usize) {
     // Start `rayon` thread pool
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
@@ -326,7 +333,7 @@ unsafe fn init_rayon_thread_pool(runners_ptr: RunnerPtr, thread_count: usize) {
     // to a `&mut Runner`, knowing that it's a valid reference, and no other thread can have access to it.
     //
     // This is sound, but there's no way to do this with safe code.
-    // `RunnerPtr` wrapper circumvents the type system, and allows copying `runners_ptr`
+    // `UnsafePtr` wrapper circumvents the type system, and allows copying `runners_ptr`
     // into `broadcast` closure.
 
     #[cfg_attr(not(debug_assertions), expect(unused_variables, unused_mut))]
