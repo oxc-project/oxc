@@ -25,7 +25,6 @@ fn test_rule_default_matches_from_configuration_null() {
     // 1. The Default implementation returns the same values as from_configuration(null), or
     // 2. The from_configuration method is updated to return Default::default() when given null
     let exceptions = [
-        "eslint/no-else-return",
         "import/extensions",
         "import/no-anonymous-default-export",
         "jest/no-deprecated-functions",
