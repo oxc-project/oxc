@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
+use likely_stable::likely;
 
 use oxc_allocator::StringBuilder;
 use oxc_syntax::identifier::{
@@ -31,7 +32,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
         let c = self.peek_char().unwrap();
         match c {
-            c if is_identifier_start_unicode(c) => {
+            c if likely(is_identifier_start_unicode(c)) => {
                 let start_pos = self.source.position();
                 self.consume_char();
                 self.identifier_tail_after_unicode(start_pos);

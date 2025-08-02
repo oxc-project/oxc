@@ -1,3 +1,4 @@
+use likely_stable::unlikely;
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::diagnostics;
@@ -30,9 +31,9 @@ impl Lexer<'_> {
 
     pub(super) fn decimal_literal_after_first_digit(&mut self) -> Kind {
         self.read_decimal_digits_after_first_digit();
-        if self.next_ascii_byte_eq(b'.') {
+        if unlikely(self.next_ascii_byte_eq(b'.')) {
             return self.decimal_literal_after_decimal_point_after_digits();
-        } else if self.next_ascii_byte_eq(b'n') {
+        } else if unlikely(self.next_ascii_byte_eq(b'n')) {
             return self.check_after_numeric_literal(Kind::Decimal);
         }
 
