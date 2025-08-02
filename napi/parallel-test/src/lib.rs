@@ -1,6 +1,6 @@
 #![expect(clippy::print_stdout)]
 
-use std::{mem, sync::Mutex, thread::available_parallelism};
+use std::{cmp, mem, sync::Mutex, thread::available_parallelism};
 
 use bpaf::Bpaf;
 use napi::{
@@ -91,6 +91,7 @@ pub async fn run(start_workers: StartThreads) -> bool {
 /// Get number of threads to use.
 ///
 /// `--threads` CLI argument takes precedence, otherwise get available parallelism from OS.
+#[expect(clippy::print_stderr)]
 fn get_threads() -> Option<u32> {
     // Parse CLI arguments
     let mut args = std::env::args_os();
@@ -108,15 +109,27 @@ fn get_threads() -> Option<u32> {
         }
     };
 
+    let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
     if let Some(thread_count) = command.threads {
         if thread_count > 0 {
+            if thread_count as usize > max_thread_count {
+                eprintln!(
+                    "Requested too many threads: {thread_count} vs {max_thread_count} maximum"
+                );
+                return None;
+            }
+
             return Some(thread_count);
         }
     }
 
     match available_parallelism() {
-        Ok(thread_count) => u32::try_from(thread_count.get()).ok().or(Some(u32::MAX)),
-        #[expect(clippy::print_stderr)]
+        Ok(thread_count) => {
+            // `max_thread_count <= u32::MAX` so `as u32` cannot truncate
+            #[expect(clippy::cast_possible_truncation)]
+            let thread_count = cmp::min(thread_count.get(), max_thread_count as usize) as u32;
+            Some(thread_count)
+        }
         Err(e) => {
             eprintln!("Failed to determine available parallelism: {e}");
             None
