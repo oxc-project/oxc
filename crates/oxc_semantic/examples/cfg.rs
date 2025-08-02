@@ -132,13 +132,14 @@ fn main() -> std::io::Result<()> {
 
     // Handle parsing errors
     if !parser_ret.errors.is_empty() {
+        let error_count = parser_ret.errors.len();
         let error_message: String = parser_ret
             .errors
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("❌ Parsing failed with {} error(s):", parser_ret.errors.len());
+        println!("❌ Parsing failed with {} error(s):", error_count);
         println!();
         println!("{}", error_message);
 
@@ -166,13 +167,14 @@ fn main() -> std::io::Result<()> {
 
     // Handle semantic analysis errors
     if !semantic.errors.is_empty() {
+        let error_count = semantic.errors.len();
         let error_message: String = semantic
             .errors
             .into_iter()
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        println!("❌ Semantic analysis failed with {} error(s):", semantic.errors.len());
+        println!("❌ Semantic analysis failed with {} error(s):", error_count);
         println!();
         println!("{}", error_message);
 

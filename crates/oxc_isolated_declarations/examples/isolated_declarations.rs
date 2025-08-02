@@ -102,7 +102,7 @@ fn main() -> std::io::Result<()> {
 
         for (i, error) in ret.errors.iter().enumerate() {
             println!("Error #{}: ", i + 1);
-            let error = error.with_source_code(source_text.clone());
+            let error = error.clone().with_source_code(source_text.clone());
             println!("{:?}", error);
             println!();
         }
@@ -158,7 +158,7 @@ fn main() -> std::io::Result<()> {
 
         for (i, error) in id_ret.errors.iter().enumerate() {
             println!("Issue #{}: ", i + 1);
-            let error = error.with_source_code(source_text.clone());
+            let error = error.clone().with_source_code(source_text.clone());
             println!("{:?}", error);
             println!();
         }
