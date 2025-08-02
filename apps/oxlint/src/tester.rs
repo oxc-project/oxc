@@ -41,6 +41,30 @@ impl Tester {
         let _ = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
     }
 
+    pub fn test_fix(file: &str, before: &str, after: &str) {
+        use std::fs;
+        #[expect(clippy::disallowed_methods)]
+        let content_original = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(content_original, before);
+
+        Tester::new().test(&["--fix", file]);
+
+        #[expect(clippy::disallowed_methods)]
+        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(new_content, after);
+
+        Tester::new().test(&["--fix", file]);
+
+        // File should not be modified if no fix is applied.
+        let modified_before: std::time::SystemTime =
+            fs::metadata(file).unwrap().modified().unwrap();
+        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
+        assert_eq!(modified_before, modified_after);
+
+        // Write the file back.
+        fs::write(file, before).unwrap();
+    }
+
     pub fn test_and_snapshot(&self, args: &[&str]) {
         self.test_and_snapshot_multiple(&[args]);
     }
