@@ -1006,6 +1006,7 @@ impl Gen for TSExportAssignment<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_comments_at(self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("export = ");
         self.expression.print_expr(p, Precedence::Lowest, ctx);
         p.print_semicolon_after_statement();
@@ -3554,6 +3555,7 @@ impl Gen for TSNamedTupleMember<'_> {
 
 impl Gen for TSModuleDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         if self.declare {
             p.print_str("declare ");
         }
@@ -3612,6 +3614,7 @@ impl Gen for TSModuleBlock<'_> {
 
 impl Gen for TSTypeAliasDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         if self.declare {
             p.print_str("declare ");
         }
@@ -3630,6 +3633,7 @@ impl Gen for TSTypeAliasDeclaration<'_> {
 
 impl Gen for TSInterfaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_str("interface");
         p.print_hard_space();
         self.id.print(p, ctx);
@@ -3665,6 +3669,7 @@ impl Gen for TSInterfaceHeritage<'_> {
 impl Gen for TSEnumDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
+        p.add_source_mapping(self.span);
         if self.declare {
             p.print_str("declare ");
         }
@@ -3745,6 +3750,7 @@ impl Gen for TSConstructorType<'_> {
 
 impl Gen for TSImportEqualsDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_str("import ");
         self.id.print(p, ctx);
         p.print_str(" = ");
