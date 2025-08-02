@@ -1,5 +1,5 @@
-use oxc_transform_conformance::{TestRunner, TestRunnerOptions};
 use oxc_tasks_common::CommonCliOptions;
+use oxc_transform_conformance::{TestRunner, TestRunnerOptions};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();

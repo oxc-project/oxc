@@ -11,7 +11,7 @@ use oxc_prettier_conformance::{
 fn main() {
     let mut args = pico_args::Arguments::from_env();
     let cli_options = CommonCliOptions::from_args(&mut args);
-    
+
     let options = TestRunnerOptions {
         language: TestLanguage::Js,
         debug: cli_options.debug,

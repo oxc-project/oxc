@@ -47,9 +47,7 @@ impl ConfigParser {
     /// Remove trailing commas
     fn handle_trailing_commas(config: &str) -> String {
         // Remove trailing commas before closing braces/brackets
-        config
-            .replace(",}", "}")
-            .replace(",]", "]")
+        config.replace(",}", "}").replace(",]", "]")
     }
 
     /// Handle undefined values
@@ -59,8 +57,7 @@ impl ConfigParser {
 
     /// Parse a JSON configuration string
     pub fn parse_json(json_str: &str) -> Result<Value, String> {
-        serde_json::from_str(json_str)
-            .map_err(|e| format!("Failed to parse JSON: {e}"))
+        serde_json::from_str(json_str).map_err(|e| format!("Failed to parse JSON: {e}"))
     }
 
     /// Extract specific configuration values
@@ -79,11 +76,8 @@ impl ConfigParser {
         match value {
             Value::Object(obj) => {
                 for (key, val) in obj {
-                    let new_prefix = if prefix.is_empty() {
-                        key.clone()
-                    } else {
-                        format!("{prefix}.{key}")
-                    };
+                    let new_prefix =
+                        if prefix.is_empty() { key.clone() } else { format!("{prefix}.{key}") };
                     Self::flatten_recursive(val, new_prefix, result);
                 }
             }
@@ -114,10 +108,7 @@ impl ESLintConfigParser {
     /// Normalize ESLint configuration syntax
     fn normalize_eslint_config(config: &str) -> String {
         // Handle ESLint-specific patterns like rule severity levels
-        config
-            .replace("\"error\"", "2")
-            .replace("\"warn\"", "1")
-            .replace("\"off\"", "0")
+        config.replace("\"error\"", "2").replace("\"warn\"", "1").replace("\"off\"", "0")
     }
 }
 
@@ -143,15 +134,12 @@ impl TestConfigParser {
 
     /// Extract filename from test configuration
     pub fn extract_filename(config: &HashMap<String, Value>) -> Option<String> {
-        config.get("filename")
-            .and_then(|v| v.as_str())
-            .map(|s| s.trim_matches('"').to_string())
+        config.get("filename").and_then(|v| v.as_str()).map(|s| s.trim_matches('"').to_string())
     }
 
     /// Extract language options from test configuration
     pub fn extract_language_options(config: &HashMap<String, Value>) -> Option<String> {
-        config.get("languageOptions")
-            .map(|v| v.to_string())
+        config.get("languageOptions").map(|v| v.to_string())
     }
 }
 

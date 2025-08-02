@@ -50,11 +50,7 @@ impl CommonCliOptions {
 
     /// Create a subset with only debug and filter (most common pattern)
     pub fn debug_filter_only(debug: bool, filter: Option<String>) -> Self {
-        Self {
-            debug,
-            filter,
-            ..Default::default()
-        }
+        Self { debug, filter, ..Default::default() }
     }
 }
 

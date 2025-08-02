@@ -1,5 +1,5 @@
 use oxc_coverage::AppArgs;
-use oxc_tasks_common::{CommonCliOptions, get_subcommand, configure_thread_pool};
+use oxc_tasks_common::{CommonCliOptions, configure_thread_pool, get_subcommand};
 
 fn main() {
     let mut args = pico_args::Arguments::from_env();

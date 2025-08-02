@@ -46,10 +46,7 @@ impl FileOperations {
         let from = from.as_ref();
         let to = to.as_ref();
         let bytes = fs::copy(from, to)?;
-        print_file_operation(
-            "Copied",
-            &format!("{} -> {}", from.display(), to.display()),
-        );
+        print_file_operation("Copied", &format!("{} -> {}", from.display(), to.display()));
         Ok(bytes)
     }
 
@@ -83,10 +80,8 @@ impl PathOperations {
     pub fn relative_to_project<P: AsRef<Path>>(path: P) -> PathBuf {
         let path = path.as_ref();
         let project_root = crate::project_root();
-        
-        path.strip_prefix(&project_root)
-            .unwrap_or(path)
-            .to_path_buf()
+
+        path.strip_prefix(&project_root).unwrap_or(path).to_path_buf()
     }
 
     /// Join paths safely

@@ -19,11 +19,14 @@ pub use crate::{
     config::{ConfigParser, ESLintConfigParser, TestConfigParser},
     fs::{FileOperations, PathOperations, create_safe_file},
     http::{HttpClient, HttpConfig, download_file, download_files},
-    logging::{print_success, print_error, print_warning, print_info, print_dim, print_progress, print_file_operation, print_download},
+    logging::{
+        print_dim, print_download, print_error, print_file_operation, print_info, print_progress,
+        print_success, print_warning,
+    },
     request::agent,
     snapshot::Snapshot,
     test_file::*,
-    test_runner::{TestRunner, TestRunnerOptions, StandardTestOptions, configure_thread_pool},
+    test_runner::{StandardTestOptions, TestRunner, TestRunnerOptions, configure_thread_pool},
 };
 
 /// # Panics

@@ -32,10 +32,7 @@ pub struct StandardTestOptions {
 
 impl Default for StandardTestOptions {
     fn default() -> Self {
-        Self {
-            debug: false,
-            filter: None,
-        }
+        Self { debug: false, filter: None }
     }
 }
 

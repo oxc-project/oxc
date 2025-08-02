@@ -56,10 +56,7 @@ impl Default for HttpClient {
 impl HttpClient {
     /// Create a new HTTP client with the given configuration
     pub fn new(config: HttpConfig) -> Self {
-        Self {
-            agent: agent(),
-            config,
-        }
+        Self { agent: agent(), config }
     }
 
     /// Download a file from URL with caching and retry logic
@@ -138,7 +135,7 @@ impl HttpClient {
         // Save response to file first, then read it back (same pattern as test_file.rs)
         let mut writer = std::fs::File::create(cache_path)
             .map_err(|e| format!("Failed to create cache file: {e}"))?;
-        
+
         std::io::copy(&mut reader, &mut writer)
             .map_err(|e| format!("Failed to write response to cache: {e}"))?;
 
@@ -184,7 +181,5 @@ pub fn download_file(url: &str) -> Result<(String, String), String> {
 pub fn download_files(urls: &[&str]) -> Vec<Result<(String, String), String>> {
     use rayon::prelude::*;
 
-    urls.par_iter()
-        .map(|url| download_file(url))
-        .collect()
+    urls.par_iter().map(|url| download_file(url)).collect()
 }
