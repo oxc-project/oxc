@@ -138,15 +138,15 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// - `prefer`: Enforce the use of type imports or disallow them
-    ///   - `"type-imports"` (default): Prefers type imports and will suggest using them over regular imports when possible
-    ///   - `"no-type-imports"`: Disallows the use of type imports and will suggest using regular imports instead
+    /// - `prefer`: Control whether to enforce type imports or value imports
+    ///   - `"type-imports"` (default): Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators
+    ///   - `"no-type-imports"`: Will enforce that you always use `import Foo from '...'`
     ///
     /// - `fixStyle`: Determines how type imports are added when auto-fixing
-    ///   - `"separate-type-imports"` (default): Creates separate `import type` declarations
-    ///   - `"inline-type-imports"`: Uses inline `type` modifiers in existing import statements
+    ///   - `"separate-type-imports"` (default): Will add the type keyword after the import keyword `import type { A } from '...'`
+    ///   - `"inline-type-imports"`: Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
     ///
-    /// - `disallowTypeAnnotations`: Disallow `import()` type annotations
+    /// - `disallowTypeAnnotations`: Disallow using `import()` in type annotations
     ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
     ///   - `false`: Allows `import()` type annotations
     ///
