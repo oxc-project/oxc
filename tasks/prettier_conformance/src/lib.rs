@@ -421,10 +421,7 @@ impl TestRunner {
         let allocator = Allocator::default();
         let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(ParseOptions {
-                allow_v8_intrinsics: true,
-                ..ParseOptions::default()
-            })
+            .with_options(ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() })
             .parse();
         Formatter::new(&allocator, formatter_options).build(&ret.program)
     }

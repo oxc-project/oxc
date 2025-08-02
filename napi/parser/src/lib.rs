@@ -81,9 +81,7 @@ fn parse<'a>(
     source_text: &'a str,
     _options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions::default())
-        .parse()
+    Parser::new(allocator, source_text, source_type).with_options(ParseOptions::default()).parse()
 }
 
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {

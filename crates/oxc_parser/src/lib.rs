@@ -202,8 +202,6 @@ pub struct ParseOptions {
     /// [`return`]: oxc_ast::ast::ReturnStatement
     pub allow_return_outside_function: bool,
 
-
-
     /// Allow V8 runtime calls in the AST.
     /// See: [V8's Parser::ParseV8Intrinsic](https://chromium.googlesource.com/v8/v8/+/35a14c75e397302655d7b3fbe648f9490ae84b7d/src/parsing/parser.cc#4811).
     ///
@@ -702,12 +700,12 @@ mod test {
     fn parentheses_are_stripped() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        
+
         // Test that parentheses around expressions are stripped
         let source = "(a + b)";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.errors.is_empty());
-        
+
         if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
             // Should be BinaryExpression, not ParenthesizedExpression
             match &expr_stmt.expression {
@@ -718,13 +716,16 @@ mod test {
                     panic!("Expected parentheses to be stripped, but got ParenthesizedExpression");
                 }
                 _ => {
-                    panic!("Expected BinaryExpression, got: {:?}", std::mem::discriminant(&expr_stmt.expression));
+                    panic!(
+                        "Expected BinaryExpression, got: {:?}",
+                        std::mem::discriminant(&expr_stmt.expression)
+                    );
                 }
             }
         } else {
             panic!("Expected ExpressionStatement");
         }
-        
+
         // Test TypeScript types with parentheses are also stripped
         let source_ts = "let x: (string | number) = 5;";
         let source_type_ts = SourceType::default().with_typescript(true);
