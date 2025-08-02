@@ -420,6 +420,11 @@ fn run_job(options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
 
+    // Run JS `run` function
+    if options.duration_js == 0 {
+        return true;
+    }
+
     let (tx, rx) = channel();
 
     let status = thread_data.run.call_with_return_value(
