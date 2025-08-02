@@ -196,13 +196,29 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
     // Store pointer to `Runner` for each thread in thread-local storage.
-    // Use `RunnerPtr` wrapper to allow copying pointer into `broadcast` closure.
+    //
+    // `broadcast` executes the closure on every thread in the thread pool,
+    // passing the thread ID of that thread into the closure.
+    // Those thread IDs are unique and cover the range `0..thread_count`.
+    //
+    // Each thread gets assigned one of the `Runner`s in the `runners` slice.
+    // Because the thread IDs are unique, the `Runner` each thread receives is unique too.
+    // The caller guarantees that `runners` slice remains valid until after the thread pool has
+    // completed all work.
+    //
+    // Therefore, when running tasks, each thread can safely dereference its `NonNull<Runner>` pointer
+    // to a `&mut Runner`, knowing that it's a valid reference, and no other thread can have access to it.
+    //
+    // This is sound, but there's no way to do this with safe code.
+    // We use `RunnerPtr` wrapper to circumvent type system, and allow copying pointer to `runners`
+    // into `broadcast` closure.
+
     #[derive(Clone, Copy)]
     struct RunnerPtr(NonNull<Runner>);
-    // SAFETY: TODO
+    // SAFETY: See above
     unsafe impl Sync for RunnerPtr {}
 
-    // SAFETY: Pointer to a slice can never be null.
+    // SAFETY: Pointer to a slice can never be null
     let runners_ptr = RunnerPtr(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
 
     let mut thread_ids = rayon::broadcast(|ctx| {
@@ -211,12 +227,18 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
         debug_assert!(thread_id < thread_count);
         debug_assert!(ctx.num_threads() == thread_count);
 
-        // SAFETY: TODO
+        // SAFETY: We created rayon thread pool with `thread_count` threads.
+        // `thread_id` is less than `thread_count`, and `runners` slice has `thread_count` entries.
+        // `runners_ptr` is pointer to first item in `runners` slice.
+        // Therefore `runners_ptr.add(thread_id)` cannot be out of bounds of the slice.
+        // Note: `identity` function is required to copy `runners_ptr` into the closure,
+        // instead of trying to copy `runners_ptr.0` (which won't compile).
         let runner_ptr = unsafe { identity(runners_ptr).0.add(thread_id) };
         RUNNER.set(runner_ptr);
 
         println!("> Set runner for thread {thread_id}");
 
+        // Return `()` in release mode to avoid the overhead of building a `Vec<usize>`
         #[cfg(debug_assertions)]
         {
             thread_id
