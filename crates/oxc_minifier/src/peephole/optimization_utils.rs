@@ -33,10 +33,7 @@ impl OptimizationUtils {
     /// # Returns
     /// `Some(true)` if definitely truthy, `Some(false)` if definitely falsy,
     /// `None` if the truthiness cannot be determined at compile time.
-    pub fn is_expression_truthy<'a>(
-        expr: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> Option<bool> {
+    pub fn is_expression_truthy<'a>(expr: &Expression<'a>, ctx: &Ctx<'a, '_>) -> Option<bool> {
         match expr.evaluate_value(ctx) {
             Some(ConstantValue::Boolean(b)) => Some(b),
             Some(ConstantValue::Number(n)) => Some(n != 0.0 && !n.is_nan()),
@@ -230,10 +227,9 @@ impl OptimizationUtils {
                 matches!(unary.argument, Expression::UnaryExpression(_))
             }
             // !(a == b) -> a != b
-            Expression::BinaryExpression(binary) => matches!(
-                binary.operator,
-                BinaryOperator::Equality | BinaryOperator::StrictEquality
-            ),
+            Expression::BinaryExpression(binary) => {
+                matches!(binary.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality)
+            }
             _ => false,
         }
     }

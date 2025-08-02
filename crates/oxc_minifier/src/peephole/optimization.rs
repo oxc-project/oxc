@@ -20,7 +20,11 @@ pub trait Optimization<'a> {
     }
 
     /// Apply this optimization to a list of statements, returning true if changed.
-    fn optimize_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn optimize_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         let _ = (stmts, ctx);
         false
     }
@@ -96,9 +100,9 @@ impl<'a, 'b> OptimizationContext<'a, 'b> {
     {
         let previous_changed = self.ctx.state.changed;
         self.ctx.state.changed = false;
-        
+
         let result = optimizer(target, self.ctx);
-        
+
         if self.ctx.state.changed {
             self.changes_made = true;
             self.ctx.state.changed = previous_changed || true;

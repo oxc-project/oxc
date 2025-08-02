@@ -2,7 +2,7 @@
 //!
 //! This module contains optimizations for ternary conditional expressions (`a ? b : c`)
 //! that can reduce their complexity or transform them into more efficient forms.
-//! 
+//!
 //! The optimizations include:
 //! - Sequence expression extraction: `(a, b) ? c : d` → `a, b ? c : d`
 //! - Literal condition evaluation: `true ? a : b` → `a`
@@ -23,7 +23,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Creates a minimized conditional expression.
-    /// 
+    ///
     /// This is the main entry point for conditional expression optimization.
     /// It attempts to minimize the conditional expression and falls back to
     /// creating a standard conditional expression if no optimizations apply.
@@ -54,18 +54,18 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to minimize a conditional expression using various optimization strategies.
-    /// 
+    ///
     /// This function implements several peephole optimizations for conditional expressions:
-    /// 
+    ///
     /// 1. **Sequence extraction**: `(a, b) ? c : d` → `a, b ? c : d`
     ///    Pulls comma-separated expressions out of the test condition.
-    /// 
+    ///
     /// 2. **Constant folding**: `true ? a : b` → `a`, `false ? a : b` → `b`
     ///    Eliminates the conditional when the test is a known constant.
-    /// 
+    ///
     /// 3. **Boolean simplification**: `a ? true : false` → `!!a`
     ///    Converts conditional expressions that return boolean literals.
-    /// 
+    ///
     /// 4. **Logical expression conversion**: `a ? b : c` → `a && b || c` (when beneficial)
     ///    Transforms to logical operators when it results in shorter code.
     ///
@@ -78,7 +78,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// # Safety
     /// All optimizations preserve the original semantics and side effects of the expression.
-    /// 
+    ///
     /// Based on esbuild's `MangleIfExpr`:
     /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     pub fn try_minimize_conditional(

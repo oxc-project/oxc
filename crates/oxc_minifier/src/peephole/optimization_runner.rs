@@ -69,10 +69,10 @@ pub trait ExpressionOptimization<'a> {
     /// Apply the optimization to an expression.
     /// Returns true if any changes were made.
     fn optimize_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool;
-    
+
     /// Get the category of this optimization.
     fn category(&self) -> OptimizationCategory;
-    
+
     /// Check if this optimization should be applied given the configuration.
     fn should_apply(&self, config: &OptimizationConfig) -> bool {
         config.enabled_categories.contains(&self.category())
@@ -84,14 +84,18 @@ pub trait StatementOptimization<'a> {
     /// Apply the optimization to a statement.
     /// Returns true if any changes were made.
     fn optimize_statement(&self, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) -> bool;
-    
+
     /// Apply the optimization to a list of statements.
     /// Returns true if any changes were made.
-    fn optimize_statements(&self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) -> bool;
-    
+    fn optimize_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool;
+
     /// Get the category of this optimization.
     fn category(&self) -> OptimizationCategory;
-    
+
     /// Check if this optimization should be applied given the configuration.
     fn should_apply(&self, config: &OptimizationConfig) -> bool {
         config.enabled_categories.contains(&self.category())
@@ -114,33 +118,43 @@ impl<'a> OptimizationRunner<'a> {
             statement_optimizations: std::vec::Vec::new(),
         }
     }
-    
+
     /// Add an expression optimization to the runner.
-    pub fn add_expression_optimization(&mut self, optimization: Box<dyn ExpressionOptimization<'a> + 'a>) {
+    pub fn add_expression_optimization(
+        &mut self,
+        optimization: Box<dyn ExpressionOptimization<'a> + 'a>,
+    ) {
         self.expression_optimizations.push(optimization);
     }
-    
+
     /// Add a statement optimization to the runner.
-    pub fn add_statement_optimization(&mut self, optimization: Box<dyn StatementOptimization<'a> + 'a>) {
+    pub fn add_statement_optimization(
+        &mut self,
+        optimization: Box<dyn StatementOptimization<'a> + 'a>,
+    ) {
         self.statement_optimizations.push(optimization);
     }
-    
+
     /// Apply all enabled optimizations to an expression.
-    pub fn optimize_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> OptimizationResult {
+    pub fn optimize_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> OptimizationResult {
         let mut result = OptimizationResult {
             changed: false,
             iterations: 0,
             applied_categories: std::vec::Vec::new(),
         };
-        
+
         for optimization in &self.expression_optimizations {
             if !optimization.should_apply(&self.config) {
                 continue;
             }
-            
+
             let original_changed = ctx.state.changed;
             ctx.state.changed = false;
-            
+
             if optimization.optimize_expression(expr, ctx) || ctx.state.changed {
                 result.changed = true;
                 let category = optimization.category();
@@ -148,30 +162,34 @@ impl<'a> OptimizationRunner<'a> {
                     result.applied_categories.push(category);
                 }
             }
-            
+
             ctx.state.changed = original_changed || result.changed;
         }
-        
+
         result.iterations = 1;
         result
     }
-    
+
     /// Apply all enabled optimizations to a statement.
-    pub fn optimize_statement(&self, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) -> OptimizationResult {
+    pub fn optimize_statement(
+        &self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> OptimizationResult {
         let mut result = OptimizationResult {
             changed: false,
             iterations: 0,
             applied_categories: std::vec::Vec::new(),
         };
-        
+
         for optimization in &self.statement_optimizations {
             if !optimization.should_apply(&self.config) {
                 continue;
             }
-            
+
             let original_changed = ctx.state.changed;
             ctx.state.changed = false;
-            
+
             if optimization.optimize_statement(stmt, ctx) || ctx.state.changed {
                 result.changed = true;
                 let category = optimization.category();
@@ -179,30 +197,34 @@ impl<'a> OptimizationRunner<'a> {
                     result.applied_categories.push(category);
                 }
             }
-            
+
             ctx.state.changed = original_changed || result.changed;
         }
-        
+
         result.iterations = 1;
         result
     }
-    
+
     /// Apply all enabled optimizations to a list of statements.
-    pub fn optimize_statements(&self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) -> OptimizationResult {
+    pub fn optimize_statements(
+        &self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> OptimizationResult {
         let mut result = OptimizationResult {
             changed: false,
             iterations: 0,
             applied_categories: std::vec::Vec::new(),
         };
-        
+
         for optimization in &self.statement_optimizations {
             if !optimization.should_apply(&self.config) {
                 continue;
             }
-            
+
             let original_changed = ctx.state.changed;
             ctx.state.changed = false;
-            
+
             if optimization.optimize_statements(stmts, ctx) || ctx.state.changed {
                 result.changed = true;
                 let category = optimization.category();
@@ -210,10 +232,10 @@ impl<'a> OptimizationRunner<'a> {
                     result.applied_categories.push(category);
                 }
             }
-            
+
             ctx.state.changed = original_changed || result.changed;
         }
-        
+
         result.iterations = 1;
         result
     }
@@ -222,7 +244,12 @@ impl<'a> OptimizationRunner<'a> {
 /// Helper trait for optimization passes that need both expression and statement optimization.
 pub trait HybridOptimization<'a>: ExpressionOptimization<'a> + StatementOptimization<'a> {
     /// Apply optimizations to both expressions and statements in a coordinated manner.
-    fn optimize_hybrid(&self, expr: &mut Expression<'a>, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn optimize_hybrid(
+        &self,
+        expr: &mut Expression<'a>,
+        stmt: &mut Statement<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
         let expr_changed = self.optimize_expression(expr, ctx);
         let stmt_changed = self.optimize_statement(stmt, ctx);
         expr_changed || stmt_changed

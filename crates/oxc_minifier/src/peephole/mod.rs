@@ -39,17 +39,17 @@ pub use self::optimization::Optimization;
 pub use self::optimization_utils::OptimizationUtils;
 // These will be used once integrated into the main optimization loop:
 // pub use self::optimization_runner::{
-//     ExpressionOptimization, 
-//     HybridOptimization, 
-//     OptimizationCategory, 
-//     OptimizationConfig, 
-//     OptimizationResult, 
-//     OptimizationRunner, 
+//     ExpressionOptimization,
+//     HybridOptimization,
+//     OptimizationCategory,
+//     OptimizationConfig,
+//     OptimizationResult,
+//     OptimizationRunner,
 //     StatementOptimization
 // };
 
 /// Main peephole optimization coordinator.
-/// 
+///
 /// This struct orchestrates the execution of various peephole optimizations
 /// in a systematic and efficient manner. It implements a fixed-point iteration
 /// strategy to ensure all possible optimizations are applied.
@@ -122,7 +122,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Runs optimizations in a fixed-point loop until convergence.
-    /// 
+    ///
     /// This is the main entry point for comprehensive peephole optimization.
     /// It repeatedly applies optimizations until no further changes can be made,
     /// ensuring that cascading optimizations are fully realized.
@@ -172,9 +172,9 @@ impl<'a> PeepholeOptimizations {
     {
         let original_changed = ctx.state.changed;
         ctx.state.changed = false;
-        
+
         let result = optimizer(target, ctx);
-        
+
         if ctx.state.changed || result {
             ctx.state.changed = true;
             true
@@ -188,7 +188,7 @@ impl<'a> PeepholeOptimizations {
     fn optimize_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let original_changed = ctx.state.changed;
         let mut any_changes = false;
-        
+
         // Apply optimizations and track changes
         if self.apply_optimization(expr, ctx, |e, c| {
             self.fold_constants_exit_expression(e, c);
@@ -196,48 +196,48 @@ impl<'a> PeepholeOptimizations {
         }) {
             any_changes = true;
         }
-        
+
         if self.apply_optimization(expr, ctx, |e, c| {
             self.minimize_conditions_exit_expression(e, c);
             false // minimize_conditions updates ctx.state.changed internally
         }) {
             any_changes = true;
         }
-        
+
         if self.apply_optimization(expr, ctx, |e, c| {
             self.remove_dead_code_exit_expression(e, c);
             false // remove_dead_code updates ctx.state.changed internally
         }) {
             any_changes = true;
         }
-        
+
         if self.apply_optimization(expr, ctx, |e, c| {
             self.replace_known_methods_exit_expression(e, c);
             false // replace_known_methods updates ctx.state.changed internally
         }) {
             any_changes = true;
         }
-        
+
         if self.apply_optimization(expr, ctx, |e, c| {
             self.substitute_exit_expression(e, c);
             false // substitute updates ctx.state.changed internally
         }) {
             any_changes = true;
         }
-        
+
         if self.apply_optimization(expr, ctx, |e, c| {
             self.inline_identifier_reference(e, c);
             false // inline updates ctx.state.changed internally
         }) {
             any_changes = true;
         }
-        
+
         // Restore original changed state or mark as changed if we made changes
         ctx.state.changed = original_changed || any_changes;
     }
 
     /// Utility function for handling commutative binary operations.
-    /// 
+    ///
     /// This function tries to apply two checker functions to a pair of values
     /// in both orders (commutative), returning the first successful match.
     /// This is useful for optimizations that can work with operands in either order.
@@ -256,14 +256,14 @@ impl<'a> PeepholeOptimizations {
                 return Some((a, b));
             }
         }
-        
+
         // Try second order: check_a(pair.1) && check_b(pair.0)
         if let Some(a) = check_a(pair.1) {
             if let Some(b) = check_b(pair.0) {
                 return Some((a, b));
             }
         }
-        
+
         None
     }
 }
@@ -427,7 +427,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 }
 
 /// Late peephole optimizations that don't interfere with the fixed-point loop.
-/// 
+///
 /// These optimizations are applied as a final pass after the main optimization loop
 /// has completed. They include transformations that:
 /// - Don't benefit from iterative application
@@ -442,7 +442,7 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// Apply late optimizations to the program.
-    /// 
+    ///
     /// This runs a single pass of optimizations that should be applied
     /// after the main optimization loop has converged.
     pub fn build(
@@ -489,7 +489,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
 }
 
 /// Specialized dead code elimination optimization.
-/// 
+///
 /// This optimization focuses specifically on removing dead code and unused expressions.
 /// It uses a subset of the main peephole optimizations but with different iteration
 /// and application strategies optimized for dead code elimination.
@@ -504,7 +504,7 @@ impl<'a> DeadCodeElimination {
     }
 
     /// Apply dead code elimination to the program.
-    /// 
+    ///
     /// This applies a focused set of optimizations specifically designed
     /// to eliminate dead code and unused expressions.
     pub fn build(
@@ -552,7 +552,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 }
 
 /// Reference counter for tracking identifier references during optimization.
-/// 
+///
 /// This visitor counts all identifier references in the AST, which is used
 /// to update the semantic information after optimizations have potentially
 /// removed references.

@@ -6,7 +6,7 @@ use oxc_syntax::symbol::SymbolId;
 use crate::{CompressOptions, symbol_value::SymbolValues};
 
 /// State maintained during minification.
-/// 
+///
 /// This struct holds all the mutable state that needs to be tracked
 /// during the minification process, including optimization options,
 /// tracking of empty functions, symbol values, and change tracking.
@@ -41,27 +41,27 @@ impl MinifierState<'_> {
             changed: false,
         }
     }
-    
+
     /// Mark the state as changed, indicating that optimizations were applied.
     pub fn mark_changed(&mut self) {
         self.changed = true;
     }
-    
+
     /// Check if any changes were made since the last reset.
     pub fn has_changed(&self) -> bool {
         self.changed
     }
-    
+
     /// Reset the changed flag, typically at the start of a new optimization pass.
     pub fn reset_changed(&mut self) {
         self.changed = false;
     }
-    
+
     /// Mark a function as empty.
     pub fn mark_function_empty(&mut self, symbol_id: SymbolId) {
         self.empty_functions.insert(symbol_id);
     }
-    
+
     /// Check if a function is marked as empty.
     pub fn is_function_empty(&self, symbol_id: SymbolId) -> bool {
         self.empty_functions.contains(&symbol_id)

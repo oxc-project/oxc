@@ -3,7 +3,7 @@ use oxc_syntax::es_target::ESTarget;
 pub use oxc_ecmascript::side_effects::PropertyReadSideEffects;
 
 /// Configuration options for code compression and minification.
-/// 
+///
 /// These options control various aspects of how the minifier transforms
 /// and optimizes JavaScript/TypeScript code. Different presets are available
 /// for common use cases like maximum compression vs. safer transformations.
@@ -43,7 +43,7 @@ pub struct CompressOptions {
     /// // Before
     /// var a = 1;
     /// var b = 2;
-    /// 
+    ///
     /// // After
     /// var a = 1, b = 2;
     /// ```
@@ -58,7 +58,7 @@ pub struct CompressOptions {
     /// // Before
     /// a();
     /// b();
-    /// 
+    ///
     /// // After
     /// a(), b();
     /// ```
@@ -73,7 +73,7 @@ pub struct CompressOptions {
     pub keep_names: CompressOptionsKeepNames,
 
     /// Tree-shaking options for eliminating dead code.
-    /// 
+    ///
     /// These options control how aggressively the minifier can eliminate
     /// code that appears to be unused, based on static analysis.
     pub treeshake: TreeShakeOptions,
@@ -87,7 +87,7 @@ impl Default for CompressOptions {
 
 impl CompressOptions {
     /// Create compression options optimized for the smallest possible output.
-    /// 
+    ///
     /// This preset enables all size-reducing optimizations while maintaining
     /// correctness. It may be more aggressive than other presets and could
     /// potentially affect debugging or runtime behavior in edge cases.
@@ -105,7 +105,7 @@ impl CompressOptions {
     }
 
     /// Create compression options optimized for safety and compatibility.
-    /// 
+    ///
     /// This preset applies conservative optimizations that are less likely
     /// to cause issues but may result in larger output. Recommended for
     /// production builds where correctness is more important than size.
@@ -123,7 +123,7 @@ impl CompressOptions {
     }
 
     /// Create compression options focused on dead code elimination only.
-    /// 
+    ///
     /// This preset applies only dead code elimination optimizations while
     /// preserving most other aspects of the code structure. Useful when
     /// you want to remove unused code but maintain readability.
@@ -139,16 +139,19 @@ impl CompressOptions {
             treeshake: TreeShakeOptions::default(),
         }
     }
-    
+
     /// Check if any compression optimizations are enabled.
     pub fn has_optimizations(&self) -> bool {
         self.drop_debugger
             || self.drop_console
             || self.join_vars
             || self.sequences
-            || matches!(self.unused, CompressOptionsUnused::Remove | CompressOptionsUnused::KeepAssign)
+            || matches!(
+                self.unused,
+                CompressOptionsUnused::Remove | CompressOptionsUnused::KeepAssign
+            )
     }
-    
+
     /// Check if unused code removal is enabled.
     pub fn removes_unused_code(&self) -> bool {
         matches!(self.unused, CompressOptionsUnused::Remove | CompressOptionsUnused::KeepAssign)
@@ -159,26 +162,26 @@ impl CompressOptions {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
 pub enum CompressOptionsUnused {
     /// Remove all unused variables and functions.
-    /// 
+    ///
     /// This is the most aggressive option and provides the best size reduction,
     /// but may remove code that is used through dynamic means (eval, etc.).
     #[default]
     Remove,
-    
+
     /// Keep unused variables but remove their assignments when safe.
-    /// 
+    ///
     /// This preserves variable declarations but may remove their initializers
     /// if the assignments have no side effects.
     KeepAssign,
-    
+
     /// Keep all unused variables and functions.
-    /// 
+    ///
     /// This is the safest option but provides no dead code elimination benefits.
     Keep,
 }
 
 /// Configuration for preserving function and class names.
-/// 
+///
 /// In JavaScript, function and class names can be accessed at runtime
 /// through the `name` property. These options control whether to preserve
 /// these names during minification.
