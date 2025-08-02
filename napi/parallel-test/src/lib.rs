@@ -9,7 +9,6 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
-use rayon::ThreadPoolBuilder;
 
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
@@ -81,7 +80,27 @@ pub async fn run(start_workers: StartThreads) -> bool {
     }
 
     // Start `rayon` thread pool with same number of threads
-    ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+    rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+
+    let mut thread_ids = rayon::broadcast(|ctx| {
+        debug_assert!(ctx.num_threads() == thread_count);
+        // TODO
+        ctx.index()
+    });
+
+    #[cfg(debug_assertions)]
+    {
+        // Check thread indexes are unique
+        thread_ids.sort_unstable();
+        assert!(
+            thread_ids.len() == thread_count
+                && thread_ids
+                    .into_iter()
+                    .zip(0..thread_count)
+                    .all(|(id, expected_id)| id == expected_id)
+        );
+        println!("> Sorted");
+    }
 
     println!("> Initialized {thread_count} workers");
 
