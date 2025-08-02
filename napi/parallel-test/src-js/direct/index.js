@@ -8,8 +8,6 @@ const workers = [];
 const success = await run(startWorkers);
 await stopWorkers();
 
-console.log('> Success:', success);
-
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
 // https://nodejs.org/api/process.html#processexitcode
@@ -17,22 +15,23 @@ if (!success) process.exitCode = 1;
 
 /**
  * @param {number} count - Number of workers
+ * @param {bool} log - `true` if logging is enabled
  * @returns {Promise<undefined>}
  */
-function startWorkers(count) {
-  console.log('> Starting', count, 'workers');
+function startWorkers(count, log) {
+  if (log) console.log('> Starting', count, 'workers');
 
   return new Promise((resolve) => {
     let remainingCount = count;
     function done() {
       if (--remainingCount === 0) {
         resolve();
-        console.log('> Started', count, 'workers');
+        if (log) console.log('> Started', count, 'workers');
       }
     }
 
     for (let id = 0; id < count; id++) {
-      const worker = new Worker(WORKER_URL, { workerData: { id } });
+      const worker = new Worker(WORKER_URL, { workerData: { id, log } });
       worker.addListener('message', done);
       workers.push(worker);
     }

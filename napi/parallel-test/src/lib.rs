@@ -1,5 +1,3 @@
-#![expect(clippy::print_stdout)]
-
 use std::{
     cell::Cell, cmp, convert::identity, mem, ptr::NonNull, sync::Mutex,
     thread::available_parallelism,
@@ -8,7 +6,7 @@ use std::{
 use bpaf::Bpaf;
 use napi::{
     Status,
-    bindgen_prelude::{Function, Promise},
+    bindgen_prelude::{FnArgs, Function, Promise},
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
@@ -27,16 +25,37 @@ pub struct Options {
     /// Number of iterations to perform
     #[bpaf(argument("INT"))]
     pub iterations: usize,
+
+    /// Enable logging
+    #[bpaf(flag(true, false), fallback(false))]
+    pub log: bool,
+}
+
+/// `true` if logging is enabled.
+static mut LOG: bool = false;
+
+/// Log a message if logging is enabled.
+macro_rules! log {
+    ($($tokens:tt)*) => {
+        // SAFETY: `LOG` is only mutated in `run` function, which is only called once,
+        // and before any usage of `log!` macro
+        if unsafe { LOG } {
+            println!($($tokens)*);
+        }
+    }
 }
 
 /// JS `startThreads` function, which starts requested number of worker threads.
 type StartThreads = ThreadsafeFunction<
     // Arguments
-    u32, // Number of threads
+    FnArgs<(
+        u32,  // Number of threads
+        bool, // `true` if logging enabled
+    )>,
     // Return value
     Promise<()>,
     // Arguments (repeated)
-    u32,
+    FnArgs<(u32, bool)>,
     // ErrorStatus
     Status,
     // CalleeHandled
@@ -73,6 +92,10 @@ thread_local! {
 /// * Initialize global rayon thread pool with same number of threads.
 /// * Pass a pointer to a `Runner` to each rayon thread.
 /// * Run workload.
+///
+/// # SAFETY
+/// * Must only be called from JS main thread.
+/// * Must only be called once.
 #[napi]
 #[allow(
     clippy::trailing_empty_array,
@@ -80,11 +103,15 @@ thread_local! {
     clippy::print_stderr,
     clippy::allow_attributes
 )]
-pub async fn run(start_workers: StartThreads) -> bool {
-    println!("> Initializing");
-
+pub async unsafe fn run(start_workers: StartThreads) -> bool {
     // Parse CLI args
     let Some(options) = parse_options() else { return false };
+
+    // SAFETY: This is only place we write to `LOG`, and caller promises to only call this function once
+    // so no synchronisation problems
+    unsafe { LOG = options.log };
+
+    log!("> Initializing");
 
     // Get number of threads to use
     let thread_count = match get_threads(&options) {
@@ -98,7 +125,12 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Call JS to start worker threads
     RUNNERS.lock().unwrap().reserve_exact(thread_count as usize);
 
-    start_workers.call_async(thread_count).await.unwrap().await.unwrap();
+    start_workers
+        .call_async(FnArgs::from((thread_count, options.log)))
+        .await
+        .unwrap()
+        .await
+        .unwrap();
 
     let mut runners = {
         let mut runners = RUNNERS.lock().unwrap();
@@ -116,7 +148,7 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // No work occurs in thread pool after end of this function.
     unsafe { init_rayon_thread_pool(runners) };
 
-    println!("> Initialized {thread_count} workers");
+    log!("> Initialized {thread_count} workers");
 
     // TODO: Run workload
 
@@ -177,7 +209,7 @@ fn get_threads(options: &Options) -> Result<u32, String> {
 #[napi]
 #[allow(clippy::missing_panics_doc, clippy::allow_attributes)]
 pub fn register_worker(worker_id: u32, run: Function<(), ()>) {
-    println!("> Registering worker {worker_id}");
+    log!("> Registering worker {worker_id}");
 
     let runner = run.build_threadsafe_function().build().unwrap();
     let mut runners = RUNNERS.lock().unwrap();
@@ -238,7 +270,7 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
         let runner_ptr = unsafe { identity(runners_ptr).0.add(thread_id) };
         RUNNER.set(runner_ptr);
 
-        println!("> Set runner for thread {thread_id}");
+        log!("> Set runner for thread {thread_id}");
 
         // Return `()` in release mode to avoid the overhead of building a `Vec<usize>`
         #[cfg(debug_assertions)]

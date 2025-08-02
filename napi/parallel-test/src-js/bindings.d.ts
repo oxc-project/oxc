@@ -15,5 +15,9 @@ export declare function registerWorker(workerId: number, run: () => void): void
  * * Initialize global rayon thread pool with same number of threads.
  * * Pass a pointer to a `Runner` to each rayon thread.
  * * Run workload.
+ *
+ * # SAFETY
+ * * Must only be called from JS main thread.
+ * * Must only be called once.
  */
 export declare function run(startWorkers: StartThreads): Promise<boolean>
