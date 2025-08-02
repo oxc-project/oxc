@@ -48,6 +48,10 @@ pub struct TestCommand {
     /// Number of threads to use. Set to 1 for using only 1 CPU core
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<u32>,
+
+    /// Number of iterations to perform
+    #[bpaf(argument("INT"), hide_usage)]
+    pub iterations: usize,
 }
 
 thread_local! {
@@ -63,12 +67,26 @@ thread_local! {
 /// * Pass a pointer to a `Runner` to each rayon thread.
 /// * Runs workload.
 #[napi]
-#[allow(clippy::trailing_empty_array, clippy::missing_panics_doc, clippy::allow_attributes)]
+#[allow(
+    clippy::trailing_empty_array,
+    clippy::missing_panics_doc,
+    clippy::print_stderr,
+    clippy::allow_attributes
+)]
 pub async fn run(start_workers: StartThreads) -> bool {
     println!("> Initializing");
 
-    // Get number of threads
-    let Some(thread_count) = get_threads() else { return false };
+    // Parse CLI args
+    let Some(command) = parse_options() else { return false };
+
+    // Get number of threads to use
+    let thread_count = match get_threads(&command) {
+        Ok(thread_count) => thread_count,
+        Err(err) => {
+            eprintln!("{err}");
+            return false;
+        }
+    };
 
     // Call JS to start worker threads
     start_workers.call_async(thread_count).await.unwrap().await.unwrap();
@@ -78,7 +96,6 @@ pub async fn run(start_workers: StartThreads) -> bool {
         mem::take(&mut *runners)
     };
 
-    #[expect(clippy::print_stderr)]
     if runners.len() != thread_count as usize {
         eprintln!("Failed to start worker threads");
         return false;
@@ -93,6 +110,55 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // TODO: Run workload
 
     true
+}
+
+/// Parse options from CLI arguments.
+fn parse_options() -> Option<TestCommand> {
+    let mut args = std::env::args_os();
+    if args.next().is_some_and(|arg| arg == "node") {
+        args.next();
+    }
+    let args = args.collect::<Vec<_>>();
+
+    let command_parser = test_command();
+    match command_parser.run_inner(&*args) {
+        Ok(command) => Some(command),
+        Err(e) => {
+            e.print_message(100);
+            None
+        }
+    }
+}
+
+/// Get number of threads to use.
+///
+/// `--threads` CLI argument takes precedence, otherwise get available parallelism from OS.
+///
+/// Return value will not be greater than 0.
+///
+/// Returns `None` if unable to determine number of threads.
+fn get_threads(command: &TestCommand) -> Result<u32, String> {
+    let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
+
+    if let Some(thread_count) = command.threads {
+        if thread_count > 0 {
+            if thread_count as usize > max_thread_count {
+                return Err(format!(
+                    "Requested too many threads: {thread_count} vs {max_thread_count} maximum"
+                ));
+            }
+            return Ok(thread_count);
+        }
+    }
+
+    available_parallelism()
+        .map(|thread_count| {
+            // `max_thread_count <= u32::MAX` so `as u32` cannot truncate
+            #[expect(clippy::cast_possible_truncation)]
+            let thread_count = cmp::min(thread_count.get(), max_thread_count as usize) as u32;
+            thread_count
+        })
+        .map_err(|e| format!("Failed to determine available parallelism: {e}"))
 }
 
 /// Wrapper for a `NonNull<Runner>` pointer, that allows copying it across threads.
@@ -160,57 +226,6 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
                     .zip(0..thread_count)
                     .all(|(id, expected_id)| id == expected_id)
         );
-    }
-}
-
-/// Get number of threads to use.
-///
-/// `--threads` CLI argument takes precedence, otherwise get available parallelism from OS.
-///
-/// Return value will not be greater than 0.
-#[expect(clippy::print_stderr)]
-fn get_threads() -> Option<u32> {
-    // Parse CLI arguments
-    let mut args = std::env::args_os();
-    if args.next().is_some_and(|arg| arg == "node") {
-        args.next();
-    }
-    let args = args.collect::<Vec<_>>();
-
-    let command_parser = test_command();
-    let command = match command_parser.run_inner(&*args) {
-        Ok(command) => command,
-        Err(e) => {
-            e.print_message(100);
-            return None;
-        }
-    };
-
-    let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
-    if let Some(thread_count) = command.threads {
-        if thread_count > 0 {
-            if thread_count as usize > max_thread_count {
-                eprintln!(
-                    "Requested too many threads: {thread_count} vs {max_thread_count} maximum"
-                );
-                return None;
-            }
-
-            return Some(thread_count);
-        }
-    }
-
-    match available_parallelism() {
-        Ok(thread_count) => {
-            // `max_thread_count <= u32::MAX` so `as u32` cannot truncate
-            #[expect(clippy::cast_possible_truncation)]
-            let thread_count = cmp::min(thread_count.get(), max_thread_count as usize) as u32;
-            Some(thread_count)
-        }
-        Err(e) => {
-            eprintln!("Failed to determine available parallelism: {e}");
-            None
-        }
     }
 }
 
