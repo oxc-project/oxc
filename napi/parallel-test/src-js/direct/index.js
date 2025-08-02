@@ -23,7 +23,7 @@ function startWorkers(count, log) {
 
   return new Promise((resolve) => {
     let remainingCount = count;
-    function done() {
+    function done(_dummy) {
       if (--remainingCount === 0) {
         resolve();
         if (log) console.log('> Started', count, 'workers');
