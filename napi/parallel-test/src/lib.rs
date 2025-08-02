@@ -2,7 +2,10 @@ use std::{
     cell::Cell,
     cmp,
     ptr::NonNull,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        mpsc::channel,
+    },
     thread::available_parallelism,
 };
 
@@ -10,7 +13,7 @@ use bpaf::Bpaf;
 use napi::{
     Status,
     bindgen_prelude::{FnArgs, Function, Promise},
-    threadsafe_function::ThreadsafeFunction,
+    threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
 
@@ -28,6 +31,14 @@ pub struct Options {
     /// Number of iterations to perform
     #[bpaf(argument("INT"))]
     pub iterations: usize,
+
+    /// Duration of work on JS side (microseconds)
+    #[bpaf(argument("INT"), fallback(0))]
+    pub duration_js: u32,
+
+    /// Duration of work on Rust side (microseconds)
+    #[bpaf(argument("INT"), fallback(0))]
+    pub duration_rs: u32,
 
     /// Enable logging
     #[bpaf(flag(true, false), fallback(false))]
@@ -68,11 +79,15 @@ type StartThreads = ThreadsafeFunction<
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
     // Arguments
-    (),
+    FnArgs<(
+        u32,  // Thread ID
+        u32,  // Duration to work for
+        bool, // `true` if logging enabled
+    )>,
     // Return value
     (),
     // Arguments (repeated)
-    (),
+    FnArgs<(u32, u32, bool)>,
     // ErrorStatus
     Status,
     // CalleeHandled
@@ -82,7 +97,7 @@ type Runner = ThreadsafeFunction<
 /// Thread data.
 /// Each thread in thread pool has its own instance of `ThreadData`.
 struct ThreadData {
-    #[expect(dead_code)]
+    id: u32,
     run: Runner,
 }
 
@@ -94,7 +109,7 @@ static mut THREAD_DATAS_PTR: NonNull<ThreadData> = NonNull::dangling();
 
 thread_local! {
     /// Thread local containing pointer to [`ThreadData`] for this thread
-    static THREAD_DATA: Cell<NonNull<ThreadData>> = const { Cell::new(NonNull::dangling()) };
+    static THREAD_DATA_PTR: Cell<NonNull<ThreadData>> = const { Cell::new(NonNull::dangling()) };
 }
 
 mod unsafe_ptr {
@@ -140,6 +155,7 @@ mod unsafe_ptr {
     // SAFETY: See above
     unsafe impl<T> Sync for UnsafePtr<T> {}
 }
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use unsafe_ptr::UnsafePtr;
 
 /// Entry point from JS.
@@ -232,7 +248,8 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
 
     log!("> Initialized {thread_count} workers");
 
-    // TODO: Run workload
+    // Run workload
+    run_workload(&options);
 
     true
 }
@@ -294,14 +311,14 @@ fn get_thread_count(options: &Options) -> Result<u32, String> {
 /// * `worker_id` must be less than thread count passed to `startWorkers` by `run`.
 /// * Each call to this function must pass a unique `worker_id`.
 #[napi]
-#[allow(clippy::missing_panics_doc, clippy::allow_attributes)]
-pub unsafe fn register_worker(worker_id: u32, run: Function<(), ()>) {
+#[allow(clippy::missing_panics_doc, clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub unsafe fn register_worker(worker_id: u32, run: Function<FnArgs<(u32, u32, bool)>, ()>) {
     log!("> Registering worker {worker_id}");
 
     // Wrap `run` in a `ThreadsafeFunction`
     let run = run.build_threadsafe_function().build().unwrap();
 
-    let data = ThreadData { run };
+    let data = ThreadData { id: worker_id, run };
 
     // SAFETY: `THREAD_DATAS_PTR` is initialized in `run`, and points to a slice of memory large enough
     // to accomodate `thread_count` x `ThreadData` instances.
@@ -362,7 +379,7 @@ unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count:
         // Therefore `datas_ptr.add(thread_id)` points to a valid `ThreadData`, and cannot be out of
         // bounds of the allocation containing the `ThreadData`s.
         let data_ptr = unsafe { datas_ptr.into_inner().add(thread_id) };
-        THREAD_DATA.set(data_ptr);
+        THREAD_DATA_PTR.set(data_ptr);
 
         log!("> Set thread data for thread {thread_id}");
 
@@ -381,5 +398,57 @@ unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count:
             thread_ids.len() == thread_count
                 && thread_ids.into_iter().enumerate().all(|(expected_id, id)| id == expected_id)
         );
+    }
+}
+
+/// Run workload across all threads.
+fn run_workload(options: &Options) -> bool {
+    let failures = (0..options.iterations)
+        .into_par_iter()
+        .filter(|i| {
+            log!("> Iteration {i}");
+            let success = run_job(options);
+            !success
+        })
+        .count();
+
+    failures == 0
+}
+
+/// Run single job on a thread.
+fn run_job(options: &Options) -> bool {
+    // SAFETY: Each thread has exclusive access to its `ThreadData`
+    let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
+
+    let (tx, rx) = channel();
+
+    let status = thread_data.run.call_with_return_value(
+        FnArgs::from((thread_data.id, options.duration_js, options.log)),
+        ThreadsafeFunctionCallMode::NonBlocking,
+        move |result, _env| {
+            let _ = match &result {
+                Ok(()) => tx.send(Ok(())),
+                Err(e) => tx.send(Err(e.to_string())),
+            };
+
+            result
+        },
+    );
+
+    if status != Status::Ok {
+        log!("Failed to schedule callback: {status:?}");
+        return false;
+    }
+
+    match rx.recv() {
+        Ok(Ok(())) => true,
+        Ok(Err(e)) => {
+            log!("Callback reported error: {e}");
+            false
+        }
+        Err(e) => {
+            log!("Callback did not respond: {e}");
+            false
+        }
     }
 }

@@ -9,7 +9,7 @@
  * * `worker_id` must be less than thread count passed to `startWorkers` by `run`.
  * * Each call to this function must pass a unique `worker_id`.
  */
-export declare function registerWorker(workerId: number, run: () => void): void
+export declare function registerWorker(workerId: number, run: (arg0: number, arg1: number, arg2: boolean) => void): void
 
 /**
  * Entry point from JS.

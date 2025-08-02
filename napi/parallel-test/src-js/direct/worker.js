@@ -6,6 +6,6 @@ const { id: workerId, log } = workerData;
 
 if (log) console.log('> Booting worker', workerId);
 
-registerWorker(workerId, workload.bind(null, workerId));
+registerWorker(workerId, workload);
 
 parentPort.postMessage('');
