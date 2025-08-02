@@ -13,6 +13,35 @@ use napi::{
 };
 use napi_derive::napi;
 
+/// CLI arguments.
+#[derive(Debug, Clone, Bpaf)]
+#[bpaf(options)]
+pub struct TestCommand {
+    /// Number of threads to use.
+    /// * 0 for using as many CPU cores as system has (default).
+    /// * 1 for using only 1 CPU core.
+    #[bpaf(argument("INT"), hide_usage)]
+    pub threads: Option<u32>,
+
+    /// Number of iterations to perform.
+    #[bpaf(argument("INT"), hide_usage)]
+    pub iterations: usize,
+}
+
+/// JS `startThreads` function, which starts requested number of worker threads.
+type StartThreads = ThreadsafeFunction<
+    // Arguments
+    u32, // Number of threads
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    u32,
+    // ErrorStatus
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
     // Arguments
@@ -27,37 +56,11 @@ type Runner = ThreadsafeFunction<
     false,
 >;
 
-/// JS `startThreads` function, which starts
-type StartThreads = ThreadsafeFunction<
-    // Arguments
-    u32, // Number of threads
-    // Return value
-    Promise<()>,
-    // Arguments (repeated)
-    u32,
-    // ErrorStatus
-    Status,
-    // CalleeHandled
-    false,
->;
-
 /// JS runner functions, each on its own worker thread
 static RUNNERS: Mutex<Vec<Runner>> = Mutex::new(Vec::new());
 
-/// CLI arguments
-#[derive(Debug, Clone, Bpaf)]
-#[bpaf(options)]
-pub struct TestCommand {
-    /// Number of threads to use. Set to 1 for using only 1 CPU core
-    #[bpaf(argument("INT"), hide_usage)]
-    pub threads: Option<u32>,
-
-    /// Number of iterations to perform
-    #[bpaf(argument("INT"), hide_usage)]
-    pub iterations: usize,
-}
-
 thread_local! {
+    /// Thread local containing pointer to JS runner function for each thread
     static RUNNER: Cell<NonNull<Runner>> = const { Cell::new(NonNull::dangling()) };
 }
 
@@ -68,7 +71,7 @@ thread_local! {
 ///   (those worker threads each call `register_worker` when they start up).
 /// * Initialize global rayon thread pool with same number of threads.
 /// * Pass a pointer to a `Runner` to each rayon thread.
-/// * Runs workload.
+/// * Run workload.
 #[napi]
 #[allow(
     clippy::trailing_empty_array,
@@ -139,9 +142,10 @@ fn parse_options() -> Option<TestCommand> {
 ///
 /// `--threads` CLI argument takes precedence, otherwise get available parallelism from OS.
 ///
-/// Return value will not be greater than 0.
+/// Return value will be greater than 0.
 ///
-/// Returns `None` if unable to determine number of threads.
+/// # Errors
+/// Returns `Err` if unable to determine number of threads.
 fn get_threads(command: &TestCommand) -> Result<u32, String> {
     let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
 
@@ -166,7 +170,19 @@ fn get_threads(command: &TestCommand) -> Result<u32, String> {
         .map_err(|e| format!("Failed to determine available parallelism: {e}"))
 }
 
-/// Start a rayon thread pool and assign a `Runner` to each.
+/// Register a JS runner function.
+/// Called from a JS worker thread.
+#[napi]
+#[allow(clippy::missing_panics_doc, clippy::allow_attributes)]
+pub fn register_worker(worker_id: u32, run: Function<(), ()>) {
+    println!("> Registering worker {worker_id}");
+
+    let runner = run.build_threadsafe_function().build().unwrap();
+    let mut runners = RUNNERS.lock().unwrap();
+    runners.push(runner);
+}
+
+/// Start a rayon thread pool and assign a `Runner` to each thread.
 ///
 /// Pointer to `Runner` is stored in `RUNNER` thread local storage for each thread.
 ///
@@ -219,16 +235,4 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
                     .all(|(id, expected_id)| id == expected_id)
         );
     }
-}
-
-/// Register a JS runner function.
-/// Called from a JS worker thread.
-#[napi]
-#[allow(clippy::missing_panics_doc, clippy::allow_attributes)]
-pub fn register_worker(worker_id: u32, run: Function<(), ()>) {
-    println!("> Registering worker {worker_id}");
-
-    let runner = run.build_threadsafe_function().build().unwrap();
-    let mut runners = RUNNERS.lock().unwrap();
-    runners.push(runner);
 }
