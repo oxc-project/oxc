@@ -8,7 +8,7 @@
     "build-dev": "pnpm run build-napi && pnpm run build-js",
     "build-test": "pnpm run build-napi-test && pnpm run build-js",
     "build-napi": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --esm",
-    "build-napi-test": "pnpm run build-napi --profile coverage --features force_test_reporter",
+    "build-napi-test": "pnpm run build-napi --features force_test_reporter",
     "build-napi-release": "pnpm run build-napi --release",
     "build-js": "node scripts/build.js",
     "test": "tsc && vitest --dir ./test run"
