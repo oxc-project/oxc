@@ -791,7 +791,7 @@ pub use match_ts_type_name;
 
 /// TypeScript Qualified Name
 ///
-/// A [type reference](TSTypeReference) qualified by a namespace.
+/// A [`TSTypeReference`] qualified by a namespace.
 ///
 /// ## Example
 /// ```ts
@@ -893,7 +893,7 @@ pub enum TSAccessibility {
 
 /// TypeScript Class Interface Heritage
 ///
-/// `implements` clause of a [class declaration](Class).
+/// `implements` clause of a [`Class`].
 ///
 /// ## Example
 /// ```ts
@@ -957,7 +957,7 @@ pub struct TSInterfaceBody<'a> {
 
 /// TypeScript Property Signature
 ///
-/// Used in [classes](Class), [interfaces](TSInterfaceDeclaration), [mapped types](TSMappedType),
+/// Used in [`Class`]es, [`TSInterfaceDeclaration`]s, [`TSMappedType`]s,
 /// etc. Part of a [`TSSignature`].
 ///
 /// ## Example
@@ -1229,7 +1229,7 @@ pub enum TSModuleDeclarationKind {
     Namespace = 2,
 }
 
-/// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
+/// The name of a TypeScript [`TSModuleDeclaration`].
 ///
 /// Note that it is a syntax error for namespace declarations to have a string literal name.
 /// Modules may have either kind.

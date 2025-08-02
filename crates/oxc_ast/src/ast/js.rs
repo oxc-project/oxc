@@ -343,7 +343,7 @@ pub enum ArrayExpressionElement<'a> {
 
 /// empty slot in `const array = [1, , 2];`
 ///
-/// Array Expression Elision Element
+/// Array expression elision element
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -394,7 +394,7 @@ pub struct ObjectProperty<'a> {
 }
 
 inherit_variants! {
-/// Property Key
+/// Property key
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -756,7 +756,7 @@ pub struct AssignmentExpression<'a> {
 }
 
 inherit_variants! {
-/// Destructuring Assignment
+/// Destructuring assignment
 ///
 /// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
 /// See [`ast` module docs] for explanation of inheritance.
@@ -774,7 +774,7 @@ pub enum AssignmentTarget<'a> {
 }
 
 inherit_variants! {
-/// Simple Assignment Target
+/// Simple assignment target
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -900,7 +900,7 @@ pub struct AssignmentTargetRest<'a> {
 }
 
 inherit_variants! {
-/// Assignment Target Maybe Default
+/// Assignment target maybe default
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1034,7 +1034,7 @@ pub struct ChainExpression<'a> {
 }
 
 inherit_variants! {
-/// Chain Element
+/// Chain element
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1138,7 +1138,7 @@ pub struct BlockStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// Declarations and the Variable Statement
+/// Declarations and the `VariableStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -1197,7 +1197,7 @@ pub enum VariableDeclarationKind {
     AwaitUsing = 4,
 }
 
-/// A single variable declaration in a list of [variable declarations](VariableDeclaration).
+/// A single variable declaration in a list of [`VariableDeclaration`]s.
 ///
 /// ## Examples
 /// ```ts
@@ -1218,7 +1218,7 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
-/// Empty Statement
+/// `EmptyStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1226,7 +1226,7 @@ pub struct EmptyStatement {
     pub span: Span,
 }
 
-/// Expression Statement
+/// `ExpressionStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1236,7 +1236,7 @@ pub struct ExpressionStatement<'a> {
     pub expression: Expression<'a>,
 }
 
-/// If Statement
+/// `IfStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1257,7 +1257,7 @@ pub struct DoWhileStatement<'a> {
     pub test: Expression<'a>,
 }
 
-/// While Statement
+/// `WhileStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1267,7 +1267,7 @@ pub struct WhileStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// For Statement
+/// `ForStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1282,7 +1282,7 @@ pub struct ForStatement<'a> {
 }
 
 inherit_variants! {
-/// For Statement Init
+/// `ForStatementInit`
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1311,7 +1311,7 @@ pub struct ForInStatement<'a> {
 }
 
 inherit_variants! {
-/// For Statement Left
+/// `ForStatementLeft`
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1340,7 +1340,7 @@ pub struct ForOfStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// Continue Statement
+/// `ContinueStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1349,7 +1349,7 @@ pub struct ContinueStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 }
 
-/// Break Statement
+/// `BreakStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1358,7 +1358,7 @@ pub struct BreakStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 }
 
-/// Return Statement
+/// `ReturnStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1367,7 +1367,7 @@ pub struct ReturnStatement<'a> {
     pub argument: Option<Expression<'a>>,
 }
 
-/// With Statement
+/// `WithStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1377,7 +1377,7 @@ pub struct WithStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Switch Statement
+/// `SwitchStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1399,7 +1399,7 @@ pub struct SwitchCase<'a> {
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
-/// Labelled Statement
+/// `LabeledStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1409,7 +1409,7 @@ pub struct LabeledStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Throw Statement
+/// `ThrowStatement`
 ///
 /// # Example
 /// ```ts
@@ -1425,7 +1425,7 @@ pub struct ThrowStatement<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Try Statement
+/// `TryStatement`
 ///
 /// # Example
 /// ```ts
@@ -1453,7 +1453,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-/// Catch Clause in a [`try/catch` statement](TryStatement).
+/// Catch Clause in a [`TryStatement`].
 ///
 /// This node creates a new scope inside its `body`.
 ///
@@ -1478,7 +1478,7 @@ pub struct CatchClause<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// A caught error parameter in a [catch clause](CatchClause).
+/// A caught error parameter in a [`CatchClause`].
 ///
 /// # Examples
 ///
@@ -1503,7 +1503,7 @@ pub struct CatchParameter<'a> {
     pub pattern: BindingPattern<'a>,
 }
 
-/// Debugger Statement
+/// `DebuggerStatement`
 ///
 /// # Example
 /// ```ts
@@ -1661,7 +1661,7 @@ pub struct ArrayPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
-/// A `...rest` binding in an [array](ArrayPattern) or [object](ObjectPattern) destructure.
+/// A `...rest` binding in an [`ArrayPattern`] or [`ObjectPattern`] destructure.
 ///
 /// ## Examples
 /// ```ts
@@ -1683,7 +1683,7 @@ pub struct BindingRestElement<'a> {
     pub argument: BindingPattern<'a>,
 }
 
-/// Function Statement or Expression
+/// Function statement or expression
 ///
 /// Includes generator functions and function-valued class properties.
 /// Arrow functions are represented by [`ArrowFunctionExpression`].
@@ -2565,7 +2565,7 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
-/// Named Export Declaration
+/// Named export declaration
 ///
 /// ## Example
 ///
@@ -2592,7 +2592,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 
-/// Export Default Declaration
+/// Export default declaration
 ///
 /// ## Example
 ///
@@ -2612,7 +2612,7 @@ pub struct ExportDefaultDeclaration<'a> {
     pub declaration: ExportDefaultDeclarationKind<'a>,
 }
 
-/// Export All Declaration
+/// Export all declaration
 ///
 /// ## Example
 ///
@@ -2663,7 +2663,7 @@ pub struct ExportSpecifier<'a> {
 }
 
 inherit_variants! {
-/// Export Default Declaration Kind
+/// Export default declaration kind
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
