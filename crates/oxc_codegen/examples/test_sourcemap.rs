@@ -17,17 +17,13 @@
 //! - Complex code structures
 //! - Performance with large files
 
-use std::{
-    path::Path,
-    fmt,
-    time::Instant,
-};
+use std::{fmt, path::Path, time::Instant};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
 use oxc_sourcemap::{SourceMap, Token};
+use oxc_span::SourceType;
 
 /// Test case for sourcemap generation
 #[derive(Debug, Clone)]
@@ -66,32 +62,28 @@ struct SourcemapTester {
 
 impl SourcemapTester {
     fn new() -> Self {
-        Self {
-            passed: 0,
-            failed: 0,
-            results: Vec::new(),
-        }
+        Self { passed: 0, failed: 0, results: Vec::new() }
     }
 
     /// Run a single test case
     fn run_test(&mut self, test_case: TestCase) {
         println!("Running test: {} - {}", test_case.name, test_case.description);
-        
+
         let start_time = Instant::now();
-        
+
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new("test.js")).unwrap();
         let ret = Parser::new(&allocator, test_case.source, source_type).parse();
-        
+
         let parse_time = start_time.elapsed();
-        
+
         let mut result = TestResult {
             name: test_case.name.to_string(),
             passed: false,
             message: String::new(),
             details: Vec::new(),
         };
-        
+
         // Check for parsing errors
         if !ret.errors.is_empty() {
             result.message = format!("Parse errors: {}", ret.errors.len());
@@ -101,9 +93,9 @@ impl SourcemapTester {
             self.add_result(result);
             return;
         }
-        
+
         let codegen_start = Instant::now();
-        
+
         // Generate code with source map
         let CodegenReturn { code, map, .. } = Codegen::new()
             .with_options(CodegenOptions {
@@ -111,24 +103,25 @@ impl SourcemapTester {
                 ..CodegenOptions::default()
             })
             .build(&ret.program);
-            
+
         let codegen_time = codegen_start.elapsed();
         let total_time = start_time.elapsed();
-        
+
         // Add performance information
-        result.details.push(format!("Performance: parse={:.2}ms, codegen={:.2}ms, total={:.2}ms", 
+        result.details.push(format!(
+            "Performance: parse={:.2}ms, codegen={:.2}ms, total={:.2}ms",
             parse_time.as_secs_f64() * 1000.0,
             codegen_time.as_secs_f64() * 1000.0,
             total_time.as_secs_f64() * 1000.0
         ));
-            
+
         // Validate sourcemap was generated
         let Some(source_map) = map else {
             result.message = "Source map was not generated".to_string();
             self.add_result(result);
             return;
         };
-        
+
         // Run comprehensive validation
         match self.validate_sourcemap(test_case.source, &code, &source_map) {
             Ok(details) => {
@@ -141,10 +134,10 @@ impl SourcemapTester {
                 result.details.extend(errors);
             }
         }
-        
+
         self.add_result(result);
     }
-    
+
     /// Add a test result and update counters
     fn add_result(&mut self, result: TestResult) {
         if result.passed {
@@ -154,7 +147,7 @@ impl SourcemapTester {
         }
         self.results.push(result);
     }
-    
+
     /// Validate a generated sourcemap comprehensively
     fn validate_sourcemap(
         &self,
@@ -164,14 +157,15 @@ impl SourcemapTester {
     ) -> Result<Vec<String>, Vec<String>> {
         let mut validations = Vec::new();
         let mut errors = Vec::new();
-        
+
         // Basic structure validation
         if source_map.get_sources().count() == 0 {
             errors.push("Source map has no sources".to_string());
         } else {
-            validations.push(format!("Source map has {} sources", source_map.get_sources().count()));
+            validations
+                .push(format!("Source map has {} sources", source_map.get_sources().count()));
         }
-        
+
         let tokens: Vec<_> = source_map.get_tokens().collect();
         if tokens.is_empty() {
             if original.is_empty() {
@@ -182,7 +176,7 @@ impl SourcemapTester {
         } else {
             validations.push(format!("Source map has {} tokens", tokens.len()));
         }
-        
+
         // Validate token mappings
         for (i, token) in tokens.iter().enumerate() {
             match self.validate_token(original, generated, token, i) {
@@ -190,20 +184,22 @@ impl SourcemapTester {
                 Err(err) => errors.push(err),
             }
         }
-        
+
         // Validate line and column ranges
         match self.validate_ranges(original, generated, &tokens) {
             Ok(msgs) => validations.extend(msgs),
             Err(errs) => errors.extend(errs),
         }
-        
-        if errors.is_empty() {
-            Ok(validations)
-        } else {
-            Err(errors)
+
+        // Validate sourcemap serialization
+        match self.validate_serialization(source_map) {
+            Ok(msg) => validations.push(msg),
+            Err(err) => errors.push(err),
         }
+
+        if errors.is_empty() { Ok(validations) } else { Err(errors) }
     }
-    
+
     /// Validate a single token mapping
     fn validate_token(
         &self,
@@ -216,45 +212,55 @@ impl SourcemapTester {
         let gen_col = token.get_dst_col() as usize;
         let orig_line = token.get_src_line() as usize;
         let orig_col = token.get_src_col() as usize;
-        
+
         // Validate generated position is within bounds
         let gen_lines: Vec<_> = generated.lines().collect();
         if gen_line >= gen_lines.len() {
             return Err(format!(
                 "Token {}: Generated line {} out of bounds (max: {})",
-                index, gen_line, gen_lines.len()
+                index,
+                gen_line,
+                gen_lines.len()
             ));
         }
-        
+
         if gen_col > gen_lines[gen_line].len() {
             return Err(format!(
                 "Token {}: Generated column {} out of bounds for line {} (max: {})",
-                index, gen_col, gen_line, gen_lines[gen_line].len()
+                index,
+                gen_col,
+                gen_line,
+                gen_lines[gen_line].len()
             ));
         }
-        
+
         // Validate original position is within bounds
         let orig_lines: Vec<_> = original.lines().collect();
         if orig_line >= orig_lines.len() {
             return Err(format!(
                 "Token {}: Original line {} out of bounds (max: {})",
-                index, orig_line, orig_lines.len()
+                index,
+                orig_line,
+                orig_lines.len()
             ));
         }
-        
+
         if orig_col > orig_lines[orig_line].len() {
             return Err(format!(
                 "Token {}: Original column {} out of bounds for line {} (max: {})",
-                index, orig_col, orig_line, orig_lines[orig_line].len()
+                index,
+                orig_col,
+                orig_line,
+                orig_lines[orig_line].len()
             ));
         }
-        
+
         Ok(format!(
             "Token {}: ({}, {}) -> ({}, {}) ✓",
             index, orig_line, orig_col, gen_line, gen_col
         ))
     }
-    
+
     /// Validate that line and column ranges are reasonable
     fn validate_ranges(
         &self,
@@ -264,10 +270,10 @@ impl SourcemapTester {
     ) -> Result<Vec<String>, Vec<String>> {
         let mut validations = Vec::new();
         let mut errors = Vec::new();
-        
+
         let orig_lines = original.lines().count();
         let gen_lines = generated.lines().count();
-        
+
         // Handle empty files specially
         if tokens.is_empty() {
             if original.is_empty() && generated.is_empty() {
@@ -278,11 +284,11 @@ impl SourcemapTester {
                 return Ok(validations);
             }
         }
-        
+
         // Check for tokens with reasonable line numbers
         let max_orig_line = tokens.iter().map(|t| t.get_src_line()).max().unwrap_or(0);
         let max_gen_line = tokens.iter().map(|t| t.get_dst_line()).max().unwrap_or(0);
-        
+
         if max_orig_line as usize >= orig_lines {
             errors.push(format!(
                 "Token references original line {} but source only has {} lines",
@@ -294,7 +300,7 @@ impl SourcemapTester {
                 max_orig_line, orig_lines
             ));
         }
-        
+
         if max_gen_line as usize >= gen_lines {
             errors.push(format!(
                 "Token references generated line {} but output only has {} lines",
@@ -306,41 +312,122 @@ impl SourcemapTester {
                 max_gen_line, gen_lines
             ));
         }
-        
-        if errors.is_empty() {
-            Ok(validations)
+
+        if errors.is_empty() { Ok(validations) } else { Err(errors) }
+    }
+
+    /// Validate that the sourcemap can be serialized to JSON
+    fn validate_serialization(&self, source_map: &SourceMap) -> Result<String, String> {
+        let json = source_map.to_json_string();
+        if json.is_empty() {
+            Err("Sourcemap serialized to empty JSON".to_string())
         } else {
-            Err(errors)
+            Ok(format!("Sourcemap serialized to {} byte JSON", json.len()))
         }
     }
-    
+
     /// Print comprehensive test results
     fn print_summary(&self) {
         let separator = "=".repeat(60);
         println!("\n{}", separator);
         println!("SOURCEMAP TESTING SUMMARY");
         println!("{}", separator);
-        
+
         for result in &self.results {
             println!("{}", result);
         }
-        
+
         println!("{}", separator);
         println!("Total tests: {}", self.passed + self.failed);
         println!("Passed: {} ✓", self.passed);
         println!("Failed: {} ✗", self.failed);
-        
+
         let success_rate = if self.passed + self.failed > 0 {
             (self.passed as f64 / (self.passed + self.failed) as f64) * 100.0
         } else {
             0.0
         };
         println!("Success rate: {:.1}%", success_rate);
-        
+
+        // Print statistics
+        self.print_statistics();
+
         if self.failed == 0 {
-            println!("\n🎉 All tests passed! The sourcemap generator appears to be working correctly.");
+            println!(
+                "\n🎉 All tests passed! The sourcemap generator appears to be working correctly."
+            );
         } else {
             println!("\n⚠️  Some tests failed. Please review the issues above.");
+        }
+    }
+
+    /// Print test statistics
+    fn print_statistics(&self) {
+        println!("\n{}STATISTICS{}", "=".repeat(26), "=".repeat(25));
+
+        let mut total_tokens = 0;
+        let mut total_parse_time = 0.0;
+        let mut total_codegen_time = 0.0;
+        let mut total_json_size = 0;
+
+        for result in &self.results {
+            if result.passed {
+                for detail in &result.details {
+                    if detail.starts_with("Source map has ") && detail.contains(" tokens") {
+                        if let Some(tokens_str) = detail
+                            .strip_prefix("Source map has ")
+                            .and_then(|s| s.strip_suffix(" tokens"))
+                        {
+                            if let Ok(tokens) = tokens_str.parse::<usize>() {
+                                total_tokens += tokens;
+                            }
+                        }
+                    }
+                    if detail.starts_with("Performance: ") {
+                        let parts: Vec<&str> = detail.split(", ").collect();
+                        if parts.len() >= 2 {
+                            if let Some(parse_str) = parts[0]
+                                .strip_prefix("Performance: parse=")
+                                .and_then(|s| s.strip_suffix("ms"))
+                            {
+                                if let Ok(time) = parse_str.parse::<f64>() {
+                                    total_parse_time += time;
+                                }
+                            }
+                            if let Some(codegen_str) =
+                                parts[1].strip_prefix("codegen=").and_then(|s| s.strip_suffix("ms"))
+                            {
+                                if let Ok(time) = codegen_str.parse::<f64>() {
+                                    total_codegen_time += time;
+                                }
+                            }
+                        }
+                    }
+                    if detail.starts_with("Sourcemap serialized to ")
+                        && detail.contains(" byte JSON")
+                    {
+                        if let Some(size_str) = detail
+                            .strip_prefix("Sourcemap serialized to ")
+                            .and_then(|s| s.strip_suffix(" byte JSON"))
+                        {
+                            if let Ok(size) = size_str.parse::<usize>() {
+                                total_json_size += size;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        println!("Total tokens generated: {}", total_tokens);
+        println!("Total parse time: {:.2}ms", total_parse_time);
+        println!("Total codegen time: {:.2}ms", total_codegen_time);
+        println!("Total JSON size: {} bytes", total_json_size);
+
+        if self.passed > 0 {
+            println!("Average tokens per test: {:.1}", total_tokens as f64 / self.passed as f64);
+            println!("Average parse time: {:.2}ms", total_parse_time / self.passed as f64);
+            println!("Average codegen time: {:.2}ms", total_codegen_time / self.passed as f64);
         }
     }
 }
@@ -451,19 +538,68 @@ fn get_test_cases() -> Vec<TestCase> {
     ]
 }
 
+/// Generate a large JavaScript file for performance testing
+fn generate_large_test_case() -> TestCase {
+    let mut content = String::new();
+
+    // Add a large function with many statements
+    content.push_str("function largeFunction() {\n");
+    for i in 0..100 {
+        content.push_str(&format!("  var variable{} = {} + {};\n", i, i, i + 1));
+        content.push_str(&format!("  if (variable{} > {}) {{\n", i, i * 2));
+        content.push_str(&format!("    console.log('Value: ' + variable{});\n", i));
+        content.push_str("  }\n");
+    }
+    content.push_str("  return variable99;\n");
+    content.push_str("}\n\n");
+
+    // Add a large object
+    content.push_str("var largeObject = {\n");
+    for i in 0..50 {
+        content.push_str(&format!("  property{}: {},\n", i, i));
+        content.push_str(&format!("  method{}: function() {{ return {}; }},\n", i, i));
+    }
+    content.push_str("};\n\n");
+
+    // Add arrays
+    content.push_str("var largeArray = [\n");
+    for i in 0..100 {
+        if i < 99 {
+            content.push_str(&format!("  {},\n", i));
+        } else {
+            content.push_str(&format!("  {}\n", i));
+        }
+    }
+    content.push_str("];\n");
+
+    TestCase {
+        name: "large_performance_test",
+        source: Box::leak(content.into_boxed_str()),
+        description: "Large file for performance testing",
+    }
+}
+
+/// Additional test cases for specific edge cases
+fn get_additional_test_cases() -> Vec<TestCase> {
+    vec![generate_large_test_case()]
+}
+
 fn main() {
     println!("🧪 Comprehensive Sourcemap Testing for oxc_codegen");
     println!("==================================================\n");
-    
+
     let mut tester = SourcemapTester::new();
-    let test_cases = get_test_cases();
-    
+    let mut test_cases = get_test_cases();
+
+    // Add additional test cases
+    test_cases.extend(get_additional_test_cases());
+
     println!("Running {} test cases...\n", test_cases.len());
-    
+
     for test_case in test_cases {
         tester.run_test(test_case);
         println!(); // Add spacing between tests
     }
-    
+
     tester.print_summary();
 }
