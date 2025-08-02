@@ -1,6 +1,13 @@
 #![expect(clippy::print_stdout)]
 
-use std::{cmp, mem, sync::Mutex, thread::available_parallelism};
+use std::{
+    cell::Cell,
+    cmp,
+    mem::{self, ManuallyDrop},
+    ptr::NonNull,
+    sync::Mutex,
+    thread::available_parallelism,
+};
 
 use bpaf::Bpaf;
 use napi::{
@@ -50,6 +57,54 @@ pub struct TestCommand {
     pub threads: Option<u32>,
 }
 
+thread_local! {
+    static RUNNER: Cell<NonNull<Runner>> = const { Cell::new(NonNull::dangling()) };
+}
+
+/// An equivalent of `std::vec::Vec` that doesn't use a `Unique` pointer.
+struct NonUniqueVec<T> {
+    ptr: NonNull<T>,
+    length: usize,
+    capacity: usize,
+}
+
+impl<T> From<Vec<T>> for NonUniqueVec<T> {
+    fn from(vec: Vec<T>) -> Self {
+        let mut vec = ManuallyDrop::new(vec);
+        Self {
+            // SAFETY: TODO
+            ptr: unsafe { NonNull::new_unchecked(vec.as_mut_ptr()) },
+            length: vec.len(),
+            capacity: vec.capacity(),
+        }
+    }
+}
+
+impl<T> Drop for NonUniqueVec<T> {
+    fn drop(&mut self) {
+        // SAFETY: TODO
+        let _ = unsafe { Vec::from_raw_parts(self.ptr.as_ptr(), self.length, self.capacity) };
+    }
+}
+
+#[derive(Clone, Copy)]
+struct RunnerPtr(NonNull<Runner>);
+
+impl RunnerPtr {
+    fn new(ptr: NonNull<Runner>) -> Self {
+        Self(ptr)
+    }
+
+    fn into_inner(self) -> NonNull<Runner> {
+        self.0
+    }
+}
+
+// SAFETY: TODO
+unsafe impl Send for RunnerPtr {}
+// SAFETY: TODO
+unsafe impl Sync for RunnerPtr {}
+
 /// Entry point from JS.
 ///
 /// * Determines number of threads to use.
@@ -67,7 +122,7 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Call JS to start worker threads
     start_workers.call_async(thread_count).await.unwrap().await.unwrap();
 
-    let runners = {
+    let mut runners = {
         let mut runners = RUNNERS.lock().unwrap();
         mem::take(&mut *runners)
     };
@@ -82,10 +137,25 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Start `rayon` thread pool with same number of threads
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
-    let mut thread_ids = rayon::broadcast(|ctx| {
+    // SAFETY: TODO
+    let runners_ptr = RunnerPtr::new(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
+
+    // Store pointer to `Runner` for each thread in thread-local storage
+    let mut thread_ids = rayon::broadcast(move |ctx| {
+        let thread_id = ctx.index();
+
+        debug_assert!(thread_id < thread_count);
         debug_assert!(ctx.num_threads() == thread_count);
-        // TODO
-        ctx.index()
+
+        RUNNER.with(move |runner_cell| {
+            // SAFETY: TODO
+            let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
+            runner_cell.set(runner_ptr);
+        });
+
+        println!("> Set runner for thread {thread_id}");
+
+        thread_id
     });
 
     #[cfg(debug_assertions)]
@@ -99,7 +169,6 @@ pub async fn run(start_workers: StartThreads) -> bool {
                     .zip(0..thread_count)
                     .all(|(id, expected_id)| id == expected_id)
         );
-        println!("> Sorted");
     }
 
     println!("> Initialized {thread_count} workers");
