@@ -238,11 +238,7 @@ impl<'a> ParserImpl<'a> {
             _ => {}
         }
 
-        if self.options.preserve_parens {
-            self.ast.expression_parenthesized(self.end_span(span), expression)
-        } else {
-            expression
-        }
+        expression
     }
 
     /// Section 13.2.2 This Expression

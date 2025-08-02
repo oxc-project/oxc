@@ -30,7 +30,6 @@ pub struct OxcRunOptions {
 #[derive(Default)]
 pub struct OxcParserOptions {
     pub allow_return_outside_function: Option<bool>,
-    pub preserve_parens: Option<bool>,
     pub allow_v8_intrinsics: Option<bool>,
     pub source_type: Option<String>,
     pub source_filename: Option<String>,

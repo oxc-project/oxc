@@ -358,7 +358,7 @@ impl Case for EstreeTypescriptCase {
         for (unit, estree_json) in self.base.units.iter().zip(estree_units.into_iter()) {
             let source_text = &unit.content;
             let allocator = Allocator::new();
-            let options = ParseOptions { preserve_parens: false, ..Default::default() };
+            let options = ParseOptions::default();
             let ret = Parser::new(&allocator, source_text, unit.source_type)
                 .with_options(options)
                 .parse();

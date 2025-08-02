@@ -20,7 +20,7 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let options = FormatOptions::default();
 
     let allocator = Allocator::default();
-    let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+    let parse_options = ParseOptions::default();
     let ParserReturn { program, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
     let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
