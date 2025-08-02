@@ -1728,6 +1728,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_allocs"
+version = "0.0.0"
+dependencies = [
+ "humansize",
+ "mimalloc-safe",
+ "oxc_allocator",
+ "oxc_parser",
+ "oxc_tasks_common",
+]
+
+[[package]]
 name = "oxc_ast"
 version = "0.79.1"
 dependencies = [
