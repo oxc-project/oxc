@@ -1,6 +1,6 @@
 #![expect(clippy::print_stdout)]
 
-use std::{sync::Mutex, thread::available_parallelism};
+use std::{mem, sync::Mutex, thread::available_parallelism};
 
 use bpaf::Bpaf;
 use napi::{
@@ -67,8 +67,10 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Call JS to start worker threads
     start_workers.call_async(thread_count).await.unwrap().await.unwrap();
 
-    let mut workers = RUNNERS.lock().unwrap();
-    let workers = workers.as_mut_slice();
+    let workers = {
+        let mut workers = RUNNERS.lock().unwrap();
+        mem::take(&mut *workers)
+    };
 
     #[expect(clippy::print_stderr)]
     if workers.len() != thread_count as usize {
