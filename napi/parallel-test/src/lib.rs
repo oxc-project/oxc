@@ -180,6 +180,10 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
         }
     };
 
+    // TODO: It seems my benchmarking was wrong and this complicated and unsafe method of avoiding
+    // contention between threads doesn't gain much/anything.
+    // Probably better to revert to just collecting the worker threads in a `Mutex<Vec<ThreadData>>`.
+
     // Initialize `Vec` to store `ThreadData`s.
     // Store a pointer to the `Vec`'s contents in `THREAD_DATAS_PTR` static.
     // `register_worker` will use this pointer to initialize the elements of the `Vec`.
