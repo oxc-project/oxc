@@ -1,5 +1,8 @@
 use std::{
-    cell::Cell, cmp, convert::identity, mem, ptr::NonNull, sync::Mutex,
+    cell::Cell,
+    cmp,
+    ptr::NonNull,
+    sync::atomic::{AtomicU32, Ordering},
     thread::available_parallelism,
 };
 
@@ -76,8 +79,49 @@ type Runner = ThreadsafeFunction<
     false,
 >;
 
-/// JS runner functions, each on its own worker thread
-static RUNNERS: Mutex<Vec<Runner>> = Mutex::new(Vec::new());
+/// Counter for number of registered runners.
+static REGISTERED_RUNNERS_COUNT: AtomicU32 = AtomicU32::new(0);
+
+/// Pointer to array of `Runner`s.
+static mut RUNNERS_PTR: NonNull<Runner> = NonNull::dangling();
+
+mod runner_ptr {
+    use super::*;
+
+    /// An unsafe wrapper around a `NonNull<Runner>`.
+    ///
+    /// It's marked as `Send` and `Sync` so can be transferred across threads,
+    /// unlike the `NonNull` pointer which it wraps.
+    ///
+    /// # SAFETY
+    ///
+    /// It is the user's responsibility to ensure that the way `RunnerPtr`s are used is sound,
+    /// and that is safe to pass the `RunnerPtr` across threads.
+    #[derive(Clone, Copy)]
+    pub struct RunnerPtr(NonNull<Runner>);
+
+    impl RunnerPtr {
+        /// Create a [`RunnerPtr`].
+        ///
+        /// # SAFETY
+        /// Caller must ensure the pointer is used in a sound manner.
+        /// See docs for [`RunnerPtr`].
+        pub unsafe fn new(ptr: NonNull<Runner>) -> Self {
+            Self(ptr)
+        }
+
+        /// Unwrap [`RunnerPtr`] into the underlying `NonNull<Runner>` pointer.
+        pub fn into_inner(self) -> NonNull<Runner> {
+            self.0
+        }
+    }
+
+    // SAFETY: See above
+    unsafe impl Send for RunnerPtr {}
+    // SAFETY: See above
+    unsafe impl Sync for RunnerPtr {}
+}
+use runner_ptr::RunnerPtr;
 
 thread_local! {
     /// Thread local containing pointer to JS runner function for each thread
@@ -107,8 +151,8 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
     // Parse CLI args
     let Some(options) = parse_options() else { return false };
 
-    // SAFETY: This is only place we write to `LOG`, and caller promises to only call this function once
-    // so no synchronisation problems
+    // SAFETY: This is only place that `LOG` is written to, and caller promises to only call
+    // this function once, so no synchronisation problems
     unsafe { LOG = options.log };
 
     log!("> Initializing");
@@ -122,9 +166,21 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
         }
     };
 
-    // Call JS to start worker threads
-    RUNNERS.lock().unwrap().reserve_exact(thread_count as usize);
+    // Initialize `Vec` to store `Runner`s.
+    // Store a pointer to the `Vec`'s contents in `RUNNERS_PTR` static.
+    // `register_worker` will use this pointer to initialize the elements of the `Vec`.
+    let mut runners = Vec::<Runner>::with_capacity(thread_count as usize);
+    // SAFETY: Pointer to a slice can never be null
+    let runners_ptr = unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) };
+    // SAFETY: This is the only place that `RUNNERS_PTR` is written to, and caller promises to only call
+    // this function once, so no synchronisation problems
+    unsafe { RUNNERS_PTR = runners_ptr };
 
+    // Wrap `runners_ptr` in a `RunnerPtr` to allow moving it over the async boundary
+    // SAFETY: Nothing which happens during the call to `start_workers` invalidates the pointer.
+    let runners_ptr = unsafe { RunnerPtr::new(runners_ptr) };
+
+    // Call JS to start worker threads
     start_workers
         .call_async(FnArgs::from((thread_count, options.log)))
         .await
@@ -132,21 +188,29 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
         .await
         .unwrap();
 
-    let mut runners = {
-        let mut runners = RUNNERS.lock().unwrap();
-        mem::take(&mut *runners)
-    };
-    let runners = runners.as_mut_slice();
-
-    if runners.len() != thread_count as usize {
+    // Check the expected number of runners were registered
+    // TODO: If this check fails (or a `start_workers` call above panics),
+    // any `Runner`s registered before the failure will not be dropped, causing a memory leak.
+    // Do we need to guard against that? Does it matter anyway since process exits then anyway?
+    // TODO: Is `SeqCst` overkill?
+    // TODO: Can we make counting registered runners a debug-mode only thing?
+    let registered_count = REGISTERED_RUNNERS_COUNT.load(Ordering::SeqCst);
+    if registered_count != thread_count {
         eprintln!("Failed to start worker threads");
         return false;
     }
 
+    // Set length of `runners` `Vec` to the number of runners.
+    // Now when `runners` is dropped at end of this function, the `Runner`s it contains will also be dropped.
+    // SAFETY: `Vec` was created with capacity of `thread_count`, and has not been altered since.
+    // We checked above that `thread_count` runners have been registered, so all elements of the `Vec`
+    // are initialized.
+    unsafe { runners.set_len(thread_count as usize) };
+
     // Start `rayon` thread pool with same number of threads
-    // SAFETY: `runners` lives until the end of this function.
+    // SAFETY: `runners` lives until the end of this function, so `runners_ptr` remains valid until then.
     // No work occurs in thread pool after end of this function.
-    unsafe { init_rayon_thread_pool(runners) };
+    unsafe { init_rayon_thread_pool(runners_ptr, thread_count as usize) };
 
     log!("> Initialized {thread_count} workers");
 
@@ -206,14 +270,34 @@ fn get_threads(options: &Options) -> Result<u32, String> {
 
 /// Register a JS runner function.
 /// Called from a JS worker thread.
+///
+/// # SAFETY
+/// * Must only be called in response to a request to call this made by `run` calling `startWorkers`.
+/// * `worker_id` must be less than thread count passed to `startWorkers` by `run`.
+/// * Each call to this function must pass a unique `worker_id`.
 #[napi]
 #[allow(clippy::missing_panics_doc, clippy::allow_attributes)]
-pub fn register_worker(worker_id: u32, run: Function<(), ()>) {
+pub unsafe fn register_worker(worker_id: u32, run: Function<(), ()>) {
     log!("> Registering worker {worker_id}");
 
+    // Wrap `run` in a `ThreadsafeFunction`
     let runner = run.build_threadsafe_function().build().unwrap();
-    let mut runners = RUNNERS.lock().unwrap();
-    runners.push(runner);
+
+    // SAFETY: `RUNNERS_PTR` is initialized in `run`, and points to a slice of memory large enough to
+    // accomodate `thread_count` x `Runner` instances.
+    // Caller promises this function has only been called in response to a call to `startWorkers`
+    // and that `worker_id` is less than `thread_count`, so `RUNNERS_PTR.add(worker_id)` is in bounds.
+    // Caller also promises this function is called each time with a unique `worker_id`,
+    // so there are no synchronisation issues of 2 threads writing to the same address at same time.
+    unsafe {
+        let runner_ptr = RUNNERS_PTR.add(worker_id as usize);
+        runner_ptr.write(runner);
+    }
+
+    // Increment counter of number of registered runners.
+    // TODO: Is `SeqCst` overkill?
+    // TODO: Can we make counting registered runners a debug-mode only thing?
+    REGISTERED_RUNNERS_COUNT.fetch_add(1, Ordering::SeqCst);
 }
 
 /// Start a rayon thread pool and assign a `Runner` to each thread.
@@ -221,11 +305,9 @@ pub fn register_worker(worker_id: u32, run: Function<(), ()>) {
 /// Pointer to `Runner` is stored in `RUNNER` thread local storage for each thread.
 ///
 /// # SAFETY
-/// The slice passed to this function must remain valid until the thread pool completes all work.
-#[expect(clippy::items_after_statements)]
-unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
-    let thread_count = runners.len();
-
+/// * `runners_ptr` must be valid pointer to an array of `thread_count` valid `Runner` instances.
+/// * Those `Runner` instances must remain valid until the thread pool completes all work.
+unsafe fn init_rayon_thread_pool(runners_ptr: RunnerPtr, thread_count: usize) {
     // Start `rayon` thread pool
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
@@ -235,25 +317,17 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
     // passing the thread ID of that thread into the closure.
     // Those thread IDs are unique and cover the range `0..thread_count`.
     //
-    // Each thread gets assigned one of the `Runner`s in the `runners` slice.
+    // Each thread gets assigned one of the `Runner`s which start at `runners_ptr`.
     // Because the thread IDs are unique, the `Runner` each thread receives is unique too.
-    // The caller guarantees that `runners` slice remains valid until after the thread pool has
+    // The caller guarantees that the `Runner`s remains valid until after the thread pool has
     // completed all work.
     //
     // Therefore, when running tasks, each thread can safely dereference its `NonNull<Runner>` pointer
     // to a `&mut Runner`, knowing that it's a valid reference, and no other thread can have access to it.
     //
     // This is sound, but there's no way to do this with safe code.
-    // We use `RunnerPtr` wrapper to circumvent type system, and allow copying pointer to `runners`
+    // `RunnerPtr` wrapper circumvents the type system, and allows copying `runners_ptr`
     // into `broadcast` closure.
-
-    #[derive(Clone, Copy)]
-    struct RunnerPtr(NonNull<Runner>);
-    // SAFETY: See above
-    unsafe impl Sync for RunnerPtr {}
-
-    // SAFETY: Pointer to a slice can never be null
-    let runners_ptr = RunnerPtr(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
 
     #[cfg_attr(not(debug_assertions), expect(unused_variables, unused_mut))]
     let mut thread_ids = rayon::broadcast(|ctx| {
@@ -263,12 +337,11 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
         debug_assert!(ctx.num_threads() == thread_count);
 
         // SAFETY: We created rayon thread pool with `thread_count` threads.
-        // `thread_id` is less than `thread_count`, and `runners` slice has `thread_count` entries.
-        // `runners_ptr` is pointer to first item in `runners` slice.
-        // Therefore `runners_ptr.add(thread_id)` cannot be out of bounds of the slice.
-        // Note: `identity` function is required to copy `runners_ptr` into the closure,
-        // instead of trying to copy `runners_ptr.0` (which won't compile).
-        let runner_ptr = unsafe { identity(runners_ptr).0.add(thread_id) };
+        // `thread_id` is less than `thread_count`, there are `thread_count` `Runner` instances
+        // starting at `runners_ptr`.
+        // Therefore `runners_ptr.add(thread_id)` points to a valid `Runner`, and cannot be out of
+        // bounds of the allocation containing the `Runner`s.
+        let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
         RUNNER.set(runner_ptr);
 
         log!("> Set runner for thread {thread_id}");

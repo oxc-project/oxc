@@ -3,6 +3,11 @@
 /**
  * Register a JS runner function.
  * Called from a JS worker thread.
+ *
+ * # SAFETY
+ * * Must only be called in response to a request to call this made by `run` calling `startWorkers`.
+ * * `worker_id` must be less than thread count passed to `startWorkers` by `run`.
+ * * Each call to this function must pass a unique `worker_id`.
  */
 export declare function registerWorker(workerId: number, run: () => void): void
 
