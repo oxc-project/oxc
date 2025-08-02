@@ -371,7 +371,7 @@ pub fn format<'ast>(
     arguments: Arguments<'_, 'ast>,
 ) -> FormatResult<Formatted<'ast>> {
     let mut state = FormatState::new(program, context);
-    let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
+    let mut buffer = VecBuffer::with_capacity(program.source_text.len(), &mut state);
 
     buffer.write_fmt(arguments)?;
 
