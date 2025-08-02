@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 710/1200
+Passed: 711/1200
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1343,7 +1343,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (47/158)
+# babel-plugin-transform-typescript (48/158)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1415,9 +1415,6 @@ after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 
 * class/private-method-override-transform-private/input.ts
-x Output mismatch
-
-* class/uninitialized-definite/input.ts
 x Output mismatch
 
 * declarations/const-enum/input.ts
