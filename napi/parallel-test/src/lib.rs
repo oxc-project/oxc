@@ -67,13 +67,13 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Call JS to start worker threads
     start_workers.call_async(thread_count).await.unwrap().await.unwrap();
 
-    let workers = {
-        let mut workers = RUNNERS.lock().unwrap();
-        mem::take(&mut *workers)
+    let runners = {
+        let mut runners = RUNNERS.lock().unwrap();
+        mem::take(&mut *runners)
     };
 
     #[expect(clippy::print_stderr)]
-    if workers.len() != thread_count as usize {
+    if runners.len() != thread_count as usize {
         eprintln!("Failed to start worker threads");
         return false;
     }
