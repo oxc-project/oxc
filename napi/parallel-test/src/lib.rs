@@ -166,6 +166,8 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
 /// Get number of threads to use.
 ///
 /// `--threads` CLI argument takes precedence, otherwise get available parallelism from OS.
+///
+/// Return value will not be greater than 0.
 #[expect(clippy::print_stderr)]
 fn get_threads() -> Option<u32> {
     // Parse CLI arguments
