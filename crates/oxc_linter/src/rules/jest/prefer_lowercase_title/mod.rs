@@ -1,3 +1,4 @@
+use rustc_hash::FxHashSet;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -22,8 +23,8 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLowercaseTitleConfig {
-    allowed_prefixes: Vec<CompactStr>,
-    ignore: Vec<CompactStr>,
+    allowed_prefixes: Vec<CompactStr>, // Keep as Vec for prefix matching
+    ignore: FxHashSet<CompactStr>,
     ignore_top_level_describe: bool,
     lowercase_first_character_only: bool,
 }
@@ -178,12 +179,12 @@ impl Rule for PreferLowercaseTitle {
             .and_then(|config| config.get("lowercaseFirstCharacterOnly"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(true);
-        let ignore = obj
+        let ignore: FxHashSet<CompactStr> = obj
             .and_then(|config| config.get("ignore"))
             .and_then(serde_json::Value::as_array)
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
-        let allowed_prefixes = obj
+        let allowed_prefixes: Vec<CompactStr> = obj
             .and_then(|config| config.get("allowedPrefixes"))
             .and_then(serde_json::Value::as_array)
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
@@ -291,27 +292,27 @@ impl PreferLowercaseTitle {
         });
     }
 
-    fn populate_ignores(ignore: &[CompactStr]) -> Vec<&str> {
-        let mut ignores: Vec<&str> = vec![];
+    fn populate_ignores(ignore: &FxHashSet<CompactStr>) -> FxHashSet<&str> {
+        let mut ignores: FxHashSet<&str> = FxHashSet::default();
         let test_case_name = ["fit", "it", "xit", "test", "xtest"];
         let describe_alias = ["describe", "fdescribe", "xdescribe"];
         let test_name = "test";
         let it_name = "it";
         let bench_name = "bench";
 
-        if ignore.iter().any(|alias| alias == "describe") {
+        if ignore.contains(&CompactStr::from("describe")) {
             ignores.extend(describe_alias.iter());
         }
 
-        if ignore.iter().any(|alias| alias == bench_name) {
-            ignores.push(bench_name);
+        if ignore.contains(&CompactStr::from(bench_name)) {
+            ignores.insert(bench_name);
         }
 
-        if ignore.iter().any(|alias| alias == test_name) {
+        if ignore.contains(&CompactStr::from(test_name)) {
             ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(test_name)));
         }
 
-        if ignore.iter().any(|alias| alias == it_name) {
+        if ignore.contains(&CompactStr::from(it_name)) {
             ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(it_name)));
         }
 
