@@ -136,6 +136,7 @@ oxc_traverse = { version = "0.79.1", path = "crates/oxc_traverse" }
 oxc_formatter = { path = "crates/oxc_formatter" }
 oxc_linter = { path = "crates/oxc_linter" }
 oxc_macros = { path = "crates/oxc_macros" }
+oxc_mcp_server = { path = "crates/oxc_mcp_server" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 oxlint = { path = "apps/oxlint" }

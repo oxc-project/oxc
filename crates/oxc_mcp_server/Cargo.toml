@@ -1,0 +1,48 @@
+[package]
+name = "oxc_mcp_server"
+version = "0.1.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description = "Model Context Protocol server for Oxc"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "oxc_mcp_server"
+test = true
+doctest = false
+
+[dependencies]
+oxc = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_linter = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_span = { workspace = true }
+
+# MCP dependencies
+rust-mcp-sdk = "0.5.0"
+rust-mcp-schema = "0.7.2"
+
+# Core dependencies
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
+anyhow = "1.0"
+log = { workspace = true }
+env_logger = { workspace = true, features = ["humantime"] }
+
+[dev-dependencies]
+tempfile = { workspace = true }
