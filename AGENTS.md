@@ -96,6 +96,8 @@ pnpm build-dev
 pnpm test
 ```
 
+Always run `just ready` as the last step after code has been committed to the repository.
+
 ## 🧭 Code Navigation Tips
 
 ### Understanding the AST
@@ -181,7 +183,6 @@ pnpm test
 
 ### Testing Strategy
 
-- Run `just ready` before submitting changes
 - Add unit tests for new functionality
 - Use snapshot tests for complex outputs
 - Test against real-world codebases when possible
