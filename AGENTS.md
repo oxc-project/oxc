@@ -31,7 +31,6 @@ Start from the `crates/` directory when exploring the codebase.
 
 Sub-directories named `generated` are code generated, do not edit files in these directories.
 
-
 ### Important Crates Overview
 
 - **`oxc_parser`** - JavaScript/TypeScript parser
