@@ -4256,7 +4256,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithClause<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         WithClause {
             span: CloneIn::clone_in(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in(&self.attributes_keyword, allocator),
+            keyword: CloneIn::clone_in(&self.keyword, allocator),
             with_entries: CloneIn::clone_in(&self.with_entries, allocator),
         }
     }
@@ -4264,12 +4264,23 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithClause<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         WithClause {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in_with_semantic_ids(
-                &self.attributes_keyword,
-                allocator,
-            ),
+            keyword: CloneIn::clone_in_with_semantic_ids(&self.keyword, allocator),
             with_entries: CloneIn::clone_in_with_semantic_ids(&self.with_entries, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for WithClauseKeyword {
+    type Cloned = WithClauseKeyword;
+
+    #[inline(always)]
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        *self
+    }
+
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        *self
     }
 }
 

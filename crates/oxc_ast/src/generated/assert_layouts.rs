@@ -787,12 +787,15 @@ const _: () = {
     assert!(offset_of!(ImportNamespaceSpecifier, span) == 0);
     assert!(offset_of!(ImportNamespaceSpecifier, local) == 8);
 
-    // Padding: 0 bytes
-    assert!(size_of::<WithClause>() == 56);
+    // Padding: 7 bytes
+    assert!(size_of::<WithClause>() == 40);
     assert!(align_of::<WithClause>() == 8);
     assert!(offset_of!(WithClause, span) == 0);
-    assert!(offset_of!(WithClause, attributes_keyword) == 8);
-    assert!(offset_of!(WithClause, with_entries) == 32);
+    assert!(offset_of!(WithClause, keyword) == 32);
+    assert!(offset_of!(WithClause, with_entries) == 8);
+
+    assert!(size_of::<WithClauseKeyword>() == 1);
+    assert!(align_of::<WithClauseKeyword>() == 1);
 
     // Padding: 0 bytes
     assert!(size_of::<ImportAttribute>() == 112);
@@ -2379,12 +2382,15 @@ const _: () = {
     assert!(offset_of!(ImportNamespaceSpecifier, span) == 0);
     assert!(offset_of!(ImportNamespaceSpecifier, local) == 8);
 
-    // Padding: 0 bytes
-    assert!(size_of::<WithClause>() == 40);
+    // Padding: 3 bytes
+    assert!(size_of::<WithClause>() == 28);
     assert!(align_of::<WithClause>() == 4);
     assert!(offset_of!(WithClause, span) == 0);
-    assert!(offset_of!(WithClause, attributes_keyword) == 8);
-    assert!(offset_of!(WithClause, with_entries) == 24);
+    assert!(offset_of!(WithClause, keyword) == 24);
+    assert!(offset_of!(WithClause, with_entries) == 8);
+
+    assert!(size_of::<WithClauseKeyword>() == 1);
+    assert!(align_of::<WithClauseKeyword>() == 1);
 
     // Padding: 0 bytes
     assert!(size_of::<ImportAttribute>() == 68);

@@ -8737,21 +8737,8 @@ impl<'a> GetSpan for AstNode<'a, ImportNamespaceSpecifier<'a>> {
 
 impl<'a> AstNode<'a, WithClause<'a>> {
     #[inline]
-    pub fn attributes_keyword(&self) -> &AstNode<'a, IdentifierName<'a>> {
-        let following_node = self
-            .inner
-            .with_entries
-            .first()
-            .as_ref()
-            .copied()
-            .map(SiblingNode::from)
-            .or(self.following_node);
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.attributes_keyword,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithClause(transmute_self(self))),
-            following_node,
-        })
+    pub fn keyword(&self) -> WithClauseKeyword {
+        self.inner.keyword
     }
 
     #[inline]

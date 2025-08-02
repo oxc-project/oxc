@@ -2534,9 +2534,18 @@ pub struct WithClause<'a> {
     #[estree(skip)]
     pub span: Span,
     #[estree(skip)]
-    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub keyword: WithClauseKeyword,
     #[estree(rename = "attributes")]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
+}
+
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[generate_derive(CloneIn, Dummy, ContentEq)]
+#[estree(no_ts_def)]
+pub enum WithClauseKeyword {
+    With = 0,
+    Assert = 1,
 }
 
 #[ast(visit)]

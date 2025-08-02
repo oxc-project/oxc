@@ -2746,7 +2746,6 @@ pub mod walk {
         let kind = AstKind::WithClause(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_import_attributes(&it.with_entries);
         visitor.leave_node(kind);
     }

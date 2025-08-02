@@ -281,13 +281,14 @@ impl<'a> ParserImpl<'a> {
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
     fn parse_import_attributes(&mut self) -> Option<WithClause<'a>> {
-        let attributes_keyword = match self.cur_kind() {
-            Kind::Assert if !self.cur_token().is_on_new_line() => self.parse_identifier_name(),
-            Kind::With => self.parse_identifier_name(),
-            _ => {
-                return None;
-            }
+        let keyword_kind = self.cur_kind();
+        let keyword = match keyword_kind {
+            Kind::With => WithClauseKeyword::With,
+            Kind::Assert if !self.cur_token().is_on_new_line() => WithClauseKeyword::Assert,
+            _ => return None,
         };
+        self.bump_remap(keyword_kind);
+
         let span = self.start_span();
         self.expect(Kind::LCurly);
         let (with_entries, _) = self.context(Context::empty(), self.ctx, |p| {
@@ -304,7 +305,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Some(self.ast.with_clause(self.end_span(span), attributes_keyword, with_entries))
+        Some(self.ast.with_clause(self.end_span(span), keyword, with_entries))
     }
 
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {

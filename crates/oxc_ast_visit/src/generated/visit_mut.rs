@@ -2853,7 +2853,6 @@ pub mod walk_mut {
         let kind = AstType::WithClause;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
         visitor.leave_node(kind);
     }

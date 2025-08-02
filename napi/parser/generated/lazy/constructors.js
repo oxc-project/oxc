@@ -5787,7 +5787,7 @@ class WithClause {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return internal.$attributes = constructVecImportAttribute(internal.pos + 32, internal.ast);
+    return internal.$attributes = constructVecImportAttribute(internal.pos + 8, internal.ast);
   }
 
   toJSON() {

@@ -1492,7 +1492,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
             [
                 space(),
                 // format_comment,
-                self.attributes_keyword(),
+                match self.keyword() {
+                    WithClauseKeyword::With => "with",
+                    WithClauseKeyword::Assert => "assert",
+                },
                 space(),
                 "{",
                 group(&soft_block_indent_with_maybe_space(

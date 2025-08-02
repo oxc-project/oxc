@@ -2889,16 +2889,9 @@ unsafe fn walk_with_clause<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_with_clause(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::WithClauseAttributesKeyword(
-        ancestor::WithClauseWithoutAttributesKeyword(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::WithClauseWithEntries(
+        ancestor::WithClauseWithoutWithEntries(node, PhantomData),
     ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_ATTRIBUTES_KEYWORD)
-            as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::WithClauseWithEntries);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_WITH_ENTRIES)
         as *mut Vec<ImportAttribute>)
     {

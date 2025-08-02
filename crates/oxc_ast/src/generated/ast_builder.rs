@@ -7654,16 +7654,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
-        WithClause { span, attributes_keyword, with_entries }
+        WithClause { span, keyword, with_entries }
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
@@ -7673,16 +7673,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn alloc_with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> Box<'a, WithClause<'a>> {
-        Box::new_in(self.with_clause(span, attributes_keyword, with_entries), self.allocator)
+        Box::new_in(self.with_clause(span, keyword, with_entries), self.allocator)
     }
 
     /// Build an [`ImportAttribute`].

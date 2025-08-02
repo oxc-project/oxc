@@ -957,7 +957,7 @@ function deserializeImportNamespaceSpecifier(pos) {
 
 function deserializeWithClause(pos) {
   return {
-    attributes: deserializeVecImportAttribute(pos + 32),
+    attributes: deserializeVecImportAttribute(pos + 8),
   };
 }
 
