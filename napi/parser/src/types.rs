@@ -31,15 +31,6 @@ pub struct ParserOptions {
     #[napi(ts_type = "boolean")]
     pub range: Option<bool>,
 
-    /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
-    ///
-    /// If this option is true, parenthesized expressions are represented by
-    /// (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
-    /// have a single `expression` property containing the expression inside parentheses.
-    ///
-    /// @default true
-    pub preserve_parens: Option<bool>,
-
     /// Produce semantic errors with an additional AST pass.
     /// Semantic errors depend on symbols and scopes, where the parser does not construct.
     /// This adds a small performance overhead.

@@ -55,7 +55,7 @@ impl<'a> ParserImpl<'a> {
             if expecting_directives {
                 if let Statement::ExpressionStatement(expr) = &stmt {
                     if let Expression::StringLiteral(string) = &expr.expression {
-                        // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                        // span start will mismatch if they are parenthesized (parens are now always stripped)
                         if expr.span.start == string.span.start {
                             let src = &self.source_text
                                 [string.span.start as usize + 1..string.span.end as usize - 1];

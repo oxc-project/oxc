@@ -79,13 +79,10 @@ fn parse<'a>(
     allocator: &'a Allocator,
     source_type: SourceType,
     source_text: &'a str,
-    options: &ParserOptions,
+    _options: &ParserOptions,
 ) -> ParserReturn<'a> {
     Parser::new(allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            preserve_parens: options.preserve_parens.unwrap_or(true),
-            ..ParseOptions::default()
-        })
+        .with_options(ParseOptions::default())
         .parse()
 }
 

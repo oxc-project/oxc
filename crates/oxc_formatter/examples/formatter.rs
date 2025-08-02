@@ -32,7 +32,6 @@ fn main() -> Result<(), String> {
     // Parse the source code
     let ret = Parser::new(&allocator, &source_text, source_type)
         .with_options(ParseOptions {
-            preserve_parens: false,
             allow_v8_intrinsics: true,
             ..ParseOptions::default()
         })

@@ -121,9 +121,6 @@ impl Oxc {
             allow_return_outside_function: parser_options
                 .allow_return_outside_function
                 .unwrap_or(default_parser_options.allow_return_outside_function),
-            preserve_parens: parser_options
-                .preserve_parens
-                .unwrap_or(default_parser_options.preserve_parens),
             allow_v8_intrinsics: parser_options
                 .allow_v8_intrinsics
                 .unwrap_or(default_parser_options.allow_v8_intrinsics),
@@ -331,7 +328,7 @@ impl Oxc {
             || run_options.formatter_ir.unwrap_or_default()
         {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+                .with_options(ParseOptions::default())
                 .parse();
 
             if run_options.formatter_format.unwrap_or_default() {

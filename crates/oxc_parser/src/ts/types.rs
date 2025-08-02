@@ -950,15 +950,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_parenthesized_type(&mut self) -> TSType<'a> {
-        let span = self.start_span();
         self.bump_any(); // bump `(`
         let ty = self.parse_ts_type();
         self.expect(Kind::RParen);
-        if self.options.preserve_parens {
-            self.ast.ts_type_parenthesized_type(self.end_span(span), ty)
-        } else {
-            ty
-        }
+        ty
     }
 
     fn parse_literal_type_node(&mut self, negative: bool) -> TSType<'a> {
