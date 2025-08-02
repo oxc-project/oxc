@@ -255,6 +255,7 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
     // SAFETY: Pointer to a slice can never be null
     let runners_ptr = RunnerPtr(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
 
+    #[cfg_attr(not(debug_assertions), expect(unused_variables, unused_mut))]
     let mut thread_ids = rayon::broadcast(|ctx| {
         let thread_id = ctx.index();
 
