@@ -32,9 +32,7 @@ impl TestReader {
         let test_path = workspace_root();
         let cases_path = test_path.join(&self.test_root);
 
-        let get_paths = || {
-            self.collect_paths(&cases_path, args, &skip_test_path)
-        };
+        let get_paths = || self.collect_paths(&cases_path, args, &skip_test_path);
 
         let mut paths = get_paths();
 
@@ -47,7 +45,12 @@ impl TestReader {
         self.read_files_parallel(paths, &test_path)
     }
 
-    fn collect_paths<F>(&self, cases_path: &Path, args: &AppArgs, skip_test_path: &F) -> Vec<PathBuf>
+    fn collect_paths<F>(
+        &self,
+        cases_path: &Path,
+        args: &AppArgs,
+        skip_test_path: &F,
+    ) -> Vec<PathBuf>
     where
         F: Fn(&Path) -> bool,
     {
@@ -83,7 +86,7 @@ impl TestReader {
             .map(|path| {
                 let mut code = self.read_file_content(&path);
                 let path = path.strip_prefix(test_path).unwrap().to_owned();
-                
+
                 // Remove the Byte Order Mark in some of the TypeScript files
                 if code.starts_with('\u{feff}') {
                     code.remove(0);

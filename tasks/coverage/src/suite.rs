@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use futures::{StreamExt, stream};
 use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
@@ -12,12 +13,11 @@ use oxc::{
 use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
 use tokio::runtime::Runtime;
-use futures::{StreamExt, stream};
 
 use crate::{
-    AppArgs, Driver, 
+    AppArgs, Driver,
     coverage::{CoverageReport, print_diff},
-    driver::DriverOptions, 
+    driver::DriverOptions,
     snapshot_manager::SnapshotManager,
     test_reader::TestReader,
 };
@@ -63,7 +63,13 @@ pub trait Suite<T: Case>: Sync {
         let mut out = stdout();
         report.print(name, args, &mut out).unwrap();
         if args.filter.is_none() {
-            SnapshotManager::snapshot_errors(name, self.get_test_root(), self.get_test_cases(), &report).unwrap();
+            SnapshotManager::snapshot_errors(
+                name,
+                self.get_test_root(),
+                self.get_test_cases(),
+                &report,
+            )
+            .unwrap();
         }
     }
 

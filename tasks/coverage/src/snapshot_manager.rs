@@ -2,7 +2,13 @@ use std::path::Path;
 
 use oxc_tasks_common::Snapshot;
 
-use crate::{AppArgs, coverage::CoverageReport, snap_root, suite::{Case, TestResult}, workspace_root};
+use crate::{
+    AppArgs,
+    coverage::CoverageReport,
+    snap_root,
+    suite::{Case, TestResult},
+    workspace_root,
+};
 
 /// Handles snapshot creation and management
 pub struct SnapshotManager;

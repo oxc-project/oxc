@@ -81,20 +81,20 @@ impl<'a, T: Case> CoverageReport<'a, T> {
         let parsed_diff = (self.parsed_positives as f64 / self.all_positives as f64) * 100.0;
         let positive_diff = (self.passed_positives as f64 / self.all_positives as f64) * 100.0;
         let negative_diff = (self.passed_negatives as f64 / self.all_negatives as f64) * 100.0;
-        
+
         writer.write_all(format!("{name} Summary:\n").as_bytes())?;
         let msg = format!(
             "AST Parsed     : {}/{} ({:.2}%)\n",
             self.parsed_positives, self.all_positives, parsed_diff
         );
         writer.write_all(msg.as_bytes())?;
-        
+
         let msg = format!(
             "Positive Passed: {}/{} ({:.2}%)\n",
             self.passed_positives, self.all_positives, positive_diff
         );
         writer.write_all(msg.as_bytes())?;
-        
+
         if self.all_negatives > 0 {
             let msg = format!(
                 "Negative Passed: {}/{} ({:.2}%)\n",

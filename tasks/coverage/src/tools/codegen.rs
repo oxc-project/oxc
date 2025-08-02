@@ -4,8 +4,8 @@ use oxc::span::SourceType;
 
 use crate::{
     Driver,
-    driver::DriverOptions,
     babel::BabelCase,
+    driver::DriverOptions,
     misc::MiscCase,
     suite::{Case, TestResult},
     test262::Test262Case,
@@ -14,26 +14,24 @@ use crate::{
 
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let result = Driver { 
+    let result = Driver {
         options: DriverOptions { codegen: true, ..DriverOptions::default() },
-        ..Driver::default() 
-    }.idempotency(
-        "Normal",
-        source_text,
-        source_type,
-    );
+        ..Driver::default()
+    }
+    .idempotency("Normal", source_text, source_type);
     if result != TestResult::Passed {
         return result;
     }
 
-    let result = Driver { 
-        options: DriverOptions { 
-            codegen: true, 
-            remove_whitespace: true, 
-            ..DriverOptions::default() 
+    let result = Driver {
+        options: DriverOptions {
+            codegen: true,
+            remove_whitespace: true,
+            ..DriverOptions::default()
         },
-        ..Driver::default() 
-    }.idempotency("Minify", source_text, source_type);
+        ..Driver::default()
+    }
+    .idempotency("Minify", source_text, source_type);
     if result != TestResult::Passed {
         return result;
     }

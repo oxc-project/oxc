@@ -4,26 +4,19 @@ use oxc::span::SourceType;
 
 use crate::{
     Driver,
-    driver::DriverOptions,
     babel::BabelCase,
+    driver::DriverOptions,
     suite::{Case, TestResult},
     test262::Test262Case,
 };
 
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    Driver { 
-        options: DriverOptions { 
-            compress: true, 
-            codegen: true, 
-            ..DriverOptions::default() 
-        },
-        ..Driver::default() 
-    }.idempotency(
-        "Compress",
-        source_text,
-        source_type,
-    )
+    Driver {
+        options: DriverOptions { compress: true, codegen: true, ..DriverOptions::default() },
+        ..Driver::default()
+    }
+    .idempotency("Compress", source_text, source_type)
 }
 
 pub struct MinifierTest262Case {
