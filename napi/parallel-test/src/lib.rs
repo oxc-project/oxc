@@ -79,11 +79,18 @@ type Runner = ThreadsafeFunction<
     false,
 >;
 
-/// Counter for number of registered runners.
-static REGISTERED_RUNNERS_COUNT: AtomicU32 = AtomicU32::new(0);
+/// Thread data.
+/// Each thread in thread pool has its own instance of `ThreadData`.
+struct ThreadData {
+    #[expect(dead_code)]
+    run: Runner,
+}
 
-/// Pointer to array of `Runner`s.
-static mut RUNNERS_PTR: NonNull<Runner> = NonNull::dangling();
+/// Counter for number of registered worker threads.
+static REGISTERED_WORKERS_COUNT: AtomicU32 = AtomicU32::new(0);
+
+/// Pointer to array of `ThreadData`s.
+static mut THREAD_DATAS_PTR: NonNull<ThreadData> = NonNull::dangling();
 
 mod unsafe_ptr {
     use super::*;
@@ -117,7 +124,7 @@ mod unsafe_ptr {
             Self(ptr)
         }
 
-        /// Unwrap [`UnsafePtr`] into the underlying `NonNull<Runner>` pointer.
+        /// Unwrap [`UnsafePtr`] into the underlying `NonNull<T>` pointer.
         pub fn into_inner(self) -> NonNull<T> {
             self.0
         }
@@ -131,8 +138,8 @@ mod unsafe_ptr {
 use unsafe_ptr::UnsafePtr;
 
 thread_local! {
-    /// Thread local containing pointer to JS runner function for each thread
-    static RUNNER: Cell<NonNull<Runner>> = const { Cell::new(NonNull::dangling()) };
+    /// Thread local containing pointer to [`ThreadData`] for this thread
+    static THREAD_DATA: Cell<NonNull<ThreadData>> = const { Cell::new(NonNull::dangling()) };
 }
 
 /// Entry point from JS.
@@ -141,7 +148,7 @@ thread_local! {
 /// * Call JS `startWorkers` function to start up worker threads
 ///   (those worker threads each call `register_worker` when they start up).
 /// * Initialize global rayon thread pool with same number of threads.
-/// * Pass a pointer to a `Runner` to each rayon thread.
+/// * Pass a pointer to a `ThreadData` to each rayon thread.
 /// * Run workload.
 ///
 /// # SAFETY
@@ -165,7 +172,7 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
     log!("> Initializing");
 
     // Get number of threads to use
-    let thread_count = match get_threads(&options) {
+    let thread_count = match get_thread_count(&options) {
         Ok(thread_count) => thread_count,
         Err(err) => {
             eprintln!("{err}");
@@ -173,19 +180,19 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
         }
     };
 
-    // Initialize `Vec` to store `Runner`s.
-    // Store a pointer to the `Vec`'s contents in `RUNNERS_PTR` static.
+    // Initialize `Vec` to store `ThreadData`s.
+    // Store a pointer to the `Vec`'s contents in `THREAD_DATAS_PTR` static.
     // `register_worker` will use this pointer to initialize the elements of the `Vec`.
-    let mut runners = Vec::<Runner>::with_capacity(thread_count as usize);
+    let mut datas = Vec::<ThreadData>::with_capacity(thread_count as usize);
     // SAFETY: Pointer to a slice can never be null
-    let runners_ptr = unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) };
-    // SAFETY: This is the only place that `RUNNERS_PTR` is written to, and caller promises to only call
-    // this function once, so no synchronisation problems
-    unsafe { RUNNERS_PTR = runners_ptr };
+    let datas_ptr = unsafe { NonNull::new_unchecked(datas.as_mut_ptr()) };
+    // SAFETY: This is the only place that `THREAD_DATAS_PTR` is written to, and caller promises
+    // to only call this function once, so no synchronisation problems
+    unsafe { THREAD_DATAS_PTR = datas_ptr };
 
-    // Wrap `runners_ptr` in an `UnsafePtr` to allow moving it over the async boundary
+    // Wrap `datas_ptr` in an `UnsafePtr` to allow moving it over the async boundary.
     // SAFETY: Nothing which happens during the call to `start_workers` invalidates the pointer.
-    let runners_ptr = unsafe { UnsafePtr::new(runners_ptr) };
+    let datas_ptr = unsafe { UnsafePtr::new(datas_ptr) };
 
     // Call JS to start worker threads
     start_workers
@@ -195,29 +202,29 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
         .await
         .unwrap();
 
-    // Check the expected number of runners were registered
+    // Check the expected number of worker threads were registered.
     // TODO: If this check fails (or a `start_workers` call above panics),
-    // any `Runner`s registered before the failure will not be dropped, causing a memory leak.
+    // any `ThreadData`s registered before the failure will not be dropped, causing a memory leak.
     // Do we need to guard against that? Does it matter anyway since process exits then anyway?
     // TODO: Is `SeqCst` overkill?
-    // TODO: Can we make counting registered runners a debug-mode only thing?
-    let registered_count = REGISTERED_RUNNERS_COUNT.load(Ordering::SeqCst);
+    // TODO: Can we make counting registered workers a debug-mode only thing?
+    let registered_count = REGISTERED_WORKERS_COUNT.load(Ordering::SeqCst);
     if registered_count != thread_count {
         eprintln!("Failed to start worker threads");
         return false;
     }
 
-    // Set length of `runners` `Vec` to the number of runners.
-    // Now when `runners` is dropped at end of this function, the `Runner`s it contains will also be dropped.
+    // Set length of `datas` `Vec` to the number of threads.
+    // Now when `datas` is dropped at end of this function, the `ThreadData`s it contains will also be dropped.
     // SAFETY: `Vec` was created with capacity of `thread_count`, and has not been altered since.
-    // We checked above that `thread_count` runners have been registered, so all elements of the `Vec`
+    // We checked above that `thread_count` workers have been registered, so all elements of the `Vec`
     // are initialized.
-    unsafe { runners.set_len(thread_count as usize) };
+    unsafe { datas.set_len(thread_count as usize) };
 
     // Start `rayon` thread pool with same number of threads
-    // SAFETY: `runners` lives until the end of this function, so `runners_ptr` remains valid until then.
+    // SAFETY: `datas` lives until the end of this function, so `datas_ptr` remains valid until then.
     // No work occurs in thread pool after end of this function.
-    unsafe { init_rayon_thread_pool(runners_ptr, thread_count as usize) };
+    unsafe { init_rayon_thread_pool(datas_ptr, thread_count as usize) };
 
     log!("> Initialized {thread_count} workers");
 
@@ -252,7 +259,7 @@ fn parse_options() -> Option<Options> {
 ///
 /// # Errors
 /// Returns `Err` if unable to determine number of threads.
-fn get_threads(options: &Options) -> Result<u32, String> {
+fn get_thread_count(options: &Options) -> Result<u32, String> {
     let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
 
     let thread_count = options.threads;
@@ -275,8 +282,8 @@ fn get_threads(options: &Options) -> Result<u32, String> {
         .map_err(|e| format!("Failed to determine available parallelism: {e}"))
 }
 
-/// Register a JS runner function.
-/// Called from a JS worker thread.
+/// Register a JS worker thread.
+/// Is passed a `run` function.
 ///
 /// # SAFETY
 /// * Must only be called in response to a request to call this made by `run` calling `startWorkers`.
@@ -288,52 +295,54 @@ pub unsafe fn register_worker(worker_id: u32, run: Function<(), ()>) {
     log!("> Registering worker {worker_id}");
 
     // Wrap `run` in a `ThreadsafeFunction`
-    let runner = run.build_threadsafe_function().build().unwrap();
+    let run = run.build_threadsafe_function().build().unwrap();
 
-    // SAFETY: `RUNNERS_PTR` is initialized in `run`, and points to a slice of memory large enough to
-    // accomodate `thread_count` x `Runner` instances.
+    let data = ThreadData { run };
+
+    // SAFETY: `THREAD_DATAS_PTR` is initialized in `run`, and points to a slice of memory large enough
+    // to accomodate `thread_count` x `ThreadData` instances.
     // Caller promises this function has only been called in response to a call to `startWorkers`
-    // and that `worker_id` is less than `thread_count`, so `RUNNERS_PTR.add(worker_id)` is in bounds.
+    // and that `worker_id` is less than `thread_count`, so `THREAD_DATAS_PTR.add(worker_id)` is in bounds.
     // Caller also promises this function is called each time with a unique `worker_id`,
     // so there are no synchronisation issues of 2 threads writing to the same address at same time.
     unsafe {
-        let runner_ptr = RUNNERS_PTR.add(worker_id as usize);
-        runner_ptr.write(runner);
+        let data_ptr = THREAD_DATAS_PTR.add(worker_id as usize);
+        data_ptr.write(data);
     }
 
-    // Increment counter of number of registered runners.
+    // Increment counter of number of registered workers.
     // TODO: Is `SeqCst` overkill?
-    // TODO: Can we make counting registered runners a debug-mode only thing?
-    REGISTERED_RUNNERS_COUNT.fetch_add(1, Ordering::SeqCst);
+    // TODO: Can we make counting registered workers a debug-mode only thing?
+    REGISTERED_WORKERS_COUNT.fetch_add(1, Ordering::SeqCst);
 }
 
-/// Start a rayon thread pool and assign a `Runner` to each thread.
+/// Start a rayon thread pool and assign a `ThreadData` to each thread.
 ///
-/// Pointer to `Runner` is stored in `RUNNER` thread local storage for each thread.
+/// Pointer to `ThreadData` is stored in `THREAD_DATA` thread local storage for each thread.
 ///
 /// # SAFETY
-/// * `runners_ptr` must be valid pointer to an array of `thread_count` valid `Runner` instances.
-/// * Those `Runner` instances must remain valid until the thread pool completes all work.
-unsafe fn init_rayon_thread_pool(runners_ptr: UnsafePtr<Runner>, thread_count: usize) {
+/// * `datas_ptr` must be valid pointer to an array of `thread_count` valid `ThreadData` instances.
+/// * Those `ThreadData` instances must remain valid until the thread pool completes all work.
+unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count: usize) {
     // Start `rayon` thread pool
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
-    // Store pointer to `Runner` for each thread in thread-local storage.
+    // Store pointer to `ThreadData` for each thread in thread-local storage.
     //
     // `broadcast` executes the closure on every thread in the thread pool,
     // passing the thread ID of that thread into the closure.
     // Those thread IDs are unique and cover the range `0..thread_count`.
     //
-    // Each thread gets assigned one of the `Runner`s which start at `runners_ptr`.
-    // Because the thread IDs are unique, the `Runner` each thread receives is unique too.
-    // The caller guarantees that the `Runner`s remains valid until after the thread pool has
+    // Each thread gets assigned one of the `ThreadData`s which start at `datas_ptr`.
+    // Because the thread IDs are unique, the `ThreadData` each thread receives is unique too.
+    // The caller guarantees that the `ThreadData`s remains valid until after the thread pool has
     // completed all work.
     //
-    // Therefore, when running tasks, each thread can safely dereference its `NonNull<Runner>` pointer
-    // to a `&mut Runner`, knowing that it's a valid reference, and no other thread can have access to it.
+    // Therefore, when running tasks, each thread can safely dereference its `NonNull<ThreadData>` pointer
+    // to a `&mut ThreadData`, knowing that it's a valid reference, and no other thread can have access to it.
     //
     // This is sound, but there's no way to do this with safe code.
-    // `UnsafePtr` wrapper circumvents the type system, and allows copying `runners_ptr`
+    // `UnsafePtr` wrapper circumvents the type system, and allows copying `datas_ptr`
     // into `broadcast` closure.
 
     #[cfg_attr(not(debug_assertions), expect(unused_variables, unused_mut))]
@@ -344,14 +353,14 @@ unsafe fn init_rayon_thread_pool(runners_ptr: UnsafePtr<Runner>, thread_count: u
         debug_assert!(ctx.num_threads() == thread_count);
 
         // SAFETY: We created rayon thread pool with `thread_count` threads.
-        // `thread_id` is less than `thread_count`, there are `thread_count` `Runner` instances
-        // starting at `runners_ptr`.
-        // Therefore `runners_ptr.add(thread_id)` points to a valid `Runner`, and cannot be out of
-        // bounds of the allocation containing the `Runner`s.
-        let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
-        RUNNER.set(runner_ptr);
+        // `thread_id` is less than `thread_count`, there are `thread_count` `ThreadData` instances
+        // starting at `datas_ptr`.
+        // Therefore `datas_ptr.add(thread_id)` points to a valid `ThreadData`, and cannot be out of
+        // bounds of the allocation containing the `ThreadData`s.
+        let data_ptr = unsafe { datas_ptr.into_inner().add(thread_id) };
+        THREAD_DATA.set(data_ptr);
 
-        log!("> Set runner for thread {thread_id}");
+        log!("> Set thread data for thread {thread_id}");
 
         // Return `()` in release mode to avoid the overhead of building a `Vec<usize>`
         #[cfg(debug_assertions)]
