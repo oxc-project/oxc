@@ -2,7 +2,7 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
-use crate::loader::JavaScriptSource;
+use crate::{frameworks::FrameworkOptions, loader::JavaScriptSource};
 
 use super::{SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
@@ -62,7 +62,12 @@ impl<'a> SveltePartialLoader<'a> {
 
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
-        Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
+        Some(JavaScriptSource::partial(
+            source_text,
+            source_type,
+            FrameworkOptions::None,
+            js_start as u32,
+        ))
     }
 }
 
