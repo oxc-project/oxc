@@ -78,8 +78,7 @@ declare_oxc_lint!(
     ///   (data: string): number;
     ///   (id: number): string;
     /// }
-    /// ```
-    /// }
+    ///
     /// // this is equivalent to Overloaded interface.
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
