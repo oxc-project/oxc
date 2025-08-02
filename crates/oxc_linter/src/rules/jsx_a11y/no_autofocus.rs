@@ -25,9 +25,14 @@ pub struct NoAutofocus {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that `autoFocus` prop is not used on elements. Autofocusing
-    /// elements can cause usability issues for sighted and non-sighted users,
-    /// alike.
+    /// Enforce that `autoFocus` prop is not used on elements.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Autofocusing elements can cause usability issues for sighted and
+    /// non-sighted users alike. It can be disorienting when focus is shifted
+    /// without user input and can interfere with assistive technologies.
+    /// Users should control when and where focus moves on a page.
     ///
     /// ### Rule Option
     ///
