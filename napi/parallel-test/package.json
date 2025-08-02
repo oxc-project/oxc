@@ -6,7 +6,7 @@
   "scripts": {
     "build": "pnpm run build-dev --release",
     "build-dev": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --esm",
-    "start": "node src-js/index.js",
+    "start": "node src-js/direct/index.js",
     "test": "vitest --dir ./test run"
   },
   "engines": {
