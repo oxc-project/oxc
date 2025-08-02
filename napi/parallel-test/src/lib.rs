@@ -17,14 +17,15 @@ use napi_derive::napi;
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options)]
 pub struct Options {
-    /// Number of threads to use.
-    /// * 0 for using as many CPU cores as system has (default).
-    /// * 1 for using only 1 CPU core.
-    #[bpaf(argument("INT"), hide_usage)]
-    pub threads: Option<u32>,
+    /// Number of threads to use
+    ///
+    /// - 0 for using as many CPU cores as system has (default).
+    /// - 1 for using only 1 CPU core.
+    #[bpaf(argument("INT"), fallback(0))]
+    pub threads: u32,
 
-    /// Number of iterations to perform.
-    #[bpaf(argument("INT"), hide_usage)]
+    /// Number of iterations to perform
+    #[bpaf(argument("INT"))]
     pub iterations: usize,
 }
 
@@ -151,15 +152,14 @@ fn parse_options() -> Option<Options> {
 fn get_threads(options: &Options) -> Result<u32, String> {
     let max_thread_count = cmp::min(rayon::max_num_threads(), u32::MAX as usize);
 
-    if let Some(thread_count) = options.threads {
-        if thread_count > 0 {
-            if thread_count as usize > max_thread_count {
-                return Err(format!(
-                    "Requested too many threads: {thread_count} vs {max_thread_count} maximum"
-                ));
-            }
-            return Ok(thread_count);
+    let thread_count = options.threads;
+    if thread_count > 0 {
+        if thread_count as usize > max_thread_count {
+            return Err(format!(
+                "Requested too many threads: {thread_count} vs {max_thread_count} maximum"
+            ));
         }
+        return Ok(thread_count);
     }
 
     available_parallelism()
