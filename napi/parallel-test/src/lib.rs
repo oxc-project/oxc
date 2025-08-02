@@ -98,6 +98,7 @@ pub async fn run(start_workers: StartThreads) -> bool {
         let mut runners = RUNNERS.lock().unwrap();
         mem::take(&mut *runners)
     };
+    let runners = runners.as_mut_slice();
 
     if runners.len() != thread_count as usize {
         eprintln!("Failed to start worker threads");
@@ -106,7 +107,7 @@ pub async fn run(start_workers: StartThreads) -> bool {
 
     // Start `rayon` thread pool with same number of threads
     // SAFETY: TODO
-    unsafe { init_rayon_thread_pool(&mut runners) };
+    unsafe { init_rayon_thread_pool(runners) };
 
     println!("> Initialized {thread_count} workers");
 
