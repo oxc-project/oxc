@@ -170,6 +170,8 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
+        env:
+          RUN_RAW_TESTS: "true"
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
