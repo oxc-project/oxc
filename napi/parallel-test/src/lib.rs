@@ -91,7 +91,8 @@ impl<T> Drop for NonUniqueVec<T> {
 struct RunnerPtr(NonNull<Runner>);
 
 impl RunnerPtr {
-    fn new(ptr: NonNull<Runner>) -> Self {
+    /// SAFETY: TODO
+    unsafe fn new(ptr: NonNull<Runner>) -> Self {
         Self(ptr)
     }
 
@@ -137,17 +138,17 @@ pub async fn run(start_workers: StartThreads) -> bool {
     // Start `rayon` thread pool with same number of threads
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
-    // SAFETY: TODO
-    let runners_ptr = RunnerPtr::new(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
-
     // Store pointer to `Runner` for each thread in thread-local storage
-    let mut thread_ids = rayon::broadcast(move |ctx| {
+    // SAFETY: TODO
+    let runners_ptr = unsafe { RunnerPtr::new(NonNull::new_unchecked(runners.as_mut_ptr())) };
+
+    let mut thread_ids = rayon::broadcast(|ctx| {
         let thread_id = ctx.index();
 
         debug_assert!(thread_id < thread_count);
         debug_assert!(ctx.num_threads() == thread_count);
 
-        RUNNER.with(move |runner_cell| {
+        RUNNER.with(|runner_cell| {
             // SAFETY: TODO
             let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
             runner_cell.set(runner_ptr);
@@ -155,12 +156,15 @@ pub async fn run(start_workers: StartThreads) -> bool {
 
         println!("> Set runner for thread {thread_id}");
 
-        thread_id
+        #[cfg(debug_assertions)]
+        {
+            thread_id
+        }
     });
 
+    // Check thread IDs are unique
     #[cfg(debug_assertions)]
     {
-        // Check thread indexes are unique
         thread_ids.sort_unstable();
         assert!(
             thread_ids.len() == thread_count
