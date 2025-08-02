@@ -9,9 +9,11 @@ export declare function registerWorker(workerId: number, run: () => void): void
 /**
  * Entry point from JS.
  *
- * * Determines number of threads to use.
- * * Calls JS `startWorkers` function to start up worker threads
+ * * Determine number of threads to use.
+ * * Call JS `startWorkers` function to start up worker threads
  *   (those worker threads each call `register_worker` when they start up).
+ * * Initialize global rayon thread pool with same number of threads.
+ * * Pass a pointer to a `Runner` to each rayon thread.
  * * Runs workload.
  */
 export declare function run(startWorkers: StartThreads): Promise<boolean>
