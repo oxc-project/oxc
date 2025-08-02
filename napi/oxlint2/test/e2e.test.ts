@@ -84,6 +84,15 @@ describe('oxlint2 CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should report an error if a a rule is not found within a custom plugin (via overrides)', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/custom_plugin_via_overrides_missing_rule',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should report the correct severity when using a custom plugin', async () => {
     const { stdout, exitCode } = await runOxlint(
       'test/fixtures/basic_custom_plugin_warn_severity',

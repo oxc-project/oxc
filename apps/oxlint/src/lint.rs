@@ -276,7 +276,19 @@ impl LintRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = config_builder.build();
+        let lint_config = match config_builder.build(&external_plugin_store) {
+            Ok(config) => config,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to build configuration.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -489,7 +501,19 @@ impl LintRunner {
             }
             .with_filters(filters);
 
-            let config = builder.build();
+            let config = match builder.build(external_plugin_store) {
+                Ok(config) => config,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to build configuration.\n{}\n",
+                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            };
             nested_configs.insert(dir.to_path_buf(), config);
         }
 

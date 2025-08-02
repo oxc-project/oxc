@@ -522,7 +522,8 @@ impl Tester {
                         self.plugins.builtin.union(BuiltinLintPlugins::from(self.plugin_name)),
                     )
                     .with_rule(rule, AllowWarnDeny::Warn)
-                    .build(),
+                    .build(&external_plugin_store)
+                    .unwrap(),
                 FxHashMap::default(),
                 external_plugin_store,
             ),
