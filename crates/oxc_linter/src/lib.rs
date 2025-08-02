@@ -134,7 +134,7 @@ impl Linter {
 
         let ctx_host = Rc::new(ContextHost::new(
             path,
-            vec![ContextSubHost::new(semantic, module_record)],
+            vec![ContextSubHost::new(semantic, module_record, 0)],
             self.options,
             config,
         ));
