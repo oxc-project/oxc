@@ -30,7 +30,6 @@ use oxc_span::SourceType;
 // or `just watch "run -p oxc_semantic --example semantic"`
 
 /// Perform semantic analysis on a JavaScript or TypeScript file
-
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let show_symbols = env::args().skip(1).any(|arg| arg == "--symbols");

@@ -2,16 +2,16 @@
 //! # Parser Example
 //!
 //! This example demonstrates how to use the Oxc parser to parse JavaScript and TypeScript files.
-//! 
+//!
 //! ## Usage
-//! 
+//!
 //! Create a `test.js` file and run:
 //! ```bash
 //! cargo run -p oxc_parser --example parser [filename] [--ast] [--estree] [--comments]
 //! ```
-//! 
+//!
 //! ## Options
-//! 
+//!
 //! - `--ast`: Display the parsed AST structure
 //! - `--estree`: Display the ESTree representation
 //! - `--comments`: Display extracted comments

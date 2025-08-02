@@ -1,4 +1,20 @@
 #![expect(clippy::print_stdout)]
+//! # Control Flow Graph (CFG) Example
+//!
+//! This example demonstrates how to build and visualize control flow graphs
+//! from JavaScript/TypeScript code using Oxc's semantic analyzer.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_semantic --example cfg [filename]
+//! ```
+//!
+//! This generates:
+//! - AST dump (`test.ast.txt`)
+//! - CFG blocks (`test.cfg.txt`)
+//! - CFG graph in DOT format (`test.dot`)
 
 use std::{env, path::Path, sync::Arc};
 
@@ -26,6 +42,7 @@ use oxc_span::SourceType;
 //    - CFG blocks (test.cfg.txt)
 //    - CFG graph (test.dot)
 
+/// Generate control flow graph visualizations from JavaScript/TypeScript code
 fn main() -> std::io::Result<()> {
     let test_file_name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let ast_file_name = env::args().nth(1).unwrap_or_else(|| "test.ast.txt".to_string());

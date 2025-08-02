@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
     let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::new();
-    
+
     // Parse the source code
     let ret = Parser::new(&allocator, &source_text, source_type)
         .with_options(ParseOptions {
