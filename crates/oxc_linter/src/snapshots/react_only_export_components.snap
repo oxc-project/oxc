@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: "snapshot_output(rule, pass_tests, fail_tests).await"
+---
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const foo = () => {}; export const Bar = () => <></>;
+   ·              ───
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+   ╭─[only_export_components.tsx:1:16]
+ 1 │ export default function () {}
+   ·                ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): This rule can't verify that `export *` only exports components.
+   ╭─[only_export_components.tsx:1:1]
+ 1 │ export * from './foo';
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const Tab = () => {}; export const tabs = [<Tab />, <Tab />];
+   ·       ───
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file has exports. Move your component(s) to a separate file.
+   ╭─[only_export_components.tsx:1:7]
+ 1 │ const App = () => {}; createRoot(document.getElementById('root')).render(<App />);
+   ·       ───
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const CONSTANT = 3; export const Foo = () => <></>;
+   ·              ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const createContext = () => {}; export const Foo = () => <></>;
+   ·              ─────────────
+   ╰────
