@@ -2166,7 +2166,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "rayon",
- "tokio",
 ]
 
 [[package]]
