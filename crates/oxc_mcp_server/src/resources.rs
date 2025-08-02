@@ -1,9 +1,8 @@
 use anyhow::{anyhow, Result};
-use rust_mcp_schema::{ReadResourceResultContentsItem, TextResourceContents};
-use serde_json::json;
+use serde_json::{json, Value};
 
 /// Get the content for a resource URI
-pub async fn get_resource_content(uri: &str) -> Result<ReadResourceResultContentsItem> {
+pub async fn get_resource_content(uri: &str) -> Result<Value> {
     match uri {
         "oxc://linter/rules" => get_linter_rules().await,
         "oxc://project/info" => get_project_info().await,
@@ -13,7 +12,7 @@ pub async fn get_resource_content(uri: &str) -> Result<ReadResourceResultContent
 }
 
 /// Get information about available linter rules
-async fn get_linter_rules() -> Result<ReadResourceResultContentsItem> {
+async fn get_linter_rules() -> Result<Value> {
     // In a real implementation, this would dynamically fetch rules from oxc_linter
     // For now, we'll provide a representative sample
     let rules_info = json!({
@@ -60,16 +59,15 @@ async fn get_linter_rules() -> Result<ReadResourceResultContentsItem> {
         "recommended_rules": 93
     });
 
-    Ok(ReadResourceResultContentsItem::TextResourceContents(TextResourceContents {
-        uri: "oxc://linter/rules".to_string(),
-        text: serde_json::to_string_pretty(&rules_info)?,
-        mime_type: Some("application/json".to_string()),
-        meta: None,
+    Ok(json!({
+        "uri": "oxc://linter/rules",
+        "mimeType": "application/json",
+        "text": serde_json::to_string_pretty(&rules_info)?
     }))
 }
 
 /// Get information about the Oxc project
-async fn get_project_info() -> Result<ReadResourceResultContentsItem> {
+async fn get_project_info() -> Result<Value> {
     let project_info = r#"# Oxc Project Information
 
 ## Overview
@@ -122,16 +120,15 @@ Oxc (The Oxidation Compiler) is a collection of high-performance tools for JavaS
 - Snapshot testing for diagnostics
 "#;
 
-    Ok(ReadResourceResultContentsItem::TextResourceContents(TextResourceContents {
-        uri: "oxc://project/info".to_string(),
-        text: project_info.to_string(),
-        mime_type: Some("text/markdown".to_string()),
-        meta: None,
+    Ok(json!({
+        "uri": "oxc://project/info",
+        "mimeType": "text/markdown",
+        "text": project_info
     }))
 }
 
 /// Get AST schema information
-async fn get_ast_schema() -> Result<ReadResourceResultContentsItem> {
+async fn get_ast_schema() -> Result<Value> {
     let ast_schema = json!({
         "description": "Oxc Abstract Syntax Tree Schema",
         "differences_from_estree": {
@@ -164,10 +161,9 @@ async fn get_ast_schema() -> Result<ReadResourceResultContentsItem> {
         }
     });
 
-    Ok(ReadResourceResultContentsItem::TextResourceContents(TextResourceContents {
-        uri: "oxc://ast/schema".to_string(),
-        text: serde_json::to_string_pretty(&ast_schema)?,
-        mime_type: Some("application/json".to_string()),
-        meta: None,
+    Ok(json!({
+        "uri": "oxc://ast/schema",
+        "mimeType": "application/json",
+        "text": serde_json::to_string_pretty(&ast_schema)?
     }))
 }

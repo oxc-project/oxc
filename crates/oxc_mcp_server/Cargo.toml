@@ -33,10 +33,6 @@ oxc_codegen = { workspace = true }
 oxc_span = { workspace = true }
 
 # MCP dependencies
-rust-mcp-sdk = "0.5.0"
-rust-mcp-schema = "0.7.2"
-
-# Core dependencies
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
