@@ -14,15 +14,6 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: "Write a meaningful title for your test"
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'foo' is declared but never used. Unused variables should start with a '_'.
-   ,-[index.ts:1:7]
- 1 | const foo = 123;
-   :       ^|^
-   :        `-- 'foo' is declared here
- 2 | // no-unused-vars error expected as `eslint` plugin and `correctness` categories are on by default (override is not applied.)
-   `----
-  help: Consider removing this declaration.
-
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/expect-expect.html\eslint-plugin-jest(expect-expect)]8;;\: Test has no assertions
    ,-[index.test.ts:4:3]
  3 | 
@@ -40,6 +31,15 @@ working directory: fixtures/overrides_with_plugin
  5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
    `----
   help: "Write a meaningful title for your test"
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ,-[index.ts:1:7]
+ 1 | const foo = 123;
+   :       ^|^
+   :        `-- 'foo' is declared here
+ 2 | // no-unused-vars error expected as `eslint` plugin and `correctness` categories are on by default (override is not applied.)
+   `----
+  help: Consider removing this declaration.
 
 Found 2 warnings and 2 errors.
 Finished in <variable>ms on 2 files with 87 rules using 1 threads.

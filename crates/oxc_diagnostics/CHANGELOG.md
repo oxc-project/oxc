@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- 5c33fc7 diagnostics: Implement `Eq` and `Ord` for `InfoPosition` (#12505) (overlookmotel)
+
+### ⚡ Performance
+
+- ce5d074 diagnostics: `Info::new` trim string in place (#12506) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

@@ -1320,8 +1320,14 @@ impl ContentEq for ImportNamespaceSpecifier<'_> {
 
 impl ContentEq for WithClause<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.attributes_keyword, &other.attributes_keyword)
+        ContentEq::content_eq(&self.keyword, &other.keyword)
             && ContentEq::content_eq(&self.with_entries, &other.with_entries)
+    }
+}
+
+impl ContentEq for WithClauseKeyword {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 

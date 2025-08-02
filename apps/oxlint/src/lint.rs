@@ -20,7 +20,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
+    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -32,10 +32,8 @@ pub struct LintRunner {
     external_linter: Option<ExternalLinter>,
 }
 
-impl Runner for LintRunner {
-    type Options = LintCommand;
-
-    fn new(options: Self::Options, external_linter: Option<ExternalLinter>) -> Self {
+impl LintRunner {
+    pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
@@ -43,7 +41,7 @@ impl Runner for LintRunner {
         }
     }
 
-    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -323,14 +321,14 @@ impl Runner for LintRunner {
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
             let mut lint_service = LintService::new(linter, allocator_pool, options);
-            let _ = lint_service.with_paths(paths);
+            lint_service.with_paths(paths);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
             // This reads the source text into start of allocator, instead of the end.
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
             {
                 use crate::raw_fs::RawTransferFileSystem;
-                let _ = lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
 
             lint_service.run(&tx_error);
@@ -447,7 +445,10 @@ impl LintRunner {
             while let Some(dir) = current {
                 // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
                 // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
-                directories.insert(dir);
+                let inserted = directories.insert(dir);
+                if !inserted {
+                    break;
+                }
                 current = dir.parent();
             }
         }

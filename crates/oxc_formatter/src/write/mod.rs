@@ -11,6 +11,7 @@ mod function;
 mod object_like;
 mod object_pattern_like;
 mod parameter_list;
+mod return_or_throw_statement;
 mod semicolon;
 mod type_parameters;
 mod utils;
@@ -33,20 +34,21 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
+        comments::is_own_line_comment,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
-        trivia::FormatLeadingComments,
+        trivia::{DanglingIndentMode, FormatDanglingComments, FormatLeadingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
-    utils::{assignment_like::AssignmentLike, write_arguments_multi_line},
-    write,
-    write::{
-        call_arguments::is_test_call_expression,
-        parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
+    utils::{
+        assignment_like::AssignmentLike, call_expression::is_test_call_expression,
+        conditional::ConditionalLike, member_chain::MemberChain, write_arguments_multi_line,
     },
+    write,
+    write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
 };
 
 use self::{
@@ -343,8 +345,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             )
         }) && !callee.needs_parentheses(f)
         {
-            // TODO
-            write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
+            MemberChain::from_call_expression(self, f).fmt(f)
         } else {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
@@ -429,20 +430,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LogicalExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                self.test(),
-                space(),
-                "?",
-                space(),
-                self.consequent(),
-                space(),
-                ":",
-                space(),
-                self.alternate()
-            ]
-        )
+        ConditionalLike::ConditionalExpression(self).fmt(f)
     }
 }
 
@@ -751,21 +739,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            // TODO: https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L153-L257
-            // let comments = f.context().comments();
-            // let dangling_comments = comments.dangling_comments(alternate.span());
-            // let dangling_line_comment =
-            //     dangling_comments.last().is_some_and(|comment| comment.kind().is_line());
-            // let has_dangling_comments = !dangling_comments.is_empty();
+            let comments = f.context().comments().comments_before(alternate.span().start);
+            let has_dangling_comments = !comments.is_empty();
+            let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
 
-            // let trailing_line_comment = comments
-            //     .trailing_comments(consequent.span().end)
-            //     .iter()
-            //     .any(|comment| comment.kind().is_line());
-
-            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_));
-            // && !trailing_line_comment
-            // && !dangling_line_comment;
+            let else_on_same_line =
+                matches!(consequent.as_ref(), Statement::BlockStatement(_)) && !has_line_comment;
 
             if else_on_same_line {
                 write!(f, space())?;
@@ -773,15 +752,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 write!(f, hard_line_break())?;
             }
 
-            // if has_dangling_comments {
-            //     write!(f, format_dangling_comments(self.span()))?;
+            if has_dangling_comments {
+                FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
+                    .fmt(f)?;
 
-            //     if trailing_line_comment || dangling_line_comment {
-            //         write!(f, hard_line_break())?;
-            //     } else {
-            //         write!(f, space())?;
-            //     }
-            // }
+                if has_line_comment {
+                    write!(f, hard_line_break())?;
+                } else {
+                    write!(f, space())?;
+                }
+            }
 
             write!(
                 f,
@@ -813,35 +793,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
         write!(f, "break")?;
         if let Some(label) = self.label() {
             write!(f, [space(), label])?;
-        }
-        write!(f, OptionalSemicolon)
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "return")?;
-        if let Some(argument) = self.argument() {
-            let is_binary_like_or_sequence_expression = matches!(
-                argument.as_ref(),
-                Expression::BinaryExpression(_)
-                    | Expression::LogicalExpression(_)
-                    | Expression::SequenceExpression(_)
-            );
-            write!(f, space())?;
-            if is_binary_like_or_sequence_expression {
-                // If the argument is a binary-like expression or sequence expression, we need to wrap it in parentheses
-                write!(
-                    f,
-                    [group(&format_args!(
-                        if_group_breaks(&text("(")),
-                        soft_block_indent(&argument),
-                        if_group_breaks(&text(")"))
-                    ))]
-                )
-            } else {
-                write!(f, argument)
-            }?;
         }
         write!(f, OptionalSemicolon)
     }
@@ -972,12 +923,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
         } else {
             write!(f, [space(), body])
         }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["throw ", self.argument(), OptionalSemicolon])
     }
 }
 
@@ -1547,7 +1492,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
             [
                 space(),
                 // format_comment,
-                self.attributes_keyword(),
+                match self.keyword() {
+                    WithClauseKeyword::With => "with",
+                    WithClauseKeyword::Assert => "assert",
+                },
                 space(),
                 "{",
                 group(&soft_block_indent_with_maybe_space(
@@ -1944,18 +1892,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                self.check_type(),
-                " extends ",
-                self.extends_type(),
-                " ? ",
-                self.true_type(),
-                " : ",
-                self.false_type()
-            ]
-        )
+        ConditionalLike::TSConditionalType(self).fmt(f)
     }
 }
 

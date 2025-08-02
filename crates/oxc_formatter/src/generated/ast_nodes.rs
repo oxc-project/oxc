@@ -54,7 +54,6 @@ pub enum AstNodes<'a> {
     LogicalExpression(&'a AstNode<'a, LogicalExpression<'a>>),
     ConditionalExpression(&'a AstNode<'a, ConditionalExpression<'a>>),
     AssignmentExpression(&'a AstNode<'a, AssignmentExpression<'a>>),
-    SimpleAssignmentTarget(&'a AstNode<'a, SimpleAssignmentTarget<'a>>),
     ArrayAssignmentTarget(&'a AstNode<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
@@ -2341,7 +2340,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => n.span(),
             Self::ConditionalExpression(n) => n.span(),
             Self::AssignmentExpression(n) => n.span(),
-            Self::SimpleAssignmentTarget(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
@@ -2533,7 +2531,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => n.parent,
             Self::ConditionalExpression(n) => n.parent,
             Self::AssignmentExpression(n) => n.parent,
-            Self::SimpleAssignmentTarget(n) => n.parent,
             Self::ArrayAssignmentTarget(n) => n.parent,
             Self::ObjectAssignmentTarget(n) => n.parent,
             Self::AssignmentTargetRest(n) => n.parent,
@@ -2725,7 +2722,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(n) => SiblingNode::from(n.inner),
             Self::ConditionalExpression(n) => SiblingNode::from(n.inner),
             Self::AssignmentExpression(n) => SiblingNode::from(n.inner),
-            Self::SimpleAssignmentTarget(n) => n.parent.as_sibling_node(),
             Self::ArrayAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::ObjectAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetRest(n) => SiblingNode::from(n.inner),
@@ -2917,7 +2913,6 @@ impl<'a> AstNodes<'a> {
             Self::LogicalExpression(_) => "LogicalExpression",
             Self::ConditionalExpression(_) => "ConditionalExpression",
             Self::AssignmentExpression(_) => "AssignmentExpression",
-            Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget",
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget",
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
@@ -4892,12 +4887,15 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
         let parent = self.parent;
         let node = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
-                AstNodes::SimpleAssignmentTarget(self.allocator.alloc(AstNode {
-                    inner: it.to_simple_assignment_target(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_simple_assignment_target(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
                 return self
@@ -4925,7 +4923,7 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTarget<'a>> {
 impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
@@ -5027,7 +5025,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
         let following_node =
-            self.inner.rest.as_ref().map(SiblingNode::from).or(self.following_node);
+            self.inner.rest.as_deref().map(SiblingNode::from).or(self.following_node);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -5041,7 +5039,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
         let following_node = self.following_node;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner,
+                inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
                 following_node,
@@ -5074,7 +5072,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
         let following_node =
-            self.inner.rest.as_ref().map(SiblingNode::from).or(self.following_node);
+            self.inner.rest.as_deref().map(SiblingNode::from).or(self.following_node);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -5088,7 +5086,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
         let following_node = self.following_node;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner,
+                inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),
@@ -6105,7 +6103,7 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
 
     #[inline]
     pub fn alternate(&self) -> Option<&AstNode<'a, Statement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
                 inner,
@@ -6568,7 +6566,7 @@ impl<'a> GetSpan for AstNode<'a, BreakStatement<'a>> {
 impl<'a> AstNode<'a, ReturnStatement<'a>> {
     #[inline]
     pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
@@ -6795,7 +6793,7 @@ impl<'a> GetSpan for AstNode<'a, LabeledStatement<'a>> {
 impl<'a> AstNode<'a, ThrowStatement<'a>> {
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -8734,21 +8732,8 @@ impl<'a> GetSpan for AstNode<'a, ImportNamespaceSpecifier<'a>> {
 
 impl<'a> AstNode<'a, WithClause<'a>> {
     #[inline]
-    pub fn attributes_keyword(&self) -> &AstNode<'a, IdentifierName<'a>> {
-        let following_node = self
-            .inner
-            .with_entries
-            .first()
-            .as_ref()
-            .copied()
-            .map(SiblingNode::from)
-            .or(self.following_node);
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.attributes_keyword,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithClause(transmute_self(self))),
-            following_node,
-        })
+    pub fn keyword(&self) -> WithClauseKeyword {
+        self.inner.keyword
     }
 
     #[inline]

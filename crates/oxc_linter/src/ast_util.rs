@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{BindingIdentifier, *},
 };
 use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
-use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
+use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -259,10 +259,10 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 /// Iterate over parents of `node`, skipping nodes that are also ignored by
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 's>(
-    semantic: &'s Semantic<'a>,
+    nodes: &'s AstNodes<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = AstKind<'a>> + 's {
-    semantic.nodes().ancestor_kinds(node_id).filter(|parent| {
+    nodes.ancestor_kinds(node_id).filter(|parent| {
         !matches!(
             parent,
             AstKind::ParenthesizedExpression(_)

@@ -642,6 +642,7 @@ fn test_class_expression() {
     test("(@foo class {})", true);
     test("(class extends a {})", false); // this may have a side effect, but ignored by the assumption
     test("(class extends foo() {})", true);
+    test("(class extends (() => {}) {})", true);
     test("(class { static {} })", false);
     test("(class { static { foo(); } })", true);
     test("(class { a() {} })", false);

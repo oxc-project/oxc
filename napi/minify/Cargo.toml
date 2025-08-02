@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minify_napi"
-version = "0.30.3"
+version = "0.79.1"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -8,7 +8,7 @@ homepage.workspace = true
 include = ["/src", "build.rs"]
 keywords.workspace = true
 license.workspace = true
-publish = false
+publish = true
 repository.workspace = true
 rust-version.workspace = true
 description.workspace = true

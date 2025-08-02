@@ -198,6 +198,7 @@ mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
+    pub mod explicit_module_boundary_types;
     pub mod no_confusing_non_null_assertion;
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
@@ -958,6 +959,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_indexed_object_style,
     typescript::consistent_type_definitions,
     typescript::consistent_type_imports,
+    typescript::explicit_module_boundary_types,
     typescript::explicit_function_return_type,
     typescript::no_inferrable_types,
     typescript::no_confusing_non_null_assertion,

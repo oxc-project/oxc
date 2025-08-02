@@ -1,27 +1,65 @@
 import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from './generated/constants.cjs';
-import { getErrorMessage } from './utils.js';
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_LEN_OFFSET,
+  // TODO(camc314): we need to generate `.d.ts` file for this module.
+  // @ts-expect-error
+} from './generated/constants.cjs';
+import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
+
+import type { Visitor } from './types.ts';
 
 // Import methods and objects from `oxc-parser`.
 // Use `require` not `import` as `oxc-parser` uses `require` internally,
 // and need to make sure get same instance of modules as it uses internally,
 // otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
 const require = createRequire(import.meta.url);
-const { TOKEN } = require('../../parser/raw-transfer/lazy-common.js'),
-  walkProgram = require('../../parser/generated/lazy/walk.js');
+const { TOKEN } = require('../dist/parser/raw-transfer/lazy-common.cjs'),
+  walkProgram = require('../dist/parser/generated/lazy/walk.cjs');
 
 // --------------------
 // Plugin loading
 // --------------------
 
+interface Diagnostic {
+  message: string;
+  node: {
+    start: number;
+    end: number;
+    [key: string]: unknown;
+  };
+}
+
+interface DiagnosticReport {
+  message: string;
+  loc: { start: number; end: number };
+  ruleIndex: number;
+}
+
+interface Rule {
+  create: (context: Context) => Visitor;
+}
+
+interface Plugin {
+  meta: {
+    name: string;
+  };
+  rules: {
+    [key: string]: Rule;
+  };
+}
+
 // Absolute paths of plugins which have been loaded
-const registeredPluginPaths = new Set();
+const registeredPluginPaths = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, passed to `lintFile`.
-const registeredRules = [];
+const registeredRules: {
+  rule: Rule;
+  context: Context;
+}[] = [];
 
 /**
  * Load a plugin.
@@ -32,7 +70,7 @@ const registeredRules = [];
  * @param {string} path - Absolute path of plugin file
  * @returns {string} - JSON result
  */
-async function loadPlugin(path) {
+async function loadPlugin(path: string): Promise<string> {
   try {
     return await loadPluginImpl(path);
   } catch (err) {
@@ -40,12 +78,14 @@ async function loadPlugin(path) {
   }
 }
 
-async function loadPluginImpl(path) {
+async function loadPluginImpl(path: string): Promise<string> {
   if (registeredPluginPaths.has(path)) {
-    return JSON.stringify({ Failure: 'This plugin has already been registered' });
+    return JSON.stringify({
+      Failure: 'This plugin has already been registered',
+    });
   }
 
-  const { default: plugin } = await import(path);
+  const { default: plugin } = (await import(path)) as { default: Plugin };
 
   registeredPluginPaths.add(path);
 
@@ -56,13 +96,31 @@ async function loadPluginImpl(path) {
 
   for (const [ruleName, rule] of Object.entries(plugin.rules)) {
     ruleNames.push(ruleName);
-    registeredRules.push({ rule, context: new Context(`${pluginName}/${ruleName}`) });
+    registeredRules.push({
+      rule,
+      context: new Context(`${pluginName}/${ruleName}`),
+    });
   }
 
   return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
 }
 
-let setupContextForFile;
+/**
+ * Update a `Context` with file-specific data.
+ *
+ * We have to define this function within class body, as it's not possible to set private property
+ * `#ruleIndex` from outside the class.
+ * We don't use a normal class method, because we don't want to expose this to user.
+ *
+ * @param context - `Context` object
+ * @param ruleIndex - Index of this rule within `ruleIds` passed from Rust
+ * @param filePath - Absolute path of file being linted
+ */
+let setupContextForFile: (
+  context: Context,
+  ruleIndex: number,
+  filePath: string,
+) => void;
 
 /**
  * Context class.
@@ -71,32 +129,27 @@ let setupContextForFile;
  */
 class Context {
   // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
-  id;
+  id: string;
   // Index into `ruleIds` sent from Rust. Set before calling `rule`'s `create` method.
-  #ruleIndex;
+  #ruleIndex: number;
   // Absolute path of file being linted. Set before calling `rule`'s `create` method.
-  filename;
+  filename: string;
   // Absolute path of file being linted. Set before calling `rule`'s `create` method.
-  physicalFilename;
+  physicalFilename: string;
 
   /**
    * @constructor
-   * @param {string} fullRuleName - Rule name, in form `<plugin>/<rule>`
+   * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
-  constructor(fullRuleName) {
+  constructor(fullRuleName: string) {
     this.id = fullRuleName;
   }
 
   /**
    * Report error.
-   * @param {Object} diagnostic - Diagnostic object
-   * @param {string} diagnostic.message - Error message
-   * @param {Object} diagnostic.loc - Node or loc object
-   * @param {number} diagnostic.loc.start - Start range of diagnostic
-   * @param {number} diagnostic.loc.end - End range of diagnostic
-   * @returns {undefined}
+   * @param diagnostic - Diagnostic object
    */
-  report(diagnostic) {
+  report(diagnostic: Diagnostic): void {
     diagnostics.push({
       message: diagnostic.message,
       loc: { start: diagnostic.node.start, end: diagnostic.node.end },
@@ -105,18 +158,6 @@ class Context {
   }
 
   static {
-    /**
-     * Update a `Context` with file-specific data.
-     *
-     * We have to define this function within class body, as it's not possible to set private property
-     * `#ruleIndex` from outside the class.
-     * We don't use a normal class method, because we don't want to expose this to user.
-     *
-     * @param {Context} context - `Context` object
-     * @param {number} ruleIndex - Index of this rule within `ruleIds` passed from Rust
-     * @param {string} filePath - Absolute path of file being linted
-     * @returns {undefined}
-     */
     setupContextForFile = (context, ruleIndex, filePath) => {
       context.#ruleIndex = ruleIndex;
       context.filename = filePath;
@@ -129,41 +170,45 @@ class Context {
 // Running rules
 // --------------------
 
+interface BufferWithArrays extends Uint8Array {
+  uint32: Uint32Array;
+  float64: Float64Array;
+}
+
 // Buffers cache.
 //
 // All buffers sent from Rust are stored in this array, indexed by `bufferId` (also sent from Rust).
 // Buffers are only added to this array, never removed, so no buffers will be garbage collected
 // until the process exits.
-const buffers = [];
+const buffers: (BufferWithArrays | null)[] = [];
 
 // Diagnostics array. Reused for every file.
-const diagnostics = [];
+const diagnostics: DiagnosticReport[] = [];
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 // Run rules on a file.
-//
-// TODO(camc314): why do we have to destructure here?
-// In `./bindings.d.ts`, it doesn't indicate that we have to
-// (typed as `(filePath: string, bufferId: number, buffer: Uint8Array | undefined | null, ruleIds: number[])`).
-function lintFile([filePath, bufferId, buffer, ruleIds]) {
+function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
   // TODO: Is this enough to guarantee soundness?
-  if (buffer !== null) {
+  if (buffer === null) {
+    // Rust will only send a `bufferId` alone, if it previously sent a buffer with this same ID
+    buffer = buffers[bufferId]!;
+  } else {
+    assertIs<BufferWithArrays>(buffer);
     const { buffer: arrayBuffer, byteOffset } = buffer;
     buffer.uint32 = new Uint32Array(arrayBuffer, byteOffset);
     buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 
-    while (buffers.length <= bufferId) {
+    for (let i = bufferId - buffers.length; i >= 0; i--) {
       buffers.push(null);
     }
     buffers[bufferId] = buffer;
-  } else {
-    buffer = buffers[bufferId];
   }
+  assertIs<BufferWithArrays>(buffer);
 
   if (typeof filePath !== 'string' || filePath.length === 0) {
     throw new Error('expected filePath to be a non-zero length string');
@@ -176,9 +221,9 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
   initCompiledVisitor();
   for (let i = 0; i < ruleIds.length; i++) {
     const ruleId = ruleIds[i];
-    const { rule: { create }, context } = registeredRules[ruleId];
+    const { rule, context } = registeredRules[ruleId];
     setupContextForFile(context, i, filePath);
-    const visitor = create(context);
+    const visitor = rule.create(context);
     addVisitorToCompiled(visitor);
   }
   const needsVisit = finalizeCompiledVisitor();
@@ -194,7 +239,14 @@ function lintFile([filePath, bufferId, buffer, ruleIds]) {
 
     const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
     const sourceIsAscii = sourceText.length === sourceByteLen;
-    const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
+    const ast = {
+      buffer,
+      sourceText,
+      sourceByteLen,
+      sourceIsAscii,
+      nodes: new Map(),
+      token: TOKEN,
+    };
 
     walkProgram(programPos, ast, compiledVisitor);
   }

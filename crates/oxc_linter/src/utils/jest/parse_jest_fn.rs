@@ -570,7 +570,7 @@ fn recurse_extend_node_chain<'a>(
 }
 
 // sorted list for binary search.
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 52] = [
+static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
     ["afterAll", "", "", ""],
     ["afterEach", "", "", ""],
     ["beforeAll", "", "", ""],

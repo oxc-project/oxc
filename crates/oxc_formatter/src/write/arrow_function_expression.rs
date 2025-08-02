@@ -682,6 +682,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
+#[derive(Debug)]
 pub enum ExpressionLeftSide<'a, 'b> {
     Expression(&'b Expression<'a>),
     AssignmentTarget(&'b AssignmentTarget<'a>),
@@ -729,6 +730,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
                 Expression::SequenceExpression(expr) => expr.expressions.first().map(Into::into),
                 Expression::StaticMemberExpression(expr) => Some((&expr.object).into()),
                 Expression::ComputedMemberExpression(expr) => Some((&expr.object).into()),
+                Expression::PrivateFieldExpression(expr) => Some((&expr.object).into()),
                 Expression::TaggedTemplateExpression(expr) => Some((&expr.tag).into()),
                 Expression::NewExpression(expr) => Some((&expr.callee).into()),
                 Expression::CallExpression(expr) => Some((&expr.callee).into()),
@@ -746,6 +748,13 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
                 }
                 Expression::BinaryExpression(binary) => Some((&binary.left).into()),
                 Expression::LogicalExpression(logical) => Some((&logical.left).into()),
+                Expression::ChainExpression(chain) => match &chain.expression {
+                    ChainElement::CallExpression(expr) => Some((&expr.callee).into()),
+                    ChainElement::TSNonNullExpression(expr) => Some((&expr.expression).into()),
+                    ChainElement::ComputedMemberExpression(expr) => Some((&expr.object).into()),
+                    ChainElement::StaticMemberExpression(expr) => Some((&expr.object).into()),
+                    ChainElement::PrivateFieldExpression(expr) => Some((&expr.object).into()),
+                },
                 _ => None,
             },
             Self::AssignmentTarget(target) => match target {

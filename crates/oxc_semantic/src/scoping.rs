@@ -332,7 +332,7 @@ impl Scoping {
     ///
     /// If you want direct access to a symbol's [`Reference`]s, use [`Scoping::get_resolved_references`].
     #[inline]
-    pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &ArenaVec<'_, ReferenceId> {
+    pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &[ReferenceId] {
         &self.cell.borrow_dependent().resolved_references[symbol_id.index()]
     }
 

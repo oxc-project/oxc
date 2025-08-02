@@ -1,16 +1,18 @@
 import { defineConfig } from 'vitest/config';
 
-const RUN_LAZY_TESTS = process.env.RUN_LAZY_TESTS === 'true';
+const { env } = process;
+let exclude;
+if (env.RUN_LAZY_TESTS !== 'true') {
+  exclude = ['lazy-deserialization.test.ts'];
+  if (env.RUN_RAW_TESTS !== 'true') exclude.push('parse-raw.test.ts');
+}
 
 export default defineConfig({
   test: {
     diff: {
       expand: false,
     },
-    ...(
-      !RUN_LAZY_TESTS &&
-      { exclude: ['lazy-deserialization.test.ts'] }
-    ),
+    exclude,
   },
   plugins: [
     // Enable Codspeed plugin in CI only

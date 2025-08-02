@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.1] - 2025-07-31
+
+### 🚜 Refactor
+
+- f12e3a0 semantic: Remove unnecessary lifetime extension (#12649) (overlookmotel)
+
+
+## [0.79.0] - 2025-07-30
+
+### 💥 BREAKING CHANGES
+
+- 5a7e72a semantic: [**BREAKING**] `AstNodes::program` return `&Program` not `Option<&Program>` (#12515) (overlookmotel)
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+- 8912134 semantic: Remove `AstNodes` `program` field (#12516) (overlookmotel)
+- 89d747a semantic: Correct comment (#12512) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

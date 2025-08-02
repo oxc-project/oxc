@@ -58,7 +58,7 @@ declare_oxc_lint!(
 );
 
 // Create a static set for all function names
-static FUNCTION_NAMES: [&str; 27] = [
+static FUNCTION_NAMES: &[&str] = &[
     "add",
     // `React.createContext(undefined)`
     "createContext",

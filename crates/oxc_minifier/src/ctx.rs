@@ -50,7 +50,9 @@ impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, 
         self.scoping()
             .get_reference(reference_id)
             .symbol_id()
-            .and_then(|symbol_id| self.state.symbol_values.get_constant_value(symbol_id))
+            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .filter(|sv| sv.write_references_count == 0 && !sv.for_statement_init)
+            .and_then(|sv| sv.initialized_constant.as_ref())
             .cloned()
     }
 }
@@ -164,7 +166,23 @@ impl<'a> Ctx<'a, '_> {
         false
     }
 
-    pub fn init_value(&mut self, symbol_id: SymbolId, constant: ConstantValue<'a>) {
+    pub fn init_value(&mut self, symbol_id: SymbolId, constant: Option<ConstantValue<'a>>) {
+        let mut exported = false;
+        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
+            for ancestor in self.ancestors() {
+                if ancestor.is_export_named_declaration()
+                    || ancestor.is_export_all_declaration()
+                    || ancestor.is_export_default_declaration()
+                {
+                    exported = true;
+                }
+            }
+        }
+
+        let for_statement_init = self.ancestors().nth(1).is_some_and(|ancestor| {
+            ancestor.is_parent_of_for_statement_init() || ancestor.is_parent_of_for_statement_left()
+        });
+
         let mut read_references_count = 0;
         let mut write_references_count = 0;
         for r in self.scoping().get_resolved_references(symbol_id) {
@@ -177,8 +195,14 @@ impl<'a> Ctx<'a, '_> {
         }
 
         let scope_id = self.scoping.current_scope_id();
-        let symbol_value =
-            SymbolValue { constant, read_references_count, write_references_count, scope_id };
+        let symbol_value = SymbolValue {
+            initialized_constant: constant,
+            exported,
+            for_statement_init,
+            read_references_count,
+            write_references_count,
+            scope_id,
+        };
         self.state.symbol_values.init_value(symbol_id, symbol_value);
     }
 

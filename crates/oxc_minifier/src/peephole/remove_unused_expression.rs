@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::{CompressOptionsUnused, ctx::Ctx};
 
 use super::PeepholeOptimizations;
 
@@ -28,6 +28,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(_) => self.fold_binary_expression(e, ctx),
             Expression::CallExpression(_) => self.fold_call_expression(e, ctx),
             Expression::AssignmentExpression(_) => self.remove_unused_assignment_expression(e, ctx),
+            Expression::ClassExpression(_) => self.remove_unused_class_expression(e, ctx),
             _ => !e.may_have_side_effects(ctx),
         }
     }
@@ -600,13 +601,146 @@ impl<'a> PeepholeOptimizations {
             (!self.remove_unused_expression(&mut expr, ctx)).then_some(expr)
         }))
     }
+
+    pub fn remove_unused_assignment_expression(
+        &self,
+        e: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
+        let Expression::AssignmentExpression(assign_expr) = e else { return false };
+        if matches!(
+            ctx.state.options.unused,
+            CompressOptionsUnused::Keep | CompressOptionsUnused::KeepAssign
+        ) {
+            return false;
+        }
+        let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
+            assign_expr.left.as_simple_assignment_target()
+        else {
+            return false;
+        };
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return false;
+        }
+        let Some(reference_id) = ident.reference_id.get() else { return false };
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return false;
+        };
+        // Keep error for assigning to `const foo = 1; foo = 2`.
+        if ctx.scoping().symbol_flags(symbol_id).is_const_variable() {
+            return false;
+        }
+        let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+            return false;
+        };
+        // Cannot remove assignment to live bindings: `export let foo; foo = 1;`.
+        if symbol_value.exported {
+            return false;
+        }
+        if symbol_value.read_references_count > 0 {
+            return false;
+        }
+        if symbol_value.for_statement_init {
+            return false;
+        }
+        *e = assign_expr.right.take_in(ctx.ast);
+        ctx.state.changed = true;
+        false
+    }
+
+    fn remove_unused_class_expression(
+        &self,
+        e: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> bool {
+        let Expression::ClassExpression(c) = e else { return false };
+        if let Some(exprs) = Self::remove_unused_class(c, ctx) {
+            if exprs.is_empty() {
+                return true;
+            }
+            *e = ctx.ast.expression_sequence(c.span, exprs);
+        }
+        false
+    }
+
+    pub fn remove_unused_class(
+        c: &mut Class<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Vec<'a, Expression<'a>>> {
+        // TypeError `class C extends (() => {}) {}`
+        if c.super_class
+            .as_ref()
+            .is_some_and(|e| matches!(e, Expression::ArrowFunctionExpression(_)))
+        {
+            return None;
+        }
+        // Keep the entire class if non-empty static block exists.
+        for e in &c.body.body {
+            match e {
+                e if e.has_decorator() => return None,
+                ClassElement::TSIndexSignature(_) => return None,
+                ClassElement::StaticBlock(block) => {
+                    if !block.body.is_empty() {
+                        return None;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        let mut exprs = ctx.ast.vec();
+
+        if let Some(e) = &mut c.super_class {
+            if e.may_have_side_effects(ctx) {
+                exprs.push(c.super_class.take().unwrap());
+            }
+        }
+
+        for e in &mut c.body.body {
+            // Save computed key.
+            if e.computed() {
+                if let Some(key) = match e {
+                    ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => None,
+                    ClassElement::MethodDefinition(def) => Some(&mut def.key),
+                    ClassElement::PropertyDefinition(def) => Some(&mut def.key),
+                    ClassElement::AccessorProperty(def) => Some(&mut def.key),
+                } {
+                    if let Some(expr) = key.as_expression_mut() {
+                        if expr.may_have_side_effects(ctx) {
+                            exprs.push(expr.take_in(ctx.ast));
+                        }
+                    }
+                }
+            }
+            // Save static initializer.
+            if e.r#static() {
+                if let Some(init) = match e {
+                    ClassElement::TSIndexSignature(_)
+                    | ClassElement::StaticBlock(_)
+                    | ClassElement::MethodDefinition(_) => None,
+                    ClassElement::PropertyDefinition(def) => def.value.take(),
+                    ClassElement::AccessorProperty(def) => def.value.take(),
+                } {
+                    if init.may_have_side_effects(ctx) {
+                        exprs.push(init);
+                    }
+                }
+            }
+        }
+
+        ctx.state.changed = true;
+        Some(exprs)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use crate::{
         CompressOptions, TreeShakeOptions,
-        tester::{default_options, test, test_options, test_same, test_same_options},
+        tester::{
+            default_options, test, test_options, test_same, test_same_options,
+            test_same_options_source_type,
+        },
     };
 
     #[test]
@@ -904,5 +1038,105 @@ mod test {
             "function test() {}",
             &options,
         );
+    }
+
+    #[test]
+    fn remove_unused_assignment_expression() {
+        use oxc_span::SourceType;
+        let options = CompressOptions::smallest();
+        // Vars are not handled yet due to TDZ.
+        test_same_options("var x = 1; x = 2;", &options);
+        test_same_options("var x = 1; x = foo();", &options);
+        test_same_options("export var foo; foo = 0;", &options);
+        test_same_options("var x = 1; x = 2, foo(x)", &options);
+        test_same_options("function foo() { return t = x(); } foo();", &options);
+        test_same_options("function foo() { var t; return t = x(); } foo();", &options);
+        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+        test_options("let x = 1; x = 2;", "", &options);
+        test_options("let x = 1; x = foo();", "foo()", &options);
+        test_same_options("export let foo; foo = 0;", &options);
+        test_same_options("let x = 1; x = 2, foo(x)", &options);
+        test_same_options("function foo() { return t = x(); } foo();", &options);
+        test_options(
+            "function foo() { let t; return t = x(); } foo();",
+            "function foo() { return x() } foo()",
+            &options,
+        );
+        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+
+        // For loops
+        test_same_options("for (let i;;) foo(i)", &options);
+        test_same_options("for (let i in []) foo(i)", &options);
+        test_same_options("for (let element of list) element && (element.foo = bar)", &options);
+        test_same_options("for (let key in obj) key && (obj[key] = bar)", &options);
+
+        test_options("var a; ({ a: a } = {})", "var a; ({ a } = {})", &options);
+        test_options("var a; b = ({ a: a })", "var a; b = ({ a })", &options);
+
+        test_options("let foo = {}; foo = 1", "", &options);
+
+        test_same_options(
+            "let bracketed = !1; for(;;) bracketed = !bracketed, log(bracketed)",
+            &options,
+        );
+
+        let options = CompressOptions::smallest();
+        let source_type = SourceType::cjs();
+        test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
+        test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
+        test_same_options_source_type(
+            "function foo() { var x = 1; x = 2, bar() } foo()",
+            source_type,
+            &options,
+        );
+    }
+
+    #[test]
+    fn remove_unused_class_expression() {
+        let options = CompressOptions::smallest();
+        // extends
+        test_options("(class {})", "", &options);
+        test_options("(class extends Foo {})", "Foo", &options);
+
+        // static block
+        test_options("(class { static {} })", "", &options);
+        test_same_options("(class { static { foo } })", &options);
+
+        // method
+        test_options("(class { foo() {} })", "", &options);
+        test_options("(class { [foo]() {} })", "foo", &options);
+        test_options("(class { static foo() {} })", "", &options);
+        test_options("(class { static [foo]() {} })", "foo", &options);
+        test_options("(class { [1]() {} })", "", &options);
+        test_options("(class { static [1]() {} })", "", &options);
+
+        // property
+        test_options("(class { foo })", "", &options);
+        test_options("(class { foo = bar })", "", &options);
+        test_options("(class { foo = 1 })", "", &options);
+        test_options("(class { static foo = bar })", "bar", &options);
+        test_options("(class { static foo = 1 })", "", &options);
+        test_options("(class { [foo] = bar })", "foo", &options);
+        test_options("(class { [foo] = 1 })", "foo", &options);
+        test_options("(class { static [foo] = bar })", "foo, bar", &options);
+        test_options("(class { static [foo] = 1 })", "foo", &options);
+
+        // accessor
+        test_options("(class { accessor foo = 1 })", "", &options);
+        test_options("(class { accessor [foo] = 1 })", "foo", &options);
+
+        // order
+        test_options(
+            "(class extends A { static [B] = C; static [D]() {} })",
+            "A, B, C, D",
+            &options,
+        );
+
+        // decorators
+        test_same_options("(class { @dec foo() {} })", &options);
+
+        // TypeError
+        test_same_options("(class extends (() => {}) {})", &options);
     }
 }

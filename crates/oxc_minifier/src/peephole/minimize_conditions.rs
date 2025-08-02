@@ -526,8 +526,9 @@ mod test {
         // In the following test case, we can't remove the duplicate "alert(x);" lines since each "x"
         // refers to a different variable.
         // We only try removing duplicate statements if the AST is normalized and names are unique.
-        test_same(
+        test(
             "if (Math.random() < 0.5) { let x = 3; alert(x); } else { let x = 5; alert(x); }",
+            "if (Math.random() < 0.5) { let x = 3; alert(3); } else { let x = 5; alert(5); }",
         );
     }
 

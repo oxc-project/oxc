@@ -105,31 +105,32 @@ ignore_without_reason = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.78.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.78.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.78.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.78.0", path = "crates/oxc_ast_macros" }
-oxc_ast_visit = { version = "0.78.0", path = "crates/oxc_ast_visit" }
-oxc_cfg = { version = "0.78.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.78.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.78.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.78.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.78.0", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.78.0", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.78.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.78.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.78.0", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.78.0", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.78.0", path = "crates/oxc_parser", features = ["regular_expression"] }
-oxc_parser_napi = { version = "0.78.0", path = "napi/parser" }
-oxc_regular_expression = { version = "0.78.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.78.0", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.78.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.78.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.78.0", path = "napi/transform" }
-oxc_transformer = { version = "0.78.0", path = "crates/oxc_transformer" }
-oxc_transformer_plugins = { version = "0.78.0", path = "crates/oxc_transformer_plugins" }
-oxc_traverse = { version = "0.78.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.79.1", path = "crates/oxc" }
+oxc_allocator = { version = "0.79.1", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.79.1", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.79.1", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.79.1", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.79.1", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.79.1", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.79.1", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.79.1", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.79.1", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.79.1", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.79.1", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.79.1", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.79.1", path = "crates/oxc_minifier" }
+oxc_minify_napi = { version = "0.79.1", path = "napi/minify" }
+oxc_napi = { version = "0.79.1", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.79.1", path = "crates/oxc_parser", features = ["regular_expression"] }
+oxc_parser_napi = { version = "0.79.1", path = "napi/parser" }
+oxc_regular_expression = { version = "0.79.1", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.79.1", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.79.1", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.79.1", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.79.1", path = "napi/transform" }
+oxc_transformer = { version = "0.79.1", path = "crates/oxc_transformer" }
+oxc_transformer_plugins = { version = "0.79.1", path = "crates/oxc_transformer_plugins" }
+oxc_traverse = { version = "0.79.1", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" }
@@ -140,9 +141,9 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 oxlint = { path = "apps/oxlint" }
 
 # Relaxed version so the user can decide which version to use.
-napi = { version = "3.0.0", features = ["tokio_rt"] }
-napi-build = "2.2.2"
-napi-derive = "3.0.0"
+napi = { version = "3", features = ["tokio_rt"] }
+napi-build = "2"
+napi-derive = "3"
 
 # Relaxed version so the user can decide which version to use.
 indexmap = "2"
@@ -177,11 +178,11 @@ console = "0.16.0"
 constcat = "0.6.1"
 convert_case = "0.8.0"
 cow-utils = "0.1.3"
-criterion2 = { version = "3.0.1", default-features = false }
+criterion2 = { version = "3.0.2", default-features = false }
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.8", default-features = false }
-fast-glob = "0.4.5"
+fast-glob = "1.0.0"
 fixedbitset = "0.5.7"
 flate2 = "1.1.2"
 futures = "0.3.31"
@@ -201,7 +202,7 @@ lazy_static = "1.5.0"
 log = "0.4.27"
 markdown = "1.0.0"
 memchr = "2.7.5"
-miette = { package = "oxc-miette", version = "2.3.1", features = ["fancy-no-syscall"] }
+miette = { package = "oxc-miette", version = "2.4.0", features = ["fancy-no-syscall"] }
 mimalloc-safe = "0.1.54"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
@@ -212,7 +213,7 @@ petgraph = { version = "0.8.2", default-features = false }
 phf = "0.12.1"
 phf_codegen = "0.12.1"
 pico-args = "0.5.0"
-prettyplease = "0.2.35"
+prettyplease = "0.2.36"
 project-root = "0.2.2"
 rayon = "1.10.0"
 ropey = "1.6.1"
@@ -228,14 +229,14 @@ similar = "2.7.0"
 similar-asserts = "1.7.0"
 smallvec = { version = "1.15.1", features = ["union"] }
 tempfile = "3.20.0"
-tokio = { version = "1.46.1", default-features = false }
+tokio = { version = "1.47.0", default-features = false }
 tower-lsp-server = "0.22.0"
 tracing-subscriber = "0.3.19"
 ureq = { version = "3.0.12", default-features = false }
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "lazy_static"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "prettyplease", "lazy_static"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

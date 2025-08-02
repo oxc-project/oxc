@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- f0b1f0d napi/oxlint, napi/parser: Remove source length from `RawTransferMetadata` (#12483) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

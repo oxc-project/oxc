@@ -17,8 +17,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar.baz);
-   ·                         ───────┬──────
-   ·                                ╰── useCallback uses `props.foo.bar.baz` here
+   ·                         ─────────┬────────
+   ·                                  ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -29,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar?.baz);
-   ·                         ───────┬──────
-   ·                                ╰── useCallback uses `props.foo.bar.baz` here
+   ·                         ─────────┬─────────
+   ·                                  ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -393,13 +393,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'history.foo', and 'history.foo.bar'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo.bar.dobedo.listen'
    ╭─[exhaustive_deps.tsx:7:14]
- 3 │             return [
  4 │               history.foo.bar[2].dobedo.listen(),
-   ·               ───────────
  5 │               history.foo.bar().dobedo.listen[2]
-   ·               ───────────
+   ·               ───────────────┬───────────────
+   ·                              ╰── useEffect uses `history.foo.bar.dobedo.listen` here
  6 │             ];
  7 │           }, []);
    ·              ──
@@ -411,8 +410,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  3 │             return [
  4 │               history?.foo
-   ·               ───┬───
-   ·                  ╰── useEffect uses `history.foo` here
+   ·               ──────┬─────
+   ·                     ╰── useEffect uses `history.foo` here
  5 │             ];
  6 │           }, []);
    ·              ──
@@ -578,8 +577,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useEffect(() => {
  3 │             console.log(props.items[0]);
-   ·                         ──┬──
-   ·                           ╰── useEffect uses `props.items` here
+   ·                         ─────┬─────
+   ·                              ╰── useEffect uses `props.items` here
  4 │           }, [props.items[0]]);
    ·              ────────────────
  5 │         }
@@ -647,9 +646,9 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  3 │           useCallback(() => {
  4 │             console.log(props.foo);
-   ·                         ─────
+   ·                         ─────────
  5 │             console.log(props.bar);
-   ·                         ─────
+   ·                         ─────────
  6 │           }, []);
    ·              ──
  7 │         }
@@ -674,28 +673,6 @@ source: crates/oxc_linter/src/tester.rs
  4 │             console.log(foo);
  5 │           }, [props.bar]);
    ·              ───────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
-   ╭─[exhaustive_deps.tsx:5:14]
- 2 │           useCallback(() => {
- 3 │             const { foo: { bar } } = props;
-   ·                                      ──┬──
-   ·                                        ╰── useCallback uses `props.foo` here
- 4 │             console.log(bar);
- 5 │           }, [props.foo.bar]);
-   ·              ───────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(bar);
- 5 │           }, [props.foo.bar]);
-   ·              ───────────────
  6 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -783,8 +760,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           const fn = useCallback(() => {
  3 │             console.log(props.foo.bar.baz);
-   ·                         ──────┬──────
-   ·                               ╰── useCallback uses `props.foo.bar.baz` here
+   ·                         ────────┬────────
+   ·                                 ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -825,9 +802,9 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           const fn = useCallback(() => {
  3 │             console.log(props.foo.bar.baz);
-   ·                         ─────────────
+   ·                         ─────────────────
  4 │             console.log(props.foo.fizz.bizz);
-   ·                         ──────────────
+   ·                         ───────────────────
  5 │           }, []);
    ·              ──
  6 │         }
@@ -838,8 +815,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           const fn = useCallback(() => {
  3 │             console.log(props.foo.bar);
-   ·                         ────┬────
-   ·                             ╰── useCallback uses `props.foo.bar` here
+   ·                         ──────┬──────
+   ·                               ╰── useCallback uses `props.foo.bar` here
  4 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  5 │         }
@@ -861,7 +838,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │             console.log(props);
    ·                         ─────
  4 │             console.log(props.hello);
-   ·                         ─────
+   ·                         ───────────
  5 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  6 │         }
@@ -944,8 +921,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useEffect(() => {
  3 │             console.log(props.foo);
-   ·                         ──┬──
-   ·                           ╰── useEffect uses `props.foo` here
+   ·                         ────┬────
+   ·                             ╰── useEffect uses `props.foo` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -956,9 +933,9 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useEffect(() => {
  3 │             console.log(props.foo);
-   ·                         ─────
+   ·                         ─────────
  4 │             console.log(props.bar);
-   ·                         ─────
+   ·                         ─────────
  5 │           }, []);
    ·              ──
  6 │         }
@@ -1002,9 +979,9 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:7:14]
  3 │           useEffect(() => {
  4 │             console.log(props.foo);
-   ·                         ─────
+   ·                         ─────────
  5 │             console.log(props.bar);
-   ·                         ─────
+   ·                         ─────────
  6 │             console.log(local);
    ·                         ─────
  7 │           }, []);
@@ -1029,8 +1006,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useEffect(() => {
  3 │             console.log(props.foo);
-   ·                         ──┬──
-   ·                           ╰── useEffect uses `props.foo` here
+   ·                         ────┬────
+   ·                             ╰── useEffect uses `props.foo` here
  4 │           }, []);
    ·              ──
  5 │           useCallback(() => {
@@ -1041,8 +1018,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:7:14]
  5 │           useCallback(() => {
  6 │             console.log(props.foo);
-   ·                         ──┬──
-   ·                           ╰── useCallback uses `props.foo` here
+   ·                         ────┬────
+   ·                             ╰── useCallback uses `props.foo` here
  7 │           }, []);
    ·              ──
  8 │           useMemo(() => {
@@ -1053,8 +1030,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:10:14]
   8 │           useMemo(() => {
   9 │             console.log(props.foo);
-    ·                         ──┬──
-    ·                           ╰── useMemo uses `props.foo` here
+    ·                         ────┬────
+    ·                             ╰── useMemo uses `props.foo` here
  10 │           }, []);
     ·              ──
  11 │           React.useEffect(() => {
@@ -1065,8 +1042,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:13:14]
  11 │           React.useEffect(() => {
  12 │             console.log(props.foo);
-    ·                         ──┬──
-    ·                           ╰── useEffect uses `props.foo` here
+    ·                         ────┬────
+    ·                             ╰── useEffect uses `props.foo` here
  13 │           }, []);
     ·              ──
  14 │           React.useCallback(() => {
@@ -1077,8 +1054,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:16:14]
  14 │           React.useCallback(() => {
  15 │             console.log(props.foo);
-    ·                         ──┬──
-    ·                           ╰── useCallback uses `props.foo` here
+    ·                         ────┬────
+    ·                             ╰── useCallback uses `props.foo` here
  16 │           }, []);
     ·              ──
  17 │           React.useMemo(() => {
@@ -1089,8 +1066,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:19:14]
  17 │           React.useMemo(() => {
  18 │             console.log(props.foo);
-    ·                         ──┬──
-    ·                           ╰── useMemo uses `props.foo` here
+    ·                         ────┬────
+    ·                             ╰── useMemo uses `props.foo` here
  19 │           }, []);
     ·              ──
  20 │           React.notReactiveHook(() => {
@@ -1101,8 +1078,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:7:14]
  5 │           useEffect(() => {
  6 │             console.log(props.foo);
-   ·                         ──┬──
-   ·                           ╰── useEffect uses `props.foo` here
+   ·                         ────┬────
+   ·                             ╰── useEffect uses `props.foo` here
  7 │           }, []);
    ·              ──
  8 │           React.useEffect(() => {
@@ -1113,8 +1090,8 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:10:14]
   8 │           React.useEffect(() => {
   9 │             console.log(props.foo);
-    ·                         ──┬──
-    ·                           ╰── useEffect uses `props.foo` here
+    ·                         ────┬────
+    ·                             ╰── useEffect uses `props.foo` here
  10 │           }, []);
     ·              ──
  11 │           React.useCustomEffect(() => {
@@ -1209,9 +1186,9 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[exhaustive_deps.tsx:9:14]
   6 │             console.log(ref2.current.textContent);
   7 │             alert(props.someOtherRefs.current.innerHTML);
-    ·                   ───────────────────────────
+    ·                   ─────────────────────────────────────
   8 │             fetch(props.color);
-    ·                   ─────
+    ·                   ───────────
   9 │           }, []);
     ·              ──
  10 │         }
@@ -1321,8 +1298,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:15]
  3 │             focus() {
  4 │               alert(props.hello);
-   ·                     ──┬──
-   ·                       ╰── useImperativeHandle uses `props.hello` here
+   ·                     ─────┬─────
+   ·                          ╰── useImperativeHandle uses `props.hello` here
  5 │             }
  6 │           }), [])
    ·               ──
@@ -1334,7 +1311,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  2 │           useEffect(() => {
  3 │             if (props.onChange) {
-   ·                 ─────
+   ·                 ──────────────
  4 │               props.onChange();
    ·               ─────
  5 │             }
@@ -1348,7 +1325,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  2 │           useEffect(() => {
  3 │             if (props?.onChange) {
-   ·                 ─────
+   ·                 ───────────────
  4 │               props?.onChange();
    ·               ─────
  5 │             }
@@ -1378,7 +1355,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  2 │           useEffect(() => {
  3 │             if (props.foo.onChange) {
-   ·                 ─────────
+   ·                 ──────────────────
  4 │               props.foo.onChange();
    ·               ─────────
  5 │             }
@@ -1394,7 +1371,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │             props.onChange();
    ·             ─────
  4 │             if (props.foo.onChange) {
-   ·                 ─────────
+   ·                 ──────────────────
  5 │               props.foo.onChange();
    ·               ─────────
  6 │             }
@@ -1421,7 +1398,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:7:14]
  3 │           useEffect(() => {
  4 │             if (skillsCount === 0 && !props.isEditMode) {
-   ·                 ───────────           ─────
+   ·                 ───────────           ────────────────
  5 │               props.toggleEditMode();
    ·               ─────
  6 │             }
@@ -2653,9 +2630,9 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  3 │           useEffect(() => {
  4 │             foo.bar.baz = 43;
-   ·             ───────
+   ·             ───────────
  5 │             props.foo.bar.baz = 1;
-   ·             ─────────────
+   ·             ─────────────────
  6 │           }, []);
    ·              ──
  7 │         }

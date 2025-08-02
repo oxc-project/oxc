@@ -1,7 +1,10 @@
 #![expect(clippy::print_stdout)]
+
 use std::{env, path::Path, sync::Arc};
 
 use itertools::Itertools;
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Allocator;
 use oxc_cfg::{
     DisplayDot, EdgeType,
@@ -13,7 +16,6 @@ use oxc_cfg::{
 use oxc_parser::Parser;
 use oxc_semantic::{SemanticBuilder, dot::DebugDot};
 use oxc_span::SourceType;
-use rustc_hash::FxHashMap;
 
 // Instruction:
 // 1. create a `test.js`,

@@ -149,7 +149,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - name: Build
         id: build
-        uses: cross-platform-actions/action@97419d18f6470332677e345e9df97cdc71244ead # v0.28.0
+        uses: cross-platform-actions/action@e8a7b572196ff79ded1979dc2bb9ee67d1ddb252 # v0.29.0
         env:
           DEBUG: napi:*
           RUSTUP_IO_THREADS: 1

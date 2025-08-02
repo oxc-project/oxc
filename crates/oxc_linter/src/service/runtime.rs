@@ -195,12 +195,12 @@ impl Runtime {
     pub fn with_file_system(
         &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> &Self {
+    ) -> &mut Self {
         self.file_system = file_system;
         self
     }
 
-    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &Self {
+    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
         self.paths = paths.into_iter().collect();
         self
     }
@@ -494,7 +494,7 @@ impl Runtime {
 
     // clippy: the source field is checked and assumed to be less than 4GB, and
     // we assume that the fix offset will not exceed 2GB in either direction
-    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
@@ -532,13 +532,19 @@ impl Runtime {
                                 .collect(),
                         };
 
+                        // adjust offset for multiple source text in a single file
+                        if section.source.start != 0 {
+                            for message in &mut messages {
+                                message.move_offset(section.source.start);
+                            }
+                        }
+
                         let source_text = section.source.source_text;
                         if me.linter.options().fix.is_some() {
                             let fix_result = Fixer::new(source_text, messages).fix();
                             if fix_result.fixed {
                                 // write to file, replacing only the changed part
-                                let start =
-                                    section.source.start.saturating_add_signed(fix_offset) as usize;
+                                let start = fix_offset as usize;
                                 let end = start + source_text.len();
                                 new_source_text
                                     .to_mut()
@@ -557,7 +563,6 @@ impl Runtime {
                                 &me.cwd,
                                 path,
                                 dep.source_text,
-                                section.source.start,
                                 errors,
                             );
                             tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
@@ -597,11 +602,10 @@ impl Runtime {
         fn fix_to_fix_with_position<'a>(
             fix: &Fix<'a>,
             rope: &Rope,
-            offset: u32,
             source_text: &str,
         ) -> FixWithPosition<'a> {
-            let start_position = offset_to_position(rope, offset + fix.span.start, source_text);
-            let end_position = offset_to_position(rope, offset + fix.span.end, source_text);
+            let start_position = offset_to_position(rope, fix.span.start, source_text);
+            let end_position = offset_to_position(rope, fix.span.end, source_text);
             FixWithPosition {
                 content: fix.content.clone(),
                 span: SpanPositionMessage::new(start_position, end_position)
@@ -624,99 +628,93 @@ impl Runtime {
                             .into_iter()
                             .zip(section_contents.drain(..))
                         {
-                            match record_result {
+                            let mut section_messages = match record_result {
                                 Err(diagnostics) => {
-                                    messages.lock().unwrap().extend(
-                                        diagnostics.into_iter().map(std::convert::Into::into),
-                                    );
+                                    messages
+                                        .lock()
+                                        .unwrap()
+                                        .extend(diagnostics.into_iter().map(Into::into));
+                                    continue;
                                 }
-                                Ok(module_record) => {
-                                    let section_message = me.linter.run(
-                                        Path::new(&module.path),
-                                        Rc::new(section.semantic.unwrap()),
-                                        Arc::clone(&module_record),
-                                        allocator_guard,
-                                    );
+                                Ok(module_record) => me.linter.run(
+                                    Path::new(&module.path),
+                                    Rc::new(section.semantic.unwrap()),
+                                    Arc::clone(&module_record),
+                                    allocator_guard,
+                                ),
+                            };
+                            // adjust offset for multiple source text in a single file
+                            if section.source.start != 0 {
+                                for message in &mut section_messages {
+                                    message.move_offset(section.source.start);
+                                }
+                            }
 
-                                    messages.lock().unwrap().extend(section_message.iter().map(
-                                        |message| {
-                                            let message = message.clone_in(allocator);
+                            messages.lock().unwrap().extend(section_messages.iter().map(
+                                |message| {
+                                    let message = message.clone_in(allocator);
 
-                                            let labels =
-                                                &message.error.labels.clone().map(|labels| {
-                                                    labels
-                                                        .into_iter()
-                                                        .map(|labeled_span| {
-                                                            let offset =
-                                                                labeled_span.offset() as u32;
-                                                            let start_position = offset_to_position(
-                                                                rope,
-                                                                offset + section.source.start,
-                                                                source_text,
-                                                            );
-                                                            let end_position = offset_to_position(
-                                                                rope,
-                                                                offset
-                                                                    + section.source.start
-                                                                    + labeled_span.len() as u32,
-                                                                source_text,
-                                                            );
-                                                            let message =
-                                                                labeled_span.label().map(|label| {
-                                                                    Cow::Owned(label.to_string())
-                                                                });
+                                    let labels = &message.error.labels.clone().map(|labels| {
+                                        labels
+                                            .into_iter()
+                                            .map(|labeled_span| {
+                                                let offset = labeled_span.offset() as u32;
+                                                let start_position =
+                                                    offset_to_position(rope, offset, source_text);
+                                                let end_position = offset_to_position(
+                                                    rope,
+                                                    offset + labeled_span.len() as u32,
+                                                    source_text,
+                                                );
+                                                let message = labeled_span
+                                                    .label()
+                                                    .map(|label| Cow::Owned(label.to_string()));
 
-                                                            SpanPositionMessage::new(
-                                                                start_position,
-                                                                end_position,
-                                                            )
-                                                            .with_message(message)
-                                                        })
-                                                        .collect::<Vec<_>>()
-                                                });
+                                                SpanPositionMessage::new(
+                                                    start_position,
+                                                    end_position,
+                                                )
+                                                .with_message(message)
+                                            })
+                                            .collect::<Vec<_>>()
+                                    });
 
-                                            MessageWithPosition {
-                                                message: message.error.message.clone(),
-                                                severity: message.error.severity,
-                                                help: message.error.help.clone(),
-                                                url: message.error.url.clone(),
-                                                code: message.error.code.clone(),
-                                                labels: labels.clone(),
-                                                fixes: match &message.fixes {
-                                                    PossibleFixes::None => {
-                                                        PossibleFixesWithPosition::None
-                                                    }
-                                                    PossibleFixes::Single(fix) => {
-                                                        PossibleFixesWithPosition::Single(
+                                    MessageWithPosition {
+                                        message: message.error.message.clone(),
+                                        severity: message.error.severity,
+                                        help: message.error.help.clone(),
+                                        url: message.error.url.clone(),
+                                        code: message.error.code.clone(),
+                                        labels: labels.clone(),
+                                        fixes: match &message.fixes {
+                                            PossibleFixes::None => PossibleFixesWithPosition::None,
+                                            PossibleFixes::Single(fix) => {
+                                                PossibleFixesWithPosition::Single(
+                                                    fix_to_fix_with_position(
+                                                        fix,
+                                                        rope,
+                                                        source_text,
+                                                    ),
+                                                )
+                                            }
+                                            PossibleFixes::Multiple(fixes) => {
+                                                PossibleFixesWithPosition::Multiple(
+                                                    fixes
+                                                        .iter()
+                                                        .map(|fix| {
                                                             fix_to_fix_with_position(
                                                                 fix,
                                                                 rope,
-                                                                section.source.start,
                                                                 source_text,
-                                                            ),
-                                                        )
-                                                    }
-                                                    PossibleFixes::Multiple(fixes) => {
-                                                        PossibleFixesWithPosition::Multiple(
-                                                            fixes
-                                                                .iter()
-                                                                .map(|fix| {
-                                                                    fix_to_fix_with_position(
-                                                                        fix,
-                                                                        rope,
-                                                                        section.source.start,
-                                                                        source_text,
-                                                                    )
-                                                                })
-                                                                .collect(),
-                                                        )
-                                                    }
-                                                },
+                                                            )
+                                                        })
+                                                        .collect(),
+                                                )
                                             }
                                         },
-                                    ));
-                                }
-                            }
+                                    }
+                                },
+                            ));
                         }
                     },
                 );
@@ -773,7 +771,12 @@ impl Runtime {
                                         .collect(),
                                 }
                                 .into_iter()
-                                .map(|message| message.clone_in(allocator)),
+                                .map(|mut message| {
+                                    if section.source.start != 0 {
+                                        message.move_offset(section.source.start);
+                                    }
+                                    message.clone_in(allocator)
+                                }),
                             );
                         }
                     },

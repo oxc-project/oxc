@@ -1,13 +1,17 @@
 {
   "name": "oxlint2",
   "version": "0.1.0",
-  "main": "src-js/index.js",
+  "bin": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build-dev": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --esm",
-    "build-test": "pnpm run build-dev --profile coverage --features force_test_reporter",
-    "build": "pnpm run build-dev --release",
-    "test": "vitest"
+    "build": "pnpm run build-napi-release && pnpm run build-js",
+    "build-dev": "pnpm run build-napi && pnpm run build-js",
+    "build-test": "pnpm run build-napi-test && pnpm run build-js",
+    "build-napi": "napi build --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache --esm",
+    "build-napi-test": "pnpm run build-napi --profile coverage --features force_test_reporter",
+    "build-napi-release": "pnpm run build-napi --release",
+    "build-js": "node scripts/build.js",
+    "test": "tsc && vitest --dir ./test run"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -26,8 +30,12 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "execa": "^9.6.0",
+    "tsdown": "^0.13.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

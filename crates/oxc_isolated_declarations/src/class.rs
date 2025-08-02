@@ -289,23 +289,35 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_constructor_parameter_properties(
         &self,
         function: &Function<'a>,
-        params: &FormalParameters<'a>,
+        typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
-        self.ast.vec_from_iter(function.params.items.iter().enumerate().filter_map(
-            |(index, param)| {
-                if !param.has_modifier() {
-                    return None;
-                }
-                let type_annotation =
-                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
-                        None
-                    } else {
-                        // transformed params will definitely have type annotation
-                        params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
-                    };
-                self.transform_formal_parameter_to_class_property(param, type_annotation)
-            },
-        ))
+        self.ast.vec_from_iter(
+            function
+                .params
+                .items
+                .iter()
+                .filter(|param| {
+                    // To follow up `transform_formal_parameters`'s behavior
+                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
+                })
+                .enumerate()
+                .filter_map(|(index, param)| {
+                    if !param.has_modifier() {
+                        return None;
+                    }
+                    let type_annotation =
+                        if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            // transformed params will definitely have type annotation
+                            typed_params.items[index]
+                                .pattern
+                                .type_annotation
+                                .clone_in(self.ast.allocator)
+                        };
+                    self.transform_formal_parameter_to_class_property(param, type_annotation)
+                }),
+        )
     }
 
     /// Collect return_type of getter and first parma type of setter

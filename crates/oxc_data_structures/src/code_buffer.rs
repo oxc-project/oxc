@@ -4,9 +4,23 @@ use std::iter;
 
 use crate::assert_unchecked;
 
+/// Character to use for indentation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(u8)]
+pub enum IndentChar {
+    /// Use tab character for indentation.
+    #[default]
+    Tab = b'\t',
+    /// Use space character for indentation.
+    Space = b' ',
+}
+
+/// Default indentation width.
+pub const DEFAULT_INDENT_WIDTH: usize = 1;
+
 /// A string builder for constructing source code.
 ///
-/// `CodeBuffer` provides safe abstractions over a byte array.
+/// [`CodeBuffer`] provides safe abstractions over a byte array.
 /// Essentially same as `String` but with additional methods.
 ///
 /// Use one of the various `print_*` methods to add text into the buffer.
@@ -31,14 +45,29 @@ use crate::assert_unchecked;
 /// ```
 ///
 /// [`into_string`]: CodeBuffer::into_string
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct CodeBuffer {
     /// INVARIANT: `buf` is a valid UTF-8 string.
     buf: Vec<u8>,
+    /// Character to use for indentation.
+    indent_char: IndentChar,
+    /// Number of indent characters per indentation level.
+    indent_width: usize,
+}
+
+impl Default for CodeBuffer {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            buf: Vec::new(),
+            indent_char: IndentChar::default(),
+            indent_width: DEFAULT_INDENT_WIDTH,
+        }
+    }
 }
 
 impl CodeBuffer {
-    /// Create a new empty `CodeBuffer`.
+    /// Create a new [`CodeBuffer`].
     ///
     /// # Example
     /// ```
@@ -54,7 +83,22 @@ impl CodeBuffer {
         Self::default()
     }
 
-    /// Create a new, empty `CodeBuffer` with the specified capacity.
+    /// Create a new [`CodeBuffer`] with specified indentation.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::{CodeBuffer, IndentChar};
+    /// let mut code = CodeBuffer::with_indent(IndentChar::Space, 4);
+    ///
+    /// // This will use 4 spaces per indentation level
+    /// code.print_indent(2); // prints 8 spaces
+    /// ```
+    #[inline]
+    pub fn with_indent(indent_char: IndentChar, indent_width: usize) -> Self {
+        Self { buf: Vec::new(), indent_char, indent_width }
+    }
+
+    /// Create a new [`CodeBuffer`] with the specified capacity.
     ///
     /// The buffer will be able to hold at least `capacity` bytes without reallocating.
     /// This method is allowed to allocate for more bytes than `capacity`.
@@ -64,10 +108,34 @@ impl CodeBuffer {
     /// minimum *capacity* specified, the buffer will have a zero *length*.
     ///
     /// # Panics
-    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    /// Panics if `capacity` exceeds `isize::MAX` bytes.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { buf: Vec::with_capacity(capacity) }
+        Self {
+            buf: Vec::with_capacity(capacity),
+            indent_char: IndentChar::default(),
+            indent_width: DEFAULT_INDENT_WIDTH,
+        }
+    }
+
+    /// Create a new [`CodeBuffer`] with the specified capacity and indentation.
+    ///
+    /// The buffer will be able to hold at least `capacity` bytes without reallocating.
+    /// This method is allowed to allocate for more bytes than `capacity`.
+    /// If `capacity` is 0, the buffer will not allocate.
+    ///
+    /// It is important to note that although the returned buffer has the
+    /// minimum *capacity* specified, the buffer will have a zero *length*.
+    ///
+    /// # Panics
+    /// Panics if `capacity` exceeds `isize::MAX` bytes.
+    #[inline]
+    pub fn with_capacity_and_indent(
+        capacity: usize,
+        indent_char: IndentChar,
+        indent_width: usize,
+    ) -> Self {
+        Self { buf: Vec::with_capacity(capacity), indent_char, indent_width }
     }
 
     /// Returns the number of bytes in the buffer.
@@ -411,51 +479,56 @@ impl CodeBuffer {
         self.buf.extend(bytes);
     }
 
-    /// Print `n` tab characters into the buffer (indentation).
+    /// Print `depth` levels of indentation into the buffer.
     ///
-    /// Optimized on assumption that more that 16 levels of indentation is rare.
+    /// Uses the configured indentation character and width.
+    /// Prints `depth * indent_width` indent characters.
     ///
-    /// Fast path is to write 16 bytes of tabs in a single load + store,
-    /// but only advance `len` by `n` bytes. This avoids a `memset` function call.
+    /// Optimized on assumption that more than 16 characters of indentation is rare.
+    ///
+    /// Fast path is to write 16 bytes of tabs/spaces in a single load + store,
+    /// but only advance `len` by the actual number of bytes. This avoids a `memset` function call.
     ///
     /// Take alternative slow path if either:
-    /// 1. `n > 16`.
+    /// 1. Total characters to print > 16.
     /// 2. Less than 16 bytes spare capacity in buffer (needs to grow).
     /// Both of these cases should be rare.
     ///
-    /// <https://godbolt.org/z/e1EP5cnPc>
+    /// <https://godbolt.org/z/zPT6Mzqsx>
     #[inline]
-    pub fn print_indent(&mut self, n: usize) {
+    pub fn print_indent(&mut self, depth: usize) {
         /// Size of chunks to write indent in.
-        /// 16 is largest register size (XMM) available on all x86_84 targets.
+        /// 16 is largest register size (XMM) available on all x86_64 targets.
         const CHUNK_SIZE: usize = 16;
 
         #[cold]
         #[inline(never)]
-        fn write_slow(code_buffer: &mut CodeBuffer, n: usize) {
-            code_buffer.buf.extend(iter::repeat_n(b'\t', n));
+        fn write_slow(code_buffer: &mut CodeBuffer, bytes: usize) {
+            code_buffer.buf.extend(iter::repeat_n(code_buffer.indent_char as u8, bytes));
         }
+
+        let bytes = depth * self.indent_width;
 
         let len = self.len();
         let spare_capacity = self.capacity() - len;
-        if n > CHUNK_SIZE || spare_capacity < CHUNK_SIZE {
-            write_slow(self, n);
+        if bytes > CHUNK_SIZE || spare_capacity < CHUNK_SIZE {
+            write_slow(self, bytes);
             return;
         }
 
-        // Write 16 tabs into buffer.
-        // On x86_86, this is 1 XMM register load + 1 XMM store (16 byte copy).
+        // Write 16 bytes of the indent character into buffer.
+        // On x86_64, this is 4 SIMD instructions (16 byte copy).
         // SAFETY: We checked there are at least 16 bytes spare capacity.
         unsafe {
             let ptr = self.buf.as_mut_ptr().add(len).cast::<[u8; CHUNK_SIZE]>();
-            ptr.write([b'\t'; CHUNK_SIZE]);
+            ptr.write([self.indent_char as u8; CHUNK_SIZE]);
         }
 
         // Update length of buffer.
-        // SAFETY: We checked there's at least 16 bytes spare capacity, and `n <= 16`,
-        // so `len + n` cannot exceed capacity.
-        // `len` cannot exceed `isize::MAX`, so `len + n` cannot wrap around.
-        unsafe { self.buf.set_len(len + n) };
+        // SAFETY: We checked there's at least 16 bytes spare capacity, and `bytes <= 16`,
+        // so `len + bytes` cannot exceed capacity.
+        // `len` cannot exceed `isize::MAX`, so `len + bytes` cannot wrap around.
+        unsafe { self.buf.set_len(len + bytes) };
     }
 
     /// Get contents of buffer as a byte slice.
@@ -512,7 +585,7 @@ impl From<CodeBuffer> for String {
 
 #[cfg(test)]
 mod test {
-    use super::CodeBuffer;
+    use super::{CodeBuffer, IndentChar};
 
     #[test]
     fn empty() {
@@ -641,5 +714,26 @@ mod test {
         assert_eq!(code.last_char(), None);
         code.print_str("bar");
         assert_eq!(code.last_char(), Some('r'));
+    }
+
+    #[test]
+    fn test_cached_indent_tabs() {
+        let mut code = CodeBuffer::with_indent(IndentChar::Tab, 1);
+        code.print_indent(2);
+        assert_eq!(code.into_string(), "\t\t");
+    }
+
+    #[test]
+    fn test_cached_indent_spaces_width_2() {
+        let mut code = CodeBuffer::with_indent(IndentChar::Space, 2);
+        code.print_indent(2);
+        assert_eq!(code.into_string(), "    "); // 2 levels * 2 spaces = 4 spaces
+    }
+
+    #[test]
+    fn test_cached_indent_spaces_width_4() {
+        let mut code = CodeBuffer::with_indent(IndentChar::Space, 4);
+        code.print_indent(2);
+        assert_eq!(code.into_string(), "        "); // 2 levels * 4 spaces = 8 spaces
     }
 }

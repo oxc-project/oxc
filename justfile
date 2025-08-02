@@ -206,6 +206,9 @@ new-vitest-rule name:
 new-regexp-rule name:
     cargo run -p rulegen {{name}} regexp
 
+new-vue-rule name:
+    cargo run -p rulegen {{name}} vue
+
 [unix]
 clone-submodule dir url sha:
   cd {{dir}} || git init {{dir}}

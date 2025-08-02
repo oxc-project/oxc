@@ -44,6 +44,8 @@ Enable Plugins
                               problems
         --promise-plugin      Enable the promise plugin and detect promise usage problems
         --node-plugin         Enable the node plugin and detect node usage problems
+        --regex-plugin        Enable the regex plugin and detect regex usage problems
+        --vue-plugin          Enable the vue plugin and detect vue usage problems
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in

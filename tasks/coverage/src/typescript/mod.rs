@@ -59,6 +59,9 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             "TransportStream.ts",
             // Emits TS5052 (complains compilerOptions are invalid, which we do not support), also implies TS2564 but not emitted
             "esDecorators-emitDecoratorMetadata.ts",
+            // These tests just check `let` as variable name under `target:es6`
+            "downlevelLetConst6.ts",
+            "VariableDeclaration6_es6.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
@@ -138,7 +141,50 @@ impl Case for TypeScriptCase {
 // spellchecker:off
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     // TODO: More not-supported error codes here
-    "2315",  // Type 'U' is not generic.
+    "2011",  // Cannot convert 'string' to 'number'.
+    "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
+    "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
+    "2301", // Initializer of instance member variable 'y' cannot reference identifier 'aaa' declared in the constructor.
+    "2302", // Static members cannot reference class type parameters.
+    "2303", // Circular definition of import alias 'A'.
+    "2304", // Cannot find name 'a'.
+    "2305", // Module '"./b"' has no exported member 'default'.
+    "2306", // File '/node_modules/@types/react/index.d.ts' is not a module.
+    "2307", // Cannot find module './SubModule' or its corresponding type declarations.
+    "2308", // Module "./b" has already exported a member named '__foo'. Consider explicitly re-exporting to resolve the ambiguity.
+    "2310", // Type 'M2' recursively references itself as a base type.
+    "2312", // An interface can only extend an object type or intersection of object types with statically known members.
+    "2313", // Type parameter 'K' has a circular constraint.
+    "2314", // Generic type 'Array<T>' requires 1 type argument(s).
+    "2315", // Type 'D' is not generic.
+    "2317", // Global type 'Array' must have 1 type parameter(s).
+    "2318", // Cannot find global type 'AsyncDisposable'.
+    "2320", // Interface 'Z' cannot simultaneously extend types 'X' and 'Y'.
+    "2322", // Type 'number' is not assignable to type 'string'.
+    "2328", // Types of parameters 'f' and 'f' are incompatible.
+    "2340", // Only public and protected methods of the base class are accessible via the 'super' keyword.
+    "2341", // Property 'sfn' is private and only accessible within class 'clodule<T>'.
+    "2343", // This syntax requires an imported helper named '__esDecorate' which does not exist in 'tslib'.
+    "2344", // Type 'number' does not satisfy the constraint 'string'.
+    "2345", // Argument of type '(string | number | boolean)[]' is not assignable to parameter of type '[string, number, boolean]'.
+    "2347", // Untyped function calls may not accept type arguments.
+    "2348", // Value of type 'new () => string' is not callable. Did you mean to include 'new'?
+    "2349", // This expression is not callable.
+    "2350", // Only a void function can be called with the 'new' keyword.
+    "2351", // This expression is not constructable.
+    "2352", // Conversion of type 'string' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+    "2353", // Object literal may only specify known properties, and 'trueness' does not exist in type 'Action'.
+    "2354", // This syntax requires an imported helper but module 'tslib' cannot be found.
+    "2355", // A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.
+    "2358", // The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+    "2359", // The right-hand side of an 'instanceof' expression must be either of type 'any', a class, function, or other type assignable to the 'Function' interface type, or an object type with a 'Symbol.hasInstance' method.
+    "2362", // The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+    "2363", // The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+    "2365", // Operator '+' cannot be applied to types 'boolean' and 'boolean'.
+    "2366", // Function lacks ending return statement and return type does not include 'undefined'.
+    "2367", // This comparison appears to be unintentional because the types '0' and '1' have no overlap.
+    "2370", // A rest parameter must be of an array type.
+    "2375", // Type '{ value: undefined; }' is not assignable to type 'A' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.

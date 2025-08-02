@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 763a618 minifier: Inline small constant values (#12639) (Boshen)
+- f46818a minifier: Remove unused class expression (#12618) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 08a7379 minifier: Do not read constant value from for loop init (#12654) (Boshen)
+- 5642b29 minifier: Initialize constant value in DCE (#12610) (Boshen)
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- 23f7f82 minifier: Remove unused assignment expression (#12509) (Boshen)
+- b877039 minifier: Inline `const` variables that are only used once (#12488) (Boshen)
+
+### 🐛 Bug Fixes
+
+- fe9c8e1 minifier: Do not remove non-plain empty functions (#12573) (Boshen)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

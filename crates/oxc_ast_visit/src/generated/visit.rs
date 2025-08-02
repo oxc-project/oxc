@@ -1770,8 +1770,7 @@ pub mod walk {
         visitor: &mut V,
         it: &SimpleAssignmentTarget<'a>,
     ) {
-        let kind = AstKind::SimpleAssignmentTarget(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => {
                 visitor.visit_identifier_reference(it)
@@ -1788,7 +1787,6 @@ pub mod walk {
                 visitor.visit_member_expression(it.to_member_expression())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2746,7 +2744,6 @@ pub mod walk {
         let kind = AstKind::WithClause(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_import_attributes(&it.with_entries);
         visitor.leave_node(kind);
     }

@@ -291,6 +291,35 @@ impl<'a> Message<'a> {
         };
         Self { error, span: Span::new(start, end), fixes, fixed: false }
     }
+
+    /// move the offset of all spans to the right
+    pub fn move_offset(&mut self, offset: u32) -> &mut Self {
+        if offset == 0 {
+            return self;
+        }
+
+        self.span = self.span.move_right(offset);
+
+        if let Some(labels) = &mut self.error.labels {
+            for label in labels {
+                label.set_span_offset(label.offset().saturating_add(offset as usize));
+            }
+        }
+
+        match &mut self.fixes {
+            PossibleFixes::None => {}
+            PossibleFixes::Single(fix) => {
+                fix.span = fix.span.move_right(offset);
+            }
+            PossibleFixes::Multiple(fixes) => {
+                for fix in fixes {
+                    fix.span = fix.span.move_right(offset);
+                }
+            }
+        }
+
+        self
+    }
 }
 
 impl From<Message<'_>> for OxcDiagnostic {
@@ -343,7 +372,7 @@ impl<'a> Fixer<'a> {
         self.messages.sort_unstable_by_key(|m| m.fixes.span());
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
-        let mut last_pos: i64 = -1;
+        let mut last_pos: u32 = 0;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -367,21 +396,20 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             }
-            if i64::from(start) < last_pos {
+            if start < last_pos {
                 filtered_messages.push(m);
                 continue;
             }
 
             m.fixed = true;
             fixed = true;
-            let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
+            let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
             output.push_str(content);
-            last_pos = i64::from(end);
+            last_pos = end;
         }
 
-        let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
-        output.push_str(&source_text[offset..]);
+        output.push_str(&source_text[last_pos as usize..]);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
         FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }

@@ -1067,8 +1067,16 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     // but preserve whitespace preceding colon, to avoid joining selectors.
                     if output.last().is_some_and(|&last| {
                         !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';')
-                    }) && (i < bytes.len() && !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
+                    }) && (i == bytes.len() || !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
                     {
+                        // `i == bytes.len()` means we're at the end of the quasi that has an
+                        // interpolation after it. Preserve trailing whitespace to avoid joining
+                        // with the interpolation.
+                        //
+                        // For example:
+                        // `padding: 0 ${PADDING}px`
+                        //            ^ this space should be preserved to avoid it becomes
+                        //              `padding:0${PADDING}px`
                         output.push(b' ');
                     }
                     continue;

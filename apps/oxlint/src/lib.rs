@@ -1,18 +1,22 @@
+use std::{ffi::OsStr, io::BufWriter};
+
+pub use oxc_linter::{
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult,
+};
+
 mod command;
 mod lint;
 mod output_formatter;
 mod result;
-mod runner;
 mod tester;
 mod walk;
 
 pub mod cli {
-    pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
+    pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
 }
 
-pub use oxc_linter::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
-};
+use cli::{CliRunResult, LintRunner};
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 mod raw_fs;
@@ -20,9 +24,6 @@ mod raw_fs;
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
-
-use cli::{CliRunResult, LintRunner, Runner};
-use std::{ffi::OsStr, io::BufWriter};
 
 pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();

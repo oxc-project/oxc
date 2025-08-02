@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

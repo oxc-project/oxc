@@ -13,8 +13,8 @@ mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_declaration;
 mod remove_unused_expression;
-mod remove_unused_variable_declaration;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
@@ -335,6 +335,15 @@ impl<'a> DeadCodeElimination {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
+    fn exit_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut ctx = Ctx::new(ctx);
+        self.inner.init_symbol_value(decl, &mut ctx);
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
         self.inner.remove_dead_code_exit_statement(stmt, &mut ctx);

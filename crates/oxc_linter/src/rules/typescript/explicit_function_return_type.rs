@@ -24,7 +24,7 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ExplicitFunctionReturnTypeConfig {
     allow_expressions: bool,
     allow_typed_function_expressions: bool,
@@ -41,6 +41,21 @@ impl std::ops::Deref for ExplicitFunctionReturnType {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Default for ExplicitFunctionReturnTypeConfig {
+    fn default() -> Self {
+        Self {
+            allow_expressions: false,
+            allow_typed_function_expressions: true,
+            allow_direct_const_assertion_in_arrow_functions: true,
+            allow_concise_arrow_function_expressions_starting_with_void: false,
+            allow_functions_without_type_parameters: false,
+            allowed_names: FxHashSet::default(),
+            allow_higher_order_functions: true,
+            allow_iifes: false,
+        }
     }
 }
 
@@ -475,8 +490,7 @@ impl ExplicitFunctionReturnType {
 
 // check function is IIFE (Immediately Invoked Function Expression)
 fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) =
-        iter_outer_expressions(ctx.semantic(), node.id()).next()
+    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
     else {
         return false;
     };
@@ -1543,6 +1557,12 @@ fn test() {
                 return () => {xxxxxxx }
             }
         	",
+            None,
+            None,
+            None,
+        ),
+        (
+            "clients.filter((client) => searchWords.every((word) => client.name.toLowerCase().includes(word)) || client.cats.some((cat) => searchWords.every((word) => cat.name.toLowerCase().includes(word))))",
             None,
             None,
             None,

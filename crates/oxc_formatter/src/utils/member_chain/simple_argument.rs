@@ -18,16 +18,14 @@ use oxc_ast::{ast::*, match_expression};
 /// - *simple*: the argument is a [`UpdateExpression`], with a trivial operator (`++` or `--`), and the argument is simple.
 /// - *simple*: the argument is a [`TSNonNullExpression`] and the argument is simple
 /// - if the argument is a template literal, check [is_simple_template_literal]
-/// - if the argument is an object expression, all its members are checked if they are simple or not. Check [`SimpleArgument::is_simple_object_expression`]
-/// - if the argument is an array expression, all its elements are checked if they are simple or not. Check [`SimpleArgument::is_simple_array_expression`]
+/// - if the argument is an object expression, all its members are checked if they are simple or not.
+/// - if the argument is an array expression, all its elements are checked if they are simple or not.
 ///
 /// This algorithm is inspired from [Prettier].
 ///
 /// [ThisExpression]: [ThisExpression]
 /// [IdentifierReference]: [IdentifierReference]
 /// [Super]: [Super]
-/// [SimpleArgument::is_simple_object_expression]: [SimpleArgument::is_simple_object_expression]
-/// [SimpleArgument::is_simple_array_expression]: [SimpleArgument::is_simple_array_expression]
 /// [UnaryExpression]: [UnaryExpression]
 /// [UpdateExpression]: [UpdateExpression]
 /// [TSNonNullExpression]: [TSNonNullExpression]
@@ -58,66 +56,40 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
             return false;
         }
 
-        if self.is_simple_literal() {
-            return true;
-        }
-
-        self.is_simple_template(depth)
-            || self.is_simple_object_expression(depth)
-            || self.is_simple_array_expression(depth)
-            || self.is_simple_unary_expression(depth)
-            || self.is_simple_update_expression(depth)
-            || self.is_simple_non_null_assertion_expression(depth)
-            || self.is_simple_member_expression(depth)
-            || self.is_simple_call_like_expression(depth)
-            || self.is_simple_regex_expression()
-    }
-
-    fn is_simple_call_like_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(any_expression) = self {
-            if any_expression.is_call_like_expression() {
-                let mut is_import_call_expression = false;
-                let mut is_simple_callee = false;
-                let arguments = match any_expression {
-                    Expression::NewExpression(expr) => {
-                        let callee = &expr.callee;
-                        is_simple_callee = Self::from(callee).is_simple_impl(depth);
-                        &expr.arguments
-                    }
-                    Expression::CallExpression(expr) => {
-                        let callee = &expr.callee;
-                        is_simple_callee = Self::from(callee).is_simple_impl(depth);
-                        &expr.arguments
-                    }
-                    // Expression::ImportExpression(expr) => {
-                    //     is_import_call_expression = true;
-                    //     expr.arguments
-                    // }
-                    _ => unreachable!("The check is done inside `is_call_like_expression`"),
-                };
-
-                if !is_import_call_expression && !is_simple_callee {
-                    return false;
+        match self {
+            Self::Expression(expr) => match expr {
+                Expression::NullLiteral(_)
+                | Expression::BooleanLiteral(_)
+                | Expression::StringLiteral(_)
+                | Expression::NumericLiteral(_)
+                | Expression::BigIntLiteral(_)
+                | Expression::ThisExpression(_)
+                | Expression::Identifier(_)
+                | Expression::Super(_) => true,
+                Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= 5,
+                Expression::TemplateLiteral(template) => {
+                    is_simple_template_literal(template, depth + 1)
                 }
-
-                // This is a little awkward, but because we _increment_
-                // depth, we need to add it to the left and compare to the
-                // max we allow (2), versus just comparing `len <= depth`.
-                arguments.len() + usize::from(depth) <= 2
-                    && arguments
-                        .iter()
-                        .all(|argument| Self::new(argument).is_simple_impl(depth + 1))
-            } else {
-                false
-            }
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_member_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(expr) = self {
-            match expr {
+                Expression::TaggedTemplateExpression(template) => {
+                    is_simple_template_literal(&template.quasi, depth + 1)
+                }
+                Expression::ObjectExpression(object) => self.is_simple_object(object, depth),
+                Expression::ArrayExpression(array) => self.is_simple_array(array, depth),
+                Expression::UnaryExpression(unary_expression) => {
+                    matches!(
+                        unary_expression.operator,
+                        UnaryOperator::LogicalNot
+                            | UnaryOperator::UnaryNegation
+                            | UnaryOperator::UnaryPlus
+                            | UnaryOperator::BitwiseNot
+                    ) && Self::from(&unary_expression.argument).is_simple_impl(depth)
+                }
+                Expression::UpdateExpression(update) => {
+                    Self::Assignment(&update.argument).is_simple_impl(depth)
+                }
+                Expression::TSNonNullExpression(assertion) => {
+                    Self::from(&assertion.expression).is_simple_impl(depth)
+                }
                 Expression::StaticMemberExpression(static_expression) => {
                     Self::from(&static_expression.object).is_simple_impl(depth)
                 }
@@ -125,127 +97,84 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                     Self::from(&computed_expression.expression).is_simple_impl(depth)
                         && Self::from(&computed_expression.object).is_simple_impl(depth)
                 }
-                _ => false,
-            }
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_non_null_assertion_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(Expression::TSNonNullExpression(assertion)) = self {
-            Self::from(&assertion.expression).is_simple_impl(depth)
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_unary_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(Expression::UnaryExpression(unary_expression)) = self {
-            if matches!(
-                unary_expression.operator,
-                UnaryOperator::LogicalNot
-                    | UnaryOperator::UnaryNegation
-                    | UnaryOperator::UnaryPlus
-                    | UnaryOperator::BitwiseNot
-            ) {
-                Self::from(&unary_expression.argument).is_simple_impl(depth)
-            } else {
-                false
-            }
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_update_expression(&self, depth: u8) -> bool {
-        // Both PreUpdate and PostUpdate expressions have Increment and Decrement
-        // operators, but they are typed separately, so must be handled that way.
-        // These arms should be equivalent.
-        if let Self::Expression(Expression::UpdateExpression(update)) = self {
-            Self::Assignment(&update.argument).is_simple_impl(depth)
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_regex_expression(&self) -> bool {
-        if let Self::Expression(Expression::RegExpLiteral(regex)) = self {
-            return regex.regex.pattern.text.len() <= 5;
-        }
-
-        false
-    }
-
-    fn is_simple_array_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(Expression::ArrayExpression(array)) = self {
-            array.elements.iter().all(|element| match element {
-                match_expression!(ArrayExpressionElement) => {
-                    Self::from(element.to_expression()).is_simple_impl(depth + 1)
+                Expression::NewExpression(expr) => {
+                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }
-                ArrayExpressionElement::Elision(_) => true,
-                ArrayExpressionElement::SpreadElement(_) => false,
-            })
-        } else {
-            false
-        }
-    }
-
-    fn is_simple_template(&self, depth: u8) -> bool {
-        match self {
-            Self::Expression(Expression::TemplateLiteral(template)) => {
-                is_simple_template_literal(template, depth + 1)
-            }
-            Self::Expression(Expression::TaggedTemplateExpression(template)) => {
-                is_simple_template_literal(&template.quasi, depth + 1)
-            }
+                Expression::CallExpression(expr) => {
+                    self.is_simple_call_like(&expr.callee, &expr.arguments, depth)
+                }
+                Expression::ImportExpression(expr) => depth < 2 && expr.options.is_none(),
+                Expression::ChainExpression(chain) => {
+                    self.is_simple_chain_element(&chain.expression, depth)
+                }
+                _ => false,
+            },
+            Self::Assignment(SimpleAssignmentTarget::AssignmentTargetIdentifier(_)) => true,
             _ => false,
         }
     }
 
-    const fn is_simple_literal(&self) -> bool {
-        // if let Self::Name(AnyJsName::JsPrivateName(_)) = self {
-        //     return true;
-        // }
+    #[inline]
+    fn is_simple_object(&self, object: &'b ObjectExpression<'a>, depth: u8) -> bool {
+        object.properties.iter().all(|member| {
+            if let ObjectPropertyKind::ObjectProperty(property) = member {
+                if property.method {
+                    return false;
+                }
 
-        if let Self::Expression(Expression::RegExpLiteral(_)) = self {
-            return false;
-        }
+                if property.shorthand {
+                    return true;
+                }
 
-        matches!(
-            self,
-            Self::Expression(
-                Expression::NullLiteral(_)
-                    | Expression::BooleanLiteral(_)
-                    | Expression::StringLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::ThisExpression(_)
-                    | Expression::Identifier(_)
-                    | Expression::Super(_)
-            ) | Self::Assignment(SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
-        )
+                !property.computed && Self::from(&property.value).is_simple_impl(depth + 1)
+            } else {
+                false
+            }
+        })
     }
 
-    fn is_simple_object_expression(&self, depth: u8) -> bool {
-        if let Self::Expression(Expression::ObjectExpression(object)) = self {
-            object.properties.iter().all(|member| {
-                if let ObjectPropertyKind::ObjectProperty(property) = member {
-                    if property.method {
-                        return false;
-                    }
+    #[inline]
+    fn is_simple_array(&self, array: &'b ArrayExpression<'a>, depth: u8) -> bool {
+        array.elements.iter().all(|element| match element {
+            match_expression!(ArrayExpressionElement) => {
+                Self::from(element.to_expression()).is_simple_impl(depth + 1)
+            }
+            ArrayExpressionElement::Elision(_) => true,
+            ArrayExpressionElement::SpreadElement(_) => false,
+        })
+    }
 
-                    if property.shorthand {
-                        return true;
-                    }
+    #[inline]
+    fn is_simple_call_like(
+        &self,
+        callee: &'b Expression<'a>,
+        arguments: &'b [Argument<'a>],
+        depth: u8,
+    ) -> bool {
+        Self::from(callee).is_simple_impl(depth)
+            && arguments.len() + usize::from(depth) <= 2
+            && arguments.iter().all(|argument| Self::new(argument).is_simple_impl(depth + 1))
+    }
 
-                    !property.computed && Self::from(&property.value).is_simple_impl(depth + 1)
-                } else {
-                    false
-                }
-            })
-        } else {
-            false
+    #[inline]
+    fn is_simple_chain_element(&self, element: &'b ChainElement<'a>, depth: u8) -> bool {
+        match element {
+            ChainElement::CallExpression(call) => {
+                self.is_simple_call_like(&call.callee, &call.arguments, depth)
+            }
+            ChainElement::TSNonNullExpression(assertion) => {
+                Self::from(&assertion.expression).is_simple_impl(depth)
+            }
+            ChainElement::StaticMemberExpression(static_expression) => {
+                Self::from(&static_expression.object).is_simple_impl(depth)
+            }
+            ChainElement::ComputedMemberExpression(computed_expression) => {
+                Self::from(&computed_expression.expression).is_simple_impl(depth)
+                    && Self::from(&computed_expression.object).is_simple_impl(depth)
+            }
+            ChainElement::PrivateFieldExpression(private_field) => {
+                Self::from(&private_field.object).is_simple_impl(depth)
+            }
         }
     }
 }
@@ -258,7 +187,7 @@ impl<'a, 'b> From<&'b Expression<'a>> for SimpleArgument<'a, 'b> {
 
 /// A template literal is simple when:
 ///
-/// - all strings dont contain newlines
+/// - all strings don't contain newlines
 /// - the expressions contained in the template are considered as [`Argument`]. Check
 ///   [`SimpleArgument`].
 pub fn is_simple_template_literal(template: &TemplateLiteral<'_>, depth: u8) -> bool {

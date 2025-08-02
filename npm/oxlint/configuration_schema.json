@@ -285,7 +285,9 @@
         "nextjs",
         "react-perf",
         "promise",
-        "node"
+        "node",
+        "regex",
+        "vue"
       ]
     },
     "LintPlugins": {

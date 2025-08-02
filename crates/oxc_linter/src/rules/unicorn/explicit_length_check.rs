@@ -214,8 +214,6 @@ impl ExplicitLengthCheck {
                     kind.span()
                 }
             }
-            // For negated expressions like !Boolean(...), replace the entire expression
-            AstKind::UnaryExpression(_) => kind.span(),
             // For other cases, use the node's span
             _ => kind.span(),
         };
@@ -236,10 +234,11 @@ impl ExplicitLengthCheck {
         }
 
         let fixed = format!(
-            "{}{}{}{}{}{}",
+            "{}{}{}{}{}{}{}",
             if need_pad_start { " " } else { "" },
             if need_paren { "(" } else { "" },
             static_member_expr.span.source_text(ctx.source_text()),
+            " ",
             check_code,
             if need_paren { ")" } else { "" },
             if need_pad_end { " " } else { "" },

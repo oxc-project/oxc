@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.9.0] - 2025-07-29
+
+### 🐛 Bug Fixes
+
+- cc19c8b vscode: Fix statusbar icon order (#12544) (Christian Fehmer)
+
+
 
 
 

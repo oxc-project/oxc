@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression, UnaryOperator,
+        Argument, AssignmentTarget, BindingPatternKind, CallExpression, Expression,
+        SimpleAssignmentTarget, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -158,6 +159,7 @@ impl Rule for PreferArrayFind {
                                     }
                                 }
                                 AstKind::AssignmentExpression(assignment_expr) => {
+                                    // Check for array destructuring: [foo] = items
                                     if let AssignmentTarget::ArrayAssignmentTarget(target) =
                                         &assignment_expr.left
                                     {
@@ -165,6 +167,16 @@ impl Rule for PreferArrayFind {
                                             && target.elements[0].is_some()
                                         {
                                             destructuring_nodes.push(reference);
+                                        }
+                                    } else if let Some(
+                                        SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
+                                    ) = assignment_expr.left.as_simple_assignment_target()
+                                    {
+                                        // Check for simple reassignment: items = something
+                                        if ident.span
+                                            == ctx.nodes().get_node(reference.node_id()).span()
+                                        {
+                                            is_used_elsewhere = true; // Variable is being reassigned
                                         }
                                     }
                                 }
@@ -242,11 +254,15 @@ fn is_filter_call(call_expr: &CallExpression) -> bool {
 
 fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     match ctx.nodes().parent_kind(node.id()) {
-        AstKind::ArrayPattern(_) | AstKind::SimpleAssignmentTarget(_) => true,
         AstKind::AssignmentExpression(expr) => expr.left.span() == node.span(),
         AstKind::AssignmentPattern(expr) => expr.left.span() == node.span(),
         AstKind::UpdateExpression(expr) => expr.argument.span() == node.span(),
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Delete,
+        AstKind::ArrayAssignmentTarget(_)
+        | AstKind::ObjectAssignmentTarget(_)
+        | AstKind::AssignmentTargetWithDefault(_)
+        | AstKind::ArrayPattern(_)
+        | AstKind::IdentifierReference(_) => true,
         _ => false,
     }
 }

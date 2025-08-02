@@ -731,14 +731,16 @@ impl<'a> ParserImpl<'a> {
             let mut question_dot = false;
             let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) {
                 // ?.
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let kind = self.cur_kind();
-                let is_identifier_or_keyword = kind.is_identifier_or_keyword();
-                if kind == Kind::LBrack
-                    || is_identifier_or_keyword
-                    || kind.is_template_start_of_tagged_template()
+                // Fast check to avoid checkpoint/rewind in common cases
+                let next_kind = self.lexer.peek_token().kind();
+                if next_kind == Kind::LBrack
+                    || next_kind.is_identifier_or_keyword()
+                    || next_kind.is_template_start_of_tagged_template()
                 {
+                    // This is likely a valid optional chain, proceed with normal parsing
+                    self.bump_any(); // consume ?.
+                    let kind = self.cur_kind();
+                    let is_identifier_or_keyword = kind.is_identifier_or_keyword();
                     // ?.[
                     // ?.something
                     // ?.template`...`
@@ -746,9 +748,9 @@ impl<'a> ParserImpl<'a> {
                     question_dot = true;
                     is_identifier_or_keyword
                 } else {
+                    // This is not a valid optional chain pattern, don't consume ?.
                     // Should be a cold branch here, as most real-world optional chaining will look like
                     // `?.something` or `?.[expr]`
-                    self.rewind(checkpoint);
                     false
                 }
             } else {

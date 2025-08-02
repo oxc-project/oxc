@@ -2751,12 +2751,15 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn assignment_target_pattern_array_assignment_target(
+    pub fn assignment_target_pattern_array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> AssignmentTargetPattern<'a> {
+        rest: T1,
+    ) -> AssignmentTargetPattern<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         AssignmentTargetPattern::ArrayAssignmentTarget(
             self.alloc_array_assignment_target(span, elements, rest),
         )
@@ -2771,12 +2774,15 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn assignment_target_pattern_object_assignment_target(
+    pub fn assignment_target_pattern_object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> AssignmentTargetPattern<'a> {
+        rest: T1,
+    ) -> AssignmentTargetPattern<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         AssignmentTargetPattern::ObjectAssignmentTarget(
             self.alloc_object_assignment_target(span, properties, rest),
         )
@@ -2792,13 +2798,16 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn array_assignment_target(
+    pub fn array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> ArrayAssignmentTarget<'a> {
-        ArrayAssignmentTarget { span, elements, rest }
+        rest: T1,
+    ) -> ArrayAssignmentTarget<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
+        ArrayAssignmentTarget { span, elements, rest: rest.into_in(self.allocator) }
     }
 
     /// Build an [`ArrayAssignmentTarget`], and store it in the memory arena.
@@ -2811,12 +2820,15 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn alloc_array_assignment_target(
+    pub fn alloc_array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> Box<'a, ArrayAssignmentTarget<'a>> {
+        rest: T1,
+    ) -> Box<'a, ArrayAssignmentTarget<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         Box::new_in(self.array_assignment_target(span, elements, rest), self.allocator)
     }
 
@@ -2830,13 +2842,16 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn object_assignment_target(
+    pub fn object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> ObjectAssignmentTarget<'a> {
-        ObjectAssignmentTarget { span, properties, rest }
+        rest: T1,
+    ) -> ObjectAssignmentTarget<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
+        ObjectAssignmentTarget { span, properties, rest: rest.into_in(self.allocator) }
     }
 
     /// Build an [`ObjectAssignmentTarget`], and store it in the memory arena.
@@ -2849,16 +2864,22 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn alloc_object_assignment_target(
+    pub fn alloc_object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> Box<'a, ObjectAssignmentTarget<'a>> {
+        rest: T1,
+    ) -> Box<'a, ObjectAssignmentTarget<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         Box::new_in(self.object_assignment_target(span, properties, rest), self.allocator)
     }
 
     /// Build an [`AssignmentTargetRest`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_assignment_target_rest`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -2870,6 +2891,23 @@ impl<'a> AstBuilder<'a> {
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
         AssignmentTargetRest { span, target }
+    }
+
+    /// Build an [`AssignmentTargetRest`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_rest`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `target`
+    #[inline]
+    pub fn alloc_assignment_target_rest(
+        self,
+        span: Span,
+        target: AssignmentTarget<'a>,
+    ) -> Box<'a, AssignmentTargetRest<'a>> {
+        Box::new_in(self.assignment_target_rest(span, target), self.allocator)
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetWithDefault`].
@@ -7444,9 +7482,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_declaration_specifier_import_specifier(
         self,
@@ -7506,9 +7544,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_specifier(
         self,
@@ -7527,9 +7565,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn alloc_import_specifier(
         self,
@@ -7616,16 +7654,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
-        WithClause { span, attributes_keyword, with_entries }
+        WithClause { span, keyword, with_entries }
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
@@ -7635,16 +7673,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn alloc_with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> Box<'a, WithClause<'a>> {
-        Box::new_in(self.with_clause(span, attributes_keyword, with_entries), self.allocator)
+        Box::new_in(self.with_clause(span, keyword, with_entries), self.allocator)
     }
 
     /// Build an [`ImportAttribute`].

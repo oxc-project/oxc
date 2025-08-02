@@ -341,7 +341,7 @@ impl<'a> Expression<'a> {
     /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
-            && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+            || matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
     /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
@@ -975,6 +975,21 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
+                    Some(id)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Returns mut identifier bound by this assignment target.
+    pub fn identifier_mut(&mut self) -> Option<&mut IdentifierReference<'a>> {
+        match self {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
+            Self::AssignmentTargetWithDefault(target) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &mut target.binding {
                     Some(id)
                 } else {
                     None
