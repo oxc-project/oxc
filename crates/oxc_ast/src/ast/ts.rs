@@ -859,7 +859,7 @@ pub struct TSTypeParameterDeclaration<'a> {
     pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
-/// TypeScript Type Alias Declaration Statement
+/// TypeScript type alias declaration statement
 ///
 /// ## Example
 /// ```ts
@@ -1152,7 +1152,7 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType) = 1,
 }
 
-/// TypeScript Module and Namespace Declarations
+/// TypeScript module and namespace declarations
 ///
 /// ## Examples
 /// ```ts
@@ -1651,7 +1651,7 @@ pub struct TSExportAssignment<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Namespace Export Declaration in declaration files
+/// Namespace export declaration in declaration files
 ///
 /// `export as namespace foo`
 #[ast(visit)]
