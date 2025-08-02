@@ -33,9 +33,6 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-#[cfg(test)]
-mod performance_test;
-
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
