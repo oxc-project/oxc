@@ -153,7 +153,7 @@ pub enum TSEnumMemberName<'a> {
     ComputedTemplateString(Box<'a, TemplateLiteral<'a>>) = 3,
 }
 
-/// TypeScript Type Annotation
+/// `TSTypeAnnotation`
 ///
 /// An annotation on a variable declaration, parameter, etc.
 ///
@@ -175,7 +175,7 @@ pub struct TSTypeAnnotation<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-/// TypeScript Literal Type
+/// `TSLiteralType`
 ///
 /// A type that is a literal value. Wraps a [`TSLiteral`].
 ///

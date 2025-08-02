@@ -343,7 +343,7 @@ pub enum ArrayExpressionElement<'a> {
 
 /// empty slot in `const array = [1, , 2];`
 ///
-/// Array Expression Elision Element
+/// `ArrayExpressionElement` for elision
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -679,7 +679,6 @@ pub struct UpdateExpression<'a> {
 
 /// `typeof` in `typeof a === "string"`
 ///
-/// Represents a unary expression, which includes an operator and an argument.
 /// The following syntaxes are supported: `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -717,7 +716,6 @@ pub struct PrivateInExpression<'a> {
 
 /// `||` in `const foo = bar || 2;`
 ///
-/// Represents a logical expression, which includes a left expression, an operator, and a right expression.
 /// The following syntaxes are supported: `||`, `&&` and `??`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -730,8 +728,6 @@ pub struct LogicalExpression<'a> {
 }
 
 /// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
-///
-/// Represents a conditional expression, which includes a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -743,8 +739,6 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// `foo = 1` in `let foo; foo = 1;`
-///
-/// Represents an assignment expression, which includes an operator, a target, and an expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -940,9 +934,6 @@ pub enum AssignmentTargetProperty<'a> {
 }
 
 /// `foo` in `({ foo } = obj);`
-///
-/// Represents an assignment target property identifier, which includes a binding,
-/// and an optional init expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -960,8 +951,6 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 }
 
 /// `foo: bar` in `({ foo: bar } = obj);`
-///
-/// Represents an assignment target property property, which includes a name and a binding.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1197,7 +1186,7 @@ pub enum VariableDeclarationKind {
     AwaitUsing = 4,
 }
 
-/// A single variable declaration in a list of [variable declarations](VariableDeclaration).
+/// A single variable declaration in a list of variable declarations ([`VariableDeclaration`]).
 ///
 /// ## Examples
 /// ```ts
@@ -1218,7 +1207,7 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
-/// Empty Statement
+/// `EmptyStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1226,7 +1215,7 @@ pub struct EmptyStatement {
     pub span: Span,
 }
 
-/// Expression Statement
+/// `ExpressionStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1236,7 +1225,7 @@ pub struct ExpressionStatement<'a> {
     pub expression: Expression<'a>,
 }
 
-/// If Statement
+/// `IfStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1247,7 +1236,7 @@ pub struct IfStatement<'a> {
     pub alternate: Option<Statement<'a>>,
 }
 
-/// Do-While Statement
+/// `DoWhileStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1257,7 +1246,7 @@ pub struct DoWhileStatement<'a> {
     pub test: Expression<'a>,
 }
 
-/// While Statement
+/// `WhileStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1267,7 +1256,7 @@ pub struct WhileStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// For Statement
+/// `ForStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1282,7 +1271,7 @@ pub struct ForStatement<'a> {
 }
 
 inherit_variants! {
-/// For Statement Init
+/// `ForStatementInit`
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1297,7 +1286,7 @@ pub enum ForStatementInit<'a> {
 }
 }
 
-/// For-In Statement
+/// `ForInStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1311,7 +1300,7 @@ pub struct ForInStatement<'a> {
 }
 
 inherit_variants! {
-/// For Statement Left
+/// `ForStatementLeft`
 ///
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -1326,7 +1315,7 @@ pub enum ForStatementLeft<'a> {
 }
 }
 
-/// For-Of Statement
+/// `ForOfStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1340,7 +1329,7 @@ pub struct ForOfStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// Continue Statement
+/// `ContinueStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1349,7 +1338,7 @@ pub struct ContinueStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 }
 
-/// Break Statement
+/// `BreakStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1358,7 +1347,7 @@ pub struct BreakStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 }
 
-/// Return Statement
+/// `ReturnStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1367,7 +1356,7 @@ pub struct ReturnStatement<'a> {
     pub argument: Option<Expression<'a>>,
 }
 
-/// With Statement
+/// `WithStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1377,7 +1366,7 @@ pub struct WithStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Switch Statement
+/// `SwitchStatement`
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1399,7 +1388,7 @@ pub struct SwitchCase<'a> {
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
-/// Labelled Statement
+/// `LabeledStatement`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1409,7 +1398,7 @@ pub struct LabeledStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Throw Statement
+/// `ThrowStatement`
 ///
 /// # Example
 /// ```ts
@@ -1425,7 +1414,7 @@ pub struct ThrowStatement<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Try Statement
+/// `TryStatement`
 ///
 /// # Example
 /// ```ts
@@ -1453,7 +1442,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-/// Catch Clause in a [`try/catch` statement](TryStatement).
+/// Catch Clause in a [`TryStatement`].
 ///
 /// This node creates a new scope inside its `body`.
 ///
@@ -1478,7 +1467,7 @@ pub struct CatchClause<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// A caught error parameter in a [catch clause](CatchClause).
+/// A caught error parameter in a [`CatchClause`].
 ///
 /// # Examples
 ///
@@ -1503,7 +1492,7 @@ pub struct CatchParameter<'a> {
     pub pattern: BindingPattern<'a>,
 }
 
-/// Debugger Statement
+/// `DebuggerStatement`
 ///
 /// # Example
 /// ```ts
@@ -1661,7 +1650,7 @@ pub struct ArrayPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
-/// A `...rest` binding in an [array](ArrayPattern) or [object](ObjectPattern) destructure.
+/// A `...rest` binding in an [`ArrayPattern`] or [`ObjectPattern`] destructure.
 ///
 /// ## Examples
 /// ```ts
@@ -2289,7 +2278,7 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// ES6 Module Declaration
+/// ES6 `ModuleDeclaration`
 ///
 /// An ESM import or export statement.
 ///
