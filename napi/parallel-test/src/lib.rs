@@ -7,6 +7,7 @@ use std::{
         mpsc::channel,
     },
     thread::available_parallelism,
+    time::{Duration, Instant},
 };
 
 use bpaf::Bpaf;
@@ -419,6 +420,13 @@ fn run_workload(options: &Options) -> bool {
 fn run_job(options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
+
+    // Do busy-work on Rust side
+    if options.duration_rs > 0 {
+        let duration = Duration::from_micros(u64::from(options.duration_rs));
+        let start = Instant::now();
+        while start.elapsed() < duration {}
+    }
 
     // Run JS `run` function
     if options.duration_js == 0 {
