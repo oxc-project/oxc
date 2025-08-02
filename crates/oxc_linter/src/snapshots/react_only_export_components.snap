@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: "snapshot_output(rule, pass_tests, fail_tests).await"
 ---
   ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
    ╭─[only_export_components.tsx:1:14]
@@ -42,4 +41,22 @@ expression: "snapshot_output(rule, pass_tests, fail_tests).await"
    ╭─[only_export_components.tsx:1:14]
  1 │ export const createContext = () => {}; export const Foo = () => <></>;
    ·              ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh can't handle anonymous components. Add a name to your export.
+   ╭─[only_export_components.tsx:1:16]
+ 1 │ export default () => {}; // anonymous arrow function
+   ·                ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const Context = createContext(); export const App = () => <></>;
+   ·              ───────
+   ╰────
+
+  ⚠ eslint-plugin-react(only-export-components): Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.
+   ╭─[only_export_components.tsx:1:14]
+ 1 │ export const Context = React.createContext(); export const App = () => <></>;
+   ·              ───────
    ╰────
