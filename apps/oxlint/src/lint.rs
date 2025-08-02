@@ -863,7 +863,12 @@ mod test {
 
     #[test]
     fn test_fix() {
-        Tester::test_fix("fixtures/linter/fix.js", "debugger\n", "\n");
+        Tester::test_fix("fixtures/fix_argument/fix.js", "debugger\n", "\n");
+        Tester::test_fix(
+            "fixtures/fix_argument/fix.vue",
+            "<script>debugger;</script>\n<script>debugger;</script>\n",
+            "<script></script>\n<script></script>\n",
+        );
     }
 
     #[test]
