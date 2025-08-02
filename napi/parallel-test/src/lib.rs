@@ -229,10 +229,7 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
         thread_ids.sort_unstable();
         assert!(
             thread_ids.len() == thread_count
-                && thread_ids
-                    .into_iter()
-                    .zip(0..thread_count)
-                    .all(|(id, expected_id)| id == expected_id)
+                && thread_ids.into_iter().enumerate().all(|(expected_id, id)| id == expected_id)
         );
     }
 }
