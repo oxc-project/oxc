@@ -225,7 +225,7 @@ pub struct IdentifierName<'a> {
 
 /// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
 ///
-/// Represents an identifier reference, which is a reference to a variable, function, class, or object.
+/// Represents an identifier reference.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -251,8 +251,7 @@ pub struct IdentifierReference<'a> {
 
 /// `x` in `const x = 0;`
 ///
-/// Represents a binding identifier, which is an identifier that is used to declare a variable,
-/// function, class, or object.
+/// Represents a binding identifier.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 ///
@@ -281,7 +280,7 @@ pub struct BindingIdentifier<'a> {
 
 /// `loop` in `loop: while (true) { break loop; }`
 ///
-/// Represents a label identifier, which is an identifier that is used to label a statement.
+/// Represents a label identifier.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -679,7 +678,7 @@ pub struct UpdateExpression<'a> {
 
 /// `typeof` in `typeof a === "string"`
 ///
-/// Represents a unary expression, which includes an operator and an argument.
+/// Represents a unary expression.
 /// The following syntaxes are supported: `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -717,7 +716,7 @@ pub struct PrivateInExpression<'a> {
 
 /// `||` in `const foo = bar || 2;`
 ///
-/// Represents a logical expression, which includes a left expression, an operator, and a right expression.
+/// Represents a logical expression.
 /// The following syntaxes are supported: `||`, `&&` and `??`.
 #[ast(visit)]
 #[derive(Debug)]
@@ -731,7 +730,7 @@ pub struct LogicalExpression<'a> {
 
 /// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
 ///
-/// Represents a conditional expression, which includes a test, a consequent, and an alternate.
+/// Represents a conditional expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -744,7 +743,7 @@ pub struct ConditionalExpression<'a> {
 
 /// `foo = 1` in `let foo; foo = 1;`
 ///
-/// Represents an assignment expression, which includes an operator, a target, and an expression.
+/// Represents an assignment expression.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -941,8 +940,7 @@ pub enum AssignmentTargetProperty<'a> {
 
 /// `foo` in `({ foo } = obj);`
 ///
-/// Represents an assignment target property identifier, which includes a binding,
-/// and an optional init expression.
+/// Represents an assignment target property identifier.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -961,7 +959,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 
 /// `foo: bar` in `({ foo: bar } = obj);`
 ///
-/// Represents an assignment target property property, which includes a name and a binding.
+/// Represents an assignment target property property.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
