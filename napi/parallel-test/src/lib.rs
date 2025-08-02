@@ -1,6 +1,9 @@
 #![expect(clippy::print_stdout)]
 
-use std::{cell::Cell, cmp, mem, ptr::NonNull, sync::Mutex, thread::available_parallelism};
+use std::{
+    cell::Cell, cmp, convert::identity, mem, ptr::NonNull, sync::Mutex,
+    thread::available_parallelism,
+};
 
 use bpaf::Bpaf;
 use napi::{
@@ -161,30 +164,13 @@ fn get_threads(command: &TestCommand) -> Result<u32, String> {
         .map_err(|e| format!("Failed to determine available parallelism: {e}"))
 }
 
-/// Wrapper for a `NonNull<Runner>` pointer, that allows copying it across threads.
-#[derive(Clone, Copy)]
-struct RunnerPtr(NonNull<Runner>);
-
-impl RunnerPtr {
-    /// SAFETY: TODO
-    unsafe fn new(ptr: NonNull<Runner>) -> Self {
-        Self(ptr)
-    }
-
-    fn into_inner(self) -> NonNull<Runner> {
-        self.0
-    }
-}
-
-// SAFETY: TODO
-unsafe impl Sync for RunnerPtr {}
-
 /// Start a rayon thread pool and assign a `Runner` to each.
 ///
 /// Pointer to `Runner` is stored in `RUNNER` thread local storage for each thread.
 ///
 /// # SAFETY
 /// The slice passed to this function must remain valid until the thread pool completes all work.
+#[expect(clippy::items_after_statements)]
 unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
     let thread_count = runners.len();
 
@@ -192,10 +178,14 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
     // Store pointer to `Runner` for each thread in thread-local storage.
-    // SAFETY: Pointer to a slice can never be null.
-    let runners_ptr = unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) };
+    // Use `RunnerPtr` wrapper to allow copying pointer into `broadcast` closure.
+    #[derive(Clone, Copy)]
+    struct RunnerPtr(NonNull<Runner>);
     // SAFETY: TODO
-    let runners_ptr = unsafe { RunnerPtr::new(runners_ptr) };
+    unsafe impl Sync for RunnerPtr {}
+
+    // SAFETY: Pointer to a slice can never be null.
+    let runners_ptr = RunnerPtr(unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) });
 
     let mut thread_ids = rayon::broadcast(|ctx| {
         let thread_id = ctx.index();
@@ -204,7 +194,7 @@ unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
         debug_assert!(ctx.num_threads() == thread_count);
 
         // SAFETY: TODO
-        let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
+        let runner_ptr = unsafe { identity(runners_ptr).0.add(thread_id) };
         RUNNER.set(runner_ptr);
 
         println!("> Set runner for thread {thread_id}");
