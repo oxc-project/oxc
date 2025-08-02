@@ -23,7 +23,7 @@ use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
 use oxc_span::SourceType;
 
-use crate::options::MinifyOptions;
+pub use crate::options::MinifyOptions;
 
 #[derive(Default)]
 #[napi(object)]
