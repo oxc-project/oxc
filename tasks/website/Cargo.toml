@@ -21,6 +21,7 @@ bpaf = { workspace = true, features = ["docgen"] }
 handlebars = { workspace = true }
 itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
+oxc_tasks_common = { workspace = true }
 oxlint = { path = "../../apps/oxlint" }
 pico-args = { workspace = true }
 project-root = { workspace = true }

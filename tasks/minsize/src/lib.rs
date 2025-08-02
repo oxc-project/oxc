@@ -10,7 +10,7 @@ use std::{
 use cow_utils::CowUtils;
 use flate2::{Compression, write::GzEncoder};
 use humansize::{DECIMAL, format_size};
-use pico_args::Arguments;
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
@@ -19,7 +19,6 @@ use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
 #[test]
@@ -36,7 +35,7 @@ struct Options {
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
-    let mut args = Arguments::from_env();
+    let mut args = pico_args::Arguments::from_env();
 
     let options = Options { compress_only: args.contains("--compress-only") };
 

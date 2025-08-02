@@ -3712,6 +3712,7 @@ dependencies = [
  "oxc_linter",
  "oxc_parser",
  "oxc_span",
+ "oxc_tasks_common",
  "oxlint",
  "pico-args",
  "project-root",

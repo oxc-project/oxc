@@ -98,7 +98,7 @@ impl HttpClient {
 
             match self.agent.get(url).call() {
                 Ok(mut response) => {
-                    match self.save_response_to_cache(response, cache_path) {
+                    match self.save_response_to_cache(response.body_mut().as_reader(), cache_path) {
                         Ok(content) => {
                             print_success(&format!("Downloaded {filename} (attempt {attempt})"));
                             return Ok((filename.to_string(), content));
@@ -125,26 +125,26 @@ impl HttpClient {
         ))
     }
 
-    /// Save HTTP response to cache file
+    /// Save HTTP response to cache file - using same pattern as test_file.rs
     fn save_response_to_cache(
         &self,
-        mut response: ureq::Response,
+        mut reader: impl std::io::Read,
         cache_path: &Path,
     ) -> Result<String, String> {
         // Ensure cache directory exists
         FileOperations::create_dir_all(&self.config.cache_dir)
             .map_err(|e| format!("Failed to create cache directory: {e}"))?;
 
-        // Read response body
-        let mut content = String::new();
-        response
-            .body_mut()
-            .read_to_string(&mut content)
-            .map_err(|e| format!("Failed to read response body: {e}"))?;
+        // Save response to file first, then read it back (same pattern as test_file.rs)
+        let mut writer = std::fs::File::create(cache_path)
+            .map_err(|e| format!("Failed to create cache file: {e}"))?;
+        
+        std::io::copy(&mut reader, &mut writer)
+            .map_err(|e| format!("Failed to write response to cache: {e}"))?;
 
-        // Save to cache
-        FileOperations::write_string(cache_path, &content)
-            .map_err(|e| format!("Failed to write cache file: {e}"))?;
+        // Read the content back as string
+        let content = std::fs::read_to_string(cache_path)
+            .map_err(|e| format!("Failed to read cached file: {e}"))?;
 
         Ok(content)
     }

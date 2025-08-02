@@ -1,14 +1,15 @@
 use oxc_transform_conformance::{TestRunner, TestRunnerOptions};
-use pico_args::Arguments;
+use oxc_tasks_common::CommonCliOptions;
 
 fn main() {
-    let mut args = Arguments::from_env();
+    let mut args = pico_args::Arguments::from_env();
+    let cli_options = CommonCliOptions::from_args(&mut args);
 
     let options = TestRunnerOptions {
-        debug: args.contains("--debug"),
-        filter: args.opt_value_from_str("--filter").unwrap(),
-        r#override: args.contains("--override"),
-        exec: args.contains("--exec"),
+        debug: cli_options.debug,
+        filter: cli_options.filter,
+        r#override: cli_options.r#override,
+        exec: cli_options.exec,
     };
 
     if options.r#override {

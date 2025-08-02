@@ -1,21 +1,19 @@
 use oxc_coverage::AppArgs;
-use pico_args::Arguments;
-use rayon::ThreadPoolBuilder;
+use oxc_tasks_common::{CommonCliOptions, get_subcommand, configure_thread_pool};
 
 fn main() {
-    let mut args = Arguments::from_env();
-    let command = args.subcommand().expect("subcommands");
+    let mut args = pico_args::Arguments::from_env();
+    let command = get_subcommand(&mut args);
+    let cli_options = CommonCliOptions::from_args(&mut args);
 
     let args = AppArgs {
-        debug: args.contains("--debug"),
-        filter: args.opt_value_from_str("--filter").unwrap(),
-        detail: args.contains("--detail"),
-        diff: args.contains("--diff"),
+        debug: cli_options.debug,
+        filter: cli_options.filter,
+        detail: cli_options.detail,
+        diff: cli_options.diff,
     };
 
-    if args.debug {
-        ThreadPoolBuilder::new().num_threads(1).build_global().unwrap();
-    }
+    configure_thread_pool(args.debug);
 
     let task = command.as_deref().unwrap_or("default");
     match task {

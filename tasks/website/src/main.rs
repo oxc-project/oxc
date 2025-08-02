@@ -1,11 +1,11 @@
 #![expect(clippy::print_stderr)]
 
-use pico_args::Arguments;
+use oxc_tasks_common::get_subcommand;
 use website::linter;
 
 fn main() {
-    let mut args = Arguments::from_env();
-    let command = args.subcommand().expect("subcommands");
+    let mut args = pico_args::Arguments::from_env();
+    let command = get_subcommand(&mut args);
 
     let task = command.as_deref().unwrap_or("default");
 
