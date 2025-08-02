@@ -25,6 +25,7 @@ doctest = false
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
+rayon = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [build-dependencies]
