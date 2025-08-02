@@ -92,6 +92,11 @@ static REGISTERED_WORKERS_COUNT: AtomicU32 = AtomicU32::new(0);
 /// Pointer to array of `ThreadData`s.
 static mut THREAD_DATAS_PTR: NonNull<ThreadData> = NonNull::dangling();
 
+thread_local! {
+    /// Thread local containing pointer to [`ThreadData`] for this thread
+    static THREAD_DATA: Cell<NonNull<ThreadData>> = const { Cell::new(NonNull::dangling()) };
+}
+
 mod unsafe_ptr {
     use super::*;
 
@@ -136,11 +141,6 @@ mod unsafe_ptr {
     unsafe impl<T> Sync for UnsafePtr<T> {}
 }
 use unsafe_ptr::UnsafePtr;
-
-thread_local! {
-    /// Thread local containing pointer to [`ThreadData`] for this thread
-    static THREAD_DATA: Cell<NonNull<ThreadData>> = const { Cell::new(NonNull::dangling()) };
-}
 
 /// Entry point from JS.
 ///
