@@ -26,7 +26,6 @@ use oxc_span::{SourceType, Span};
 // or `cargo watch -x "run -p oxc_linter --example linter"`
 
 /// Run a simple linter on a JavaScript file
-
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);

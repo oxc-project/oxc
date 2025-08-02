@@ -30,7 +30,6 @@ use pico_args::Arguments;
 // or `just watch "cargo run -p oxc_parser --example parser"`
 
 /// Parse and display information about a JavaScript or TypeScript file
-
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
 
