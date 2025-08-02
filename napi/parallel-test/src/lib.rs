@@ -1,13 +1,6 @@
 #![expect(clippy::print_stdout)]
 
-use std::{
-    cell::Cell,
-    cmp,
-    mem::{self, ManuallyDrop},
-    ptr::NonNull,
-    sync::Mutex,
-    thread::available_parallelism,
-};
+use std::{cell::Cell, cmp, mem, ptr::NonNull, sync::Mutex, thread::available_parallelism};
 
 use bpaf::Bpaf;
 use napi::{
@@ -61,51 +54,6 @@ thread_local! {
     static RUNNER: Cell<NonNull<Runner>> = const { Cell::new(NonNull::dangling()) };
 }
 
-/// An equivalent of `std::vec::Vec` that doesn't use a `Unique` pointer.
-struct NonUniqueVec<T> {
-    ptr: NonNull<T>,
-    length: usize,
-    capacity: usize,
-}
-
-impl<T> From<Vec<T>> for NonUniqueVec<T> {
-    fn from(vec: Vec<T>) -> Self {
-        let mut vec = ManuallyDrop::new(vec);
-        Self {
-            // SAFETY: TODO
-            ptr: unsafe { NonNull::new_unchecked(vec.as_mut_ptr()) },
-            length: vec.len(),
-            capacity: vec.capacity(),
-        }
-    }
-}
-
-impl<T> Drop for NonUniqueVec<T> {
-    fn drop(&mut self) {
-        // SAFETY: TODO
-        let _ = unsafe { Vec::from_raw_parts(self.ptr.as_ptr(), self.length, self.capacity) };
-    }
-}
-
-#[derive(Clone, Copy)]
-struct RunnerPtr(NonNull<Runner>);
-
-impl RunnerPtr {
-    /// SAFETY: TODO
-    unsafe fn new(ptr: NonNull<Runner>) -> Self {
-        Self(ptr)
-    }
-
-    fn into_inner(self) -> NonNull<Runner> {
-        self.0
-    }
-}
-
-// SAFETY: TODO
-unsafe impl Send for RunnerPtr {}
-// SAFETY: TODO
-unsafe impl Sync for RunnerPtr {}
-
 /// Entry point from JS.
 ///
 /// * Determines number of threads to use.
@@ -128,19 +76,56 @@ pub async fn run(start_workers: StartThreads) -> bool {
         mem::take(&mut *runners)
     };
 
-    let thread_count = thread_count as usize;
     #[expect(clippy::print_stderr)]
-    if runners.len() != thread_count {
+    if runners.len() != thread_count as usize {
         eprintln!("Failed to start worker threads");
         return false;
     }
 
     // Start `rayon` thread pool with same number of threads
+    // SAFETY: TODO
+    unsafe { init_rayon_thread_pool(&mut runners) };
+
+    println!("> Initialized {thread_count} workers");
+
+    true
+}
+
+/// Wrapper for a `NonNull<Runner>` pointer, that allows copying it across threads.
+#[derive(Clone, Copy)]
+struct RunnerPtr(NonNull<Runner>);
+
+impl RunnerPtr {
+    /// SAFETY: TODO
+    unsafe fn new(ptr: NonNull<Runner>) -> Self {
+        Self(ptr)
+    }
+
+    fn into_inner(self) -> NonNull<Runner> {
+        self.0
+    }
+}
+
+// SAFETY: TODO
+unsafe impl Sync for RunnerPtr {}
+
+/// Start a rayon thread pool and assign a `Runner` to each.
+///
+/// Pointer to `Runner` is stored in `RUNNER` thread local storage for each thread.
+///
+/// # SAFETY
+/// The slice passed to this function must remain valid until the thread pool completes all work.
+unsafe fn init_rayon_thread_pool(runners: &mut [Runner]) {
+    let thread_count = runners.len();
+
+    // Start `rayon` thread pool
     rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
-    // Store pointer to `Runner` for each thread in thread-local storage
+    // Store pointer to `Runner` for each thread in thread-local storage.
+    // SAFETY: Pointer to a slice can never be null.
+    let runners_ptr = unsafe { NonNull::new_unchecked(runners.as_mut_ptr()) };
     // SAFETY: TODO
-    let runners_ptr = unsafe { RunnerPtr::new(NonNull::new_unchecked(runners.as_mut_ptr())) };
+    let runners_ptr = unsafe { RunnerPtr::new(runners_ptr) };
 
     let mut thread_ids = rayon::broadcast(|ctx| {
         let thread_id = ctx.index();
@@ -148,11 +133,9 @@ pub async fn run(start_workers: StartThreads) -> bool {
         debug_assert!(thread_id < thread_count);
         debug_assert!(ctx.num_threads() == thread_count);
 
-        RUNNER.with(|runner_cell| {
-            // SAFETY: TODO
-            let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
-            runner_cell.set(runner_ptr);
-        });
+        // SAFETY: TODO
+        let runner_ptr = unsafe { runners_ptr.into_inner().add(thread_id) };
+        RUNNER.set(runner_ptr);
 
         println!("> Set runner for thread {thread_id}");
 
@@ -174,10 +157,6 @@ pub async fn run(start_workers: StartThreads) -> bool {
                     .all(|(id, expected_id)| id == expected_id)
         );
     }
-
-    println!("> Initialized {thread_count} workers");
-
-    true
 }
 
 /// Get number of threads to use.
