@@ -24,9 +24,15 @@ fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct PreferObjectFromEntriesConfig {
     functions: Vec<String>,
+}
+
+impl Default for PreferObjectFromEntriesConfig {
+    fn default() -> Self {
+        Self { functions: vec!["_.fromPairs".to_string(), "lodash.fromPairs".to_string()] }
+    }
 }
 
 impl std::ops::Deref for PreferObjectFromEntries {
@@ -227,16 +233,13 @@ impl Rule for PreferObjectFromEntries {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut config: PreferObjectFromEntriesConfig = value
+        let config: PreferObjectFromEntriesConfig = value
             .as_array()
             .and_then(|arr| arr.first())
             .map(|config| {
                 serde_json::from_value(config.clone()).expect("Failed to deserialize config")
             })
             .unwrap_or_default();
-
-        config.functions.push("_.fromPairs".into());
-        config.functions.push("lodash.fromPairs".into());
 
         Self(Box::new(config))
     }
