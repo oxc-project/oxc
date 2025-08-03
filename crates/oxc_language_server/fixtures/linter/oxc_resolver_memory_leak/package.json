@@ -2,6 +2,6 @@
   "devPackages": {},
   "devDependencies": {
     "@react-three/fiber": "^9.1.4",
-    "three": "^0.178.0"
+    "three": "^0.179.0"
   }
 }
