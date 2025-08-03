@@ -37,43 +37,9 @@ jobs:
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
-      - name: Verify installations
-        run: |
-          echo "=== Rust toolchain ==="
-          rustc --version
-          cargo --version
-
-          echo "=== Node.js and pnpm ==="
-          node --version
-          pnpm --version
-
-          echo "=== Command runner ==="
-          just --version
-
-          echo "=== Development tools ==="
-          watchexec --version
-          cargo insta --version
-          typos --version
-          cargo shear --version
-          dprint --version
-
-          echo "=== Project commands ==="
-          just --list
-
-      - name: Setup complete
-        run: |
-          echo "🎉 Development environment setup complete!"
-          echo "The following tools are now available:"
-          echo "  - Rust toolchain (version from rust-toolchain.toml)"
-          echo "  - Node.js and pnpm (versions from .node-version and"
-          echo "    package.json)"
-          echo "  - just command runner"
-          echo "  - Development tools: watchexec, cargo-insta, typos,"
-          echo "    cargo-shear, dprint"
-          echo "  - All Node.js dependencies installed"
-          echo ""
-          echo "You can now use 'just' commands to work with the project:"
-          echo "  - just ready   # Run all checks"
-          echo "  - just fmt     # Format code"
-          echo "  - just test    # Run tests"
-          echo "  - just lint    # Run linting"
+      - name: Restore dprint plugin cache
+        id: cache-restore
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          key: dprint-${{ hashFiles('dprint.json') }}
+          path: ~/.cache/dprint
