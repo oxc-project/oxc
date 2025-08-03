@@ -158,7 +158,15 @@ impl<'a> ParserImpl<'a> {
         // Use a fast path for common case of ASCII characters, to avoid the more expensive
         // `char::is_uppercase` in most cases.
         let name = identifier.name.as_str();
-        let is_reference = match name.as_bytes()[0] {
+        let first_byte = if cfg!(debug_assertions) {
+            name.as_bytes()[0]
+        } else {
+            // SAFETY:
+            // * Identifier names are always non-empty (enforced by lexer)
+            // * String slices are always valid UTF-8, so first byte is safe to access
+            unsafe { *name.as_bytes().get_unchecked(0) }
+        };
+        let is_reference = match first_byte {
             b if b.is_ascii() => b < b'a',
             _ => name.chars().next().unwrap().is_uppercase(),
         };

@@ -420,7 +420,18 @@ impl Kind {
 
     pub fn match_keyword(s: &str) -> Self {
         let len = s.len();
-        if len <= 1 || len >= 12 || !s.as_bytes()[0].is_ascii_lowercase() {
+        let first_byte = if len <= 1 || len >= 12 {
+            return Ident;
+        } else if cfg!(debug_assertions) {
+            s.as_bytes()[0]
+        } else {
+            // SAFETY:
+            // * We just checked that `len > 1`, so there is at least one byte
+            // * String slices are always valid UTF-8, so first byte is safe to access
+            unsafe { *s.as_bytes().get_unchecked(0) }
+        };
+        
+        if !first_byte.is_ascii_lowercase() {
             return Ident;
         }
         Self::match_keyword_impl(s)

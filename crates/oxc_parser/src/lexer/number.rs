@@ -33,21 +33,27 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
         }
         Kind::Octal => {
             // Octals always begin with `0`. Trim off leading `0`, `0o` or `0O`.
-            let second_byte = s.as_bytes()[1];
+            let second_byte = if cfg!(debug_assertions) {
+                s.as_bytes()[1]
+            } else {
+                // SAFETY:
+                // * Octal number tokens always start with "0" and have at least 2 characters
+                // * The lexer ensures `s.len() >= 2` for octal tokens
+                // * Accessing index 1 is safe and always on a UTF-8 char boundary
+                unsafe { *s.as_bytes().get_unchecked(1) }
+            };
             let s = if second_byte == b'o' || second_byte == b'O' {
                 // SAFETY: We just checked that 2nd byte is ASCII, so slicing off 2 bytes
                 // must be in bounds and on a UTF-8 character boundary.
                 unsafe { s.get_unchecked(2..) }
+            } else if cfg!(debug_assertions) {
+                &s[1..] // legacy octal
             } else {
-                if cfg!(debug_assertions) {
-                    &s[1..] // legacy octal
-                } else {
-                    // SAFETY:
-                    // * Octal number tokens always start with "0" (1 byte minimum)
-                    // * The lexer ensures `s.len() >= 1` for octal tokens
-                    // * '0' is ASCII, so position 1 is on a UTF-8 char boundary
-                    unsafe { s.get_unchecked(1..) }
-                }
+                // SAFETY:
+                // * Octal number tokens always start with "0" (1 byte minimum)
+                // * The lexer ensures `s.len() >= 1` for octal tokens
+                // * '0' is ASCII, so position 1 is on a UTF-8 char boundary
+                unsafe { s.get_unchecked(1..) }
             };
             Ok(if has_sep { parse_octal_with_underscores(s) } else { parse_octal(s) })
         }
