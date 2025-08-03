@@ -24,11 +24,7 @@ fn test_rule_default_matches_from_configuration_null() {
     // When fixing a rule, ensure that either:
     // 1. The Default implementation returns the same values as from_configuration(null), or
     // 2. The from_configuration method is updated to return Default::default() when given null
-    let exceptions = [
-        "typescript/no-this-alias",
-        "unicorn/prefer-object-from-entries",
-        "unicorn/prefer-structured-clone",
-    ];
+    let exceptions = ["unicorn/prefer-object-from-entries", "unicorn/prefer-structured-clone"];
 
     // Iterate through all available linter rules
     for rule in RULES.iter() {
