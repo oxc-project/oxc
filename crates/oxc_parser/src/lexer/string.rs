@@ -257,7 +257,9 @@ impl<'a> Lexer<'a> {
             // * The lexer ensures these are within bounds of source text
             // * `token.start() <= token.end()` is guaranteed by token structure
             // * Both positions are on UTF-8 char boundaries
-            unsafe { self.source.whole().get_unchecked(token.start() as usize..token.end() as usize) }
+            unsafe {
+                self.source.whole().get_unchecked(token.start() as usize..token.end() as usize)
+            }
         };
         match token.kind() {
             Kind::Str => {

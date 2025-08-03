@@ -430,7 +430,7 @@ impl Kind {
             // * String slices are always valid UTF-8, so first byte is safe to access
             unsafe { *s.as_bytes().get_unchecked(0) }
         };
-        
+
         if !first_byte.is_ascii_lowercase() {
             return Ident;
         }

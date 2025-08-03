@@ -27,7 +27,9 @@ impl<'a> ParserImpl<'a> {
                 // * Hashbang comments always start with "#!" (2 bytes)
                 // * `span.start + 2 <= span.end` is guaranteed by token structure
                 // * Both positions are on UTF-8 char boundaries
-                unsafe { self.source_text.get_unchecked(span.start as usize + 2..span.end as usize) }
+                unsafe {
+                    self.source_text.get_unchecked(span.start as usize + 2..span.end as usize)
+                }
             };
             Some(self.ast.hashbang(span, Atom::from(src)))
         } else {

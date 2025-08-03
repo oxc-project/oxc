@@ -571,7 +571,9 @@ impl<'a> ParserImpl<'a> {
             // * `raw_span.start + 1 <= raw_span.end - end_offset` is guaranteed by token structure
             // * Both positions are on UTF-8 char boundaries
             unsafe {
-                self.source_text.get_unchecked(raw_span.start as usize + 1..(raw_span.end - end_offset) as usize)
+                self.source_text.get_unchecked(
+                    raw_span.start as usize + 1..(raw_span.end - end_offset) as usize,
+                )
             }
         });
 
