@@ -61,6 +61,23 @@ impl<T> Box<'_, T> {
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
+    /// Create [`Box`] from a [`NonNull`] pointer.
+    ///
+    /// # SAFETY
+    /// * Pointer must point to a valid instance of `T` (which also implies pointer is aligned for `T`).
+    /// * Pointer must point to within arena.
+    /// * Pointer must remain valid for `'a`.
+    ///   Caller must ensure inferred lifetime of the returned `Box<'a, T>` is suitable.
+    //
+    // `#[inline(always)]` because this is a no-op.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(ptr, PhantomData)
+    }
+
     /// Create a fake [`Box`] with a dangling pointer.
     ///
     /// # SAFETY
