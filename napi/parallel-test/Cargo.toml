@@ -27,6 +27,8 @@ napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 rayon = { workspace = true }
 
+oxc_allocator = { workspace = true }
+
 [build-dependencies]
 napi-build = { workspace = true }
 

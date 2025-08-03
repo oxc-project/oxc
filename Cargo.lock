@@ -2165,6 +2165,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "oxc_allocator",
  "rayon",
 ]
 
