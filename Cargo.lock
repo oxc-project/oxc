@@ -1661,11 +1661,12 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.0.11"
+version = "2.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "509ae58826553dbd720886b6a77e7bb2a953d28a52728a74cc1fe296d66fa9a2"
+checksum = "b94a2f0da0105f3a813eeb6b182a791b2dc491f494432e1953fd8e72c1f3887d"
 dependencies = [
  "bincode 2.0.1",
+ "flate2",
  "nom",
  "rustc-hash",
  "serde",
