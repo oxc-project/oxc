@@ -17,6 +17,7 @@ use napi::{
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
+use rayon::iter::ParallelIterator;
 
 /// CLI arguments.
 #[derive(Debug, Clone, Bpaf)]
@@ -156,7 +157,6 @@ mod unsafe_ptr {
     // SAFETY: See above
     unsafe impl<T> Sync for UnsafePtr<T> {}
 }
-use rayon::iter::ParallelIterator;
 use unsafe_ptr::UnsafePtr;
 
 /// Entry point from JS.
