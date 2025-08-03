@@ -41,11 +41,21 @@ impl AllowType {
 #[derive(Debug, Default, Clone)]
 pub struct JsxFilenameExtension(Box<JsxFilenameExtensionConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct JsxFilenameExtensionConfig {
     allow: AllowType,
     extensions: Vec<CompactStr>,
     ignore_files_without_code: bool,
+}
+
+impl Default for JsxFilenameExtensionConfig {
+    fn default() -> Self {
+        Self {
+            allow: AllowType::Always,
+            extensions: vec![CompactStr::from("jsx")],
+            ignore_files_without_code: false,
+        }
+    }
 }
 
 impl std::ops::Deref for JsxFilenameExtension {
