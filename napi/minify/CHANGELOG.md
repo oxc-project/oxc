@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
 ## [0.79.1] - 2025-07-31
 
 ### 🚀 Features

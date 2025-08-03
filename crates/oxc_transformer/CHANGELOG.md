@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- d02e17c transformer/class-properties: Preserve computed keys if they may have side effects when `remove_class_fields_without_initializer` is enabled (#12772) (Dunqing)
+- 701399e transformer/typescript: Don't remove class fields without initializers when class-properties plugin is enabled (#12771) (Dunqing)
+- 8854c1a transformer/typescript: Revert "remove properties with definite assignment assertion" (#12759) (Copilot)
+- 0e1e79d transformer/typescript: Remove properties with definite assignment assertion (#12713) (Dunqing)
+
+### 🚜 Refactor
+
+- 5c9fdd2 transformer/object-rest-spread: Extract unboxed field earlier (#12717) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+
 
 ## [0.79.0] - 2025-07-30
 
