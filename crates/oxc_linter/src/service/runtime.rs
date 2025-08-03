@@ -494,7 +494,7 @@ impl Runtime {
 
     // clippy: the source field is checked and assumed to be less than 4GB, and
     // we assume that the fix offset will not exceed 2GB in either direction
-    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
@@ -544,7 +544,8 @@ impl Runtime {
                             let fix_result = Fixer::new(source_text, messages).fix();
                             if fix_result.fixed {
                                 // write to file, replacing only the changed part
-                                let start = fix_offset as usize;
+                                let start =
+                                    section.source.start.saturating_add_signed(fix_offset) as usize;
                                 let end = start + source_text.len();
                                 new_source_text
                                     .to_mut()
@@ -646,7 +647,9 @@ impl Runtime {
                             // adjust offset for multiple source text in a single file
                             if section.source.start != 0 {
                                 for message in &mut section_messages {
-                                    message.move_offset(section.source.start);
+                                    message
+                                        .move_offset(section.source.start)
+                                        .move_fix_offset(section.source.start);
                                 }
                             }
 
@@ -773,7 +776,8 @@ impl Runtime {
                                 .into_iter()
                                 .map(|mut message| {
                                     if section.source.start != 0 {
-                                        message.move_offset(section.source.start);
+                                        message.move_offset(section.source.start)
+                                        .move_fix_offset(section.source.start);
                                     }
                                     message.clone_in(allocator)
                                 }),
