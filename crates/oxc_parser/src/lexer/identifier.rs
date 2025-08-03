@@ -74,7 +74,16 @@ impl<'a> Lexer<'a> {
                 // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
                 // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_tail_unicode(start_pos)[1..]
+                if cfg!(debug_assertions) {
+                    &self.identifier_tail_unicode(start_pos)[1..]
+                } else {
+                    // SAFETY:
+                    // * `identifier_tail_unicode` always returns a string starting with the first character
+                    // * We want to skip the first character, so position 1 is always valid
+                    // * The first character is a valid Unicode character, so position 1 is on a UTF-8 boundary
+                    let full_ident = self.identifier_tail_unicode(start_pos);
+                    unsafe { full_ident.get_unchecked(1..) }
+                }
             });
         }
         if next_byte == b'\\' {
@@ -82,7 +91,16 @@ impl<'a> Lexer<'a> {
                 // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
                 // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_backslash(start_pos, false)[1..]
+                if cfg!(debug_assertions) {
+                    &self.identifier_backslash(start_pos, false)[1..]
+                } else {
+                    // SAFETY:
+                    // * `identifier_backslash` always returns a string starting with the first character
+                    // * We want to skip the first character, so position 1 is always valid
+                    // * The first character is a valid Unicode character, so position 1 is on a UTF-8 boundary
+                    let full_ident = self.identifier_backslash(start_pos, false);
+                    unsafe { full_ident.get_unchecked(1..) }
+                }
             });
         }
 

@@ -20,7 +20,15 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
             Ok(if has_sep { parse_decimal_with_underscores(s) } else { parse_decimal(s) })
         }
         Kind::Binary => {
-            let s = &s[2..];
+            let s = if cfg!(debug_assertions) {
+                &s[2..]
+            } else {
+                // SAFETY:
+                // * Binary number tokens always start with "0b" or "0B" (2 bytes)
+                // * The lexer ensures `s.len() >= 2` for binary tokens
+                // * Both bytes are ASCII, so position 2 is on a UTF-8 char boundary
+                unsafe { s.get_unchecked(2..) }
+            };
             Ok(if has_sep { parse_binary_with_underscores(s) } else { parse_binary(s) })
         }
         Kind::Octal => {
@@ -31,7 +39,15 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
                 // must be in bounds and on a UTF-8 character boundary.
                 unsafe { s.get_unchecked(2..) }
             } else {
-                &s[1..] // legacy octal
+                if cfg!(debug_assertions) {
+                    &s[1..] // legacy octal
+                } else {
+                    // SAFETY:
+                    // * Octal number tokens always start with "0" (1 byte minimum)
+                    // * The lexer ensures `s.len() >= 1` for octal tokens
+                    // * '0' is ASCII, so position 1 is on a UTF-8 char boundary
+                    unsafe { s.get_unchecked(1..) }
+                }
             };
             Ok(if has_sep { parse_octal_with_underscores(s) } else { parse_octal(s) })
         }

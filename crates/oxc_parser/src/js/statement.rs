@@ -18,7 +18,17 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             self.bump_any();
             let span = self.end_span(span);
-            let src = &self.source_text[span.start as usize + 2..span.end as usize];
+            let src = if cfg!(debug_assertions) {
+                &self.source_text[span.start as usize + 2..span.end as usize]
+            } else {
+                // SAFETY:
+                // * `span` comes from the lexer for a HashbangComment token
+                // * The lexer ensures span is within bounds of source text
+                // * Hashbang comments always start with "#!" (2 bytes)
+                // * `span.start + 2 <= span.end` is guaranteed by token structure
+                // * Both positions are on UTF-8 char boundaries
+                unsafe { self.source_text.get_unchecked(span.start as usize + 2..span.end as usize) }
+            };
             Some(self.ast.hashbang(span, Atom::from(src)))
         } else {
             None

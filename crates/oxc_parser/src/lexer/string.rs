@@ -249,13 +249,38 @@ impl<'a> Lexer<'a> {
             return self.escaped_strings[&token.start()];
         }
 
-        let raw = &self.source.whole()[token.start() as usize..token.end() as usize];
+        let raw = if cfg!(debug_assertions) {
+            &self.source.whole()[token.start() as usize..token.end() as usize]
+        } else {
+            // SAFETY:
+            // * `token.start()` and `token.end()` come from the lexer
+            // * The lexer ensures these are within bounds of source text
+            // * `token.start() <= token.end()` is guaranteed by token structure
+            // * Both positions are on UTF-8 char boundaries
+            unsafe { self.source.whole().get_unchecked(token.start() as usize..token.end() as usize) }
+        };
         match token.kind() {
             Kind::Str => {
-                &raw[1..raw.len() - 1] // omit surrounding quotes
+                if cfg!(debug_assertions) {
+                    &raw[1..raw.len() - 1] // omit surrounding quotes
+                } else {
+                    // SAFETY:
+                    // * String tokens always have at least 2 characters (opening and closing quotes)
+                    // * `raw.len() >= 2` is guaranteed by string token structure
+                    // * Quotes are ASCII, so positions 1 and raw.len()-1 are on UTF-8 char boundaries
+                    unsafe { raw.get_unchecked(1..raw.len() - 1) }
+                }
             }
             Kind::PrivateIdentifier => {
-                &raw[1..] // omit leading `#`
+                if cfg!(debug_assertions) {
+                    &raw[1..] // omit leading `#`
+                } else {
+                    // SAFETY:
+                    // * Private identifier tokens always start with '#'
+                    // * `raw.len() >= 1` is guaranteed by private identifier token structure
+                    // * '#' is ASCII, so position 1 is on a UTF-8 char boundary
+                    unsafe { raw.get_unchecked(1..) }
+                }
             }
             _ => raw,
         }

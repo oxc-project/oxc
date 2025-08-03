@@ -359,9 +359,27 @@ impl<'a> ParserImpl<'a> {
         }
         let span = self.cur_token().span();
         let pattern_start = span.start + 1; // +1 to exclude left `/`
-        let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
+        let pattern_text = if cfg!(debug_assertions) {
+            &self.source_text[pattern_start as usize..pattern_end as usize]
+        } else {
+            // SAFETY:
+            // * `pattern_start` and `pattern_end` come from the lexer's regex parsing
+            // * The lexer ensures these are within bounds of the source text
+            // * `pattern_start < pattern_end` is guaranteed by regex token structure
+            // * Both positions are on UTF-8 char boundaries (ASCII characters)
+            unsafe { self.source_text.get_unchecked(pattern_start as usize..pattern_end as usize) }
+        };
         let flags_start = pattern_end + 1; // +1 to include right `/`
-        let flags_text = &self.source_text[flags_start as usize..span.end as usize];
+        let flags_text = if cfg!(debug_assertions) {
+            &self.source_text[flags_start as usize..span.end as usize]
+        } else {
+            // SAFETY:
+            // * `flags_start` and `span.end` come from the lexer's regex parsing
+            // * The lexer ensures these are within bounds of the source text
+            // * `flags_start <= span.end` is guaranteed by regex token structure
+            // * Both positions are on UTF-8 char boundaries (ASCII characters)
+            unsafe { self.source_text.get_unchecked(flags_start as usize..span.end as usize) }
+        };
         let raw = self.cur_src();
         self.bump_any();
 
@@ -543,9 +561,19 @@ impl<'a> ParserImpl<'a> {
 
         // Get `raw`
         let raw_span = self.cur_token().span();
-        let mut raw = Atom::from(
-            &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],
-        );
+        let mut raw = Atom::from(if cfg!(debug_assertions) {
+            &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize]
+        } else {
+            // SAFETY:
+            // * `raw_span` comes from the lexer for a template token
+            // * The lexer ensures span is within bounds of source text
+            // * Template literals always have at least one quote character at start and end
+            // * `raw_span.start + 1 <= raw_span.end - end_offset` is guaranteed by token structure
+            // * Both positions are on UTF-8 char boundaries
+            unsafe {
+                self.source_text.get_unchecked(raw_span.start as usize + 1..(raw_span.end - end_offset) as usize)
+            }
+        });
 
         // Get `cooked`.
         // Also replace `\r` with `\n` in `raw`.
