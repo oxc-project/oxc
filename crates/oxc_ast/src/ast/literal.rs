@@ -18,7 +18,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 ///
 /// <https://tc39.es/ecma262/#prod-BooleanLiteral>
 #[ast(visit)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
@@ -32,7 +32,7 @@ pub struct BooleanLiteral {
 ///
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {

@@ -51,7 +51,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a, '_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Direction {
     Before,
     After,

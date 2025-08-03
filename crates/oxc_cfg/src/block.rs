@@ -31,7 +31,7 @@ impl BasicBlock {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Instruction {
     pub kind: InstructionKind,
     pub node_id: Option<NodeId>,

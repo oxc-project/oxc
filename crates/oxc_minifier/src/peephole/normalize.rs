@@ -11,7 +11,7 @@ use crate::{
     state::MinifierState,
 };
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
     pub convert_const_to_let: bool,
