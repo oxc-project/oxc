@@ -863,29 +863,7 @@ mod test {
 
     #[test]
     fn test_fix() {
-        use std::fs;
-        let file = "fixtures/linter/fix.js";
-        let args = &["--fix", file];
-        let content_original = fs::read_to_string(file).unwrap();
-        #[expect(clippy::disallowed_methods)]
-        let content = content_original.replace("\r\n", "\n");
-        assert_eq!(&content, "debugger\n");
-
-        // Apply fix to the file.
-        Tester::new().test(args);
-        #[expect(clippy::disallowed_methods)]
-        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
-        assert_eq!(new_content, "\n");
-
-        // File should not be modified if no fix is applied.
-        let modified_before: std::time::SystemTime =
-            fs::metadata(file).unwrap().modified().unwrap();
-        Tester::new().test(args);
-        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
-        assert_eq!(modified_before, modified_after);
-
-        // Write the file back.
-        fs::write(file, content_original).unwrap();
+        Tester::test_fix("fixtures/linter/fix.js", "debugger\n", "\n");
     }
 
     #[test]
