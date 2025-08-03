@@ -77,6 +77,35 @@ impl<'a> ClassProperties<'a, '_> {
         }
     }
 
+    /// Extract computed key when key needs a temp var, which may have side effect.
+    ///
+    /// When `set_public_class_fields` and `remove_class_fields_without_initializer` are both true,
+    /// fields without initializers would be removed. However, if the key is a computed key and may
+    /// have side effects, we need to extract the key and place it before the class to preserve the
+    /// original behavior.
+    ///
+    /// Extract computed key:
+    /// `class C { [foo()] }`
+    /// -> `foo(); class C { }`
+    ///
+    /// Do not extract computed key:
+    /// `class C { [123] }`
+    /// -> `class C { }`
+    ///
+    pub(super) fn extract_computed_key(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let Some(key) = prop.key.as_expression_mut() else {
+            return;
+        };
+
+        if self.ctx.key_needs_temp_var(key, ctx) {
+            self.insert_before.push(key.take_in(ctx.ast));
+        }
+    }
+
     /// Extract computed key if it's an assignment, and replace with identifier.
     ///
     /// In entry phase, computed keys for instance properties are converted to assignments to temp vars.
@@ -100,6 +129,16 @@ impl<'a> ClassProperties<'a, '_> {
     ) {
         // Exit if computed key is not an assignment (wasn't processed in 1st pass)
         if !matches!(&prop.key, PropertyKey::AssignmentExpression(_)) {
+            // This field is going to be removed, but if the key is a computed key and may have
+            // side effects, we need to extract the key and place it before the class to preserve
+            // the original behavior.
+            if prop.value.is_none()
+                && self.set_public_class_fields
+                && self.remove_class_fields_without_initializer
+            {
+                self.extract_computed_key(prop, ctx);
+            }
+
             return;
         }
 
