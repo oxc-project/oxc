@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 🐛 Bug Fixes
+
+- 7dae2e4 minifier: Keep class if class has decorators (#12669) (Boshen)
+
+### 🚜 Refactor
+
+- 5f50bc3 minifier: Move string method constant evaluation from minifier to ecmascript crate (#12672) (Copilot)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- 16312d7 minifier: Add more tests (#12722) (Copilot)
+
+
 ## [0.79.1] - 2025-07-31
 
 ### 🚀 Features

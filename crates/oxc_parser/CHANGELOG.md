@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- e836e55 parser: Prevent panic when parsing invalid extends clause (#12551) (Cameron)
+- ce5876d parser: Validate inner expression of type assertions in assignment targets (#12614) (camc314)
+
+### 🚜 Refactor
+
+- 4fc0868 parser: Reduce unnecessary backtracking in hot paths (#12708) (Copilot)
+- 8a27974 parser: Shorten `AstBuilder` calls (#12716) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
 
 ## [0.79.0] - 2025-07-30
 

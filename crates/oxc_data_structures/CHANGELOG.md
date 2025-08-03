@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- af4d558 codegen: Add options to control indentation (#12691) (Copilot)
+
+### 📚 Documentation
+
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
 
 
 
