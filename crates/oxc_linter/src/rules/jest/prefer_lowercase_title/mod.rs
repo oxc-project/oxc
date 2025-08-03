@@ -20,12 +20,23 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct PreferLowercaseTitleConfig {
     allowed_prefixes: Vec<CompactStr>,
     ignore: Vec<CompactStr>,
     ignore_top_level_describe: bool,
     lowercase_first_character_only: bool,
+}
+
+impl Default for PreferLowercaseTitleConfig {
+    fn default() -> Self {
+        Self {
+            allowed_prefixes: Vec::new(),
+            ignore: Vec::new(),
+            ignore_top_level_describe: false,
+            lowercase_first_character_only: true,
+        }
+    }
 }
 
 impl std::ops::Deref for PreferLowercaseTitle {
