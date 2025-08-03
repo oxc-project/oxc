@@ -418,9 +418,11 @@ impl Kind {
         matches!(self, LCurly | LBrack | PrivateIdentifier) || self.is_binding_identifier()
     }
 
+    #[cold]
     pub fn match_keyword(s: &str) -> Self {
         let len = s.len();
-        if len <= 1 || len >= 12 || !s.as_bytes()[0].is_ascii_lowercase() {
+        // SAFETY: Already checked `len <= 1`.
+        if len <= 1 || len >= 12 || !unsafe { s.as_bytes().get_unchecked(0) }.is_ascii_lowercase() {
             return Ident;
         }
         Self::match_keyword_impl(s)
