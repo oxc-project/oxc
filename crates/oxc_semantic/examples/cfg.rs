@@ -139,15 +139,16 @@ fn main() -> std::io::Result<()> {
             },
             &|_graph, node| {
                 let nodes = ast_nodes_by_block.get(node.1).map_or("None".to_string(), |nodes| {
-                    let nodes: Vec<_> =
-                        nodes.iter().map(|node| format!("{}", node.kind().debug_name())).collect();
                     if nodes.len() > 1 {
                         format!(
                             "{}\\l",
-                            nodes.into_iter().map(|it| format!("\\l    {it}")).join("")
+                            nodes
+                                .iter()
+                                .map(|node| format!("\\l    {}", node.kind().debug_name()))
+                                .join("")
                         )
                     } else {
-                        nodes.into_iter().join("")
+                        nodes.iter().map(|node| format!("{}", node.kind().debug_name())).join("")
                     }
                 });
                 format!(
