@@ -590,9 +590,6 @@ impl Rule for ExhaustiveDeps {
 
         // effects are allowed to have extra dependencies
         if !is_effect {
-            let unnecessary_deps: Vec<_> =
-                declared_dependencies.difference(&found_dependencies).collect();
-
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
@@ -612,7 +609,7 @@ impl Rule for ExhaustiveDeps {
                 }
             });
 
-            for dep in unnecessary_deps {
+            for dep in declared_dependencies.difference(&found_dependencies) {
                 if found_dependencies.iter().any(|found_dep| found_dep.contains(dep)) {
                     continue;
                 }
