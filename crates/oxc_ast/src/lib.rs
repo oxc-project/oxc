@@ -48,6 +48,7 @@ pub mod ast;
 mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
+pub mod compact;
 pub mod precedence;
 mod trivia;
 
