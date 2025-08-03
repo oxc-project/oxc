@@ -19,7 +19,7 @@ use napi::{
 use napi_derive::napi;
 use rayon::iter::ParallelIterator;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::FixedSizeAllocator;
 
 /// CLI arguments.
 #[derive(Debug, Clone, Bpaf)]
@@ -104,7 +104,7 @@ struct ThreadData {
     id: u32,
     run: Runner,
     #[expect(dead_code)]
-    allocator: Allocator,
+    allocator: FixedSizeAllocator,
 }
 
 /// Counter for number of registered worker threads.
@@ -324,7 +324,7 @@ pub unsafe fn register_worker(worker_id: u32, run: Function<FnArgs<(u32, u32, bo
     let run = run.build_threadsafe_function().build().unwrap();
 
     // Create `Allocator`
-    let allocator = Allocator::new();
+    let allocator = FixedSizeAllocator::new(worker_id);
 
     let data = ThreadData { id: worker_id, run, allocator };
 
