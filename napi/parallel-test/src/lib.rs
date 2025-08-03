@@ -156,7 +156,7 @@ mod unsafe_ptr {
     // SAFETY: See above
     unsafe impl<T> Sync for UnsafePtr<T> {}
 }
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::ParallelIterator;
 use unsafe_ptr::UnsafePtr;
 
 /// Entry point from JS.
@@ -404,14 +404,8 @@ unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count:
 
 /// Run workload across all threads.
 fn run_workload(options: &Options) -> bool {
-    let failures = (0..options.iterations)
-        .into_par_iter()
-        .filter(|i| {
-            log!("> Iteration {i}");
-            let success = run_job(options);
-            !success
-        })
-        .count();
+    let failures =
+        rayon::iter::repeatn((), options.iterations).filter(|()| !run_job(options)).count();
 
     failures == 0
 }
