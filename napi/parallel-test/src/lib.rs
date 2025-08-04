@@ -1,7 +1,8 @@
 use std::{
     cell::Cell,
     cmp, env, fs,
-    ptr::NonNull,
+    ptr::{self, NonNull},
+    slice, str,
     sync::{
         atomic::{AtomicU32, Ordering},
         mpsc::channel,
@@ -103,7 +104,6 @@ struct ThreadData {
     #[expect(dead_code)]
     id: u32,
     run: Runner,
-    #[expect(dead_code)]
     fixed_size_allocator: FixedSizeAllocator,
 }
 
@@ -477,9 +477,23 @@ fn run_workload(options: &Options, files: &[&str]) -> bool {
 }
 
 /// Run single job on a thread.
-fn run_job(_source_text: &str, options: &Options) -> bool {
+fn run_job(source_text: &str, options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
+
+    // Write source text into start of buffer
+    let allocator = thread_data.fixed_size_allocator.get();
+    // SAFETY: Allocator is wrapped in a `FixedSizeAllocator`, which takes care of dropping `Allocator`
+    let source_ptr = unsafe { allocator.alloc_bytes_start(source_text.len()) }.as_ptr();
+    // SAFETY: We just reserved space in allocator for source text
+    unsafe {
+        ptr::copy_nonoverlapping(source_text.as_ptr(), source_ptr, source_text.len());
+    }
+    // SAFETY: We just wrote source_text into allocator at `source_ptr`
+    let _source_text = unsafe {
+        let slice = slice::from_raw_parts(source_ptr, source_text.len());
+        str::from_utf8_unchecked(slice)
+    };
 
     // Do busy-work on Rust side
     if options.duration_rs > 0 {
@@ -490,6 +504,8 @@ fn run_job(_source_text: &str, options: &Options) -> bool {
 
     // Run JS `run` function
     if options.duration_js == 0 {
+        // Reset allocator
+        thread_data.fixed_size_allocator.reset();
         return true;
     }
 
@@ -507,6 +523,9 @@ fn run_job(_source_text: &str, options: &Options) -> bool {
             result
         },
     );
+
+    // Reset allocator
+    thread_data.fixed_size_allocator.reset();
 
     if status != Status::Ok {
         log!("Failed to schedule callback: {status:?}");
