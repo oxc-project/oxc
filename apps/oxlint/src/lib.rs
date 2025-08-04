@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, io::BufWriter};
+use std::io::BufWriter;
 
 pub use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
@@ -29,16 +29,14 @@ pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();
     init_miette();
 
-    let mut args = std::env::args_os().peekable();
-
-    let args = match args.peek() {
-        Some(s) if s == OsStr::new("node") => args.skip(2),
-        _ => args.skip(1),
-    };
+    let mut args = std::env::args_os();
+    // If first arg is `node`, also skip script path (`node script.js ...`).
+    // Otherwise, just skip first arg (`oxlint ...`).
+    if args.next().is_some_and(|arg| arg == "node") {
+        args.next();
+    }
     let args = args.collect::<Vec<_>>();
 
-    // SAFELY skip first two args (node + script.js)
-    // let cli_args = std::env::args_os().skip(2);
     let cmd = crate::cli::lint_command();
     let command = match cmd.run_inner(&*args) {
         Ok(cmd) => cmd,
