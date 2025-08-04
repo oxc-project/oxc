@@ -49,16 +49,36 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true })
  * @param {boolean} lazy - `true` to do lazy deserialization
  */
 export function workload(lazy) {
-  if (log) console.log(`> Start job (${lazy ? "lazy" : "eager"}) on JS worker`, workerId);
+  if (lazy) {
+    workloadLazy();
+  } else {
+    workloadEager();
+  }
+
+  if (log) console.log('> Finished job on JS worker', workerId);
+}
+
+function workloadEager() {
+  if (log) console.log('> Start job (eager) on JS worker', workerId);
 
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32],
     sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
   const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-  // const sourceIsAscii = sourceText.length === sourceByteLen;
 
   deserialize(buffer, sourceText, sourceByteLen);
+}
 
-  if (log) console.log('> Finished job on JS worker', workerId);
+function workloadLazy() {
+  if (log) console.log('> Start job (lazy) on JS worker', workerId);
+
+  // TODO
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+
+  deserialize(buffer, sourceText, sourceByteLen);
 }
