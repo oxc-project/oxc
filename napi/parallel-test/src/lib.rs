@@ -511,6 +511,8 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
 
+    log!("> Run job on worker {} - {path}", thread_data.id);
+
     // Write source text into start of buffer
     let allocator = thread_data.fixed_size_allocator.get();
     // SAFETY: Allocator is wrapped in a `FixedSizeAllocator`, which takes care of dropping `Allocator`
