@@ -520,7 +520,7 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
         ptr::copy_nonoverlapping(source_text.as_ptr(), source_ptr, source_text.len());
     }
     // SAFETY: We just wrote source_text into allocator at `source_ptr`
-    let _source_text = unsafe {
+    let source_text = unsafe {
         let slice = slice::from_raw_parts(source_ptr, source_text.len());
         str::from_utf8_unchecked(slice)
     };
