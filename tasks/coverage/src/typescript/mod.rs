@@ -185,6 +185,34 @@ static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2367", // This comparison appears to be unintentional because the types '0' and '1' have no overlap.
     "2370", // A rest parameter must be of an array type.
     "2375", // Type '{ value: undefined; }' is not assignable to type 'A' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    "2403", // Subsequent variable declarations must have the same type.  Variable 'x' must be of type 'any', but here has type 'any[]'.
+    "2407", // The right-hand side of a 'for...in' statement must be of type 'any', an object type or a type parameter, but here has type 'Color.Blue'.
+    "2409", // Return type of constructor signature must be assignable to the instance type of the class.
+    "2411", // Property 'y' of type 'string' is not assignable to 'string' index type 'number'.
+    "2412", // Type 'undefined' is not assignable to type 'string' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+    "2413", // '`a${string}a`' index type '"c"' is not assignable to '`${string}a`' index type '"b"'.
+    "2415", // Class 'L' incorrectly extends base class 'G'.
+    "2416", // Property 'num' in type 'WrongTypePropertyImpl' is not assignable to the same property in base type 'WrongTypeProperty'.
+    "2417", // Class static side 'typeof Conestoga' incorrectly extends base class static side 'typeof Wagon'.
+    "2418", // Type of computed property's value is '"str"', which is not assignable to type '"sym"'.
+    "2420", // Class 'C' incorrectly implements interface 'I'.
+    "2422", // A class can only implement an object type or intersection of object types with statically known members.
+    "2423", // Class 'A' defines instance member function 'm', but extended class 'B' defines it as instance member accessor.
+    "2425", // Class 'Good' defines instance member property 'f', but extended class 'Baad' defines it as instance member function.
+    "2426", // Class 'Base' defines instance member accessor 'x', but extended class 'Derived' defines it as instance member function.
+    "2430", // Interface 'Bar' incorrectly extends interface 'Foo'.
+    "2433", // A namespace declaration cannot be in a different file from a class or function with which it is merged.
+    "2445", // Property 'p' is protected and only accessible within class 'C3' and its subclasses.
+    "2446", // Property 'x' is protected and only accessible through an instance of class 'Derived1'. This is an instance of class 'Base'.
+    "2447", // The '&' operator is not allowed for boolean types. Consider using '&&' instead.
+    "2448", // Block-scoped variable 'v' used before its declaration.
+    "2449", // Class 'A' used before its declaration.
+    "2450", // Enum 'E' used before its declaration.
+    "2454", // Variable 'getValue' is used before being assigned.
+    "2456", // Type alias 'A' circularly references itself.
+    "2458", // An AMD module cannot have multiple name assignments.
+    "2459", // Module '"./a"' declares 'bar' locally, but it is not exported.
+    "2460", // Module '"./a"' declares 'bar' locally, but it is exported as 'baz'.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.
