@@ -83,7 +83,7 @@ debuggerVisitor[NODE_TYPE_IDS_MAP.get('DebuggerStatement')] = _ident => {};
 
 const identVisitor = [...emptyVisitor];
 identVisitor[NODE_TYPE_IDS_MAP.get('IdentifierName')] = _ident => {};
-identVisitor[NODE_TYPE_IDS_MAP.get('IdentifierReference')] = _ident => console.log([_ident.name]);
+identVisitor[NODE_TYPE_IDS_MAP.get('IdentifierReference')] = _ident => {};
 identVisitor[NODE_TYPE_IDS_MAP.get('BindingIdentifier')] = _ident => {};
 identVisitor[NODE_TYPE_IDS_MAP.get('LabelIdentifier')] = _ident => {};
 
