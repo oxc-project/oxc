@@ -255,7 +255,7 @@ impl Linter {
         let metadata = RawTransferMetadata::new(program_offset);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
+        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
         // Pass AST and rule IDs to JS
