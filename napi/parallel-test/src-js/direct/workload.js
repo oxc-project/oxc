@@ -9,7 +9,10 @@ const require = createRequire(import.meta.url);
 // walkProgram = require('../dist/parser/generated/lazy/walk.cjs');
 
 const deserialize = require('../../../parser/generated/deserialize/js.js'),
-  { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } = require('../../../parser/generated/constants.js');
+  { TOKEN } = require('../../../parser/raw-transfer/lazy-common.js'),
+  walkProgram = require('../../../parser/generated/lazy/walk.js'),
+  { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } = require('../../../parser/generated/constants.js'),
+  { NODE_TYPES_COUNT } = require('../../../parser/generated/lazy/types.js');
 
 // ID of this worker
 let workerId;
@@ -70,6 +73,11 @@ function workloadEager() {
   deserialize(buffer, sourceText, sourceByteLen);
 }
 
+const compiledVisitor = [];
+for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
+  compiledVisitor.push(null);
+}
+
 function workloadLazy() {
   if (log) console.log('> Start job (lazy) on JS worker', workerId);
 
@@ -79,6 +87,15 @@ function workloadLazy() {
     sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
   const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+  const sourceIsAscii = sourceText.length === sourceByteLen;
+  const ast = {
+    buffer,
+    sourceText,
+    sourceByteLen,
+    sourceIsAscii,
+    nodes: new Map(),
+    token: TOKEN,
+  };
 
-  deserialize(buffer, sourceText, sourceByteLen);
+  walkProgram(programPos, ast, compiledVisitor);
 }
