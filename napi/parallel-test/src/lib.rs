@@ -13,13 +13,13 @@ use std::{
 use bpaf::Bpaf;
 use napi::{
     Status,
-    bindgen_prelude::{FnArgs, Function, Promise},
+    bindgen_prelude::{FnArgs, Function, Promise, Uint8Array},
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
 use rayon::iter::ParallelIterator;
 
-use oxc_allocator::FixedSizeAllocator;
+use oxc_allocator::{FixedSizeAllocator, free_fixed_size_allocator};
 
 /// CLI arguments.
 #[derive(Debug, Clone, Bpaf)]
@@ -101,7 +101,7 @@ struct ThreadData {
     id: u32,
     run: Runner,
     #[expect(dead_code)]
-    allocator: FixedSizeAllocator,
+    fixed_size_allocator: FixedSizeAllocator,
 }
 
 /// Counter for number of registered worker threads.
@@ -305,6 +305,9 @@ fn get_thread_count(options: &Options) -> Result<u32, String> {
         .map_err(|e| format!("Failed to determine available parallelism: {e}"))
 }
 
+// TODO: Don't hard-code this here
+const BUFFER_SIZE: usize = 2_147_483_616;
+
 /// Register a JS worker thread.
 /// Is passed a `run` function.
 ///
@@ -314,16 +317,44 @@ fn get_thread_count(options: &Options) -> Result<u32, String> {
 /// * Each call to this function must pass a unique `worker_id`.
 #[napi]
 #[allow(clippy::missing_panics_doc, clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub unsafe fn register_worker(worker_id: u32, run: Function<u32, ()>) {
+pub unsafe fn register_worker(
+    worker_id: u32,
+    store_buffer: Function<Uint8Array, ()>,
+    run: Function<u32, ()>,
+) {
     log!("> Registering worker {worker_id}");
 
     // Wrap `run` in a `ThreadsafeFunction`
     let run = run.build_threadsafe_function().build().unwrap();
 
     // Create `Allocator`
-    let allocator = FixedSizeAllocator::new(worker_id);
+    let fixed_size_allocator = FixedSizeAllocator::new(worker_id);
+    let allocator = fixed_size_allocator.get();
 
-    let data = ThreadData { id: worker_id, run, allocator };
+    // Mark allocator as sent to JS.
+    // SAFETY: `allocator` was created by a `FixedSizeAllocator`. We don't create a mut ref from the pointer.
+    let metadata_ptr = unsafe { allocator.fixed_size_metadata_ptr() };
+    {
+        // SAFETY: Fixed-size allocators always have a valid `FixedSizeAllocatorMetadata`
+        // stored at the pointer returned by `Allocator::fixed_size_metadata_ptr`.
+        let metadata = unsafe { metadata_ptr.as_ref() };
+        // TODO: Is `Ordering::SeqCst` excessive here?
+        metadata.is_double_owned.store(true, Ordering::SeqCst);
+    };
+
+    // Send buffer to JS
+    // SAFETY: TODO
+    let buffer = unsafe {
+        Uint8Array::with_external_data(
+            allocator.data_ptr().as_ptr(),
+            BUFFER_SIZE,
+            move |_ptr, _len| free_fixed_size_allocator(metadata_ptr),
+        )
+    };
+    store_buffer.call(buffer).unwrap();
+
+    // Store `ThreadData`
+    let data = ThreadData { id: worker_id, run, fixed_size_allocator };
 
     // SAFETY: `THREAD_DATAS_PTR` is initialized in `run`, and points to a slice of memory large enough
     // to accomodate `thread_count` x `ThreadData` instances.
