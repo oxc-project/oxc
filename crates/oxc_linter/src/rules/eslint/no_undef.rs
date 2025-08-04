@@ -172,6 +172,11 @@ fn test() {
         ("function resolve<T>(path: string): T { return { path } as T; }", None, None),
         ("let xyz: NodeListOf<HTMLElement>", None, None),
         ("type Foo = Record<string, unknown>;", None, None),
+        (
+            "export interface StoreImpl { onOutputBlobs: (callback: (blobs: MediaSetBlobs) => void) => import('rxjs').Subscription; }",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![

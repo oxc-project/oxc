@@ -1368,6 +1368,24 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_import_type(&mut self, it: &TSImportType<'a>) {
+        let kind = AstKind::TSImportType(self.alloc(it));
+        self.current_reference_flags = ReferenceFlags::Type;
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        self.visit_ts_type(&it.argument);
+        if let Some(options) = &it.options {
+            self.visit_object_expression(options);
+        }
+        if let Some(qualifier) = &it.qualifier {
+            self.visit_ts_type_name(qualifier);
+        }
+        if let Some(type_arguments) = &it.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
+        self.leave_node(kind);
+    }
+
     fn visit_throw_statement(&mut self, stmt: &ThrowStatement<'a>) {
         let kind = AstKind::ThrowStatement(self.alloc(stmt));
         self.enter_node(kind);
