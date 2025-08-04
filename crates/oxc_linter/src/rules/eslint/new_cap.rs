@@ -588,8 +588,12 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) => Some(lit.value.as_ref().into()),
-        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
+        Expression::StringLiteral(lit) if !lit.value.is_empty() => Some(lit.value.as_ref().into()),
+        Expression::TemplateLiteral(lit)
+            if lit.expressions.is_empty()
+                && lit.quasis.len() == 1
+                && !lit.quasis[0].value.raw.is_empty() =>
+        {
             Some(lit.quasis[0].value.raw.as_ref().into())
         }
         Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|&x| x.into_compact_str()),
@@ -745,6 +749,7 @@ fn test() {
         ("new (foo?.bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
         ("Date?.UTC();", None),   // { "ecmaVersion": 2020 },
         ("(Date?.UTC)();", None), // { "ecmaVersion": 2020 }
+        (r#"expect(1)[""](1);"#, None),
     ];
 
     let fail = vec![
