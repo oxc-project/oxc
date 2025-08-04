@@ -141,7 +141,7 @@ impl Case for TypeScriptCase {
 // spellchecker:off
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     // TODO: More not-supported error codes here
-    "2011", // Cannot convert 'string' to 'number'.
+    "2011",  // Cannot convert 'string' to 'number'.
     "2209", // The project root is ambiguous, but is required to resolve export map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2210", // The project root is ambiguous, but is required to resolve import map entry '.' in file 'package.json'. Supply the `rootDir` compiler option to disambiguate.
     "2301", // Initializer of instance member variable 'y' cannot reference identifier 'aaa' declared in the constructor.
