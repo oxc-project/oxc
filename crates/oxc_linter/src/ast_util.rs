@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -514,6 +516,14 @@ pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
 }
 
 pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
+    could_be_error_impl(ctx, expr, &mut FxHashSet::default())
+}
+
+fn could_be_error_impl(
+    ctx: &LintContext,
+    expr: &Expression,
+    visited: &mut FxHashSet<SymbolId>,
+) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
         | Expression::AwaitExpression(_)
@@ -527,42 +537,54 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
         Expression::AssignmentExpression(expr) => {
             if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
             {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
             if matches!(
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr.left.get_expression().is_none_or(|expr| could_be_error(ctx, expr))
-                    || could_be_error(ctx, &expr.right);
+                return expr
+                    .left
+                    .get_expression()
+                    .is_none_or(|expr| could_be_error_impl(ctx, expr, visited))
+                    || could_be_error_impl(ctx, &expr.right, visited);
             }
 
             false
         }
         Expression::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|expr| could_be_error(ctx, expr))
+            expr.expressions.last().is_some_and(|expr| could_be_error_impl(ctx, expr, visited))
         }
         Expression::LogicalExpression(expr) => {
             if matches!(expr.operator, LogicalOperator::And) {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
-            could_be_error(ctx, &expr.left) || could_be_error(ctx, &expr.right)
+            could_be_error_impl(ctx, &expr.left, visited)
+                || could_be_error_impl(ctx, &expr.right, visited)
         }
         Expression::ConditionalExpression(expr) => {
-            could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
+            could_be_error_impl(ctx, &expr.consequent, visited)
+                || could_be_error_impl(ctx, &expr.alternate, visited)
         }
         Expression::Identifier(ident) => {
             let reference = ctx.scoping().get_reference(ident.reference_id());
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
+
+            // Check if we've already visited this symbol to prevent infinite recursion
+            // Return true (could be error) when we encounter a circular reference since we can't determine the type
+            if !visited.insert(symbol_id) {
+                return true;
+            }
+
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
-                        could_be_error(ctx, init)
+                        could_be_error_impl(ctx, init, visited)
                     } else {
                         // TODO: warn about throwing undefined
                         false
