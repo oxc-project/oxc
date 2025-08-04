@@ -510,6 +510,8 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     };
 
     // Parse source
+    log!("> Parsing: {path}");
+
     let source_type = SourceType::from_path(path).unwrap();
     let program = Parser::new(allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
