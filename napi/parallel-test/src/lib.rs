@@ -41,9 +41,13 @@ pub struct Options {
     #[bpaf(argument("INT"))]
     pub iterations: usize,
 
-    /// Duration of work on JS side (microseconds)
-    #[bpaf(argument("INT"), fallback(0))]
-    pub duration_js: u32,
+    /// `true` if should visit AST on JS side
+    #[bpaf(flag(true, false), fallback(false))]
+    pub js: bool,
+
+    /// `true` if should do lazy deserialization on JS side
+    #[bpaf(flag(true, false), fallback(false))]
+    pub lazy: bool,
 
     /// Enable logging
     #[bpaf(flag(true, false), fallback(false))]
@@ -84,11 +88,11 @@ type StartThreads = ThreadsafeFunction<
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
     // Arguments
-    u32, // Duration to work for
+    bool, // Whether to use lazy deserialization
     // Return value
     (),
     // Arguments (repeated)
-    u32,
+    bool,
     // ErrorStatus
     Status,
     // CalleeHandled
@@ -98,7 +102,6 @@ type Runner = ThreadsafeFunction<
 /// Thread data.
 /// Each thread in thread pool has its own instance of `ThreadData`.
 struct ThreadData {
-    #[expect(dead_code)]
     id: u32,
     run: Runner,
     fixed_size_allocator: FixedSizeAllocator,
@@ -325,7 +328,7 @@ const BUFFER_SIZE: usize = 2_147_483_616;
 pub unsafe fn register_worker(
     worker_id: u32,
     store_buffer: Function<Uint8Array, ()>,
-    run: Function<u32, ()>,
+    run: Function<bool, ()>,
 ) {
     log!("> Registering worker {worker_id}");
 
@@ -510,7 +513,7 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     };
 
     // Parse source
-    log!("> Parsing: {path}");
+    log!("> Parsing: '{path}' on worker {}", thread_data.id);
 
     let source_type = SourceType::from_path(path).unwrap();
     let program = Parser::new(allocator, source_text, source_type).parse().program;
@@ -525,7 +528,7 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     unsafe { metadata_ptr.write(metadata) };
 
     // Run JS `run` function
-    if options.duration_js == 0 {
+    if !options.js {
         // Reset allocator
         thread_data.fixed_size_allocator.reset();
         return true;
@@ -534,7 +537,7 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     let (tx, rx) = channel();
 
     let status = thread_data.run.call_with_return_value(
-        options.duration_js,
+        options.lazy,
         ThreadsafeFunctionCallMode::NonBlocking,
         move |result, _env| {
             let _ = match &result {

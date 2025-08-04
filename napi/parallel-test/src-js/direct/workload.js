@@ -1,3 +1,16 @@
+import { createRequire } from 'node:module';
+
+// Import methods and objects from `oxc-parser`.
+// Use `require` not `import` as `oxc-parser` uses `require` internally,
+// and need to make sure get same instance of modules as it uses internally,
+// otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
+const require = createRequire(import.meta.url);
+// const { TOKEN } = require('../dist/parser/raw-transfer/lazy-common.cjs'),
+// walkProgram = require('../dist/parser/generated/lazy/walk.cjs');
+
+const deserialize = require('../../../parser/generated/deserialize/js.js'),
+  { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } = require('../../../parser/generated/constants.js');
+
 // ID of this worker
 let workerId;
 
@@ -29,16 +42,23 @@ export function storeBuffer(uint8Array) {
   buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 }
 
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true })
+
 /**
  * Run workload.
- * @param {number} duration - Microseconds to work for
+ * @param {boolean} lazy - `true` to do lazy deserialization
  */
-export function workload(duration) {
-  if (log) console.log('> Start job on JS worker', workerId, '-', duration, 'micros');
+export function workload(lazy) {
+  if (log) console.log(`> Start job (${lazy ? "lazy" : "eager"}) on JS worker`, workerId);
 
-  // Eat up the CPU for some time
-  const endTime = performance.now() + (duration / 1000);
-  while (performance.now() < endTime) {}
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+  // const sourceIsAscii = sourceText.length === sourceByteLen;
+
+  deserialize(buffer, sourceText, sourceByteLen);
 
   if (log) console.log('> Finished job on JS worker', workerId);
 }
