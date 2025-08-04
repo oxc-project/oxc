@@ -29,6 +29,8 @@ rayon = { workspace = true }
 simdutf8 = { workspace = true }
 
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }

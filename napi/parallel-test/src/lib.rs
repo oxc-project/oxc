@@ -8,7 +8,6 @@ use std::{
         mpsc::channel,
     },
     thread::available_parallelism,
-    time::{Duration, Instant},
 };
 
 use bpaf::Bpaf;
@@ -21,6 +20,8 @@ use napi_derive::napi;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use oxc_allocator::{FixedSizeAllocator, free_fixed_size_allocator};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 mod files;
 use files::FILES;
@@ -43,10 +44,6 @@ pub struct Options {
     /// Duration of work on JS side (microseconds)
     #[bpaf(argument("INT"), fallback(0))]
     pub duration_js: u32,
-
-    /// Duration of work on Rust side (microseconds)
-    #[bpaf(argument("INT"), fallback(0))]
-    pub duration_rs: u32,
 
     /// Enable logging
     #[bpaf(flag(true, false), fallback(false))]
@@ -255,7 +252,8 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
 
     // Load test files
     let files = load_test_files();
-    let files = files.iter().map(String::as_str).collect::<Vec<_>>();
+    let files =
+        files.iter().map(|(path, source_text)| (*path, source_text.as_str())).collect::<Vec<_>>();
 
     // Run workload
     run_workload(&options, &files);
@@ -445,31 +443,31 @@ unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count:
 }
 
 /// Read test files from disk.
-fn load_test_files() -> Vec<String> {
+fn load_test_files() -> Vec<(&'static str, String)> {
     let cwd = env::current_dir().unwrap();
     let root_path = cwd.parent().unwrap().parent().unwrap();
 
     FILES
         .iter()
-        .map(|relative_path| {
+        .map(|&relative_path| {
             let path = root_path.join(relative_path);
             let bytes = fs::read(path).unwrap();
             simdutf8::basic::from_utf8(&bytes).unwrap();
             log!("Loaded test file: {relative_path}");
             // SAFETY: `simdutf8` has ensured it's a valid UTF-8 string
-            unsafe { String::from_utf8_unchecked(bytes) }
+            (relative_path, unsafe { String::from_utf8_unchecked(bytes) })
         })
         .collect()
 }
 
 /// Run workload across all threads.
-fn run_workload(options: &Options, files: &[&str]) -> bool {
+fn run_workload(options: &Options, files: &[(&str, &str)]) -> bool {
     let files_len = files.len();
     let failures = (0..options.iterations)
         .into_par_iter()
         .filter(|iteration| {
-            let source_text = files[iteration % files_len];
-            !run_job(source_text, options)
+            let (path, source_text) = files[iteration % files_len];
+            !run_job(path, source_text, options)
         })
         .count();
 
@@ -477,7 +475,7 @@ fn run_workload(options: &Options, files: &[&str]) -> bool {
 }
 
 /// Run single job on a thread.
-fn run_job(source_text: &str, options: &Options) -> bool {
+fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
 
@@ -495,12 +493,10 @@ fn run_job(source_text: &str, options: &Options) -> bool {
         str::from_utf8_unchecked(slice)
     };
 
-    // Do busy-work on Rust side
-    if options.duration_rs > 0 {
-        let duration = Duration::from_micros(u64::from(options.duration_rs));
-        let start = Instant::now();
-        while start.elapsed() < duration {}
-    }
+    // Parse source
+    let source_type = SourceType::from_path(path).unwrap();
+    let _ret = Parser::new(allocator, source_text, source_type).parse();
+    // let program = ret.program;
 
     // Run JS `run` function
     if options.duration_js == 0 {

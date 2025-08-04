@@ -2166,6 +2166,8 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc_allocator",
+ "oxc_parser",
+ "oxc_span",
  "rayon",
  "simdutf8",
 ]
