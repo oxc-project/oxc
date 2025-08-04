@@ -201,6 +201,9 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::interface_implements(implements_kw_span));
         }
         for extend in &extends {
+            if self.fatal_error.is_some() {
+                break;
+            }
             if !extend.expression.is_entity_name_expression() {
                 self.error(diagnostics::interface_extend(extend.span));
             }

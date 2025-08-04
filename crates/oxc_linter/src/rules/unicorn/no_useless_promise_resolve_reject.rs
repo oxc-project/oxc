@@ -201,13 +201,13 @@ fn get_function_like_node<'a, 'b>(
 
 fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
     let function_node = traverse_bind_calls(node, ctx);
+
+    // Get the parent of the function node
     let Some(parent) = outermost_paren_parent(function_node, ctx) else {
         return false;
     };
-    let Some(parent) = outermost_paren_parent(parent, ctx) else {
-        return false;
-    };
 
+    // Check if the function is used as an argument in a call expression
     let AstKind::CallExpression(call_expr) = parent.kind() else {
         return false;
     };
@@ -223,6 +223,7 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
         return false;
     };
 
+    // Check if it's a call to .then(), .catch(), or .finally() with the right number of arguments
     if call_expr.arguments.len() == 1 && matches!(static_prop_name, "then" | "catch" | "finally") {
         return true;
     }
@@ -722,7 +723,6 @@ fn test() {
             None,
         ),
         (
-            // Async generator yielding Promise.reject
             r"
 				async function * foo() {
 					yield Promise.reject(bar);

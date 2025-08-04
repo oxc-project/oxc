@@ -2380,7 +2380,7 @@ function walkImportNamespaceSpecifier(pos, ast, visitors) {
 }
 
 function walkWithClause(pos, ast, visitors) {
-  walkVecImportAttribute(pos + 32, ast, visitors);
+  walkVecImportAttribute(pos + 8, ast, visitors);
 }
 
 function walkImportAttribute(pos, ast, visitors) {

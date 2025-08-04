@@ -19,49 +19,49 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/assignments/left-hand.ts
             "flags": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "Foo",
-            "node_id": 11
+            "node_id": 10
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 1,
             "name": "Foo",
-            "node_id": 18
+            "node_id": 16
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "Foo",
-            "node_id": 24
+            "node_id": 21
           },
           {
             "flags": "ReferenceFlags(Write)",
             "id": 3,
             "name": "Foo",
-            "node_id": 31
+            "node_id": 27
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "Foo",
-            "node_id": 39
+            "node_id": 34
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 5,
             "name": "Foo",
-            "node_id": 48
+            "node_id": 42
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 6,
             "name": "Foo",
-            "node_id": 56
+            "node_id": 49
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 7,
             "name": "Foo",
-            "node_id": 65
+            "node_id": 57
           }
         ]
       }

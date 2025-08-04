@@ -51,7 +51,7 @@ declare_oxc_lint!(
 impl Rule for ExportsLast {
     fn run_once(&self, ctx: &LintContext<'_>) {
         // find last non export declaration index
-        let program = ctx.nodes().program().unwrap();
+        let program = ctx.nodes().program();
         let body = &program.body;
         let find_res =
             body.iter().rev().find_position(|statement| !is_exports_declaration(statement));

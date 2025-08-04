@@ -92,9 +92,7 @@ impl CompilerInterface for Driver {
 
     fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
-            let Some(program) = ret.semantic.nodes().program() else {
-                return ControlFlow::Break(());
-            };
+            let program = ret.semantic.nodes().program();
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());

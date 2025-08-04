@@ -1,7 +1,19 @@
+//! # TypeScript JSX Parsing Example
+//!
+//! This example demonstrates parsing TypeScript files with JSX syntax.
+//! It shows how to parse a simple React component and validate the parsing results.
+//!
+//! ## Usage
+//!
+//! ```bash
+//! cargo run -p oxc_parser --example parser_tsx
+//! ```
+
 use oxc_allocator::Allocator;
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
+/// Parse a TypeScript JSX file and validate the results
 fn main() {
     let source_text = r"
 import React from 'react';

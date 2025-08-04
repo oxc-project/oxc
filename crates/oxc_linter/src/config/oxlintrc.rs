@@ -263,7 +263,7 @@ mod test {
             Some(BuiltinLintPlugins::TYPESCRIPT.union(BuiltinLintPlugins::UNICORN).into())
         );
         let config: Oxlintrc =
-            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node"] }"#).unwrap();
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node", "regex", "vue"] }"#).unwrap();
         assert_eq!(config.plugins, Some(BuiltinLintPlugins::all().into()));
 
         let config: Oxlintrc =

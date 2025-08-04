@@ -5,10 +5,9 @@ use std::{
     mem,
 };
 
-use oxc_allocator::Address;
-use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
@@ -66,8 +65,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
     pub(crate) current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Stack<NodeId>,
+    /// `NodeId` of current `Function` (not including arrow functions).
+    /// When not in a function, is `NodeId` of `Program`.
+    pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
@@ -121,7 +121,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
-            function_stack: Stack::with_capacity(16),
+            current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
@@ -257,8 +257,6 @@ impl<'a> SemanticBuilder<'a> {
             stats.assert_accurate(actual_stats);
         }
 
-        let comments = self.alloc(&program.comments);
-
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
@@ -272,7 +270,7 @@ impl<'a> SemanticBuilder<'a> {
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
-            comments,
+            comments: &program.comments,
             irregular_whitespaces: [].into(),
             nodes: self.nodes,
             scoping: self.scoping,
@@ -357,12 +355,6 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
-    }
-
-    pub(crate) fn set_function_node_flags(&mut self, flags: NodeFlags) {
-        if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
-        }
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -611,7 +603,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg - must be above directives as directives are in cfg */
 
-        // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
+        // Don't call `enter_node` here as `Program` is a special case - node has itself as `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This avoids `Nodes::add_node` having to handle the special case.
         // We can also skip calling `self.enter_kind`, `self.record_ast_node`
@@ -656,6 +648,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // as scope depth must remain >= 1.
 
         self.leave_node(kind);
+
+        // Check `current_function_node_id` has been reset to as it was at start
+        debug_assert!(self.current_function_node_id == NodeId::ROOT);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -681,6 +676,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
+        self.current_node_flags |= NodeFlags::Class;
+        if class.is_declaration() {
+            class.bind(self);
+        }
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
@@ -707,6 +706,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.current_node_flags -= NodeFlags::Class;
+        self.class_table_builder.pop_class();
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
@@ -1214,6 +1215,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.unused_labels.add(stmt.label.name.as_str());
 
         /* cfg */
         let label = &stmt.label.name;
@@ -1239,6 +1241,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.unused_labels.mark_unused(self.current_node_id);
         self.leave_node(kind);
     }
 
@@ -1592,6 +1595,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_function_graph_ix = cfg.current_node_ix;
@@ -1603,10 +1608,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+
+        let parent_function_node_id = self.current_function_node_id;
+        self.current_function_node_id = self.current_node_id;
+
+        if func.is_declaration() {
+            func.bind(self);
+        }
+
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -1683,10 +1694,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+
+        self.current_function_node_id = parent_function_node_id;
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
         let (current_node_ix, error_harness, function_graph_ix) = control_flow!(self, |cfg| {
             let current_node_ix = cfg.current_node_ix;
             cfg.push_finalization_stack();
@@ -1697,8 +1712,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
         self.enter_scope(
@@ -1762,8 +1775,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
@@ -1791,8 +1804,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
-        let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
-        self.enter_node(kind);
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
         if !self.current_reference_flags.is_write() {
@@ -1819,7 +1830,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_member_expression(it.to_member_expression());
             }
         }
-        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property_identifier(
@@ -1953,21 +1963,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
-            AstKind::Function(func) => {
-                self.function_stack.push(self.current_node_id);
-                if func.is_declaration() {
-                    func.bind(self);
-                }
-            }
-            AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.push(self.current_node_id);
-            }
-            AstKind::Class(class) => {
-                self.current_node_flags |= NodeFlags::Class;
-                if class.is_declaration() {
-                    class.bind(self);
-                }
-            }
+
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
@@ -2036,9 +2032,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::LabeledStatement(stmt) => {
-                self.unused_labels.add(stmt.label.name.as_str());
-            }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
@@ -2046,7 +2039,10 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.set_function_node_flags(NodeFlags::HasYield);
+                // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
+                // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
+                *self.nodes.get_node_mut(self.current_function_node_id).flags_mut() |=
+                    NodeFlags::HasYield;
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
@@ -2061,13 +2057,6 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Class(_) => {
-                self.current_node_flags -= NodeFlags::Class;
-                self.class_table_builder.pop_class();
-            }
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.pop();
-            }
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
@@ -2075,7 +2064,6 @@ impl<'a> SemanticBuilder<'a> {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }

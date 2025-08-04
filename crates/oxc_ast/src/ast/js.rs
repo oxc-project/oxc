@@ -320,7 +320,7 @@ pub struct ArrayExpression<'a> {
 }
 
 inherit_variants! {
-/// Represents a element in an array literal.
+/// Represents an element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -861,7 +861,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[estree(append_to = elements)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 /// `{ foo }` in `({ foo } = obj);`
@@ -879,7 +879,7 @@ pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     #[estree(append_to = properties)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 /// `rest` in `[foo, ...rest] = arr;` or `({foo, ...rest} = obj);`.
@@ -2457,35 +2457,41 @@ pub enum ImportPhase {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ImportDeclarationSpecifier<'a> {
-    /// import {imported} from "source"
-    /// import {imported as local} from "source"
+    /// `import {imported} from "source";`
+    /// `import {imported as local} from "source";`
     ImportSpecifier(Box<'a, ImportSpecifier<'a>>) = 0,
-    /// import local from "source"
+    /// `import local from "source";`
     ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>) = 1,
-    /// import * as local from "source"
+    /// `import * as local from "source";`
     ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
 }
 
-// import {imported} from "source"
-// import {imported as local} from "source"
+/// Import specifier.
+///
+/// ```ts
+/// import { imported, imported2 } from "source";
+/// //       ^^^^^^^^  ^^^^^^^^^
+/// import { imported as local } from "source";
+/// //       ^^^^^^^^^^^^^^^^^
+/// import { type Foo } from "source";
+/// //       ^^^^^^^^
+/// ```
+///
+/// In the case of `import { foo }`, `imported` and `local` both are the same name,
+/// and have the same `Span`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportSpecifier<'a> {
     pub span: Span,
+    /// Imported symbol.
+    /// Can only be `IdentifierName` or `StringLiteral`.
     pub imported: ModuleExportName<'a>,
-    /// The name of the imported symbol.
-    ///
-    /// ## Example
-    /// ```ts
-    /// // local and imported name are the same
-    /// import { Foo } from 'foo';
-    /// //       ^^^
-    /// // imports can be renamed, changing the local name
-    /// import { Foo as Bar } from 'foo';
-    /// //              ^^^
-    /// ```
+    /// Binding for local symbol.
     pub local: BindingIdentifier<'a>,
+    /// Value or type.
+    /// `import { foo }`      -> `ImportOrExportKind::Value`
+    /// `import { type Bar }` -> `ImportOrExportKind::Type`
     #[ts]
     pub import_kind: ImportOrExportKind,
 }
@@ -2528,9 +2534,18 @@ pub struct WithClause<'a> {
     #[estree(skip)]
     pub span: Span,
     #[estree(skip)]
-    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub keyword: WithClauseKeyword,
     #[estree(rename = "attributes")]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
+}
+
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[generate_derive(CloneIn, Dummy, ContentEq)]
+#[estree(no_ts_def)]
+pub enum WithClauseKeyword {
+    With = 0,
+    Assert = 1,
 }
 
 #[ast(visit)]

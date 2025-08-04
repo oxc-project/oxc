@@ -323,7 +323,7 @@ function deserializeAssignmentExpression(pos) {
 
 function deserializeArrayAssignmentTarget(pos) {
   const elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) elements.push(rest);
   return {
     type: 'ArrayPattern',
@@ -335,7 +335,7 @@ function deserializeArrayAssignmentTarget(pos) {
 
 function deserializeObjectAssignmentTarget(pos) {
   const properties = deserializeVecAssignmentTargetProperty(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) properties.push(rest);
   return {
     type: 'ObjectPattern',
@@ -957,7 +957,7 @@ function deserializeImportNamespaceSpecifier(pos) {
 
 function deserializeWithClause(pos) {
   return {
-    attributes: deserializeVecImportAttribute(pos + 32),
+    attributes: deserializeVecImportAttribute(pos + 8),
   };
 }
 
@@ -4389,9 +4389,13 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   return arr;
 }
 
-function deserializeOptionAssignmentTargetRest(pos) {
-  if (uint8[pos + 8] === 51) return null;
-  return deserializeAssignmentTargetRest(pos);
+function deserializeBoxAssignmentTargetRest(pos) {
+  return deserializeAssignmentTargetRest(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxAssignmentTargetRest(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxAssignmentTargetRest(pos);
 }
 
 function deserializeVecAssignmentTargetProperty(pos) {

@@ -1,4 +1,21 @@
 #![expect(clippy::print_stdout)]
+//! # Code Generation Example
+//!
+//! This example demonstrates how to use the Oxc code generator to convert an AST
+//! back into JavaScript code. It supports minification and idempotency testing.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_codegen --example codegen [filename] [--minify] [--twice]
+//! ```
+//!
+//! ## Options
+//!
+//! - `--minify`: Generate minified output
+//! - `--twice`: Test idempotency by parsing and generating twice
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -13,6 +30,7 @@ use pico_args::Arguments;
 // run `cargo run -p oxc_codegen --example codegen`
 // or `cargo watch -x "run -p oxc_codegen --example codegen"`
 
+/// Demonstrate code generation with optional minification and idempotency testing
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
@@ -25,6 +43,7 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
     let mut allocator = Allocator::default();
 
+    // First round: parse and generate
     let printed = {
         let program = parse(&allocator, &source_text, source_type);
         codegen(&program, minify)
@@ -32,6 +51,7 @@ fn main() -> std::io::Result<()> {
     println!("First time:");
     println!("{printed}");
 
+    // Optional second round to test idempotency
     if twice {
         // Reset the allocator as we don't need the first AST any more
         allocator.reset();
@@ -48,6 +68,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+/// Parse JavaScript/TypeScript source code into an AST
 fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -65,6 +86,7 @@ fn parse<'a>(
     ret.program
 }
 
+/// Generate JavaScript code from an AST
 fn codegen(program: &Program<'_>, minify: bool) -> String {
     Codegen::new()
         .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })

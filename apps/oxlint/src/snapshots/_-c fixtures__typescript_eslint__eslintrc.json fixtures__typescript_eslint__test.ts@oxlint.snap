@@ -6,6 +6,14 @@ arguments: -c fixtures/typescript_eslint/eslintrc.json fixtures/typescript_eslin
 working directory: 
 ----------
 
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-namespace.html\typescript-eslint(no-namespace)]8;;\: ES2015 module syntax is preferred over namespaces.
+   ,-[fixtures/typescript_eslint/test.ts:1:1]
+ 1 | namespace X {
+   : ^^^^^^^^^
+ 2 | }
+   `----
+  help: Replace the namespace with an ES2015 module or use `declare module`
+
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'X' is declared but never used.
    ,-[fixtures/typescript_eslint/test.ts:1:11]
  1 | namespace X {
@@ -14,14 +22,6 @@ working directory:
  2 | }
    `----
   help: Consider removing this declaration.
-
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-namespace.html\typescript-eslint(no-namespace)]8;;\: ES2015 module syntax is preferred over namespaces.
-   ,-[fixtures/typescript_eslint/test.ts:1:1]
- 1 | namespace X {
-   : ^^^^^^^^^
- 2 | }
-   `----
-  help: Replace the namespace with an ES2015 module or use `declare module`
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-loss-of-precision.html\eslint(no-loss-of-precision)]8;;\: This number literal will lose precision at runtime.
    ,-[fixtures/typescript_eslint/test.ts:4:1]

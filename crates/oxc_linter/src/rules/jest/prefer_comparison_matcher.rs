@@ -36,6 +36,13 @@ declare_oxc_lint!(
     /// - `toBeLessThan`
     /// - `toBeLessThanOrEqual`
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using generic matchers like `toBe(true)` with comparison expressions
+    /// makes tests less readable and provides less helpful error messages when
+    /// they fail. Jest's specific comparison matchers offer clearer intent and
+    /// better error output that shows the actual values being compared.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

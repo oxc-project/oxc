@@ -1,6 +1,13 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+  ⚠ typescript-eslint(array-type): Array type using 'factories.User[]' is forbidden. Use 'Array<factories.User>' instead.
+   ╭─[array_type.ts:1:8]
+ 1 │ let a: factories.User[] = [];
+   ·        ────────────────
+   ╰────
+  help: Replace `factories.User[]` with `Array<factories.User>`.
+
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
  1 │ let a: Array<number> = [];
@@ -734,3 +741,191 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test3 = testFn<string[], number[]>([]);
+   ·                             ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
+   ╭─[array_type.ts:2:39]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test3 = testFn<string[], number[]>([]);
+   ·                                       ────────
+   ╰────
+  help: Replace `number[]` with `Array<number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test3 = testFn<Array<string>, Array<number>>([]);
+   ·                             ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:2:44]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test3 = testFn<Array<string>, Array<number>>([]);
+   ·                                            ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:2:37]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test4 = testFn<Promise<string[]>>([]);
+   ·                                     ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:2:37]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test4 = testFn<Promise<string[]>>([]);
+   ·                                     ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:2:37]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test4 = testFn<Promise<Array<string>>>([]);
+   ·                                     ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:2:37]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test4 = testFn<Promise<Array<string>>>([]);
+   ·                                     ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test5 = testFn<(string & number)[]>([]);
+   ·                             ───────────────────
+   ╰────
+  help: Replace `(string & number)[]` with `Array<string & number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T>(param: T) { return param; }
+ 2 │ export const test5 = testFn<(() => void)[]>([]);
+   ·                             ──────────────
+   ╰────
+  help: Replace `(() => void)[]` with `Array<() => void>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
+   ╭─[array_type.ts:2:30]
+ 1 │ class MyClass<T> { constructor(public value: T) {} }
+ 2 │ const instance = new MyClass<number[]>([1, 2, 3]);
+   ·                              ────────
+   ╰────
+  help: Replace `number[]` with `Array<number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:2:30]
+ 1 │ class MyClass<T> { constructor(public value: T) {} }
+ 2 │ const instance = new MyClass<Array<number>>([1, 2, 3]);
+   ·                              ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
+   ╭─[array_type.ts:1:33]
+ 1 │ const value = {} as Map<string, number[]>;
+   ·                                 ────────
+   ╰────
+  help: Replace `number[]` with `Array<number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:1:33]
+ 1 │ const value = {} as Map<string, Array<number>>;
+   ·                                 ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.ts:2:28]
+ 1 │ interface Container<T> { value: T; }
+ 2 │ const container: Container<string[]> = { value: [] };
+   ·                            ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
+   ╭─[array_type.ts:2:28]
+ 1 │ interface Container<T> { value: T; }
+ 2 │ const container: Container<Array<string>> = { value: [] };
+   ·                            ─────────────
+   ╰────
+  help: Replace `Array<string>` with `string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test7 = testFn<readonly string[], readonly number[]>([]);
+   ·                             ─────────────────
+   ╰────
+  help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
+   ╭─[array_type.ts:2:48]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test7 = testFn<readonly string[], readonly number[]>([]);
+   ·                                                ─────────────────
+   ╰────
+  help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead.
+   ╭─[array_type.ts:2:29]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test7 = testFn<ReadonlyArray<string>, ReadonlyArray<number>>([]);
+   ·                             ─────────────────────
+   ╰────
+  help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
+   ╭─[array_type.ts:2:52]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test7 = testFn<ReadonlyArray<string>, ReadonlyArray<number>>([]);
+   ·                                                    ─────────────────────
+   ╰────
+  help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:2:39]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test8 = testFn<string[], Array<number>>([]);
+   ·                                       ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
+   ╭─[array_type.ts:2:44]
+ 1 │ function testFn<T, U>(param1: T, param2: U) { return [param1, param2]; }
+ 2 │ export const test8 = testFn<Array<string>, number[]>([]);
+   ·                                            ────────
+   ╰────
+  help: Replace `number[]` with `Array<number>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'any[]' is forbidden. Use 'Array<any>' instead.
+   ╭─[array_type.ts:1:29]
+ 1 │ type IsArray<T> = T extends any[] ? true : false;
+   ·                             ─────
+   ╰────
+  help: Replace `any[]` with `Array<any>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
+   ╭─[array_type.ts:1:40]
+ 1 │ type MakeArrays<T> = { [K in keyof T]: T[K][] };
+   ·                                        ──────
+   ╰────
+  help: Replace `T[K][]` with `Array<T[K]>`.

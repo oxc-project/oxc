@@ -40,7 +40,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_assignment_target_property_property(
         &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
@@ -49,7 +48,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_assignment_target_property(
         &self,
         prop: &mut AssignmentTargetProperty<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_assignment_target_property(prop, ctx);
@@ -58,7 +56,6 @@ impl<'a> PeepholeOptimizations {
     pub fn try_compress_assignment_target_property(
         &self,
         prop: &mut AssignmentTargetProperty<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         // `a: a` -> `a`
@@ -66,16 +63,13 @@ impl<'a> PeepholeOptimizations {
             prop
         {
             let Some(prop_name) = assign_target_prop_prop.name.static_name() else { return };
-            let Some(binding_identifier) = assign_target_prop_prop.binding.identifier() else {
+            let Some(ident) = assign_target_prop_prop.binding.identifier_mut() else {
                 return;
             };
-            if prop_name == binding_identifier.name {
+            if prop_name == ident.name {
                 *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
-                    assign_target_prop_prop.span,
-                    ctx.ast.identifier_reference(
-                        assign_target_prop_prop.span,
-                        binding_identifier.name,
-                    ),
+                    ident.span,
+                    ident.take_in(ctx.ast),
                     None,
                 );
                 ctx.state.changed = true;
@@ -86,7 +80,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_binding_property(
         &self,
         prop: &mut BindingProperty<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
@@ -95,7 +88,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_method_definition(
         &self,
         prop: &mut MethodDefinition<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -110,7 +102,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_property_definition(
         &self,
         prop: &mut PropertyDefinition<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -125,7 +116,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_accessor_property(
         &self,
         prop: &mut AccessorProperty<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
@@ -140,7 +130,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_return_statement(
         &self,
         stmt: &mut ReturnStatement<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         self.compress_return_statement(stmt, ctx);
@@ -149,7 +138,6 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_variable_declaration(
         &self,
         decl: &mut VariableDeclaration<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
@@ -218,7 +206,6 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_arrow_expression(
         &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         if !arrow_expr.expression
@@ -603,7 +590,6 @@ impl<'a> PeepholeOptimizations {
     fn compress_variable_declarator(
         &self,
         decl: &mut VariableDeclarator<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
@@ -859,7 +845,6 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_chain_call_expression(
         &self,
         chain_expr: &mut ChainExpression<'a>,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
@@ -890,7 +875,6 @@ impl<'a> PeepholeOptimizations {
         &self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
-
         ctx: &mut Ctx<'a, '_>,
     ) {
         if let PropertyKey::NumericLiteral(_) = key {

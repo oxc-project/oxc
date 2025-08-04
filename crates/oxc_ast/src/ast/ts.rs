@@ -212,7 +212,7 @@ pub enum TSLiteral<'a> {
 
 /// TypeScript Type
 ///
-/// This is the root-level type for TypeScript types, kind of like [`Expression`] is for
+/// This is the root-level type for TypeScript types, similar to how [`Expression`] is for
 /// expressions.
 ///
 /// ## Examples

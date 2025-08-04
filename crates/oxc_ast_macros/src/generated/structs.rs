@@ -181,7 +181,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("TSNonNullExpression", StructDetails { field_order: None }),
         ("Disjunction", StructDetails { field_order: None }),
         ("TSTypeAnnotation", StructDetails { field_order: None }),
-        ("WithClause", StructDetails { field_order: None }),
+        ("WithClause", StructDetails { field_order: Some(&[0, 2, 1]) }),
         ("ExportAllDeclaration", StructDetails { field_order: None }),
         ("Hashbang", StructDetails { field_order: None }),
         ("ClassBody", StructDetails { field_order: None }),

@@ -132,8 +132,10 @@ mod test_implementation {
             let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
             let mut output = String::new();
 
-            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).filename);
-            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
+            self.diagnostics.sort_by_cached_key(|diagnostic| {
+                let info = Info::new(diagnostic);
+                (info.filename, info.start, info.end, info.rule_id, info.message)
+            });
 
             for diagnostic in &self.diagnostics {
                 handler.render_report(&mut output, diagnostic.as_ref()).unwrap();

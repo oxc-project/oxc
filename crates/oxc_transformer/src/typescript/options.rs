@@ -91,7 +91,7 @@ pub struct TypeScriptOptions {
     /// Modifies extensions in import and export declarations.
     ///
     /// This option, when used together with TypeScript's [`allowImportingTsExtension`](https://www.typescriptlang.org/tsconfig#allowImportingTsExtensions) option,
-    /// allows to write complete relative specifiers in import declarations while using the same extension used by the source files.
+    /// allows writing complete relative specifiers in import declarations while using the same extension used by the source files.
     ///
     /// When set to `true`, same as [`RewriteExtensionsMode::Rewrite`]. Defaults to `false` (do nothing).
     #[serde(deserialize_with = "deserialize_rewrite_import_extensions")]

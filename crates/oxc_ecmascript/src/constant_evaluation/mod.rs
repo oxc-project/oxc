@@ -1,27 +1,29 @@
-use std::borrow::Cow;
-
-use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
-
-use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
-use oxc_ast::{AstBuilder, ast::*};
-
-use crate::{
-    ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
-    is_less_than::is_less_than,
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
-    to_numeric::ToNumeric,
-};
-
+mod call_expr;
 mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod value;
 mod value_type;
+
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
+
+use std::borrow::Cow;
+
+use num_bigint::BigInt;
+use num_traits::{ToPrimitive, Zero};
+use oxc_ast::{AstBuilder, ast::*};
+
+use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+
+use crate::{
+    ToBigInt, ToBoolean, ToInt32, ToJsString as ToJsStringTrait, ToNumber,
+    is_less_than::is_less_than,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+    to_numeric::ToNumeric,
+};
 
 pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
     fn ast(&self) -> AstBuilder<'a>;
@@ -34,7 +36,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     ///
     /// - target_ty: How the result will be used.
     ///   For example, if the result will be converted to a boolean,
-    ///   passing `Some(ValueType::Boolean)` will allow to utilize that information.
+    ///   passing `Some(ValueType::Boolean)` will allow us to utilize that information.
     fn evaluate_value_to(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
@@ -164,6 +166,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::SequenceExpression(e) => {
                 // For sequence expression, the value is the value of the RHS.
                 e.expressions.last().and_then(|e| e.evaluate_value_to(ctx, target_ty))
@@ -515,5 +518,15 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
             }
             _ => None,
         }
+    }
+}
+
+impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
+    fn evaluate_value_to(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+        _target_ty: Option<ValueType>,
+    ) -> Option<ConstantValue<'a>> {
+        call_expr::try_fold_known_global_methods(&self.callee, &self.arguments, ctx)
     }
 }

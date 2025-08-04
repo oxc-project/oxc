@@ -69,7 +69,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// check if a references is "used" under the criteria of this rule.
     #[inline]
     pub fn has_references(&self) -> bool {
-        !self.scoping().get_resolved_reference_ids(self.id).is_empty()
+        !self.scoping().symbol_is_unused(self.id)
     }
 
     #[inline]

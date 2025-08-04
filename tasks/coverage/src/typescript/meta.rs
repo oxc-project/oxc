@@ -164,6 +164,7 @@ impl TestCaseContent {
                         "This file is not processed.",
                         "Nor is this one.",
                         "not read",
+                        "content not parsed",
                     ]
                     .iter()
                     .any(|&invalid| line.starts_with(invalid))

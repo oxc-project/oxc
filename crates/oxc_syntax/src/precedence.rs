@@ -8,7 +8,7 @@ pub trait GetPrecedence {
 /// The following values are meaningful relative position, not their individual values.
 /// The relative positions are derived from the ECMA Spec by following the grammar bottom up, starting from the "Comma Operator".
 ///
-/// Note: This differs from the the operator precedence table
+/// Note: This differs from the operator precedence table
 /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table>
 /// but the relative positions are the same, as both are derived from the ECMA specification.
 ///

@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
 use std::borrow::Cow;
+
+use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};

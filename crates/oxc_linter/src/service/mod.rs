@@ -75,7 +75,6 @@ impl LintService {
         Self { runtime }
     }
 
-    #[must_use]
     pub fn with_file_system(
         &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
@@ -84,7 +83,6 @@ impl LintService {
         self
     }
 
-    #[must_use]
     pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
         self.runtime.with_paths(paths);
         self

@@ -140,6 +140,11 @@ fn dce_logical_expression() {
 
     test("foo = false && bar()", "foo = false");
     test("foo = true && bar()", "foo = bar()");
+
+    test(
+        "const x = 'keep'; const y = 'remove'; foo(x || y), foo(y && x)",
+        "const x = 'keep'; const y = 'remove'; foo(x), foo(x);",
+    );
 }
 
 #[test]

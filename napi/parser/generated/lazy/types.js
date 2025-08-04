@@ -187,8 +187,11 @@ const NODE_TYPE_IDS_MAP = new Map([
   ['JSDocNonNullableType', 177],
 ]);
 
+const NODE_TYPES_COUNT = 178,
+  LEAF_NODE_TYPES_COUNT = 38;
+
 module.exports = {
   NODE_TYPE_IDS_MAP,
-  NODE_TYPES_COUNT: 178,
-  LEAF_NODE_TYPES_COUNT: 38,
+  NODE_TYPES_COUNT,
+  LEAF_NODE_TYPES_COUNT,
 };

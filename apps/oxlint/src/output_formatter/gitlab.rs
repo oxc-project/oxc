@@ -1,9 +1,9 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
-
-use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::output_formatter::InternalFormatter;
 

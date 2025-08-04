@@ -134,7 +134,7 @@ impl Rule for SortImports {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let program = ctx.nodes().program().unwrap();
+        let program = ctx.nodes().program();
 
         let mut import_declarations = vec![];
 

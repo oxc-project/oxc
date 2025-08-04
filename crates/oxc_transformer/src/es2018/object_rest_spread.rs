@@ -326,6 +326,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<SpreadPair<'a>> {
         let rest = object_assignment_target.rest.take()?;
+        let rest_target = rest.unbox().target;
         let mut all_primitives = true;
         let keys =
             ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
@@ -347,7 +348,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 }
             }));
         Some(SpreadPair {
-            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest.target),
+            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest_target),
             keys,
             has_no_properties: object_assignment_target.is_empty(),
             all_primitives,

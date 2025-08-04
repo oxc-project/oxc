@@ -5,6 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::formatter::prelude::{FormatElements, format_once, line_suffix_boundary};
 use crate::formatter::{BufferExtensions, VecBuffer};
+use crate::utils::member_chain::is_member_call_chain;
 use crate::write::BinaryLikeExpression;
 use crate::write::{FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions};
 use crate::{
@@ -29,7 +30,7 @@ pub enum AssignmentLike<'a, 'b> {
 /// - Assignment
 /// - Object property member
 /// - Variable declaration
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentLikeLayout {
     /// This is a special layout usually used for variable declarations.
     /// This layout is hit, usually, when a variable declarator doesn't have initializer:
@@ -208,7 +209,9 @@ impl<'a> AssignmentLike<'a, '_> {
             return layout;
         }
 
-        if let Some(Expression::CallExpression(call_expression)) = &right_expression {
+        if let Some(Expression::CallExpression(call_expression)) =
+            &right_expression.map(AsRef::as_ref)
+        {
             if call_expression
                 .callee
                 .get_identifier_reference()
@@ -236,14 +239,15 @@ impl<'a> AssignmentLike<'a, '_> {
         //  !"123" -> "123"
         //  void "123" -> "123"
         //  !!"string"! -> "string"
-        let right_expression = iter::successors(right_expression, |expression| match expression {
-            Expression::UnaryExpression(unary) => Some(&unary.argument),
-            Expression::TSNonNullExpression(assertion) => Some(&assertion.expression),
-            _ => None,
-        })
-        .last();
+        let right_expression =
+            iter::successors(right_expression, |expression| match expression.as_ast_nodes() {
+                AstNodes::UnaryExpression(unary) => Some(unary.argument()),
+                AstNodes::TSNonNullExpression(assertion) => Some(assertion.expression()),
+                _ => None,
+            })
+            .last();
 
-        if matches!(right_expression, Some(Expression::StringLiteral(_))) {
+        if matches!(right_expression.map(AsRef::as_ref), Some(Expression::StringLiteral(_))) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
@@ -258,7 +262,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if !left_may_break
             && matches!(
-                right_expression,
+                right_expression.map(AsRef::as_ref),
                 Some(
                     Expression::ClassExpression(_)
                         | Expression::TemplateLiteral(_)
@@ -273,12 +277,10 @@ impl<'a> AssignmentLike<'a, '_> {
         AssignmentLikeLayout::Fluid
     }
 
-    fn get_right_expression(&self) -> Option<&Expression<'a>> {
+    fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
         match self {
-            AssignmentLike::VariableDeclarator(variable_decorator) => {
-                variable_decorator.init.as_ref()
-            }
-            AssignmentLike::AssignmentExpression(assignment) => Some(&assignment.right),
+            AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
+            AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
         }
     }
 
@@ -389,7 +391,7 @@ impl<'a> AssignmentLike<'a, '_> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right_expression: Option<&Expression<'a>>,
+        right_expression: Option<&AstNode<'a, Expression<'a>>>,
         f: &Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
@@ -434,7 +436,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 }
 
-                properties.iter().any(|property| !property.value.kind.is_binding_identifier())
+                properties.iter().any(|property| {
+                    !property.shorthand || !property.value.kind.is_binding_identifier()
+                })
             }
             AssignmentLike::AssignmentExpression(assignment) => {
                 let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {
@@ -454,14 +458,17 @@ impl<'a> AssignmentLike<'a, '_> {
 }
 
 /// Checks if the function is entitled to be printed with layout [AssignmentLikeLayout::BreakAfterOperator]
-fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> bool {
+fn should_break_after_operator<'a>(
+    right: &AstNode<'a, Expression<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> bool {
     if f.comments().has_leading_own_line_comments(right.span().start)
-        && !matches!(right, Expression::JSXElement(_) | Expression::JSXFragment(_))
+        && !matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
     {
         return true;
     }
 
-    match right {
+    match right.as_ref() {
         // head is a long chain, meaning that right -> right are both assignment expressions
         Expression::AssignmentExpression(assignment) => {
             matches!(assignment.right, Expression::AssignmentExpression(_))
@@ -470,20 +477,25 @@ fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> boo
         Expression::LogicalExpression(logical) => {
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
-        Expression::ConditionalExpression(conditional) => {
-            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::can_inline_logical_expr(logical))
-        }
+        Expression::ConditionalExpression(conditional) => match &conditional.test {
+            Expression::BinaryExpression(_) => true,
+            Expression::LogicalExpression(logical) => {
+                !BinaryLikeExpression::can_inline_logical_expr(logical)
+            }
+            _ => false,
+        },
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
 
         _ => {
-            let argument = match right {
-                Expression::AwaitExpression(expression) => Some(&expression.argument),
-                Expression::YieldExpression(expression) => expression.argument.as_ref(),
-                Expression::UnaryExpression(expression) => {
-                    match get_last_non_unary_argument(expression) {
-                        Expression::AwaitExpression(expression) => Some(&expression.argument),
-                        Expression::YieldExpression(expression) => expression.argument.as_ref(),
-                        argument => Some(argument),
+            let argument = match right.as_ast_nodes() {
+                AstNodes::AwaitExpression(expression) => Some(expression.argument()),
+                AstNodes::YieldExpression(expression) => expression.argument(),
+                AstNodes::UnaryExpression(expression) => {
+                    let argument = get_last_non_unary_argument(expression);
+                    match argument.as_ast_nodes() {
+                        AstNodes::AwaitExpression(expression) => Some(expression.argument()),
+                        AstNodes::YieldExpression(expression) => expression.argument(),
+                        _ => Some(argument),
                     }
                 }
                 _ => None,
@@ -499,12 +511,12 @@ fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> boo
 /// Iterate over unary expression arguments to get last non-unary
 /// Example: void !!(await test()) -> returns await as last argument
 fn get_last_non_unary_argument<'a, 'b>(
-    unary_expression: &'b UnaryExpression<'a>,
-) -> &'b Expression<'a> {
-    let mut argument = &unary_expression.argument;
+    unary_expression: &'b AstNode<'a, UnaryExpression<'a>>,
+) -> &'b AstNode<'a, Expression<'a>> {
+    let mut argument = unary_expression.argument();
 
-    while let Expression::UnaryExpression(unary) = argument {
-        argument = &unary.argument;
+    while let AstNodes::UnaryExpression(unary) = argument.as_ast_nodes() {
+        argument = unary.argument();
     }
 
     argument
@@ -641,9 +653,9 @@ impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
 /// A chain that has no calls at all or all of whose calls have no arguments
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
-fn is_poorly_breakable_member_or_call_chain(
-    expression: &Expression,
-    f: &Formatter<'_, '_>,
+fn is_poorly_breakable_member_or_call_chain<'a>(
+    expression: &AstNode<'a, Expression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
 
@@ -662,23 +674,23 @@ fn is_poorly_breakable_member_or_call_chain(
     let mut expression = expression;
 
     loop {
-        expression = match expression {
-            Expression::TSNonNullExpression(assertion) => &assertion.expression,
-            Expression::CallExpression(call_expression) => {
+        expression = match expression.as_ast_nodes() {
+            AstNodes::TSNonNullExpression(assertion) => assertion.expression(),
+            AstNodes::CallExpression(call_expression) => {
                 is_chain = true;
-                let callee = &call_expression.callee;
+                let callee = &call_expression.callee();
                 call_expressions.push(call_expression);
                 callee
             }
-            Expression::StaticMemberExpression(node) => {
+            AstNodes::StaticMemberExpression(node) => {
                 is_chain = true;
-                &node.object
+                node.object()
             }
-            Expression::ComputedMemberExpression(node) => {
+            AstNodes::ComputedMemberExpression(node) => {
                 is_chain = true;
-                &node.object
+                node.object()
             }
-            Expression::Identifier(_) | Expression::ThisExpression(_) => {
+            AstNodes::IdentifierReference(_) | AstNodes::ThisExpression(_) => {
                 is_chain_head_simple = true;
                 break;
             }
@@ -692,16 +704,15 @@ fn is_poorly_breakable_member_or_call_chain(
         return false;
     }
 
-    for call_expression in call_expressions {
-        // if is_member_call_chain(call_expression.clone(), f.comments(), f.options().tab_width())? {
-        //     return Ok(false);
-        // }
-        // TODO: It looks like `is_member_call_chain` is used for checking comments,
-        // but not sure if the following code is equivalent to the above check.
-        if f.comments().has_comments_in_span(call_expression.span) {
-            return false;
-        }
+    if call_expressions.is_empty() {
+        return true;
+    }
 
+    if f.comments().has_comments_in_span(call_expressions[0].span) {
+        return false;
+    }
+
+    for call_expression in &call_expressions {
         let args = &call_expression.arguments;
 
         let is_breakable_call = match args.len() {
@@ -727,7 +738,7 @@ fn is_poorly_breakable_member_or_call_chain(
         }
     }
 
-    true
+    !is_member_call_chain(call_expressions[0], f)
 }
 
 /// This function checks if `JsAnyCallArgument` is short

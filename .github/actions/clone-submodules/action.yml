@@ -2,40 +2,81 @@ name: Clone submodules
 
 description: Clone submodules
 
+inputs:
+  test262:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone test262 submodule
+
+  babel:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone babel submodule
+
+  typescript:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone typescript submodule
+
+  prettier:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone prettier submodule
+
+  acorn-test262:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone acorn-test262 submodule
+
 runs:
   using: composite
   steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      if: ${{ inputs.test262 == 'true' }}
       with:
         show-progress: false
+        persist-credentials: false
         repository: tc39/test262
         path: tasks/coverage/test262
         ref: 4b5d36ab6ef2f59d0a8902cd383762547a3a74c4
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      if: ${{ inputs.babel == 'true' }}
       with:
         show-progress: false
+        persist-credentials: false
         repository: babel/babel
         path: tasks/coverage/babel
         ref: 1d4546bcb80009303aab386b59f4df1fd335c1d5
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      if: ${{ inputs.typescript == 'true' }}
       with:
         show-progress: false
+        persist-credentials: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
         ref: 81c951894e93bdc37c6916f18adcd80de76679bc
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      if: ${{ inputs.prettier == 'true' }}
       with:
         show-progress: false
+        persist-credentials: false
         repository: prettier/prettier
         path: tasks/prettier_conformance/prettier
         ref: 7584432401a47a26943dd7a9ca9a8e032ead7285 # v3.5.0
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      if: ${{ inputs.acorn-test262 == 'true' }}
       with:
         show-progress: false
+        persist-credentials: false
         repository: oxc-project/acorn-test262
         path: tasks/coverage/acorn-test262
         ref: d9ba02ddea22800a285c7ad24e3fbfbb00ccbb02 # Latest main at 1/7/25

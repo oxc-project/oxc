@@ -4,7 +4,11 @@ use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
-    formatter::{Buffer, FormatResult, Formatter, prelude::*, trivia::DanglingIndentMode},
+    formatter::{
+        Buffer, FormatResult, Formatter,
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
@@ -13,8 +17,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
         if is_empty_block(&self.body, f) {
-            if f.context().comments().has_dangling_comments(self.span) {
-                write!(f, format_dangling_comments(self.span).with_block_indent())?;
+            // `if (a) /* comment */ {}`
+            // should be formatted like:
+            // `if (a) { /* comment */ }`
+            //
+            // Some comments are not inside the block, but we need to print them inside the block.
+            let comments = f.context().comments().comments_before(self.span.end);
+            if !comments.is_empty() {
+                write!(
+                    f,
+                    FormatDanglingComments::Comments {
+                        comments,
+                        indent: DanglingIndentMode::Block,
+                    }
+                )?;
             } else if is_non_collapsible(self.parent) {
                 write!(f, hard_line_break())?;
             }

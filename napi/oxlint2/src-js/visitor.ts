@@ -72,11 +72,23 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
-import types from '../../parser/generated/lazy/types.js';
+// TODO(camc314): we need to generate `.d.ts` file for this module.
+// @ts-expect-error
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.cjs';
+import { assertIs } from './utils.js';
 
-const { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } = types;
+import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
 const { isArray } = Array;
+
+// Types for temporary state of entries of `compiledVisitor`
+// between calling `initCompiledVisitor` and `finalizeCompiledVisitor`.
+type CompilingLeafVisitorEntry = VisitFn | VisitFn[] | null;
+type CompilingNonLeafVisitorEntry = {
+  enter: VisitFn | VisitFn[] | null;
+  exit: VisitFn | VisitFn[] | null;
+} | null;
+type CompilingVisitor = Array<CompilingLeafVisitorEntry | CompilingNonLeafVisitorEntry>;
 
 // Compiled visitor used for visiting each file.
 // Same array is reused for each file.
@@ -85,7 +97,7 @@ const { isArray } = Array;
 // not "holey" (hash map). This is critical, as looking up elements in this array is a very hot path
 // during AST visitation, and holey arrays are much slower.
 // https://v8.dev/blog/elements-kinds
-export const compiledVisitor = [];
+export const compiledVisitor: CompiledVisitorEntry[] = [];
 
 for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
   compiledVisitor.push(null);
@@ -96,9 +108,9 @@ for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
 // Filled with `0` initially up to maximum size they could ever need to be so:
 // 1. These arrays never need to grow.
 // 2. V8 treats these arrays as "PACKED_SMI_ELEMENTS".
-const mergedLeafVisitorTypeIds = [],
-  mergedEnterVisitorTypeIds = [],
-  mergedExitVisitorTypeIds = [];
+const mergedLeafVisitorTypeIds: number[] = [],
+  mergedEnterVisitorTypeIds: number[] = [],
+  mergedExitVisitorTypeIds: number[] = [];
 
 for (let i = LEAF_NODE_TYPES_COUNT; i !== 0; i--) {
   mergedLeafVisitorTypeIds.push(0);
@@ -123,15 +135,15 @@ let hasActiveVisitors = false;
 //
 // `enterExitObjectCacheNextIndex` is the index of first object in cache which is currently unused.
 // It may point to the end of the cache array.
-const enterExitObjectCache = [];
+const enterExitObjectCache: EnterExit[] = [];
 let enterExitObjectCacheNextIndex = 0;
 
-function getEnterExitObject() {
+function getEnterExitObject(): EnterExit {
   if (enterExitObjectCacheNextIndex < enterExitObjectCache.length) {
     return enterExitObjectCache[enterExitObjectCacheNextIndex++];
   }
 
-  const enterExit = { enter: null, exit: null };
+  const enterExit: EnterExit = { enter: null, exit: null };
   enterExitObjectCache.push(enterExit);
   enterExitObjectCacheNextIndex++;
   return enterExit;
@@ -147,10 +159,10 @@ function getEnterExitObject() {
 //
 // `visitFnArrayCacheNextIndex` is the index of first array in cache which is currently unused.
 // It may point to the end of the cache array.
-const visitFnArrayCache = [];
+const visitFnArrayCache: VisitFn[][] = [];
 let visitFnArrayCacheNextIndex = 0;
 
-function createVisitFnArray(visit1, visit2) {
+function createVisitFnArray(visit1: VisitFn, visit2: VisitFn): VisitFn[] {
   if (visitFnArrayCacheNextIndex < visitFnArrayCache.length) {
     const arr = visitFnArrayCache[visitFnArrayCacheNextIndex++];
     arr.push(visit1, visit2);
@@ -165,9 +177,8 @@ function createVisitFnArray(visit1, visit2) {
 
 /**
  * Initialize compiled visitor, ready for calls to `addVisitor`.
- * @returns {undefined}
  */
-export function initCompiledVisitor() {
+export function initCompiledVisitor(): void {
   // Reset `compiledVisitor` array after previous compilation
   for (let i = 0; i < NODE_TYPES_COUNT; i++) {
     compiledVisitor[i] = null;
@@ -185,10 +196,9 @@ export function initCompiledVisitor() {
 /**
  * Add a visitor to compiled visitor.
  *
- * @param {Object} visitor - Visitor object
- * @returns {undefined}
+ * @param visitor - Visitor object
  */
-export function addVisitorToCompiled(visitor) {
+export function addVisitorToCompiled(visitor: Visitor): void {
   if (visitor === null || typeof visitor !== 'object') {
     throw new TypeError('Visitor returned from `create` method must be an object');
   }
@@ -212,9 +222,11 @@ export function addVisitorToCompiled(visitor) {
     const typeId = NODE_TYPE_IDS_MAP.get(name);
     if (typeId === void 0) throw new Error(`Unknown node type '${name}' in visitor object`);
 
-    const existing = compiledVisitor[typeId];
+    const existing = (compiledVisitor as CompilingVisitor)[typeId];
     if (typeId < LEAF_NODE_TYPES_COUNT) {
       // Leaf node - store just 1 function, not enter+exit pair
+      assertIs<CompilingLeafVisitorEntry>(existing);
+
       if (existing === null) {
         compiledVisitor[typeId] = visitFn;
       } else if (isArray(existing)) {
@@ -230,11 +242,15 @@ export function addVisitorToCompiled(visitor) {
         }
       } else {
         // Same as above, enter visitor is put to front of list to make sure enter is called before exit
-        compiledVisitor[typeId] = isExit ? [existing, visitFn] : [visitFn, existing];
+        (compiledVisitor as CompilingVisitor)[typeId] = isExit
+          ? createVisitFnArray(existing, visitFn)
+          : createVisitFnArray(visitFn, existing);
         mergedLeafVisitorTypeIds.push(typeId);
       }
     } else {
       // Not leaf node - store enter+exit pair
+      assertIs<CompilingNonLeafVisitorEntry>(existing);
+
       if (existing === null) {
         const enterExit = compiledVisitor[typeId] = getEnterExitObject();
         if (isExit) {
@@ -243,7 +259,7 @@ export function addVisitorToCompiled(visitor) {
           enterExit.enter = visitFn;
         }
       } else if (isExit) {
-        let { exit } = existing;
+        const { exit } = existing;
         if (exit === null) {
           existing.exit = visitFn;
         } else if (isArray(exit)) {
@@ -253,7 +269,7 @@ export function addVisitorToCompiled(visitor) {
           mergedExitVisitorTypeIds.push(typeId);
         }
       } else {
-        let { enter } = existing;
+        const { enter } = existing;
         if (enter === null) {
           existing.enter = visitFn;
         } else if (isArray(enter)) {
@@ -280,15 +296,15 @@ export function finalizeCompiledVisitor() {
   // Merge visit functions for node types which have multiple visitors from different rules,
   // or enter+exit functions for leaf nodes
   for (const typeId of mergedLeafVisitorTypeIds) {
-    compiledVisitor[typeId] = mergeVisitFns(compiledVisitor[typeId]);
+    compiledVisitor[typeId] = mergeVisitFns(compiledVisitor[typeId] as unknown as VisitFn[]);
   }
   for (const typeId of mergedEnterVisitorTypeIds) {
-    const enterExit = compiledVisitor[typeId];
-    enterExit.enter = mergeVisitFns(enterExit.enter);
+    const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
+    enterExit.enter = mergeVisitFns(enterExit.enter as VisitFn[]);
   }
   for (const typeId of mergedExitVisitorTypeIds) {
-    const enterExit = compiledVisitor[typeId];
-    enterExit.exit = mergeVisitFns(enterExit.exit);
+    const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
+    enterExit.exit = mergeVisitFns(enterExit.exit as VisitFn[]);
   }
 
   // Reset state, ready for next time
@@ -316,14 +332,14 @@ export function finalizeCompiledVisitor() {
  * `mergers` contains pre-defined functions to merge up to 5 visit functions.
  * Merger functions for merging more than 5 visit functions are created dynamically on demand.
  *
- * @param {Array<function>} visitFns - Array of visit functions
- * @returns {function} - Function which calls all of `visitFns` in turn.
+ * @param visitFns - Array of visit functions
+ * @returns Function which calls all of `visitFns` in turn.
  */
-function mergeVisitFns(visitFns) {
+function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
   const numVisitFns = visitFns.length;
 
   // Get or create merger for merging `numVisitFns` functions
-  let merger;
+  let merger: Merger;
   if (mergers.length <= numVisitFns) {
     while (mergers.length < numVisitFns) {
       mergers.push(null);
@@ -344,13 +360,15 @@ function mergeVisitFns(visitFns) {
   return mergedFn;
 }
 
+type Merger = (...visitFns: VisitFn[]) => VisitFn;
+
 /**
  * Create a merger function that merges `fnCount` functions.
  *
- * @param {number} fnCount - Number of functions to be merged
- * @returns {function} - Function to merge `fnCount` functions
+ * @param fnCount - Number of functions to be merged
+ * @returns Function to merge `fnCount` functions
  */
-function createMerger(fnCount) {
+function createMerger(fnCount: number): Merger {
   const args = [];
   let body = 'return node=>{';
   for (let i = 1; i <= fnCount; i++) {
@@ -359,29 +377,29 @@ function createMerger(fnCount) {
   }
   body += '}';
   args.push(body);
-  return new Function(...args);
+  return new Function(...args) as Merger;
 }
 
 // Pre-defined mergers for merging up to 5 functions
-const mergers = [
+const mergers: (Merger | null)[] = [
   null, // No merger for 0 functions
   null, // No merger for 1 function
-  (visit1, visit2) => node => {
+  (visit1: VisitFn, visit2: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
   },
-  (visit1, visit2, visit3) => node => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);
   },
-  (visit1, visit2, visit3, visit4) => node => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);
     visit4(node);
   },
-  (visit1, visit2, visit3, visit4, visit5) => node => {
+  (visit1: VisitFn, visit2: VisitFn, visit3: VisitFn, visit4: VisitFn, visit5: VisitFn) => (node: Node) => {
     visit1(node);
     visit2(node);
     visit3(node);

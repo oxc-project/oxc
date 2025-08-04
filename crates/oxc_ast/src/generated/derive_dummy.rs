@@ -451,7 +451,7 @@ impl<'a> Dummy<'a> for SimpleAssignmentTarget<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetPattern<'a> {
     /// Create a dummy [`AssignmentTargetPattern`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::ArrayAssignmentTarget(Dummy::dummy(allocator))
     }
@@ -1434,9 +1434,19 @@ impl<'a> Dummy<'a> for WithClause<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            attributes_keyword: Dummy::dummy(allocator),
+            keyword: Dummy::dummy(allocator),
             with_entries: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for WithClauseKeyword {
+    /// Create a dummy [`WithClauseKeyword`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::With
     }
 }
 

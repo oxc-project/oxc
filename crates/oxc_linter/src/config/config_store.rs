@@ -12,7 +12,8 @@ use crate::{
 };
 
 use super::{
-    BuiltinLintPlugins, LintConfig, categories::OxlintCategories, overrides::OxlintOverrides,
+    BuiltinLintPlugins, LintConfig, OxlintEnv, OxlintGlobals, categories::OxlintCategories,
+    overrides::GlobSet,
 };
 
 // TODO: support `categories` et. al. in overrides.
@@ -35,6 +36,38 @@ impl Clone for ResolvedLinterState {
     }
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct ResolvedOxlintOverrides(Vec<ResolvedOxlintOverride>);
+
+impl ResolvedOxlintOverrides {
+    pub(crate) fn new(overrides: Vec<ResolvedOxlintOverride>) -> Self {
+        Self(overrides)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, ResolvedOxlintOverride> {
+        self.0.iter()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedOxlintOverride {
+    pub files: GlobSet,
+    pub env: Option<OxlintEnv>,
+    pub globals: Option<OxlintGlobals>,
+    pub plugins: Option<LintPlugins>,
+    pub rules: ResolvedOxlintOverrideRules,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedOxlintOverrideRules {
+    pub(crate) builtin_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+    pub(crate) external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     /// The basic linter state for this configuration.
@@ -51,7 +84,7 @@ pub struct Config {
     pub(crate) categories: OxlintCategories,
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
-    pub(crate) overrides: OxlintOverrides,
+    pub(crate) overrides: ResolvedOxlintOverrides,
 }
 
 impl Config {
@@ -60,7 +93,7 @@ impl Config {
         mut external_rules: Vec<(ExternalRuleId, AllowWarnDeny)>,
         categories: OxlintCategories,
         config: LintConfig,
-        overrides: OxlintOverrides,
+        overrides: ResolvedOxlintOverrides,
     ) -> Self {
         Config {
             base: ResolvedLinterState {
@@ -96,11 +129,7 @@ impl Config {
         self.base.rules.len()
     }
 
-    pub fn apply_overrides(
-        &self,
-        path: &Path,
-        external_plugin_store: &ExternalPluginStore,
-    ) -> ResolvedLinterState {
+    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
         if self.overrides.is_empty() {
             return self.base.clone();
         }
@@ -152,7 +181,6 @@ impl Config {
             .cloned()
             .collect::<Vec<_>>();
 
-        // TODO(camc314): this should come from the base.
         let mut external_rules = FxHashMap::default();
 
         for override_config in overrides_to_apply {
@@ -168,20 +196,16 @@ impl Config {
                 }
             }
 
-            if !override_config.rules.is_empty() {
-                // TODO(camc314): this needs refactoring such that this call is infallible
-                // note: errors from this FN call can currently only come from custom plugins (unmatched rules)
-                // so it's ok to to have the `unwrap` for now
-                #[expect(clippy::missing_panics_doc)]
-                override_config
-                    .rules
-                    .override_rules(
-                        &mut rules,
-                        &mut external_rules,
-                        &all_rules,
-                        external_plugin_store,
-                    )
-                    .unwrap();
+            for (rule, severity) in &override_config.rules.builtin_rules {
+                if *severity == AllowWarnDeny::Allow {
+                    rules.remove(rule);
+                } else {
+                    rules.insert(rule.clone(), *severity);
+                }
+            }
+
+            for (external_rule_id, severity) in &override_config.rules.external_rules {
+                external_rules.insert(*external_rule_id, *severity);
             }
 
             if let Some(override_env) = &override_config.env {
@@ -269,7 +293,7 @@ impl ConfigStore {
             &self.base
         };
 
-        Config::apply_overrides(resolved_config, path, &self.external_plugin_store)
+        Config::apply_overrides(resolved_config, path)
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
@@ -298,13 +322,16 @@ impl ConfigStore {
 mod test {
     use rustc_hash::{FxHashMap, FxHashSet};
 
-    use super::{ConfigStore, OxlintOverrides};
+    use super::{ConfigStore, ResolvedOxlintOverrides};
     use crate::{
         AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore, LintPlugins, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, categories::OxlintCategories,
-            config_store::Config,
+            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            categories::OxlintCategories,
+            config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
+            overrides::GlobSet,
         },
+        rules::{EslintNoUnusedVars, TypescriptNoExplicitAny},
     };
 
     macro_rules! from_json {
@@ -322,9 +349,12 @@ mod test {
     #[test]
     fn test_no_rules() {
         let base_rules = vec![no_explicit_any()];
-        let overrides: OxlintOverrides = from_json!([{
-            "files": ["*.test.{ts,tsx}"],
-            "rules": {}
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
             Config::new(
@@ -350,10 +380,19 @@ mod test {
     #[test]
     fn test_no_rules_and_new_plugins() {
         let base_rules = vec![no_explicit_any()];
-        let overrides: OxlintOverrides = from_json!([{
-            "files": ["*.test.{ts,tsx}"],
-            "plugins": ["react", "typescript", "unicorn", "oxc", "jsx-a11y"],
-            "rules": {}
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            plugins: Some(LintPlugins::new(
+                BuiltinLintPlugins::REACT
+                    .union(BuiltinLintPlugins::TYPESCRIPT)
+                    .union(BuiltinLintPlugins::UNICORN)
+                    .union(BuiltinLintPlugins::OXC)
+                    .union(BuiltinLintPlugins::JSX_A11Y),
+                FxHashSet::default(),
+            )),
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
             Config::new(
@@ -378,11 +417,18 @@ mod test {
     #[test]
     fn test_remove_rule() {
         let base_rules = vec![no_explicit_any()];
-        let overrides: OxlintOverrides = from_json!([{
-            "files": ["*.test.{ts,tsx}"],
-            "rules": {
-                "@typescript-eslint/no-explicit-any": "off"
-            }
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                    AllowWarnDeny::Allow,
+                )],
+                external_rules: vec![],
+            },
         }]);
 
         let store = ConfigStore::new(
@@ -408,11 +454,18 @@ mod test {
     #[test]
     fn test_add_rule() {
         let base_rules = vec![no_explicit_any()];
-        let overrides = from_json!([{
-            "files": ["src/**/*.{ts,tsx}"],
-            "rules": {
-                "no-unused-vars": "warn"
-            }
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]).unwrap(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+                    AllowWarnDeny::Warn,
+                )],
+                external_rules: vec![],
+            },
         }]);
 
         let store = ConfigStore::new(
@@ -438,11 +491,18 @@ mod test {
     #[test]
     fn test_change_rule_severity() {
         let base_rules = vec![no_explicit_any()];
-        let overrides = from_json!([{
-            "files": ["src/**/*.{ts,tsx}"],
-            "rules": {
-                "no-explicit-any": "error"
-            }
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]).unwrap(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
+                    AllowWarnDeny::Deny,
+                )],
+                external_rules: vec![],
+            },
         }]);
 
         let store = ConfigStore::new(
@@ -476,13 +536,31 @@ mod test {
             globals: OxlintGlobals::default(),
             path: None,
         };
-        let overrides = from_json!([{
-            "files": ["*.jsx", "*.tsx"],
-            "plugins": ["react"],
-        }, {
-            "files": ["*.ts", "*.tsx"],
-            "plugins": ["typescript"],
-        }]);
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.jsx", "*.tsx"]).unwrap(),
+                plugins: Some(LintPlugins::new(BuiltinLintPlugins::REACT, FxHashSet::default())),
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.ts", "*.tsx"]).unwrap(),
+                plugins: Some(LintPlugins::new(
+                    BuiltinLintPlugins::TYPESCRIPT,
+                    FxHashSet::default(),
+                )),
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+        ]);
 
         let store = ConfigStore::new(
             Config::new(vec![], vec![], OxlintCategories::default(), base_config, overrides),
@@ -520,12 +598,12 @@ mod test {
             globals: OxlintGlobals::default(),
             path: None,
         };
-
-        let overrides = from_json!([{
-            "files": ["*.tsx"],
-            "env": {
-                "es2024": true
-            },
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: Some(OxlintEnv::from_iter(["es2024".to_string()])),
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
         let store = ConfigStore::new(
@@ -548,12 +626,12 @@ mod test {
             globals: OxlintGlobals::default(),
             path: None,
         };
-
-        let overrides = from_json!([{
-            "files": ["*.tsx"],
-            "env": {
-                "es2024": false
-            },
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            env: Some(from_json!({ "es2024": false })),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
         let store = ConfigStore::new(
@@ -577,12 +655,12 @@ mod test {
             path: None,
         };
 
-        let overrides = from_json!([{
-            "files": ["*.tsx"],
-            "globals": {
-                "React": "readonly",
-                "Secret": "writeable"
-            },
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            env: None,
+            plugins: None,
+            globals: Some(from_json!({ "React": "readonly", "Secret": "writeable" })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
         let store = ConfigStore::new(
@@ -611,12 +689,12 @@ mod test {
             path: None,
         };
 
-        let overrides = from_json!([{
-            "files": ["*.tsx"],
-            "globals": {
-                "React": "off",
-                "Secret": "off"
-            },
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            env: None,
+            plugins: None,
+            globals: Some(from_json!({ "React": "off", "Secret": "off" })),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
         let store = ConfigStore::new(

@@ -145,7 +145,7 @@ pub fn run() -> Result<(), io::Error> {
 }
 
 fn minify_twice(file: &TestFile, options: Options) -> String {
-    let source_type = SourceType::from_path(&file.file_name).unwrap();
+    let source_type = SourceType::cjs();
     let code1 = minify(&file.source_text, source_type, options);
     let code2 = minify(&code1, source_type, options);
     assert_eq_minified_code(&code1, &code2, &file.file_name);

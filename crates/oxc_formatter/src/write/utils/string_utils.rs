@@ -120,7 +120,7 @@ impl FormatLiteralStringToken<'_> {
     /// The function determines the preferred quote and alternate quote.
     /// The preferred quote is the one that comes from the formatter options. The alternate quote is the other one.
     ///
-    /// We check how many preferred quotes we have inside the content. If this number is greater then the
+    /// We check how many preferred quotes we have inside the content. If this number is greater than the
     /// number alternate quotes that we have inside the content,
     /// then we swap them, so we can reduce the number of escaped quotes.
     ///

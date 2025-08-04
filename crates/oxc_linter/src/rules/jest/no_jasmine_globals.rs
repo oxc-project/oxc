@@ -21,7 +21,14 @@ pub struct NoJasmineGlobals;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule reports on any usage of Jasmine globals, which is not ported to Jest, and suggests alternatives from Jest's own API.
+    /// This rule reports on any usage of Jasmine globals, which is not ported to
+    /// Jest, and suggests alternatives from Jest's own API.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// When migrating from Jasmine to Jest, relying on Jasmine-specific globals
+    /// creates compatibility issues and prevents taking advantage of Jest's
+    /// improved testing features and better error reporting.
     ///
     /// ### Examples
     ///
@@ -29,10 +36,24 @@ declare_oxc_lint!(
     /// ```javascript
     /// jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     /// test('my test', () => {
-    ///     pending();
+    ///   pending();
     /// });
     /// test('my test', () => {
-    ///     jasmine.createSpy();
+    ///   jasmine.createSpy();
+    /// });
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// jest.setTimeout(5000);
+    /// test('my test', () => {
+    ///   // Use test.skip() instead of pending()
+    /// });
+    /// test.skip('my test', () => {
+    ///   // Skipped test
+    /// });
+    /// test('my test', () => {
+    ///   jest.fn(); // Use jest.fn() instead of jasmine.createSpy()
     /// });
     /// ```
     NoJasmineGlobals,

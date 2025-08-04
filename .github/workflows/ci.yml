@@ -6,19 +6,9 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.yml"
-      - "!.github/workflows/ci.yml"
-      - "!.github/actions/clone-submodules/action.yml"
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.yml"
-      - "!.github/workflows/ci.yml"
-      - "!.github/actions/clone-submodules/action.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -161,6 +151,9 @@ jobs:
               - '!editors/**'
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
+        with:
+          babel: false
+          prettier: false
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
@@ -170,6 +163,8 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
+        env:
+          RUN_RAW_TESTS: "true"
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
@@ -189,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@392b78fe18a52790c53f42456e46124f77346842 # v1.34.0
+      - uses: crate-ci/typos@a9ccf76b53d1ace194871d216f9ff058599a86db # v1.35.1
         with:
           files: .
 
