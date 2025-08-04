@@ -45,9 +45,13 @@ pub struct Options {
     #[bpaf(flag(true, false), fallback(false))]
     pub js: bool,
 
-    /// `true` if should do lazy deserialization on JS side
-    #[bpaf(flag(true, false), fallback(false))]
-    pub lazy: bool,
+    /// Visitor to use
+    #[bpaf(argument("STR"), fallback(String::new()))]
+    pub visitor: String,
+
+    /// ID of visitor
+    #[bpaf(argument("INT"), fallback(0))]
+    pub visitor_id: u32,
 
     /// Enable logging
     #[bpaf(flag(true, false), fallback(false))]
@@ -88,11 +92,11 @@ type StartThreads = ThreadsafeFunction<
 /// JS runner function, which runs on a worker thread.
 type Runner = ThreadsafeFunction<
     // Arguments
-    bool, // Whether to use lazy deserialization
+    u32, // Visitor ID
     // Return value
     (),
     // Arguments (repeated)
-    bool,
+    u32,
     // ErrorStatus
     Status,
     // CalleeHandled
@@ -274,7 +278,16 @@ fn parse_options() -> Option<Options> {
 
     let options_parser = options();
     match options_parser.run_inner(&*args) {
-        Ok(options) => Some(options),
+        Ok(mut options) => {
+            options.visitor_id = match options.visitor.as_str() {
+                "" => 0,
+                "empty" => 1,
+                "debugger" => 2,
+                "ident" => 3,
+                _ => panic!("Unknown visitor"),
+            };
+            Some(options)
+        }
         Err(e) => {
             e.print_message(100);
             None
@@ -328,7 +341,7 @@ const BUFFER_SIZE: usize = 2_147_483_616;
 pub unsafe fn register_worker(
     worker_id: u32,
     store_buffer: Function<Uint8Array, ()>,
-    run: Function<bool, ()>,
+    run: Function<u32, ()>,
 ) {
     log!("> Registering worker {worker_id}");
 
@@ -537,7 +550,7 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     let (tx, rx) = channel();
 
     let status = thread_data.run.call_with_return_value(
-        options.lazy,
+        options.visitor_id,
         ThreadsafeFunctionCallMode::NonBlocking,
         move |result, _env| {
             let _ = match &result {

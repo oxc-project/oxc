@@ -12,7 +12,7 @@ const deserialize = require('../../../parser/generated/deserialize/js.js'),
   { TOKEN } = require('../../../parser/raw-transfer/lazy-common.js'),
   walkProgram = require('../../../parser/generated/lazy/walk.js'),
   { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } = require('../../../parser/generated/constants.js'),
-  { NODE_TYPES_COUNT } = require('../../../parser/generated/lazy/types.js');
+  { NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } = require('../../../parser/generated/lazy/types.js');
 
 // ID of this worker
 let workerId;
@@ -45,17 +45,17 @@ export function storeBuffer(uint8Array) {
   buffer.float64 = new Float64Array(arrayBuffer, byteOffset);
 }
 
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true })
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 /**
  * Run workload.
- * @param {boolean} lazy - `true` to do lazy deserialization
+ * @param {number} visitorId - Visitor to use. If 0, use eager deserialization.
  */
-export function workload(lazy) {
-  if (lazy) {
-    workloadLazy();
-  } else {
+export function workload(visitorId) {
+  if (visitorId === 0) {
     workloadEager();
+  } else {
+    workloadLazy(visitorId);
   }
 
   if (log) console.log('> Finished job on JS worker', workerId);
@@ -73,13 +73,38 @@ function workloadEager() {
   deserialize(buffer, sourceText, sourceByteLen);
 }
 
-const compiledVisitor = [];
+const emptyVisitor = [];
 for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
-  compiledVisitor.push(null);
+  emptyVisitor.push(null);
 }
 
-function workloadLazy() {
-  if (log) console.log('> Start job (lazy) on JS worker', workerId);
+const debuggerVisitor = [...emptyVisitor];
+debuggerVisitor[NODE_TYPE_IDS_MAP.get('DebuggerStatement')] = _ident => {};
+
+const identVisitor = [...emptyVisitor];
+identVisitor[NODE_TYPE_IDS_MAP.get('IdentifierName')] = _ident => {};
+identVisitor[NODE_TYPE_IDS_MAP.get('IdentifierReference')] = _ident => console.log([_ident.name]);
+identVisitor[NODE_TYPE_IDS_MAP.get('BindingIdentifier')] = _ident => {};
+identVisitor[NODE_TYPE_IDS_MAP.get('LabelIdentifier')] = _ident => {};
+
+const visitors = [
+  null,
+  emptyVisitor,
+  debuggerVisitor,
+  identVisitor,
+];
+
+const visitorNames = [
+  null,
+  'empty',
+  'debugger',
+  'ident',
+];
+
+function workloadLazy(visitorId) {
+  if (log) {
+    console.log(`> Start job (${visitorNames[visitorId]} visitor) on JS worker`, workerId);
+  }
 
   // TODO
   const { uint32 } = buffer,
@@ -97,5 +122,7 @@ function workloadLazy() {
     token: TOKEN,
   };
 
-  walkProgram(programPos, ast, compiledVisitor);
+  const visitor = visitors[visitorId];
+
+  walkProgram(programPos, ast, visitor);
 }
