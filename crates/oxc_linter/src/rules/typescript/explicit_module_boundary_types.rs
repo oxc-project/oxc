@@ -476,9 +476,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             AstKind::ArrowFunctionExpression(arrow) => self.fns.push(Fn::Arrow(arrow)),
             AstKind::Class(_) => self.fns.push(Fn::None),
             AstKind::ReturnStatement(ret) => {
-                // returns outside of functions are semantic errors
-                let src: &str = self.ctx.source_text();
-                debug_assert!(!self.fns.is_empty(), "{src}");
                 let Some(f) = self.fns.last() else {
                     return;
                 };
@@ -1488,6 +1485,7 @@ mod test {
                 "function ErrorTrackingRules(): JSX.Element { return (<BindLogic><DndContext onDragEnd={({ active, over }) => { /**/ }}></DndContext></BindLogic>); }; export default ErrorTrackingRules;",
                 None,
             ),
+            ("export namespace B{return}", None),
         ];
 
         let fail = vec![
