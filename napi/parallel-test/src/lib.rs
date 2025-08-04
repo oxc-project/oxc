@@ -474,6 +474,22 @@ fn run_workload(options: &Options, files: &[(&str, &str)]) -> bool {
     failures == 0
 }
 
+/// Metadata written to end of buffer.
+///
+/// Copied from `oxc_linter` crate.
+/// Fields re-ordered to match what `#[ast]` macro does.
+#[repr(C)]
+struct RawTransferMetadata {
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u64,
+    /// Offset of `Program` within buffer.
+    /// Note: In `RawTransferMetadata` (in `napi/parser`), this field is offset of `RawTransferData`,
+    /// but here it's offset of `Program`.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+}
+
 /// Run single job on a thread.
 fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
@@ -495,8 +511,16 @@ fn run_job(path: &str, source_text: &str, options: &Options) -> bool {
 
     // Parse source
     let source_type = SourceType::from_path(path).unwrap();
-    let _ret = Parser::new(allocator, source_text, source_type).parse();
-    // let program = ret.program;
+    let program = Parser::new(allocator, source_text, source_type).parse().program;
+    let program = allocator.alloc(program);
+
+    // Write offset of `Program` in metadata at end of buffer
+    let program_offset = ptr::from_ref(program) as u32;
+    let metadata = RawTransferMetadata { data_offset: program_offset, is_ts: false, _padding: 0 };
+    let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
+    // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
+    // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
+    unsafe { metadata_ptr.write(metadata) };
 
     // Run JS `run` function
     if options.duration_js == 0 {
