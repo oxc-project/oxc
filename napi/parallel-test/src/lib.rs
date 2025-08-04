@@ -1,6 +1,6 @@
 use std::{
     cell::Cell,
-    cmp,
+    cmp, env, fs,
     ptr::NonNull,
     sync::{
         atomic::{AtomicU32, Ordering},
@@ -17,9 +17,12 @@ use napi::{
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
-use rayon::iter::ParallelIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use oxc_allocator::{FixedSizeAllocator, free_fixed_size_allocator};
+
+mod files;
+use files::FILES;
 
 /// CLI arguments.
 #[derive(Debug, Clone, Bpaf)]
@@ -250,8 +253,12 @@ pub async unsafe fn run(start_workers: StartThreads) -> bool {
 
     log!("> Initialized {thread_count} workers");
 
+    // Load test files
+    let files = load_test_files();
+    let files = files.iter().map(String::as_str).collect::<Vec<_>>();
+
     // Run workload
-    run_workload(&options);
+    run_workload(&options, &files);
 
     true
 }
@@ -437,16 +444,40 @@ unsafe fn init_rayon_thread_pool(datas_ptr: UnsafePtr<ThreadData>, thread_count:
     }
 }
 
+/// Read test files from disk.
+fn load_test_files() -> Vec<String> {
+    let cwd = env::current_dir().unwrap();
+    let root_path = cwd.parent().unwrap().parent().unwrap();
+
+    FILES
+        .iter()
+        .map(|relative_path| {
+            let path = root_path.join(relative_path);
+            let bytes = fs::read(path).unwrap();
+            simdutf8::basic::from_utf8(&bytes).unwrap();
+            log!("Loaded test file: {relative_path}");
+            // SAFETY: `simdutf8` has ensured it's a valid UTF-8 string
+            unsafe { String::from_utf8_unchecked(bytes) }
+        })
+        .collect()
+}
+
 /// Run workload across all threads.
-fn run_workload(options: &Options) -> bool {
-    let failures =
-        rayon::iter::repeatn((), options.iterations).filter(|()| !run_job(options)).count();
+fn run_workload(options: &Options, files: &[&str]) -> bool {
+    let files_len = files.len();
+    let failures = (0..options.iterations)
+        .into_par_iter()
+        .filter(|iteration| {
+            let source_text = files[iteration % files_len];
+            !run_job(source_text, options)
+        })
+        .count();
 
     failures == 0
 }
 
 /// Run single job on a thread.
-fn run_job(options: &Options) -> bool {
+fn run_job(_source_text: &str, options: &Options) -> bool {
     // SAFETY: Each thread has exclusive access to its `ThreadData`
     let thread_data = unsafe { THREAD_DATA_PTR.get().as_mut() };
 

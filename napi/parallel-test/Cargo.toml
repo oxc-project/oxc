@@ -26,6 +26,7 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 rayon = { workspace = true }
+simdutf8 = { workspace = true }
 
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 
