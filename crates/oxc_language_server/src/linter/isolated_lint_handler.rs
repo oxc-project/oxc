@@ -26,6 +26,7 @@ use super::error_with_position::{
 pub struct IsolatedLintHandlerOptions {
     pub use_cross_module: bool,
     pub root_path: PathBuf,
+    pub tsconfig_path: Option<PathBuf>,
 }
 
 pub struct IsolatedLintHandler {
@@ -68,8 +69,12 @@ impl IsolatedLintHandler {
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
         let linter = Linter::new(lint_options, config_store, None);
-        let lint_service_options = LintServiceOptions::new(options.root_path.clone())
+        let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
+
+        if let Some(tsconfig_path) = &options.tsconfig_path {
+            lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
+        }
 
         let service = LintService::new(linter, AllocatorPool::default(), lint_service_options);
 

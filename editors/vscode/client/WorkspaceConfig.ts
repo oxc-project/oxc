@@ -20,6 +20,14 @@ export interface WorkspaceConfigInterface {
    */
   configPath: string | null;
   /**
+   * typescript config path
+   *
+   * `oxc.tsConfigPath`
+   *
+   * @default null
+   */
+  tsConfigPath: string | null;
+  /**
    * When to run the linter and generate diagnostics
    * `oxc.lint.run`
    *
@@ -47,6 +55,7 @@ export interface WorkspaceConfigInterface {
 
 export class WorkspaceConfig {
   private _configPath: string | null = null;
+  private _tsConfigPath: string | null = null;
   private _runTrigger: Trigger = 'onType';
   private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
   private _flags: Record<string, string> = {};
@@ -66,6 +75,7 @@ export class WorkspaceConfig {
     this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
     this._configPath = this.configuration.get<string | null>('configPath') ||
       (useNestedConfigs ? null : oxlintConfigFileName);
+    this._tsConfigPath = this.configuration.get<string | null>('tsConfigPath') ?? null;
     this._unusedDisableDirectives = this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ??
       'allow';
     this._flags = flags;
@@ -73,6 +83,9 @@ export class WorkspaceConfig {
 
   public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
     if (event.affectsConfiguration(`${ConfigService.namespace}.configPath`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.tsConfigPath`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.lint.run`, this.workspace)) {
@@ -104,9 +117,18 @@ export class WorkspaceConfig {
     return this._configPath;
   }
 
-  updateConfigPath(value: string): PromiseLike<void> {
+  updateConfigPath(value: string | null): PromiseLike<void> {
     this._configPath = value;
     return this.configuration.update('configPath', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
+  get tsConfigPath(): string | null {
+    return this._tsConfigPath;
+  }
+
+  updateTsConfigPath(value: string | null): PromiseLike<void> {
+    this._tsConfigPath = value;
+    return this.configuration.update('tsConfigPath', value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get unusedDisableDirectives(): UnusedDisableDirectives {
@@ -131,6 +153,7 @@ export class WorkspaceConfig {
     return {
       run: this.runTrigger,
       configPath: this.configPath ?? null,
+      tsConfigPath: this.tsConfigPath ?? null,
       unusedDisableDirectives: this.unusedDisableDirectives,
       flags: this.flags,
     };

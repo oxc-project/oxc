@@ -100,7 +100,14 @@ impl ServerLinter {
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
             config_store,
-            &IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
+            &IsolatedLintHandlerOptions {
+                use_cross_module,
+                root_path: root_path.to_path_buf(),
+                tsconfig_path: options
+                    .ts_config_path
+                    .as_ref()
+                    .map(|path| Path::new(path).to_path_buf()),
+            },
         );
 
         Self {
@@ -405,5 +412,17 @@ mod test {
     fn test_root_ignore_patterns() {
         Tester::new("fixtures/linter/root_ignore_patterns", None)
             .test_and_snapshot_single_file("ignored-file.ts");
+    }
+
+    #[test]
+    fn test_ts_alias() {
+        Tester::new(
+            "fixtures/linter/ts_path_alias",
+            Some(Options {
+                ts_config_path: Some("./deep/tsconfig.json".to_string()),
+                ..Default::default()
+            }),
+        )
+        .test_and_snapshot_single_file("deep/src/dep-a.ts");
     }
 }

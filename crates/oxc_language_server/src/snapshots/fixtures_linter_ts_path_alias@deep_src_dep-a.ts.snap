@@ -1,0 +1,15 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/ts_path_alias/deep/src/dep-a.ts
+---
+code: "eslint-plugin-import(no-cycle)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html"
+message: "Dependency cycle detected\nhelp: These paths form a cycle: \n-> @/dep-b - fixtures/linter/ts_path_alias/deep/src/dep-b.ts\n-> ./dep-a.ts - fixtures/linter/ts_path_alias/deep/src/dep-a.ts"
+range: Range { start: Position { line: 1, character: 18 }, end: Position { line: 1, character: 27 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/ts_path_alias/deep/src/dep-a.ts"
+related_information[0].location.range: Range { start: Position { line: 1, character: 18 }, end: Position { line: 1, character: 27 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+fixed: None

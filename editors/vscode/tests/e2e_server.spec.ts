@@ -33,6 +33,7 @@ suiteSetup(async () => {
 
 teardown(async () => {
   await workspace.getConfiguration('oxc').update('flags', undefined);
+  await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.saveAll();
 });
 
@@ -216,6 +217,24 @@ suite('E2E Diagnostics', () => {
 
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
+  testSingleFolderMode('changing oxc.tsConfigPath will revalidate the diagnostics', async () => {
+    await loadFixture('changing_tsconfig_path');
+    const firstDiagnostics = await getDiagnostics('deep/src/dep-a.ts');
+
+    strictEqual(firstDiagnostics.length, 0);
+
+    await workspace.getConfiguration('oxc').update('tsConfigPath', "fixtures/deep/tsconfig.json");
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('deep/src/dep-a.ts');
+    strictEqual(secondDiagnostics.length, 1);
+    assert(typeof secondDiagnostics[0].code == 'object');
+    strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    assert(secondDiagnostics[0].message.startsWith("Dependency cycle detected"));
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
