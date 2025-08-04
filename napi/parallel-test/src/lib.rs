@@ -481,7 +481,7 @@ fn run_workload(options: &Options, files: &[(&str, &str)]) -> bool {
     let files_len = files.len();
     let failures = (0..options.iterations)
         .into_par_iter()
-        .filter(|iteration| {
+        .filter(|&iteration| {
             let (path, source_text) = files[iteration % files_len];
             !run_job(path, source_text, options)
         })
