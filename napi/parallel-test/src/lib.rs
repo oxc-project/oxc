@@ -84,14 +84,13 @@ type StartThreads = ThreadsafeFunction<
 type Runner = ThreadsafeFunction<
     // Arguments
     FnArgs<(
-        u32,  // Thread ID
-        u32,  // Duration to work for
-        bool, // `true` if logging enabled
+        u32, // Thread ID
+        u32, // Duration to work for
     )>,
     // Return value
     (),
     // Arguments (repeated)
-    FnArgs<(u32, u32, bool)>,
+    FnArgs<(u32, u32)>,
     // ErrorStatus
     Status,
     // CalleeHandled
@@ -317,7 +316,7 @@ fn get_thread_count(options: &Options) -> Result<u32, String> {
 /// * Each call to this function must pass a unique `worker_id`.
 #[napi]
 #[allow(clippy::missing_panics_doc, clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub unsafe fn register_worker(worker_id: u32, run: Function<FnArgs<(u32, u32, bool)>, ()>) {
+pub unsafe fn register_worker(worker_id: u32, run: Function<FnArgs<(u32, u32)>, ()>) {
     log!("> Registering worker {worker_id}");
 
     // Wrap `run` in a `ThreadsafeFunction`
@@ -437,7 +436,7 @@ fn run_job(options: &Options) -> bool {
     let (tx, rx) = channel();
 
     let status = thread_data.run.call_with_return_value(
-        FnArgs::from((thread_data.id, options.duration_js, options.log)),
+        FnArgs::from((thread_data.id, options.duration_js)),
         ThreadsafeFunctionCallMode::NonBlocking,
         move |result, _env| {
             let _ = match &result {
