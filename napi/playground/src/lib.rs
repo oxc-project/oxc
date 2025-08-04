@@ -293,6 +293,7 @@ impl Oxc {
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
+            let external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_config = if linter_options.config.is_some() {
@@ -306,13 +307,14 @@ impl Oxc {
                     &mut ExternalPluginStore::default(),
                 )
                 .unwrap_or_default();
-                config_builder.build()
+                config_builder.build(&external_plugin_store)
             } else {
-                ConfigStoreBuilder::default().build()
+                ConfigStoreBuilder::default().build(&external_plugin_store)
             };
+            let lint_config = lint_config.unwrap();
             let linter_ret = Linter::new(
                 LintOptions::default(),
-                ConfigStore::new(lint_config, FxHashMap::default(), ExternalPluginStore::default()),
+                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
                 None,
             )
             .run(path, Rc::clone(&semantic), Arc::clone(module_record), allocator);

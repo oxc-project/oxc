@@ -364,6 +364,13 @@ Found 0 warnings and 6 errors.
 Finished in Xms on 2 files using X threads."
 `;
 
+exports[`oxlint2 CLI > should report an error if a a rule is not found within a custom plugin (via overrides) 1`] = `
+"Failed to build configuration.
+
+  x Rule 'missing' not found in plugin 'basic-custom-plugin'
+"
+`;
+
 exports[`oxlint2 CLI > should report an error if a custom plugin cannot be loaded 1`] = `
 "Failed to parse configuration file.
 
