@@ -29,7 +29,7 @@ struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { array: true, object: true }
+        Self { array: false, object: false }
     }
 }
 
@@ -130,22 +130,22 @@ impl Rule for PreferDestructuring {
                     .get("VariableDeclarator")
                     .and_then(Value::as_object)
                     .map(|conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(true),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(true),
+                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
+                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
                     })
                     .unwrap_or_default();
                 let assign_config = obj
                     .get("AssignmentExpression")
                     .and_then(Value::as_object)
                     .map(|conf| Config {
-                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(true),
-                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(true),
+                        array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
+                        object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
                     })
                     .unwrap_or_default();
                 (var_config, assign_config)
             }
         } else {
-            (Config::default(), Config::default())
+            (Config { array: true, object: true }, Config { array: true, object: true })
         };
 
         Self {
@@ -285,6 +285,23 @@ fn test() {
     let pass = vec![
         ("var [foo] = array;", None),
         ("var { foo } = object;", None),
+        (
+            "a = b.c",
+            Some(
+                serde_json::json!([{ "AssignmentExpression": { "object": false } }, { "enforceForRenamedProperties": true }]),
+            ),
+        ),
+        (
+            "let a = arr[0];",
+            Some(
+                serde_json::json!([{ "AssignmentExpression": { "object": true, "array": true } }]),
+            ),
+        ),
+        (
+            "var a = arr[0];",
+            Some(serde_json::json!([{ "VariableDeclarator": { "object": true } }])),
+        ),
+        ("a = arr[0];", Some(serde_json::json!([{ "AssignmentExpression": { "object": true } }]))),
         ("let a = arr[0];", Some(serde_json::json!([{ "object": true }]))),
         ("var foo;", None),
         (
