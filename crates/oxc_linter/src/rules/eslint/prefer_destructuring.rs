@@ -21,16 +21,10 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 struct Config {
     array: bool,
     object: bool,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self { array: false, object: false }
-    }
 }
 
 #[derive(Debug, Default, Clone)]
