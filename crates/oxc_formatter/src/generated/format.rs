@@ -2012,6 +2012,21 @@ impl<'a> Format<'a> for AstNode<'a, TSImportType<'a>> {
     }
 }
 
+impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.format_leading_comments(f)?;
+        let result = self.write(f);
+        self.format_trailing_comments(f)?;
+        result
+    }
+}
+
 impl<'a> Format<'a> for AstNode<'a, TSFunctionType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;

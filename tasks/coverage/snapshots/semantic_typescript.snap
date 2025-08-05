@@ -2,7 +2,7 @@ commit: 81c95189
 
 semantic_typescript Summary:
 AST Parsed     : 6537/6537 (100.00%)
-Positive Passed: 2828/6537 (43.26%)
+Positive Passed: 2836/6537 (43.38%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -7949,16 +7949,6 @@ Symbol reference IDs mismatch for "x":
 after transform: SymbolId(7): [ReferenceId(5), ReferenceId(7)]
 rebuilt        : SymbolId(4): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse1.ts
-Unresolved references mismatch:
-after transform: ["Id"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse2.ts
-Unresolved references mismatch:
-after transform: ["Id"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNoInvalidCommentReuse3.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["_", "id", "object"]
@@ -8263,16 +8253,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCrossFile2.ts
-Unresolved references mismatch:
-after transform: ["Box"]
-rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTripleSlashReferenceAmbientModule.ts
-Unresolved references mismatch:
-after transform: ["Url"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeAliasWithTypeParameters1.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
@@ -8496,11 +8476,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationsForIn
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationsForInferredTypeFromOtherFile.ts
-Unresolved references mismatch:
-after transform: ["Foo"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationsWithRecursiveInternalTypesProduceUniqueTypeParams.ts
 Scope children mismatch:
@@ -16170,20 +16145,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importTypeTypeofClassStaticLookup.ts
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
 Symbol reference IDs mismatch for "Sub":
 after transform: SymbolId(1): [ReferenceId(1)]
 rebuilt        : SymbolId(1): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/importUsedInGenericImportResolves.ts
-Unresolved references mismatch:
-after transform: ["T", "theme"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
 Symbol flags mismatch for "App":
@@ -18893,7 +18858,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsDocDeclarationEmitDoesNotUseNodeModulesPathWithoutError.ts
 Unresolved references mismatch:
-after transform: ["LionRequestInit"]
+after transform: ["Object"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsEmitIntersectionProperty.ts
@@ -29681,11 +29646,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNamesImportRef.ts
-Unresolved references mismatch:
-after transform: ["InterpolationValue"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNamesRootDir.ts
 Bindings mismatch:
@@ -47392,9 +47352,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResoluti
 Bindings mismatch:
 after transform: ScopeId(0): ["User", "getUser", "user"]
 rebuilt        : ScopeId(0): ["getUser", "user"]
-Unresolved references mismatch:
-after transform: ["User"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/bundler/bundlerDirectoryModule.ts
 Bindings mismatch:
@@ -47420,9 +47377,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResoluti
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["x"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTypeOnlyImport1.ts
 Bindings mismatch:
@@ -47466,17 +47420,11 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModul
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["ImportInterface", "RequireInterface"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["ImportInterface", "RequireInterface"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTripleSlashReferenceModeDeclarationEmit1.ts
 Scope children mismatch:
@@ -49112,9 +49060,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/import/i
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["Bar", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeAmdBundleRewrite.ts
 Scope children mismatch:

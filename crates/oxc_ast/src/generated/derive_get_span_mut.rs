@@ -2026,6 +2026,22 @@ impl GetSpanMut for TSImportType<'_> {
     }
 }
 
+impl GetSpanMut for TSImportTypeQualifier<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for TSImportTypeQualifiedName<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for TSFunctionType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

@@ -2,10 +2,18 @@ commit: 81c95189
 
 estree_typescript Summary:
 AST Parsed     : 8575/8575 (100.00%)
-Positive Passed: 8572/8575 (99.97%)
+Positive Passed: 8568/8575 (99.92%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/importTypeTypeofClassStaticLookup.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeAmbient.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeGenericTypes.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/import/importTypeLocal.ts
 

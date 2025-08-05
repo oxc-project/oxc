@@ -5154,10 +5154,10 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
         walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-        as *mut Option<TSTypeName>)
+        as *mut Option<TSImportTypeQualifier>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeQualifier);
-        walk_ts_type_name(traverser, field as *mut _, ctx);
+        walk_ts_import_type_qualifier(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
@@ -5168,6 +5168,49 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_import_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualifier<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifier<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_import_type_qualifier(&mut *node, ctx);
+    match &mut *node {
+        TSImportTypeQualifier::Identifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSImportTypeQualifier::QualifiedName(node) => {
+            walk_ts_import_type_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_import_type_qualifier(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualified_name<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifiedName<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_import_type_qualified_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeQualifiedNameLeft(
+        ancestor::TSImportTypeQualifiedNameWithoutLeft(node, PhantomData),
+    ));
+    walk_ts_import_type_qualifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT)
+            as *mut TSImportTypeQualifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSImportTypeQualifiedNameRight);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT)
+            as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_import_type_qualified_name(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_function_type<'a, State, Tr: Traverse<'a, State>>(

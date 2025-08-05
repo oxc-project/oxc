@@ -2330,6 +2330,23 @@ impl ContentEq for TSImportType<'_> {
     }
 }
 
+impl ContentEq for TSImportTypeQualifier<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
+            (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for TSImportTypeQualifiedName<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.left, &other.left)
+            && ContentEq::content_eq(&self.right, &other.right)
+    }
+}
+
 impl ContentEq for TSFunctionType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.type_parameters, &other.type_parameters)

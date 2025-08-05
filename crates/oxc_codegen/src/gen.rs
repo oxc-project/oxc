@@ -3491,6 +3491,27 @@ impl Gen for TSImportType<'_> {
     }
 }
 
+impl Gen for TSImportTypeQualifier<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            TSImportTypeQualifier::Identifier(ident) => {
+                p.print_str(ident.name.as_str());
+            }
+            TSImportTypeQualifier::QualifiedName(qualified) => {
+                qualified.print(p, ctx);
+            }
+        }
+    }
+}
+
+impl Gen for TSImportTypeQualifiedName<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        self.left.print(p, ctx);
+        p.print_ascii_byte(b'.');
+        p.print_str(self.right.name.as_str());
+    }
+}
+
 impl Gen for TSTypeParameterInstantiation<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("<");

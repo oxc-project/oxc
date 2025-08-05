@@ -965,6 +965,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_ts_import_type_qualified_name(&mut self, it: &mut TSImportTypeQualifiedName<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_import_type_qualified_name(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_ts_function_type(&mut self, it: &mut TSFunctionType<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_function_type(self, it);

@@ -10486,7 +10486,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSType<'a>
     where
@@ -13665,7 +13665,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSTypeQueryExprName<'a>
     where
@@ -13698,7 +13698,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSImportType<'a>
     where
@@ -13731,7 +13731,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> Box<'a, TSImportType<'a>>
     where
@@ -13742,6 +13742,83 @@ impl<'a> AstBuilder<'a> {
             self.ts_import_type(span, argument, options, qualifier, type_arguments),
             self.allocator,
         )
+    }
+
+    /// Build a [`TSImportTypeQualifier::Identifier`].
+    ///
+    /// This node contains an [`IdentifierName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[inline]
+    pub fn ts_import_type_qualifier_identifier<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> TSImportTypeQualifier<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        TSImportTypeQualifier::Identifier(self.alloc_identifier_name(span, name))
+    }
+
+    /// Build a [`TSImportTypeQualifier::QualifiedName`].
+    ///
+    /// This node contains a [`TSImportTypeQualifiedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_import_type_qualifier_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSImportTypeQualifier<'a> {
+        TSImportTypeQualifier::QualifiedName(
+            self.alloc_ts_import_type_qualified_name(span, left, right),
+        )
+    }
+
+    /// Build a [`TSImportTypeQualifiedName`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ts_import_type_qualified_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_import_type_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSImportTypeQualifiedName<'a> {
+        TSImportTypeQualifiedName { span, left, right }
+    }
+
+    /// Build a [`TSImportTypeQualifiedName`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ts_import_type_qualified_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn alloc_ts_import_type_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> Box<'a, TSImportTypeQualifiedName<'a>> {
+        Box::new_in(self.ts_import_type_qualified_name(span, left, right), self.allocator)
     }
 
     /// Build a [`TSFunctionType`].

@@ -1447,6 +1447,16 @@ const _: () = {
     assert!(offset_of!(TSImportType, qualifier) == 32);
     assert!(offset_of!(TSImportType, type_arguments) == 48);
 
+    assert!(size_of::<TSImportTypeQualifier>() == 16);
+    assert!(align_of::<TSImportTypeQualifier>() == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<TSImportTypeQualifiedName>() == 48);
+    assert!(align_of::<TSImportTypeQualifiedName>() == 8);
+    assert!(offset_of!(TSImportTypeQualifiedName, span) == 0);
+    assert!(offset_of!(TSImportTypeQualifiedName, left) == 8);
+    assert!(offset_of!(TSImportTypeQualifiedName, right) == 24);
+
     // Padding: 4 bytes
     assert!(size_of::<TSFunctionType>() == 48);
     assert!(align_of::<TSFunctionType>() == 8);
@@ -3041,6 +3051,16 @@ const _: () = {
     assert!(offset_of!(TSImportType, options) == 16);
     assert!(offset_of!(TSImportType, qualifier) == 20);
     assert!(offset_of!(TSImportType, type_arguments) == 28);
+
+    assert!(size_of::<TSImportTypeQualifier>() == 8);
+    assert!(align_of::<TSImportTypeQualifier>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<TSImportTypeQualifiedName>() == 32);
+    assert!(align_of::<TSImportTypeQualifiedName>() == 4);
+    assert!(offset_of!(TSImportTypeQualifiedName, span) == 0);
+    assert!(offset_of!(TSImportTypeQualifiedName, left) == 8);
+    assert!(offset_of!(TSImportTypeQualifiedName, right) == 16);
 
     // Padding: 0 bytes
     assert!(size_of::<TSFunctionType>() == 28);

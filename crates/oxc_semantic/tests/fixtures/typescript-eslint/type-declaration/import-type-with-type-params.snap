@@ -32,7 +32,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": [
           {
             "flags": "ReferenceFlags(Type)",
-            "id": 1,
+            "id": 0,
             "name": "Param",
             "node_id": 12
           }

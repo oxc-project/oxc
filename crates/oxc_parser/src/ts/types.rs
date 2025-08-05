@@ -1005,7 +1005,8 @@ impl<'a> ParserImpl<'a> {
         let options =
             if self.eat(Kind::Comma) { Some(self.parse_object_expression()) } else { None };
         self.expect(Kind::RParen);
-        let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()) } else { None };
+        let qualifier =
+            if self.eat(Kind::Dot) { Some(self.parse_ts_import_type_qualifier()) } else { None };
         let type_arguments = self.parse_type_arguments_of_type_reference();
         self.ast.alloc_ts_import_type(
             self.end_span(span),
@@ -1014,6 +1015,20 @@ impl<'a> ParserImpl<'a> {
             qualifier,
             type_arguments,
         )
+    }
+
+    fn parse_ts_import_type_qualifier(&mut self) -> TSImportTypeQualifier<'a> {
+        let span = self.start_span();
+        let ident = self.parse_identifier_name();
+        let mut left = self.ast.ts_import_type_qualifier_identifier(ident.span, ident.name);
+
+        while self.eat(Kind::Dot) {
+            let right = self.parse_identifier_name();
+            left =
+                self.ast.ts_import_type_qualifier_qualified_name(self.end_span(span), left, right);
+        }
+
+        left
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {

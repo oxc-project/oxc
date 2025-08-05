@@ -2509,6 +2509,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.left(), ".", self.right()])
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let type_parameters = self.type_parameters();

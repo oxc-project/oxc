@@ -2217,6 +2217,32 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
+    #[inline]
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            TSImportTypeQualifier::Identifier(inner) => allocator
+                .alloc(AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                })
+                .fmt(f),
+            TSImportTypeQualifier::QualifiedName(inner) => allocator
+                .alloc(AstNode::<TSImportTypeQualifiedName> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                })
+                .fmt(f),
+        }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleReference<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {

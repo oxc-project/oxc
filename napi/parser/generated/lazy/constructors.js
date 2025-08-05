@@ -10650,7 +10650,7 @@ class TSImportType {
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSTypeName(internal.pos + 32, internal.ast);
+    return constructOptionTSImportTypeQualifier(internal.pos + 32, internal.ast);
   }
 
   get typeArguments() {
@@ -10676,6 +10676,69 @@ class TSImportType {
 }
 
 const DebugTSImportType = class TSImportType {};
+
+function constructTSImportTypeQualifier(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return constructBoxIdentifierName(pos + 8, ast);
+    case 1:
+      return constructBoxTSImportTypeQualifiedName(pos + 8, ast);
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSImportTypeQualifier`);
+  }
+}
+
+class TSImportTypeQualifiedName {
+  type = 'TSImportTypeQualifiedName';
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get left() {
+    const internal = this.#internal;
+    return constructTSImportTypeQualifier(internal.pos + 8, internal.ast);
+  }
+
+  get right() {
+    const internal = this.#internal;
+    return new IdentifierName(internal.pos + 24, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: 'TSImportTypeQualifiedName',
+      start: this.start,
+      end: this.end,
+      left: this.left,
+      right: this.right,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSImportTypeQualifiedName.prototype);
+  }
+}
+
+const DebugTSImportTypeQualifiedName = class TSImportTypeQualifiedName {};
 
 class TSFunctionType {
   type = 'TSFunctionType';
@@ -13742,9 +13805,13 @@ function constructOptionBoxObjectExpression(pos, ast) {
   return constructBoxObjectExpression(pos, ast);
 }
 
-function constructOptionTSTypeName(pos, ast) {
-  if (ast.buffer[pos] === 3) return null;
-  return constructTSTypeName(pos, ast);
+function constructOptionTSImportTypeQualifier(pos, ast) {
+  if (ast.buffer[pos] === 2) return null;
+  return constructTSImportTypeQualifier(pos, ast);
+}
+
+function constructBoxTSImportTypeQualifiedName(pos, ast) {
+  return new TSImportTypeQualifiedName(ast.buffer.uint32[pos >> 2], ast);
 }
 
 function constructOptionTSMappedTypeModifierOperator(pos, ast) {
@@ -14074,6 +14141,7 @@ module.exports = {
   TSInferType,
   TSTypeQuery,
   TSImportType,
+  TSImportTypeQualifiedName,
   TSFunctionType,
   TSConstructorType,
   TSMappedType,

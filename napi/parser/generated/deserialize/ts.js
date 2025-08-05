@@ -2009,8 +2009,18 @@ function deserializeTSImportType(pos) {
     type: 'TSImportType',
     argument: deserializeTSType(pos + 8),
     options: deserializeOptionBoxObjectExpression(pos + 24),
-    qualifier: deserializeOptionTSTypeName(pos + 32),
+    qualifier: deserializeOptionTSImportTypeQualifier(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+  };
+}
+
+function deserializeTSImportTypeQualifiedName(pos) {
+  return {
+    type: 'TSImportTypeQualifiedName',
+    left: deserializeTSImportTypeQualifier(pos + 8),
+    right: deserializeIdentifierName(pos + 24),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3881,6 +3891,17 @@ function deserializeTSTypeQueryExprName(pos) {
   }
 }
 
+function deserializeTSImportTypeQualifier(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return deserializeBoxIdentifierName(pos + 8);
+    case 1:
+      return deserializeBoxTSImportTypeQualifiedName(pos + 8);
+    default:
+      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSImportTypeQualifier`);
+  }
+}
+
 function deserializeTSMappedTypeModifierOperator(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -5359,9 +5380,13 @@ function deserializeOptionBoxObjectExpression(pos) {
   return deserializeBoxObjectExpression(pos);
 }
 
-function deserializeOptionTSTypeName(pos) {
-  if (uint8[pos] === 3) return null;
-  return deserializeTSTypeName(pos);
+function deserializeOptionTSImportTypeQualifier(pos) {
+  if (uint8[pos] === 2) return null;
+  return deserializeTSImportTypeQualifier(pos);
+}
+
+function deserializeBoxTSImportTypeQualifiedName(pos) {
+  return deserializeTSImportTypeQualifiedName(uint32[pos >> 2]);
 }
 
 function deserializeOptionTSMappedTypeModifierOperator(pos) {

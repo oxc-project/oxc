@@ -287,35 +287,37 @@ pub(crate) enum AncestorType {
     TSImportTypeOptions = 262,
     TSImportTypeQualifier = 263,
     TSImportTypeTypeArguments = 264,
-    TSFunctionTypeTypeParameters = 265,
-    TSFunctionTypeThisParam = 266,
-    TSFunctionTypeParams = 267,
-    TSFunctionTypeReturnType = 268,
-    TSConstructorTypeTypeParameters = 269,
-    TSConstructorTypeParams = 270,
-    TSConstructorTypeReturnType = 271,
-    TSMappedTypeTypeParameter = 272,
-    TSMappedTypeNameType = 273,
-    TSMappedTypeTypeAnnotation = 274,
-    TSTemplateLiteralTypeQuasis = 275,
-    TSTemplateLiteralTypeTypes = 276,
-    TSAsExpressionExpression = 277,
-    TSAsExpressionTypeAnnotation = 278,
-    TSSatisfiesExpressionExpression = 279,
-    TSSatisfiesExpressionTypeAnnotation = 280,
-    TSTypeAssertionTypeAnnotation = 281,
-    TSTypeAssertionExpression = 282,
-    TSImportEqualsDeclarationId = 283,
-    TSImportEqualsDeclarationModuleReference = 284,
-    TSExternalModuleReferenceExpression = 285,
-    TSNonNullExpressionExpression = 286,
-    DecoratorExpression = 287,
-    TSExportAssignmentExpression = 288,
-    TSNamespaceExportDeclarationId = 289,
-    TSInstantiationExpressionExpression = 290,
-    TSInstantiationExpressionTypeArguments = 291,
-    JSDocNullableTypeTypeAnnotation = 292,
-    JSDocNonNullableTypeTypeAnnotation = 293,
+    TSImportTypeQualifiedNameLeft = 265,
+    TSImportTypeQualifiedNameRight = 266,
+    TSFunctionTypeTypeParameters = 267,
+    TSFunctionTypeThisParam = 268,
+    TSFunctionTypeParams = 269,
+    TSFunctionTypeReturnType = 270,
+    TSConstructorTypeTypeParameters = 271,
+    TSConstructorTypeParams = 272,
+    TSConstructorTypeReturnType = 273,
+    TSMappedTypeTypeParameter = 274,
+    TSMappedTypeNameType = 275,
+    TSMappedTypeTypeAnnotation = 276,
+    TSTemplateLiteralTypeQuasis = 277,
+    TSTemplateLiteralTypeTypes = 278,
+    TSAsExpressionExpression = 279,
+    TSAsExpressionTypeAnnotation = 280,
+    TSSatisfiesExpressionExpression = 281,
+    TSSatisfiesExpressionTypeAnnotation = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSTypeAssertionExpression = 284,
+    TSImportEqualsDeclarationId = 285,
+    TSImportEqualsDeclarationModuleReference = 286,
+    TSExternalModuleReferenceExpression = 287,
+    TSNonNullExpressionExpression = 288,
+    DecoratorExpression = 289,
+    TSExportAssignmentExpression = 290,
+    TSNamespaceExportDeclarationId = 291,
+    TSInstantiationExpressionExpression = 292,
+    TSInstantiationExpressionTypeArguments = 293,
+    JSDocNullableTypeTypeAnnotation = 294,
+    JSDocNonNullableTypeTypeAnnotation = 295,
 }
 
 /// Ancestor type used in AST traversal.
@@ -826,6 +828,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSImportTypeQualifier as u16,
     TSImportTypeTypeArguments(TSImportTypeWithoutTypeArguments<'a, 't>) =
         AncestorType::TSImportTypeTypeArguments as u16,
+    TSImportTypeQualifiedNameLeft(TSImportTypeQualifiedNameWithoutLeft<'a, 't>) =
+        AncestorType::TSImportTypeQualifiedNameLeft as u16,
+    TSImportTypeQualifiedNameRight(TSImportTypeQualifiedNameWithoutRight<'a, 't>) =
+        AncestorType::TSImportTypeQualifiedNameRight as u16,
     TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
         AncestorType::TSFunctionTypeTypeParameters as u16,
     TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a, 't>) =
@@ -1751,6 +1757,14 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_ts_import_type_qualified_name(self) -> bool {
+        matches!(
+            self,
+            Self::TSImportTypeQualifiedNameLeft(_) | Self::TSImportTypeQualifiedNameRight(_)
+        )
+    }
+
+    #[inline]
     pub fn is_ts_function_type(self) -> bool {
         matches!(
             self,
@@ -2155,7 +2169,6 @@ impl<'a, 't> Ancestor<'a, 't> {
             Self::TSTypeReferenceTypeName(_)
                 | Self::TSQualifiedNameLeft(_)
                 | Self::TSClassImplementsExpression(_)
-                | Self::TSImportTypeQualifier(_)
         )
     }
 
@@ -2182,6 +2195,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     #[inline]
     pub fn is_parent_of_ts_type_query_expr_name(self) -> bool {
         matches!(self, Self::TSTypeQueryExprName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_import_type_qualifier(self) -> bool {
+        matches!(self, Self::TSImportTypeQualifier(_) | Self::TSImportTypeQualifiedNameLeft(_))
     }
 
     #[inline]
@@ -2461,6 +2479,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSImportTypeOptions(a) => a.address(),
             Self::TSImportTypeQualifier(a) => a.address(),
             Self::TSImportTypeTypeArguments(a) => a.address(),
+            Self::TSImportTypeQualifiedNameLeft(a) => a.address(),
+            Self::TSImportTypeQualifiedNameRight(a) => a.address(),
             Self::TSFunctionTypeTypeParameters(a) => a.address(),
             Self::TSFunctionTypeThisParam(a) => a.address(),
             Self::TSFunctionTypeParams(a) => a.address(),
@@ -14258,10 +14278,10 @@ impl<'a, 't> TSImportTypeWithoutArgument<'a, 't> {
     }
 
     #[inline]
-    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-                as *const Option<TSTypeName<'a>>)
+                as *const Option<TSImportTypeQualifier<'a>>)
         }
     }
 
@@ -14302,10 +14322,10 @@ impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
     }
 
     #[inline]
-    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-                as *const Option<TSTypeName<'a>>)
+                as *const Option<TSImportTypeQualifier<'a>>)
         }
     }
 
@@ -14398,15 +14418,84 @@ impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+    pub fn qualifier(self) -> &'t Option<TSImportTypeQualifier<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-                as *const Option<TSTypeName<'a>>)
+                as *const Option<TSImportTypeQualifier<'a>>)
         }
     }
 }
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutTypeArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN: usize =
+    offset_of!(TSImportTypeQualifiedName, span);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT: usize =
+    offset_of!(TSImportTypeQualifiedName, left);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT: usize =
+    offset_of!(TSImportTypeQualifiedName, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeQualifiedNameWithoutLeft<'a, 't>(
+    pub(crate) *const TSImportTypeQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t IdentifierName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT)
+                as *const IdentifierName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeQualifiedNameWithoutRight<'a, 't>(
+    pub(crate) *const TSImportTypeQualifiedName<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t TSImportTypeQualifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT)
+                as *const TSImportTypeQualifier<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeQualifiedNameWithoutRight<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

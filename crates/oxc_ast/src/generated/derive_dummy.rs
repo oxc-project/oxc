@@ -2637,6 +2637,28 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for TSImportTypeQualifier<'a> {
+    /// Create a dummy [`TSImportTypeQualifier`].
+    ///
+    /// Has cost of making 1 allocation (24 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Identifier(Dummy::dummy(allocator))
+    }
+}
+
+impl<'a> Dummy<'a> for TSImportTypeQualifiedName<'a> {
+    /// Create a dummy [`TSImportTypeQualifiedName`].
+    ///
+    /// Has cost of making 1 allocation (24 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            span: Dummy::dummy(allocator),
+            left: Dummy::dummy(allocator),
+            right: Dummy::dummy(allocator),
+        }
+    }
+}
+
 impl<'a> Dummy<'a> for TSFunctionType<'a> {
     /// Create a dummy [`TSFunctionType`].
     ///

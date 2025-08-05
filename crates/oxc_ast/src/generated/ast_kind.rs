@@ -183,23 +183,24 @@ pub enum AstType {
     TSInferType = 166,
     TSTypeQuery = 167,
     TSImportType = 168,
-    TSFunctionType = 169,
-    TSConstructorType = 170,
-    TSMappedType = 171,
-    TSTemplateLiteralType = 172,
-    TSAsExpression = 173,
-    TSSatisfiesExpression = 174,
-    TSTypeAssertion = 175,
-    TSImportEqualsDeclaration = 176,
-    TSExternalModuleReference = 177,
-    TSNonNullExpression = 178,
-    Decorator = 179,
-    TSExportAssignment = 180,
-    TSNamespaceExportDeclaration = 181,
-    TSInstantiationExpression = 182,
-    JSDocNullableType = 183,
-    JSDocNonNullableType = 184,
-    JSDocUnknownType = 185,
+    TSImportTypeQualifiedName = 169,
+    TSFunctionType = 170,
+    TSConstructorType = 171,
+    TSMappedType = 172,
+    TSTemplateLiteralType = 173,
+    TSAsExpression = 174,
+    TSSatisfiesExpression = 175,
+    TSTypeAssertion = 176,
+    TSImportEqualsDeclaration = 177,
+    TSExternalModuleReference = 178,
+    TSNonNullExpression = 179,
+    Decorator = 180,
+    TSExportAssignment = 181,
+    TSNamespaceExportDeclaration = 182,
+    TSInstantiationExpression = 183,
+    JSDocNullableType = 184,
+    JSDocNonNullableType = 185,
+    JSDocUnknownType = 186,
 }
 
 /// Untyped AST Node Kind
@@ -388,6 +389,8 @@ pub enum AstKind<'a> {
     TSInferType(&'a TSInferType<'a>) = AstType::TSInferType as u8,
     TSTypeQuery(&'a TSTypeQuery<'a>) = AstType::TSTypeQuery as u8,
     TSImportType(&'a TSImportType<'a>) = AstType::TSImportType as u8,
+    TSImportTypeQualifiedName(&'a TSImportTypeQualifiedName<'a>) =
+        AstType::TSImportTypeQualifiedName as u8,
     TSFunctionType(&'a TSFunctionType<'a>) = AstType::TSFunctionType as u8,
     TSConstructorType(&'a TSConstructorType<'a>) = AstType::TSConstructorType as u8,
     TSMappedType(&'a TSMappedType<'a>) = AstType::TSMappedType as u8,
@@ -595,6 +598,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSInferType(it) => it.span(),
             Self::TSTypeQuery(it) => it.span(),
             Self::TSImportType(it) => it.span(),
+            Self::TSImportTypeQualifiedName(it) => it.span(),
             Self::TSFunctionType(it) => it.span(),
             Self::TSConstructorType(it) => it.span(),
             Self::TSMappedType(it) => it.span(),
@@ -788,6 +792,7 @@ impl GetAddress for AstKind<'_> {
             Self::TSInferType(it) => Address::from_ptr(it),
             Self::TSTypeQuery(it) => Address::from_ptr(it),
             Self::TSImportType(it) => Address::from_ptr(it),
+            Self::TSImportTypeQualifiedName(it) => Address::from_ptr(it),
             Self::TSFunctionType(it) => Address::from_ptr(it),
             Self::TSConstructorType(it) => Address::from_ptr(it),
             Self::TSMappedType(it) => Address::from_ptr(it),
@@ -1661,6 +1666,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_import_type(self) -> Option<&'a TSImportType<'a>> {
         if let Self::TSImportType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_import_type_qualified_name(self) -> Option<&'a TSImportTypeQualifiedName<'a>> {
+        if let Self::TSImportTypeQualifiedName(v) = self { Some(v) } else { None }
     }
 
     #[inline]
