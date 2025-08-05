@@ -150,17 +150,18 @@ impl Context {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum StatementContext {
+    StatementList,
+    TopLevelStatementList,
     If,
     Label,
     Do,
     While,
     With,
     For,
-    StatementList,
 }
 
 impl StatementContext {
     pub(crate) fn is_single_statement(self) -> bool {
-        self != Self::StatementList
+        !matches!(self, Self::StatementList | Self::TopLevelStatementList)
     }
 }

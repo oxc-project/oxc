@@ -36,12 +36,18 @@ impl<'a> ParserImpl<'a> {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
+        let stmt_ctx = if is_top_level {
+            StatementContext::TopLevelStatementList
+        } else {
+            StatementContext::StatementList
+        };
+
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
             }
-            let stmt = self.parse_statement_list_item(StatementContext::StatementList);
+            let stmt = self.parse_statement_list_item(stmt_ctx);
 
             if is_top_level {
                 if let Some(module_decl) = stmt.as_module_declaration() {
