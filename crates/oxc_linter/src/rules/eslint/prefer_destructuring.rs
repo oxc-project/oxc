@@ -9,9 +9,15 @@ use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn prefer_destructuring_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(msg.to_string())
-        .with_help("Use object/array destructuring rather than direct member access.")
+fn prefer_object_destructuring(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use Object destructuring.")
+        .with_help("Use object destructuring rather than direct member access.")
+        .with_label(span)
+}
+
+fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use Array destructuring.")
+        .with_help("Use array destructuring rather than direct member access.")
         .with_label(span)
 }
 
@@ -170,29 +176,20 @@ impl Rule for PreferDestructuring {
                         }
                         if matches!(comp_expr.expression, Expression::NumericLiteral(_)) {
                             if self.assignment_expression.array {
-                                ctx.diagnostic(prefer_destructuring_diagnostic(
-                                    assign_expr.span,
-                                    "Use array destructuring.",
-                                ));
+                                ctx.diagnostic(prefer_array_destructuring(assign_expr.span));
                             }
                         } else {
                             if self.enforce_for_renamed_properties
                                 && self.assignment_expression.object
                             {
-                                ctx.diagnostic(prefer_destructuring_diagnostic(
-                                    assign_expr.span,
-                                    "Use Object destructuring.",
-                                ));
+                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
                             if let Expression::StringLiteral(string_literal) = &comp_expr.expression
                             {
                                 if get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
                                 {
-                                    ctx.diagnostic(prefer_destructuring_diagnostic(
-                                        assign_expr.span,
-                                        "Use Object destructuring.",
-                                    ));
+                                    ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                                 }
                             }
                         }
@@ -203,10 +200,7 @@ impl Rule for PreferDestructuring {
                         if get_target_name(&assign_expr.left)
                             .is_some_and(|name| name == static_expr.property.name.as_str())
                         {
-                            ctx.diagnostic(prefer_destructuring_diagnostic(
-                                assign_expr.span,
-                                "Use Object destructuring.",
-                            ));
+                            ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                         }
                     }
                     _ => {}
@@ -232,29 +226,20 @@ impl Rule for PreferDestructuring {
                             }
                             if matches!(comp_expr.expression, Expression::NumericLiteral(_)) {
                                 if self.variable_declarator.array {
-                                    ctx.diagnostic(prefer_destructuring_diagnostic(
-                                        init.span(),
-                                        "Use array destructuring.",
-                                    ));
+                                    ctx.diagnostic(prefer_array_destructuring(init.span()));
                                 }
                             } else {
                                 if self.enforce_for_renamed_properties
                                     && self.variable_declarator.object
                                 {
-                                    ctx.diagnostic(prefer_destructuring_diagnostic(
-                                        right.span(),
-                                        "Use Object destructuring.",
-                                    ));
+                                    ctx.diagnostic(prefer_object_destructuring(right.span()));
                                 }
                                 if let Expression::StringLiteral(string_literal) =
                                     &comp_expr.expression
                                     && self.variable_declarator.object
                                     && name.is_some_and(|v| v == string_literal.value)
                                 {
-                                    ctx.diagnostic(prefer_destructuring_diagnostic(
-                                        init.span(),
-                                        "Use Object destructuring.",
-                                    ));
+                                    ctx.diagnostic(prefer_object_destructuring(init.span()));
                                 }
                             }
                         }
@@ -262,16 +247,10 @@ impl Rule for PreferDestructuring {
                             if self.variable_declarator.object =>
                         {
                             if self.enforce_for_renamed_properties {
-                                ctx.diagnostic(prefer_destructuring_diagnostic(
-                                    right.span(),
-                                    "Use Object destructuring.",
-                                ));
+                                ctx.diagnostic(prefer_object_destructuring(right.span()));
                             }
                             if name.is_some_and(|name| name == static_expr.property.name.as_str()) {
-                                ctx.diagnostic(prefer_destructuring_diagnostic(
-                                    init.span(),
-                                    "Use Object destructuring.",
-                                ));
+                                ctx.diagnostic(prefer_object_destructuring(init.span()));
                             }
                         }
                         _ => {}
@@ -306,6 +285,7 @@ fn test() {
     let pass = vec![
         ("var [foo] = array;", None),
         ("var { foo } = object;", None),
+        ("let a = arr[0];", Some(serde_json::json!([{ "object": true }]))),
         ("var foo;", None),
         (
             "var foo = object.bar;",
