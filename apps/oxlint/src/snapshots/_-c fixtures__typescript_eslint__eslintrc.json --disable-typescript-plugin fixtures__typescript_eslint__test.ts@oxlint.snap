@@ -23,7 +23,7 @@ working directory:
    `----
 
 Found 1 warning and 1 error.
-Finished in <variable>ms on 1 file with 50 rules using 1 threads.
+Finished in <variable>ms on 1 file with 51 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

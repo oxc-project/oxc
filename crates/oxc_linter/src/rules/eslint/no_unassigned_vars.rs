@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// ```
     NoUnassignedVars,
     eslint,
-    suspicious,
+    correctness,
 );
 
 impl Rule for NoUnassignedVars {
