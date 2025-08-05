@@ -1,8 +1,8 @@
 commit: 81c95189
 
 semantic_typescript Summary:
-AST Parsed     : 6537/6537 (100.00%)
-Positive Passed: 2836/6537 (43.38%)
+AST Parsed     : 6534/6534 (100.00%)
+Positive Passed: 2836/6534 (43.40%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]

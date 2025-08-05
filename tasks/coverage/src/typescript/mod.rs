@@ -219,6 +219,39 @@ static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2458", // An AMD module cannot have multiple name assignments.
     "2459", // Module '"./a"' declares 'bar' locally, but it is not exported.
     "2460", // Module '"./a"' declares 'bar' locally, but it is exported as 'baz'.
+    "2461", // Type 'number' is not an array type.
+    "2467", // A computed property name cannot reference a type parameter from its containing type.
+    "2468", // Cannot find global value 'Promise'.
+    "2469", // The '+' operator cannot be applied to type 'symbol'.
+    "2488", // Type '() => any' must have a '[Symbol.iterator]()' method that returns an iterator.
+    "2490", // The type returned by the 'next()' method of an iterator must have a 'value' property.
+    "2493", // Tuple type '[string, number]' of length '2' has no element at index '2'.
+    "2495", // Type 'MyStringIterator' is not an array type or a string type.
+    "2497", // This module can only be referenced with ECMAScript imports/exports by turning on the 'esModuleInterop' flag and referencing its default export.
+    "2498", // Module '"interface"' uses 'export =' and cannot be used with 'export *'.
+    "2502", // 'foo' is referenced directly or indirectly in its own type annotation.
+    "2503", // Cannot find namespace 'no'.
+    "2504", // Type '{ [Symbol.asyncIterator](_: number): AsyncGenerator<number, void, unknown>; }' must have a '[Symbol.asyncIterator]()' method that returns an async iterator.
+    "2506", // 'C' is referenced directly or indirectly in its own base expression.
+    "2507", // Type 'TFunction' is not a constructor function type.
+    "2508", // No base constructor has the specified number of type arguments.
+    "2509", // Base constructor return type 'never' is not an object type or intersection of object types with statically known members.
+    "2510", // Base constructors must all have the same return type.
+    "2511", // Cannot create an instance of an abstract class.
+    "2512", // Overload signatures must all be abstract or non-abstract.
+    "2513", // Abstract method 'foo' in class 'B' cannot be accessed via super expression.
+    "2514", // A tuple type cannot be indexed with a negative value.
+    "2515", // Non-abstract class 'C' does not implement inherited abstract member next from class 'Iterator<number, undefined, unknown>'.
+    "2516", // All declarations of an abstract method must be consecutive.
+    "2527", // The inferred type of 'A1' references an inaccessible 'unique symbol' type. A type annotation is necessary.
+    "2531", // Object is possibly 'null'.
+    "2532", // Object is possibly 'undefined'.
+    "2533", // Object is possibly 'null' or 'undefined'.
+    "2534", // A function returning 'never' cannot have a reachable end point.
+    "2536", // Type '"0.0"' cannot be used to index type 'T'.
+    "2537", // Type '{ bar: string; }' has no matching index signature for type 'string'.
+    "2538", // Type '[]' cannot be used as an index type.
+    "2540", // Cannot assign to 'ro' because it is a read-only property.
     "2665", // Invalid module name in augmentation. Module 'foo' resolves to an untyped module at '/node_modules/foo/index.js', which cannot be augmented.
     "4023", // Exported variable 'foo' has or is using name 'Foo' from external module "type" but cannot be named.
     "4025", // Exported variable 'b' has or is using private name 'a'.
