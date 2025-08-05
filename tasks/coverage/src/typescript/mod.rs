@@ -62,6 +62,12 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             // These tests just check `let` as variable name under `target:es6`
             "downlevelLetConst6.ts",
             "VariableDeclaration6_es6.ts",
+            // TS2339 should be reported for `.js` file by `checkJs: true`. REPL shows error but here isn't...
+            "privateIdentifierExpando.ts",
+            // We report error but this case does not, since `.js` file with `checkJs: false`
+            "plainJSRedeclare3.ts",
+            // We do not ignore or exclude BOMs
+            "bom-utf16be.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));

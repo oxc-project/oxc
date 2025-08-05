@@ -1380,9 +1380,6 @@ Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 66, end: 67 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
-Invalid Character `￾`
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/booleanFilterAnyArray.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["anys", "foo", "foor", "foos", "realanys", "xs", "ys"]
@@ -48001,12 +47998,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["Partial"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
-Identifier `orbitol` has already been declared
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/salsa/privateIdentifierExpando.ts
-Private identifier '#bar' is not allowed outside class bodies
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType1.ts
 Scope children mismatch:
