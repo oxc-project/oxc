@@ -3032,17 +3032,28 @@ impl Gen for TSTupleType<'_> {
     }
 }
 
+fn parenthesize_check_type_of_conditional_type(ty: &TSType<'_>) -> bool {
+    matches!(
+        ty,
+        TSType::TSFunctionType(_) | TSType::TSConstructorType(_) | TSType::TSConditionalType(_)
+    )
+}
+
 impl Gen for TSUnionType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let Some((first, rest)) = self.types.split_first() else {
             return;
         };
-        first.print(p, ctx);
+        p.wrap(parenthesize_check_type_of_conditional_type(first), |p| {
+            first.print(p, ctx);
+        });
         for item in rest {
             p.print_soft_space();
             p.print_str("|");
             p.print_soft_space();
-            item.print(p, ctx);
+            p.wrap(parenthesize_check_type_of_conditional_type(item), |p| {
+                item.print(p, ctx);
+            });
         }
     }
 }

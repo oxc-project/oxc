@@ -395,8 +395,8 @@ export class ClsWithRequiredInitializedParameter {
 //// [fnDecl.d.ts] ////
 type T = number[];
 export declare function fnDeclBasic1(p: number[] | string[] | [T] | undefined, rParam: string): void;
-export declare function fnDeclBasic2(p: (n: T) => T | undefined, rParam: string): void;
-export declare function fnDeclBasic3(p: new () => any | undefined, rParam: string): void;
+export declare function fnDeclBasic2(p: ((n: T) => T) | undefined, rParam: string): void;
+export declare function fnDeclBasic3(p: (new () => any) | undefined, rParam: string): void;
 export declare function fnDeclBasic4(p: [T] | undefined, rParam: string): void;
 export declare function fnDeclBasic5(p: {
 	a: T;
