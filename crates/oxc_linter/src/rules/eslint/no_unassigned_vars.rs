@@ -60,10 +60,18 @@ impl Rule for NoUnassignedVars {
         if declarator.init.is_some() || declarator.kind.is_const() {
             return;
         }
-        let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(node.id()) else {
+        let parent_node = ctx.nodes().parent_node(node.id());
+        let AstKind::VariableDeclaration(parent) = parent_node.kind() else {
             return;
         };
         if parent.declare {
+            return;
+        }
+        let grand_parent = ctx.nodes().parent_node(parent_node.id());
+        if matches!(
+            grand_parent.kind(),
+            AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+        ) {
             return;
         }
         if ctx
@@ -123,6 +131,7 @@ fn test() {
         					export = x;
         				}
         			",
+        "for (let p of pathToRemove) { p.remove() }",
     ];
 
     let fail = vec![
