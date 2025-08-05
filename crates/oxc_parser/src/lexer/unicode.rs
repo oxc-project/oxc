@@ -37,23 +37,32 @@ impl<'a> Lexer<'a> {
                 self.identifier_tail_after_unicode(start_pos);
                 Kind::Ident
             }
-            c if is_irregular_whitespace(c) => {
-                self.consume_char();
-                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
-                Kind::Skip
-            }
-            c if is_irregular_line_terminator(c) => {
-                self.consume_char();
-                self.token.set_is_on_new_line(true);
-                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
-                Kind::Skip
-            }
-            _ => {
-                self.consume_char();
-                self.error(diagnostics::invalid_character(c, self.unterminated_range()));
-                Kind::Undetermined
-            }
+            c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
+            c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
+            _ => self.handle_invalid_unicode_char(c),
         }
+    }
+
+    #[cold]
+    fn handle_irregular_whitespace(&mut self, _c: char) -> Kind {
+        self.consume_char();
+        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        Kind::Skip
+    }
+
+    #[cold]
+    fn handle_irregular_line_terminator(&mut self, _c: char) -> Kind {
+        self.consume_char();
+        self.token.set_is_on_new_line(true);
+        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+        Kind::Skip
+    }
+
+    #[cold]
+    fn handle_invalid_unicode_char(&mut self, c: char) -> Kind {
+        self.consume_char();
+        self.error(diagnostics::invalid_character(c, self.unterminated_range()));
+        Kind::Undetermined
     }
 
     /// Identifier `UnicodeEscapeSequence`

@@ -375,7 +375,12 @@ impl<'a> Source<'a> {
             unsafe { self.ptr = self.ptr.add(1) };
             return Some(byte as char);
         }
+        self.next_unicode_char(byte)
+    }
 
+    #[expect(clippy::unnecessary_wraps)]
+    #[cold] // Unicode is rare.
+    fn next_unicode_char(&mut self, byte: u8) -> Option<char> {
         // Multi-byte Unicode character.
         // Check invariant that `ptr` is on a UTF-8 character boundary.
         debug_assert!(!is_utf8_cont_byte(byte));
@@ -404,6 +409,12 @@ impl<'a> Source<'a> {
             return Some([byte1 as char, byte2 as char]);
         }
 
+        // Handle Unicode characters
+        self.next_2_unicode_chars(byte1)
+    }
+
+    #[cold] // Unicode is rare.
+    fn next_2_unicode_chars(&mut self, byte1: u8) -> Option<[char; 2]> {
         // Multi-byte Unicode character.
         // Check invariant that `ptr` is on a UTF-8 character boundary.
         debug_assert!(!is_utf8_cont_byte(byte1));
@@ -505,7 +516,12 @@ impl<'a> Source<'a> {
         if byte.is_ascii() {
             return Some(byte as char);
         }
+        self.peek_unicode_char(byte)
+    }
 
+    #[expect(clippy::unnecessary_wraps)]
+    #[cold] // Unicode is rare.
+    fn peek_unicode_char(&self, byte: u8) -> Option<char> {
         // Multi-byte Unicode character.
         // Check invariant that `ptr` is on a UTF-8 character boundary.
         debug_assert!(!is_utf8_cont_byte(byte));
