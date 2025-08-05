@@ -14,7 +14,6 @@ fn no_unassigned_vars_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUnassignedVars;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
