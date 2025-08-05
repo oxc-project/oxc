@@ -21,10 +21,16 @@ fn prefer_array_destructuring(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 struct Config {
     array: bool,
     object: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self { array: true, object: true }
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -120,26 +126,24 @@ impl Rule for PreferDestructuring {
                     Config { array: array.unwrap_or(false), object: object.unwrap_or(false) },
                 )
             } else {
-                let var_config = obj
-                    .get("VariableDeclarator")
-                    .and_then(Value::as_object)
-                    .map(|conf| Config {
+                let var_config = obj.get("VariableDeclarator").and_then(Value::as_object).map_or(
+                    Config { array: false, object: false },
+                    |conf| Config {
                         array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
                         object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    })
-                    .unwrap_or_default();
+                    },
+                );
                 let assign_config = obj
                     .get("AssignmentExpression")
                     .and_then(Value::as_object)
-                    .map(|conf| Config {
+                    .map_or(Config { array: false, object: false }, |conf| Config {
                         array: conf.get("array").and_then(Value::as_bool).unwrap_or(false),
                         object: conf.get("object").and_then(Value::as_bool).unwrap_or(false),
-                    })
-                    .unwrap_or_default();
+                    });
                 (var_config, assign_config)
             }
         } else {
-            (Config { array: true, object: true }, Config { array: true, object: true })
+            (Config::default(), Config::default())
         };
 
         Self {
