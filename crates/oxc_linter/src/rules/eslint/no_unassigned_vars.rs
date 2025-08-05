@@ -5,10 +5,14 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_unassigned_vars_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
-    OxcDiagnostic::warn(msg)
-        .with_help("Variable declared without assignment. Either assign a value or remove the declaration.")
-        .with_label(span)
+fn no_unassigned_vars_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "'{ident_name}' is always 'undefined' because it's never assigned.",
+    ))
+    .with_help(
+        "Variable declared without assignment. Either assign a value or remove the declaration.",
+    )
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -84,11 +88,7 @@ impl Rule for NoUnassignedVars {
             }
         }
         if has_read {
-            let msg = format!(
-                "'{}' is always 'undefined' because it's never assigned.",
-                ident.name.as_str()
-            );
-            ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, msg));
+            ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
         }
     }
 }
