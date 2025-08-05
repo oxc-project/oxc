@@ -164,4 +164,8 @@ impl StatementContext {
     pub(crate) fn is_single_statement(self) -> bool {
         !matches!(self, Self::StatementList | Self::TopLevelStatementList)
     }
+
+    pub(crate) fn is_top_level(self) -> bool {
+        self == Self::TopLevelStatementList
+    }
 }

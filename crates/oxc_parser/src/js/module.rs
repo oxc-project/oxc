@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
@@ -61,7 +61,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 16.2.2 Import Declaration
-    pub(crate) fn parse_import_declaration(&mut self, span: u32) -> Statement<'a> {
+    pub(crate) fn parse_import_declaration(
+        &mut self,
+        span: u32,
+        should_record_module_record: bool,
+    ) -> Statement<'a> {
         let token_after_import = self.cur_token();
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
@@ -186,16 +190,20 @@ impl<'a> ParserImpl<'a> {
         self.asi();
         let span = self.end_span(span);
 
-        self.ast
-            .module_declaration_import_declaration(
-                span,
-                specifiers,
-                source,
-                phase,
-                with_clause,
-                import_kind,
-            )
-            .into()
+        let import_decl = self.ast.alloc_import_declaration(
+            span,
+            specifiers,
+            source,
+            phase,
+            with_clause,
+            import_kind,
+        );
+
+        if should_record_module_record {
+            self.module_record_builder.visit_import_declaration(&import_decl);
+        }
+
+        Statement::ImportDeclaration(import_decl)
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
@@ -322,21 +330,29 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
         start_span: u32,
+        stmt_ctx: StatementContext,
     ) -> Box<'a, TSExportAssignment<'a>> {
         self.expect(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.found_ts_export();
+        }
         self.ast.alloc_ts_export_assignment(self.end_span(start_span), expression)
     }
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
         start_span: u32,
+        stmt_ctx: StatementContext,
     ) -> Box<'a, TSNamespaceExportDeclaration<'a>> {
         self.expect(Kind::As);
         self.expect(Kind::Namespace);
         let id = self.parse_identifier_name();
         self.asi();
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.found_ts_export();
+        }
         self.ast.alloc_ts_namespace_export_declaration(self.end_span(start_span), id)
     }
 
@@ -345,6 +361,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         mut decorators: Vec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         self.bump_any(); // bump `export`
         let decl = match self.cur_kind() {
@@ -352,16 +369,23 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => {
                 let import_span = self.start_span();
                 self.bump_any();
-                let stmt = self.parse_import_declaration(import_span);
+                // Pass `should_record_module_record: false` to prevent an `import` module record
+                // being created. It's an export not an import.
+                let stmt = self.parse_import_declaration(import_span, false);
                 if stmt.is_declaration() {
-                    self.ast.module_declaration_export_named_declaration(
+                    let export_named_decl = self.ast.alloc_export_named_declaration(
                         self.end_span(span),
                         Some(stmt.into_declaration()),
                         self.ast.vec(),
                         None,
                         ImportOrExportKind::Value,
                         NONE,
-                    )
+                    );
+                    if stmt_ctx.is_top_level() {
+                        self.module_record_builder
+                            .visit_export_named_declaration(&export_named_decl);
+                    }
+                    ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
                 } else {
                     return self.fatal_error(diagnostics::unexpected_export(stmt.span()));
                 }
@@ -378,52 +402,56 @@ impl<'a> ParserImpl<'a> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
-                self.ast.module_declaration_export_named_declaration(
+                let export_named_decl = self.ast.alloc_export_named_declaration(
                     self.end_span(span),
                     Some(decl),
                     self.ast.vec(),
                     None,
                     ImportOrExportKind::Value,
                     NONE,
-                )
+                );
+                if stmt_ctx.is_top_level() {
+                    self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+                }
+                ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
-                self.parse_ts_export_assignment_declaration(span),
+                self.parse_ts_export_assignment_declaration(span, stmt_ctx),
             ),
             Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
-                    self.parse_ts_export_namespace(span),
+                    self.parse_ts_export_namespace(span, stmt_ctx),
                 )
             }
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
-                self.parse_export_default_declaration(span, decorators),
+                self.parse_export_default_declaration(span, decorators, stmt_ctx),
             ),
-            Kind::Star => {
-                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(span))
-            }
-            Kind::LCurly => {
-                ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
-            }
+            Kind::Star => ModuleDeclaration::ExportAllDeclaration(
+                self.parse_export_all_declaration(span, stmt_ctx),
+            ),
+            Kind::LCurly => ModuleDeclaration::ExportNamedDeclaration(
+                self.parse_export_named_specifiers(span, stmt_ctx),
+            ),
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
                     Kind::LCurly => ModuleDeclaration::ExportNamedDeclaration(
-                        self.parse_export_named_specifiers(span),
+                        self.parse_export_named_specifiers(span, stmt_ctx),
                     ),
                     // `export type * as ...`
                     Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                        self.parse_export_all_declaration(span),
+                        self.parse_export_all_declaration(span, stmt_ctx),
                     ),
                     _ => ModuleDeclaration::ExportNamedDeclaration(
-                        self.parse_export_named_declaration(span, decorators),
+                        self.parse_export_named_declaration(span, decorators, stmt_ctx),
                     ),
                 }
             }
             _ => ModuleDeclaration::ExportNamedDeclaration(
-                self.parse_export_named_declaration(span, decorators),
+                self.parse_export_named_declaration(span, decorators, stmt_ctx),
             ),
         };
         Statement::from(decl)
@@ -440,7 +468,11 @@ impl<'a> ParserImpl<'a> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self, span: u32) -> Box<'a, ExportNamedDeclaration<'a>> {
+    fn parse_export_named_specifiers(
+        &mut self,
+        span: u32,
+        stmt_ctx: StatementContext,
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.expect(Kind::LCurly);
         let (mut specifiers, _) = self.context(Context::empty(), self.ctx, |p| {
@@ -496,14 +528,18 @@ impl<'a> ParserImpl<'a> {
 
         self.asi();
         let span = self.end_span(span);
-        self.ast.alloc_export_named_declaration(
+        let export_named_decl = self.ast.alloc_export_named_declaration(
             span,
             None,
             specifiers,
             source,
             export_kind,
             with_clause,
-        )
+        );
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+        }
+        export_named_decl
     }
 
     // export Declaration
@@ -511,6 +547,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         decorators: Vec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
         let decl_span = self.start_span();
         let reserved_ctx = self.ctx;
@@ -525,14 +562,18 @@ impl<'a> ParserImpl<'a> {
             ImportOrExportKind::Value
         };
         self.ctx = reserved_ctx;
-        self.ast.alloc_export_named_declaration(
+        let export_named_decl = self.ast.alloc_export_named_declaration(
             self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,
             export_kind,
             NONE,
-        )
+        );
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+        }
+        export_named_decl
     }
 
     // export default HoistableDeclaration[~Yield, +Await, +Default]
@@ -542,12 +583,18 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         decorators: Vec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
         let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        self.ast.alloc_export_default_declaration(span, exported, declaration)
+        let export_default_decl =
+            self.ast.alloc_export_default_declaration(span, exported, declaration);
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.visit_export_default_declaration(&export_default_decl);
+        }
+        export_default_decl
     }
 
     fn parse_export_default_declaration_kind(
@@ -672,7 +719,11 @@ impl<'a> ParserImpl<'a> {
     //   *
     //   * as ModuleExportName
     //   NamedExports
-    fn parse_export_all_declaration(&mut self, span: u32) -> Box<'a, ExportAllDeclaration<'a>> {
+    fn parse_export_all_declaration(
+        &mut self,
+        span: u32,
+        stmt_ctx: StatementContext,
+    ) -> Box<'a, ExportAllDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name());
@@ -681,7 +732,12 @@ impl<'a> ParserImpl<'a> {
         let with_clause = self.parse_import_attributes();
         self.asi();
         let span = self.end_span(span);
-        self.ast.alloc_export_all_declaration(span, exported, source, with_clause, export_kind)
+        let export_all_decl =
+            self.ast.alloc_export_all_declaration(span, exported, source, with_clause, export_kind);
+        if stmt_ctx.is_top_level() {
+            self.module_record_builder.visit_export_all_declaration(&export_all_decl);
+        }
+        export_all_decl
     }
 
     // ImportSpecifier :

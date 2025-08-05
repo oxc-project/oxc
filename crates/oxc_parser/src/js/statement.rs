@@ -49,12 +49,6 @@ impl<'a> ParserImpl<'a> {
             }
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            if is_top_level {
-                if let Some(module_decl) = stmt.as_module_declaration() {
-                    self.module_record_builder.visit_module_declaration(module_decl);
-                }
-            }
-
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
@@ -109,7 +103,9 @@ impl<'a> ParserImpl<'a> {
                 &Modifiers::empty(),
                 self.ast.vec(),
             ),
-            Kind::Export => self.parse_export_declaration(self.start_span(), self.ast.vec()),
+            Kind::Export => {
+                self.parse_export_declaration(self.start_span(), self.ast.vec(), stmt_ctx)
+            }
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -124,7 +120,7 @@ impl<'a> ParserImpl<'a> {
             Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
-            Kind::Import => self.parse_import_statement(),
+            Kind::Import => self.parse_import_statement(stmt_ctx),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(),
@@ -705,7 +701,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse import statement or import expression.
-    fn parse_import_statement(&mut self) -> Statement<'a> {
+    fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         self.bump_any();
@@ -714,7 +710,7 @@ impl<'a> ParserImpl<'a> {
             self.rewind(checkpoint);
             self.parse_expression_or_labeled_statement()
         } else {
-            self.parse_import_declaration(span)
+            self.parse_import_declaration(span, stmt_ctx.is_top_level())
         }
     }
 
@@ -740,7 +736,7 @@ impl<'a> ParserImpl<'a> {
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
-            return self.parse_export_declaration(self.start_span(), decorators);
+            return self.parse_export_declaration(self.start_span(), decorators, stmt_ctx);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {

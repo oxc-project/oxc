@@ -187,27 +187,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.import_metas.push(span);
     }
 
-    pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
-        self.module_record.has_module_syntax = true;
-        match module_decl {
-            ModuleDeclaration::ImportDeclaration(import_decl) => {
-                self.visit_import_declaration(import_decl);
-            }
-            ModuleDeclaration::ExportAllDeclaration(export_all_decl) => {
-                self.visit_export_all_declaration(export_all_decl);
-            }
-            ModuleDeclaration::ExportDefaultDeclaration(export_default_decl) => {
-                self.visit_export_default_declaration(export_default_decl);
-            }
-            ModuleDeclaration::ExportNamedDeclaration(export_named_decl) => {
-                self.visit_export_named_declaration(export_named_decl);
-            }
-            ModuleDeclaration::TSExportAssignment(_)
-            | ModuleDeclaration::TSNamespaceExportDeclaration(_) => { /* noop */ }
-        }
-    }
-
-    fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
+    pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
         let module_request = NameSpan::new(decl.source.value, decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
@@ -250,9 +230,10 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: true,
             },
         );
+        self.module_record.has_module_syntax = true;
     }
 
-    fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
+    pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
         let module_request = NameSpan::new(decl.source.value, decl.source.span);
         let export_entry = ExportEntry {
             statement_span: decl.span,
@@ -281,9 +262,10 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: false,
             },
         );
+        self.module_record.has_module_syntax = true;
     }
 
-    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
+    pub fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         let exported_name = &decl.exported;
 
         let local_name = match &decl.declaration {
@@ -315,9 +297,10 @@ impl<'a> ModuleRecordBuilder<'a> {
             is_type: decl.is_typescript_syntax(),
         };
         self.add_export_entry(export_entry);
+        self.module_record.has_module_syntax = true;
     }
 
-    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+    pub fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         let module_request =
             decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
 
@@ -381,6 +364,12 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
+
+        self.module_record.has_module_syntax = true;
+    }
+
+    pub fn found_ts_export(&mut self) {
+        self.module_record.has_module_syntax = true;
     }
 }
 
