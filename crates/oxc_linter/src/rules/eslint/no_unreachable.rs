@@ -1,10 +1,7 @@
 use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
-    graph::{
-        Direction,
-        visit::{EdgeRef},
-    },
+    graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -80,9 +77,9 @@ impl Rule for NoUnreachable {
             let mut stack = Vec::new();
             let mut visited = FxHashSet::default();
             let mut finished = FxHashSet::default();
-            
+
             stack.push((root.cfg_id(), false)); // (node, is_finishing)
-            
+
             while let Some((node, is_finishing)) = stack.pop() {
                 if is_finishing {
                     if finished.insert(node) {
@@ -94,12 +91,13 @@ impl Rule for NoUnreachable {
                             if let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
                                 use oxc_cfg::EvalConstConditionResult::{Eval, Fail, NotFound};
                                 match instruction {
-                                    Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                                        match nodes.kind(*id) {
-                                            AstKind::BooleanLiteral(lit) => Eval(lit.value),
-                                            _ => Fail,
-                                        }
-                                    }
+                                    Instruction {
+                                        kind: InstructionKind::Condition,
+                                        node_id: Some(id),
+                                    } => match nodes.kind(*id) {
+                                        AstKind::BooleanLiteral(lit) => Eval(lit.value),
+                                        _ => Fail,
+                                    },
                                     _ => NotFound,
                                 }
                             }) {
@@ -110,13 +108,14 @@ impl Rule for NoUnreachable {
                 } else if visited.insert(node) {
                     // Push the finish event for this node (will be processed after children)
                     stack.push((node, true));
-                    
+
                     // Push all neighbors for exploration (in reverse order to match DFS order)
-                    let mut neighbors: Vec<_> = graph.edges_directed(node, Direction::Outgoing)
+                    let mut neighbors: Vec<_> = graph
+                        .edges_directed(node, Direction::Outgoing)
                         .map(|edge| edge.target())
                         .collect();
                     neighbors.reverse(); // Reverse to maintain DFS order when popping from stack
-                    
+
                     for target in neighbors {
                         if !visited.contains(&target) {
                             stack.push((target, false));
@@ -143,7 +142,7 @@ impl Rule for NoUnreachable {
             {
                 let mut queue = VecDeque::from(starts);
                 let mut visited = FxHashSet::default();
-                
+
                 while let Some(node) = queue.pop_front() {
                     if visited.insert(node) {
                         // This is equivalent to the DfsEvent::Discover event
@@ -170,14 +169,14 @@ impl Rule for NoUnreachable {
                             }
                             _ => false,
                         });
-                        
+
                         if should_prune {
                             // We prune this branch if it is reachable from this point forward.
                             continue;
                         } else {
                             // Otherwise we set it to unreachable and continue.
                             unreachables[node.index()] = true;
-                            
+
                             // Add neighbors to the queue
                             for edge in graph.edges_directed(node, Direction::Outgoing) {
                                 let target = edge.target();
