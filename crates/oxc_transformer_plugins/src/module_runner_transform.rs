@@ -550,7 +550,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
+        let ExportDefaultDeclaration { span, declaration } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {

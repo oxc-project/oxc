@@ -987,7 +987,7 @@ function deserializeExportNamedDeclaration(pos) {
 function deserializeExportDefaultDeclaration(pos) {
   return {
     type: 'ExportDefaultDeclaration',
-    declaration: deserializeExportDefaultDeclarationKind(pos + 64),
+    declaration: deserializeExportDefaultDeclarationKind(pos + 8),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };

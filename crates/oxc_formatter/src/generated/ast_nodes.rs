@@ -8972,17 +8972,6 @@ impl<'a> GetSpan for AstNode<'a, ExportNamedDeclaration<'a>> {
 
 impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
     #[inline]
-    pub fn exported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
-        let following_node = Some(SiblingNode::from(&self.inner.declaration));
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.exported,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
-            following_node,
-        })
-    }
-
-    #[inline]
     pub fn declaration(&self) -> &AstNode<'a, ExportDefaultDeclarationKind<'a>> {
         let following_node = self.following_node;
         self.allocator.alloc(AstNode {

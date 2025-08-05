@@ -1493,11 +1493,7 @@ impl<'a> Dummy<'a> for ExportDefaultDeclaration<'a> {
     ///
     /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            exported: Dummy::dummy(allocator),
-            declaration: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), declaration: Dummy::dummy(allocator) }
     }
 }
 

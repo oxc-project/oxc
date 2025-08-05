@@ -2607,8 +2607,6 @@ pub struct ExportNamedDeclaration<'a> {
 #[estree(add_fields(exportKind = TsValue))]
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
-    #[estree(skip)]
-    pub exported: ModuleExportName<'a>, // the `default` Keyword
     pub declaration: ExportDefaultDeclarationKind<'a>,
 }
 

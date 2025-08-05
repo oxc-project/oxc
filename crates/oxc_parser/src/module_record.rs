@@ -265,9 +265,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.has_module_syntax = true;
     }
 
-    pub fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
-        let exported_name = &decl.exported;
-
+    pub fn visit_export_default_declaration(
+        &mut self,
+        decl: &ExportDefaultDeclaration<'a>,
+        default_keyword_span: Span,
+    ) {
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
                 ExportLocalName::Default(NameSpan::new(ident.name, ident.span))
@@ -292,7 +294,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             span: decl.declaration.span(),
             module_request: None,
             import_name: ExportImportName::default(),
-            export_name: ExportExportName::Default(exported_name.span()),
+            export_name: ExportExportName::Default(default_keyword_span),
             local_name,
             is_type: decl.is_typescript_syntax(),
         };

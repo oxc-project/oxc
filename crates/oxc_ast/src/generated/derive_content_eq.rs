@@ -1360,8 +1360,7 @@ impl ContentEq for ExportNamedDeclaration<'_> {
 
 impl ContentEq for ExportDefaultDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.exported, &other.exported)
-            && ContentEq::content_eq(&self.declaration, &other.declaration)
+        ContentEq::content_eq(&self.declaration, &other.declaration)
     }
 }
 

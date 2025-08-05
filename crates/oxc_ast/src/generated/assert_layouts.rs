@@ -818,11 +818,10 @@ const _: () = {
     assert!(offset_of!(ExportNamedDeclaration, with_clause) == 96);
 
     // Padding: 0 bytes
-    assert!(size_of::<ExportDefaultDeclaration>() == 80);
+    assert!(size_of::<ExportDefaultDeclaration>() == 24);
     assert!(align_of::<ExportDefaultDeclaration>() == 8);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 64);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<ExportAllDeclaration>() == 128);
@@ -2423,11 +2422,10 @@ const _: () = {
     assert!(offset_of!(ExportNamedDeclaration, with_clause) == 60);
 
     // Padding: 0 bytes
-    assert!(size_of::<ExportDefaultDeclaration>() == 48);
+    assert!(size_of::<ExportDefaultDeclaration>() == 16);
     assert!(align_of::<ExportDefaultDeclaration>() == 4);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 40);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
 
     // Padding: 3 bytes
     assert!(size_of::<ExportAllDeclaration>() == 76);

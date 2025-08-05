@@ -585,14 +585,14 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
         stmt_ctx: StatementContext,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        let exported = self.parse_keyword_identifier(Kind::Default);
+        let default_keyword_span = self.cur_token().span();
+        self.bump_remap(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
-        let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        let export_default_decl =
-            self.ast.alloc_export_default_declaration(span, exported, declaration);
+        let export_default_decl = self.ast.alloc_export_default_declaration(span, declaration);
         if stmt_ctx.is_top_level() {
-            self.module_record_builder.visit_export_default_declaration(&export_default_decl);
+            self.module_record_builder
+                .visit_export_default_declaration(&export_default_decl, default_keyword_span);
         }
         export_default_decl
     }

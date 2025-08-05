@@ -7181,20 +7181,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
-        ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
-            span,
-            exported,
-            declaration,
-        ))
+        ModuleDeclaration::ExportDefaultDeclaration(
+            self.alloc_export_default_declaration(span, declaration),
+        )
     }
 
     /// Build a [`ModuleDeclaration::ExportNamedDeclaration`].
@@ -7839,16 +7835,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, exported, declaration }
+        ExportDefaultDeclaration { span, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7858,16 +7852,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
+        Box::new_in(self.export_default_declaration(span, declaration), self.allocator)
     }
 
     /// Build an [`ExportAllDeclaration`].

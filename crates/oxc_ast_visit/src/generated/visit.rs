@@ -2811,7 +2811,6 @@ pub mod walk {
         let kind = AstKind::ExportDefaultDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_module_export_name(&it.exported);
         visitor.visit_export_default_declaration_kind(&it.declaration);
         visitor.leave_node(kind);
     }

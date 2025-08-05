@@ -5965,7 +5965,7 @@ class ExportDefaultDeclaration {
 
   get declaration() {
     const internal = this.#internal;
-    return constructExportDefaultDeclarationKind(internal.pos + 64, internal.ast);
+    return constructExportDefaultDeclarationKind(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
