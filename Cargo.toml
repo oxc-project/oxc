@@ -198,7 +198,6 @@ itoa = "1.0.15"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy-regex = "3.4.1"
-lazy_static = "1.5.0"
 log = "0.4.27"
 markdown = "1.0.0"
 memchr = "2.7.5"
@@ -236,7 +235,7 @@ ureq = { version = "3.0.12", default-features = false }
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "prettyplease", "lazy_static"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "prettyplease"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
