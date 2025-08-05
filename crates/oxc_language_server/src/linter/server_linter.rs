@@ -178,10 +178,11 @@ impl ServerLinter {
         for entry in walk {
             let ignore_file_path = entry.path();
             let path_str = ignore_file_path.to_string_lossy();
-            
+
             // Check if this file matches any of our ignore patterns
-            let is_ignore_file = ignore_patterns.iter().any(|pattern| glob_match(pattern, path_str.as_ref()));
-            
+            let is_ignore_file =
+                ignore_patterns.iter().any(|pattern| glob_match(pattern, path_str.as_ref()));
+
             if !is_ignore_file {
                 continue;
             }

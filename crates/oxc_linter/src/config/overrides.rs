@@ -6,7 +6,7 @@ use std::{
 
 use fast_glob::glob_match;
 use schemars::{JsonSchema, r#gen, schema::Schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
@@ -109,9 +109,7 @@ pub struct GlobSet {
 }
 
 impl GlobSet {
-    pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(
-        patterns: I,
-    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(patterns: I) -> Self {
         let patterns = patterns.into_iter();
         let size_hint = patterns.size_hint();
 
@@ -125,7 +123,7 @@ impl GlobSet {
             raw.push(pattern.to_string());
         }
 
-        Ok(Self { raw })
+        Self { raw }
     }
 
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
@@ -135,16 +133,16 @@ impl GlobSet {
             if glob_match(pattern, path_str.as_ref()) {
                 return true;
             }
-            
-            // For patterns that don't start with ** and don't contain /, 
+
+            // For patterns that don't start with ** and don't contain /,
             // also try matching with **/ prefix to be compatible with globset behavior
             if !pattern.starts_with("**/") && !pattern.contains('/') {
-                let prefixed_pattern = format!("**/{}", pattern);
+                let prefixed_pattern = format!("**/{pattern}");
                 if glob_match(&prefixed_pattern, path_str.as_ref()) {
                     return true;
                 }
             }
-            
+
             false
         })
     }
@@ -165,7 +163,7 @@ impl Serialize for GlobSet {
 impl<'de> Deserialize<'de> for GlobSet {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let globs = Vec::<String>::deserialize(deserializer)?;
-        Self::new(globs).map_err(de::Error::custom)
+        Ok(Self::new(globs))
     }
 }
 

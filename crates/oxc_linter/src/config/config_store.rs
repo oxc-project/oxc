@@ -351,7 +351,7 @@ mod test {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
-            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
@@ -382,7 +382,7 @@ mod test {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
-            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: Some(LintPlugins::new(
                 BuiltinLintPlugins::REACT
                     .union(BuiltinLintPlugins::TYPESCRIPT)
@@ -419,7 +419,7 @@ mod test {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
-            files: GlobSet::new(vec!["*.test.{ts,tsx}"]).unwrap(),
+            files: GlobSet::new(vec!["*.test.{ts,tsx}"]),
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules {
@@ -456,7 +456,7 @@ mod test {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
-            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]).unwrap(),
+            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules {
@@ -493,7 +493,7 @@ mod test {
         let base_rules = vec![no_explicit_any()];
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: None,
-            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]).unwrap(),
+            files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules {
@@ -539,7 +539,7 @@ mod test {
         let overrides = ResolvedOxlintOverrides::new(vec![
             ResolvedOxlintOverride {
                 env: None,
-                files: GlobSet::new(vec!["*.jsx", "*.tsx"]).unwrap(),
+                files: GlobSet::new(vec!["*.jsx", "*.tsx"]),
                 plugins: Some(LintPlugins::new(BuiltinLintPlugins::REACT, FxHashSet::default())),
                 globals: None,
                 rules: ResolvedOxlintOverrideRules {
@@ -549,7 +549,7 @@ mod test {
             },
             ResolvedOxlintOverride {
                 env: None,
-                files: GlobSet::new(vec!["*.ts", "*.tsx"]).unwrap(),
+                files: GlobSet::new(vec!["*.ts", "*.tsx"]),
                 plugins: Some(LintPlugins::new(
                     BuiltinLintPlugins::TYPESCRIPT,
                     FxHashSet::default(),
@@ -600,7 +600,7 @@ mod test {
         };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: Some(OxlintEnv::from_iter(["es2024".to_string()])),
-            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            files: GlobSet::new(vec!["*.tsx"]),
             plugins: None,
             globals: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
@@ -627,7 +627,7 @@ mod test {
             path: None,
         };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            files: GlobSet::new(vec!["*.tsx"]),
             env: Some(from_json!({ "es2024": false })),
             plugins: None,
             globals: None,
@@ -656,7 +656,7 @@ mod test {
         };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            files: GlobSet::new(vec!["*.tsx"]),
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "readonly", "Secret": "writeable" })),
@@ -690,7 +690,7 @@ mod test {
         };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
-            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            files: GlobSet::new(vec!["*.tsx"]),
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "off", "Secret": "off" })),

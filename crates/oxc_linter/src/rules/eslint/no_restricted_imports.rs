@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use std::borrow::Cow;
 
 use fast_glob::glob_match;
@@ -878,12 +879,12 @@ impl RestrictedPattern {
 
             // Handle case sensitivity manually since fast-glob doesn't have this option
             let (pattern_to_use, name_to_use) = if case_insensitive {
-                (pat.to_lowercase(), name.to_lowercase())
+                (CowUtils::cow_to_lowercase(pat.as_str()), CowUtils::cow_to_lowercase(name))
             } else {
-                (pat, name.to_string())
+                (pat.into(), name.into())
             };
 
-            if glob_match(&pattern_to_use, &name_to_use) {
+            if glob_match(pattern_to_use.as_ref(), name_to_use.as_ref()) {
                 decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
             }
         }

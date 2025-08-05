@@ -28,8 +28,8 @@ oxc_linter = { workspace = true, features = ["language_server"] }
 
 #
 env_logger = { workspace = true, features = ["humantime"] }
-futures = { workspace = true }
 fast-glob = { workspace = true }
+futures = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 log = { workspace = true }
 papaya = { workspace = true }

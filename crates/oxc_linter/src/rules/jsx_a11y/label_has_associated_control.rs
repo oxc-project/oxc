@@ -178,7 +178,8 @@ impl Rule for LabelHasAssociatedControl {
         if let Some(control_components_config) =
             options.get("controlComponents").and_then(serde_json::Value::as_array)
         {
-            for component in control_components_config.iter().filter_map(serde_json::Value::as_str) {
+            for component in control_components_config.iter().filter_map(serde_json::Value::as_str)
+            {
                 control_components.push(component.into());
             }
         }
@@ -361,9 +362,7 @@ impl LabelHasAssociatedControl {
 
                 if element.children.is_empty() {
                     let name = get_element_type(ctx, &element.opening_element);
-                    if is_react_component_name(&name)
-                        && !self.is_control_component(&name)
-                    {
+                    if is_react_component_name(&name) && !self.is_control_component(&name) {
                         return true;
                     }
                 }
