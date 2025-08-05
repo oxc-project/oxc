@@ -1,0 +1,88 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unassigned-vars): 'x' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let x; let a = x, b; log(x, a, b);
+   ·     ─
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'b' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:19]
+ 1 │ let x; let a = x, b; log(x, a, b);
+   ·                   ─
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'one' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:28]
+ 1 │ const foo = (two) => { let one; if (one === two) {} }
+   ·                            ───
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'user' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let user; greet(user);
+   ·     ────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'error' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:23]
+ 1 │ function test() { let error; return error || 'Unknown error'; }
+   ·                       ─────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'options' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let options; const { debug } = options || {};
+   ·     ───────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'flag' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let flag; while (!flag) { }
+   ·     ────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'config' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let config; function init() { return config?.enabled; }
+   ·     ──────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'x' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let x: number; log(x);
+   ·     ─────────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'x' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:5]
+ 1 │ let x: number | undefined; log(x);
+   ·     ─────────────────────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'one' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:1:42]
+ 1 │ const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }
+   ·                                          ───────────────────────
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
+
+  ⚠ eslint(no-unassigned-vars): 'y' is always 'undefined' because it's never assigned.
+   ╭─[no_unassigned_vars.tsx:5:12]
+ 4 │                             }
+ 5 │                             let y: string;
+   ·                                 ─────────
+ 6 │                             console.log(y);
+   ╰────
+  help: Variable declared without assignment. Either assign a value or remove the declaration.
