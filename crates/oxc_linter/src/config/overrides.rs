@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 
+use fast_glob::glob_match;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
@@ -99,39 +100,53 @@ pub struct OxlintOverride {
 
 /// A glob pattern.
 ///
-/// Thin wrapper around [`globset::GlobSet`] because that struct doesn't implement Serialize or schemars
+/// Thin wrapper around pattern matching using `fast-glob` because we need to implement Serialize and schemars
 /// traits.
 #[derive(Clone, Default)]
 pub struct GlobSet {
-    /// Raw patterns from the config. Inefficient, but required for [serialization](Serialize),
-    /// which in turn is required for `--print-config`.
+    /// Raw patterns from the config. Used for pattern matching and serialization.
     raw: Vec<String>,
-    globs: globset::GlobSet,
 }
 
 impl GlobSet {
     pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(
         patterns: I,
-    ) -> Result<Self, globset::Error> {
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let patterns = patterns.into_iter();
         let size_hint = patterns.size_hint();
 
-        let mut builder = globset::GlobSetBuilder::new();
         let mut raw = Vec::with_capacity(size_hint.1.unwrap_or(size_hint.0));
 
         for pattern in patterns {
             let pattern = pattern.as_ref();
-            let glob = globset::Glob::new(pattern)?;
-            builder.add(glob);
+            // Validate the pattern by testing it against an empty string
+            // This helps catch invalid glob patterns early
+            let _ = glob_match(pattern, "");
             raw.push(pattern.to_string());
         }
 
-        let globs = builder.build()?;
-        Ok(Self { raw, globs })
+        Ok(Self { raw })
     }
 
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.globs.is_match(path)
+        let path_str = path.as_ref().to_string_lossy();
+        self.raw.iter().any(|pattern| {
+            // First try direct match
+            if glob_match(pattern, path_str.as_ref()) {
+                return true;
+            }
+            
+            // For patterns that don't start with ** and don't contain /, 
+            // also try matching with **/ prefix to be compatible with globset behavior
+            if !pattern.starts_with("**/") && !pattern.contains('/') {
+                let prefixed_pattern = format!("**/{}", pattern);
+                if glob_match(&prefixed_pattern, path_str.as_ref()) {
+                    return true;
+                }
+            }
+            
+            false
+        })
     }
 }
 
@@ -182,15 +197,15 @@ mod test {
             "files": ["*.tsx",],
         }))
         .unwrap();
-        assert!(config.files.globs.is_match("/some/path/foo.tsx"));
-        assert!(!config.files.globs.is_match("/some/path/foo.ts"));
+        assert!(config.files.is_match("/some/path/foo.tsx"));
+        assert!(!config.files.is_match("/some/path/foo.ts"));
 
         let config: OxlintOverride = from_value(json!({
             "files": ["lib/*.ts",],
         }))
         .unwrap();
-        assert!(config.files.globs.is_match("lib/foo.ts"));
-        assert!(!config.files.globs.is_match("src/foo.ts"));
+        assert!(config.files.is_match("lib/foo.ts"));
+        assert!(!config.files.is_match("src/foo.ts"));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use globset::{Glob, GlobSet, GlobSetBuilder};
+use fast_glob::glob_match;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -21,7 +21,7 @@ pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnassignedImportConfig {
-    globs: GlobSet,
+    patterns: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoUnassignedImport {
@@ -71,16 +71,8 @@ declare_oxc_lint!(
     suspicious,
 );
 
-fn build_globset(patterns: Vec<CompactStr>) -> Result<GlobSet, globset::Error> {
-    if patterns.is_empty() {
-        return Ok(GlobSet::empty());
-    }
-    let mut builder = GlobSetBuilder::new();
-    for pattern in patterns {
-        let pattern_str = pattern.as_str();
-        builder.add(Glob::new(pattern_str)?);
-    }
-    builder.build()
+fn is_pattern_match(patterns: &[CompactStr], path: &str) -> bool {
+    patterns.iter().any(|pattern| glob_match(pattern.as_str(), path))
 }
 
 impl Rule for NoUnassignedImport {
@@ -91,7 +83,7 @@ impl Rule for NoUnassignedImport {
             .and_then(Value::as_array)
             .map(|v| v.iter().filter_map(Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
-        Self(Box::new(NoUnassignedImportConfig { globs: build_globset(allow).unwrap_or_default() }))
+        Self(Box::new(NoUnassignedImportConfig { patterns: allow }))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -100,7 +92,7 @@ impl Rule for NoUnassignedImport {
                     return;
                 }
                 let source_str = import_decl.source.value.as_str();
-                if !self.globs.is_match(source_str) {
+                if !is_pattern_match(&self.patterns, source_str) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         import_decl.span,
                         "Imported module should be assigned",
@@ -118,7 +110,7 @@ impl Rule for NoUnassignedImport {
                 let Argument::StringLiteral(source_str) = first_arg else {
                     return;
                 };
-                if !self.globs.is_match(source_str.value.as_str()) {
+                if !is_pattern_match(&self.patterns, source_str.value.as_str()) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         call_expr.span,
                         "A `require()` style import is forbidden.",

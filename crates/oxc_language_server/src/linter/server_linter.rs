@@ -1,7 +1,7 @@
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
-use globset::Glob;
+use fast_glob::glob_match;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
@@ -165,12 +165,7 @@ impl ServerLinter {
     }
 
     fn create_ignore_glob(root_path: &Path, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
-        let mut builder = globset::GlobSetBuilder::new();
-        // Collecting all ignore files
-        builder.add(Glob::new("**/.eslintignore").unwrap());
-        builder.add(Glob::new("**/.gitignore").unwrap());
-
-        let ignore_file_glob_set = builder.build().unwrap();
+        let ignore_patterns = ["**/.eslintignore", "**/.gitignore"];
 
         let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
@@ -182,7 +177,12 @@ impl ServerLinter {
         let mut gitignore_globs = vec![];
         for entry in walk {
             let ignore_file_path = entry.path();
-            if !ignore_file_glob_set.is_match(ignore_file_path) {
+            let path_str = ignore_file_path.to_string_lossy();
+            
+            // Check if this file matches any of our ignore patterns
+            let is_ignore_file = ignore_patterns.iter().any(|pattern| glob_match(pattern, path_str.as_ref()));
+            
+            if !is_ignore_file {
                 continue;
             }
 

@@ -1974,8 +1974,8 @@ name = "oxc_language_server"
 version = "1.9.0"
 dependencies = [
  "env_logger",
+ "fast-glob",
  "futures",
- "globset",
  "ignore",
  "insta",
  "log",
@@ -1999,7 +1999,6 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
- "globset",
  "icu_segmenter",
  "indexmap",
  "insta",

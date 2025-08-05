@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use globset::GlobBuilder;
+use fast_glob::glob_match;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
@@ -876,15 +876,14 @@ impl RestrictedPattern {
                 pat = format!("**/{pat}");
             }
 
-            let Ok(glob) = GlobBuilder::new(&pat)
-                .case_insensitive(case_insensitive)
-                .build()
-                .map(|g| g.compile_matcher())
-            else {
-                continue;
+            // Handle case sensitivity manually since fast-glob doesn't have this option
+            let (pattern_to_use, name_to_use) = if case_insensitive {
+                (pat.to_lowercase(), name.to_lowercase())
+            } else {
+                (pat, name.to_string())
             };
 
-            if glob.is_match(name) {
+            if glob_match(&pattern_to_use, &name_to_use) {
                 decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
             }
         }
