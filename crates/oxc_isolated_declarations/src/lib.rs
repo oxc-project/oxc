@@ -607,7 +607,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Statement::FunctionDeclaration(func) => {
                     if func.body.is_some() {
                         if let Some(name) = func.name() {
-                            if self.scope.has_reference(&name) {
+                            if self.scope.has_value_reference(&name) {
                                 can_expando_function_names.insert(name);
                             }
                         }
@@ -619,7 +619,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
                         {
                             if let Some(name) = declarator.id.get_identifier_name() {
-                                if self.scope.has_reference(&name) {
+                                if self.scope.has_value_reference(&name) {
                                     can_expando_function_names.insert(name);
                                 }
                             }

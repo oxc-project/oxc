@@ -5,15 +5,15 @@ use std::{
 
 use napi::{
     Status,
-    bindgen_prelude::{Promise, Uint8Array},
+    bindgen_prelude::{FnArgs, Promise, Uint8Array},
     threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode},
 };
 use napi_derive::napi;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxlint::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
-    lint as oxlint_lint,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult, lint as oxlint_lint,
 };
 
 mod generated {
@@ -22,24 +22,53 @@ mod generated {
 use generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
 #[napi]
-pub type JsRunCb = ThreadsafeFunction<
-    (String, u32, Option<Uint8Array>, Vec<u32>),
-    String, /* Vec<LintResult> */
-    (String, u32, Option<Uint8Array>, Vec<u32>),
+pub type JsLoadPluginCb = ThreadsafeFunction<
+    // Arguments
+    String, // Absolute path of plugin file
+    // Return value
+    Promise<String>, // `PluginLoadResult`, serialized to JSON
+    // Arguments (repeated)
+    String,
+    // Error status
     Status,
+    // CalleeHandled
     false,
 >;
 
 #[napi]
-pub type JsLoadPluginCb = ThreadsafeFunction<
-    String, /* PluginName */
-    Promise<String /* PluginLoadResult */>,
-    String, /* PluginName */
+pub type JsLintFileCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(
+        String,             // Absolute path of file to lint
+        u32,                // Buffer ID
+        Option<Uint8Array>, // Buffer (optional)
+        Vec<u32>,           // Array of rule IDs
+    )>,
+    // Return value
+    String, // `Vec<LintFileResult>`, serialized to JSON
+    // Arguments (repeated)
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>)>,
+    // Error status
     Status,
+    // CalleeHandled
     false,
 >;
 
-fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
+fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |plugin_name| {
+        Box::pin({
+            let cb = Arc::clone(&cb);
+            async move {
+                let result = cb.call_async(plugin_name).await?.into_future().await?;
+                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
+                Ok(plugin_load_result)
+            }
+        })
+    })
+}
+
+fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
     Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
         let cb = Arc::clone(&cb);
@@ -113,11 +142,11 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
 
         // Send data to JS
         let status = cb.call_with_return_value(
-            (file_path, buffer_id, buffer, rule_ids),
+            FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {
-                    Ok(r) => match serde_json::from_str::<Vec<LintResult>>(r) {
+                    Ok(r) => match serde_json::from_str::<Vec<LintFileResult>>(r) {
                         Ok(v) => tx.send(Ok(v)),
                         Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
                     },
@@ -129,37 +158,24 @@ fn wrap_run(cb: JsRunCb) -> ExternalLinterCb {
         );
 
         if status != Status::Ok {
-            return Err(format!("Failed to schedule callback: {status:?}").into());
+            return Err(format!("Failed to schedule callback: {status:?}"));
         }
 
         match rx.recv() {
             Ok(Ok(x)) => Ok(x),
-            Ok(Err(e)) => Err(format!("Callback reported error: {e}").into()),
-            Err(e) => Err(format!("Callback did not respond: {e}").into()),
+            Ok(Err(e)) => Err(format!("Callback reported error: {e}")),
+            Err(e) => Err(format!("Callback did not respond: {e}")),
         }
-    })
-}
-
-fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    let cb = Arc::new(cb);
-    Arc::new(move |plugin_name| {
-        Box::pin({
-            let cb = Arc::clone(&cb);
-            async move {
-                let result = cb.call_async(plugin_name).await?.into_future().await?;
-                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
-                Ok(plugin_load_result)
-            }
-        })
     })
 }
 
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(load_plugin: JsLoadPluginCb, run: JsRunCb) -> bool {
+pub async fn lint(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
-    let rust_run = wrap_run(run);
+    let rust_lint_file = wrap_lint_file(lint_file);
 
-    oxlint_lint(Some(ExternalLinter::new(rust_run, rust_load_plugin))).report() == ExitCode::SUCCESS
+    oxlint_lint(Some(ExternalLinter::new(rust_load_plugin, rust_lint_file))).report()
+        == ExitCode::SUCCESS
 }

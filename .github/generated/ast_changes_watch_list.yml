@@ -65,7 +65,7 @@ src:
   - 'crates/oxc_syntax/src/serialize.rs'
   - 'crates/oxc_syntax/src/symbol.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
-  - 'napi/oxlint2/src/generated/constants.cjs'
+  - 'napi/oxlint2/src-js/generated/constants.cjs'
   - 'napi/oxlint2/src/generated/raw_transfer_constants.rs'
   - 'napi/parser/generated/constants.js'
   - 'napi/parser/generated/deserialize/js.js'

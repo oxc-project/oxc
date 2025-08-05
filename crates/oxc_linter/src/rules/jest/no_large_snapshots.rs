@@ -35,11 +35,17 @@ fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDia
 #[derive(Debug, Default, Clone)]
 pub struct NoLargeSnapshots(Box<NoLargeSnapshotsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoLargeSnapshotsConfig {
     pub max_size: usize,
     pub inline_max_size: usize,
     pub allowed_snapshots: FxHashMap<CompactStr, Vec<CompactStr>>,
+}
+
+impl Default for NoLargeSnapshotsConfig {
+    fn default() -> Self {
+        Self { max_size: 50, inline_max_size: 50, allowed_snapshots: FxHashMap::default() }
+    }
 }
 
 impl Deref for NoLargeSnapshots {

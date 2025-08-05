@@ -77,7 +77,10 @@ impl Rule for PreferAwaitToCallbacks {
                         .as_member_expression()
                         .and_then(MemberExpression::static_property_name);
 
-                    if matches!(callee_property_name, Some("on" | "once")) {
+                    if matches!(
+                        callee_property_name,
+                        Some("on" | "once" | "addEventListener" | "removeEventListener")
+                    ) {
                         return;
                     }
 
@@ -165,6 +168,10 @@ fn test() {
         r#"map(errors, function(error) { return  err.type === "CoolError" })"#,
         r#"_.find(errors, function(error) { return  err.type === "CoolError" })"#,
         r#"_.map(errors, function(err) { return  err.type === "CoolError" })"#,
+        r#"socket.addEventListener("error", err => { console.error(err) })"#,
+        r#"socket.addEventListener("message", error => { console.log(error) })"#,
+        r#"element.removeEventListener("click", error => { console.log(error) })"#,
+        r#"ws.addEventListener("close", (error) => { console.log(error) })"#,
     ];
 
     let fail = vec![

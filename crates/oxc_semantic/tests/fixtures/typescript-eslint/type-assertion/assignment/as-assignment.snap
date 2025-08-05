@@ -19,7 +19,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-assertion/
             "flags": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "x",
-            "node_id": 13
+            "node_id": 12
           }
         ]
       }

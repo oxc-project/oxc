@@ -44,14 +44,44 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
             }
-            Expression::TSAsExpression(expr) => SimpleAssignmentTarget::TSAsExpression(expr),
+            Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSAsExpression(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
             Expression::TSSatisfiesExpression(expr) => {
-                SimpleAssignmentTarget::TSSatisfiesExpression(expr)
+                match expr.expression.get_inner_expression() {
+                    Expression::Identifier(_)
+                    | Expression::StaticMemberExpression(_)
+                    | Expression::ComputedMemberExpression(_)
+                    | Expression::PrivateFieldExpression(_) => {
+                        SimpleAssignmentTarget::TSSatisfiesExpression(expr)
+                    }
+                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                }
             }
-            Expression::TSNonNullExpression(expr) => {
-                SimpleAssignmentTarget::TSNonNullExpression(expr)
-            }
-            Expression::TSTypeAssertion(expr) => SimpleAssignmentTarget::TSTypeAssertion(expr),
+            Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSNonNullExpression(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
+            Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => {
+                    SimpleAssignmentTarget::TSTypeAssertion(expr)
+                }
+                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+            },
             Expression::TSInstantiationExpression(expr) => {
                 p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
             }
@@ -89,7 +119,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.assignment_target_rest(span, target));
+                        rest = Some(p.ast.alloc_assignment_target_rest(span, target));
                         if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
                             p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
@@ -153,7 +183,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.assignment_target_rest(span, target));
+                        rest = Some(p.ast.alloc_assignment_target_rest(span, target));
                     } else {
                         return p.fatal_error(diagnostics::spread_last_element(spread.span));
                     }

@@ -2,6 +2,7 @@
 
 mod convert_to_dotted_properties;
 mod fold_constants;
+mod inline;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_expression_in_boolean_context;
@@ -12,8 +13,8 @@ mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_declaration;
 mod remove_unused_expression;
-mod remove_unused_variable_declaration;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
@@ -102,10 +103,12 @@ impl<'a> PeepholeOptimizations {
 
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.symbol_values.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Remove unused references by visiting the AST again and diff the collected references.
         let refs_before =
             ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
         let mut counter = ReferencesCounter::default();
@@ -155,18 +158,26 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut ctx = Ctx::new(ctx);
-
         self.substitute_variable_declaration(decl, &mut ctx);
+    }
+
+    fn exit_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut ctx = Ctx::new(ctx);
+        self.init_symbol_value(decl, &mut ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-
         self.fold_constants_exit_expression(expr, &mut ctx);
         self.minimize_conditions_exit_expression(expr, &mut ctx);
         self.remove_dead_code_exit_expression(expr, &mut ctx);
         self.replace_known_methods_exit_expression(expr, &mut ctx);
         self.substitute_exit_expression(expr, &mut ctx);
+        self.inline_identifier_reference(expr, &mut ctx);
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -324,6 +335,15 @@ impl<'a> DeadCodeElimination {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
+    fn exit_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let mut ctx = Ctx::new(ctx);
+        self.inner.init_symbol_value(decl, &mut ctx);
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
         self.inner.remove_dead_code_exit_statement(stmt, &mut ctx);

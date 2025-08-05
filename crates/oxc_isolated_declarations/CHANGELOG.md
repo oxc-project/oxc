@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🐛 Bug Fixes
+
+- 3cdac4c isolated-declarations: Optional parameter property misses `undefined` type (#12579) (Dunqing)
+- 4f9cb0b isolated-declarations: Crash when transforming a class with a parameter property in a private constructor (#12578) (Dunqing)
+
+
+## [0.78.0] - 2025-07-24
+
+### 🐛 Bug Fixes
+
+- 9a9d78d isolated-declarations: Transformed parameter property has an incorrect type annotation (#12450) (Dunqing)
+- 89da027 isolated-declarations: Incorrect error when exported type is locally shadowed by an unexported variable (#12466) (Dunqing)
+
+
 
 
 ## [0.77.1] - 2025-07-16

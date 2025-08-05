@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- d02e17c transformer/class-properties: Preserve computed keys if they may have side effects when `remove_class_fields_without_initializer` is enabled (#12772) (Dunqing)
+- 701399e transformer/typescript: Don't remove class fields without initializers when class-properties plugin is enabled (#12771) (Dunqing)
+- 8854c1a transformer/typescript: Revert "remove properties with definite assignment assertion" (#12759) (Copilot)
+- 0e1e79d transformer/typescript: Remove properties with definite assignment assertion (#12713) (Dunqing)
+
+### 🚜 Refactor
+
+- 5c9fdd2 transformer/object-rest-spread: Extract unboxed field earlier (#12717) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🐛 Bug Fixes
+
+- 2f66dd2 transformer/styled-components: Preserve whitespace before interpolations in minification (#12558) (Dunqing)
+
+
+## [0.78.0] - 2025-07-24
+
+### 💥 BREAKING CHANGES
+
+- ccbcf3e transformer, minifier, syntax: [**BREAKING**] Remove `ESTarget::ES5` (#12448) (Dunqing)
+
+### 🚀 Features
+
+- dee25f4 ast: Add `pife` field to `Function` (#12469) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 7c2d2c6 transformer/top-level-statements: Should not inject statements after non-import statement (#12463) (Dunqing)
+- dcb245c transformer/typescript: Incorrect evaluation of `TemplateLiteral` in enum (#12456) (Dunqing)
+- 986c48e transformer/decorator: Transformed decorators should be injected after class-properties has run (#12418) (Dunqing)
+- c4a2d79 transformer/typescript: Should remove `abstract` field early (#12417) (Dunqing)
+
+### 🚜 Refactor
+
+- 3541739 transformer/typescript: Take a `Vec` rather than take elements of `Vec` one by one (#12462) (Dunqing)
+- 93a5b76 transformer/typescript: Simplify evaulating the of value an enum member without an initialzier (#12461) (Dunqing)
+
+### ⚡ Performance
+
+- f32c816 transformer/typescript: Store `Atom` rather than `String` for `ConstantValue::String` (#12458) (Dunqing)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### 🚀 Features

@@ -132,7 +132,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_class(class, ctx);
-        self.transform_class_on_exit(class, ctx);
+
+        // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
+        // this transformation does.
+        if !self.ctx.is_class_properties_plugin_enabled {
+            self.transform_class_on_exit(class, ctx);
+        }
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

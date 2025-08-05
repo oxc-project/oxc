@@ -1,4 +1,16 @@
 #![expect(clippy::print_stdout)]
+//! # Isolated Declarations Example
+//!
+//! This example demonstrates how to generate TypeScript declaration files (.d.ts)
+//! from TypeScript source code using isolated declarations.
+//!
+//! ## Usage
+//!
+//! Create a `test.ts` file and run:
+//! ```bash
+//! cargo run -p oxc_isolated_declarations --example isolated_declarations [filename]
+//! ```
+
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
@@ -12,6 +24,7 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_isolated_declarations --example isolated_declarations`
 // or `just example isolated_declarations`
 
+/// Generate TypeScript declaration files from TypeScript source
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.ts".to_string());
     let path = Path::new(&name);

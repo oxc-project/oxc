@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "1.7.0",
+  "version": "1.9.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -114,7 +114,16 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
+          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration."
+        },
+        "oxc.tsConfigPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null,
+          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin."
         },
         "oxc.unusedDisableDirectives": {
           "type": "string",
@@ -183,7 +192,7 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.0.0",
     "esbuild": "^0.25.0",
     "ovsx": "^0.10.0",
     "oxlint": "^1.0.0",

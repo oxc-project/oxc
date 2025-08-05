@@ -1,16 +1,15 @@
-use cow_utils::CowUtils;
 use std::borrow::Cow;
+
+use cow_utils::CowUtils;
 
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToBigInt, ToInt32, ToIntegerIndex,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-    is_global_reference::IsGlobalReference,
+    StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::{Atom, SPAN, format_atom};
+use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::Ancestor;
 
@@ -36,6 +35,15 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_known_global_methods(&self, node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
+
+        // Use constant evaluation for known method calls
+        if let Some(constant_value) = ce.evaluate_value(ctx) {
+            ctx.state.changed = true;
+            *node = ctx.value_to_expr(ce.span, constant_value);
+            return;
+        }
+
+        // Handle special cases not suitable for constant evaluation
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
@@ -50,353 +58,15 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let replacement = match name {
-            "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
-                Self::try_fold_string_casing(*span, arguments, name, object, ctx)
-            }
-            "substring" | "slice" => {
-                Self::try_fold_string_substring_or_slice(*span, arguments, object, ctx)
-            }
-            "indexOf" | "lastIndexOf" => {
-                Self::try_fold_string_index_of(*span, arguments, name, object, ctx)
-            }
-            "charAt" => Self::try_fold_string_char_at(*span, arguments, object, ctx),
-            "charCodeAt" => Self::try_fold_string_char_code_at(*span, arguments, object, ctx),
             "concat" => self.try_fold_concat(*span, arguments, callee, ctx),
-            "replace" | "replaceAll" => {
-                Self::try_fold_string_replace(*span, arguments, name, object, ctx)
-            }
-            "fromCharCode" => Self::try_fold_string_from_char_code(*span, arguments, object, ctx),
-            "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
             "pow" => self.try_fold_pow(*span, arguments, object, ctx),
-            "isFinite" | "isNaN" | "isInteger" | "isSafeInteger" => {
-                Self::try_fold_number_methods(*span, arguments, object, name, ctx)
-            }
-            "sqrt" | "cbrt" => Self::try_fold_roots(*span, arguments, name, object, ctx),
-            "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
-                Self::try_fold_math_unary(*span, arguments, name, object, ctx)
-            }
-            "min" | "max" => Self::try_fold_math_variadic(*span, arguments, name, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
-            "startsWith" => Self::try_fold_starts_with(*span, arguments, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
             ctx.state.changed = true;
             *node = replacement;
         }
-    }
-
-    fn try_fold_string_casing(
-        span: Span,
-        args: &Arguments,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !args.is_empty() {
-            return None;
-        }
-
-        let value = match object {
-            Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-            Expression::Identifier(ident) => ident
-                .reference_id
-                .get()
-                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
-                .and_then(ConstantValue::into_string)?,
-
-            _ => return None,
-        };
-
-        let value = match name {
-            "toLowerCase" => ctx.ast.atom(&value.cow_to_lowercase()),
-            "toUpperCase" => ctx.ast.atom(&value.cow_to_uppercase()),
-            "trim" => ctx.ast.atom(value.trim()),
-            "trimStart" => ctx.ast.atom(value.trim_start()),
-            "trimEnd" => ctx.ast.atom(value.trim_end()),
-            _ => return None,
-        };
-        Some(ctx.ast.expression_string_literal(span, value, None))
-    }
-
-    fn try_fold_string_index_of(
-        span: Span,
-        args: &Arguments<'a>,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if args.len() >= 3 {
-            return None;
-        }
-        let Expression::StringLiteral(s) = object else { return None };
-        let search_value = match args.first() {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_string_value(ctx)?)
-            }
-            None => None,
-        };
-        let search_start_index = match args.get(1) {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_number_value(ctx)?)
-            }
-            None => None,
-        };
-        let result = match name {
-            "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
-            "lastIndexOf" => {
-                s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
-            }
-            _ => unreachable!(),
-        };
-        #[expect(clippy::cast_precision_loss)]
-        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
-    }
-
-    fn try_fold_string_substring_or_slice(
-        span: Span,
-        args: &Arguments<'a>,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if args.len() > 2 {
-            return None;
-        }
-        let Expression::StringLiteral(s) = object else { return None };
-        let start_idx = match args.first() {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_number_value(ctx)?)
-            }
-            None => None,
-        };
-        let end_idx = match args.get(1) {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_number_value(ctx)?)
-            }
-            None => None,
-        };
-        #[expect(clippy::cast_precision_loss)]
-        if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
-            || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
-        {
-            return None;
-        }
-        if let (Some(start), Some(end)) = (start_idx, end_idx) {
-            if start > end {
-                return None;
-            }
-        }
-        Some(ctx.ast.expression_string_literal(
-            span,
-            ctx.ast.atom(&s.value.as_str().substring(start_idx, end_idx)),
-            None,
-        ))
-    }
-
-    fn try_fold_string_char_at(
-        span: Span,
-        args: &Arguments<'a>,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if args.len() > 1 {
-            return None;
-        }
-        let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index = match args.first() {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_number_value(ctx)?)
-            }
-            None => None,
-        };
-        let result = match s.value.as_str().char_at(char_at_index) {
-            StringCharAtResult::Value(c) => format_atom!(ctx.ast.allocator, "{c}"),
-            StringCharAtResult::InvalidChar(_) => return None,
-            StringCharAtResult::OutOfRange => Atom::empty(),
-        };
-        Some(ctx.ast.expression_string_literal(span, result, None))
-    }
-
-    #[expect(clippy::cast_lossless)]
-    fn try_fold_string_char_code_at(
-        span: Span,
-        args: &Arguments<'a>,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index = match args.first() {
-            Some(Argument::SpreadElement(_)) => return None,
-            Some(arg @ match_expression!(Argument)) => {
-                Some(arg.to_expression().get_side_free_number_value(ctx)?)
-            }
-            None => None,
-        };
-        let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
-        Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
-    }
-
-    fn try_fold_string_replace(
-        span: Span,
-        args: &Arguments<'a>,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if args.len() != 2 {
-            return None;
-        }
-        let Expression::StringLiteral(s) = object else { return None };
-        let search_value = args.first().unwrap();
-        let search_value = match search_value {
-            Argument::SpreadElement(_) => return None,
-            match_expression!(Argument) => {
-                let value = search_value.to_expression();
-                if value.may_have_side_effects(ctx) {
-                    return None;
-                }
-                value.evaluate_value(ctx)?.into_string()?
-            }
-        };
-        let replace_value = args.get(1).unwrap();
-        let replace_value = match replace_value {
-            Argument::SpreadElement(_) => return None,
-            match_expression!(Argument) => {
-                replace_value.to_expression().get_side_free_string_value(ctx)?
-            }
-        };
-        if replace_value.contains('$') {
-            return None;
-        }
-        let result = match name {
-            "replace" => s.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1),
-            "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
-            _ => unreachable!(),
-        };
-        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&result), None))
-    }
-
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
-    fn try_fold_string_from_char_code(
-        span: Span,
-        args: &mut Arguments<'a>,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let Expression::Identifier(ident) = object else { return None };
-        if ident.name != "String" || !ctx.is_global_reference(ident) {
-            return None;
-        }
-        let mut s = String::with_capacity(args.len());
-        for arg in args {
-            let expr = arg.as_expression()?;
-            let v = expr.get_side_free_number_value(ctx)?;
-            let v = v.to_int_32() as u16 as u32;
-            let c = char::try_from(v).ok()?;
-            s.push(c);
-        }
-        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None))
-    }
-
-    #[expect(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        clippy::cast_lossless,
-        clippy::float_cmp
-    )]
-    fn try_fold_to_string(
-        span: Span,
-        args: &mut Arguments,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        match object {
-            // Number.prototype.toString()
-            // Number.prototype.toString(radix)
-            Expression::NumericLiteral(lit) if args.len() <= 1 => {
-                let mut radix: u32 = 0;
-                if args.is_empty() {
-                    radix = 10;
-                }
-                if let Some(Argument::NumericLiteral(n)) = args.first() {
-                    if n.value >= 2.0 && n.value <= 36.0 && n.value.fract() == 0.0 {
-                        radix = n.value as u32;
-                    }
-                }
-                if radix == 0 {
-                    return None;
-                }
-                if radix == 10 {
-                    use oxc_syntax::number::ToJsString;
-                    let s = lit.value.to_js_string();
-                    return Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None));
-                }
-                // Only convert integers for other radix values.
-                let value = lit.value;
-                if value.is_infinite() {
-                    let s = if value.is_sign_negative() { "-Infinity" } else { "Infinity" };
-                    return Some(ctx.ast.expression_string_literal(span, s, None));
-                }
-                if value.is_nan() {
-                    return Some(ctx.ast.expression_string_literal(span, "NaN", None));
-                }
-                if value >= 0.0 && value.fract() != 0.0 {
-                    return None;
-                }
-                let i = value as u32;
-                if i as f64 != value {
-                    return None;
-                }
-                let value = Self::format_radix(i, radix);
-                Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&value), None))
-            }
-            // `null` returns type errors
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::StringLiteral(_)
-                if args.is_empty() =>
-            {
-                use oxc_ecmascript::ToJsString;
-                object.to_js_string(ctx).map(|s| {
-                    ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&s), None)
-                })
-            }
-            _ => None,
-        }
-    }
-
-    fn format_radix(mut x: u32, radix: u32) -> String {
-        debug_assert!((2..=36).contains(&radix));
-        let mut result = vec![];
-        loop {
-            let m = x % radix;
-            x /= radix;
-            result.push(std::char::from_digit(m, radix).unwrap());
-            if x == 0 {
-                break;
-            }
-        }
-        result.into_iter().rev().collect()
-    }
-
-    fn validate_global_reference(
-        expr: &Expression<'a>,
-        target: &str,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
-        let Expression::Identifier(ident) = expr else { return false };
-        ctx.is_global_reference(ident) && ident.name == target
-    }
-
-    fn validate_arguments(args: &Arguments, expected_len: usize) -> bool {
-        (args.len() == expected_len) && args.iter().all(Argument::is_expression)
     }
 
     /// `Math.pow(a, b)` -> `+(a) ** +b`
@@ -438,132 +108,23 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    /// `Math.sqrt(a)`, `Math.cbrt(a)`
-    ///
-    /// These cannot be replaced with `a ** .5`, `a ** (1/3)` because `Math.sqrt(-0)` returns `-0` where `(-0) ** .5` returns `0`.
-    /// It can be replaced when the value is known to be not `-0`, but that makes the gzip output worse.
-    fn try_fold_roots(
+    fn try_fold_array_of(
         span: Span,
-        arguments: &Arguments<'a>,
+        arguments: &mut Arguments<'a>,
         name: &str,
         object: &Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if !Self::validate_global_reference(object, "Math", ctx)
-            || !Self::validate_arguments(arguments, 1)
-        {
+        if !Self::validate_global_reference(object, "Array", ctx) {
             return None;
         }
-        let arg_val = arguments[0].to_expression().get_side_free_number_value(ctx)?;
-        if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
-            return Some(ctx.ast.expression_numeric_literal(
-                span,
-                arg_val,
-                None,
-                NumberBase::Decimal,
-            ));
-        }
-        if arg_val < 0.0 {
-            return Some(ctx.ast.expression_numeric_literal(
-                span,
-                f64::NAN,
-                None,
-                NumberBase::Decimal,
-            ));
-        }
-        let calculated_val = match name {
-            "sqrt" => arg_val.sqrt(),
-            "cbrt" => arg_val.cbrt(),
-            _ => unreachable!(),
-        };
-        (calculated_val.fract() == 0.0).then(|| {
-            ctx.ast.expression_numeric_literal(span, calculated_val, None, NumberBase::Decimal)
-        })
-    }
-
-    fn try_fold_math_unary(
-        span: Span,
-        arguments: &Arguments<'a>,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !Self::validate_global_reference(object, "Math", ctx)
-            || !Self::validate_arguments(arguments, 1)
-        {
+        if name != "of" {
             return None;
         }
-        let arg_val = arguments[0].to_expression().get_side_free_number_value(ctx)?;
-        let result = match name {
-            "abs" => arg_val.abs(),
-            "ceil" => arg_val.ceil(),
-            "floor" => arg_val.floor(),
-            "round" => {
-                // We should be aware that the behavior in JavaScript and Rust towards `round` is different.
-                // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
-                // So we need to handle it manually.
-                let frac_part = arg_val.fract();
-                let epsilon = 2f64.powi(-52);
-                if (frac_part.abs() - 0.5).abs() < epsilon {
-                    // We should ceil it.
-                    arg_val.ceil()
-                } else {
-                    arg_val.round()
-                }
-            }
-            #[expect(clippy::cast_possible_truncation)]
-            "fround" if arg_val.fract() == 0f64 || arg_val.is_nan() || arg_val.is_infinite() => {
-                f64::from(arg_val as f32)
-            }
-            "fround" => return None,
-            "trunc" => arg_val.trunc(),
-            "sign" if arg_val.to_bits() == 0f64.to_bits() => 0f64,
-            "sign" if arg_val.to_bits() == (-0f64).to_bits() => -0f64,
-            "sign" => arg_val.signum(),
-            _ => unreachable!(),
-        };
-        // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
-        Some(ctx.ast.expression_numeric_literal(span, result, None, NumberBase::Decimal))
-    }
-
-    fn try_fold_math_variadic(
-        span: Span,
-        arguments: &Arguments<'a>,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !Self::validate_global_reference(object, "Math", ctx) {
-            return None;
-        }
-        let numbers = arguments
-            .iter()
-            .map(|arg| arg.as_expression().map(|e| e.get_side_free_number_value(ctx))?)
-            .collect::<Option<Vec<_>>>()?;
-        let result = if numbers.iter().any(|n| n.is_nan()) {
-            f64::NAN
-        } else {
-            match name {
-                // TODO
-                // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
-                "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
-                    if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
-                        a
-                    } else {
-                        b
-                    }
-                }),
-                "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
-                    if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
-                        a
-                    } else {
-                        b
-                    }
-                }),
-                _ => return None,
-            }
-        };
-        Some(ctx.ast.expression_numeric_literal(span, result, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_array(
+            span,
+            ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
+        ))
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
@@ -937,39 +498,6 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
-    fn try_fold_array_of(
-        span: Span,
-        arguments: &mut Arguments<'a>,
-        name: &str,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !Self::validate_global_reference(object, "Array", ctx) {
-            return None;
-        }
-        if name != "of" {
-            return None;
-        }
-        Some(ctx.ast.expression_array(
-            span,
-            ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
-        ))
-    }
-
-    fn try_fold_starts_with(
-        span: Span,
-        arguments: &mut Arguments<'a>,
-        object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if arguments.len() != 1 {
-            return None;
-        }
-        let Argument::StringLiteral(arg) = arguments.first().unwrap() else { return None };
-        let Expression::StringLiteral(s) = object else { return None };
-        Some(ctx.ast.expression_boolean_literal(span, s.value.starts_with(arg.value.as_str())))
-    }
-
     /// Compress `"abc"[0]` to `"a"` and `[0,1,2][1]` to `1`
     fn try_fold_integer_index_access(
         object: &mut Expression<'a>,
@@ -1014,36 +542,17 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_number_methods(
-        span: Span,
-        args: &mut Arguments<'a>,
-        object: &Expression<'a>,
-        name: &str,
+    fn validate_global_reference(
+        expr: &Expression<'a>,
+        target: &str,
         ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !Self::validate_global_reference(object, "Number", ctx) {
-            return None;
-        }
-        if args.len() != 1 {
-            return None;
-        }
-        let extracted_expr = args.first()?.as_expression()?;
-        if !extracted_expr.is_number_literal() {
-            return None;
-        }
-        let extracted = extracted_expr.get_side_free_number_value(ctx)?;
-        let result = match name {
-            "isFinite" => Some(extracted.is_finite()),
-            "isInteger" => Some(extracted.fract().abs() < f64::EPSILON),
-            "isNaN" => Some(extracted.is_nan()),
-            "isSafeInteger" => {
-                let integer = extracted.fract().abs() < f64::EPSILON;
-                let safe = extracted.abs() <= 2f64.powi(53) - 1.0;
-                Some(safe && integer)
-            }
-            _ => None,
-        };
-        result.map(|value| ctx.ast.expression_boolean_literal(span, value))
+    ) -> bool {
+        let Expression::Identifier(ident) = expr else { return false };
+        ctx.is_global_reference(ident) && ident.name == target
+    }
+
+    fn validate_arguments(args: &Arguments, expected_len: usize) -> bool {
+        (args.len() == expected_len) && args.iter().all(Argument::is_expression)
     }
 }
 

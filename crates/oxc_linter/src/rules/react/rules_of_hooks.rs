@@ -99,9 +99,60 @@ pub struct RulesOfHooks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This enforces the Rules of Hooks
+    /// Enforces the Rules of Hooks, ensuring that React Hooks are only called
+    /// in valid contexts and in the correct order.
     ///
-    /// <https://reactjs.org/docs/hooks-rules.html>
+    /// ### Why is this bad?
+    ///
+    /// React Hooks must follow specific rules to ensure they work correctly:
+    /// 1. Only call Hooks at the top level (never inside loops, conditions,
+    ///    or nested functions)
+    /// 2. Only call Hooks from React function components or custom Hooks
+    /// 3. Hooks must be called in the same order every time a component renders
+    ///
+    /// Breaking these rules can lead to bugs where state gets corrupted or
+    /// component behavior becomes unpredictable.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// // Don't call Hooks inside loops, conditions, or nested functions
+    /// function BadComponent() {
+    ///   if (condition) {
+    ///     const [state, setState] = useState(); // ❌ Hook in condition
+    ///   }
+    ///
+    ///   for (let i = 0; i < 10; i++) {
+    ///     useEffect(() => {}); // ❌ Hook in loop
+    ///   }
+    /// }
+    ///
+    /// // Don't call Hooks from regular JavaScript functions
+    /// function regularFunction() {
+    ///   const [state, setState] = useState(); // ❌ Hook in regular function
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ✅ Call Hooks at the top level of a React component
+    /// function GoodComponent() {
+    ///   const [state, setState] = useState();
+    ///
+    ///   useEffect(() => {
+    ///     // Effect logic here
+    ///   });
+    ///
+    ///   return <div>{state}</div>;
+    /// }
+    ///
+    /// // ✅ Call Hooks from custom Hooks
+    /// function useCustomHook() {
+    ///   const [state, setState] = useState();
+    ///   return state;
+    /// }
+    /// ```
     ///
     RulesOfHooks,
     react,

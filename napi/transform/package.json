@@ -1,11 +1,11 @@
 {
   "name": "oxc-transform",
-  "version": "0.77.3",
+  "version": "0.80.0",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
     "build-dev": "napi build --platform",
-    "build-test": "pnpm run build",
+    "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "test": "tsc && vitest run --dir ./test"

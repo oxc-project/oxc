@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 🚜 Refactor
+
+- 77acc11 linter, transformer: Use `Scoping::symbol_is_unused` (#12666) (overlookmotel)
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
+## [0.78.0] - 2025-07-24
+
+### 🚀 Features
+
+- c135beb codegen: Keep function expression PIFEs (#12470) (sapphi-red)
+- dee25f4 ast: Add `pife` field to `Function` (#12469) (sapphi-red)
+
+### 🚜 Refactor
+
+- 1cf08c0 minifier: Make DCE remove more code to align with rollup (#12427) (Boshen)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### ⚡ Performance

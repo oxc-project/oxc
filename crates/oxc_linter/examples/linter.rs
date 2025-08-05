@@ -1,5 +1,15 @@
 #![expect(clippy::print_stdout)]
-//! The simplest linter
+//! # Simple Linter Example
+//!
+//! This example demonstrates how to create a basic linter using Oxc's parser and semantic analyzer.
+//! It implements simple rules to detect debugger statements and empty destructuring patterns.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_linter --example linter [filename]
+//! ```
 
 use std::{env, path::Path};
 
@@ -15,6 +25,7 @@ use oxc_span::{SourceType, Span};
 // run `cargo run -p oxc_linter --example linter`
 // or `cargo watch -x "run -p oxc_linter --example linter"`
 
+/// Run a simple linter on a JavaScript file
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
@@ -29,10 +40,12 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
+    // Build semantic model for AST analysis
     let semantic_ret = SemanticBuilder::new().build(&ret.program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 
+    // Check for linting violations
     for node in semantic_ret.semantic.nodes() {
         match node.kind() {
             AstKind::DebuggerStatement(stmt) => {
@@ -48,6 +61,7 @@ fn main() -> std::io::Result<()> {
         }
     }
 
+    // Report results
     if errors.is_empty() {
         println!("Success!");
     } else {
@@ -57,6 +71,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+/// Print diagnostic errors with source context
 fn print_errors(source_text: &str, errors: Vec<OxcDiagnostic>) {
     for error in errors {
         let error = error.with_source_code(source_text.to_string());
@@ -64,6 +79,7 @@ fn print_errors(source_text: &str, errors: Vec<OxcDiagnostic>) {
     }
 }
 
+/// Create a diagnostic for debugger statements
 // This prints:
 //
 //   ⚠ `debugger` statement is not allowed
@@ -75,6 +91,7 @@ fn no_debugger(debugger_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("`debugger` statement is not allowed").with_label(debugger_span)
 }
 
+/// Create a diagnostic for empty destructuring patterns
 // This prints:
 //
 //   ⚠ empty destructuring pattern is not allowed

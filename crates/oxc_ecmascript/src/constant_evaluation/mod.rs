@@ -1,27 +1,29 @@
-use std::borrow::Cow;
-
-use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
-
-use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
-use oxc_ast::{AstBuilder, ast::*};
-
-use crate::{
-    ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
-    is_less_than::is_less_than,
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
-    to_numeric::ToNumeric,
-};
-
+mod call_expr;
 mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod value;
 mod value_type;
+
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
+
+use std::borrow::Cow;
+
+use num_bigint::BigInt;
+use num_traits::{ToPrimitive, Zero};
+use oxc_ast::{AstBuilder, ast::*};
+
+use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+
+use crate::{
+    ToBigInt, ToBoolean, ToInt32, ToJsString as ToJsStringTrait, ToNumber,
+    is_less_than::is_less_than,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+    to_numeric::ToNumeric,
+};
 
 pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
     fn ast(&self) -> AstBuilder<'a>;
@@ -34,7 +36,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     ///
     /// - target_ty: How the result will be used.
     ///   For example, if the result will be converted to a boolean,
-    ///   passing `Some(ValueType::Boolean)` will allow to utilize that information.
+    ///   passing `Some(ValueType::Boolean)` will allow us to utilize that information.
     fn evaluate_value_to(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
@@ -99,6 +101,20 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     }
 }
 
+impl<'a, T: ConstantEvaluation<'a>> ConstantEvaluation<'a> for Option<T> {
+    fn evaluate_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<ConstantValue<'a>> {
+        self.as_ref().and_then(|t| t.evaluate_value(ctx))
+    }
+
+    fn evaluate_value_to(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+        target_ty: Option<ValueType>,
+    ) -> Option<ConstantValue<'a>> {
+        self.as_ref().and_then(|t| t.evaluate_value_to(ctx, target_ty))
+    }
+}
+
 impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
     fn evaluate_value_to(
         &self,
@@ -150,6 +166,7 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
+            Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::SequenceExpression(e) => {
                 // For sequence expression, the value is the value of the RHS.
                 e.expressions.last().and_then(|e| e.evaluate_value_to(ctx, target_ty))
@@ -216,51 +233,60 @@ fn binary_operation_evaluate_value_to<'a>(
             }
             None
         }
-        BinaryOperator::Subtraction
-        | BinaryOperator::Division
-        | BinaryOperator::Remainder
-        | BinaryOperator::Multiplication
-        | BinaryOperator::Exponential => {
+        BinaryOperator::Subtraction => {
             let lval = left.evaluate_value_to_number(ctx)?;
             let rval = right.evaluate_value_to_number(ctx)?;
-            let val = match operator {
-                BinaryOperator::Subtraction => lval - rval,
-                BinaryOperator::Division => lval / rval,
-                BinaryOperator::Remainder => {
-                    if rval.is_zero() {
-                        f64::NAN
-                    } else {
-                        lval % rval
-                    }
-                }
-                BinaryOperator::Multiplication => lval * rval,
-                BinaryOperator::Exponential => {
-                    let result = lval.powf(rval);
-                    // For now, ignore the result if it large or has a decimal part
-                    // so that the output does not become bigger than the input.
-                    if result.is_finite() && (result.fract() != 0.0 || result.log10() > 4.0) {
-                        return None;
-                    }
-                    result
-                }
-                _ => unreachable!(),
-            };
-            Some(ConstantValue::Number(val))
+            Some(ConstantValue::Number(lval - rval))
+        }
+        BinaryOperator::Division => {
+            let lval = left.evaluate_value_to_number(ctx)?;
+            let rval = right.evaluate_value_to_number(ctx)?;
+            Some(ConstantValue::Number(lval / rval))
+        }
+        BinaryOperator::Remainder => {
+            let lval = left.evaluate_value_to_number(ctx)?;
+            let rval = right.evaluate_value_to_number(ctx)?;
+            Some(ConstantValue::Number(if rval.is_zero() { f64::NAN } else { lval % rval }))
+        }
+        BinaryOperator::Multiplication => {
+            let lval = left.evaluate_value_to_number(ctx)?;
+            let rval = right.evaluate_value_to_number(ctx)?;
+            Some(ConstantValue::Number(lval * rval))
+        }
+        BinaryOperator::Exponential => {
+            let lval = left.evaluate_value_to_number(ctx)?;
+            let rval = right.evaluate_value_to_number(ctx)?;
+            let result = lval.powf(rval);
+            // For now, ignore the result if it large or has a decimal part
+            // so that the output does not become bigger than the input.
+            if result.is_finite() && (result.fract() != 0.0 || result.log10() > 4.0) {
+                return None;
+            }
+            Some(ConstantValue::Number(result))
         }
         #[expect(clippy::cast_sign_loss)]
-        BinaryOperator::ShiftLeft
-        | BinaryOperator::ShiftRight
-        | BinaryOperator::ShiftRightZeroFill => {
+        BinaryOperator::ShiftLeft => {
             let left = left.evaluate_value_to_number(ctx)?;
             let right = right.evaluate_value_to_number(ctx)?;
             let left = left.to_int_32();
             let right = (right.to_int_32() as u32) & 31;
-            Some(ConstantValue::Number(match operator {
-                BinaryOperator::ShiftLeft => f64::from(left << right),
-                BinaryOperator::ShiftRight => f64::from(left >> right),
-                BinaryOperator::ShiftRightZeroFill => f64::from((left as u32) >> right),
-                _ => unreachable!(),
-            }))
+            Some(ConstantValue::Number(f64::from(left << right)))
+        }
+        #[expect(clippy::cast_sign_loss)]
+        BinaryOperator::ShiftRight => {
+            let left = left.evaluate_value_to_number(ctx)?;
+            let right = right.evaluate_value_to_number(ctx)?;
+            let left = left.to_int_32();
+            let right = (right.to_int_32() as u32) & 31;
+            Some(ConstantValue::Number(f64::from(left >> right)))
+        }
+        #[expect(clippy::cast_sign_loss)]
+        BinaryOperator::ShiftRightZeroFill => {
+            let left = left.evaluate_value_to_number(ctx)?;
+            let right = right.evaluate_value_to_number(ctx)?;
+            let left = left.to_int_32();
+            let right = (right.to_int_32() as u32) & 31;
+            Some(ConstantValue::Number(f64::from((left as u32) >> right)))
         }
         BinaryOperator::LessThan => is_less_than(ctx, left, right).map(|value| match value {
             ConstantValue::Undefined => ConstantValue::Boolean(false),
@@ -286,33 +312,35 @@ fn binary_operation_evaluate_value_to<'a>(
                 _ => unreachable!(),
             })
         }
-        BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
+        BinaryOperator::BitwiseAnd => {
             if left.value_type(ctx).is_bigint() && right.value_type(ctx).is_bigint() {
-                let left_val = left.evaluate_value_to_bigint(ctx)?;
-                let right_val = right.evaluate_value_to_bigint(ctx)?;
-                let result_val: BigInt = match operator {
-                    BinaryOperator::BitwiseAnd => left_val & right_val,
-                    BinaryOperator::BitwiseOR => left_val | right_val,
-                    BinaryOperator::BitwiseXOR => left_val ^ right_val,
-                    _ => unreachable!(),
-                };
-                return Some(ConstantValue::BigInt(result_val));
+                let left_biginit = left.evaluate_value_to_bigint(ctx)?;
+                let right_bigint = right.evaluate_value_to_bigint(ctx)?;
+                return Some(ConstantValue::BigInt(left_biginit & right_bigint));
             }
-            let left_num = left.evaluate_value_to_number(ctx);
-            let right_num = right.evaluate_value_to_number(ctx);
-            if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
-                let left_val_int = left_val.to_int_32();
-                let right_val_int = right_val.to_int_32();
-
-                let result_val: f64 = match operator {
-                    BinaryOperator::BitwiseAnd => f64::from(left_val_int & right_val_int),
-                    BinaryOperator::BitwiseOR => f64::from(left_val_int | right_val_int),
-                    BinaryOperator::BitwiseXOR => f64::from(left_val_int ^ right_val_int),
-                    _ => unreachable!(),
-                };
-                return Some(ConstantValue::Number(result_val));
+            let left_int = left.evaluate_value_to_number(ctx)?.to_int_32();
+            let right_int = right.evaluate_value_to_number(ctx)?.to_int_32();
+            Some(ConstantValue::Number(f64::from(left_int & right_int)))
+        }
+        BinaryOperator::BitwiseOR => {
+            if left.value_type(ctx).is_bigint() && right.value_type(ctx).is_bigint() {
+                let left_biginit = left.evaluate_value_to_bigint(ctx)?;
+                let right_bigint = right.evaluate_value_to_bigint(ctx)?;
+                return Some(ConstantValue::BigInt(left_biginit | right_bigint));
             }
-            None
+            let left_int = left.evaluate_value_to_number(ctx)?.to_int_32();
+            let right_int = right.evaluate_value_to_number(ctx)?.to_int_32();
+            Some(ConstantValue::Number(f64::from(left_int | right_int)))
+        }
+        BinaryOperator::BitwiseXOR => {
+            if left.value_type(ctx).is_bigint() && right.value_type(ctx).is_bigint() {
+                let left_biginit = left.evaluate_value_to_bigint(ctx)?;
+                let right_bigint = right.evaluate_value_to_bigint(ctx)?;
+                return Some(ConstantValue::BigInt(left_biginit ^ right_bigint));
+            }
+            let left_int = left.evaluate_value_to_number(ctx)?.to_int_32();
+            let right_int = right.evaluate_value_to_number(ctx)?.to_int_32();
+            Some(ConstantValue::Number(f64::from(left_int ^ right_int)))
         }
         BinaryOperator::Instanceof => {
             if let Expression::Identifier(right_ident) = right {
@@ -331,24 +359,21 @@ fn binary_operation_evaluate_value_to<'a>(
             }
             None
         }
-        BinaryOperator::StrictEquality
-        | BinaryOperator::StrictInequality
-        | BinaryOperator::Equality
-        | BinaryOperator::Inequality => {
-            let value = match operator {
-                BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
-                    strict_equality_comparison(ctx, left, right)?
-                }
-                BinaryOperator::Equality | BinaryOperator::Inequality => {
-                    abstract_equality_comparison(ctx, left, right)?
-                }
-                _ => unreachable!(),
-            };
-            Some(ConstantValue::Boolean(match operator {
-                BinaryOperator::StrictEquality | BinaryOperator::Equality => value,
-                BinaryOperator::StrictInequality | BinaryOperator::Inequality => !value,
-                _ => unreachable!(),
-            }))
+        BinaryOperator::StrictEquality => {
+            let value = strict_equality_comparison(ctx, left, right)?;
+            Some(ConstantValue::Boolean(value))
+        }
+        BinaryOperator::StrictInequality => {
+            let value = strict_equality_comparison(ctx, left, right)?;
+            Some(ConstantValue::Boolean(!value))
+        }
+        BinaryOperator::Equality => {
+            let value = abstract_equality_comparison(ctx, left, right)?;
+            Some(ConstantValue::Boolean(value))
+        }
+        BinaryOperator::Inequality => {
+            let value = abstract_equality_comparison(ctx, left, right)?;
+            Some(ConstantValue::Boolean(!value))
         }
         BinaryOperator::In => None,
     }
@@ -501,5 +526,15 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
             }
             _ => None,
         }
+    }
+}
+
+impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
+    fn evaluate_value_to(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+        _target_ty: Option<ValueType>,
+    ) -> Option<ConstantValue<'a>> {
+        call_expr::try_fold_known_global_methods(&self.callee, &self.arguments, ctx)
     }
 }

@@ -215,7 +215,14 @@ impl Rule for LabelHasAssociatedControl {
             return;
         }
 
-        let has_html_for = has_jsx_prop(&element.opening_element, "htmlFor").is_some();
+        let has_html_for = if let Some(attributes) = ctx.settings().jsx_a11y.attributes.get("for") {
+            attributes
+                .iter()
+                .any(|attr| has_jsx_prop(&element.opening_element, attr.as_str()).is_some())
+        } else {
+            has_jsx_prop(&element.opening_element, "htmlFor").is_some()
+        };
+
         let has_control = self.has_nested_control(element, ctx);
 
         if !self.has_accessible_label(element, ctx) {
@@ -400,6 +407,18 @@ fn test() {
                     "components": {
                         "CustomInput": "input",
                         "CustomLabel": "label",
+                    }
+                }
+            }
+        })
+    }
+
+    fn attributes_settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": {
+                "jsx-a11y": {
+                    "attributes": {
+                        "for": ["htmlFor", "for"]
                     }
                 }
             }
@@ -933,6 +952,32 @@ fn test() {
                </label>"#,
             None,
             None,
+        ),
+        // Test for 'for' attribute with attributes setting
+        (
+            r#"<label for="js_id">A label</label>"#,
+            Some(serde_json::json!([{ "assert": "htmlFor" }])),
+            Some(attributes_settings()),
+        ),
+        (
+            r#"<label for="js_id" aria-label="A label" />"#,
+            Some(serde_json::json!([{ "assert": "htmlFor" }])),
+            Some(attributes_settings()),
+        ),
+        (
+            r#"<label for="js_id">A label</label>"#,
+            Some(serde_json::json!([{ "assert": "either" }])),
+            Some(attributes_settings()),
+        ),
+        (
+            r#"<label for="js_id" aria-label="A label" />"#,
+            Some(serde_json::json!([{ "assert": "either" }])),
+            Some(attributes_settings()),
+        ),
+        (
+            r#"<label for="js_id" aria-label="A label"><input /></label>"#,
+            Some(serde_json::json!([{ "assert": "both" }])),
+            Some(attributes_settings()),
         ),
     ];
 
@@ -1609,6 +1654,16 @@ fn test() {
             Some(serde_json::json!([{
                 "labelComponents": ["FilesContext.Provider"],
             }])),
+            None,
+        ),
+        (
+            r#"<label for="js_id">A label</label>"#,
+            Some(serde_json::json!([{ "assert": ["htmlFor"] }])),
+            None,
+        ),
+        (
+            r#"<label for="js_id" aria-label="A label" />"#,
+            Some(serde_json::json!([{ "assert": ["htmlFor"] }])),
             None,
         ),
     ];

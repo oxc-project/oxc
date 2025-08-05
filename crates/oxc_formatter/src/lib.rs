@@ -39,6 +39,8 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
 };
 
+use self::formatter::prelude::tag::Label;
+
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -64,5 +66,22 @@ impl<'a> Formatter<'a> {
         )
         .unwrap();
         formatted.print().unwrap().into_code()
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) enum JsLabels {
+    MemberChain,
+}
+
+impl Label for JsLabels {
+    fn id(&self) -> u64 {
+        *self as u64
+    }
+
+    fn debug_name(&self) -> &'static str {
+        match self {
+            Self::MemberChain => "MemberChain",
+        }
     }
 }

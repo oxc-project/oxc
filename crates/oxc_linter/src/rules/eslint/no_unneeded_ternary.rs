@@ -19,9 +19,15 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoUnneededTernary {
     default_assignment: bool,
+}
+
+impl Default for NoUnneededTernary {
+    fn default() -> Self {
+        Self { default_assignment: true }
+    }
 }
 
 declare_oxc_lint!(

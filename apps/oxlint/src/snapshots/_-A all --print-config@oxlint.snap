@@ -16,7 +16,8 @@ working directory:
   "settings": {
     "jsx-a11y": {
       "polymorphicPropName": null,
-      "components": {}
+      "components": {},
+      "attributes": {}
     },
     "next": {
       "rootDir": []

@@ -6,11 +6,11 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/class-decorator.ts
 ==================== .D.TS ====================
 
 export declare class Test1 {
-	/** This methond will trigger the feature highlight dialog load/show based on dialogId and analyticsId */
+	/** This method will trigger the feature highlight dialog load/show based on dialogId and analyticsId */
 	property: (() => any) | undefined;
 }
 export declare class Test2 {
-	/** This methond will trigger the feature highlight dialog load/show based on dialogId and analyticsI */
+	/** This method will trigger the feature highlight dialog load/show based on dialogId and analyticsI */
 	property: ((arg: any) => any) | undefined;
 }
 export declare class Test3 {

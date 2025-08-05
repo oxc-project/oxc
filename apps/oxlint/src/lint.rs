@@ -11,7 +11,7 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
@@ -20,7 +20,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
+    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -32,10 +32,8 @@ pub struct LintRunner {
     external_linter: Option<ExternalLinter>,
 }
 
-impl Runner for LintRunner {
-    type Options = LintCommand;
-
-    fn new(options: Self::Options, external_linter: Option<ExternalLinter>) -> Self {
+impl LintRunner {
+    pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
@@ -43,7 +41,7 @@ impl Runner for LintRunner {
         }
     }
 
-    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -278,7 +276,19 @@ impl Runner for LintRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
-        let lint_config = config_builder.build();
+        let lint_config = match config_builder.build(&external_plugin_store) {
+            Ok(config) => config,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to build configuration.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -313,9 +323,8 @@ impl Runner for LintRunner {
             }
         }
 
-        let mut diagnostic_service =
+        let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-        let tx_error = diagnostic_service.sender().clone();
 
         let number_of_rules = linter.number_of_rules();
 
@@ -324,14 +333,14 @@ impl Runner for LintRunner {
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
             let mut lint_service = LintService::new(linter, allocator_pool, options);
-            let _ = lint_service.with_paths(paths);
+            lint_service.with_paths(paths);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
             // This reads the source text into start of allocator, instead of the end.
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
             {
                 use crate::raw_fs::RawTransferFileSystem;
-                let _ = lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
 
             lint_service.run(&tx_error);
@@ -373,11 +382,15 @@ impl LintRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
-    ) -> DiagnosticService {
-        DiagnosticService::new(reporter.get_diagnostic_reporter())
-            .with_quiet(warning_options.quiet)
-            .with_silent(misc_options.silent)
-            .with_max_warnings(warning_options.max_warnings)
+    ) -> (DiagnosticService, DiagnosticSender) {
+        let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
+        (
+            service
+                .with_quiet(warning_options.quiet)
+                .with_silent(misc_options.silent)
+                .with_max_warnings(warning_options.max_warnings),
+            sender,
+        )
     }
 
     // moved into a separate function for readability, but it's only ever used
@@ -444,7 +457,10 @@ impl LintRunner {
             while let Some(dir) = current {
                 // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
                 // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
-                directories.insert(dir);
+                let inserted = directories.insert(dir);
+                if !inserted {
+                    break;
+                }
                 current = dir.parent();
             }
         }
@@ -485,7 +501,19 @@ impl LintRunner {
             }
             .with_filters(filters);
 
-            let config = builder.build();
+            let config = match builder.build(external_plugin_store) {
+                Ok(config) => config,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to build configuration.\n{}\n",
+                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                        ),
+                    );
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            };
             nested_configs.insert(dir.to_path_buf(), config);
         }
 
@@ -859,29 +887,12 @@ mod test {
 
     #[test]
     fn test_fix() {
-        use std::fs;
-        let file = "fixtures/linter/fix.js";
-        let args = &["--fix", file];
-        let content_original = fs::read_to_string(file).unwrap();
-        #[expect(clippy::disallowed_methods)]
-        let content = content_original.replace("\r\n", "\n");
-        assert_eq!(&content, "debugger\n");
-
-        // Apply fix to the file.
-        Tester::new().test(args);
-        #[expect(clippy::disallowed_methods)]
-        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
-        assert_eq!(new_content, "\n");
-
-        // File should not be modified if no fix is applied.
-        let modified_before: std::time::SystemTime =
-            fs::metadata(file).unwrap().modified().unwrap();
-        Tester::new().test(args);
-        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
-        assert_eq!(modified_before, modified_after);
-
-        // Write the file back.
-        fs::write(file, content_original).unwrap();
+        Tester::test_fix("fixtures/fix_argument/fix.js", "debugger\n", "\n");
+        Tester::test_fix(
+            "fixtures/fix_argument/fix.vue",
+            "<script>debugger;</script>\n<script>debugger;</script>\n",
+            "<script></script>\n<script></script>\n",
+        );
     }
 
     #[test]

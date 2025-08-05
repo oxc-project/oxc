@@ -167,6 +167,7 @@ mod eslint {
     pub mod no_void;
     pub mod no_with;
     pub mod operator_assignment;
+    pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -199,6 +200,7 @@ mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
+    pub mod explicit_module_boundary_types;
     pub mod no_confusing_non_null_assertion;
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
@@ -705,6 +707,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_void,
     eslint::no_with,
     eslint::operator_assignment,
+    eslint::prefer_destructuring,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
@@ -960,6 +963,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_indexed_object_style,
     typescript::consistent_type_definitions,
     typescript::consistent_type_imports,
+    typescript::explicit_module_boundary_types,
     typescript::explicit_function_return_type,
     typescript::no_inferrable_types,
     typescript::no_confusing_non_null_assertion,

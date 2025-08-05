@@ -408,15 +408,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTarget<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
-        let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
-        result
+        self.write(f)
     }
 }
 
@@ -2012,6 +2004,21 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
 }
 
 impl<'a> Format<'a> for AstNode<'a, TSImportType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.format_leading_comments(f)?;
+        let result = self.write(f);
+        self.format_trailing_comments(f)?;
+        result
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
         let result = self.write(f);

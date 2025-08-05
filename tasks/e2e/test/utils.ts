@@ -11,7 +11,7 @@ const nodeModulesPath = path.resolve(path.dirname(url.fileURLToPath(import.meta.
 
 const minifyOptions: any[] = [
   { compress: true, mangle: true, codegen: { whitespace: true } },
-  { compress: true, mangle: true, codegen: { whitespace: true } },
+  { compress: true, mangle: false, codegen: { whitespace: true } },
 ].map((o) => ({ type: 'minify', ...o }));
 
 const transformOptions: any[] = [

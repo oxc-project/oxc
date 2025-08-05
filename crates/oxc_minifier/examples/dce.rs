@@ -1,4 +1,21 @@
 #![expect(clippy::print_stdout)]
+//! # Dead Code Elimination Example
+//!
+//! This example demonstrates dead code elimination (DCE) using the Oxc compressor.
+//! It removes unreachable code and unused variables.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_minifier --example dce [filename] [--nospace] [--twice]
+//! ```
+//!
+//! ## Options
+//!
+//! - `--nospace`: Remove extra whitespace
+//! - `--twice`: Test idempotency by running twice
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;

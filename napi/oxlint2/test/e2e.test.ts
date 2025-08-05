@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 
 const PACKAGE_ROOT_PATH = path.dirname(import.meta.dirname);
-const ENTRY_POINT_PATH = path.join(PACKAGE_ROOT_PATH, 'src/index.js');
+const ENTRY_POINT_PATH = path.join(PACKAGE_ROOT_PATH, 'dist/index.js');
 
 async function runOxlint(cwd: string, args: string[] = []) {
   return await execa('node', [ENTRY_POINT_PATH, ...args], {
@@ -84,6 +84,15 @@ describe('oxlint2 CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should report an error if a a rule is not found within a custom plugin (via overrides)', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/custom_plugin_via_overrides_missing_rule',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should report the correct severity when using a custom plugin', async () => {
     const { stdout, exitCode } = await runOxlint(
       'test/fixtures/basic_custom_plugin_warn_severity',
@@ -96,6 +105,15 @@ describe('oxlint2 CLI', () => {
   it('should work with multiple rules', async () => {
     const { stdout, exitCode } = await runOxlint(
       'test/fixtures/basic_custom_plugin_multiple_rules',
+    );
+
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should receive data via `context`', async () => {
+    const { stdout, exitCode } = await runOxlint(
+      'test/fixtures/context_properties',
     );
 
     expect(exitCode).toBe(1);

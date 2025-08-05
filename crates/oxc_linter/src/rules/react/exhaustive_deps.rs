@@ -468,7 +468,7 @@ impl Rule for ExhaustiveDeps {
                                 return false;
                             }
                             let grand_parent = ctx.nodes().parent_node(parent.id());
-                            matches!(grand_parent.kind(), AstKind::SimpleAssignmentTarget(_))
+                            matches!(grand_parent.kind(), AstKind::AssignmentExpression(_))
                         })
                     });
 
@@ -590,9 +590,6 @@ impl Rule for ExhaustiveDeps {
 
         // effects are allowed to have extra dependencies
         if !is_effect {
-            let unnecessary_deps: Vec<_> =
-                declared_dependencies.difference(&found_dependencies).collect();
-
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
@@ -612,7 +609,7 @@ impl Rule for ExhaustiveDeps {
                 }
             });
 
-            for dep in unnecessary_deps {
+            for dep in declared_dependencies.difference(&found_dependencies) {
                 if found_dependencies.iter().any(|found_dep| found_dep.contains(dep)) {
                     continue;
                 }
@@ -1073,7 +1070,7 @@ fn is_stable_value<'a, 'b>(
                     .any(|reference| {
                         matches!(
                             ctx.nodes().parent_kind(reference.node_id()),
-                            AstKind::SimpleAssignmentTarget(_)
+                            AstKind::IdentifierReference(_) | AstKind::AssignmentExpression(_)
                         )
                     })
             {
@@ -1408,15 +1405,32 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
                 AstKind::VariableDeclarator(var_decl) => {
-                    if let Some(Expression::CallExpression(call_expr)) = &var_decl.init {
-                        if let Some(name) = func_call_without_react_namespace(call_expr) {
-                            name == "useState" || name == "useReducer"
-                        } else {
-                            false
-                        }
-                    } else {
-                        false
+                    let Some(Expression::CallExpression(call_expr)) = &var_decl.init else {
+                        return;
+                    };
+
+                    let Some(name) = func_call_without_react_namespace(call_expr) else {
+                        return;
+                    };
+
+                    if name != "useState" && name != "useReducer" {
+                        return;
                     }
+
+                    let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind else {
+                        return;
+                    };
+
+                    let Some(Some(second_arg)) = array_pat.elements.get(1) else {
+                        return;
+                    };
+
+                    let BindingPatternKind::BindingIdentifier(binding_ident) = &second_arg.kind
+                    else {
+                        return;
+                    };
+
+                    binding_ident.name == ident.name
                 }
                 _ => false,
             };
@@ -2554,6 +2568,7 @@ fn test() {
         r"function MyComponent(props) { useEffect(() => { console.log(props.foo!.bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
+        r#"function Test() { const [state, setState] = useState(); useEffect(() => { console.log("state", state); }); }"#,
     ];
 
     let fail = vec![

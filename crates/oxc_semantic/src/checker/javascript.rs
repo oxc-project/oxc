@@ -187,13 +187,27 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
-                AstKind::SimpleAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
+                // Only check for actual assignment contexts, not member expression access
+                AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                m if m.is_member_expression_kind() => break,
+                AstKind::AssignmentExpression(assign_expr) => {
+                    // only throw error if arguments or eval are being assigned to
+                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
+                        &assign_expr.left
+                    {
+                        if target_ident.name == ident.name {
+                            return ctx
+                                .error(unexpected_identifier_assign(&ident.name, ident.span));
+                        }
+                    }
+                }
+                m if m.is_member_expression_kind() => {
+                    break;
+                }
                 _ => {}
             }
         }
@@ -476,7 +490,6 @@ pub fn check_function_declaration<'a>(
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
 pub fn check_function_declaration_in_labeled_statement<'a>(
     body: &Statement<'a>,
-
     ctx: &SemanticBuilder<'a>,
 ) {
     if let Statement::FunctionDeclaration(decl) = body {
@@ -495,7 +508,6 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
                     | AstKind::DoWhileStatement(_)
                     | AstKind::WithStatement(_)
                     | AstKind::IfStatement(_) => break,
-
                     _ => return,
                 }
             }
@@ -753,7 +765,7 @@ pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             // label cannot cross boundary on function or static block
-            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
+            AstKind::Function(_) | AstKind::StaticBlock(_) => break,
             // check label name redeclaration
             AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
                 return ctx.error(label_redeclaration(

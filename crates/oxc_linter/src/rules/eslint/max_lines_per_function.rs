@@ -225,7 +225,8 @@ impl Rule for MaxLinesPerFunction {
 }
 
 fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(semantic, node.id()).next()
+    let Some(AstKind::CallExpression(call)) =
+        iter_outer_expressions(semantic.nodes(), node.id()).next()
     else {
         return false;
     };

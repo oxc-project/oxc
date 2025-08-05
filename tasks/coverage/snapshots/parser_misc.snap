@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 44/44 (100.00%)
-Positive Passed: 44/44 (100.00%)
-Negative Passed: 48/48 (100.00%)
+AST Parsed     : 45/45 (100.00%)
+Positive Passed: 45/45 (100.00%)
+Negative Passed: 54/54 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -186,6 +186,45 @@ Negative Passed: 48/48 (100.00%)
    ╭─[misc/fail/oxc-11789-2.ts:1:14]
  1 │ interface i<>implements K {}
    ·              ──────────
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-1.ts:1:25]
+ 1 │ interface Props extends /MenuProps {
+   ·                         ─────────────
+ 2 │   collapse?: boolean;
+ 3 │   menus: MenuRecordRaw[];
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-2.ts:1:21]
+ 1 │ class Props extends /MenuProps {
+   ·                     ─────────────
+ 2 │ }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-1.ts:1:2]
+ 1 │ (foo() as bar) = 123;
+   ·  ────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-2.ts:1:2]
+ 1 │ (<any>foo()) = 123;
+   ·  ──────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-3.ts:1:2]
+ 1 │ (foo() satisfies any) = 123;
+   ·  ───────────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-4.ts:1:2]
+ 1 │ (foo() as number as any) = 123;
+   ·  ──────────────────────
    ╰────
 
   × Unexpected token

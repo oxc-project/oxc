@@ -1,8 +1,20 @@
 commit: 4b5d36ab
 
 runtime Summary:
-AST Parsed     : 18254/18254 (100.00%)
-Positive Passed: 17310/18254 (94.83%)
+AST Parsed     : 18261/18261 (100.00%)
+Positive Passed: 17284/18261 (94.65%)
+minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/getter-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/method-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/setter-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
 codegen Error: tasks/coverage/test262/test/language/eval-code/direct/var-env-func-init-global-update-configurable.js
 Test262Error: obj['f'] descriptor should be enumerable; obj['f'] descriptor should be writable
 
@@ -233,6 +245,9 @@ Test262Error: Expected SameValue(«true», «false») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
 Test262Error: Expected SameValue(«true», «false») to be true
+
+codegen Error: tasks/coverage/test262/test/language/expressions/async-generator/generator-created-after-decl-inst.js
+Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
 minify Error: tasks/coverage/test262/test/language/expressions/async-generator/name.js
 Test262Error: obj['name'] descriptor value should be func; obj['name'] value should be func
@@ -1179,6 +1194,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
+codegen Error: tasks/coverage/test262/test/language/expressions/generators/generator-created-after-decl-inst.js
+Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
+
 minify Error: tasks/coverage/test262/test/language/expressions/generators/name.js
 Test262Error: obj['name'] descriptor value should be func; obj['name'] value should be func
 
@@ -1380,6 +1398,18 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
 
+codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-getvalue.js
+Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
+
+codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-compound-assign.js
+Test262Error: Expected SameValue(«0», «2») to be true
+
+codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-increment.js
+Test262Error: Expected SameValue(«0», «2») to be true
+
+codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue.js
+Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
+
 transform Error: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-arguments.js
 Test262Error: Expected SameValue(«true», «false») to be true
 
@@ -1427,6 +1457,9 @@ Test262Error: Expected SameValue(«true», «false») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-caller.js
 Test262Error: Expected SameValue(«true», «false») to be true
+
+codegen Error: tasks/coverage/test262/test/language/statements/async-generator/generator-created-after-decl-inst.js
+Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
 Test262Error: Actual [tick 1, tick 2, g1 ret, g2 ret, g3 ret, g4 ret] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
@@ -1478,6 +1511,12 @@ throw-arg-1
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/yield-star-throw-notdone-iter-value-throws.js
 Timed out.
+
+minify Error: tasks/coverage/test262/test/language/statements/class/accessor-name-inst/computed-err-to-prop-key.js
+Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/accessor-name-static/computed-err-to-prop-key.js
+Test262Error: `get` accessor Expected a TypeError to be thrown but no exception was thrown at all
 
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-async-next.js
 Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -1539,6 +1578,24 @@ Test262Error: reject reason Expected SameValue(«TypeError: The iterator does no
 transform Error: tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 throw-arg-1
 
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/constructable-but-no-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/getters-non-configurable-err.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/invalid-extends.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/prototype-getter.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/prototype-setter.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/definition/setters-non-configurable-err.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -1592,6 +1649,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+codegen Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-id-elision-next-err.js
+io: Connection reset by peer (os error 54)
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2102,6 +2162,12 @@ Test262Error: Expected a Test262Error to be thrown but no exception was thrown a
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/evaluation-error/computed-name-valueof-err.js
 Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-computed-var-propname-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/fields-computed-name-static-propname-prototype.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
 Test262Error: Expected a SyntaxError but got a ReferenceError
 
@@ -2133,6 +2199,9 @@ Test262Error: Expected a SyntaxError but got a ReferenceError
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/nested-private-direct-eval-err-contains-arguments.js
 Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/private-accessor-is-visible-in-computed-properties.js
+SyntaxError: Private field '#f' must be declared in an enclosing class
+
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/private-async-generator-method-name.js
 Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
@@ -2151,8 +2220,17 @@ Test262Error: Expected a SyntaxError but got a ReferenceError
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/private-direct-eval-err-contains-arguments.js
 Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/private-field-is-visible-in-computed-properties.js
+SyntaxError: Private field '#f' must be declared in an enclosing class
+
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/private-field-with-initialized-id-is-visible-in-computed-properties.js
+SyntaxError: Private field '#f' must be declared in an enclosing class
+
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/private-generator-method-name.js
 Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
+
+minify Error: tasks/coverage/test262/test/language/statements/class/elements/private-method-is-visible-in-computed-properties.js
+SyntaxError: Private field '#m' must be declared in an enclosing class
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/private-methods/prod-private-async-generator.js
 Test262Error: function name inside constructor Expected SameValue(«"_m"», «"#m"») to be true
@@ -2184,19 +2262,37 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
+minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-assigned.js
+Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
+
 minify Error: tasks/coverage/test262/test/language/statements/class/name-binding/in-extends-expression-grouped.js
 Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 transform Error: tasks/coverage/test262/test/language/statements/class/static-init-expr-new-target.js
 SyntaxError: new.target expression is not allowed here
 
+minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/static-method-non-configurable-err.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/subclass/builtin-objects/Proxy/no-prototype-throws.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
 minify Error: tasks/coverage/test262/test/language/statements/class/subclass/class-definition-null-proto-this.js
 Test262Error: Expected a ReferenceError but got a Test262Error
+
+minify Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-arrow-function.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 transform Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-function.js
 TypeError: Cannot redefine property: prototype
 
 transform Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-generator-function.js
+Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
+
+minify Error: tasks/coverage/test262/test/language/statements/class/subclass/superclass-generator-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 minify Error: tasks/coverage/test262/test/language/statements/const/block-local-use-before-initialization-in-prior-statement.js
@@ -2792,6 +2888,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+codegen Error: tasks/coverage/test262/test/language/statements/generators/generator-created-after-decl-inst.js
+Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/let/block-local-use-before-initialization-in-prior-statement.js
 Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all

@@ -68,7 +68,6 @@ describe('transform', () => {
 
 describe('target', () => {
   const data = [
-    ['es5', '() => {};\n'],
     ['es6', 'a ** b;\n'],
     ['es2015', 'a ** b;\n'],
     ['es2016', 'async function foo() {}\n'],

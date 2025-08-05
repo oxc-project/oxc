@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+
+## [0.78.0] - 2025-07-24
+
+### 🚜 Refactor
+
+- 1cf08c0 minifier: Make DCE remove more code to align with rollup (#12427) (Boshen)
+
+
 ## [0.77.3] - 2025-07-20
 
 ### ⚡ Performance

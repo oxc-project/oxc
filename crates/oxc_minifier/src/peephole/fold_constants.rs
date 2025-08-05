@@ -7,7 +7,6 @@ use oxc_ecmascript::{
 };
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -39,20 +38,6 @@ impl<'a> PeepholeOptimizations {
         } {
             *expr = folded_expr;
             ctx.state.changed = true;
-        }
-
-        // Save `const value = false` into constant values.
-        if let Ancestor::VariableDeclaratorInit(decl) = ctx.parent() {
-            // TODO: Check for no write references.
-            if decl.kind().is_const() {
-                if let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind {
-                    // TODO: refactor all the above code to return value instead of expression, to avoid calling `evaluate_value` again.
-                    if let Some(value) = expr.evaluate_value(ctx) {
-                        let symbol_id = ident.symbol_id();
-                        ctx.state.constant_values.insert(symbol_id, value);
-                    }
-                }
-            }
         }
     }
 
@@ -1431,7 +1416,7 @@ mod test {
     fn test_fold_logical_op2() {
         fold("x = function(){} && x", "x=x");
         fold("x = true && function(){}", "x=function(){}");
-        fold("x = [(function(){alert(x)})()] && x", "x=(function(){alert(x)}(),x)");
+        fold("x = [(function(){alert(x)})()] && x", "x=((function(){alert(x)})(),x)");
     }
 
     #[test]

@@ -3,7 +3,6 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
-use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
@@ -419,20 +418,45 @@ impl<'a> PeepholeOptimizations {
 
     pub fn keep_track_of_empty_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         match stmt {
-            Statement::FunctionDeclaration(func) => {
-                if let Some(body) = &func.body {
-                    if body.is_empty() {
-                        let symbol_id = func.id.as_ref().and_then(|id| id.symbol_id.get());
-                        Self::save_empty_function(symbol_id, ctx);
-                    }
+            Statement::FunctionDeclaration(f) => {
+                if let Some(body) = &f.body {
+                    Self::try_save_empty_function(
+                        f.id.as_ref(),
+                        &f.params,
+                        body,
+                        f.r#async,
+                        f.generator,
+                        ctx,
+                    );
                 }
             }
             Statement::VariableDeclaration(decl) => {
                 for d in &decl.declarations {
-                    if d.init.as_ref().is_some_and(|e|matches!(e, Expression::ArrowFunctionExpression(arrow) if arrow.body.is_empty())) {
-                        if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
-                            let symbol_id = id.symbol_id.get();
-                            Self::save_empty_function(symbol_id,ctx);
+                    if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
+                        match &d.init {
+                            Some(Expression::ArrowFunctionExpression(a)) => {
+                                Self::try_save_empty_function(
+                                    Some(id),
+                                    &a.params,
+                                    &a.body,
+                                    a.r#async,
+                                    false,
+                                    ctx,
+                                );
+                            }
+                            Some(Expression::FunctionExpression(f)) => {
+                                if let Some(body) = &f.body {
+                                    Self::try_save_empty_function(
+                                        Some(id),
+                                        &f.params,
+                                        body,
+                                        f.r#async,
+                                        f.generator,
+                                        ctx,
+                                    );
+                                }
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -441,11 +465,24 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn save_empty_function(symbol_id: Option<SymbolId>, ctx: &mut Ctx<'a, '_>) {
-        if let Some(symbol_id) = symbol_id {
-            if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-                ctx.state.empty_functions.insert(symbol_id);
-            }
+    fn try_save_empty_function(
+        id: Option<&BindingIdentifier<'a>>,
+        params: &FormalParameters<'a>,
+        body: &FunctionBody<'a>,
+        r#async: bool,
+        generator: bool,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
+        if !body.is_empty() || r#async || generator {
+            return;
+        }
+        // `function foo({}) {} foo(null)` is runtime type error.
+        if !params.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) {
+            return;
+        }
+        let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
+            ctx.state.empty_functions.insert(symbol_id);
         }
     }
 
@@ -552,7 +589,7 @@ impl<'a> LatePeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions,
-        tester::{test, test_options, test_same},
+        tester::{test, test_options, test_same, test_same_options},
     };
 
     #[test]
@@ -773,5 +810,17 @@ mod test {
         test_options("var foo = () => {}; foo(...a, ...b)", "a, b", &options);
         test_options("var foo = () => {}; x = foo()", "x = void 0", &options);
         test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
+        test_options("var foo = function () {}; foo()", "", &options);
+
+        test_same_options("function foo({}) {} foo()", &options);
+        test_same_options("var foo = ({}) => {}; foo()", &options);
+        test_same_options("var foo = function ({}) {}; foo()", &options);
+
+        test_same_options("async function foo({}) {} foo()", &options);
+        test_same_options("var foo = async ({}) => {}; foo()", &options);
+        test_same_options("var foo = async function ({}) {}; foo()", &options);
+
+        test_same_options("function* foo({}) {} foo()", &options);
+        test_same_options("var foo = function*({}) {}; foo()", &options);
     }
 }

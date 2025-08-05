@@ -341,7 +341,7 @@ impl<'a> Expression<'a> {
     /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
-            && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+            || matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
     /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
@@ -434,11 +434,20 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     }
 }
 
-impl ObjectPropertyKind<'_> {
+impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadProperty(_))
+    }
+
+    /// Returns [`Some`] for non-spread [object properties](ObjectProperty).
+    #[inline]
+    pub fn as_property(&self) -> Option<&ObjectProperty<'a>> {
+        match self {
+            Self::ObjectProperty(prop) => Some(prop),
+            Self::SpreadProperty(_) => None,
+        }
     }
 }
 
@@ -966,6 +975,21 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
+                    Some(id)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Returns mut identifier bound by this assignment target.
+    pub fn identifier_mut(&mut self) -> Option<&mut IdentifierReference<'a>> {
+        match self {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
+            Self::AssignmentTargetWithDefault(target) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &mut target.binding {
                     Some(id)
                 } else {
                     None

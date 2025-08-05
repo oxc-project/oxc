@@ -45,7 +45,8 @@ pub use crate::{
     },
     context::LintContext,
     external_linter::{
-        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+        PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
@@ -247,20 +248,18 @@ impl Linter {
         // `external_linter` always exists when `oxlint2` feature is enabled
         let external_linter = self.external_linter.as_ref().unwrap();
 
-        // Write offset of `Program` and source text length in metadata at end of buffer
-        let program = semantic.nodes().program().unwrap();
+        // Write offset of `Program` in metadata at end of buffer
+        let program = semantic.nodes().program();
         let program_offset = ptr::from_ref(program) as u32;
-        #[expect(clippy::cast_possible_truncation)]
-        let source_len = program.source_text.len() as u32;
 
-        let metadata = RawTransferMetadata::new(program_offset, source_len);
+        let metadata = RawTransferMetadata::new(program_offset);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
+        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
         // Pass AST and rule IDs to JS
-        let result = (external_linter.run)(
+        let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             allocator,
@@ -268,33 +267,18 @@ impl Linter {
         match result {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
-                    match self.config.resolve_plugin_rule_names(diagnostic.external_rule_id) {
-                        Some((plugin_name, rule_name)) => {
-                            ctx_host.push_diagnostic(Message::new(
-                                // TODO: `error` isn't right, we need to get the severity from `external_rules`
-                                OxcDiagnostic::error(diagnostic.message)
-                                    .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
-                                    .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                    .with_severity(
-                                        (*external_rules
-                                            .iter()
-                                            .find(|(rule_id, _)| {
-                                                rule_id.raw() == diagnostic.external_rule_id
-                                            })
-                                            .map(|(_, severity)| severity)
-                                            .expect(
-                                                "external rule must exist when resolving severity",
-                                            ))
-                                        .into(),
-                                    ),
-                                PossibleFixes::None,
-                            ));
-                        }
-                        None => {
-                            // TODO: report diagnostic, this should be unreachable
-                            debug_assert!(false);
-                        }
-                    }
+                    let (external_rule_id, severity) =
+                        external_rules[diagnostic.rule_index as usize];
+                    let (plugin_name, rule_name) =
+                        self.config.resolve_plugin_rule_names(external_rule_id);
+
+                    ctx_host.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        PossibleFixes::None,
+                    ));
                 }
             }
             Err(_err) => {
@@ -318,10 +302,8 @@ struct RawTransferMetadata2 {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
-    /// Offset of `u32` containing source text length within buffer.
-    pub(crate) source_len: u32,
     /// Padding to pad struct to size 16.
-    pub(crate) _padding: u32,
+    pub(crate) _padding: u64,
 }
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
@@ -329,8 +311,8 @@ use RawTransferMetadata2 as RawTransferMetadata;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, source_len: u32) -> Self {
-        Self { data_offset, is_ts: false, source_len, _padding: 0 }
+    pub fn new(data_offset: u32) -> Self {
+        Self { data_offset, is_ts: false, _padding: 0 }
     }
 }
 

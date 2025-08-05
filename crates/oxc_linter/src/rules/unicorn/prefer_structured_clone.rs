@@ -25,9 +25,15 @@ fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferStructuredClone(Box<PreferStructuredCloneConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct PreferStructuredCloneConfig {
     allowed_functions: Vec<String>,
+}
+
+impl Default for PreferStructuredCloneConfig {
+    fn default() -> Self {
+        Self { allowed_functions: vec!["cloneDeep".to_string(), "utils.clone".to_string()] }
+    }
 }
 
 impl Deref for PreferStructuredClone {

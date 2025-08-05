@@ -6,8 +6,9 @@ use crate::{
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::{DanglingIndentMode, format_dangling_comments},
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     write,
+    write::parameter_list::should_hug_function_parameters,
 };
 
 use super::{
@@ -36,97 +37,83 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
-        // TODO
-        false
-        // let parent_kind = self.syntax().parent.kind();
-
-        // Ok(
-        // (matches!(parent_kind, Some(JsSyntaxKind::JS_FORMAL_PARAMETER))
-        // || self.is_hug_parameter(comments))
-        // && !self.l_curly_token()?.leading_trivia().has_skipped(),
-        // )
+        match self {
+            Self::ObjectPattern(node) => {
+                matches!(node.parent, AstNodes::FormalParameter(_)) || self.is_hug_parameter(f)
+            }
+            Self::ObjectAssignmentTarget(node) => {
+                matches!(node.parent, AstNodes::FormalParameter(_))
+            }
+        }
     }
 
     fn should_break_properties(&self) -> bool {
-        false
-        // TODO
-        // let parent_kind = self.syntax().parent.kind();
+        // Check parent node type
+        let parent_is_catch_or_parameter = match self {
+            Self::ObjectPattern(node) => {
+                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
+            }
+            Self::ObjectAssignmentTarget(node) => {
+                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
+            }
+        };
 
-        // Catch only has a single expression in the declaration, so it will
-        // be the direct parent of the object pattern, and the pattern should
-        // not break unless it has to there.
-        //
-        // Parameters in function-like expressions are also kept inline, and
-        // all parameters end up wrapped by a `JsFormalParameter` node, as
-        // checked here. Note that this is also checked ahead of time by the
-        // `is_inline` function.
-        // if matches!(
-        // parent_kind,
-        // Some(JsSyntaxKind::JS_CATCH_DECLARATION | JsSyntaxKind::JS_FORMAL_PARAMETER)
-        // ) {
-        // return false;
-        // }
+        if parent_is_catch_or_parameter {
+            return false;
+        }
 
-        // match self {
-        // JsObjectPatternLike::JsObjectAssignmentPattern(node) => {
-        // node.properties().iter().any(|property| {
-        // if let Ok(
-        // AnyJsObjectAssignmentPatternMember::JsObjectAssignmentPatternProperty(node),
-        // ) = property
-        // {
-        // let pattern = node.pattern();
-        // matches!(
-        // pattern,
-        // Ok(AnyJsAssignmentPattern::JsObjectAssignmentPattern(_)
-        // | AnyJsAssignmentPattern::JsArrayAssignmentPattern(_))
-        // )
-        // } else {
-        // false
-        // }
-        // })
-        // }
-        // JsObjectPatternLike::JsObjectBindingPattern(node) => {
-        // node.properties().iter().any(|property| {
-        // if let Ok(AnyJsObjectBindingPatternMember::JsObjectBindingPatternProperty(
-        // node,
-        // )) = property
-        // {
-        // let pattern = node.pattern();
-
-        // matches!(
-        // pattern,
-        // Ok(AnyJsBindingPattern::JsObjectBindingPattern(_)
-        // | AnyJsBindingPattern::JsArrayBindingPattern(_))
-        // )
-        // } else {
-        // false
-        // }
-        // })
-        // }
-        // }
+        match self {
+            Self::ObjectPattern(node) => {
+                node.properties.iter().any(|property| match &property.value.kind {
+                    BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => {
+                        true
+                    }
+                    BindingPatternKind::AssignmentPattern(assignment) => {
+                        matches!(
+                            assignment.left.kind,
+                            BindingPatternKind::ObjectPattern(_)
+                                | BindingPatternKind::ArrayPattern(_)
+                        )
+                    }
+                    BindingPatternKind::BindingIdentifier(_) => false,
+                })
+            }
+            Self::ObjectAssignmentTarget(node) => {
+                node.properties.iter().any(|property| match property {
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
+                        matches!(
+                            &prop.binding,
+                            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(_)
+                                | AssignmentTargetMaybeDefault::ArrayAssignmentTarget(_)
+                        )
+                    }
+                })
+            }
+        }
     }
 
     fn is_in_assignment_like(&self) -> bool {
-        // TODO
-        false
-        // matches!(
-        // self.syntax().parent.kind(),
-        // Some(JsSyntaxKind::JS_ASSIGNMENT_EXPRESSION | JsSyntaxKind::JS_VARIABLE_DECLARATOR),
-        // )
+        match self {
+            Self::ObjectPattern(node) => matches!(node.parent, AstNodes::VariableDeclarator(_)),
+            Self::ObjectAssignmentTarget(node) => matches!(
+                node.parent,
+                AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_)
+            ),
+        }
     }
 
-    fn is_hug_parameter(&self, comments: &Comments) -> bool {
-        false
-        // match self {
-        // JsObjectPatternLike::JsObjectAssignmentPattern(_) => false,
-        // JsObjectPatternLike::JsObjectBindingPattern(binding) => binding
-        // .parent::<AnyJsFormalParameter>()
-        // .and_then(|parameter| parameter.syntax().grand_parent())
-        // .and_then(FormatAnyJsParameters::cast)
-        // .is_some_and(|parameters| {
-        // should_hug_function_parameters(&parameters, comments, false).unwrap_or(false)
-        // }),
-        // }
+    fn is_hug_parameter(&self, f: &Formatter<'_, 'a>) -> bool {
+        match self {
+            Self::ObjectAssignmentTarget(_) => false,
+            Self::ObjectPattern(node) => {
+                matches!(node.parent, AstNodes::FormalParameter(param) if {
+                    matches!(param.parent, AstNodes::FormalParameters(params) if {
+                        should_hug_function_parameters(params, false, f)
+                    })
+                })
+            }
+        }
     }
 
     fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {

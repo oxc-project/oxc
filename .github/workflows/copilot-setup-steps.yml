@@ -1,0 +1,45 @@
+name: Copilot Setup Steps
+
+# This workflow defines the setup steps that GitHub Copilot agents will use
+# to prepare the development environment for the oxc project.
+# It preinstalls tools and dependencies needed for Rust and Node.js development.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+permissions: {}
+
+jobs:
+  copilot-setup-steps:
+    name: Setup Development Environment for Copilot
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout full repo for git history.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          cache-key: warm
+          save-cache: false
+          tools: just,watchexec-cli,cargo-insta,typos-cli,cargo-shear,dprint
+          components: clippy rust-docs rustfmt
+
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+
+      - name: Restore dprint plugin cache
+        id: cache-restore
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          key: dprint-${{ hashFiles('dprint.json') }}
+          path: ~/.cache/dprint

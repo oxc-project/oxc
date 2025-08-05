@@ -6,9 +6,15 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoElseReturn {
     allow_else_if: bool,
+}
+
+impl Default for NoElseReturn {
+    fn default() -> Self {
+        Self { allow_else_if: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -332,7 +338,7 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
 
 impl Rule for NoElseReturn {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(value) = value.get(0) else { return Self { allow_else_if: true } };
+        let Some(value) = value.get(0) else { return Self::default() };
         Self {
             allow_else_if: value
                 .get("allowElseIf")

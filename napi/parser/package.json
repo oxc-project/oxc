@@ -1,11 +1,11 @@
 {
   "name": "oxc-parser",
-  "version": "0.77.3",
+  "version": "0.80.0",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --platform --js bindings.js",
-    "build-test": "pnpm run build",
+    "build-test": "pnpm run build-dev --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",

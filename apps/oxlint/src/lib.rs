@@ -1,18 +1,22 @@
+use std::io::BufWriter;
+
+pub use oxc_linter::{
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+    PluginLoadResult,
+};
+
 mod command;
 mod lint;
 mod output_formatter;
 mod result;
-mod runner;
 mod tester;
 mod walk;
 
 pub mod cli {
-    pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
+    pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
 }
 
-pub use oxc_linter::{
-    ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
-};
+use cli::{CliRunResult, LintRunner};
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 mod raw_fs;
@@ -21,23 +25,18 @@ mod raw_fs;
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-use cli::{CliRunResult, LintRunner, Runner};
-use std::{ffi::OsStr, io::BufWriter};
-
 pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();
     init_miette();
 
-    let mut args = std::env::args_os().peekable();
-
-    let args = match args.peek() {
-        Some(s) if s == OsStr::new("node") => args.skip(2),
-        _ => args.skip(1),
-    };
+    let mut args = std::env::args_os();
+    // If first arg is `node`, also skip script path (`node script.js ...`).
+    // Otherwise, just skip first arg (`oxlint ...`).
+    if args.next().is_some_and(|arg| arg == "node") {
+        args.next();
+    }
     let args = args.collect::<Vec<_>>();
 
-    // SAFELY skip first two args (node + script.js)
-    // let cli_args = std::env::args_os().skip(2);
     let cmd = crate::cli::lint_command();
     let command = match cmd.run_inner(&*args) {
         Ok(cmd) => cmd,

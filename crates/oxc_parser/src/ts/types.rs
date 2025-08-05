@@ -430,14 +430,15 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                let checkpoint = self.checkpoint();
-                let asserts_start_span = self.start_span();
-                self.bump_any(); // bump `asserts`
-
-                if self.is_token_identifier_or_keyword_on_same_line() {
+                // Use lookahead to check if this is an asserts type predicate
+                if self.lookahead(|parser| {
+                    parser.bump(Kind::Asserts);
+                    parser.is_token_identifier_or_keyword_on_same_line()
+                }) {
+                    let asserts_start_span = self.start_span();
+                    self.bump_any(); // bump `asserts`
                     self.parse_asserts_type_predicate(asserts_start_span)
                 } else {
-                    self.rewind(checkpoint);
                     self.parse_type_reference()
                 }
             }
@@ -1004,7 +1005,8 @@ impl<'a> ParserImpl<'a> {
         let options =
             if self.eat(Kind::Comma) { Some(self.parse_object_expression()) } else { None };
         self.expect(Kind::RParen);
-        let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()) } else { None };
+        let qualifier =
+            if self.eat(Kind::Dot) { Some(self.parse_ts_import_type_qualifier()) } else { None };
         let type_arguments = self.parse_type_arguments_of_type_reference();
         self.ast.alloc_ts_import_type(
             self.end_span(span),
@@ -1013,6 +1015,20 @@ impl<'a> ParserImpl<'a> {
             qualifier,
             type_arguments,
         )
+    }
+
+    fn parse_ts_import_type_qualifier(&mut self) -> TSImportTypeQualifier<'a> {
+        let span = self.start_span();
+        let ident = self.parse_identifier_name();
+        let mut left = self.ast.ts_import_type_qualifier_identifier(ident.span, ident.name);
+
+        while self.eat(Kind::Dot) {
+            let right = self.parse_identifier_name();
+            left =
+                self.ast.ts_import_type_qualifier_qualified_name(self.end_span(span), left, right);
+        }
+
+        left
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {

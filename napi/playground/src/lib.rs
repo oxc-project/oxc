@@ -20,11 +20,11 @@ use oxc::{
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags,
+        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
-    syntax::reference::Reference,
+    syntax::reference::ReferenceFlags,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{FormatOptions, Formatter};
@@ -293,6 +293,7 @@ impl Oxc {
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
+            let external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_config = if linter_options.config.is_some() {
@@ -306,13 +307,14 @@ impl Oxc {
                     &mut ExternalPluginStore::default(),
                 )
                 .unwrap_or_default();
-                config_builder.build()
+                config_builder.build(&external_plugin_store)
             } else {
-                ConfigStoreBuilder::default().build()
+                ConfigStoreBuilder::default().build(&external_plugin_store)
             };
+            let lint_config = lint_config.unwrap();
             let linter_ret = Linter::new(
                 LintOptions::default(),
-                ConfigStore::new(lint_config, FxHashMap::default(), ExternalPluginStore::default()),
+                ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
                 None,
             )
             .run(path, Rc::clone(&semantic), Arc::clone(module_record), allocator);
@@ -413,30 +415,38 @@ impl Oxc {
     fn get_symbols_text(scoping: &Scoping) -> napi::Result<String> {
         #[derive(Serialize)]
         struct Data {
+            symbol_id: SymbolId,
             span: Span,
             name: String,
             flags: SymbolFlags,
             scope_id: ScopeId,
-            resolved_references: Vec<ReferenceId>,
-            references: Vec<Reference>,
+            references: Vec<ReferenceData>,
         }
-
+        #[derive(Serialize)]
+        struct ReferenceData {
+            reference_id: ReferenceId,
+            symbol_id: Option<SymbolId>,
+            flags: ReferenceFlags,
+        }
         let data = scoping
             .symbol_ids()
             .map(|symbol_id| Data {
+                symbol_id,
                 span: scoping.symbol_span(symbol_id),
                 name: scoping.symbol_name(symbol_id).into(),
                 flags: scoping.symbol_flags(symbol_id),
                 scope_id: scoping.symbol_scope_id(symbol_id),
-                resolved_references: scoping
-                    .get_resolved_reference_ids(symbol_id)
-                    .iter()
-                    .copied()
-                    .collect::<Vec<_>>(),
                 references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
-                    .map(|reference_id| scoping.get_reference(*reference_id).clone())
+                    .map(|&reference_id| {
+                        let reference = scoping.get_reference(reference_id);
+                        ReferenceData {
+                            reference_id,
+                            symbol_id: reference.symbol_id(),
+                            flags: reference.flags(),
+                        }
+                    })
                     .collect::<Vec<_>>(),
             })
             .collect::<Vec<_>>();

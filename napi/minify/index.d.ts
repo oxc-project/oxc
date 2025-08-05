@@ -100,6 +100,8 @@ export interface MangleOptionsKeepNames {
 export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
 export interface MinifyOptions {
+  /** Use when minifying an ES6 module. */
+  module?: boolean
   compress?: boolean | CompressOptions
   mangle?: boolean | MangleOptions
   codegen?: boolean | CodegenOptions

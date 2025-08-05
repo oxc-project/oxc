@@ -45,6 +45,21 @@ impl<'a> Comments<'a> {
         &self.comments[..self.printed_count]
     }
 
+    /// Returns comments that are before the given `pos`.
+    pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if comment.span.end > pos {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
     /// Returns the comments that after the given `start` position, even if they were already printed.
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let mut index = self.printed_count;
@@ -67,6 +82,21 @@ impl<'a> Comments<'a> {
         } else {
             &self.comments[index..]
         }
+    }
+
+    pub fn comments_between(&self, start: u32, end: u32) -> &'a [Comment] {
+        let comments = self.comments_after(start);
+
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let mut index = 0;
+        while index < comments.len() - 1 && comments[index].span.end < end {
+            index += 1;
+        }
+
+        if comments[index].span.end < end { &comments[..=index] } else { &comments[..index] }
     }
 
     #[inline]
@@ -294,6 +324,19 @@ impl<'a> Comments<'a> {
                 // Reached an own line comment, which means it is the leading comment for the next node.
                 break;
             } else if is_end_of_line_comment(comment, source_text) {
+                let first_comment_start = comments[0].span.start;
+                // TODO: Maybe we can remove this check once we complete the logic of handling comments.
+                if preceding_span.end < first_comment_start {
+                    let is_break = source_text.as_bytes()
+                        [(preceding_span.end as usize)..(first_comment_start as usize)]
+                        .iter()
+                        .any(|&b| matches!(b, b'\n' | b'\r' | b')'));
+
+                    if is_break {
+                        return &[];
+                    }
+                }
+
                 // Should be a leading comment of following node.
                 // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
                 if matches!(

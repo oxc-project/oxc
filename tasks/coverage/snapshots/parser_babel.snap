@@ -11788,12 +11788,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ [...[] as T] = b;
    ╰────
 
-  × Invalid rest operator's argument.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignent-rest-invalid/input.ts:4:9]
- 3 │ 
- 4 │ 0, { ...({} as T)} = b;
-   ·         ─────────
- 5 │ [...([] as T)] = b;
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:9]
+ 1 │ 0, { ...{} as T} = b;
+   ·         ───────
+ 2 │ [...[] as T] = b;
    ╰────
 
   × Expected `=>` but found `;`

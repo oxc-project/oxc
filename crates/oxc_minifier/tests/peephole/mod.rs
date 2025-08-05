@@ -2,7 +2,9 @@ mod collapse_variable_declarations;
 mod dead_code_elimination;
 mod esbuild;
 mod minimize_exit_points;
+mod obscure_edge_cases;
 mod oxc;
+mod real_world_patterns;
 mod statement_fusion;
 
 use oxc_minifier::{CompressOptions, CompressOptionsUnused};

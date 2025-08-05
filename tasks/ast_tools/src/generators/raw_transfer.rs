@@ -26,6 +26,9 @@ use crate::{
 
 use super::define_generator;
 
+/// Offset of length field in `&str`
+const STR_LEN_OFFSET: u32 = 8;
+
 /// Bytes reserved for `malloc`'s metadata
 const MALLOC_RESERVED_SIZE: u32 = 16;
 
@@ -74,7 +77,7 @@ impl Generator for RawTransferGenerator {
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src/generated/constants.cjs"),
+                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src-js/generated/constants.cjs"),
                 code: constants_js,
             },
             Output::Rust {
@@ -1015,10 +1018,10 @@ struct Constants {
     data_pointer_pos: u32,
     /// Offset within buffer of `bool` indicating if AST is TS or JS
     is_ts_pos: u32,
-    /// Offset within buffer of `u32` containing position of `u32` containing source text length
-    source_len_pos: u32,
     /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,
+    /// Offset of `u32` source text length, relative to position of `Program`
+    source_len_offset: u32,
     /// Size of `RawTransferData` in bytes
     raw_metadata_size: u32,
 }
@@ -1029,13 +1032,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         buffer_size,
         data_pointer_pos,
         is_ts_pos,
-        source_len_pos,
         program_offset,
+        source_len_offset,
         raw_metadata_size,
     } = consts;
 
     let data_pointer_pos_32 = data_pointer_pos / 4;
-    let source_len_pos_32 = source_len_pos / 4;
 
     #[rustfmt::skip]
     let js_output = format!("
@@ -1043,16 +1045,16 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
             BUFFER_ALIGN = {BLOCK_ALIGN},
             DATA_POINTER_POS_32 = {data_pointer_pos_32},
             IS_TS_FLAG_POS = {is_ts_pos},
-            SOURCE_LEN_POS_32 = {source_len_pos_32},
-            PROGRAM_OFFSET = {program_offset};
+            PROGRAM_OFFSET = {program_offset},
+            SOURCE_LEN_OFFSET = {source_len_offset};
 
         module.exports = {{
             BUFFER_SIZE,
             BUFFER_ALIGN,
             DATA_POINTER_POS_32,
             IS_TS_FLAG_POS,
-            SOURCE_LEN_POS_32,
             PROGRAM_OFFSET,
+            SOURCE_LEN_OFFSET,
         }};
     ");
 
@@ -1085,7 +1087,6 @@ fn get_constants(schema: &Schema) -> Constants {
 
     let mut data_offset_field = None;
     let mut is_ts_field = None;
-    let mut source_len_field = None;
     for (field1, field2) in raw_metadata_struct.fields.iter().zip(&raw_metadata2_struct.fields) {
         assert_eq!(field1.name(), field2.name());
         assert_eq!(field1.type_id, field2.type_id);
@@ -1093,13 +1094,11 @@ fn get_constants(schema: &Schema) -> Constants {
         match field1.name() {
             "data_offset" => data_offset_field = Some(field1),
             "is_ts" => is_ts_field = Some(field1),
-            "source_len" => source_len_field = Some(field1),
             _ => {}
         }
     }
     let data_offset_field = data_offset_field.unwrap();
     let is_ts_field = is_ts_field.unwrap();
-    let source_len_field = source_len_field.unwrap();
 
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
 
@@ -1115,7 +1114,6 @@ fn get_constants(schema: &Schema) -> Constants {
     let raw_metadata_pos = buffer_size - raw_metadata_size;
     let data_pointer_pos = raw_metadata_pos + data_offset_field.offset_64();
     let is_ts_pos = raw_metadata_pos + is_ts_field.offset_64();
-    let source_len_pos = raw_metadata_pos + source_len_field.offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
@@ -1124,12 +1122,20 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
+    let source_len_offset = schema
+        .type_by_name("Program")
+        .as_struct()
+        .unwrap()
+        .field_by_name("source_text")
+        .offset_64()
+        + STR_LEN_OFFSET;
+
     Constants {
         buffer_size,
         data_pointer_pos,
         is_ts_pos,
-        source_len_pos,
         program_offset,
+        source_len_offset,
         raw_metadata_size,
     }
 }

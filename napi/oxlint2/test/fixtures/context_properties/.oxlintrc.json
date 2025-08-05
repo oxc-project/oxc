@@ -1,0 +1,8 @@
+{
+    "plugins": ["./test_plugin"],
+    "categories": {"correctness": "off"},
+    "rules": {
+        "context-plugin/log-context": "error"
+    },
+    "ignorePatterns": ["test_plugin"]
+}

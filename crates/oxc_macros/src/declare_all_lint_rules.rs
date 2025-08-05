@@ -205,11 +205,9 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             }
         }
 
-        lazy_static::lazy_static! {
-            pub static ref RULES: Vec<RuleEnum> = vec![
-                #(RuleEnum::#struct_names(#struct_names::default())),*
-            ];
-        }
+        pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(|| vec![
+            #(RuleEnum::#struct_names(#struct_names::default())),*
+        ]);
     };
 
     TokenStream::from(expanded)

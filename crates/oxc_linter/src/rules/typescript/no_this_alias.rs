@@ -31,7 +31,7 @@ fn no_this_destructure_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoThisAlias(Box<NoThisAliasConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct NoThisAliasConfig {
     allow_destructuring: bool,
     allow_names: FxHashSet<CompactStr>,
@@ -45,11 +45,6 @@ impl std::ops::Deref for NoThisAlias {
     }
 }
 
-impl Default for NoThisAliasConfig {
-    fn default() -> Self {
-        Self { allow_destructuring: true, allow_names: FxHashSet::default() }
-    }
-}
 impl NoThisAlias {
     fn is_allowed(&self, name: &str) -> bool {
         self.allow_names.contains(name)

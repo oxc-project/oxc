@@ -66,19 +66,15 @@ impl ImgRedundantAltConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce img alt attribute does not contain the word image, picture, or photo. Screenreaders already announce img elements as an image.
-    /// There is no need to use words such as image, photo, and/or picture.
+    /// Enforce that `img` alt attributes do not contain redundant words like
+    /// "image", "picture", or "photo".
     ///
-    /// ### Why is this necessary?
+    /// ### Why is this bad?
     ///
-    /// Alternative text is a critical component of accessibility for screen
-    /// reader users, enabling them to understand the content and function
-    /// of an element.
-    ///
-    /// ### What it checks
-    ///
-    /// This rule checks for alternative text on the following elements:
-    /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
+    /// Screen readers already announce `img` elements as an image, so there is
+    /// no need to use words such as "image", "photo", or "picture" in the alt
+    /// text. This creates redundant information for users of assistive
+    /// technologies and makes the alt text less concise and useful.
     ///
     /// ### Examples
     ///

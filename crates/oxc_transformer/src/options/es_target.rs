@@ -9,7 +9,6 @@ pub trait ESVersion {
 impl ESVersion for ESTarget {
     fn version(&self) -> Version {
         match self {
-            Self::ES5 => Version(5, 0, 0),
             Self::ES2015 => Version(2015, 0, 0),
             Self::ES2016 => Version(2016, 0, 0),
             Self::ES2017 => Version(2017, 0, 0),

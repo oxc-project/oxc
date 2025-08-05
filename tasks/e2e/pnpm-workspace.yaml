@@ -1,3 +1,5 @@
 packages:
     - .
     - tests/**
+
+verifyDepsBeforeRun: install

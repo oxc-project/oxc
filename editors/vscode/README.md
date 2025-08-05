@@ -38,12 +38,13 @@ Following configuration are supported via `settings.json` and effect the window 
 
 Following configuration are supported via `settings.json` and can be changed for each workspace:
 
-| Key                           | Default Value | Possible Values             | Description                                                                                                                                  |
-| ----------------------------- | ------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`        | Run the linter on save (onSave) or on type (onType)                                                                                          |
-| `oxc.configPath`              | `null`        | `null` \| `<string>`        | Path to ESlint configuration. Keep it empty to enable nested configuration.                                                                  |
-| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway. |
-| `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                  |
+| Key                           | Default Value | Possible Values             | Description                                                                                                                                      |
+| ----------------------------- | ------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`        | Run the linter on save (onSave) or on type (onType)                                                                                              |
+| `oxc.configPath`              | `null`        | `null` \| `<string>`        | Path to ESlint configuration. Keep it empty to enable nested configuration.                                                                      |
+| `oxc.tsConfigPath`            | `null`        | `null` \| `<string>`        | Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin. |
+| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.     |
+| `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                      |
 
 #### Flags
 

@@ -344,7 +344,7 @@ impl<'a> Fix<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum PossibleFixes<'a> {
     None,
     Single(Fix<'a>),

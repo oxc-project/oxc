@@ -1,4 +1,4 @@
-//! Trivias such as comments and irregular whitespaces
+//! Trivia such as comments and irregular whitespaces
 #![expect(missing_docs)] // FIXME
 
 use std::{

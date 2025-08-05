@@ -212,7 +212,7 @@ pub enum TSLiteral<'a> {
 
 /// TypeScript Type
 ///
-/// This is the root-level type for TypeScript types, kind of like [`Expression`] is for
+/// This is the root-level type for TypeScript types, similar to how [`Expression`] is for
 /// expressions.
 ///
 /// ## Examples
@@ -1359,8 +1359,37 @@ pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
-    pub qualifier: Option<TSTypeName<'a>>,
+    #[estree(via = TSImportTypeQualifierConverter)]
+    pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+}
+
+/// TypeScript Import Type Qualifier
+///
+/// The qualifier part of an import type that doesn't create references.
+/// In `import("./a").b.c`, the `.b.c` part is the qualifier.
+///
+/// Unlike `TSTypeName`, this doesn't use `IdentifierReference` because
+/// these are not references to identifiers in scope, but rather property
+/// accesses on the imported module type.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+pub enum TSImportTypeQualifier<'a> {
+    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    QualifiedName(Box<'a, TSImportTypeQualifiedName<'a>>) = 1,
+}
+
+/// TypeScript Import Type Qualified Name
+///
+/// A qualified name in an import type (e.g., `a.b.c` in `import("./module").a.b.c`)
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+pub struct TSImportTypeQualifiedName<'a> {
+    pub span: Span,
+    pub left: TSImportTypeQualifier<'a>,
+    pub right: IdentifierName<'a>,
 }
 
 /// TypeScript Function Type

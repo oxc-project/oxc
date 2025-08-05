@@ -7,11 +7,11 @@ use oxc_ecmascript::{
     },
     side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
 };
-use oxc_semantic::{IsGlobalReference, Scoping};
+use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
 use oxc_syntax::reference::ReferenceId;
 
-use crate::{options::CompressOptions, state::MinifierState};
+use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -50,7 +50,9 @@ impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, 
         self.scoping()
             .get_reference(reference_id)
             .symbol_id()
-            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
+            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .filter(|sv| sv.write_references_count == 0 && !sv.for_statement_init)
+            .and_then(|sv| sv.initialized_constant.as_ref())
             .cloned()
     }
 }
@@ -162,6 +164,46 @@ impl<'a> Ctx<'a, '_> {
             return true;
         }
         false
+    }
+
+    pub fn init_value(&mut self, symbol_id: SymbolId, constant: Option<ConstantValue<'a>>) {
+        let mut exported = false;
+        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
+            for ancestor in self.ancestors() {
+                if ancestor.is_export_named_declaration()
+                    || ancestor.is_export_all_declaration()
+                    || ancestor.is_export_default_declaration()
+                {
+                    exported = true;
+                }
+            }
+        }
+
+        let for_statement_init = self.ancestors().nth(1).is_some_and(|ancestor| {
+            ancestor.is_parent_of_for_statement_init() || ancestor.is_parent_of_for_statement_left()
+        });
+
+        let mut read_references_count = 0;
+        let mut write_references_count = 0;
+        for r in self.scoping().get_resolved_references(symbol_id) {
+            if r.is_read() {
+                read_references_count += 1;
+            }
+            if r.is_write() {
+                write_references_count += 1;
+            }
+        }
+
+        let scope_id = self.scoping.current_scope_id();
+        let symbol_value = SymbolValue {
+            initialized_constant: constant,
+            exported,
+            for_statement_init,
+            read_references_count,
+            write_references_count,
+            scope_id,
+        };
+        self.state.symbol_values.init_value(symbol_id, symbol_value);
     }
 
     /// If two expressions are equal.

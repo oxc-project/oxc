@@ -35,6 +35,14 @@ declare_oxc_lint!(
     ///
     /// The default threshold is 100;
     ///
+    /// ### Why is this bad?
+    ///
+    /// Barrel files that re-export many modules can significantly slow down
+    /// applications and bundlers. When a barrel file exports a large number of
+    /// modules, importing from it forces the runtime or bundler to process all
+    /// the exported modules, even if only a few are actually used. This leads
+    /// to slower startup times and larger bundle sizes.
+    ///
     /// References:
     ///
     /// * <https://github.com/thepassle/eslint-plugin-barrel-files>

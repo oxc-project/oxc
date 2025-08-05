@@ -105,30 +105,30 @@ mod join_vars {
     fn test_redeclaration_let_in_function() {
         test(
             "function f() { let x = 1; let y = 2; let z = 3; x + y + z; }",
-            "function f() { let x = 1, y = 2, z = 3; x + y + z; } ",
+            "function f() { let x = 1, y = 2, z = 3; } ",
         );
 
         // recognize local scope version of x
         test(
             "var x = 1; function f() { let x = 1; let y = 2; x + y; }",
-            "var x = 1; function f() { let x = 1, y = 2; x + y } ",
+            "var x = 1; function f() { let x = 1, y = 2; } ",
         );
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("function f(x) { let y = 3; x = 4, x + y; }");
+        test(
+            "function f(x) { let y = 3; x = 4, x + y; }",
+            "function f(x) { let y = 3; x = 4, x + 3 }",
+        );
     }
 
     #[test]
     fn test_arrow_function() {
-        test(
-            "(() => { let x = 1; let y = 2; x + y; })()",
-            "(() => { let x = 1, y = 2; x + y; })()",
-        );
+        test("(() => { let x = 1; let y = 2; x + y; })()", "(() => { let x = 1, y = 2; })()");
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("((x) => { x = 4; let y = 2; x + y; })()");
+        test("((x) => { x = 4; let y = 2; x + y; })()", "((x) => { x = 4; let y = 2; x + 2; })()");
     }
 
     #[test]

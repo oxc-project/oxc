@@ -35,6 +35,14 @@ declare_oxc_lint!(
     ///
     /// Disallow [Object Rest/Spread Properties](https://github.com/tc39/proposal-object-rest-spread#readme).
     ///
+    /// ### Why is this bad?
+    ///
+    /// Object rest/spread properties are a relatively new JavaScript feature that may
+    /// not be supported in all target environments. If you need to support older
+    /// browsers or JavaScript engines that don't support these features, using them
+    /// can cause runtime errors. This rule helps maintain compatibility with older
+    /// environments by preventing the use of these modern syntax features.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

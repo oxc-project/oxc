@@ -687,7 +687,8 @@ impl Gen for VariableDeclarator<'_> {
 impl Gen for Function<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
-        let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
+        let wrap = self.is_expression()
+            && ((p.start_of_stmt == n || p.start_of_default_export == n) || self.pife);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -908,7 +909,10 @@ impl Gen for ImportDeclaration<'_> {
 impl Gen for WithClause<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        self.attributes_keyword.print(p, ctx);
+        p.print_str(match self.keyword {
+            WithClauseKeyword::With => "with",
+            WithClauseKeyword::Assert => "assert",
+        });
         p.print_soft_space();
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
@@ -2195,9 +2199,16 @@ impl GenExpr for TSAsExpression<'_> {
 impl GenExpr for TSSatisfiesExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.print_ascii_byte(b'(');
-        p.print_ascii_byte(b'(');
-        self.expression.print_expr(p, precedence, Context::default());
-        p.print_ascii_byte(b')');
+        let should_wrap =
+            if let Expression::FunctionExpression(func) = &self.expression.without_parentheses() {
+                // pife is handled on Function side
+                !func.pife
+            } else {
+                true
+            };
+        p.wrap(should_wrap, |p| {
+            self.expression.print_expr(p, precedence, Context::default());
+        });
         p.print_str(" satisfies ");
         self.type_annotation.print(p, ctx);
         p.print_ascii_byte(b')');
@@ -3477,6 +3488,27 @@ impl Gen for TSImportType<'_> {
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
+    }
+}
+
+impl Gen for TSImportTypeQualifier<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            TSImportTypeQualifier::Identifier(ident) => {
+                p.print_str(ident.name.as_str());
+            }
+            TSImportTypeQualifier::QualifiedName(qualified) => {
+                qualified.print(p, ctx);
+            }
+        }
+    }
+}
+
+impl Gen for TSImportTypeQualifiedName<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        self.left.print(p, ctx);
+        p.print_ascii_byte(b'.');
+        p.print_str(self.right.name.as_str());
     }
 }
 

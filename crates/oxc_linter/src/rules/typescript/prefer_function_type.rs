@@ -29,18 +29,21 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforce using function types instead of interfaces with call signatures.
-    /// TypeScript allows for two common ways to declare a type for a function:
     ///
+    /// ### Why is this bad?
+    ///
+    /// TypeScript allows for two common ways to declare a type for a function:
     /// - Function type: `() => string`
     /// - Object type with a signature: `{ (): string }`
     ///
-    /// The function type form is generally preferred when possible for being more succinct.
-    ///
-    /// This rule suggests using a function type instead of an interface or object type literal with a single call signature.
+    /// The function type form is generally preferred when possible for being
+    /// more succinct and readable. Interfaces with only call signatures add
+    /// unnecessary verbosity without providing additional functionality.
     ///
     /// ### Examples
-    /// ```ts
-    /// // error
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```typescript
     /// interface Example {
     ///   (): string;
     /// }
@@ -52,33 +55,30 @@ declare_oxc_lint!(
     /// interface ReturnsSelf {
     ///   (arg: string): this;
     /// }
+    /// ```
     ///
-    /// // success
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
     /// type Example = () => string;
     ///
     /// function foo(example: () => number): number {
-    ///   return bar();
+    ///   return example();
     /// }
     ///
-    /// // returns the function itself, not the `this` argument.
+    /// // Returns the function itself, not the `this` argument
     /// type ReturnsSelf = (arg: string) => ReturnsSelf;
     ///
+    /// // Multiple properties are allowed
     /// function foo(bar: { (): string; baz: number }): string {
     ///   return bar();
     /// }
     ///
-    /// interface Foo {
-    ///   bar: string;
-    /// }
-    /// interface Bar extends Foo {
-    ///   (): void;
-    /// }
-    ///
-    /// // multiple call signatures (overloads) is allowed:
+    /// // Multiple call signatures (overloads) are allowed
     /// interface Overloaded {
     ///   (data: string): number;
     ///   (id: number): string;
     /// }
+    ///
     /// // this is equivalent to Overloaded interface.
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```

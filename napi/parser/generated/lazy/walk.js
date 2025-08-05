@@ -165,6 +165,7 @@ const {
   TSInferType,
   TSTypeQuery,
   TSImportType,
+  TSImportTypeQualifiedName,
   TSFunctionType,
   TSConstructorType,
   TSMappedType,
@@ -188,7 +189,7 @@ module.exports = walkProgram;
 
 function walkProgram(pos, ast, visitors) {
   const enterExit = visitors[38];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new Program(pos, ast);
@@ -198,7 +199,7 @@ function walkProgram(pos, ast, visitors) {
   walkOptionHashbang(pos + 48, ast, visitors);
   walkVecStatement(pos + 96, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkExpression(pos, ast, visitors) {
@@ -364,7 +365,7 @@ function walkThisExpression(pos, ast, visitors) {
 
 function walkArrayExpression(pos, ast, visitors) {
   const enterExit = visitors[39];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ArrayExpression(pos, ast);
@@ -373,7 +374,7 @@ function walkArrayExpression(pos, ast, visitors) {
 
   walkVecArrayExpressionElement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkArrayExpressionElement(pos, ast, visitors) {
@@ -525,7 +526,7 @@ function walkElision(pos, ast, visitors) {
 
 function walkObjectExpression(pos, ast, visitors) {
   const enterExit = visitors[40];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ObjectExpression(pos, ast);
@@ -534,7 +535,7 @@ function walkObjectExpression(pos, ast, visitors) {
 
   walkVecObjectPropertyKind(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkObjectPropertyKind(pos, ast, visitors) {
@@ -552,7 +553,7 @@ function walkObjectPropertyKind(pos, ast, visitors) {
 
 function walkObjectProperty(pos, ast, visitors) {
   const enterExit = visitors[41];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ObjectProperty(pos, ast);
@@ -562,7 +563,7 @@ function walkObjectProperty(pos, ast, visitors) {
   walkPropertyKey(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkPropertyKey(pos, ast, visitors) {
@@ -709,7 +710,7 @@ function walkPropertyKey(pos, ast, visitors) {
 
 function walkTemplateLiteral(pos, ast, visitors) {
   const enterExit = visitors[42];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TemplateLiteral(pos, ast);
@@ -719,12 +720,12 @@ function walkTemplateLiteral(pos, ast, visitors) {
   walkVecTemplateElement(pos + 8, ast, visitors);
   walkVecExpression(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTaggedTemplateExpression(pos, ast, visitors) {
   const enterExit = visitors[43];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TaggedTemplateExpression(pos, ast);
@@ -735,7 +736,7 @@ function walkTaggedTemplateExpression(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
   walkTemplateLiteral(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTemplateElement(pos, ast, visitors) {
@@ -745,7 +746,7 @@ function walkTemplateElement(pos, ast, visitors) {
 
 function walkComputedMemberExpression(pos, ast, visitors) {
   const enterExit = visitors[44];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ComputedMemberExpression(pos, ast);
@@ -755,12 +756,12 @@ function walkComputedMemberExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkStaticMemberExpression(pos, ast, visitors) {
   const enterExit = visitors[45];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new StaticMemberExpression(pos, ast);
@@ -770,12 +771,12 @@ function walkStaticMemberExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkIdentifierName(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkPrivateFieldExpression(pos, ast, visitors) {
   const enterExit = visitors[46];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new PrivateFieldExpression(pos, ast);
@@ -785,12 +786,12 @@ function walkPrivateFieldExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkPrivateIdentifier(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkCallExpression(pos, ast, visitors) {
   const enterExit = visitors[47];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new CallExpression(pos, ast);
@@ -801,12 +802,12 @@ function walkCallExpression(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
   walkVecArgument(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkNewExpression(pos, ast, visitors) {
   const enterExit = visitors[48];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new NewExpression(pos, ast);
@@ -817,12 +818,12 @@ function walkNewExpression(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
   walkVecArgument(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkMetaProperty(pos, ast, visitors) {
   const enterExit = visitors[49];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new MetaProperty(pos, ast);
@@ -832,12 +833,12 @@ function walkMetaProperty(pos, ast, visitors) {
   walkIdentifierName(pos + 8, ast, visitors);
   walkIdentifierName(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkSpreadElement(pos, ast, visitors) {
   const enterExit = visitors[50];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new SpreadElement(pos, ast);
@@ -846,7 +847,7 @@ function walkSpreadElement(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkArgument(pos, ast, visitors) {
@@ -990,7 +991,7 @@ function walkArgument(pos, ast, visitors) {
 
 function walkUpdateExpression(pos, ast, visitors) {
   const enterExit = visitors[51];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new UpdateExpression(pos, ast);
@@ -999,12 +1000,12 @@ function walkUpdateExpression(pos, ast, visitors) {
 
   walkSimpleAssignmentTarget(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkUnaryExpression(pos, ast, visitors) {
   const enterExit = visitors[52];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new UnaryExpression(pos, ast);
@@ -1013,12 +1014,12 @@ function walkUnaryExpression(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkBinaryExpression(pos, ast, visitors) {
   const enterExit = visitors[53];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new BinaryExpression(pos, ast);
@@ -1028,12 +1029,12 @@ function walkBinaryExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkPrivateInExpression(pos, ast, visitors) {
   const enterExit = visitors[54];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new PrivateInExpression(pos, ast);
@@ -1043,12 +1044,12 @@ function walkPrivateInExpression(pos, ast, visitors) {
   walkPrivateIdentifier(pos + 8, ast, visitors);
   walkExpression(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkLogicalExpression(pos, ast, visitors) {
   const enterExit = visitors[55];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new LogicalExpression(pos, ast);
@@ -1058,12 +1059,12 @@ function walkLogicalExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkConditionalExpression(pos, ast, visitors) {
   const enterExit = visitors[56];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ConditionalExpression(pos, ast);
@@ -1074,12 +1075,12 @@ function walkConditionalExpression(pos, ast, visitors) {
   walkExpression(pos + 24, ast, visitors);
   walkExpression(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAssignmentExpression(pos, ast, visitors) {
   const enterExit = visitors[57];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AssignmentExpression(pos, ast);
@@ -1089,7 +1090,7 @@ function walkAssignmentExpression(pos, ast, visitors) {
   walkAssignmentTarget(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAssignmentTarget(pos, ast, visitors) {
@@ -1162,7 +1163,7 @@ function walkSimpleAssignmentTarget(pos, ast, visitors) {
 
 function walkArrayAssignmentTarget(pos, ast, visitors) {
   const enterExit = visitors[58];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ArrayAssignmentTarget(pos, ast);
@@ -1171,12 +1172,12 @@ function walkArrayAssignmentTarget(pos, ast, visitors) {
 
   walkVecOptionAssignmentTargetMaybeDefault(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkObjectAssignmentTarget(pos, ast, visitors) {
   const enterExit = visitors[59];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ObjectAssignmentTarget(pos, ast);
@@ -1185,7 +1186,7 @@ function walkObjectAssignmentTarget(pos, ast, visitors) {
 
   walkVecAssignmentTargetProperty(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAssignmentTargetMaybeDefault(pos, ast, visitors) {
@@ -1230,7 +1231,7 @@ function walkAssignmentTargetMaybeDefault(pos, ast, visitors) {
 
 function walkAssignmentTargetWithDefault(pos, ast, visitors) {
   const enterExit = visitors[60];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AssignmentTargetWithDefault(pos, ast);
@@ -1240,7 +1241,7 @@ function walkAssignmentTargetWithDefault(pos, ast, visitors) {
   walkAssignmentTarget(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAssignmentTargetProperty(pos, ast, visitors) {
@@ -1258,7 +1259,7 @@ function walkAssignmentTargetProperty(pos, ast, visitors) {
 
 function walkAssignmentTargetPropertyIdentifier(pos, ast, visitors) {
   const enterExit = visitors[61];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AssignmentTargetPropertyIdentifier(pos, ast);
@@ -1268,12 +1269,12 @@ function walkAssignmentTargetPropertyIdentifier(pos, ast, visitors) {
   walkIdentifierReference(pos + 8, ast, visitors);
   walkOptionExpression(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAssignmentTargetPropertyProperty(pos, ast, visitors) {
   const enterExit = visitors[62];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AssignmentTargetPropertyProperty(pos, ast);
@@ -1283,12 +1284,12 @@ function walkAssignmentTargetPropertyProperty(pos, ast, visitors) {
   walkPropertyKey(pos + 8, ast, visitors);
   walkAssignmentTargetMaybeDefault(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkSequenceExpression(pos, ast, visitors) {
   const enterExit = visitors[63];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new SequenceExpression(pos, ast);
@@ -1297,7 +1298,7 @@ function walkSequenceExpression(pos, ast, visitors) {
 
   walkVecExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkSuper(pos, ast, visitors) {
@@ -1307,7 +1308,7 @@ function walkSuper(pos, ast, visitors) {
 
 function walkAwaitExpression(pos, ast, visitors) {
   const enterExit = visitors[64];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AwaitExpression(pos, ast);
@@ -1316,12 +1317,12 @@ function walkAwaitExpression(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkChainExpression(pos, ast, visitors) {
   const enterExit = visitors[65];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ChainExpression(pos, ast);
@@ -1330,7 +1331,7 @@ function walkChainExpression(pos, ast, visitors) {
 
   walkChainElement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkChainElement(pos, ast, visitors) {
@@ -1357,7 +1358,7 @@ function walkChainElement(pos, ast, visitors) {
 
 function walkParenthesizedExpression(pos, ast, visitors) {
   const enterExit = visitors[66];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ParenthesizedExpression(pos, ast);
@@ -1366,7 +1367,7 @@ function walkParenthesizedExpression(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkStatement(pos, ast, visitors) {
@@ -1479,7 +1480,7 @@ function walkHashbang(pos, ast, visitors) {
 
 function walkBlockStatement(pos, ast, visitors) {
   const enterExit = visitors[67];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new BlockStatement(pos, ast);
@@ -1488,7 +1489,7 @@ function walkBlockStatement(pos, ast, visitors) {
 
   walkVecStatement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkDeclaration(pos, ast, visitors) {
@@ -1524,7 +1525,7 @@ function walkDeclaration(pos, ast, visitors) {
 
 function walkVariableDeclaration(pos, ast, visitors) {
   const enterExit = visitors[68];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new VariableDeclaration(pos, ast);
@@ -1533,12 +1534,12 @@ function walkVariableDeclaration(pos, ast, visitors) {
 
   walkVecVariableDeclarator(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkVariableDeclarator(pos, ast, visitors) {
   const enterExit = visitors[69];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new VariableDeclarator(pos, ast);
@@ -1548,7 +1549,7 @@ function walkVariableDeclarator(pos, ast, visitors) {
   walkBindingPattern(pos + 8, ast, visitors);
   walkOptionExpression(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkEmptyStatement(pos, ast, visitors) {
@@ -1558,7 +1559,7 @@ function walkEmptyStatement(pos, ast, visitors) {
 
 function walkExpressionStatement(pos, ast, visitors) {
   const enterExit = visitors[70];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ExpressionStatement(pos, ast);
@@ -1567,12 +1568,12 @@ function walkExpressionStatement(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkIfStatement(pos, ast, visitors) {
   const enterExit = visitors[71];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new IfStatement(pos, ast);
@@ -1583,12 +1584,12 @@ function walkIfStatement(pos, ast, visitors) {
   walkStatement(pos + 24, ast, visitors);
   walkOptionStatement(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkDoWhileStatement(pos, ast, visitors) {
   const enterExit = visitors[72];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new DoWhileStatement(pos, ast);
@@ -1598,12 +1599,12 @@ function walkDoWhileStatement(pos, ast, visitors) {
   walkStatement(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkWhileStatement(pos, ast, visitors) {
   const enterExit = visitors[73];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new WhileStatement(pos, ast);
@@ -1613,12 +1614,12 @@ function walkWhileStatement(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkStatement(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkForStatement(pos, ast, visitors) {
   const enterExit = visitors[74];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ForStatement(pos, ast);
@@ -1630,7 +1631,7 @@ function walkForStatement(pos, ast, visitors) {
   walkOptionExpression(pos + 40, ast, visitors);
   walkStatement(pos + 56, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkForStatementInit(pos, ast, visitors) {
@@ -1774,7 +1775,7 @@ function walkForStatementInit(pos, ast, visitors) {
 
 function walkForInStatement(pos, ast, visitors) {
   const enterExit = visitors[75];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ForInStatement(pos, ast);
@@ -1785,7 +1786,7 @@ function walkForInStatement(pos, ast, visitors) {
   walkExpression(pos + 24, ast, visitors);
   walkStatement(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkForStatementLeft(pos, ast, visitors) {
@@ -1830,7 +1831,7 @@ function walkForStatementLeft(pos, ast, visitors) {
 
 function walkForOfStatement(pos, ast, visitors) {
   const enterExit = visitors[76];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ForOfStatement(pos, ast);
@@ -1841,12 +1842,12 @@ function walkForOfStatement(pos, ast, visitors) {
   walkExpression(pos + 24, ast, visitors);
   walkStatement(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkContinueStatement(pos, ast, visitors) {
   const enterExit = visitors[77];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ContinueStatement(pos, ast);
@@ -1855,12 +1856,12 @@ function walkContinueStatement(pos, ast, visitors) {
 
   walkOptionLabelIdentifier(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkBreakStatement(pos, ast, visitors) {
   const enterExit = visitors[78];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new BreakStatement(pos, ast);
@@ -1869,12 +1870,12 @@ function walkBreakStatement(pos, ast, visitors) {
 
   walkOptionLabelIdentifier(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkReturnStatement(pos, ast, visitors) {
   const enterExit = visitors[79];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ReturnStatement(pos, ast);
@@ -1883,12 +1884,12 @@ function walkReturnStatement(pos, ast, visitors) {
 
   walkOptionExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkWithStatement(pos, ast, visitors) {
   const enterExit = visitors[80];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new WithStatement(pos, ast);
@@ -1898,12 +1899,12 @@ function walkWithStatement(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkStatement(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkSwitchStatement(pos, ast, visitors) {
   const enterExit = visitors[81];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new SwitchStatement(pos, ast);
@@ -1913,12 +1914,12 @@ function walkSwitchStatement(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkVecSwitchCase(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkSwitchCase(pos, ast, visitors) {
   const enterExit = visitors[82];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new SwitchCase(pos, ast);
@@ -1928,12 +1929,12 @@ function walkSwitchCase(pos, ast, visitors) {
   walkOptionExpression(pos + 8, ast, visitors);
   walkVecStatement(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkLabeledStatement(pos, ast, visitors) {
   const enterExit = visitors[83];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new LabeledStatement(pos, ast);
@@ -1943,12 +1944,12 @@ function walkLabeledStatement(pos, ast, visitors) {
   walkLabelIdentifier(pos + 8, ast, visitors);
   walkStatement(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkThrowStatement(pos, ast, visitors) {
   const enterExit = visitors[84];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ThrowStatement(pos, ast);
@@ -1957,12 +1958,12 @@ function walkThrowStatement(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTryStatement(pos, ast, visitors) {
   const enterExit = visitors[85];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TryStatement(pos, ast);
@@ -1973,12 +1974,12 @@ function walkTryStatement(pos, ast, visitors) {
   walkOptionBoxCatchClause(pos + 16, ast, visitors);
   walkOptionBoxBlockStatement(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkCatchClause(pos, ast, visitors) {
   const enterExit = visitors[86];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new CatchClause(pos, ast);
@@ -1988,7 +1989,7 @@ function walkCatchClause(pos, ast, visitors) {
   walkOptionCatchParameter(pos + 8, ast, visitors);
   walkBoxBlockStatement(pos + 48, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkCatchParameter(pos, ast, visitors) {
@@ -2026,7 +2027,7 @@ function walkBindingPatternKind(pos, ast, visitors) {
 
 function walkAssignmentPattern(pos, ast, visitors) {
   const enterExit = visitors[87];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AssignmentPattern(pos, ast);
@@ -2036,12 +2037,12 @@ function walkAssignmentPattern(pos, ast, visitors) {
   walkBindingPattern(pos + 8, ast, visitors);
   walkExpression(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkObjectPattern(pos, ast, visitors) {
   const enterExit = visitors[88];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ObjectPattern(pos, ast);
@@ -2050,12 +2051,12 @@ function walkObjectPattern(pos, ast, visitors) {
 
   walkVecBindingProperty(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkBindingProperty(pos, ast, visitors) {
   const enterExit = visitors[89];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new BindingProperty(pos, ast);
@@ -2065,12 +2066,12 @@ function walkBindingProperty(pos, ast, visitors) {
   walkPropertyKey(pos + 8, ast, visitors);
   walkBindingPattern(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkArrayPattern(pos, ast, visitors) {
   const enterExit = visitors[90];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ArrayPattern(pos, ast);
@@ -2079,12 +2080,12 @@ function walkArrayPattern(pos, ast, visitors) {
 
   walkVecOptionBindingPattern(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkFunction(pos, ast, visitors) {
   const enterExit = visitors[91];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new Function(pos, ast);
@@ -2097,12 +2098,12 @@ function walkFunction(pos, ast, visitors) {
   walkOptionBoxTSTypeAnnotation(pos + 64, ast, visitors);
   walkOptionBoxFunctionBody(pos + 72, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkFormalParameters(pos, ast, visitors) {
   const enterExit = visitors[92];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new FormalParameters(pos, ast);
@@ -2111,7 +2112,7 @@ function walkFormalParameters(pos, ast, visitors) {
 
   walkVecFormalParameter(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkFormalParameter(pos, ast, visitors) {
@@ -2121,7 +2122,7 @@ function walkFormalParameter(pos, ast, visitors) {
 
 function walkFunctionBody(pos, ast, visitors) {
   const enterExit = visitors[93];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new FunctionBody(pos, ast);
@@ -2130,12 +2131,12 @@ function walkFunctionBody(pos, ast, visitors) {
 
   walkVecStatement(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkArrowFunctionExpression(pos, ast, visitors) {
   const enterExit = visitors[94];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ArrowFunctionExpression(pos, ast);
@@ -2147,12 +2148,12 @@ function walkArrowFunctionExpression(pos, ast, visitors) {
   walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
   walkBoxFunctionBody(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkYieldExpression(pos, ast, visitors) {
   const enterExit = visitors[95];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new YieldExpression(pos, ast);
@@ -2161,12 +2162,12 @@ function walkYieldExpression(pos, ast, visitors) {
 
   walkOptionExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkClass(pos, ast, visitors) {
   const enterExit = visitors[96];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new Class(pos, ast);
@@ -2181,12 +2182,12 @@ function walkClass(pos, ast, visitors) {
   walkVecTSClassImplements(pos + 96, ast, visitors);
   walkBoxClassBody(pos + 120, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkClassBody(pos, ast, visitors) {
   const enterExit = visitors[97];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ClassBody(pos, ast);
@@ -2195,7 +2196,7 @@ function walkClassBody(pos, ast, visitors) {
 
   walkVecClassElement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkClassElement(pos, ast, visitors) {
@@ -2222,7 +2223,7 @@ function walkClassElement(pos, ast, visitors) {
 
 function walkMethodDefinition(pos, ast, visitors) {
   const enterExit = visitors[98];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new MethodDefinition(pos, ast);
@@ -2233,12 +2234,12 @@ function walkMethodDefinition(pos, ast, visitors) {
   walkPropertyKey(pos + 32, ast, visitors);
   walkBoxFunction(pos + 48, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkPropertyDefinition(pos, ast, visitors) {
   const enterExit = visitors[99];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new PropertyDefinition(pos, ast);
@@ -2250,7 +2251,7 @@ function walkPropertyDefinition(pos, ast, visitors) {
   walkOptionBoxTSTypeAnnotation(pos + 48, ast, visitors);
   walkOptionExpression(pos + 56, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkPrivateIdentifier(pos, ast, visitors) {
@@ -2260,7 +2261,7 @@ function walkPrivateIdentifier(pos, ast, visitors) {
 
 function walkStaticBlock(pos, ast, visitors) {
   const enterExit = visitors[100];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new StaticBlock(pos, ast);
@@ -2269,12 +2270,12 @@ function walkStaticBlock(pos, ast, visitors) {
 
   walkVecStatement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkAccessorProperty(pos, ast, visitors) {
   const enterExit = visitors[101];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new AccessorProperty(pos, ast);
@@ -2286,12 +2287,12 @@ function walkAccessorProperty(pos, ast, visitors) {
   walkOptionBoxTSTypeAnnotation(pos + 48, ast, visitors);
   walkOptionExpression(pos + 56, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportExpression(pos, ast, visitors) {
   const enterExit = visitors[102];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportExpression(pos, ast);
@@ -2301,12 +2302,12 @@ function walkImportExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkOptionExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportDeclaration(pos, ast, visitors) {
   const enterExit = visitors[103];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportDeclaration(pos, ast);
@@ -2317,7 +2318,7 @@ function walkImportDeclaration(pos, ast, visitors) {
   walkStringLiteral(pos + 32, ast, visitors);
   walkOptionBoxWithClause(pos + 80, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportDeclarationSpecifier(pos, ast, visitors) {
@@ -2338,7 +2339,7 @@ function walkImportDeclarationSpecifier(pos, ast, visitors) {
 
 function walkImportSpecifier(pos, ast, visitors) {
   const enterExit = visitors[104];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportSpecifier(pos, ast);
@@ -2348,12 +2349,12 @@ function walkImportSpecifier(pos, ast, visitors) {
   walkModuleExportName(pos + 8, ast, visitors);
   walkBindingIdentifier(pos + 64, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportDefaultSpecifier(pos, ast, visitors) {
   const enterExit = visitors[105];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportDefaultSpecifier(pos, ast);
@@ -2362,12 +2363,12 @@ function walkImportDefaultSpecifier(pos, ast, visitors) {
 
   walkBindingIdentifier(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportNamespaceSpecifier(pos, ast, visitors) {
   const enterExit = visitors[106];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportNamespaceSpecifier(pos, ast);
@@ -2376,16 +2377,16 @@ function walkImportNamespaceSpecifier(pos, ast, visitors) {
 
   walkBindingIdentifier(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkWithClause(pos, ast, visitors) {
-  walkVecImportAttribute(pos + 32, ast, visitors);
+  walkVecImportAttribute(pos + 8, ast, visitors);
 }
 
 function walkImportAttribute(pos, ast, visitors) {
   const enterExit = visitors[107];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ImportAttribute(pos, ast);
@@ -2395,7 +2396,7 @@ function walkImportAttribute(pos, ast, visitors) {
   walkImportAttributeKey(pos + 8, ast, visitors);
   walkStringLiteral(pos + 64, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkImportAttributeKey(pos, ast, visitors) {
@@ -2413,7 +2414,7 @@ function walkImportAttributeKey(pos, ast, visitors) {
 
 function walkExportNamedDeclaration(pos, ast, visitors) {
   const enterExit = visitors[108];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ExportNamedDeclaration(pos, ast);
@@ -2425,26 +2426,26 @@ function walkExportNamedDeclaration(pos, ast, visitors) {
   walkOptionStringLiteral(pos + 48, ast, visitors);
   walkOptionBoxWithClause(pos + 96, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkExportDefaultDeclaration(pos, ast, visitors) {
   const enterExit = visitors[109];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ExportDefaultDeclaration(pos, ast);
     if (enter !== null) enter(node);
   }
 
-  walkExportDefaultDeclarationKind(pos + 64, ast, visitors);
+  walkExportDefaultDeclarationKind(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkExportAllDeclaration(pos, ast, visitors) {
   const enterExit = visitors[110];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ExportAllDeclaration(pos, ast);
@@ -2455,12 +2456,12 @@ function walkExportAllDeclaration(pos, ast, visitors) {
   walkStringLiteral(pos + 64, ast, visitors);
   walkOptionBoxWithClause(pos + 112, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkExportSpecifier(pos, ast, visitors) {
   const enterExit = visitors[111];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new ExportSpecifier(pos, ast);
@@ -2470,7 +2471,7 @@ function walkExportSpecifier(pos, ast, visitors) {
   walkModuleExportName(pos + 8, ast, visitors);
   walkModuleExportName(pos + 64, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkExportDefaultDeclarationKind(pos, ast, visitors) {
@@ -2636,7 +2637,7 @@ function walkModuleExportName(pos, ast, visitors) {
 
 function walkV8IntrinsicExpression(pos, ast, visitors) {
   const enterExit = visitors[112];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new V8IntrinsicExpression(pos, ast);
@@ -2646,7 +2647,7 @@ function walkV8IntrinsicExpression(pos, ast, visitors) {
   walkIdentifierName(pos + 8, ast, visitors);
   walkVecArgument(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkBooleanLiteral(pos, ast, visitors) {
@@ -2681,7 +2682,7 @@ function walkRegExpLiteral(pos, ast, visitors) {
 
 function walkJSXElement(pos, ast, visitors) {
   const enterExit = visitors[113];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXElement(pos, ast);
@@ -2692,12 +2693,12 @@ function walkJSXElement(pos, ast, visitors) {
   walkVecJSXChild(pos + 16, ast, visitors);
   walkOptionBoxJSXClosingElement(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXOpeningElement(pos, ast, visitors) {
   const enterExit = visitors[114];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXOpeningElement(pos, ast);
@@ -2708,12 +2709,12 @@ function walkJSXOpeningElement(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
   walkVecJSXAttributeItem(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXClosingElement(pos, ast, visitors) {
   const enterExit = visitors[115];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXClosingElement(pos, ast);
@@ -2722,12 +2723,12 @@ function walkJSXClosingElement(pos, ast, visitors) {
 
   walkJSXElementName(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXFragment(pos, ast, visitors) {
   const enterExit = visitors[116];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXFragment(pos, ast);
@@ -2738,7 +2739,7 @@ function walkJSXFragment(pos, ast, visitors) {
   walkVecJSXChild(pos + 16, ast, visitors);
   walkJSXClosingFragment(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXOpeningFragment(pos, ast, visitors) {
@@ -2775,7 +2776,7 @@ function walkJSXElementName(pos, ast, visitors) {
 
 function walkJSXNamespacedName(pos, ast, visitors) {
   const enterExit = visitors[117];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXNamespacedName(pos, ast);
@@ -2785,12 +2786,12 @@ function walkJSXNamespacedName(pos, ast, visitors) {
   walkJSXIdentifier(pos + 8, ast, visitors);
   walkJSXIdentifier(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXMemberExpression(pos, ast, visitors) {
   const enterExit = visitors[118];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXMemberExpression(pos, ast);
@@ -2800,7 +2801,7 @@ function walkJSXMemberExpression(pos, ast, visitors) {
   walkJSXMemberExpressionObject(pos + 8, ast, visitors);
   walkJSXIdentifier(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXMemberExpressionObject(pos, ast, visitors) {
@@ -2821,7 +2822,7 @@ function walkJSXMemberExpressionObject(pos, ast, visitors) {
 
 function walkJSXExpressionContainer(pos, ast, visitors) {
   const enterExit = visitors[119];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXExpressionContainer(pos, ast);
@@ -2830,7 +2831,7 @@ function walkJSXExpressionContainer(pos, ast, visitors) {
 
   walkJSXExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXExpression(pos, ast, visitors) {
@@ -2992,7 +2993,7 @@ function walkJSXAttributeItem(pos, ast, visitors) {
 
 function walkJSXAttribute(pos, ast, visitors) {
   const enterExit = visitors[120];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXAttribute(pos, ast);
@@ -3002,12 +3003,12 @@ function walkJSXAttribute(pos, ast, visitors) {
   walkJSXAttributeName(pos + 8, ast, visitors);
   walkOptionJSXAttributeValue(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXSpreadAttribute(pos, ast, visitors) {
   const enterExit = visitors[121];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXSpreadAttribute(pos, ast);
@@ -3016,7 +3017,7 @@ function walkJSXSpreadAttribute(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXAttributeName(pos, ast, visitors) {
@@ -3080,7 +3081,7 @@ function walkJSXChild(pos, ast, visitors) {
 
 function walkJSXSpreadChild(pos, ast, visitors) {
   const enterExit = visitors[122];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSXSpreadChild(pos, ast);
@@ -3089,7 +3090,7 @@ function walkJSXSpreadChild(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSXText(pos, ast, visitors) {
@@ -3099,7 +3100,7 @@ function walkJSXText(pos, ast, visitors) {
 
 function walkTSEnumDeclaration(pos, ast, visitors) {
   const enterExit = visitors[123];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSEnumDeclaration(pos, ast);
@@ -3109,12 +3110,12 @@ function walkTSEnumDeclaration(pos, ast, visitors) {
   walkBindingIdentifier(pos + 8, ast, visitors);
   walkTSEnumBody(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSEnumBody(pos, ast, visitors) {
   const enterExit = visitors[124];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSEnumBody(pos, ast);
@@ -3123,12 +3124,12 @@ function walkTSEnumBody(pos, ast, visitors) {
 
   walkVecTSEnumMember(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSEnumMember(pos, ast, visitors) {
   const enterExit = visitors[125];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSEnumMember(pos, ast);
@@ -3138,7 +3139,7 @@ function walkTSEnumMember(pos, ast, visitors) {
   walkTSEnumMemberName(pos + 8, ast, visitors);
   walkOptionExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSEnumMemberName(pos, ast, visitors) {
@@ -3162,7 +3163,7 @@ function walkTSEnumMemberName(pos, ast, visitors) {
 
 function walkTSTypeAnnotation(pos, ast, visitors) {
   const enterExit = visitors[126];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeAnnotation(pos, ast);
@@ -3171,12 +3172,12 @@ function walkTSTypeAnnotation(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSLiteralType(pos, ast, visitors) {
   const enterExit = visitors[127];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSLiteralType(pos, ast);
@@ -3185,7 +3186,7 @@ function walkTSLiteralType(pos, ast, visitors) {
 
   walkTSLiteral(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSLiteral(pos, ast, visitors) {
@@ -3333,7 +3334,7 @@ function walkTSType(pos, ast, visitors) {
 
 function walkTSConditionalType(pos, ast, visitors) {
   const enterExit = visitors[128];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSConditionalType(pos, ast);
@@ -3345,12 +3346,12 @@ function walkTSConditionalType(pos, ast, visitors) {
   walkTSType(pos + 40, ast, visitors);
   walkTSType(pos + 56, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSUnionType(pos, ast, visitors) {
   const enterExit = visitors[129];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSUnionType(pos, ast);
@@ -3359,12 +3360,12 @@ function walkTSUnionType(pos, ast, visitors) {
 
   walkVecTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSIntersectionType(pos, ast, visitors) {
   const enterExit = visitors[130];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSIntersectionType(pos, ast);
@@ -3373,12 +3374,12 @@ function walkTSIntersectionType(pos, ast, visitors) {
 
   walkVecTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSParenthesizedType(pos, ast, visitors) {
   const enterExit = visitors[131];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSParenthesizedType(pos, ast);
@@ -3387,12 +3388,12 @@ function walkTSParenthesizedType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeOperator(pos, ast, visitors) {
   const enterExit = visitors[132];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeOperator(pos, ast);
@@ -3401,12 +3402,12 @@ function walkTSTypeOperator(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSArrayType(pos, ast, visitors) {
   const enterExit = visitors[133];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSArrayType(pos, ast);
@@ -3415,12 +3416,12 @@ function walkTSArrayType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSIndexedAccessType(pos, ast, visitors) {
   const enterExit = visitors[134];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSIndexedAccessType(pos, ast);
@@ -3430,12 +3431,12 @@ function walkTSIndexedAccessType(pos, ast, visitors) {
   walkTSType(pos + 8, ast, visitors);
   walkTSType(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTupleType(pos, ast, visitors) {
   const enterExit = visitors[135];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTupleType(pos, ast);
@@ -3444,12 +3445,12 @@ function walkTSTupleType(pos, ast, visitors) {
 
   walkVecTSTupleElement(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSNamedTupleMember(pos, ast, visitors) {
   const enterExit = visitors[136];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSNamedTupleMember(pos, ast);
@@ -3459,12 +3460,12 @@ function walkTSNamedTupleMember(pos, ast, visitors) {
   walkIdentifierName(pos + 8, ast, visitors);
   walkTSTupleElement(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSOptionalType(pos, ast, visitors) {
   const enterExit = visitors[137];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSOptionalType(pos, ast);
@@ -3473,12 +3474,12 @@ function walkTSOptionalType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSRestType(pos, ast, visitors) {
   const enterExit = visitors[138];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSRestType(pos, ast);
@@ -3487,7 +3488,7 @@ function walkTSRestType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTupleElement(pos, ast, visitors) {
@@ -3686,7 +3687,7 @@ function walkTSBigIntKeyword(pos, ast, visitors) {
 
 function walkTSTypeReference(pos, ast, visitors) {
   const enterExit = visitors[139];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeReference(pos, ast);
@@ -3696,7 +3697,7 @@ function walkTSTypeReference(pos, ast, visitors) {
   walkTSTypeName(pos + 8, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeName(pos, ast, visitors) {
@@ -3717,7 +3718,7 @@ function walkTSTypeName(pos, ast, visitors) {
 
 function walkTSQualifiedName(pos, ast, visitors) {
   const enterExit = visitors[140];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSQualifiedName(pos, ast);
@@ -3727,12 +3728,12 @@ function walkTSQualifiedName(pos, ast, visitors) {
   walkTSTypeName(pos + 8, ast, visitors);
   walkIdentifierName(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeParameterInstantiation(pos, ast, visitors) {
   const enterExit = visitors[141];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeParameterInstantiation(pos, ast);
@@ -3741,12 +3742,12 @@ function walkTSTypeParameterInstantiation(pos, ast, visitors) {
 
   walkVecTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeParameter(pos, ast, visitors) {
   const enterExit = visitors[142];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeParameter(pos, ast);
@@ -3757,12 +3758,12 @@ function walkTSTypeParameter(pos, ast, visitors) {
   walkOptionTSType(pos + 40, ast, visitors);
   walkOptionTSType(pos + 56, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeParameterDeclaration(pos, ast, visitors) {
   const enterExit = visitors[143];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeParameterDeclaration(pos, ast);
@@ -3771,12 +3772,12 @@ function walkTSTypeParameterDeclaration(pos, ast, visitors) {
 
   walkVecTSTypeParameter(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeAliasDeclaration(pos, ast, visitors) {
   const enterExit = visitors[144];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeAliasDeclaration(pos, ast);
@@ -3787,12 +3788,12 @@ function walkTSTypeAliasDeclaration(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterDeclaration(pos + 40, ast, visitors);
   walkTSType(pos + 48, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSClassImplements(pos, ast, visitors) {
   const enterExit = visitors[145];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSClassImplements(pos, ast);
@@ -3802,12 +3803,12 @@ function walkTSClassImplements(pos, ast, visitors) {
   walkTSTypeName(pos + 8, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSInterfaceDeclaration(pos, ast, visitors) {
   const enterExit = visitors[146];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSInterfaceDeclaration(pos, ast);
@@ -3819,12 +3820,12 @@ function walkTSInterfaceDeclaration(pos, ast, visitors) {
   walkVecTSInterfaceHeritage(pos + 48, ast, visitors);
   walkBoxTSInterfaceBody(pos + 72, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSInterfaceBody(pos, ast, visitors) {
   const enterExit = visitors[147];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSInterfaceBody(pos, ast);
@@ -3833,12 +3834,12 @@ function walkTSInterfaceBody(pos, ast, visitors) {
 
   walkVecTSSignature(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSPropertySignature(pos, ast, visitors) {
   const enterExit = visitors[148];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSPropertySignature(pos, ast);
@@ -3848,7 +3849,7 @@ function walkTSPropertySignature(pos, ast, visitors) {
   walkPropertyKey(pos + 8, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSSignature(pos, ast, visitors) {
@@ -3875,7 +3876,7 @@ function walkTSSignature(pos, ast, visitors) {
 
 function walkTSIndexSignature(pos, ast, visitors) {
   const enterExit = visitors[149];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSIndexSignature(pos, ast);
@@ -3885,12 +3886,12 @@ function walkTSIndexSignature(pos, ast, visitors) {
   walkVecTSIndexSignatureName(pos + 8, ast, visitors);
   walkBoxTSTypeAnnotation(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSCallSignatureDeclaration(pos, ast, visitors) {
   const enterExit = visitors[150];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSCallSignatureDeclaration(pos, ast);
@@ -3901,12 +3902,12 @@ function walkTSCallSignatureDeclaration(pos, ast, visitors) {
   walkBoxFormalParameters(pos + 24, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSMethodSignature(pos, ast, visitors) {
   const enterExit = visitors[151];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSMethodSignature(pos, ast);
@@ -3918,12 +3919,12 @@ function walkTSMethodSignature(pos, ast, visitors) {
   walkBoxFormalParameters(pos + 40, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 48, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSConstructSignatureDeclaration(pos, ast, visitors) {
   const enterExit = visitors[152];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSConstructSignatureDeclaration(pos, ast);
@@ -3934,12 +3935,12 @@ function walkTSConstructSignatureDeclaration(pos, ast, visitors) {
   walkBoxFormalParameters(pos + 16, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSIndexSignatureName(pos, ast, visitors) {
   const enterExit = visitors[153];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSIndexSignatureName(pos, ast);
@@ -3948,12 +3949,12 @@ function walkTSIndexSignatureName(pos, ast, visitors) {
 
   walkBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSInterfaceHeritage(pos, ast, visitors) {
   const enterExit = visitors[154];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSInterfaceHeritage(pos, ast);
@@ -3963,12 +3964,12 @@ function walkTSInterfaceHeritage(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypePredicate(pos, ast, visitors) {
   const enterExit = visitors[155];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypePredicate(pos, ast);
@@ -3978,7 +3979,7 @@ function walkTSTypePredicate(pos, ast, visitors) {
   walkTSTypePredicateName(pos + 8, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypePredicateName(pos, ast, visitors) {
@@ -3996,7 +3997,7 @@ function walkTSTypePredicateName(pos, ast, visitors) {
 
 function walkTSModuleDeclaration(pos, ast, visitors) {
   const enterExit = visitors[156];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSModuleDeclaration(pos, ast);
@@ -4006,7 +4007,7 @@ function walkTSModuleDeclaration(pos, ast, visitors) {
   walkTSModuleDeclarationName(pos + 8, ast, visitors);
   walkOptionTSModuleDeclarationBody(pos + 64, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSModuleDeclarationName(pos, ast, visitors) {
@@ -4037,7 +4038,7 @@ function walkTSModuleDeclarationBody(pos, ast, visitors) {
 
 function walkTSModuleBlock(pos, ast, visitors) {
   const enterExit = visitors[157];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSModuleBlock(pos, ast);
@@ -4046,12 +4047,12 @@ function walkTSModuleBlock(pos, ast, visitors) {
 
   walkVecStatement(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeLiteral(pos, ast, visitors) {
   const enterExit = visitors[158];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeLiteral(pos, ast);
@@ -4060,12 +4061,12 @@ function walkTSTypeLiteral(pos, ast, visitors) {
 
   walkVecTSSignature(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSInferType(pos, ast, visitors) {
   const enterExit = visitors[159];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSInferType(pos, ast);
@@ -4074,12 +4075,12 @@ function walkTSInferType(pos, ast, visitors) {
 
   walkBoxTSTypeParameter(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeQuery(pos, ast, visitors) {
   const enterExit = visitors[160];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeQuery(pos, ast);
@@ -4089,7 +4090,7 @@ function walkTSTypeQuery(pos, ast, visitors) {
   walkTSTypeQueryExprName(pos + 8, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeQueryExprName(pos, ast, visitors) {
@@ -4113,7 +4114,7 @@ function walkTSTypeQueryExprName(pos, ast, visitors) {
 
 function walkTSImportType(pos, ast, visitors) {
   const enterExit = visitors[161];
-  let node, enter, exit;
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSImportType(pos, ast);
@@ -4122,15 +4123,43 @@ function walkTSImportType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
   walkOptionBoxObjectExpression(pos + 24, ast, visitors);
-  walkOptionTSTypeName(pos + 32, ast, visitors);
+  walkOptionTSImportTypeQualifier(pos + 32, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 48, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
+}
+
+function walkTSImportTypeQualifier(pos, ast, visitors) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      walkBoxIdentifierName(pos + 8, ast, visitors);
+      return;
+    case 1:
+      walkBoxTSImportTypeQualifiedName(pos + 8, ast, visitors);
+      return;
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSImportTypeQualifier`);
+  }
+}
+
+function walkTSImportTypeQualifiedName(pos, ast, visitors) {
+  const enterExit = visitors[162];
+  let node, enter, exit = null;
+  if (enterExit !== null) {
+    ({ enter, exit } = enterExit);
+    node = new TSImportTypeQualifiedName(pos, ast);
+    if (enter !== null) enter(node);
+  }
+
+  walkTSImportTypeQualifier(pos + 8, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
+
+  if (exit !== null) exit(node);
 }
 
 function walkTSFunctionType(pos, ast, visitors) {
-  const enterExit = visitors[162];
-  let node, enter, exit;
+  const enterExit = visitors[163];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSFunctionType(pos, ast);
@@ -4141,12 +4170,12 @@ function walkTSFunctionType(pos, ast, visitors) {
   walkBoxFormalParameters(pos + 24, ast, visitors);
   walkBoxTSTypeAnnotation(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSConstructorType(pos, ast, visitors) {
-  const enterExit = visitors[163];
-  let node, enter, exit;
+  const enterExit = visitors[164];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSConstructorType(pos, ast);
@@ -4157,12 +4186,12 @@ function walkTSConstructorType(pos, ast, visitors) {
   walkBoxFormalParameters(pos + 16, ast, visitors);
   walkBoxTSTypeAnnotation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSMappedType(pos, ast, visitors) {
-  const enterExit = visitors[164];
-  let node, enter, exit;
+  const enterExit = visitors[165];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSMappedType(pos, ast);
@@ -4172,12 +4201,12 @@ function walkTSMappedType(pos, ast, visitors) {
   walkOptionTSType(pos + 16, ast, visitors);
   walkOptionTSType(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTemplateLiteralType(pos, ast, visitors) {
-  const enterExit = visitors[165];
-  let node, enter, exit;
+  const enterExit = visitors[166];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTemplateLiteralType(pos, ast);
@@ -4187,12 +4216,12 @@ function walkTSTemplateLiteralType(pos, ast, visitors) {
   walkVecTemplateElement(pos + 8, ast, visitors);
   walkVecTSType(pos + 32, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSAsExpression(pos, ast, visitors) {
-  const enterExit = visitors[166];
-  let node, enter, exit;
+  const enterExit = visitors[167];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSAsExpression(pos, ast);
@@ -4202,12 +4231,12 @@ function walkTSAsExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkTSType(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSSatisfiesExpression(pos, ast, visitors) {
-  const enterExit = visitors[167];
-  let node, enter, exit;
+  const enterExit = visitors[168];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSSatisfiesExpression(pos, ast);
@@ -4217,12 +4246,12 @@ function walkTSSatisfiesExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkTSType(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSTypeAssertion(pos, ast, visitors) {
-  const enterExit = visitors[168];
-  let node, enter, exit;
+  const enterExit = visitors[169];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSTypeAssertion(pos, ast);
@@ -4232,12 +4261,12 @@ function walkTSTypeAssertion(pos, ast, visitors) {
   walkTSType(pos + 8, ast, visitors);
   walkExpression(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSImportEqualsDeclaration(pos, ast, visitors) {
-  const enterExit = visitors[169];
-  let node, enter, exit;
+  const enterExit = visitors[170];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSImportEqualsDeclaration(pos, ast);
@@ -4247,7 +4276,7 @@ function walkTSImportEqualsDeclaration(pos, ast, visitors) {
   walkBindingIdentifier(pos + 8, ast, visitors);
   walkTSModuleReference(pos + 40, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSModuleReference(pos, ast, visitors) {
@@ -4270,8 +4299,8 @@ function walkTSModuleReference(pos, ast, visitors) {
 }
 
 function walkTSExternalModuleReference(pos, ast, visitors) {
-  const enterExit = visitors[170];
-  let node, enter, exit;
+  const enterExit = visitors[171];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSExternalModuleReference(pos, ast);
@@ -4280,12 +4309,12 @@ function walkTSExternalModuleReference(pos, ast, visitors) {
 
   walkStringLiteral(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSNonNullExpression(pos, ast, visitors) {
-  const enterExit = visitors[171];
-  let node, enter, exit;
+  const enterExit = visitors[172];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSNonNullExpression(pos, ast);
@@ -4294,12 +4323,12 @@ function walkTSNonNullExpression(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkDecorator(pos, ast, visitors) {
-  const enterExit = visitors[172];
-  let node, enter, exit;
+  const enterExit = visitors[173];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new Decorator(pos, ast);
@@ -4308,12 +4337,12 @@ function walkDecorator(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSExportAssignment(pos, ast, visitors) {
-  const enterExit = visitors[173];
-  let node, enter, exit;
+  const enterExit = visitors[174];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSExportAssignment(pos, ast);
@@ -4322,12 +4351,12 @@ function walkTSExportAssignment(pos, ast, visitors) {
 
   walkExpression(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSNamespaceExportDeclaration(pos, ast, visitors) {
-  const enterExit = visitors[174];
-  let node, enter, exit;
+  const enterExit = visitors[175];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSNamespaceExportDeclaration(pos, ast);
@@ -4336,12 +4365,12 @@ function walkTSNamespaceExportDeclaration(pos, ast, visitors) {
 
   walkIdentifierName(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkTSInstantiationExpression(pos, ast, visitors) {
-  const enterExit = visitors[175];
-  let node, enter, exit;
+  const enterExit = visitors[176];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new TSInstantiationExpression(pos, ast);
@@ -4351,12 +4380,12 @@ function walkTSInstantiationExpression(pos, ast, visitors) {
   walkExpression(pos + 8, ast, visitors);
   walkBoxTSTypeParameterInstantiation(pos + 24, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSDocNullableType(pos, ast, visitors) {
-  const enterExit = visitors[176];
-  let node, enter, exit;
+  const enterExit = visitors[177];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSDocNullableType(pos, ast);
@@ -4365,12 +4394,12 @@ function walkJSDocNullableType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSDocNonNullableType(pos, ast, visitors) {
-  const enterExit = visitors[177];
-  let node, enter, exit;
+  const enterExit = visitors[178];
+  let node, enter, exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
     node = new JSDocNonNullableType(pos, ast);
@@ -4379,7 +4408,7 @@ function walkJSDocNonNullableType(pos, ast, visitors) {
 
   walkTSType(pos + 8, ast, visitors);
 
-  if (exit) exit(node);
+  if (exit !== null) exit(node);
 }
 
 function walkJSDocUnknownType(pos, ast, visitors) {
@@ -5457,8 +5486,12 @@ function walkOptionBoxObjectExpression(pos, ast, visitors) {
   }
 }
 
-function walkOptionTSTypeName(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 3)) walkTSTypeName(pos, ast, visitors);
+function walkOptionTSImportTypeQualifier(pos, ast, visitors) {
+  if (!(ast.buffer[pos] === 2)) walkTSImportTypeQualifier(pos, ast, visitors);
+}
+
+function walkBoxTSImportTypeQualifiedName(pos, ast, visitors) {
+  return walkTSImportTypeQualifiedName(ast.buffer.uint32[pos >> 2], ast, visitors);
 }
 
 function walkBoxTSExternalModuleReference(pos, ast, visitors) {
