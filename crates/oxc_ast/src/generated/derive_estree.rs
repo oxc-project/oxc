@@ -2977,7 +2977,10 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("type", &JsonSafeString("TSImportType"));
         state.serialize_field("argument", &self.argument);
         state.serialize_field("options", &self.options);
-        state.serialize_field("qualifier", &self.qualifier);
+        state.serialize_field(
+            "qualifier",
+            &crate::serialize::ts::TSImportTypeQualifierConverter(self),
+        );
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_span(self.span);
         state.end();

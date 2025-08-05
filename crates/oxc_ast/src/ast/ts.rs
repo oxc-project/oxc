@@ -1359,6 +1359,7 @@ pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
+    #[estree(via = TSImportTypeQualifierConverter)]
     pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }

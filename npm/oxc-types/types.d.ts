@@ -1351,7 +1351,7 @@ export interface TSImportType extends Span {
   type: 'TSImportType';
   argument: TSType;
   options: ObjectExpression | null;
-  qualifier: TSImportTypeQualifier | null;
+  qualifier: TSQualifiedName | IdentifierName | null;
   typeArguments: TSTypeParameterInstantiation | null;
 }
 

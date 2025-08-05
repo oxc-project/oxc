@@ -401,3 +401,118 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
         Concat2(&fn_type.this_param, fn_type.params.as_ref()).serialize(serializer);
     }
 }
+
+/// Serializer for `qualifier` field of `TSImportType`.
+///
+/// Our AST represents the qualifier as `TSImportTypeQualifier` with `IdentifierName` nodes.
+/// TS-ESTree represents it as `TSQualifiedName` with `Identifier` nodes.
+#[ast_meta]
+#[estree(
+    ts_type = "TSQualifiedName | IdentifierName | null",
+    raw_deser = "
+        let qualifier = DESER[Option<TSImportTypeQualifier>](POS_OFFSET.qualifier);
+        if (qualifier !== null) {
+            if (qualifier.type === 'IdentifierName') {
+                qualifier = {
+                    type: 'Identifier',
+                    decorators: [],
+                    name: qualifier.name,
+                    optional: false,
+                    typeAnnotation: null,
+                    start: qualifier.start,
+                    end: qualifier.end,
+                };
+            } else if (qualifier.type === 'TSImportTypeQualifiedName') {
+                // Convert TSImportTypeQualifiedName to TSQualifiedName
+                const convertQualifier = (q) => {
+                    if (q.type === 'IdentifierName') {
+                        return {
+                            type: 'Identifier',
+                            decorators: [],
+                            name: q.name,
+                            optional: false,
+                            typeAnnotation: null,
+                            start: q.start,
+                            end: q.end,
+                        };
+                    } else if (q.type === 'TSImportTypeQualifiedName') {
+                        return {
+                            type: 'TSQualifiedName',
+                            left: convertQualifier(q.left),
+                            right: {
+                                type: 'Identifier',
+                                decorators: [],
+                                name: q.right.name,
+                                optional: false,
+                                typeAnnotation: null,
+                                start: q.right.start,
+                                end: q.right.end,
+                            },
+                            start: q.start,
+                            end: q.end,
+                        };
+                    }
+                    return q;
+                };
+                qualifier = convertQualifier(qualifier);
+            }
+        }
+        qualifier
+    "
+)]
+pub struct TSImportTypeQualifierConverter<'a, 'b>(pub &'b TSImportType<'a>);
+
+impl ESTree for TSImportTypeQualifierConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match &self.0.qualifier {
+            None => None::<()>.serialize(serializer),
+            Some(qualifier) => {
+                TSImportTypeQualifierAsQualifiedName(qualifier).serialize(serializer);
+            }
+        }
+    }
+}
+
+struct TSImportTypeQualifierAsQualifiedName<'a, 'b>(&'b TSImportTypeQualifier<'a>);
+
+impl ESTree for TSImportTypeQualifierAsQualifiedName<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self.0 {
+            TSImportTypeQualifier::Identifier(ident) => {
+                // Convert IdentifierName to Identifier
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("Identifier"));
+                state.serialize_field("decorators", &Vec::<Decorator>::new().as_slice());
+                state.serialize_field("name", &ident.name);
+                state.serialize_field("optional", &false);
+                state.serialize_field("typeAnnotation", &None::<()>);
+                state.serialize_span(ident.span);
+                state.end();
+            }
+            TSImportTypeQualifier::QualifiedName(name) => {
+                // Convert TSImportTypeQualifiedName to TSQualifiedName
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+                state.serialize_field("left", &TSImportTypeQualifierAsQualifiedName(&name.left));
+                state.serialize_field("right", &IdentifierAsIdentifier(&name.right));
+                state.serialize_span(name.span);
+                state.end();
+            }
+        }
+    }
+}
+
+struct IdentifierAsIdentifier<'a, 'b>(&'b IdentifierName<'a>);
+
+impl ESTree for IdentifierAsIdentifier<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Identifier"));
+        state.serialize_field("decorators", &Vec::<Decorator>::new().as_slice());
+        state.serialize_field("name", &self.0.name);
+        state.serialize_field("optional", &false);
+        state.serialize_field("typeAnnotation", &None::<()>);
+        state.serialize_span(self.0.span);
+        state.end();
+    }
+}
