@@ -34,12 +34,12 @@ phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
-ryu-js = { workspace = true, optional = true }
+dragonbox_ecma = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-to_js_string = ["dep:ryu-js"]
+to_js_string = ["dep:dragonbox_ecma"]
 serialize = [
   "bitflags/serde",
   "dep:serde",

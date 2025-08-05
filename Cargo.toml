@@ -179,6 +179,7 @@ constcat = "0.6.1"
 convert_case = "0.8.0"
 cow-utils = "0.1.3"
 criterion2 = { version = "3.0.2", default-features = false }
+dragonbox_ecma = "0.0.5"
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.8", default-features = false }
@@ -217,7 +218,6 @@ project-root = "0.2.2"
 rayon = "1.10.0"
 ropey = "1.6.1"
 rust-lapper = "1.2.0"
-ryu-js = "1.0.2"
 saphyr = "0.0.6"
 schemars = { package = "oxc-schemars", version = "0.8.25" }
 self_cell = "1.2.0"

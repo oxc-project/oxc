@@ -31,9 +31,9 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+dragonbox_ecma = { workspace = true }
 nonmax = { workspace = true }
 rustc-hash = { workspace = true }
-ryu-js = { workspace = true }
 
 [dev-dependencies]
 base64 = { workspace = true }
