@@ -235,6 +235,14 @@ impl Rule for FuncStyle {
                     let parent = semantic.nodes().parent_node(node.id());
                     match func.r#type {
                         FunctionType::FunctionDeclaration => {
+                            if func.body.is_none()
+                                || func.id.as_ref().is_some_and(|id| {
+                                    !ctx.scoping().symbol_redeclarations(id.symbol_id()).is_empty()
+                                })
+                            {
+                                continue;
+                            }
+
                             // There are two situations to diagnostic
                             // 1) if style not equal to "declaration"
                             // we need to consider whether the parent node is ExportDefaultDeclaration or ExportNamedDeclaration
@@ -338,6 +346,7 @@ impl Rule for FuncStyle {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
     let pass = vec![
         (
             "function foo(){}
@@ -460,35 +469,111 @@ fn test() {
         (
             "export var foo = () => {};",
             Some(
-                serde_json::json!(["declaration", { "allowArrowFunctions": true, "overrides": { "namedExports": "ignore" } }]),
+                serde_json::json!(["declaration",{ "allowArrowFunctions": true, "overrides": { "namedExports": "ignore" }}]),
             ),
         ),
+        ("$1: function $2() { }", Some(serde_json::json!(["declaration"]))), // { "sourceType": "script" },
+        ("switch ($0) { case $1: function $2() { } }", Some(serde_json::json!(["declaration"]))),
         (
-            "const arrow: Fn = () => {}",
+            "function foo(): void {}
+			 function bar(): void {}",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        ("(function(): void { /* code */ }());", Some(serde_json::json!(["declaration"]))),
+        (
+            "const module = (function(): { [key: string]: any } { return {}; }());",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "const object: { foo: () => void } = { foo: function(): void {} };",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        ("Array.prototype.foo = function(): void {};", Some(serde_json::json!(["declaration"]))),
+        (
+            "const foo: () => void = function(): void {};
+			 const bar: () => void = function(): void {};",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "const foo: () => void = (): void => {};
+			 const bar: () => void = (): void => {}",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "const foo: () => void = function(): void { this; }.bind(this);",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "const foo: () => void = (): void => { this; };",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "class C extends D { foo(): void { const bar: () => void = (): void => { super.baz(); }; } }",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "const obj: { foo(): void } = { foo(): void { const bar: () => void = (): void => super.baz; } }",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "const foo: () => void = (): void => {};",
+            Some(serde_json::json!(["declaration", { "allowArrowFunctions": true }])),
+        ),
+        (
+            "const foo: () => void = (): void => { function foo(): void { this; } };",
+            Some(serde_json::json!(["declaration", { "allowArrowFunctions": true }])),
+        ),
+        (
+            "const foo: () => { bar(): void } = (): { bar(): void } => ({ bar(): void { super.baz(); } });",
+            Some(serde_json::json!(["declaration", { "allowArrowFunctions": true }])),
+        ),
+        ("export function foo(): void {};", Some(serde_json::json!(["declaration"]))),
+        (
+            "export function foo(): void {};",
             Some(
-                serde_json::json!(["declaration", { "allowTypeAnnotation": true, "allowArrowFunctions": false }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } },			]),
             ),
         ),
         (
-            "const arrow: Fn = () => {}",
+            "export function foo(): void {};",
             Some(
-                serde_json::json!(["expression", { "allowTypeAnnotation": false, "allowArrowFunctions": false }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } },			]),
             ),
         ),
         (
-            "export const foo: () => void = function () {}",
+            "export function foo(): void {};",
+            Some(serde_json::json!(["expression", { "overrides": { "namedExports": "ignore" } }])),
+        ),
+        (
+            "export function foo(): void {};",
+            Some(serde_json::json!(["declaration", { "overrides": { "namedExports": "ignore" } }])),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
+            Some(serde_json::json!(["expression"])),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
-            "export const foo: () => void = function () {}",
+            "export const foo: () => void = function(): void {};",
             Some(
-                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
-            "export const foo: () => void = function () {}",
+            "export const foo: () => void = function(): void {};",
+            Some(serde_json::json!(["declaration", { "overrides": { "namedExports": "ignore" } }])),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
+            Some(serde_json::json!(["expression", { "overrides": { "namedExports": "ignore" } }])),
+        ),
+        (
+            "const expression: Fn = function () {}",
             Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
         ),
         (
@@ -506,8 +591,78 @@ fn test() {
         (
             "export const expression: Fn = function () {}",
             Some(
+                serde_json::json!(["expression", { "allowTypeAnnotation": true,	"overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "export const arrow: Fn = () => {}",
+            Some(
                 serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
             ),
+        ),
+        ("$1: function $2(): void { }", Some(serde_json::json!(["declaration"]))),
+        (
+            "switch ($0) { case $1: function $2(): void { } }",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "
+					function test(a: string): string;
+					function test(a: number): number;
+					function test(a: unknown) {
+					  return a;
+					}
+					",
+            None,
+        ),
+        (
+            "
+					export function test(a: string): string;
+					export function test(a: number): number;
+					export function test(a: unknown) {
+					  return a;
+					}
+					",
+            None,
+        ),
+        (
+            "
+						export function test(a: string): string;
+					    export function test(a: number): number;
+					    export function test(a: unknown) {
+					      return a;
+					    }
+						",
+            Some(
+                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "
+					switch ($0) {
+						case $1:
+						function test(a: string): string;
+						function test(a: number): number;
+						function test(a: unknown) {
+						return a;
+						}
+					}
+					",
+            None,
+        ),
+        (
+            "
+					switch ($0) {
+						case $1:
+						function test(a: string): string;
+						break;
+						case $2:
+						function test(a: unknown) {
+						return a;
+						}
+					}
+					",
+            None,
         ),
     ];
 
@@ -519,90 +674,215 @@ fn test() {
         ("function foo(){}", Some(serde_json::json!(["expression"]))),
         ("export function foo(){}", Some(serde_json::json!(["expression"]))),
         (
-            "export const foo = () => {}",
+            "export function foo() {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         (
             "export function foo() {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
-            ),
-        ),
-        (
-            "export function foo() {};",
-            Some(
-                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
             ),
         ),
         ("export var foo = function(){};", Some(serde_json::json!(["declaration"]))), // { "ecmaVersion": 6 },
         (
             "export var foo = function(){};",
             Some(
-                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "export var foo = function(){};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         ("export var foo = () => {};", Some(serde_json::json!(["declaration"]))), // { "ecmaVersion": 6 },
         (
             "export var b = () => {};",
             Some(
-                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "export var c = () => {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "function foo() {};",
             Some(
-                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "var foo = function() {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
             ),
         ), // { "ecmaVersion": 6 },
         (
             "var foo = () => {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
             ),
-        ), // { "ecmaVersion": 6 }
+        ), // { "ecmaVersion": 6 },
         (
-            "const arrow: Fn = () => {}",
+            "const foo = function() {};",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        ("$1: function $2() { }", None), // { "sourceType": "script" },
+        (
+            "const foo = () => {};",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const foo = function() {};",
             Some(
-                serde_json::json!(["declaration", { "allowTypeAnnotation": false, "allowArrowFunctions": false }]),
+                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
             ),
         ),
         (
-            "const foo = function() {}",
-            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
-        ),
-        (
-            "export const foo = function() {}",
-            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
-        ),
-        (
-            "export const foo = () => {}",
-            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
-        ),
-        (
-            "export const foo: () => void = function () {}",
+            "export const foo = () => {};",
             Some(
-                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
             ),
+        ),
+        ("if (foo) function bar() {}", None), // { "sourceType": "script" },
+        ("const foo: () => void = function(): void {};", Some(serde_json::json!(["declaration"]))),
+        ("const foo: () => void = (): void => {};", Some(serde_json::json!(["declaration"]))),
+        (
+            "const foo: () => void = (): void => { function foo(): void { this; } };",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "const foo: () => { bar(): void } = (): { bar(): void } => ({ bar(): void { super.baz(); } });",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        ("function foo(): void {}", Some(serde_json::json!(["expression"]))),
+        ("export function foo(): void {}", Some(serde_json::json!(["expression"]))),
+        (
+            "export function foo(): void {};",
+            Some(
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "export function foo(): void {};",
+            Some(
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
+            Some(
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = function(): void {};",
+            Some(
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = (): void => {};",
+            Some(serde_json::json!(["declaration"])),
+        ),
+        (
+            "export const b: () => void = (): void => {};",
+            Some(
+                serde_json::json!(["expression", { "overrides": { "namedExports": "declaration" } } ]),
+            ),
+        ),
+        (
+            "export const c: () => void = (): void => {};",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } } ]),
+            ),
+        ),
+        (
+            "function foo(): void {};",
+            Some(
+                serde_json::json!(["expression",{ "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "const foo: () => void = function(): void {};",
+            Some(
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "const foo: () => void = (): void => {};",
+            Some(
+                serde_json::json!(["declaration",{ "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        ("$1: function $2(): void { }", None),
+        ("if (foo) function bar(): string {}", None),
+        (
+            "
+						function test1(a: string): string;
+						function test2(a: number): number;
+						function test3(a: unknown) {
+						  return a;
+						}",
+            None,
+        ),
+        (
+            "
+						export function test1(a: string): string;
+						export function test2(a: number): number;
+						export function test3(a: unknown) {
+						  return a;
+						}",
+            None,
+        ),
+        (
+            "
+						export function test1(a: string): string;
+					    export function test2(a: number): number;
+					    export function test3(a: unknown) {
+					      return a;
+					    }
+						",
+            Some(
+                serde_json::json!(["expression", { "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "
+						switch ($0) {
+							case $1:
+							function test1(a: string): string;
+							function test2(a: number): number;
+							function test3(a: unknown) {
+								return a;
+							}
+						}
+						",
+            None,
+        ),
+        (
+            "
+						switch ($0) {
+							case $1:
+							function test1(a: string): string;
+							break;
+							case $2:
+							function test2(a: unknown) {
+							return a;
+							}
+						}
+						",
+            None,
         ),
     ];
 
