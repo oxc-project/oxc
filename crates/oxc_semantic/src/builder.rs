@@ -267,6 +267,9 @@ impl<'a> SemanticBuilder<'a> {
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
+        #[cfg(debug_assertions)]
+        self.unused_labels.assert_empty();
+
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
@@ -1215,7 +1218,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
-        self.unused_labels.add(stmt.label.name.as_str());
+        self.unused_labels.add(stmt.label.name.as_str(), self.current_node_id);
 
         /* cfg */
         let label = &stmt.label.name;
@@ -1241,7 +1244,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.unused_labels.mark_unused(self.current_node_id);
+        self.unused_labels.mark_unused();
         self.leave_node(kind);
     }
 
