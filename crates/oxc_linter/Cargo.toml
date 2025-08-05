@@ -60,7 +60,6 @@ javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy-regex = { workspace = true }
-lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
