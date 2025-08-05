@@ -30,7 +30,7 @@ pub fn generate() {
 
     let features = items.iter().map(|item| {
         let key = item.es_name();
-        let es_version = u32::from_str(item.es.trim_start_matches("ES")).unwrap();
+        let es_version = u16::from_str(item.es.trim_start_matches("ES")).unwrap();
         let targets = item
             .targets
             .iter()
