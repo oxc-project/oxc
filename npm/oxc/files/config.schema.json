@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Oxc MCP Server Configuration",
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "@oxc-project/oxc"
+        },
+        "version": {
+          "type": "string",
+          "default": "0.1.0"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "parser": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable JavaScript/TypeScript parsing capabilities"
+        },
+        "linter": {
+          "type": "boolean", 
+          "default": true,
+          "description": "Enable code linting capabilities"
+        },
+        "analysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code analysis capabilities"
+        }
+      }
+    },
+    "linting": {
+      "type": "object",
+      "properties": {
+        "defaultRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["no-var", "eqeqeq", "no-console"],
+          "description": "Default linting rules to apply"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "warning",
+          "description": "Minimum severity level to report"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "enableDocumentation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable documentation resources"
+        },
+        "enableExamples": {
+          "type": "boolean", 
+          "default": true,
+          "description": "Enable AST and code examples"
+        }
+      }
+    }
+  }
+}

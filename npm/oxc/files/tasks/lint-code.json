@@ -1,0 +1,47 @@
+{
+  "taskName": "lint-code",
+  "title": "Code Linting",
+  "description": "Run Oxc linter on JavaScript/TypeScript code",
+  "category": "linting",
+  "inputs": {
+    "code": {
+      "type": "string",
+      "description": "JavaScript or TypeScript code to lint",
+      "required": true
+    },
+    "rules": {
+      "type": "array",
+      "itemType": "string",
+      "description": "Specific linting rules to apply",
+      "required": false,
+      "default": []
+    },
+    "severity": {
+      "type": "enum",
+      "values": ["error", "warning", "info"],
+      "description": "Minimum severity level to report",
+      "required": false,
+      "default": "warning"
+    }
+  },
+  "outputs": {
+    "issues": {
+      "type": "array",
+      "itemType": "LintIssue",
+      "description": "Array of linting issues found"
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary of linting results"
+    }
+  },
+  "examples": [
+    {
+      "input": {
+        "code": "var x = 5; if (x == 5) console.log('hello');",
+        "rules": ["no-var", "eqeqeq", "no-console"]
+      },
+      "description": "Lint code with specific rules"
+    }
+  ]
+}

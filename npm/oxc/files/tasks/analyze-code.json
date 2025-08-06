@@ -1,0 +1,38 @@
+{
+  "taskName": "analyze-code",
+  "title": "Code Analysis",
+  "description": "Parse and analyze JavaScript/TypeScript code using Oxc parser",
+  "category": "analysis",
+  "inputs": {
+    "code": {
+      "type": "string",
+      "description": "JavaScript or TypeScript code to analyze",
+      "required": true
+    },
+    "language": {
+      "type": "enum",
+      "values": ["javascript", "typescript"],
+      "description": "Language type (auto-detected if not provided)",
+      "required": false
+    }
+  },
+  "outputs": {
+    "analysis": {
+      "type": "CodeAnalysis",
+      "description": "Detailed code analysis results"
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Code complexity and quality metrics"
+    }
+  },
+  "examples": [
+    {
+      "input": {
+        "code": "function hello(name) { return `Hello, ${name}!`; }",
+        "language": "javascript"
+      },
+      "description": "Analyze a simple JavaScript function"
+    }
+  ]
+}

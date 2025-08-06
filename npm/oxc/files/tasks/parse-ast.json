@@ -1,0 +1,50 @@
+{
+  "taskName": "parse-ast",
+  "title": "AST Parsing",
+  "description": "Parse JavaScript/TypeScript code into Abstract Syntax Tree",
+  "category": "parsing",
+  "inputs": {
+    "code": {
+      "type": "string",
+      "description": "JavaScript or TypeScript code to parse",
+      "required": true
+    },
+    "format": {
+      "type": "enum",
+      "values": ["json", "pretty", "minimal"],
+      "description": "Output format for the AST",
+      "required": false,
+      "default": "pretty"
+    },
+    "includeComments": {
+      "type": "boolean",
+      "description": "Include comments in the AST",
+      "required": false,
+      "default": false
+    }
+  },
+  "outputs": {
+    "ast": {
+      "type": "object",
+      "description": "Abstract Syntax Tree representation"
+    },
+    "nodeCount": {
+      "type": "number",
+      "description": "Total number of AST nodes"
+    },
+    "parseTime": {
+      "type": "number",
+      "description": "Time taken to parse (in milliseconds)"
+    }
+  },
+  "examples": [
+    {
+      "input": {
+        "code": "const add = (a, b) => a + b;",
+        "format": "pretty",
+        "includeComments": false
+      },
+      "description": "Parse arrow function into AST"
+    }
+  ]
+}

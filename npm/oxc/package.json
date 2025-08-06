@@ -1,0 +1,55 @@
+{
+  "name": "@oxc-project/oxc",
+  "version": "0.1.0",
+  "description": "MCP server for Oxc - JavaScript/TypeScript parsing, linting, and code analysis",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "oxc",
+    "javascript",
+    "typescript",
+    "parser",
+    "linter",
+    "ast"
+  ],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxc"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "oxc-mcp": "./dist/bin/server.js"
+  },
+  "files": [
+    "dist",
+    "files",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/bin/server.js",
+    "mcp": "node dist/bin/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.2",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
