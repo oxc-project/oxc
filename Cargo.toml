@@ -105,32 +105,32 @@ ignore_without_reason = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.80.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.80.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.80.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.80.0", path = "crates/oxc_ast_macros" }
-oxc_ast_visit = { version = "0.80.0", path = "crates/oxc_ast_visit" }
-oxc_cfg = { version = "0.80.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.80.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.80.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.80.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.80.0", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.80.0", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.80.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.80.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.80.0", path = "crates/oxc_minifier" }
-oxc_minify_napi = { version = "0.80.0", path = "napi/minify" }
-oxc_napi = { version = "0.80.0", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.80.0", path = "crates/oxc_parser", features = ["regular_expression"] }
-oxc_parser_napi = { version = "0.80.0", path = "napi/parser" }
-oxc_regular_expression = { version = "0.80.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.80.0", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.80.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.80.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.80.0", path = "napi/transform" }
-oxc_transformer = { version = "0.80.0", path = "crates/oxc_transformer" }
-oxc_transformer_plugins = { version = "0.80.0", path = "crates/oxc_transformer_plugins" }
-oxc_traverse = { version = "0.80.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.81.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.81.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.81.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.81.0", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.81.0", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.81.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.81.0", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.81.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.81.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.81.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.81.0", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.81.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.81.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.81.0", path = "crates/oxc_minifier" }
+oxc_minify_napi = { version = "0.81.0", path = "napi/minify" }
+oxc_napi = { version = "0.81.0", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.81.0", path = "crates/oxc_parser", features = ["regular_expression"] }
+oxc_parser_napi = { version = "0.81.0", path = "napi/parser" }
+oxc_regular_expression = { version = "0.81.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.81.0", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.81.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.81.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.81.0", path = "napi/transform" }
+oxc_transformer = { version = "0.81.0", path = "crates/oxc_transformer" }
+oxc_transformer_plugins = { version = "0.81.0", path = "crates/oxc_transformer_plugins" }
+oxc_traverse = { version = "0.81.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" }
