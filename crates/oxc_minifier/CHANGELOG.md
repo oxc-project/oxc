@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.81.0] - 2025-08-06
+
+### 🐛 Bug Fixes
+
+- 00fda91 minifier: Fix `KATAKANA MIDDLE DOT` syntax error for unicode 4.1 to 15 (#12829) (Boshen)
+
+
 ## [0.80.0] - 2025-08-03
 
 ### 🐛 Bug Fixes
