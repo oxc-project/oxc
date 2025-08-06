@@ -17,7 +17,7 @@ use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
-pub use crate::{engine::Compressor, api::*};
+pub use crate::{api::*, engine::Compressor};
 
 #[derive(Debug, Clone)]
 pub struct MinifierOptions {

@@ -3,7 +3,10 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
-use crate::{api::{CompressOptions, CompressOptionsUnused}, engine::Compressor};
+use crate::{
+    api::{CompressOptions, CompressOptionsUnused},
+    engine::Compressor,
+};
 
 pub fn default_options() -> CompressOptions {
     CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() }

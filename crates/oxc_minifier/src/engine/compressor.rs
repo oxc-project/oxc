@@ -5,11 +5,11 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     api::CompressOptions,
+    engine::MinifierState,
     peephole::{
         DeadCodeElimination, LatePeepholeOptimizations, Normalize, NormalizeOptions,
         PeepholeOptimizations,
     },
-    engine::MinifierState,
 };
 
 pub struct Compressor<'a> {

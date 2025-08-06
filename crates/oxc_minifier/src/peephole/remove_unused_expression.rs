@@ -744,7 +744,8 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        api::CompressOptions, TreeShakeOptions,
+        TreeShakeOptions,
+        api::CompressOptions,
         tester::{
             default_options, test, test_options, test_same, test_same_options,
             test_same_options_source_type,
