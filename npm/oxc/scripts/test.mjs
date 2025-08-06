@@ -10,7 +10,9 @@ const __dirname = dirname(__filename);
 
 function testMcpServer() {
   return new Promise((resolve, reject) => {
-    const serverPath = join(__dirname, 'dist', 'bin', 'server.js');
+    const serverPath = join(__dirname, '..', 'dist', 'bin', 'server.js');
+    console.log(`Starting server: ${serverPath}`);
+    
     const server = spawn('node', [serverPath], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -41,15 +43,18 @@ function testMcpServer() {
       }
     };
 
-    server.stdin.write(JSON.stringify(initRequest) + '\n');
+    setTimeout(() => {
+      server.stdin.write(JSON.stringify(initRequest) + '\n');
+    }, 500);
 
     setTimeout(() => {
       server.kill();
       if (errorOutput.includes('Oxc MCP Server is running')) {
         console.log('✅ MCP Server started successfully');
+        console.log('✅ Server logged startup message correctly');
         resolve(true);
       } else {
-        console.log('❌ MCP Server failed to start');
+        console.log('❌ MCP Server failed to start properly');
         console.log('Error output:', errorOutput);
         console.log('Standard output:', output);
         reject(new Error('Server failed to start'));
@@ -63,13 +68,21 @@ function testMcpServer() {
   });
 }
 
-console.log('Testing Oxc MCP Server...');
+console.log('🧪 Testing Oxc MCP Server...');
+console.log('');
 testMcpServer()
   .then(() => {
+    console.log('');
     console.log('✅ All tests passed!');
+    console.log('');
+    console.log('💡 To test interactively, run:');
+    console.log('   npm start');
+    console.log('');
+    console.log('💡 To use with MCP Inspector:');
+    console.log('   npx @modelcontextprotocol/inspector');
     process.exit(0);
   })
   .catch((err) => {
-    console.error('❌ Tests failed:', err);
+    console.error('❌ Tests failed:', err.message);
     process.exit(1);
   });

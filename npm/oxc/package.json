@@ -39,7 +39,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/bin/server.js",
-    "mcp": "node dist/bin/server.js"
+    "mcp": "node dist/bin/server.js",
+    "test": "node scripts/test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
