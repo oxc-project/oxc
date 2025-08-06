@@ -9,7 +9,10 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
-use oxc_syntax::reference::ReferenceId;
+use oxc_syntax::{
+    identifier::{is_identifier_part, is_identifier_start},
+    reference::ReferenceId,
+};
 
 use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
 
@@ -240,5 +243,15 @@ impl<'a> Ctx<'a, '_> {
             })?;
         }
         Some(f64::from(int_value))
+    }
+
+    /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+    /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+    /// 15.
+    /// <https://github.com/oxc-project/unicode-id-start/pull/3>
+    pub fn is_identifier_name_patched(s: &str) -> bool {
+        let mut chars = s.chars();
+        chars.next().is_some_and(is_identifier_start)
+            && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
     }
 }

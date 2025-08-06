@@ -8,7 +8,6 @@ use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::{
     es_target::ESTarget,
-    identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -877,35 +876,40 @@ impl<'a> PeepholeOptimizations {
         computed: &mut bool,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if let PropertyKey::NumericLiteral(_) = key {
-            if *computed {
-                *computed = false;
+        match key {
+            PropertyKey::NumericLiteral(_) => {
+                if *computed {
+                    *computed = false;
+                }
             }
-            return;
-        }
-        let PropertyKey::StringLiteral(s) = key else { return };
-        let value = s.value.as_str();
-        if is_identifier_name(value) {
-            *computed = false;
-            *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
-            ctx.state.changed = true;
-            return;
-        }
-        if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
-            if value >= 0.0 {
-                *computed = false;
-                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                    s.span,
-                    value,
-                    None,
-                    NumberBase::Decimal,
-                ));
-                ctx.state.changed = true;
-                return;
+            PropertyKey::StringLiteral(s) => {
+                let value = s.value.as_str();
+                if Ctx::is_identifier_name_patched(value) {
+                    *computed = false;
+                    *key = PropertyKey::StaticIdentifier(
+                        ctx.ast.alloc_identifier_name(s.span, s.value),
+                    );
+                    ctx.state.changed = true;
+                    return;
+                }
+                if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
+                    if value >= 0.0 {
+                        *computed = false;
+                        *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                            s.span,
+                            value,
+                            None,
+                            NumberBase::Decimal,
+                        ));
+                        ctx.state.changed = true;
+                        return;
+                    }
+                }
+                if *computed {
+                    *computed = false;
+                }
             }
-        }
-        if *computed {
-            *computed = false;
+            _ => {}
         }
     }
 
@@ -1743,6 +1747,13 @@ mod test {
             "class C { static accessor ['__proto__'] = 0 }",
             "class C { static accessor __proto__ = 0 }",
         );
+
+        // Patch KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+        // <https://github.com/oxc-project/unicode-id-start/pull/3>
+        test_same("x = { 'x・': 0 };");
+        test_same("x = { 'x･': 0 };");
+        test_same("x = y['x・'];");
+        test_same("x = y['x･'];");
 
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
