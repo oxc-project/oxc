@@ -783,16 +783,16 @@ impl<'a> Codegen<'a> {
             } else {
                 s.into()
             };
-            
+
             let mut best_candidate: std::borrow::Cow<'_, str> = s;
             let mut best_len = best_candidate.len();
-            
+
             let hex_candidate = format!("0x{:x}", num as u128);
             if hex_candidate.len() < best_len {
                 best_candidate = hex_candidate.into();
                 best_len = best_candidate.len();
             }
-            
+
             // Check for numbers ending with zeros (but not hex numbers)
             if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
                 if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
@@ -804,7 +804,7 @@ impl<'a> Codegen<'a> {
                     }
                 }
             }
-            
+
             // Check for scientific notation optimization: `1.2e101` -> `12e100`
             if let Some((integer, point, exponent)) = best_candidate
                 .split_once('.')
@@ -816,7 +816,7 @@ impl<'a> Codegen<'a> {
                     best_candidate = optimized_candidate.into();
                 }
             }
-            
+
             // Print the best candidate and update need_space_before_dot
             if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
                 self.print_str(&best_candidate);
@@ -831,7 +831,7 @@ impl<'a> Codegen<'a> {
             } else {
                 s.into()
             };
-            
+
             let mut best_candidate: std::borrow::Cow<'_, str> = s;
             let mut best_len = best_candidate.len();
 
@@ -847,7 +847,7 @@ impl<'a> Codegen<'a> {
                     }
                 }
             }
-            
+
             // Check for numbers ending with zeros
             if best_candidate.ends_with('0') {
                 if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
@@ -859,7 +859,7 @@ impl<'a> Codegen<'a> {
                     }
                 }
             }
-            
+
             // Check for scientific notation optimization: `1.2e101` -> `12e100`
             if let Some((integer, point, exponent)) = best_candidate
                 .split_once('.')
@@ -871,7 +871,7 @@ impl<'a> Codegen<'a> {
                     best_candidate = optimized_candidate.into();
                 }
             }
-            
+
             // Print the best candidate and update need_space_before_dot
             if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
                 self.print_str(&best_candidate);
