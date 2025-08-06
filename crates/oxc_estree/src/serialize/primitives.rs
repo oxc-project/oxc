@@ -10,34 +10,6 @@ impl ESTree for bool {
     }
 }
 
-/// [`ESTree`] implementation for `f32`.
-impl ESTree for f32 {
-    fn serialize<S: Serializer>(&self, mut serializer: S) {
-        if self.is_finite() {
-            // For f32, we need custom formatting to match ryu_js behavior
-            let s = if *self == f32::MIN {
-                "-3.4028235e+38".to_string()
-            } else if *self == f32::MAX {
-                "3.4028235e+38".to_string()
-            } else {
-                // For other finite values, standard formatting works
-                format!("{self}")
-            };
-            serializer.buffer_mut().print_str(&s);
-        } else if self.is_nan() {
-            // Serialize `NAN` as `null`
-            // TODO: Throw an error? Use a sentinel value?
-            serializer.buffer_mut().print_str("null");
-        } else if *self == f32::INFINITY {
-            // Serialize `INFINITY` as `1e+400. `JSON.parse` deserializes this as `Infinity`.
-            serializer.buffer_mut().print_str("1e+400");
-        } else {
-            // Serialize `-INFINITY` as `-1e+400`. `JSON.parse` deserializes this as `-Infinity`.
-            serializer.buffer_mut().print_str("-1e+400");
-        }
-    }
-}
-
 /// [`ESTree`] implementation for `f64`.
 impl ESTree for f64 {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
@@ -109,21 +81,6 @@ mod tests {
     #[test]
     fn serialize_bool() {
         run_test(&[(true, "true"), (false, "false")]);
-    }
-
-    #[test]
-    fn serialize_f32() {
-        run_test(&[
-            (0.0, "0"),
-            (1.0, "1"),
-            (123_456.0, "123456"),
-            (0.12345, "0.12345"),
-            (123.45, "123.45"),
-            (f32::MIN, "-3.4028235e+38"),
-            (f32::MAX, "3.4028235e+38"),
-            (f32::INFINITY, "1e+400"),
-            (-f32::INFINITY, "-1e+400"),
-        ]);
     }
 
     #[test]
