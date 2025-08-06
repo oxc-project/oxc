@@ -130,11 +130,13 @@ mod test {
         test_options("class C { foo }", "", &options);
         test_options("class C { foo = bar }", "", &options);
         test_options("class C { foo = 1 }", "", &options);
-        test_options("class C { static foo = bar }", "bar", &options);
+        // TODO: would be nice if this is removed but the one with `this` is kept.
+        test_same_options("class C { static foo = bar }", &options);
+        test_same_options("class C { static foo = this.bar = {} }", &options);
         test_options("class C { static foo = 1 }", "", &options);
         test_options("class C { [foo] = bar }", "foo", &options);
         test_options("class C { [foo] = 1 }", "foo", &options);
-        test_options("class C { static [foo] = bar }", "foo, bar", &options);
+        test_same_options("class C { static [foo] = bar }", &options);
         test_options("class C { static [foo] = 1 }", "foo", &options);
 
         // accessor
@@ -142,11 +144,7 @@ mod test {
         test_options("class C { accessor [foo] = 1 }", "foo", &options);
 
         // order
-        test_options(
-            "class _ extends A { static [B] = C; static [D]() {} }",
-            "A, B, C, D",
-            &options,
-        );
+        test_options("class _ extends A { [B] = C; [D]() {} }", "A, B, D", &options);
 
         // decorators
         test_same_options("class C { @dec foo() {} }", &options);
