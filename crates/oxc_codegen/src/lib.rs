@@ -762,8 +762,6 @@ impl<'a> Codegen<'a> {
     // and use self.print_str directly instead of returning intermediate strings
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
-        use cow_utils::CowUtils;
-
         if num < 1000.0 && num.fract() == 0.0 {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
@@ -776,67 +774,111 @@ impl<'a> Codegen<'a> {
             s = &s[1..];
         }
 
-        let s = s.cow_replacen("e+", "e", 1);
-
         // Track the best candidate found so far
-        let mut best_candidate = s.clone();
-        let mut best_len = best_candidate.len();
-
-        // Check hex format for integers
+        // Check hex format for integers first
         if num.fract() == 0.0 {
+            // For integers, apply e+ replacement first, then check optimizations
+            let s = if let Some((prefix, suffix)) = s.split_once("e+") {
+                format!("{prefix}e{suffix}").into()
+            } else {
+                s.into()
+            };
+            
+            let mut best_candidate: std::borrow::Cow<'_, str> = s;
+            let mut best_len = best_candidate.len();
+            
             let hex_candidate = format!("0x{:x}", num as u128);
             if hex_candidate.len() < best_len {
                 best_candidate = hex_candidate.into();
                 best_len = best_candidate.len();
             }
-        }
-
-        // Check for scientific notation optimizations for numbers starting with ".0"
-        if best_candidate.starts_with(".0") {
-            if let Some((i, _)) = best_candidate[1..].bytes().enumerate().find(|(_, c)| *c != b'0')
-            {
-                let len = i + 1; // `+1` to include the dot.
-                let digits = &best_candidate[len..];
-                let scientific_candidate = format!("{digits}e-{}", digits.len() + len - 1);
-                if scientific_candidate.len() < best_len {
-                    best_candidate = scientific_candidate.into();
-                    best_len = best_candidate.len();
+            
+            // Check for numbers ending with zeros (but not hex numbers)
+            if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
+                if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
+                    let base = &best_candidate[0..best_candidate.len() - len];
+                    let scientific_candidate = format!("{base}e{len}");
+                    if scientific_candidate.len() < best_len {
+                        best_candidate = scientific_candidate.into();
+                        best_len = best_candidate.len();
+                    }
                 }
             }
-        }
-
-        // Check for numbers ending with zeros (but not hex numbers)
-        if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
-            if let Some((len, _)) =
-                best_candidate.bytes().rev().enumerate().find(|(_, c)| *c != b'0')
+            
+            // Check for scientific notation optimization: `1.2e101` -> `12e100`
+            if let Some((integer, point, exponent)) = best_candidate
+                .split_once('.')
+                .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
             {
-                let base = &best_candidate[0..best_candidate.len() - len];
-                let scientific_candidate = format!("{base}e{len}");
-                if scientific_candidate.len() < best_len {
-                    best_candidate = scientific_candidate.into();
-                    best_len = best_candidate.len();
+                let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
+                let optimized_candidate = format!("{integer}{point}e{new_exp}");
+                if optimized_candidate.len() < best_len {
+                    best_candidate = optimized_candidate.into();
                 }
             }
-        }
-
-        // Check for scientific notation optimization: `1.2e101` -> `12e100`
-        if let Some((integer, point, exponent)) = best_candidate
-            .split_once('.')
-            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-        {
-            let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let optimized_candidate = format!("{integer}{point}e{new_exp}");
-            if optimized_candidate.len() < best_len {
-                best_candidate = optimized_candidate.into();
+            
+            // Print the best candidate and update need_space_before_dot
+            if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.print_str(&best_candidate);
+                self.need_space_before_dot = self.code_len();
+            } else {
+                self.print_str(&best_candidate);
             }
-        }
+        } else {
+            // For non-integers, apply e+ replacement and check for ".0" optimizations
+            let s = if let Some((prefix, suffix)) = s.split_once("e+") {
+                format!("{prefix}e{suffix}").into()
+            } else {
+                s.into()
+            };
+            
+            let mut best_candidate: std::borrow::Cow<'_, str> = s;
+            let mut best_len = best_candidate.len();
 
-        // Print the best candidate
-        self.print_str(&best_candidate);
-
-        // Update need_space_before_dot based on the final output
-        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-            self.need_space_before_dot = self.code_len();
+            // Check for scientific notation optimizations for numbers starting with ".0"
+            if best_candidate.starts_with(".0") {
+                if let Some(i) = best_candidate[1..].bytes().position(|c| c != b'0') {
+                    let len = i + 1; // `+1` to include the dot.
+                    let digits = &best_candidate[len..];
+                    let scientific_candidate = format!("{digits}e-{}", digits.len() + len - 1);
+                    if scientific_candidate.len() < best_len {
+                        best_candidate = scientific_candidate.into();
+                        best_len = best_candidate.len();
+                    }
+                }
+            }
+            
+            // Check for numbers ending with zeros
+            if best_candidate.ends_with('0') {
+                if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
+                    let base = &best_candidate[0..best_candidate.len() - len];
+                    let scientific_candidate = format!("{base}e{len}");
+                    if scientific_candidate.len() < best_len {
+                        best_candidate = scientific_candidate.into();
+                        best_len = best_candidate.len();
+                    }
+                }
+            }
+            
+            // Check for scientific notation optimization: `1.2e101` -> `12e100`
+            if let Some((integer, point, exponent)) = best_candidate
+                .split_once('.')
+                .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+            {
+                let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
+                let optimized_candidate = format!("{integer}{point}e{new_exp}");
+                if optimized_candidate.len() < best_len {
+                    best_candidate = optimized_candidate.into();
+                }
+            }
+            
+            // Print the best candidate and update need_space_before_dot
+            if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.print_str(&best_candidate);
+                self.need_space_before_dot = self.code_len();
+            } else {
+                self.print_str(&best_candidate);
+            }
         }
     }
 
