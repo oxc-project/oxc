@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 9b35600 linter/jsx-a11y: Add support for mapped attributes in label association checks (#12805) (camc314)
+
+### 🐛 Bug Fixes
+
+- 45206dd linter: Apply fix span offset after fixing the section source text (#12758) (Sysix)
+
+### 🚜 Refactor
+
+- 030e397 linter: Simplify parsing CLI args (#12802) (overlookmotel)
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+
+### ⚡ Performance
+
+- 693673b linter: Reduce iterations when collecting directories for nested configs (#12329) (overlookmotel)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- d8ccff7 oxlint: Add `Tester::test_fix` mehod (#12754) (Sysix)
+
+
 ## [1.9.0] - 2025-07-29
 
 ### 🚜 Refactor
