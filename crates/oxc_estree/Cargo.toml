@@ -21,9 +21,9 @@ doctest = false
 [dependencies]
 oxc_data_structures = { workspace = true, features = ["code_buffer", "pointer_ext", "slice_iter_ext", "stack"], optional = true }
 
+dragonbox_ecma = { workspace = true, optional = true }
 itoa = { workspace = true, optional = true }
-ryu-js = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:ryu-js"]
+serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma"]

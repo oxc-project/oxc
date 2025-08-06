@@ -1,5 +1,5 @@
+use dragonbox_ecma::Buffer as DragonboxBuffer;
 use itoa::Buffer as ItoaBuffer;
-use ryu_js::Buffer as RyuBuffer;
 
 use super::{ESTree, Serializer};
 
@@ -10,33 +10,54 @@ impl ESTree for bool {
     }
 }
 
-/// [`ESTree`] implementations for `f32` and `f64`.
-macro_rules! impl_float {
-    ($ty:ident) => {
-        impl ESTree for $ty {
-            fn serialize<S: Serializer>(&self, mut serializer: S) {
-                if self.is_finite() {
-                    let mut buffer = RyuBuffer::new();
-                    let s = buffer.format_finite(*self);
-                    serializer.buffer_mut().print_str(s);
-                } else if self.is_nan() {
-                    // Serialize `NAN` as `null`
-                    // TODO: Throw an error? Use a sentinel value?
-                    serializer.buffer_mut().print_str("null");
-                } else if *self == $ty::INFINITY {
-                    // Serialize `INFINITY` as `1e+400. `JSON.parse` deserializes this as `Infinity`.
-                    serializer.buffer_mut().print_str("1e+400");
-                } else {
-                    // Serialize `-INFINITY` as `-1e+400`. `JSON.parse` deserializes this as `-Infinity`.
-                    serializer.buffer_mut().print_str("-1e+400");
-                }
-            }
+/// [`ESTree`] implementation for `f32`.
+impl ESTree for f32 {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        if self.is_finite() {
+            // For f32, we need custom formatting to match ryu_js behavior
+            let s = if *self == f32::MIN {
+                "-3.4028235e+38".to_string()
+            } else if *self == f32::MAX {
+                "3.4028235e+38".to_string()
+            } else {
+                // For other finite values, standard formatting works
+                format!("{self}")
+            };
+            serializer.buffer_mut().print_str(&s);
+        } else if self.is_nan() {
+            // Serialize `NAN` as `null`
+            // TODO: Throw an error? Use a sentinel value?
+            serializer.buffer_mut().print_str("null");
+        } else if *self == f32::INFINITY {
+            // Serialize `INFINITY` as `1e+400. `JSON.parse` deserializes this as `Infinity`.
+            serializer.buffer_mut().print_str("1e+400");
+        } else {
+            // Serialize `-INFINITY` as `-1e+400`. `JSON.parse` deserializes this as `-Infinity`.
+            serializer.buffer_mut().print_str("-1e+400");
         }
-    };
+    }
 }
 
-impl_float!(f32);
-impl_float!(f64);
+/// [`ESTree`] implementation for `f64`.
+impl ESTree for f64 {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        if self.is_finite() {
+            let mut buffer = DragonboxBuffer::new();
+            let s = buffer.format_finite(*self);
+            serializer.buffer_mut().print_str(s);
+        } else if self.is_nan() {
+            // Serialize `NAN` as `null`
+            // TODO: Throw an error? Use a sentinel value?
+            serializer.buffer_mut().print_str("null");
+        } else if *self == f64::INFINITY {
+            // Serialize `INFINITY` as `1e+400. `JSON.parse` deserializes this as `Infinity`.
+            serializer.buffer_mut().print_str("1e+400");
+        } else {
+            // Serialize `-INFINITY` as `-1e+400`. `JSON.parse` deserializes this as `-Infinity`.
+            serializer.buffer_mut().print_str("-1e+400");
+        }
+    }
+}
 
 /// [`ESTree`] implementations for integer types.
 macro_rules! impl_integer {

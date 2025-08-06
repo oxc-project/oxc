@@ -625,6 +625,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dragonbox_ecma"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d742b56656e8b14d63e7ea9806597b1849ae25412584c8adf78c0f67bd985e66"
+
+[[package]]
 name = "dtor"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1830,6 +1836,7 @@ dependencies = [
  "base64",
  "bitflags 2.9.1",
  "cow-utils",
+ "dragonbox_ecma",
  "insta",
  "nonmax",
  "oxc_allocator",
@@ -1843,7 +1850,6 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
- "ryu-js",
 ]
 
 [[package]]
@@ -1921,9 +1927,9 @@ dependencies = [
 name = "oxc_estree"
 version = "0.80.0"
 dependencies = [
+ "dragonbox_ecma",
  "itoa",
  "oxc_data_structures",
- "ryu-js",
 ]
 
 [[package]]
@@ -2332,6 +2338,7 @@ version = "0.80.0"
 dependencies = [
  "bitflags 2.9.1",
  "cow-utils",
+ "dragonbox_ecma",
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
@@ -2341,7 +2348,6 @@ dependencies = [
  "oxc_span",
  "phf",
  "rustc-hash",
- "ryu-js",
  "serde",
  "unicode-id-start",
 ]
@@ -2914,12 +2920,6 @@ name = "ryu"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
-
-[[package]]
-name = "ryu-js"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd29631678d6fb0903b69223673e122c32e9ae559d0960a38d574695ebc0ea15"
 
 [[package]]
 name = "same-file"

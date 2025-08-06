@@ -740,7 +740,7 @@ impl<'a> Codegen<'a> {
 
     fn print_non_negative_float(&mut self, num: f64) {
         // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
-        let mut buffer = ryu_js::Buffer::new();
+        let mut buffer = dragonbox_ecma::Buffer::new();
         if num < 1000.0 && num.fract() == 0.0 {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
@@ -763,7 +763,7 @@ impl<'a> Codegen<'a> {
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn get_minified_number(num: f64, buffer: &mut ryu_js::Buffer) -> Cow<'_, str> {
+    fn get_minified_number(num: f64, buffer: &mut dragonbox_ecma::Buffer) -> Cow<'_, str> {
         use cow_utils::CowUtils;
 
         if num < 1000.0 && num.fract() == 0.0 {
