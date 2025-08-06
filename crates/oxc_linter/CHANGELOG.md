@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 44ac5a1 linter: Add eslint/no-unassigned-vars rule (#11365) (yefan)
+- ce6eeee linter: Add `eslint/prefer-destructuring` rule (#12721) (yefan)
+- 9b35600 linter/jsx-a11y: Add support for mapped attributes in label association checks (#12805) (camc314)
+- a754f7a linter: Support `countVoidThis` option in `max-params` rule (#12604) (yefan)
+
+### 🐛 Bug Fixes
+
+- 2c1dab6 linter/no-unassigned-vars: False positive with variables in for loop (#12833) (camc314)
+- 5a24574 linter/func-style: Fix more false positives (#12828) (camc314)
+- 33a7320 linter/no-throw-literal: Fix unconditional recursion in `could_be_error` (#12819) (camc314)
+- a3aec6a linter/explicit-module-boundary-types: Debug assertion fail with top level return (#12820) (camc314)
+- 6efe457 linter/no-empty-function: Respect allow options for functions and arrow functions (#12814) (camc314)
+- 1c21c46 linter/new-cap: Fix panic with computed member expr (#12804) (camc314)
+- 45206dd linter: Apply fix span offset after fixing the section source text (#12758) (Sysix)
+- 1e97e35 linter/unicorn/prefer-structured-clone: Update Default implementation for `PreferStructuredCloneConfig` (#12791) (camc314)
+- d382159 linter/unicorn/prefer-object-from-entries: Update Default implementation for `PreferObjectFromEntriesConfig` (#12790) (camc314)
+- b07d29c linter/typescript/no-this-alias: Update Default implementation for `NoThisAliasConfig` (#12789) (camc314)
+- 0db34ab linter/react/jsx-filename-case: Update Default implementation for `JsxFilenameExtensionConfig` (#12788) (camc314)
+- ff84eff linter/jest/prefer-lowercase-title: Update Default implementation for `PreferLowercaseTitleConfig` (#12787) (camc314)
+- 5175c6d linter/jest/no-large-snapshots: Update Default implementation for `NoLargeSnapshotsConfig` (#12786) (camc314)
+- 0eaebcd linter/jest/no-deprecated-functions: Update Default implementation for `JestConfig` (#12785) (camc314)
+- 4265db7 linter/import/no-anonymous-default-export: Update Default implementation for `NoAnonymousDefaultExport` config (#12784) (camc314)
+- 6a360e3 linter/import/extensions: Update Default implementation for ExtensionsConfig (#12783) (camc314)
+- 42c8f29 linter: Default options for `eslint/no-else-return` (#12762) (Sysix)
+- 4eac511 linter: Default options for `eslint/no-unneeded-ternary` (#12761) (Sysix)
+- 9c01dbf linter: Default options for `eslint/new-cap` (#12760) (Sysix)
+- b25406f linter/explicit-function-return-types: Update default values in ExplicitFunctionReturnTypeConfig (#12718) (camc314)
+- ce5876d parser: Validate inner expression of type assertions in assignment targets (#12614) (camc314)
+- 5383331 linter/explicit-mod-boundary-types: False positive with jsx elements (#12678) (camc314)
+- d0e99b5 linter/explicit-mod-boundary-types: False positive with call expressions (#12677) (camc314)
+- 525137e linter: Add missing options to no-inner-declarations (#12661) (camc314)
+- fc4a327 linter: No-unused-vars false positive with class property initializers (#12660) (camc314)
+- 6af8631 linter/no-unused-vars: False positive with chain expression (#12609) (camc314)
+- 744ef52 linter: Correct `array-type` handling of `default: 'array-simple'` (#12607) (yefan)
+
+### 🚜 Refactor
+
+- 3f37ed1 linter: Replace `lazy_static` with `std::sync::LazyLock` (#12822) (Copilot)
+- 69fd08d semantic: Improve unused label tracking and add debug assertions (#12812) (camc314)
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+- 61587e4 linter: Correct comment (#12792) (overlookmotel)
+- 5adcb98 linter: Use `u32` to keep track of last fixed source text position (#12696) (Sysix)
+- 77acc11 linter, transformer: Use `Scoping::symbol_is_unused` (#12666) (overlookmotel)
+- ecf1cff language_server: Simplify offset adjustment by using `Message.move_offset` (#12647) (Sysix)
+- 7695393 linter: Simplify offset adjustment by using `Message.move_offset` (#12595) (Sysix)
+- b36dc92 linter: Refactor large arrays to reduce binary size (#12603) (Boshen)
+- 3b9f1f0 linter: Update iter_outer_expressions to take AstNodes reference (#12583) (camc314)
+
+### 📚 Documentation
+
+- e760fd4 linter: Complete linter rules documentation with missing "Why is this bad?" sections (#12757) (Copilot)
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 1d910d5 linter: Fix typescript/consistent-type-imports rule options to match TypeScript ESLint (#12707) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- 7660a88 linter: Improve linter rule documentation with "Why is this bad?" sections and enhanced examples (#12711) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+### ⚡ Performance
+
+- 09ae2a9 linter: Eliminate unnecessary Iterator::collect() allocations (#12776) (Copilot)
+
+### 🎨 Styling
+
+- cacbd1e linter/no-empty-function: Order match arms consistently (#12815) (camc314)
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- 3957fcc linter/no-undef: Add test case for `TSImportType` (#12800) (camc314)
+- c6bfb8a linter: Add rule configuration consistency test (#12744) (camc314)
+- 2ceb835 linter: Fix offset for partical source texts (#12594) (Sysix)
+
+
 ## [1.9.0] - 2025-07-29
 
 ### 💥 BREAKING CHANGES
