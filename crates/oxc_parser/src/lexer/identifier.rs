@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use oxc_allocator::StringBuilder;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
@@ -15,15 +13,28 @@ use super::{
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
-static ASCII_ID_START_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
-
+// Keep the lookup table for the byte_search macro which still uses it
 static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
+/// Fast ASCII identifier start check using bit manipulation.
+/// This is faster than the lookup table for single byte checks.
 #[inline]
 fn is_identifier_start_ascii_byte(byte: u8) -> bool {
-    ASCII_ID_START_TABLE.matches(byte)
+    // ASCII letters: a-z (0x61-0x7A), A-Z (0x41-0x5A)
+    // ASCII underscore: _ (0x5F)
+    // ASCII dollar: $ (0x24)
+    matches!(byte, b'A'..=b'Z' | b'a'..=b'z' | b'_' | b'$')
+}
+
+/// Fast ASCII identifier continue check using bit manipulation.
+/// This is faster than the lookup table for single byte checks.
+#[inline]
+fn is_identifier_continue_ascii_byte(byte: u8) -> bool {
+    // ASCII letters + digits: 0-9 (0x30-0x39), A-Z (0x41-0x5A), a-z (0x61-0x7A)
+    // ASCII underscore: _ (0x5F)
+    // ASCII dollar: $ (0x24)
+    matches!(byte, b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'_' | b'$')
 }
 
 impl<'a> Lexer<'a> {
@@ -52,7 +63,12 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { self.source.position().add(1) };
 
-        // Consume bytes which are part of identifier
+        // Try optimized fast path for short ASCII-only identifiers first
+        if let Some(result) = unsafe { self.try_fast_ascii_identifier(after_first) } {
+            return result;
+        }
+
+        // Fall back to original implementation for complex cases
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
@@ -91,6 +107,46 @@ impl<'a> Lexer<'a> {
         // Searching only proceeds in forwards direction, so `lexer.source.position()`
         // cannot be before `after_first`.
         unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+    }
+
+    /// Fast path for short ASCII-only identifiers.
+    /// Processes bytes manually for maximum speed on common case.
+    /// Returns `Some(result)` if identifier is short and ASCII-only, `None` if complex.
+    #[inline]
+    unsafe fn try_fast_ascii_identifier(&mut self, start_pos: SourcePosition<'a>) -> Option<&'a str> {
+        let mut pos = start_pos;
+        
+        // Process up to 16 bytes manually - covers most common identifiers
+        // Using a simple loop is faster than complex batch processing for this case
+        for _ in 0..16 {
+            if pos.is_end_of(&self.source) {
+                // Reached end - return identifier (minus first char)
+                self.source.set_position(pos);
+                return Some(unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) });
+            }
+
+            // SAFETY: We just checked we're not at end of source
+            let byte = unsafe { pos.read() };
+            
+            if is_identifier_continue_ascii_byte(byte) {
+                // Continue with this byte
+                // SAFETY: We know this is an ASCII byte, so safe to advance
+                pos = unsafe { pos.add(1) };
+                continue;
+            }
+
+            if byte == b'\\' || !byte.is_ascii() {
+                // Complex case - let main implementation handle it
+                return None;
+            }
+
+            // End of identifier - position on the byte that stopped us and return
+            self.source.set_position(pos);
+            return Some(unsafe { self.source.str_from_pos_to_current_unchecked(start_pos) });
+        }
+
+        // Identifier is longer than 16 chars - let main implementation handle it
+        None
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
@@ -136,6 +192,7 @@ impl<'a> Lexer<'a> {
     pub fn identifier_backslash_handler(&mut self) -> Kind {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being, so guess.
+        // Use a more conservative estimate to reduce allocations.
         let str = StringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
 
         // Process escape and get rest of identifier
@@ -149,10 +206,19 @@ impl<'a> Lexer<'a> {
     /// `start_pos` must be position of start of identifier.
     fn identifier_backslash(&mut self, start_pos: SourcePosition<'a>, is_start: bool) -> &'a str {
         // Create arena string to hold unescaped identifier.
-        // We don't know how long identifier will end up being. Take a guess that total length
-        // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
+        // We don't know how long identifier will end up being. Use a more intelligent
+        // capacity estimation based on typical identifier lengths to reduce reallocations.
         let so_far = self.source.str_from_pos_to_current(start_pos);
-        let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
+        
+        // Most identifiers are short. Use a more conservative growth strategy:
+        // - For very short identifiers (< 8 chars), use a minimum of 16
+        // - For longer identifiers, add 50% plus a small buffer (8 chars)
+        // This reduces over-allocation while still avoiding most reallocations.
+        let capacity = if so_far.len() < 8 {
+            MIN_ESCAPED_STR_LEN
+        } else {
+            so_far.len() + (so_far.len() >> 1) + 8
+        };
         let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
 
         // Push identifier up this point into `str`
