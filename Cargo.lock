@@ -2379,6 +2379,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_track_memory_allocations"
+version = "0.0.0"
+dependencies = [
+ "humansize",
+ "mimalloc-safe",
+ "oxc_allocator",
+ "oxc_parser",
+ "oxc_tasks_common",
+]
+
+[[package]]
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [

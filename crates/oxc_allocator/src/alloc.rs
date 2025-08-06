@@ -95,6 +95,25 @@ impl Alloc for Bump {
     /// Panics if reserving space for `layout` fails.
     #[inline(always)]
     fn alloc(&self, layout: Layout) -> NonNull<u8> {
+        // SAFETY: We only use `Bump` inside of `Allocator` in oxc, so the `self` reference should
+        // also be pointing to a valid `Allocator` struct, which we can use for finding the stats fields.
+        // This will go away when we add a custom allocator to oxc.
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        unsafe {
+            use crate::Allocator;
+            use std::{
+                mem::offset_of,
+                ptr,
+                sync::atomic::{AtomicUsize, Ordering},
+            };
+            #[expect(clippy::cast_possible_wrap)]
+            const OFFSET: isize = (offset_of!(Allocator, num_alloc) as isize)
+                - (offset_of!(Allocator, bump) as isize);
+            let num_alloc_ptr = ptr::from_ref(self).byte_offset(OFFSET).cast::<AtomicUsize>();
+            let num_alloc = num_alloc_ptr.as_ref().unwrap_unchecked();
+            num_alloc.fetch_add(1, Ordering::SeqCst);
+        }
+
         self.alloc_layout(layout)
     }
 
@@ -133,6 +152,25 @@ impl Alloc for Bump {
     /// Panics / aborts if reserving space for `new_layout` fails.
     #[inline(always)]
     unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8> {
+        // SAFETY: We only use `Bump` inside of `Allocator` in oxc, so the `self` reference should
+        // also be pointing to a valid `Allocator` struct, which we can use for finding the stats fields.
+        // This will go away when we add a custom allocator to oxc.
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        unsafe {
+            use crate::Allocator;
+            use std::{
+                mem::offset_of,
+                ptr,
+                sync::atomic::{AtomicUsize, Ordering},
+            };
+            #[expect(clippy::cast_possible_wrap)]
+            const OFFSET: isize = (offset_of!(Allocator, num_realloc) as isize)
+                - (offset_of!(Allocator, bump) as isize);
+            let num_realloc_ptr = ptr::from_ref(self).byte_offset(OFFSET).cast::<AtomicUsize>();
+            let num_realloc = num_realloc_ptr.as_ref().unwrap_unchecked();
+            num_realloc.fetch_add(1, Ordering::SeqCst);
+        }
+
         // SAFETY: Safety requirements of `Allocator::grow` are the same as for this method
         let res = unsafe { Allocator::grow(&self, ptr, old_layout, new_layout) };
         match res {

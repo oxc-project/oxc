@@ -214,7 +214,20 @@ use oxc_data_structures::assert_unchecked;
 /// [`HashMap::new_in`]: crate::HashMap::new_in
 #[derive(Default)]
 pub struct Allocator {
+    #[cfg(not(all(feature = "track_allocations", not(feature = "disable_track_allocations"))))]
     bump: Bump,
+    // NOTE: We need to expose `bump` publicly here for calculating its field offset in memory.
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    #[doc(hidden)]
+    pub bump: Bump,
+    /// Used to track the total number of allocations made in this allocator when the `track_allocations` feature is enabled.
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    #[doc(hidden)]
+    pub num_alloc: std::sync::atomic::AtomicUsize,
+    /// Used to track the total number of re-allocations made in this allocator when the `track_allocations` feature is enabled.
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    #[doc(hidden)]
+    pub num_realloc: std::sync::atomic::AtomicUsize,
 }
 
 impl Allocator {
@@ -241,7 +254,13 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
-        Self { bump: Bump::new() }
+        Self {
+            bump: Bump::new(),
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_realloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 
     /// Create a new [`Allocator`] with specified capacity.
@@ -252,7 +271,13 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { bump: Bump::with_capacity(capacity) }
+        Self {
+            bump: Bump::with_capacity(capacity),
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_realloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
@@ -276,6 +301,9 @@ impl Allocator {
     pub fn alloc<T>(&self, val: T) -> &mut T {
         const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc(val)
     }
 
@@ -297,6 +325,9 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_str(src)
     }
 
@@ -317,6 +348,9 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_slice_copy(src)
     }
 
@@ -329,6 +363,9 @@ impl Allocator {
     ///
     /// Panics if reserving space matching `layout` fails.
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
         self.bump.alloc_layout(layout)
     }
 
@@ -378,6 +415,9 @@ impl Allocator {
             isize::try_from(total_len).is_ok(),
             "attempted to create a string longer than `isize::MAX` bytes"
         );
+
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.num_alloc.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 
         // Create actual `&str` in a separate function, to ensure that `alloc_concat_strs_array`
         // is inlined, so that compiler has knowledge to remove the overflow checks above.
@@ -471,6 +511,12 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        {
+            self.num_alloc.store(0, std::sync::atomic::Ordering::SeqCst);
+            self.num_realloc.store(0, std::sync::atomic::Ordering::SeqCst);
+        }
+
         self.bump.reset();
     }
 
@@ -592,7 +638,13 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) fn from_bump(bump: Bump) -> Self {
-        Self { bump }
+        Self {
+            bump,
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_alloc: std::sync::atomic::AtomicUsize::new(0),
+            #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+            num_realloc: std::sync::atomic::AtomicUsize::new(0),
+        }
     }
 }
 

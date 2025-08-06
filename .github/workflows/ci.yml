@@ -282,6 +282,36 @@ jobs:
           cargo minsize
           git diff --exit-code
 
+  allocs:
+    name: Allocations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '.github/workflows/ci.yml'
+              - 'crates/oxc_ast/**'
+              - 'crates/oxc_data_structures/**'
+              - 'crates/oxc_parser/**'
+              - 'crates/oxc_allocator/**'
+              - 'tasks/allocs/**'
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: allocs
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check allocations
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          cargo allocs
+          git diff --exit-code ||
+          (echo 'Allocations have changed. Run the `cargo allocs` command to update the allocation snapshot, otherwise please fix the regression.' && exit 1)
+
   ast_changes:
     name: AST Changes
     runs-on: ubuntu-latest

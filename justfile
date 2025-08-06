@@ -132,6 +132,10 @@ benchmark:
 benchmark-one *args:
   cargo benchmark --bench {{args}} --no-default-features --features {{args}}
 
+# Update memory allocation snapshots.
+allocs:
+  cargo allocs
+
 # Automatically DRY up Cargo.toml manifests in a workspace.
 autoinherit:
   cargo binstall cargo-autoinherit
