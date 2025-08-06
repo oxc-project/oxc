@@ -160,8 +160,10 @@ fn format_code_snippet(code: &str) -> String {
         return code;
     }
 
-    // "debugger" => "debugger"
-    if !code.contains('"') {
+    // `debugger` => `debugger`
+    // `"debugger"` => `r#"\"debugger\""#`
+    // `\u1234` => `r#"\u1234"`
+    if !code.contains('"') && !code.contains('\\') {
         return format!("\"{code}\"");
     }
 
