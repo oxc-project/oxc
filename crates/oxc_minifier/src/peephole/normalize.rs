@@ -7,8 +7,8 @@ use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
+    utils::{Ctx, TraverseCtx},
+    engine::MinifierState,
 };
 
 #[derive(Default)]
@@ -418,7 +418,7 @@ impl<'a> Normalize {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{default_options, test, test_options, test_options_source_type, test_same},
     };
 

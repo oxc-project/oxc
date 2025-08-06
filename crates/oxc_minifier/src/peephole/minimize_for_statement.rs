@@ -2,7 +2,7 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 

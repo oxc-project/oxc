@@ -13,7 +13,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::Ancestor;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 
@@ -1221,8 +1221,7 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        CompressOptions,
-        options::CompressOptionsKeepNames,
+        api::{CompressOptions, CompressOptionsKeepNames},
         tester::{default_options, test, test_same, test_same_options},
     };
 

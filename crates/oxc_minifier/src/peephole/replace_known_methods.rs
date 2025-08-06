@@ -13,7 +13,7 @@ use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::Ancestor;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -562,7 +562,7 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{test, test_options, test_same},
     };
 

@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::LatePeepholeOptimizations;
 

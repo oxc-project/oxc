@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 

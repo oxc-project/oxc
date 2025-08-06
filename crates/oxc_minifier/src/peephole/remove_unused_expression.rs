@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
-use crate::{CompressOptionsUnused, ctx::Ctx};
+use crate::{api::CompressOptionsUnused, utils::Ctx};
 
 use super::PeepholeOptimizations;
 
@@ -744,7 +744,7 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions, TreeShakeOptions,
+        api::CompressOptions, TreeShakeOptions,
         tester::{
             default_options, test, test_options, test_same, test_same_options,
             test_same_options_source_type,

@@ -5,7 +5,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayH
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::utils::{Ctx, KeepVar};
 
 use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 
@@ -588,7 +588,7 @@ impl<'a> LatePeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{test, test_options, test_same, test_same_options},
     };
 

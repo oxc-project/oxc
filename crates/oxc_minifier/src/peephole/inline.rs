@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -36,7 +36,7 @@ impl<'a> PeepholeOptimizations {
         let Some(cv) = &symbol_value.initialized_constant else { return };
         if symbol_value.read_references_count == 1
             || match cv {
-                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
+                ConstantValue::Number(n) => n.fract() == 0.0 && n >= &-99.0 && n <= &999.0,
                 ConstantValue::BigInt(_) => false,
                 ConstantValue::String(s) => s.len() <= 3,
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
@@ -51,7 +51,7 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{test_options, test_same_options},
     };
 

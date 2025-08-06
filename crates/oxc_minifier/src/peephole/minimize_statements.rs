@@ -8,7 +8,7 @@ use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::utils::{Ctx, KeepVar};
 
 use super::PeepholeOptimizations;
 

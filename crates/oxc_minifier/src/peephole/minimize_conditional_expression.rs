@@ -4,7 +4,7 @@ use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -588,7 +588,7 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{test, test_options, test_same},
     };
 

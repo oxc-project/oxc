@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 

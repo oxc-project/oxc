@@ -4,7 +4,7 @@ use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, Det
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -301,7 +301,7 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{test, test_same, test_same_options},
     };
     use oxc_syntax::es_target::ESTarget;

@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{CompressOptionsUnused, ctx::Ctx};
+use crate::{api::CompressOptionsUnused, utils::Ctx};
 
 use super::PeepholeOptimizations;
 
@@ -82,7 +82,7 @@ mod test {
     use oxc_span::SourceType;
 
     use crate::{
-        CompressOptions,
+        api::CompressOptions,
         tester::{
             test_options, test_options_source_type, test_same_options,
             test_same_options_source_type,

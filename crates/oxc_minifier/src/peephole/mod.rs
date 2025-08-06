@@ -27,8 +27,8 @@ use oxc_ast::ast::*;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
+    utils::{Ctx, TraverseCtx},
+    engine::MinifierState,
 };
 
 pub use self::normalize::{Normalize, NormalizeOptions};

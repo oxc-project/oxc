@@ -3,7 +3,7 @@ use rustc_hash::FxHashSet;
 use oxc_span::SourceType;
 use oxc_syntax::symbol::SymbolId;
 
-use crate::{CompressOptions, symbol_value::SymbolValues};
+use crate::{api::CompressOptions, utils::SymbolValues};
 
 pub struct MinifierState<'a> {
     pub source_type: SourceType,

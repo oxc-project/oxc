@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::ScopeId;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 

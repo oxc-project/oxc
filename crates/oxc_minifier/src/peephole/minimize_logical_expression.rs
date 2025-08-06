@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::utils::Ctx;
 
 use super::PeepholeOptimizations;
 

@@ -2,13 +2,10 @@
 
 #![allow(clippy::literal_string_with_formatting_args, clippy::needless_pass_by_ref_mut)]
 
-mod compressor;
-mod ctx;
-mod keep_var;
-mod options;
+mod api;
+mod engine;
 mod peephole;
-mod state;
-mod symbol_value;
+mod utils;
 
 #[cfg(test)]
 mod tester;
@@ -20,7 +17,7 @@ use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
-pub use crate::{compressor::Compressor, options::*};
+pub use crate::{engine::Compressor, api::*};
 
 #[derive(Debug, Clone)]
 pub struct MinifierOptions {
@@ -52,7 +49,7 @@ impl Minifier {
             let semantic = SemanticBuilder::new().build(program).semantic;
             let stats = semantic.stats();
             let scoping = semantic.into_scoping();
-            Compressor::new(allocator).build_with_scoping(program, scoping, options);
+            engine::Compressor::new(allocator).build_with_scoping(program, scoping, options);
             stats
         } else {
             Stats::default()

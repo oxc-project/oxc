@@ -14,7 +14,7 @@ use oxc_syntax::{
     reference::ReferenceId,
 };
 
-use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
+use crate::{api::CompressOptions, engine::MinifierState, utils::SymbolValue};
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -27,17 +27,17 @@ impl<'a, 'b> Ctx<'a, 'b> {
 }
 
 impl<'a, 'b> Deref for Ctx<'a, 'b> {
-    type Target = &'b mut TraverseCtx<'a>;
+    type Target = TraverseCtx<'a>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
 }
 
 #[expect(clippy::mut_mut)]
 impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
-    fn deref_mut(&mut self) -> &mut &'b mut TraverseCtx<'a> {
-        &mut self.0
+    fn deref_mut(&mut self) -> &mut TraverseCtx<'a> {
+        self.0
     }
 }
 
