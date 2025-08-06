@@ -113,9 +113,12 @@ impl<'a> Lexer<'a> {
     /// Processes bytes manually for maximum speed on common case.
     /// Returns `Some(result)` if identifier is short and ASCII-only, `None` if complex.
     #[inline]
-    unsafe fn try_fast_ascii_identifier(&mut self, start_pos: SourcePosition<'a>) -> Option<&'a str> {
+    unsafe fn try_fast_ascii_identifier(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> Option<&'a str> {
         let mut pos = start_pos;
-        
+
         // Process up to 16 bytes manually - covers most common identifiers
         // Using a simple loop is faster than complex batch processing for this case
         for _ in 0..16 {
@@ -127,7 +130,7 @@ impl<'a> Lexer<'a> {
 
             // SAFETY: We just checked we're not at end of source
             let byte = unsafe { pos.read() };
-            
+
             if is_identifier_continue_ascii_byte(byte) {
                 // Continue with this byte
                 // SAFETY: We know this is an ASCII byte, so safe to advance
@@ -209,7 +212,7 @@ impl<'a> Lexer<'a> {
         // We don't know how long identifier will end up being. Use a more intelligent
         // capacity estimation based on typical identifier lengths to reduce reallocations.
         let so_far = self.source.str_from_pos_to_current(start_pos);
-        
+
         // Most identifiers are short. Use a more conservative growth strategy:
         // - For very short identifiers (< 8 chars), use a minimum of 16
         // - For longer identifiers, add 50% plus a small buffer (8 chars)
