@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 3eed87a codegen: Wrap parens for `TSUnionType` (#12830) (Boshen)
+
+
 ## [0.80.0] - 2025-08-03
 
 ### 📚 Documentation
