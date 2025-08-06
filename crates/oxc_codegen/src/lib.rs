@@ -745,11 +745,7 @@ impl<'a> Codegen<'a> {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
         } else {
-            let s = Self::get_minified_number(num, &mut buffer);
-            self.print_str(&s);
-            if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-                self.need_space_before_dot = self.code_len();
-            }
+            self.print_minified_number(num, &mut buffer);
         }
     }
 
@@ -760,14 +756,18 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    // `get_minified_number` from terser
+    // Optimized version of `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+    // Instead of building all candidates and finding the shortest, we track the shortest as we go
+    // and use self.print_str directly instead of returning intermediate strings
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn get_minified_number(num: f64, buffer: &mut dragonbox_ecma::Buffer) -> Cow<'_, str> {
+    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
         use cow_utils::CowUtils;
 
         if num < 1000.0 && num.fract() == 0.0 {
-            return Cow::Borrowed(buffer.format(num));
+            self.print_str(buffer.format(num));
+            self.need_space_before_dot = self.code_len();
+            return;
         }
 
         let mut s = buffer.format(num);
@@ -778,40 +778,66 @@ impl<'a> Codegen<'a> {
 
         let s = s.cow_replacen("e+", "e", 1);
 
-        let mut candidates = vec![s.clone()];
+        // Track the best candidate found so far
+        let mut best_candidate = s.clone();
+        let mut best_len = best_candidate.len();
 
+        // Check hex format for integers
         if num.fract() == 0.0 {
-            candidates.push(Cow::Owned(format!("0x{:x}", num as u128)));
+            let hex_candidate = format!("0x{:x}", num as u128);
+            if hex_candidate.len() < best_len {
+                best_candidate = hex_candidate.into();
+                best_len = best_candidate.len();
+            }
         }
 
-        // create `1e-2`
-        if s.starts_with(".0") {
-            if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
+        // Check for scientific notation optimizations for numbers starting with ".0"
+        if best_candidate.starts_with(".0") {
+            if let Some((i, _)) = best_candidate[1..].bytes().enumerate().find(|(_, c)| *c != b'0')
+            {
                 let len = i + 1; // `+1` to include the dot.
-                let digits = &s[len..];
-                candidates.push(Cow::Owned(format!("{digits}e-{}", digits.len() + len - 1)));
+                let digits = &best_candidate[len..];
+                let scientific_candidate = format!("{digits}e-{}", digits.len() + len - 1);
+                if scientific_candidate.len() < best_len {
+                    best_candidate = scientific_candidate.into();
+                    best_len = best_candidate.len();
+                }
             }
         }
 
-        // create 1e2
-        if s.ends_with('0') {
-            if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
-                candidates.push(Cow::Owned(format!("{}e{len}", &s[0..s.len() - len])));
+        // Check for numbers ending with zeros (but not hex numbers)
+        if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
+            if let Some((len, _)) =
+                best_candidate.bytes().rev().enumerate().find(|(_, c)| *c != b'0')
+            {
+                let base = &best_candidate[0..best_candidate.len() - len];
+                let scientific_candidate = format!("{base}e{len}");
+                if scientific_candidate.len() < best_len {
+                    best_candidate = scientific_candidate.into();
+                    best_len = best_candidate.len();
+                }
             }
         }
 
-        // `1.2e101` -> ("1", "2", "101")
-        // `1.3415205933077406e300` -> `13415205933077406e284;`
-        if let Some((integer, point, exponent)) =
-            s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        // Check for scientific notation optimization: `1.2e101` -> `12e100`
+        if let Some((integer, point, exponent)) = best_candidate
+            .split_once('.')
+            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
-            candidates.push(Cow::Owned(format!(
-                "{integer}{point}e{}",
-                exponent.parse::<isize>().unwrap() - point.len() as isize
-            )));
+            let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
+            let optimized_candidate = format!("{integer}{point}e{new_exp}");
+            if optimized_candidate.len() < best_len {
+                best_candidate = optimized_candidate.into();
+            }
         }
 
-        candidates.into_iter().min_by_key(|c| c.len()).unwrap()
+        // Print the best candidate
+        self.print_str(&best_candidate);
+
+        // Update need_space_before_dot based on the final output
+        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+            self.need_space_before_dot = self.code_len();
+        }
     }
 
     fn add_source_mapping(&mut self, span: Span) {
