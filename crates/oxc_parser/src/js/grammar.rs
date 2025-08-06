@@ -92,10 +92,10 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
 
 impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a>) -> Self {
-        let mut elements = p.ast.vec();
+        let len = expr.elements.len();
+        let mut elements = p.ast.vec_with_capacity(len);
         let mut rest = None;
 
-        let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
                 match_expression!(ArrayExpressionElement) => {
@@ -159,10 +159,10 @@ impl<'a> CoverGrammar<'a, AssignmentExpression<'a>> for AssignmentTargetWithDefa
 
 impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a>) -> Self {
-        let mut properties = p.ast.vec();
+        let len = expr.properties.len();
+        let mut properties = p.ast.vec_with_capacity(len);
         let mut rest = None;
 
-        let len = expr.properties.len();
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
                 ObjectPropertyKind::ObjectProperty(property) => {
