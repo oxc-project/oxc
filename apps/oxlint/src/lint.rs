@@ -10,18 +10,20 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
+use rustc_hash::{FxHashMap, FxHashSet};
+use serde_json::Value;
+
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    tsgolint::TsGoLintState,
     walk::Walk,
 };
 
@@ -295,14 +297,25 @@ impl LintRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
+        let (mut diagnostic_service, tx_error) =
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-        let linter = Linter::new(
-            LintOptions::default(),
-            ConfigStore::new(lint_config, nested_configs, external_plugin_store),
-            self.external_linter,
-        )
-        .with_fix(fix_options.fix_kind())
-        .with_report_unused_directives(report_unused_directives);
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        // Run type-aware linting through tsgolint
+        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        if let Some(ret) = self
+            .options
+            .type_aware
+            .then(|| TsGoLintState::new(tx_error.clone(), config_store.clone(), &paths, &options))
+            .and_then(|s| s.lint(stdout))
+        {
+            return ret;
+        }
+
+        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+            .with_fix(fix_options.fix_kind())
+            .with_report_unused_directives(report_unused_directives);
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -322,9 +335,6 @@ impl LintRunner {
                 return CliRunResult::InvalidOptionTsConfig;
             }
         }
-
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let number_of_rules = linter.number_of_rules();
 
@@ -571,7 +581,7 @@ impl LintRunner {
     }
 }
 
-fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
+pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     stdout.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
     stdout.flush().unwrap();
 }
@@ -1202,5 +1212,11 @@ mod test {
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_tsgolint() {
+        let args = &["fixtures/tsgolint", "--type-aware"];
+        Tester::new().test_and_snapshot(args);
     }
 }

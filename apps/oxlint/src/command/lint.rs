@@ -46,6 +46,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
 
+    /// Enables rules that require type information.
+    #[bpaf(switch, hide_usage)]
+    pub type_aware: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -572,6 +576,14 @@ mod lint_options {
         assert!(options.disable_nested_config);
         let options = get_lint_options(".");
         assert!(!options.disable_nested_config);
+    }
+
+    #[test]
+    fn type_aware() {
+        let options = get_lint_options("--type-aware");
+        assert!(options.type_aware);
+        let options = get_lint_options(".");
+        assert!(!options.type_aware);
     }
 }
 

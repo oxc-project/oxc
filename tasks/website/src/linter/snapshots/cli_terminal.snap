@@ -91,5 +91,6 @@ Available positional items:
 Available options:
         --rules               list all the rules that are currently registered
         --disable-nested-config  Disables the automatic loading of nested configuration files.
+        --type-aware          Enables rules that require type information.
     -h, --help                Prints help information
     -V, --version             Prints version information

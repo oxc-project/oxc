@@ -41,7 +41,7 @@ mod generated {
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, LintPlugins, Oxlintrc,
+        ESLintRule, LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::LintContext,
     external_linter::{
@@ -61,7 +61,7 @@ pub use crate::{
     utils::read_to_string,
 };
 use crate::{
-    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
+    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
     fixer::{Fixer, Message},
     rules::RuleEnum,

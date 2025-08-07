@@ -10,6 +10,7 @@ mod lint;
 mod output_formatter;
 mod result;
 mod tester;
+mod tsgolint;
 mod walk;
 
 pub mod cli {

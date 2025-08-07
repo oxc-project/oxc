@@ -145,6 +145,8 @@ Arguments:
   list all the rules that are currently registered
 - **`    --disable-nested-config`** &mdash; 
   Disables the automatic loading of nested configuration files.
+- **`    --type-aware`** &mdash; 
+  Enables rules that require type information.
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 

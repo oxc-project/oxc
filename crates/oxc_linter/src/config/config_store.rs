@@ -284,7 +284,9 @@ impl ConfigStore {
         &self.base.base.config.plugins
     }
 
-    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
+    // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs
+    // for the `tsgolint` linter.
+    pub fn resolve(&self, path: &Path) -> ResolvedLinterState {
         let resolved_config = if self.nested_configs.is_empty() {
             &self.base
         } else if let Some(config) = self.get_nearest_config(path) {
