@@ -1,0 +1,145 @@
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+use oxc_syntax::identifier::is_identifier_name;
+
+use crate::{
+    Format, FormatResult, format_args,
+    formatter::{
+        Formatter,
+        comments::{is_end_of_line_comment, is_own_line_comment},
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
+    },
+    generated::ast_nodes::{AstNode, AstNodes},
+    write,
+    write::{semicolon::OptionalSemicolon, utils::statement_body::FormatStatementBody},
+};
+
+use super::FormatWrite;
+
+impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let discriminant = self.discriminant();
+        let cases = self.cases();
+        let format_cases =
+            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
+        write!(
+            f,
+            [
+                "switch",
+                space(),
+                "(",
+                group(&soft_block_indent(&discriminant)),
+                ")",
+                space(),
+                "{",
+                block_indent(&format_cases),
+                "}"
+            ]
+        )
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let source_text = f.source_text();
+        let mut join = f.join_nodes_with_hardline();
+        for case in self {
+            join.entry(case.span(), case);
+        }
+        join.finish()
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_default = if let Some(test) = self.test() {
+            write!(f, ["case", space(), test, ":"])?;
+            false
+        } else {
+            write!(f, ["default", ":"])?;
+            true
+        };
+
+        let consequent = self.consequent();
+        // When the case block is empty, the case becomes a fallthrough, so it
+        // is collapsed directly on top of the next case (just a single
+        // hardline).
+        // When the block is a single statement _and_ it's a block statement,
+        // then the opening brace of the block can hug the same line as the
+        // case. But, if there's more than one statement, then the block
+        // _cannot_ hug. This distinction helps clarify that the case continues
+        // past the end of the block statement, despite the braces making it
+        // seem like it might end.
+        // Lastly, the default case is just to break and indent the body.
+        //
+        // switch (key) {
+        //   case fallthrough: // trailing comment
+        //   case normalBody:
+        //     someWork();
+        //     break;
+        //
+        //   case blockBody: {
+        //     const a = 1;
+        //     break;
+        //   }
+        //
+        //   case separateBlockBody:
+        //     {
+        //       breakIsNotInsideTheBlock();
+        //     }
+        //     break;
+        //
+        //   default:
+        //     break;
+        // }
+        if consequent.is_empty() {
+            // Print nothing to ensure that trailing comments on the same line
+            // are printed on the same line. The parent list formatter takes
+            // care of inserting a hard line break between cases.
+            return Ok(());
+        }
+
+        // Whether the first statement in the clause is a BlockStatement, and
+        // there are no other non-empty statements. Empties may show up when
+        // parsing depending on if the input code includes certain newlines.
+        let first_statement = consequent.first().unwrap();
+        let is_single_block_statement =
+            matches!(first_statement.as_ref(), Statement::BlockStatement(_))
+                && consequent
+                    .iter()
+                    .skip(1)
+                    .all(|statement| matches!(statement.as_ref(), Statement::EmptyStatement(_)));
+
+        // Format dangling comments before default case body.
+        if is_default {
+            let comments = f.context().comments();
+            let comments = if is_single_block_statement {
+                comments.block_comments_before(first_statement.span().start)
+            } else {
+                comments.comments_before_character(self.span.start, b'\n')
+            };
+
+            if !comments.is_empty() {
+                write!(
+                    f,
+                    [
+                        space(),
+                        FormatDanglingComments::Comments {
+                            comments,
+                            indent: DanglingIndentMode::None
+                        },
+                    ]
+                )?;
+            }
+        }
+
+        if is_single_block_statement {
+            write!(f, [FormatStatementBody::new(first_statement)])
+        } else {
+            // no line break needed after because it is added by the indent in the switch statement
+            write!(f, indent(&format_args!(hard_line_break(), consequent)))
+        }
+    }
+}

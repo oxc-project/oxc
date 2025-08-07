@@ -15,6 +15,7 @@ mod object_pattern_like;
 mod parameter_list;
 mod return_or_throw_statement;
 mod semicolon;
+mod switch_statement;
 mod try_statement;
 mod type_parameters;
 mod utils;
@@ -868,104 +869,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
                 FormatStatementBody::new(self.body())
             ))
         )
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let discriminant = self.discriminant();
-        let cases = self.cases();
-        let format_cases =
-            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
-        write!(
-            f,
-            [
-                "switch",
-                space(),
-                "(",
-                group(&soft_block_indent(&discriminant)),
-                ")",
-                space(),
-                "{",
-                block_indent(&format_cases),
-                "}"
-            ]
-        )
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.source_text();
-        let mut join = f.join_nodes_with_hardline();
-        for case in self {
-            join.entry(case.span(), case);
-        }
-        join.finish()
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let Some(test) = self.test() {
-            write!(f, ["case", space(), test, ":"])?;
-        } else {
-            write!(f, ["default", ":"])?;
-        }
-
-        let consequent = self.consequent();
-        // Whether the first statement in the clause is a BlockStatement, and
-        // there are no other non-empty statements. Empties may show up when
-        // parsing depending on if the input code includes certain newlines.
-        let is_single_block_statement =
-            matches!(consequent.as_ref().first(), Some(Statement::BlockStatement(_)))
-                && consequent
-                    .iter()
-                    .filter(|statement| !matches!(statement.as_ref(), Statement::EmptyStatement(_)))
-                    .count()
-                    == 1;
-        // When the case block is empty, the case becomes a fallthrough, so it
-        // is collapsed directly on top of the next case (just a single
-        // hardline).
-        // When the block is a single statement _and_ it's a block statement,
-        // then the opening brace of the block can hug the same line as the
-        // case. But, if there's more than one statement, then the block
-        // _cannot_ hug. This distinction helps clarify that the case continues
-        // past the end of the block statement, despite the braces making it
-        // seem like it might end.
-        // Lastly, the default case is just to break and indent the body.
-        //
-        // switch (key) {
-        //   case fallthrough: // trailing comment
-        //   case normalBody:
-        //     someWork();
-        //     break;
-        //
-        //   case blockBody: {
-        //     const a = 1;
-        //     break;
-        //   }
-        //
-        //   case separateBlockBody:
-        //     {
-        //       breakIsNotInsideTheBlock();
-        //     }
-        //     break;
-        //
-        //   default:
-        //     break;
-        // }
-        if consequent.is_empty() {
-            // Print nothing to ensure that trailing comments on the same line
-            // are printed on the same line. The parent list formatter takes
-            // care of inserting a hard line break between cases.
-            Ok(())
-        } else if is_single_block_statement {
-            write!(f, [space(), consequent])
-        } else {
-            // no line break needed after because it is added by the indent in the switch statement
-            write!(f, indent(&format_args!(hard_line_break(), consequent)))
-        }
     }
 }
 
