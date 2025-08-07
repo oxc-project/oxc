@@ -230,14 +230,8 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let kind = self.cur_kind();
 
-        if matches!(kind, Kind::LParen | Kind::LAngle) {
-            return self.parse_signature_member(CallOrConstructorSignature::Call);
-        }
-
-        if kind == Kind::New
-            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
-        {
-            return self.parse_signature_member(CallOrConstructorSignature::Constructor);
+        if let Some(signature) = self.try_parse_call_constructor_signature(kind) {
+            return signature;
         }
 
         let modifiers = self.parse_modifiers(
@@ -245,12 +239,8 @@ impl<'a> ParserImpl<'a> {
             /* stop_on_start_of_class_static_block */ false,
         );
 
-        if self.parse_contextual_modifier(Kind::Get) {
-            return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Get);
-        }
-
-        if self.parse_contextual_modifier(Kind::Set) {
-            return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set);
+        if let Some(signature) = self.try_parse_getter_setter_signature(span) {
+            return signature;
         }
 
         if self.is_index_signature() {
@@ -260,6 +250,32 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.parse_property_or_method_signature(span, &modifiers)
+    }
+
+    fn try_parse_call_constructor_signature(&mut self, kind: Kind) -> Option<TSSignature<'a>> {
+        if matches!(kind, Kind::LParen | Kind::LAngle) {
+            return Some(self.parse_signature_member(CallOrConstructorSignature::Call));
+        }
+
+        if kind == Kind::New
+            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+        {
+            return Some(self.parse_signature_member(CallOrConstructorSignature::Constructor));
+        }
+
+        None
+    }
+
+    fn try_parse_getter_setter_signature(&mut self, span: u32) -> Option<TSSignature<'a>> {
+        if self.parse_contextual_modifier(Kind::Get) {
+            return Some(self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Get));
+        }
+
+        if self.parse_contextual_modifier(Kind::Set) {
+            return Some(self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set));
+        }
+
+        None
     }
 
     pub(crate) fn is_index_signature(&mut self) -> bool {
@@ -298,22 +314,30 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let mut flags = ParseModuleDeclarationFlags::empty();
-        let kind;
         if self.at(Kind::Global) {
-            kind = TSModuleDeclarationKind::Global;
+            let kind = TSModuleDeclarationKind::Global;
             return self.parse_ambient_external_module_declaration(span, kind, modifiers);
-        } else if self.eat(Kind::Namespace) {
-            kind = TSModuleDeclarationKind::Namespace;
+        }
+
+        let (kind, flags) = self.determine_module_kind_and_flags();
+        
+        if kind == TSModuleDeclarationKind::Module && self.at(Kind::Str) {
+            return self.parse_ambient_external_module_declaration(span, kind, modifiers);
+        }
+
+        self.parse_module_or_namespace_declaration(span, kind, modifiers, flags)
+    }
+
+    fn determine_module_kind_and_flags(&mut self) -> (TSModuleDeclarationKind, ParseModuleDeclarationFlags) {
+        let mut flags = ParseModuleDeclarationFlags::empty();
+        
+        if self.eat(Kind::Namespace) {
             flags.insert(ParseModuleDeclarationFlags::Namespace);
+            (TSModuleDeclarationKind::Namespace, flags)
         } else {
             self.expect(Kind::Module);
-            kind = TSModuleDeclarationKind::Module;
-            if self.at(Kind::Str) {
-                return self.parse_ambient_external_module_declaration(span, kind, modifiers);
-            }
+            (TSModuleDeclarationKind::Module, flags)
         }
-        self.parse_module_or_namespace_declaration(span, kind, modifiers, flags)
     }
 
     fn parse_ambient_external_module_declaration(
@@ -359,16 +383,34 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         flags: ParseModuleDeclarationFlags,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = // if flags.intersects(ParseModuleDeclarationFlags::NestedNamespace) {
-        // TODO: missing identifier name in AST.
-        // TSModuleDeclarationName::IdentifierName(self.parse_identifier_name());
-        // } else {
-            TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
-        // };
-        let body = if self.eat(Kind::Dot) {
-            let span = self.start_span();
+        let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+        let body = self.parse_module_body(span, kind, flags);
+        
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE,
+            diagnostics::modifier_cannot_be_used_here,
+        );
+        
+        self.ast.alloc_ts_module_declaration(
+            self.end_span(span),
+            id,
+            Some(body),
+            kind,
+            modifiers.contains_declare(),
+        )
+    }
+
+    fn parse_module_body(
+        &mut self,
+        _span: u32,
+        kind: TSModuleDeclarationKind,
+        flags: ParseModuleDeclarationFlags,
+    ) -> TSModuleDeclarationBody<'a> {
+        if self.eat(Kind::Dot) {
+            let nested_span = self.start_span();
             let decl = self.parse_module_or_namespace_declaration(
-                span,
+                nested_span,
                 kind,
                 &Modifiers::empty(),
                 flags.union(ParseModuleDeclarationFlags::NestedNamespace),
@@ -377,19 +419,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             let block = self.parse_ts_module_block();
             TSModuleDeclarationBody::TSModuleBlock(block)
-        };
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
-        self.ast.alloc_ts_module_declaration(
-            self.end_span(span),
-            id,
-            Some(body),
-            kind,
-            modifiers.contains_declare(),
-        )
+        }
     }
 
     /* ----------------------- declare --------------------- */
