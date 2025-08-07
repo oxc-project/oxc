@@ -22,7 +22,7 @@ The Oxidation Compiler is a collection of high-performance tools for JavaScript 
 
 Our goal is to enable a new generation of faster, more reliable development tools by providing:
 
-- **Performance**: 10-100x faster than existing JavaScript tools
+- **Performance**: 2-100x faster than existing JavaScript tools
 - **Reliability**: 100% compatibility with JavaScript and TypeScript standards
 - **Modularity**: Use individual tools or compose them into complete toolchains
 - **Developer Experience**: Clear error messages and seamless editor integration
