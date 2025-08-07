@@ -5,7 +5,7 @@
 
 #![warn(missing_docs)]
 
-use std::{cmp, slice};
+use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
 use oxc_data_structures::pointer_ext::PointerExt;
@@ -18,8 +18,6 @@ mod operator;
 mod options;
 mod sourcemap_builder;
 mod str;
-
-use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
@@ -780,7 +778,7 @@ impl<'a> Codegen<'a> {
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
-            let mut best_candidate = s.clone();
+            let mut best_candidate: Cow<'_, str> = s.into();
             let mut best_len = best_candidate.len();
 
             let hex_candidate = format!("0x{:x}", num as u128);
@@ -790,6 +788,8 @@ impl<'a> Codegen<'a> {
             }
 
             // Check for numbers ending with zeros (but not hex numbers)
+            // The 0x check is necessary to prevent hex numbers like 0x8000000000000000 
+            // from being incorrectly converted to scientific notation
             if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
                 if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
                     let base = &best_candidate[0..best_candidate.len() - len];
@@ -807,8 +807,11 @@ impl<'a> Codegen<'a> {
                 .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
             {
                 let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
-                let optimized_candidate = format!("{integer}{point}e{new_exp}");
-                if optimized_candidate.len() < best_len {
+                // Calculate expected length: integer + point + 'e' + new_exp_str
+                let new_exp_str = new_exp.to_string();
+                let expected_len = integer.len() + point.len() + 1 + new_exp_str.len();
+                if expected_len < best_len {
+                    let optimized_candidate = format!("{integer}{point}e{new_exp}");
                     best_candidate = optimized_candidate.into();
                 }
             }
@@ -822,13 +825,14 @@ impl<'a> Codegen<'a> {
             }
         } else {
             // For non-integers, check for ".0" optimizations and other cases
-            let mut best_candidate = s.clone();
+            let mut best_candidate: Cow<'_, str> = s.into();
             let mut best_len = best_candidate.len();
 
             // Check for scientific notation optimizations for numbers starting with ".0"
             if best_candidate.starts_with(".0") {
-                if let Some(i) = best_candidate[1..].bytes().position(|c| c != b'0') {
-                    let len = i + 1; // `+1` to include the dot.
+                // Skip the first '0' since we know it's there from the starts_with check
+                if let Some(i) = best_candidate[2..].bytes().position(|c| c != b'0') {
+                    let len = i + 2; // `+2` to include the dot and first zero.
                     let digits = &best_candidate[len..];
                     let scientific_candidate = format!("{digits}e-{}", digits.len() + len - 1);
                     if scientific_candidate.len() < best_len {
@@ -840,7 +844,9 @@ impl<'a> Codegen<'a> {
 
             // Check for numbers ending with zeros
             if best_candidate.ends_with('0') {
-                if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
+                // Skip the last '0' since we know it's there from the ends_with check
+                if let Some(len) = best_candidate.bytes().rev().skip(1).position(|c| c != b'0') {
+                    let len = len + 1; // Add back the skipped zero
                     let base = &best_candidate[0..best_candidate.len() - len];
                     let scientific_candidate = format!("{base}e{len}");
                     if scientific_candidate.len() < best_len {
@@ -856,8 +862,11 @@ impl<'a> Codegen<'a> {
                 .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
             {
                 let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
-                let optimized_candidate = format!("{integer}{point}e{new_exp}");
-                if optimized_candidate.len() < best_len {
+                // Calculate expected length: integer + point + 'e' + new_exp_str
+                let new_exp_str = new_exp.to_string();
+                let expected_len = integer.len() + point.len() + 1 + new_exp_str.len();
+                if expected_len < best_len {
+                    let optimized_candidate = format!("{integer}{point}e{new_exp}");
                     best_candidate = optimized_candidate.into();
                 }
             }
