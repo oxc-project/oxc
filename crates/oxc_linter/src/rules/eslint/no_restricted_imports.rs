@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use globset::GlobBuilder;
+use cow_utils::CowUtils as _;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
@@ -869,22 +869,20 @@ impl RestrictedPattern {
                 None => (false, raw_pat.as_str()),
             };
 
-            // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03e830892e787686917509c17860456db1/crates/ignore/src/gitignore.rs#L436-L516
-            let mut pat = pat.to_string();
-
-            if !pat.starts_with('/') && !pat.chars().any(|c| c == '/') && (!pat.starts_with("**")) {
-                pat = format!("**/{pat}");
-            }
-
-            let Ok(glob) = GlobBuilder::new(&pat)
-                .case_insensitive(case_insensitive)
-                .build()
-                .map(|g| g.compile_matcher())
-            else {
-                continue;
+            // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03/crates/ignore/src/gitignore.rs#L436-L516
+            let pat = if pat.contains('/') {
+                Cow::Borrowed(pat)
+            } else {
+                Cow::Owned(format!("**/{pat}"))
             };
 
-            if glob.is_match(name) {
+            let (pat, name) = if case_insensitive {
+                (pat.cow_to_ascii_lowercase(), name.cow_to_ascii_lowercase())
+            } else {
+                (pat, name.into())
+            };
+
+            if fast_glob::glob_match(pat.as_ref(), name.as_ref()) {
                 decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
             }
         }
