@@ -799,6 +799,7 @@ impl<'a> Codegen<'a> {
                 let expected_len = digits.len() + 2 + exp_str_len;
                 if expected_len < best_len {
                     best_candidate = format!("{digits}e-{exp}").into();
+                    debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = best_candidate.len();
                 }
             }
@@ -815,6 +816,7 @@ impl<'a> Codegen<'a> {
                 let expected_len = base.len() + 1 + exp_str_len;
                 if expected_len < best_len {
                     best_candidate = format!("{base}e{len}").into();
+                    debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = expected_len;
                 }
             }
@@ -831,6 +833,7 @@ impl<'a> Codegen<'a> {
             let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
             if expected_len < best_len {
                 best_candidate = format!("{integer}{point}e{new_expr}").into();
+                debug_assert_eq!(best_candidate.len(), expected_len);
             }
         }
 
