@@ -12,41 +12,60 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
+        // Handle function and constructor types first
         if self.is_start_of_function_type_or_constructor_type() {
             return self.parse_function_or_constructor_type();
         }
+
         let span = self.start_span();
         let ty = self.parse_union_type_or_higher();
-        if !self.ctx.has_disallow_conditional_types()
-            && !self.cur_token().is_on_new_line()
-            && self.eat(Kind::Extends)
-        {
-            let extends_type = self.context(
-                Context::DisallowConditionalTypes,
-                Context::empty(),
-                Self::parse_ts_type,
-            );
-            self.expect(Kind::Question);
-            let true_type = self.context(
-                Context::empty(),
-                Context::DisallowConditionalTypes,
-                Self::parse_ts_type,
-            );
-            self.expect(Kind::Colon);
-            let false_type = self.context(
-                Context::empty(),
-                Context::DisallowConditionalTypes,
-                Self::parse_ts_type,
-            );
-            return self.ast.ts_type_conditional_type(
-                self.end_span(span),
-                ty,
-                extends_type,
-                true_type,
-                false_type,
-            );
+        
+        // Check for conditional type: T extends U ? X : Y
+        if self.should_parse_conditional_type() {
+            return self.parse_conditional_type(span, ty);
         }
+        
         ty
+    }
+
+    /// Check if we should parse a conditional type
+    fn should_parse_conditional_type(&self) -> bool {
+        !self.ctx.has_disallow_conditional_types()
+            && !self.cur_token().is_on_new_line()
+            && self.at(Kind::Extends)
+    }
+
+    /// Parse conditional type: T extends U ? X : Y
+    fn parse_conditional_type(&mut self, start_span: u32, check_type: TSType<'a>) -> TSType<'a> {
+        self.bump_any(); // consume 'extends'
+        
+        let extends_type = self.context(
+            Context::DisallowConditionalTypes,
+            Context::empty(),
+            Self::parse_ts_type,
+        );
+        
+        self.expect(Kind::Question);
+        let true_type = self.context(
+            Context::empty(),
+            Context::DisallowConditionalTypes,
+            Self::parse_ts_type,
+        );
+        
+        self.expect(Kind::Colon);
+        let false_type = self.context(
+            Context::empty(),
+            Context::DisallowConditionalTypes,
+            Self::parse_ts_type,
+        );
+        
+        self.ast.ts_type_conditional_type(
+            self.end_span(start_span),
+            check_type,
+            extends_type,
+            true_type,
+            false_type,
+        )
     }
 
     fn parse_function_or_constructor_type(&mut self) -> TSType<'a> {

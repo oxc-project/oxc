@@ -113,6 +113,7 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    /// Parse class heritage clause (extends and implements)
     pub(crate) fn parse_heritage_clause(
         &mut self,
     ) -> (Option<Extends<'a>>, Option<(Span, Vec<'a, TSClassImplements<'a>>)>) {
@@ -122,26 +123,28 @@ impl<'a> ParserImpl<'a> {
         loop {
             match self.cur_kind() {
                 Kind::Extends => {
+                    let current_span = self.cur_token().span();
+                    
+                    // Validate extends clause placement and uniqueness
                     if extends.is_some() {
-                        self.error(diagnostics::extends_clause_already_seen(
-                            self.cur_token().span(),
-                        ));
+                        self.error(diagnostics::extends_clause_already_seen(current_span));
                     } else if implements.is_some() {
-                        self.error(diagnostics::extends_clause_must_precede_implements(
-                            self.cur_token().span(),
-                        ));
+                        self.error(diagnostics::extends_clause_must_precede_implements(current_span));
                     }
+                    
                     extends = Some(self.parse_extends_clause());
                 }
                 Kind::Implements => {
-                    if implements.is_some() {
-                        self.error(diagnostics::implements_clause_already_seen(
-                            self.cur_token().span(),
-                        ));
-                    }
                     let implements_kw_span = self.cur_token().span();
-                    if let Some((_, implements)) = implements.as_mut() {
-                        implements.extend(self.parse_ts_implements_clause());
+                    
+                    // Validate implements clause uniqueness  
+                    if implements.is_some() {
+                        self.error(diagnostics::implements_clause_already_seen(implements_kw_span));
+                    }
+                    
+                    // Parse implements clause
+                    if let Some((_, existing_implements)) = implements.as_mut() {
+                        existing_implements.extend(self.parse_ts_implements_clause());
                     } else {
                         implements = Some((
                             implements_kw_span,

@@ -10,21 +10,23 @@ use crate::{
 };
 
 impl<'a> ParserImpl<'a> {
-    // Section 12
-    // The InputElementHashbangOrRegExp goal is used at the start of a Script
-    // or Module.
+    /// Parse hashbang comment if present
+    /// Section 12: The InputElementHashbangOrRegExp goal is used at the start of a Script or Module
     pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang<'a>> {
-        if self.cur_kind() == Kind::HashbangComment {
-            let span = self.start_span();
-            self.bump_any();
-            let span = self.end_span(span);
-            let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, Atom::from(src)))
-        } else {
-            None
+        if self.cur_kind() != Kind::HashbangComment {
+            return None;
         }
+
+        let span = self.start_span();
+        self.bump_any();
+        let span = self.end_span(span);
+        
+        // Extract the content after '#!' prefix
+        let src = &self.source_text[span.start as usize + 2..span.end as usize];
+        Some(self.ast.hashbang(span, Atom::from(src)))
     }
 
+    /// Parse directive and statements list according to ECMAScript specification
     /// <https://tc39.es/ecma262/#prod-StatementList>
     /// `StatementList`[Yield, Await, Return] :
     ///     `StatementListItem`[?Yield, ?Await, ?Return]
@@ -43,35 +45,46 @@ impl<'a> ParserImpl<'a> {
         };
 
         let mut expecting_directives = true;
+        
         while !self.has_fatal_error() {
+            // Stop parsing if we hit closing brace (for non-top-level contexts)
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
             }
+            
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
             // Section 11.2.1 Directive Prologue
-            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            // Parse statement first and check if it's a string literal for directive detection.
+            // This is the only correct method - all others are flawed.
+            // See: https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js
             if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt {
-                    if let Expression::StringLiteral(string) = &expr.expression {
-                        // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                        if expr.span.start == string.span.start {
-                            let src = &self.source_text
-                                [string.span.start as usize + 1..string.span.end as usize - 1];
-                            let directive =
-                                self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
-                            directives.push(directive);
-                            continue;
-                        }
-                    }
+                if let Some(directive) = self.try_extract_directive(&stmt) {
+                    directives.push(directive);
+                    continue;
                 }
                 expecting_directives = false;
             }
+            
             statements.push(stmt);
         }
 
         (directives, statements)
+    }
+
+    /// Try to extract a directive from a statement if it's a valid directive
+    fn try_extract_directive(&self, stmt: &Statement<'a>) -> Option<Directive<'a>> {
+        if let Statement::ExpressionStatement(expr) = stmt {
+            if let Expression::StringLiteral(string) = &expr.expression {
+                // Span start must match to ensure it's not parenthesized (when preserve_parens = false)
+                if expr.span.start == string.span.start {
+                    let src = &self.source_text
+                        [string.span.start as usize + 1..string.span.end as usize - 1];
+                    return Some(self.ast.directive(expr.span, (*string).clone(), Atom::from(src)));
+                }
+            }
+        }
+        None
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
