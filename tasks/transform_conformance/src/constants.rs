@@ -56,7 +56,7 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
-    "babel-plugin-proposal-explicit-resource-management",
+    "babel-plugin-transform-explicit-resource-management",
     // RegExp tests ported from esbuild + a few additions
     "regexp",
     // Legacy decorators, tests almost ported from TypeScript

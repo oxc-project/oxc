@@ -27,10 +27,10 @@
 //!
 //! ## Implementation
 //!
-//! Implementation based on [@babel/plugin-proposal-explicit-resource-management](https://babeljs.io/docs/babel-plugin-proposal-explicit-resource-management).
+//! Implementation based on [@babel/plugin-transform-explicit-resource-management](https://babeljs.io/docs/babel-plugin-transform-explicit-resource-management).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.9/packages/babel-plugin-proposal-explicit-resource-management>
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.9/packages/babel-plugin-transform-explicit-resource-management>
 //! * Explicit Resource Management TC39 proposal: <https://github.com/tc39/proposal-explicit-resource-management>
 
 use std::mem;
