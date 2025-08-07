@@ -167,7 +167,7 @@ impl Codegen<'_> {
             if comment.is_block() && text.contains(is_line_terminator) {
                 // Optimize comment formatting by pre-calculating capacity and building efficiently
                 let lines: Vec<&str> = text.split(is_line_terminator).collect();
-                
+
                 // Pre-calculate the exact capacity needed to avoid reallocations
                 let mut capacity = 0;
                 for line in &lines {
@@ -179,7 +179,7 @@ impl Codegen<'_> {
                         capacity += 1; // for '\n'
                     }
                 }
-                
+
                 let mut buffer = String::with_capacity(capacity);
                 // Build the formatted comment with exact capacity
                 for line in lines {

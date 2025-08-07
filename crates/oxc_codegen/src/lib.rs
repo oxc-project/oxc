@@ -782,7 +782,8 @@ impl<'a> Codegen<'a> {
             // For integers, check hex format and other optimizations
             // Use more efficient hex formatting to avoid format! macro
             let int_val = num as u128;
-            let hex_len = if int_val == 0 { 3 } else { 2 + (128 - int_val.leading_zeros() + 3) / 4 };
+            let hex_len =
+                if int_val == 0 { 3 } else { 2 + (128 - int_val.leading_zeros() + 3) / 4 };
             if hex_len < best_len as u32 {
                 // Only create the hex string if it will be shorter
                 let hex_candidate = format!("0x{:x}", int_val);
@@ -807,7 +808,7 @@ impl<'a> Codegen<'a> {
                     new_candidate.push_str(digits);
                     new_candidate.push_str("e-");
                     new_candidate.push_str(itoa::Buffer::new().format(exp));
-                    
+
                     best_candidate = new_candidate.into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = best_candidate.len();
@@ -830,7 +831,7 @@ impl<'a> Codegen<'a> {
                     new_candidate.push_str(base);
                     new_candidate.push('e');
                     new_candidate.push_str(itoa::Buffer::new().format(len));
-                    
+
                     best_candidate = new_candidate.into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = expected_len;
@@ -854,7 +855,7 @@ impl<'a> Codegen<'a> {
                 new_candidate.push_str(point);
                 new_candidate.push('e');
                 new_candidate.push_str(itoa::Buffer::new().format(new_expr));
-                
+
                 best_candidate = new_candidate.into();
                 debug_assert_eq!(best_candidate.len(), expected_len);
             }
