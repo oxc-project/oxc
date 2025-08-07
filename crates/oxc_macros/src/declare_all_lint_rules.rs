@@ -177,6 +177,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }
             }
+
+            pub fn is_tsgolint_rule(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(rule) => #struct_names::IS_TSGOLINT_RULE),*
+                }
+            }
         }
 
         impl std::hash::Hash for RuleEnum {

@@ -1112,10 +1112,3 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
 }
-
-impl RuleEnum {
-    pub fn is_tsgolint_rule(&self) -> bool {
-        // TODO: Codegen this?
-        matches!(self, Self::TypescriptNoFloatingPromises(_) | Self::TypescriptNoMisusedPromises(_))
-    }
-}
