@@ -62,32 +62,26 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
             }
         });
 
-        let mut declarators = self.iter().zip(
-            FormatSeparatedIter::new(self.iter(), ",")
-                .with_trailing_separator(TrailingSeparator::Disallowed),
-        );
+        let mut declarators = FormatSeparatedIter::new(self.iter(), ",")
+            .with_trailing_separator(TrailingSeparator::Disallowed);
 
-        let (first_declarator_span, format_first_declarator) = match declarators.next() {
-            Some((decl, format_first_declarator)) => (decl.span(), format_first_declarator),
-            None => return Err(FormatError::SyntaxError),
-        };
+        // `VariableDeclaration` always has at least one declarator.
+        let first_declarator = declarators.next().unwrap();
 
-        if length == 1 && !f.comments().has_comments_before(first_declarator_span.start) {
-            return write!(f, format_first_declarator);
+        if length == 1 && !f.comments().has_comments_before(first_declarator.element.span().start) {
+            return write!(f, first_declarator);
         }
 
         write!(
             f,
             indent(&format_once(|f| {
-                write!(f, format_first_declarator)?;
+                write!(f, first_declarator)?;
 
                 if length > 1 {
                     write!(f, format_separator)?;
                 }
 
-                f.join_with(&format_separator)
-                    .entries(declarators.map(|(_, format)| format))
-                    .finish()
+                f.join_with(format_separator).entries(declarators).finish()
             }))
         )
     }

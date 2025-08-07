@@ -197,10 +197,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_soft_line();
-        for (element, formatted) in self.iter().zip(
-            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator),
-        ) {
-            join.entry(element.span(), &formatted);
+        for formatted in
+            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator)
+        {
+            join.entry(formatted.element.span(), &formatted);
         }
         join.finish()
     }
@@ -1649,14 +1649,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        let source_text = f.source_text();
         let mut join = f.join_nodes_with_soft_line();
-        for (element, formatted) in self.iter().zip(
-            FormatSeparatedIter::new(self.iter(), ",")
-                .with_trailing_separator(trailing_separator)
-                .nodes_grouped(),
-        ) {
-            join.entry(element.span(), &formatted);
+        for formatted in FormatSeparatedIter::new(self.iter(), ",")
+            .with_trailing_separator(trailing_separator)
+            .nodes_grouped()
+        {
+            join.entry(formatted.element.span(), &formatted);
         }
         join.finish()
     }
@@ -2190,7 +2188,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join_with(&soft_line_break_or_space())
+        f.join_with(soft_line_break_or_space())
             .entries(
                 FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(TrailingSeparator::Disallowed),

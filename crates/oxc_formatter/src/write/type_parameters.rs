@@ -31,7 +31,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
 
-        f.join_with(&soft_line_break_or_space())
+        f.join_with(soft_line_break_or_space())
             .entries(
                 FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(trailing_separator),

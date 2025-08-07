@@ -131,7 +131,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         joiner: Joiner,
     ) -> JoinBuilder<'fmt, 'buf, 'ast, Joiner>
     where
-        Joiner: Format<'ast> + Copy,
+        Joiner: Format<'ast>,
     {
         JoinBuilder::with_separator(self, joiner)
     }

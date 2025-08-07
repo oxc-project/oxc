@@ -121,11 +121,11 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                let entries = FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
-                    .with_trailing_separator(trailing_separator)
-                    .zip(FormalParametersIter::from(self.list));
-                for (formatted, param) in entries {
-                    joiner.entry(param.span(), &formatted);
+                for formatted in
+                    FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
+                        .with_trailing_separator(trailing_separator)
+                {
+                    joiner.entry(formatted.element.span(), &formatted);
                 }
                 joiner.finish()
             }

@@ -22,6 +22,15 @@ enum BindingPropertyListNode<'a, 'b> {
     Rest(&'b AstNode<'a, BindingRestElement<'a>>),
 }
 
+impl BindingPropertyListNode<'_, '_> {
+    pub fn span(&self) -> Span {
+        match self {
+            BindingPropertyListNode::Property(property) => property.span,
+            BindingPropertyListNode::Rest(rest) => rest.span,
+        }
+    }
+}
+
 impl<'a> Format<'a> for BindingPropertyListNode<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
@@ -70,12 +79,11 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
             BindingPropertyListIter { properties: self.properties.iter(), rest: self.rest },
             ",",
         )
-        .with_trailing_separator(trailing_separator)
-        .zip(self.properties.iter().map(|p| p.span).chain(self.rest.map(|r| r.span)));
+        .with_trailing_separator(trailing_separator);
 
         let mut join = f.join_nodes_with_soft_line();
-        for (entry, span) in entries {
-            join.entry(span, &entry);
+        for entry in entries {
+            join.entry(entry.element.span(), &entry);
         }
 
         join.finish()

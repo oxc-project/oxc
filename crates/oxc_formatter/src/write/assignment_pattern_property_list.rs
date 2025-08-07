@@ -14,6 +14,15 @@ enum AssignmentTargetPropertyListNode<'a, 'b> {
     Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
 }
 
+impl AssignmentTargetPropertyListNode<'_, '_> {
+    pub fn span(&self) -> Span {
+        match self {
+            AssignmentTargetPropertyListNode::Property(property) => property.span(),
+            AssignmentTargetPropertyListNode::Rest(rest) => rest.span(),
+        }
+    }
+}
+
 impl<'a> Format<'a> for AssignmentTargetPropertyListNode<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
@@ -70,13 +79,11 @@ impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
             },
             ",",
         )
-        .with_trailing_separator(trailing_separator)
-        .zip(
-            self.properties.as_ref().iter().map(GetSpan::span).chain(self.rest.map(GetSpan::span)),
-        );
+        .with_trailing_separator(trailing_separator);
+
         let mut join = f.join_nodes_with_soft_line();
-        for (entry, span) in entries {
-            join.entry(span, &entry);
+        for entry in entries {
+            join.entry(entry.element.span(), &entry);
         }
 
         join.finish()
