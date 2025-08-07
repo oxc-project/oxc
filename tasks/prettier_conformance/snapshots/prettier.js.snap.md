@@ -1,4 +1,4 @@
-js compatibility: 472/699 (67.53%)
+js compatibility: 474/699 (67.81%)
 
 # Failed
 
@@ -94,7 +94,6 @@ js compatibility: 472/699 (67.53%)
 | js/decorators-export/before_export.js | 💥 | 88.89% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 83.33% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
-| js/explicit-resource-management/using-declarations.js | 💥 | 70.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
 | js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js | 💥 | 50.00% |
 | js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js | 💥 | 50.00% |
@@ -182,7 +181,6 @@ js compatibility: 472/699 (67.53%)
 | js/try/catch.js | 💥 | 52.63% |
 | js/try/try.js | 💥 | 50.00% |
 | js/unicode/nbsp-jsx.js | 💥 | 22.22% |
-| js/variable_declarator/multiple.js | 💥 | 87.27% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
 | js/yield/jsx.js | 💥 | 50.00% |
 | jsx/attr-element/attr-element.js | 💥 | 0.00% |
