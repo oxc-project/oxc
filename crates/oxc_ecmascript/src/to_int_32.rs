@@ -44,11 +44,13 @@ unsafe fn f64_to_int32_arm64(number: f64) -> i32 {
     }
     let ret: i32;
     // SAFETY: Number is not nan so no floating-point exception should throw.
-    std::arch::asm!(
-        "fjcvtzs {dst:w}, {src:d}",
-        src = in(vreg) number,
-        dst = out(reg) ret,
-    );
+    unsafe {
+        std::arch::asm!(
+            "fjcvtzs {dst:w}, {src:d}",
+            src = in(vreg) number,
+            dst = out(reg) ret,
+        );
+    }
     ret
 }
 
