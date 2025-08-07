@@ -476,7 +476,7 @@ impl Rule for NewCap {
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        &self.new_is_cap_exceptions,
+                        self.new_is_cap_exceptions.iter(),
                         self.new_is_cap_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -498,14 +498,12 @@ impl Rule for NewCap {
 
                 let capitalization = &get_cap(short_name);
 
-                let mut caps_is_new_exceptions = self.cap_is_new_exceptions.clone();
-                caps_is_new_exceptions.append(&mut caps_allowed_vec());
-
+                let caps_allowed = caps_allowed_vec();
                 let allowed = *capitalization != GetCapResult::Upper
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        &caps_is_new_exceptions,
+                        self.cap_is_new_exceptions.iter().chain(caps_allowed.iter()),
                         self.cap_is_new_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -628,14 +626,16 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
     }
 }
 
-fn is_cap_allowed_expression(
+fn is_cap_allowed_expression<'a>(
     short_name: &CompactStr,
     name: &CompactStr,
-    exceptions: &[CompactStr],
+    exceptions: impl Iterator<Item = &'a CompactStr>,
     patterns: Option<&Regex>,
 ) -> bool {
-    if exceptions.contains(name) || exceptions.contains(short_name) {
-        return true;
+    for exception in exceptions {
+        if exception == name || exception == short_name {
+            return true;
+        }
     }
 
     if name == "Date.UTC" {
