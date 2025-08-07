@@ -14,7 +14,8 @@ use crate::{
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
 /// Based on the prettier printing comments algorithm, these nodes don't need to print comments.
-const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &["FormalParameters", "FunctionBody"];
+const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] =
+    &["FormalParameters", "FunctionBody", "CatchParameter", "CatchClause"];
 
 const NEEDS_PARENTHESES: &[&str] = &[
     "Class",

@@ -787,19 +787,13 @@ impl<'a> Format<'a> for AstNode<'a, TryStatement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, CatchClause<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
-        let result = self.write(f);
-        self.format_trailing_comments(f)?;
-        result
+        self.write(f)
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, CatchParameter<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
-        let result = self.write(f);
-        self.format_trailing_comments(f)?;
-        result
+        self.write(f)
     }
 }
 

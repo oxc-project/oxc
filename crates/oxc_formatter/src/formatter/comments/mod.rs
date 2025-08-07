@@ -95,10 +95,9 @@ impl<'a> Comments<'a> {
 
     pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
         let mut index = 0;
-        let comments = self.unprinted_comments();
+        let comments = self.comments_after(start);
         while index < comments.len() {
             let comment = &comments[index];
-
             if self.source_text[start as usize..comment.span.end as usize]
                 .contains(character as char)
             {

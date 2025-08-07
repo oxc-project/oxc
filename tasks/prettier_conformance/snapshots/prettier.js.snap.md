@@ -1,4 +1,4 @@
-js compatibility: 498/699 (71.24%)
+js compatibility: 501/699 (71.67%)
 
 # Failed
 
@@ -47,7 +47,6 @@ js compatibility: 498/699 (71.24%)
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
 | js/comments/template-literal.js | 💥💥 | 30.43% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
-| js/comments/try.js | 💥💥 | 71.43% |
 | js/comments/variable_declarator.js | 💥✨ | 49.31% |
 | js/comments/flow-types/inline.js | 💥 | 62.50% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
@@ -154,8 +153,6 @@ js compatibility: 498/699 (71.24%)
 | js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
-| js/try/catch.js | 💥 | 52.63% |
-| js/try/try.js | 💥 | 50.00% |
 | js/unicode/nbsp-jsx.js | 💥 | 22.22% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
 | js/yield/jsx.js | 💥 | 50.00% |

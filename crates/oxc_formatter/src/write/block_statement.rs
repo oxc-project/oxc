@@ -4,6 +4,7 @@ use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
+    format_args,
     formatter::{
         Buffer, FormatResult, Formatter,
         prelude::*,
@@ -16,19 +17,46 @@ use crate::{
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
+
+        let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent {
+            f.context().get_cached_element(&catch.span)
+        } else {
+            None
+        };
+        let has_comments_before_catch_clause = comments_before_catch_clause.is_some();
+        // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
+        let formatted_comments_before_catch_clause = format_once(|f| {
+            if let Some(comments) = comments_before_catch_clause {
+                f.write_element(comments)
+            } else {
+                Ok(())
+            }
+        });
+
         if is_empty_block(&self.body, f) {
             // `if (a) /* comment */ {}`
             // should be formatted like:
             // `if (a) { /* comment */ }`
             //
             // Some comments are not inside the block, but we need to print them inside the block.
-            if f.context().comments().has_comments_before(self.span.end) {
-                write!(f, format_dangling_comments(self.span).with_block_indent())?;
+            if has_comments_before_catch_clause
+                || f.context().comments().has_comments_before(self.span.end)
+            {
+                write!(
+                    f,
+                    block_indent(&format_args!(
+                        &formatted_comments_before_catch_clause,
+                        format_dangling_comments(self.span)
+                    ))
+                )?;
             } else if is_non_collapsible(self.parent) {
                 write!(f, hard_line_break())?;
             }
         } else {
-            write!(f, block_indent(&self.body()))?;
+            write!(
+                f,
+                block_indent(&format_args!(&formatted_comments_before_catch_clause, self.body()))
+            )?;
         }
         write!(f, "}")
     }

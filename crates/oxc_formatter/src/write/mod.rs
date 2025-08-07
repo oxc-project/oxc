@@ -15,6 +15,7 @@ mod object_pattern_like;
 mod parameter_list;
 mod return_or_throw_statement;
 mod semicolon;
+mod try_statement;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
@@ -979,34 +980,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
         } else {
             write!(f, [space(), body])
         }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let block = self.block();
-        let handler = self.handler();
-        let finalizer = self.finalizer();
-        write!(f, ["try", space(), block])?;
-        if let Some(handler) = handler {
-            write!(f, [space(), handler])?;
-        }
-        if let Some(finalizer) = finalizer {
-            write!(f, [space(), "finally", space(), finalizer])?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["catch", space(), self.param(), space(), self.body()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["(", self.pattern(), ")"])
     }
 }
 
