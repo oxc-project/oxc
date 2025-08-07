@@ -28,6 +28,19 @@ jobs:
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
+  test-ubuntu-aarch64:
+    name: Test Linux ARM64
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm-aarch64
+      - run: cargo ck
+      - run: cargo test --all-features
+      - run: git diff --exit-code # Must commit everything
+
   # Separate job to save a job on PRs
   test-mac:
     name: Test Mac
