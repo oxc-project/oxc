@@ -750,6 +750,10 @@ fn test() {
         ("Date?.UTC();", None),   // { "ecmaVersion": 2020 },
         ("(Date?.UTC)();", None), // { "ecmaVersion": 2020 }
         (r#"expect(1)[""](1);"#, None),
+        (
+            "let tz = Intl.DateTimeFormat().resolvedOptions().timezone()",
+            Some(serde_json::json!([{ "capIsNewExceptions": ["Intl.DateTimeFormat"] }])),
+        ),
     ];
 
     let fail = vec![
