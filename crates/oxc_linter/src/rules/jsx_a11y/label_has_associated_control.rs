@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
@@ -31,13 +30,16 @@ fn label_has_associated_control_diagnostic_no_label(span: Span) -> OxcDiagnostic
 #[derive(Debug, Default, Clone)]
 pub struct LabelHasAssociatedControl(Box<LabelHasAssociatedControlConfig>);
 
+const DEFAULT_CONTROL_COMPONENTS: [&str; 6] =
+    ["input", "meter", "output", "progress", "select", "textarea"];
+
 #[derive(Debug, Clone)]
 pub struct LabelHasAssociatedControlConfig {
     depth: u8,
     assert: Assert,
     label_components: Vec<CompactStr>,
     label_attributes: Vec<CompactStr>,
-    control_components: GlobSet,
+    control_components: Vec<CompactStr>,
 }
 
 #[derive(Debug, Clone)]
@@ -58,20 +60,12 @@ impl Deref for LabelHasAssociatedControl {
 
 impl Default for LabelHasAssociatedControlConfig {
     fn default() -> Self {
-        let mut control_builder = GlobSetBuilder::new();
-        control_builder.add(Glob::new("input").unwrap());
-        control_builder.add(Glob::new("meter").unwrap());
-        control_builder.add(Glob::new("output").unwrap());
-        control_builder.add(Glob::new("progress").unwrap());
-        control_builder.add(Glob::new("select").unwrap());
-        control_builder.add(Glob::new("textarea").unwrap());
-
         Self {
             depth: 2,
             assert: Assert::Either,
             label_components: vec!["label".into()],
             label_attributes: vec!["alt".into(), "aria-label".into(), "aria-labelledby".into()],
-            control_components: control_builder.build().unwrap(),
+            control_components: Vec::default(),
         }
     }
 }
@@ -165,35 +159,15 @@ impl Rule for LabelHasAssociatedControl {
             }
         }
 
-        let mut control_builder = GlobSetBuilder::new();
-        control_builder.add(Glob::new("input").unwrap());
-        control_builder.add(Glob::new("meter").unwrap());
-        control_builder.add(Glob::new("output").unwrap());
-        control_builder.add(Glob::new("progress").unwrap());
-        control_builder.add(Glob::new("select").unwrap());
-        control_builder.add(Glob::new("textarea").unwrap());
-
         if let Some(control_components) =
             options.get("controlComponents").and_then(serde_json::Value::as_array)
         {
-            control_components.iter().map(serde_json::Value::as_str).for_each(|component| {
-                let Some(component) = component else {
-                    return;
-                };
-
-                let Ok(glob) = Glob::new(component) else {
-                    return;
-                };
-
-                control_builder.add(glob);
-            });
+            config.control_components = control_components
+                .iter()
+                .map(serde_json::Value::as_str)
+                .filter_map(|component| component.map(CompactStr::from))
+                .collect::<Vec<CompactStr>>();
         }
-
-        config.control_components = if let Ok(controls) = control_builder.build() {
-            controls
-        } else {
-            control_builder.build().unwrap()
-        };
 
         config.label_components.sort_unstable();
         config.label_components.dedup();
@@ -260,6 +234,14 @@ impl Rule for LabelHasAssociatedControl {
 }
 
 impl LabelHasAssociatedControl {
+    fn is_match_control_components(&self, name: &str) -> bool {
+        DEFAULT_CONTROL_COMPONENTS.contains(&name)
+            || self
+                .control_components
+                .iter()
+                .any(|component| fast_glob::glob_match(component.as_str(), name))
+    }
+
     fn has_accessible_label<'a>(&self, root: &JSXElement<'a>, ctx: &LintContext<'a>) -> bool {
         if root.opening_element.attributes.iter().any(|attribute| match attribute {
             JSXAttributeItem::Attribute(attr) => {
@@ -304,7 +286,7 @@ impl LabelHasAssociatedControl {
             JSXChild::ExpressionContainer(_) => true,
             JSXChild::Element(element) => {
                 let element_type = get_element_type(ctx, &element.opening_element);
-                if self.control_components.is_match(element_type.to_string()) {
+                if self.is_match_control_components(element_type.as_ref()) {
                     return true;
                 }
 
@@ -368,7 +350,7 @@ impl LabelHasAssociatedControl {
                 if element.children.is_empty() {
                     let name = get_element_type(ctx, &element.opening_element);
                     if is_react_component_name(&name)
-                        && !self.control_components.is_match(name.to_string())
+                        && !self.is_match_control_components(name.as_ref())
                     {
                         return true;
                     }
