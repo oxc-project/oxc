@@ -60,6 +60,20 @@ impl<'a> Comments<'a> {
         &comments[..index]
     }
 
+    pub fn block_comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if comment.span.end > pos || !comment.is_block() {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
     /// Returns own line comments that are before the given `pos`.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
         let mut index = 0;

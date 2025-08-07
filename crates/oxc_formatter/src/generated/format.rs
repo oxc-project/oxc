@@ -920,10 +920,7 @@ impl<'a> Format<'a> for AstNode<'a, FormalParameter<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, FunctionBody<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
-        let result = self.write(f);
-        self.format_trailing_comments(f)?;
-        result
+        self.write(f)
     }
 }
 

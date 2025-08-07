@@ -5,8 +5,11 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer, comments::has_new_line_backward, prelude::*,
-        trivia::format_trailing_comments, write,
+        buffer::RemoveSoftLinesBuffer,
+        comments::has_new_line_backward,
+        prelude::*,
+        trivia::{FormatLeadingComments, format_trailing_comments},
+        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,

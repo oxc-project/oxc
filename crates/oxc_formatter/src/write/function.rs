@@ -10,8 +10,10 @@ use super::{
 use crate::{
     format_args,
     formatter::{
-        Buffer, FormatError, FormatResult, Formatter, buffer::RemoveSoftLinesBuffer, prelude::*,
-        trivia::DanglingIndentMode,
+        Buffer, FormatError, FormatResult, Formatter,
+        buffer::RemoveSoftLinesBuffer,
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatLeadingComments},
     },
     generated::ast_nodes::AstNode,
     write,
@@ -145,6 +147,11 @@ impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().block_comments_before(self.span.start);
+        if !comments.is_empty() {
+            write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
+        }
+
         let statements = self.statements();
         let directives = self.directives();
         if is_empty_block(statements, f) && directives.is_empty() {

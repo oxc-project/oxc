@@ -97,12 +97,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let leading_comments = f
-                    .context()
-                    .comments()
-                    .unprinted_comments()
-                    .iter()
-                    .take_while(|comment| comment.span.end <= span.start);
+                let leading_comments = f.context().comments().comments_before(span.start);
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -356,11 +351,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
             FormatDanglingComments::Node { span, indent } => {
                 let source_text = f.context().source_text();
                 format_dangling_comments_impl(
-                    f.context()
-                        .comments()
-                        .unprinted_comments()
-                        .iter()
-                        .take_while(|comment| span.contains_inclusive(comment.span)),
+                    f.context().comments().comments_before(span.end),
                     *indent,
                     f,
                 )

@@ -656,7 +656,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                     [
                         FormatDanglingComments::Comments {
                             comments,
-                            indent: DanglingIndentMode::None,
+                            indent: DanglingIndentMode::None
                         },
                         soft_line_break_or_space()
                     ]
@@ -777,8 +777,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             }
 
             if has_dangling_comments {
-                FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
-                    .fmt(f)?;
+                write!(
+                    f,
+                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
+                )?;
 
                 if has_line_comment {
                     write!(f, hard_line_break())?;
@@ -999,7 +1001,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left(), space(), "=", space(), self.right()])
+        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
+        write!(
+            f,
+            [
+                FormatLeadingComments::Comments(comments),
+                self.left(),
+                space(),
+                "=",
+                space(),
+                self.right(),
+            ]
+        )
     }
 }
 
@@ -1077,6 +1090,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().comments_before(self.span.start);
+        if !comments.is_empty() {
+            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
+        }
+
         let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
             can_avoid_parentheses(arrow, f)
         } else {
@@ -1259,15 +1277,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if let Some(type_parameters) = &self.value().type_parameters() {
             write!(f, type_parameters)?;
         }
-        write!(f, group(&self.value().params()))?;
-        if let Some(return_type) = &self.value().return_type() {
+        let value = self.value();
+        let comments = f.context().comments().comments_before(value.params().span.start);
+        if !comments.is_empty() {
+            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
+        }
+        write!(f, group(&value.params()))?;
+        if let Some(return_type) = &value.return_type() {
             write!(f, return_type)?;
         }
-        if let Some(body) = &self.value().body() {
+        if let Some(body) = &value.body() {
+            let comments = f.context().comments().block_comments_before(body.span.start);
+            if !comments.is_empty() {
+                write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
+            }
             write!(f, [space(), body])?;
         }
         if self.r#type().is_abstract()
-            || matches!(self.value().r#type(), FunctionType::TSEmptyBodyFunctionExpression)
+            || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
         {
             write!(f, OptionalSemicolon)?;
         }

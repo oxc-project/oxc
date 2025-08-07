@@ -22,15 +22,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
             // `if (a) { /* comment */ }`
             //
             // Some comments are not inside the block, but we need to print them inside the block.
-            let comments = f.context().comments().comments_before(self.span.end);
-            if !comments.is_empty() {
-                write!(
-                    f,
-                    FormatDanglingComments::Comments {
-                        comments,
-                        indent: DanglingIndentMode::Block,
-                    }
-                )?;
+            if f.context().comments().has_comments_before(self.span.end) {
+                write!(f, format_dangling_comments(self.span).with_block_indent())?;
             } else if is_non_collapsible(self.parent) {
                 write!(f, hard_line_break())?;
             }

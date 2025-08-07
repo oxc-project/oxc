@@ -1,4 +1,4 @@
-ts compatibility: 247/573 (43.11%)
+ts compatibility: 248/573 (43.28%)
 
 # Failed
 
@@ -104,9 +104,8 @@ ts compatibility: 247/573 (43.11%)
 | typescript/comments/jsx.tsx | 💥 | 20.00% |
 | typescript/comments/location.ts | 💥 | 75.00% |
 | typescript/comments/mapped_types.ts | 💥 | 58.82% |
-| typescript/comments/method_types.ts | 💥 | 74.36% |
-| typescript/comments/methods.ts | 💥 | 97.96% |
-| typescript/comments/type-parameters.ts | 💥 | 40.00% |
+| typescript/comments/method_types.ts | 💥 | 76.92% |
+| typescript/comments/type-parameters.ts | 💥 | 36.36% |
 | typescript/comments/type_literals.ts | 💥 | 55.17% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/comments-2/dangling.ts | 💥💥 | 75.00% |
