@@ -168,7 +168,7 @@ ts compatibility: 249/573 (43.46%)
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/custom/computedProperties/symbol.ts | 💥 | 71.43% |
 | typescript/custom/declare/declareModifier.d.ts | 💥 | 44.44% |
-| typescript/custom/modifiers/minustoken.ts | 💥 | 16.67% |
+| typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
 | typescript/custom/modifiers/question.ts | 💥 | 0.00% |
 | typescript/custom/modifiers/readonly.ts | 💥 | 0.00% |
 | typescript/custom/module/global.ts | 💥 | 80.00% |
@@ -296,7 +296,7 @@ ts compatibility: 249/573 (43.46%)
 | typescript/tsx/react.tsx | 💥 | 50.00% |
 | typescript/tsx/type-parameters.tsx | 💥 | 90.48% |
 | typescript/tsx/url.tsx | 💥 | 58.06% |
-| typescript/tuple/dangling-comments.ts | 💥💥💥 | 13.95% |
+| typescript/tuple/dangling-comments.ts | 💥💥💥 | 21.28% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |
 | typescript/tuple/trailing-comma-trailing-rest.ts | 💥💥💥 | 0.00% |
 | typescript/tuple/trailing-comma.ts | 💥💥💥 | 15.38% |

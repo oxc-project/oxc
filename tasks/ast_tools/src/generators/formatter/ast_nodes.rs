@@ -9,7 +9,7 @@ use crate::{
     Codegen, Generator,
     generators::define_generator,
     output::{Output, output_path},
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    schema::{self, Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
 };
 
 pub fn get_node_type(ty: &TokenStream) -> TokenStream {
@@ -20,7 +20,8 @@ const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
 /// Based on the printing comments algorithm, the last child of these AST nodes don't need to print comments.
 /// Without following nodes could lead to only print comments that before the end of the node, which is what we want.
-const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &["AssignmentExpression", "FormalParameters"];
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] =
+    &["AssignmentExpression", "FormalParameters", "StaticMemberExpression"];
 
 pub struct FormatterAstNodesGenerator;
 
@@ -28,6 +29,8 @@ define_generator!(FormatterAstNodesGenerator);
 
 impl Generator for FormatterAstNodesGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+        let all_statement_variants_names = get_all_statement_variants_names(schema);
+
         let impls = schema
             .types
             .iter()
@@ -35,7 +38,7 @@ impl Generator for FormatterAstNodesGenerator {
                 TypeDef::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
-                    Some(generate_struct_impls(struct_def, schema))
+                    Some(generate_struct_impls(struct_def, &all_statement_variants_names, schema))
                 }
                 TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_impls(enum_def, schema))
@@ -193,7 +196,29 @@ impl Generator for FormatterAstNodesGenerator {
     }
 }
 
-fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+fn get_all_statement_variants_names(schema: &Schema) -> Vec<&str> {
+    let Some(type_id) = schema.type_names.get("Statement") else {
+        return vec![];
+    };
+
+    let enum_def = schema.types.get(*type_id).unwrap().as_enum().unwrap();
+
+    enum_def
+        .variants
+        .iter()
+        .map(schema::VariantDef::name)
+        .chain(enum_def.inherits_types(schema).flat_map(|inherited_type| {
+            let inherited_enum_def = inherited_type.as_enum().unwrap();
+            inherited_enum_def.variants.iter().map(schema::VariantDef::name)
+        }))
+        .collect()
+}
+
+fn generate_struct_impls(
+    struct_def: &StructDef,
+    all_statement_variants_names: &[&str],
+    schema: &Schema,
+) -> TokenStream {
     let type_ty = struct_def.ty(schema);
     let has_kind = struct_def.kind.has_kind;
     let struct_name = struct_def.ident();
@@ -264,9 +289,10 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                 quote! { &self.inner.#field_name }
             };
 
-            let mut following_node = if struct_def.name.as_str().ends_with("Statement")
-                || AST_NODE_WITHOUT_FOLLOWING_NODE_LIST.contains(&struct_def.name.as_str())
-            {
+            let should_not_have_following_node = all_statement_variants_names
+                .contains(&struct_def.name.as_str())
+                || AST_NODE_WITHOUT_FOLLOWING_NODE_LIST.contains(&struct_def.name.as_str());
+            let mut following_node = if should_not_have_following_node {
                 quote! {
                     None
                 }
@@ -287,6 +313,7 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                     {
                         let or_else_following_nodes = build_following_node_chain_until_non_option(
                             &fields[next_field_index + 1..],
+                            should_not_have_following_node,
                             schema,
                         );
                         quote! {
@@ -425,6 +452,7 @@ fn generate_next_following_node(
 
 fn build_following_node_chain_until_non_option(
     fields: &[FieldDef],
+    should_not_have_following_node: bool,
     schema: &Schema,
 ) -> TokenStream {
     let mut result = TokenStream::new();
@@ -441,7 +469,11 @@ fn build_following_node_chain_until_non_option(
         }
     }
 
-    quote! { #result.or(self.following_node) }
+    if should_not_have_following_node {
+        result
+    } else {
+        quote! { #result.or(self.following_node) }
+    }
 }
 
 fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
