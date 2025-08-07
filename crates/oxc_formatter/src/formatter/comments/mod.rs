@@ -23,7 +23,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
-    source_text: &'a str,
+    pub source_text: &'a str,
     comments: &'a Vec<'a, Comment>,
     printed_count: usize,
 }
@@ -91,6 +91,25 @@ impl<'a> Comments<'a> {
         }
 
         &comments[..index]
+    }
+
+    pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
+        let mut index = 0;
+        let comments = self.unprinted_comments();
+        while index < comments.len() {
+            let comment = &comments[index];
+
+            if self.source_text[start as usize..comment.span.end as usize]
+                .contains(character as char)
+            {
+                return &comments[..index];
+            }
+
+            start = comment.span.end;
+            index += 1;
+        }
+
+        comments
     }
 
     /// Returns the comments that after the given `start` position, even if they were already printed.

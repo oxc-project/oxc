@@ -1,4 +1,4 @@
-js compatibility: 492/699 (70.39%)
+js compatibility: 498/699 (71.24%)
 
 # Failed
 
@@ -30,12 +30,10 @@ js compatibility: 492/699 (70.39%)
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
-| js/comments/dangling.js | 💥💥 | 93.33% |
 | js/comments/dangling_array.js | 💥✨ | 40.00% |
 | js/comments/dynamic_imports.js | 💥💥 | 71.43% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
-| js/comments/export-and-import.js | 💥💥 | 85.71% |
-| js/comments/export.js | 💥💥 | 84.93% |
+| js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 91.06% |
 | js/comments/issue-3532.js | 💥💥 | 79.73% |
 | js/comments/issues.js | 💥💥 | 94.89% |
@@ -72,24 +70,20 @@ js compatibility: 492/699 (70.39%)
 | js/conditional/new-ternary-examples.js | 💥💥 | 43.38% |
 | js/conditional/new-ternary-spec.js | 💥💥 | 58.16% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 65.17% |
-| js/decorators/classes.js | 💥 | 66.67% |
-| js/decorators/comments.js | 💥 | 71.19% |
+| js/decorators/classes.js | 💥 | 73.68% |
+| js/decorators/comments.js | 💥 | 73.33% |
 | js/decorators/member-expression.js | 💥 | 80.60% |
 | js/decorators/mobx.js | 💥 | 70.45% |
 | js/decorators/multiline.js | 💥 | 44.44% |
 | js/decorators/multiple.js | 💥 | 61.54% |
 | js/decorators/parens.js | 💥 | 75.00% |
-| js/decorators/redux.js | 💥 | 88.89% |
 | js/decorators/class-expression/class-expression.js | 💥💥 | 55.56% |
 | js/decorators/class-expression/member-expression.js | 💥💥 | 0.00% |
 | js/decorators/class-expression/super-class.js | 💥💥 | 14.29% |
-| js/decorators-export/after_export.js | 💥 | 50.00% |
-| js/decorators-export/before_export.js | 💥 | 88.89% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 83.33% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 91.89% |
 | js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js | 💥 | 50.00% |
 | js/explicit-resource-management/valid-for-using-binding-escaped-of-of.js | 💥 | 50.00% |
-| js/export/blank-line-between-specifiers.js | 💥💥 | 95.00% |
 | js/export-default/function_in_template.js | 💥 | 0.00% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |

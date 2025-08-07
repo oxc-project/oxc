@@ -10,8 +10,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
-    Argument, Arguments, Buffer, GroupId, TextSize, TokenText, VecBuffer, format_element,
-    format_element::tag::{Condition, Tag},
+    Argument, Arguments, Buffer, Comments, GroupId, TextSize, TokenText, VecBuffer,
+    format_element::{
+        self,
+        tag::{Condition, Tag},
+    },
     prelude::{
         tag::{DedentMode, GroupMode, LabelId},
         *,

@@ -1,4 +1,4 @@
-ts compatibility: 248/573 (43.28%)
+ts compatibility: 249/573 (43.46%)
 
 # Failed
 
@@ -51,9 +51,8 @@ ts compatibility: 248/573 (43.28%)
 | jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
 | jsx/text-wrap/test.js | 💥 | 33.71% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
-| typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 72.00% |
-| typescript/angular-component-examples/15934.component.ts | 💥💥 | 48.00% |
-| typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 93.33% |
+| typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
+| typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 89.47% |
@@ -183,7 +182,7 @@ ts compatibility: 248/573 (43.28%)
 | typescript/declare/object-type-in-declare-function.ts | 💥 | 23.08% |
 | typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 25.00% |
 | typescript/decorators/decorator-type-assertion.ts | 💥 | 60.00% |
-| typescript/decorators/decorators.ts | 💥 | 73.38% |
+| typescript/decorators/decorators.ts | 💥 | 74.29% |
 | typescript/decorators/inline-decorators.ts | 💥 | 67.31% |
 | typescript/decorators/legacy.ts | 💥 | 80.00% |
 | typescript/decorators/mobx.ts | 💥 | 70.33% |

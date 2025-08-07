@@ -11,7 +11,8 @@ use super::GroupId;
 /// Formats a single element inside a separated list.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FormatSeparatedElement<E> {
-    element: E,
+    // Public this field to make it easier to get the element span from `FormatSeparatedElement`.
+    pub element: E,
     is_last: bool,
     /// The separator to write if the element has no separator yet.
     separator: &'static str,

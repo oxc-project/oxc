@@ -7,6 +7,7 @@ mod binding_property_list;
 mod block_statement;
 mod call_arguments;
 mod class;
+mod export_declarations;
 mod function;
 mod import_declaration;
 mod object_like;
@@ -560,7 +561,36 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
         for stmt in
             self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
         {
-            join.entry(stmt.span(), stmt);
+            let span = match stmt.as_ref() {
+                // `@decorator export class A {}`
+                // Get the span of the decorator.
+                Statement::ExportNamedDeclaration(export) => {
+                    if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
+                        && let Some(decorator) = decl.decorators.first()
+                        && decorator.span().start < export.span.start
+                    {
+                        decorator.span()
+                    } else {
+                        export.span
+                    }
+                }
+                // `@decorator export default class A {}`
+                // Get the span of the decorator.
+                Statement::ExportDefaultDeclaration(export) => {
+                    if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
+                        &export.declaration
+                        && let Some(decorator) = decl.decorators.first()
+                        && decorator.span().start < export.span.start
+                    {
+                        decorator.span()
+                    } else {
+                        export.span
+                    }
+                }
+                _ => stmt.span(),
+            };
+
+            join.entry(span, stmt);
         }
         join.finish()
     }
@@ -1394,106 +1424,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
             write!(f, [space(), "=", space(), value])?;
         }
         Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let declaration = self.declaration();
-        let export_kind = self.export_kind();
-        let specifiers = self.specifiers();
-        let source = self.source();
-        let with_clause = self.with_clause();
-        let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-
-        if let Some(AstNodes::Class(class)) = declaration.map(AstNode::<Declaration>::as_ast_nodes)
-        {
-            if !class.decorators().is_empty() {
-                write!(f, class.decorators())?;
-            }
-        }
-
-        write!(f, ["export", space()])?;
-
-        if let Some(decl) = declaration {
-            write!(f, decl)?;
-        } else {
-            write!(f, [export_kind, "{"])?;
-            // TODO
-            if specifiers.is_empty() {
-                // write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
-            } else {
-                let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-                write!(
-                    f,
-                    group(&soft_block_indent_with_maybe_space(
-                        &specifiers,
-                        should_insert_space_around_brackets
-                    ))
-                )?;
-            }
-            write!(f, [export_kind, "}"])?;
-        }
-
-        if let Some(source) = source {
-            write!(f, [space(), "from", space(), source])?;
-        }
-
-        if let Some(with_clause) = with_clause {
-            write!(f, [space(), with_clause])?;
-        }
-        if declaration.is_none_or(|d| matches!(d.as_ref(), Declaration::VariableDeclaration(_))) {
-            write!(f, OptionalSemicolon)?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let AstNodes::Class(class) = self.declaration().as_ast_nodes() {
-            if !class.decorators().is_empty() {
-                write!(f, class.decorators())?;
-            }
-        }
-        write!(f, ["export", space(), "default", space(), self.declaration()])?;
-        if self.declaration().is_expression() {
-            write!(f, OptionalSemicolon)?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["export", space(), self.export_kind(), "*", space()])?;
-        if let Some(name) = &self.exported() {
-            write!(f, ["as", space(), name, space()])?;
-        }
-        write!(f, ["from", space(), self.source(), self.with_clause(), OptionalSemicolon])
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        f.join_with(&soft_line_break_or_space())
-            .entries(
-                FormatSeparatedIter::new(self.iter(), ",")
-                    .with_trailing_separator(trailing_separator),
-            )
-            .finish()
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.export_kind());
-        if self.local().span() == self.exported().span() {
-            write!(f, self.local())
-        } else {
-            write!(f, [self.local(), space(), "as", space(), self.exported()])
-        }
     }
 }
 

@@ -100,12 +100,27 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
 
-                            f.join_with(&soft_line_break_or_space())
-                                .entries(
-                                    FormatSeparatedIter::new(specifiers_iter, ",")
-                                        .with_trailing_separator(trailing_separator),
-                                )
-                                .finish()
+                            let mut joiner = f.join_with(soft_line_break_or_space());
+                            for specifier in FormatSeparatedIter::new(specifiers_iter, ",")
+                                .with_trailing_separator(trailing_separator)
+                            {
+                                joiner.entry(&format_once(|f| {
+                                    // Should add empty line before the specifier if there are comments before it.
+                                    let comments = f
+                                        .context()
+                                        .comments()
+                                        .comments_before(specifier.element.span().start);
+                                    if !comments.is_empty() {
+                                        if get_lines_before(comments[0].span, f) > 1 {
+                                            write!(f, [empty_line()])?;
+                                        }
+                                        write!(f, [FormatLeadingComments::Comments(comments)])?;
+                                    }
+
+                                    write!(f, specifier)
+                                }));
+                            }
+                            joiner.finish()
                         }),
                         should_insert_space_around_brackets
                     )),
@@ -125,7 +140,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
         while len != 0 && comments[len - 1].is_block() {
             len -= 1;
         }
-        write!(f, [FormatLeadingComments::Comments(&comments[..len]), self.import_kind()])?;
+        if len != 0 {
+            write!(f, [FormatLeadingComments::Comments(&comments[..len])])?;
+        }
+        write!(f, [self.import_kind()])?;
         if self.local.span == self.imported.span() {
             write!(f, [self.local()])?;
         } else {
