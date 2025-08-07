@@ -1981,7 +1981,6 @@ version = "1.10.0"
 dependencies = [
  "env_logger",
  "futures",
- "globset",
  "ignore",
  "insta",
  "log",

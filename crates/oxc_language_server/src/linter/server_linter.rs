@@ -1,7 +1,6 @@
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
-use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
@@ -164,14 +163,8 @@ impl ServerLinter {
         (nested_configs, extended_paths)
     }
 
+    #[expect(clippy::filetype_is_file)]
     fn create_ignore_glob(root_path: &Path, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
-        let mut builder = globset::GlobSetBuilder::new();
-        // Collecting all ignore files
-        builder.add(Glob::new("**/.eslintignore").unwrap());
-        builder.add(Glob::new("**/.gitignore").unwrap());
-
-        let ignore_file_glob_set = builder.build().unwrap();
-
         let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
             .hidden(false)
@@ -181,11 +174,17 @@ impl ServerLinter {
 
         let mut gitignore_globs = vec![];
         for entry in walk {
-            let ignore_file_path = entry.path();
-            if !ignore_file_glob_set.is_match(ignore_file_path) {
+            if !entry.file_type().is_some_and(|v| v.is_file()) {
                 continue;
             }
-
+            let ignore_file_path = entry.path();
+            if !ignore_file_path
+                .file_name()
+                .and_then(std::ffi::OsStr::to_str)
+                .is_some_and(|v| [".eslintignore", ".gitignore"].contains(&v))
+            {
+                continue;
+            }
             if let Some(ignore_file_dir) = ignore_file_path.parent() {
                 let mut builder = ignore::gitignore::GitignoreBuilder::new(ignore_file_dir);
                 builder.add(ignore_file_path);
