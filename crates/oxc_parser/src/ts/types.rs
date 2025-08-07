@@ -3,13 +3,12 @@ use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
+use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
 use crate::{
     Context, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
-
-use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {

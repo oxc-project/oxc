@@ -27,7 +27,7 @@ bitflags! {
 
         /// [Return] Flag
         /// i.e. the [Return] in Statement[Yield, Await, Return]
-        const Return = 1<< 3;
+        const Return = 1 << 3;
 
         /// If node was parsed as part of a decorator
         const Decorator = 1 << 4;

@@ -3,13 +3,12 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::PropName;
 use oxc_span::Span;
 
+use super::FunctionKind;
 use crate::{
     Context, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
-
-use super::FunctionKind;
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
