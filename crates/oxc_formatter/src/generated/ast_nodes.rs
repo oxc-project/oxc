@@ -5842,7 +5842,7 @@ impl<'a> GetSpan for AstNode<'a, Hashbang<'a>> {
 impl<'a> AstNode<'a, BlockStatement<'a>> {
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6178,7 +6178,7 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
 
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
@@ -6222,7 +6222,7 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6305,7 +6305,7 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6396,7 +6396,7 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6492,7 +6492,7 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6525,7 +6525,7 @@ impl<'a> GetSpan for AstNode<'a, ForOfStatement<'a>> {
 impl<'a> AstNode<'a, ContinueStatement<'a>> {
     #[inline]
     pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
@@ -6560,7 +6560,7 @@ impl<'a> GetSpan for AstNode<'a, ContinueStatement<'a>> {
 impl<'a> AstNode<'a, BreakStatement<'a>> {
     #[inline]
     pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
@@ -6641,7 +6641,7 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6692,7 +6692,7 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
 
     #[inline]
     pub fn cases(&self) -> &AstNode<'a, Vec<'a, SwitchCase<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.cases,
             allocator: self.allocator,
@@ -6789,7 +6789,7 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -6886,7 +6886,7 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
 
     #[inline]
     pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
-        let following_node = self.following_node;
+        let following_node = None;
         self.allocator
             .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),

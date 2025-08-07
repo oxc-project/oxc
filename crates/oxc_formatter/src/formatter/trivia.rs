@@ -208,14 +208,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
-                format_trailing_comments_impl(
-                    f.context().comments().get_trailing_comments(
-                        enclosing_node,
-                        preceding_node,
-                        *following_node,
-                    ),
-                    f,
-                )
+                let comments = f.context().comments().get_trailing_comments(
+                    enclosing_node,
+                    preceding_node,
+                    *following_node,
+                );
+
+                format_trailing_comments_impl(comments, f)
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }

@@ -523,7 +523,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 let inner = it.to_simple_assignment_target();
                 allocator
@@ -546,7 +550,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
                     })
                     .fmt(f)
             }
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 
@@ -555,7 +563,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner) => allocator
                 .alloc(AstNode::<IdentifierReference> {
                     inner,
@@ -607,7 +619,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     })
                     .fmt(f)
             }
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 
@@ -616,7 +632,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(inner) => allocator
                 .alloc(AstNode::<ArrayAssignmentTarget> {
                     inner,
@@ -633,7 +653,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
                     following_node: self.following_node,
                 })
                 .fmt(f),
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 

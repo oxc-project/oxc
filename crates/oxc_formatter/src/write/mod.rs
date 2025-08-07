@@ -645,8 +645,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
-            return write!(f, group(&format_args!("for", space(), "(;;)", format_body)));
+            let comments = f.context().comments().comments_before(body.span().start);
+            if !comments.is_empty() {
+                write!(
+                    f,
+                    [
+                        FormatDanglingComments::Comments {
+                            comments,
+                            indent: DanglingIndentMode::None,
+                        },
+                        soft_line_break_or_space()
+                    ]
+                )?;
+            }
+            return write!(f, [group(&format_args!("for", space(), "(;;)", format_body))]);
         }
+
         let format_inner = format_with(|f| {
             write!(
                 f,
@@ -674,26 +688,32 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
         write!(
             f,
-            group(&format_args!(
-                "for",
-                space(),
-                "(",
-                self.left(),
-                space(),
-                "in",
-                space(),
-                self.right(),
-                ")",
-                FormatStatementBody::new(self.body())
-            ))
+            [
+                FormatLeadingComments::Comments(comments),
+                group(&format_args!(
+                    "for",
+                    space(),
+                    "(",
+                    self.left(),
+                    space(),
+                    "in",
+                    space(),
+                    self.right(),
+                    ")",
+                    FormatStatementBody::new(self.body())
+                ))
+            ]
         )
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+
         let r#await = self.r#await();
         let left = self.left();
         let right = self.right();
@@ -718,7 +738,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                 ]
             )
         });
-        write!(f, group(&format_inner))
+        write!(f, [FormatLeadingComments::Comments(comments), group(&format_inner)])
     }
 }
 
