@@ -39,11 +39,7 @@ The system is built around an arena allocator (`oxc_allocator`) that enables zer
 
 AST traversal is implemented using the visitor pattern (`oxc_ast_visit`) with automatic visitor generation through procedural macros. This ensures type safety and performance while maintaining code clarity.
 
-### 3. Incremental Processing
-
-Components are designed to work incrementally, allowing for efficient re-processing of only changed parts of the codebase. This is essential for language server responsiveness and watch mode operations.
-
-### 4. Shared Infrastructure
+### 3. Shared Infrastructure
 
 Common functionality like error reporting (`oxc_diagnostics`), source positions (`oxc_span`), and syntax definitions (`oxc_syntax`) are shared across all components to ensure consistency.
 
@@ -116,7 +112,6 @@ This clear distinction greatly enhances the development experience by aligning m
 - **Key Features**:
   - Hand-written recursive descent parser
   - Full ES2024+ and TypeScript support
-  - Error recovery for incomplete code
   - Preservation of comments and trivia
 - **Dependencies**: oxc_allocator, oxc_ast, oxc_diagnostics, oxc_span, oxc_syntax
 
@@ -126,7 +121,6 @@ This clear distinction greatly enhances the development experience by aligning m
 - **Key Features**:
   - Scope chain construction
   - Symbol table generation
-  - Type inference (basic)
   - Dead code detection
 - **Dependencies**: oxc_ast, oxc_cfg, oxc_diagnostics, oxc_span, oxc_syntax
 
@@ -189,7 +183,6 @@ This clear distinction greatly enhances the development experience by aligning m
   - Real-time diagnostics
   - Go-to-definition and references
   - Symbol search and completion
-  - Incremental processing for performance
 - **Dependencies**: All core components
 
 #### NAPI Bindings (napi/*)
@@ -323,7 +316,6 @@ Source Text → Arena Allocator → AST Nodes → Visitors → Results
 **Decision**: Implement recursive descent parser instead of parser generator
 **Rationale**:
 
-- Better error recovery control
 - Easier debugging and maintenance
 - More efficient generated code
 - Faster compilation times
@@ -363,7 +355,7 @@ Source Text → Arena Allocator → AST Nodes → Visitors → Results
 
 ### Scalability Concerns
 
-- **Large Codebases**: Incremental processing improvements
+- **Large Codebases**: Processing optimization improvements
 - **Memory Usage**: Streaming processing for huge files
 - **Parallel Processing**: Fine-grained parallelization
 
