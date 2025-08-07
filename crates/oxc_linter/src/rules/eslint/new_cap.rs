@@ -476,7 +476,7 @@ impl Rule for NewCap {
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        self.new_is_cap_exceptions.iter(),
+                        self.new_is_cap_exceptions.iter().map(CompactStr::as_str),
                         self.new_is_cap_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -498,12 +498,14 @@ impl Rule for NewCap {
 
                 let capitalization = &get_cap(short_name);
 
-                let caps_allowed = caps_allowed_vec();
                 let allowed = *capitalization != GetCapResult::Upper
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        self.cap_is_new_exceptions.iter().chain(caps_allowed.iter()),
+                        self.cap_is_new_exceptions
+                            .iter()
+                            .map(CompactStr::as_str)
+                            .chain(CAPS_ALLOWED),
                         self.cap_is_new_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -626,14 +628,17 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
     }
 }
 
-fn is_cap_allowed_expression<'a>(
+fn is_cap_allowed_expression<'a, I>(
     short_name: &CompactStr,
     name: &CompactStr,
-    exceptions: impl Iterator<Item = &'a CompactStr>,
+    exceptions: I,
     patterns: Option<&Regex>,
-) -> bool {
+) -> bool
+where
+    I: Iterator<Item = &'a str>,
+{
     for exception in exceptions {
-        if exception == name || exception == short_name {
+        if exception == name.as_str() || exception == short_name.as_str() {
             return true;
         }
     }
