@@ -345,6 +345,12 @@ impl<'a> Comments<'a> {
         );
 
         let Some(following_node) = following_node else {
+            if let SiblingNode::ImportDeclaration(import) = enclosing_node
+                && import.source.span.start > preceding_span.end
+            {
+                return self.comments_before(import.source.span.start);
+            }
+
             let enclosing_span = enclosing_node.span();
             return self.comments_before(enclosing_span.end);
         };
@@ -425,6 +431,13 @@ impl<'a> Comments<'a> {
         if comment_index == 0 {
             // No comments to print
             return &[];
+        }
+
+        if matches!(
+            enclosing_node,
+            SiblingNode::ImportDeclaration(_) | SiblingNode::ExportAllDeclaration(_)
+        ) {
+            return &comments[..comment_index];
         }
 
         let mut gap_end = following_span.start;

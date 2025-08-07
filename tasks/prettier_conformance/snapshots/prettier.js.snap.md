@@ -1,4 +1,4 @@
-js compatibility: 486/699 (69.53%)
+js compatibility: 489/699 (69.96%)
 
 # Failed
 
@@ -36,7 +36,7 @@ js compatibility: 486/699 (69.53%)
 | js/comments/dangling_array.js | 💥✨ | 40.00% |
 | js/comments/dynamic_imports.js | 💥💥 | 71.43% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
-| js/comments/export-and-import.js | 💥💥 | 78.05% |
+| js/comments/export-and-import.js | 💥💥 | 85.71% |
 | js/comments/export.js | 💥💥 | 84.93% |
 | js/comments/function-declaration.js | 💥💥 | 68.29% |
 | js/comments/issue-3532.js | 💥💥 | 79.73% |
@@ -99,12 +99,9 @@ js compatibility: 486/699 (69.53%)
 | js/identifier/for-of/await.js | 💥 | 50.00% |
 | js/identifier/for-of/let.js | 💥 | 69.23% |
 | js/identifier/parentheses/let.js | 💥💥 | 79.55% |
-| js/import/comments.js | 💥💥 | 63.41% |
-| js/import-assertions/empty.js | 💥 | 71.43% |
-| js/import-assertions/keyword-detect.js | 💥 | 25.00% |
-| js/import-attributes/empty.js | 💥 | 71.43% |
-| js/import-attributes/keyword-detect.js | 💥 | 28.57% |
-| js/import-attributes/long-sources.js | 💥 | 48.48% |
+| js/import-assertions/keyword-detect.js | 💥 | 71.43% |
+| js/import-attributes/keyword-detect.js | 💥 | 71.43% |
+| js/import-attributes/long-sources.js | 💥 | 75.00% |
 | js/label/comment.js | 💥 | 53.33% |
 | js/last-argument-expansion/break-parent.js | 💥 | 78.26% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
