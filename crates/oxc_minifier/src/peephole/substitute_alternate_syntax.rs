@@ -1689,6 +1689,27 @@ mod test {
         test_same("v = +foo - bar");
         test_same("v = foo - +bar");
         test_same("v = 1 + +foo"); // cannot compress into `1 + foo` because `foo` can be a string
+        
+        // Additional test cases for more comprehensive coverage
+        // Division and multiplication
+        test("v = +d / 1000", "v = d / 1000"); // Safe to remove - 1000 is number literal
+        test("v = 1000 * +d", "v = 1000 * d"); // Safe to remove - 1000 is number
+        test("v = +d * 1000", "v = d * 1000"); // Safe to remove - 1000 is number
+        
+        // Complex expressions
+        test("v = 2 - +this._x.call(null, node.data)", "v = 2 - this._x.call(null, node.data)"); // Safe - 2 is number
+        
+        // Bitwise operations
+        test("v = 5 | +b", "v = 5 | b"); // Safe to remove - 5 is number literal
+        test("v = +b | 5", "v = b | 5"); // Safe to remove - 5 is number literal
+        test("v = 7 & +c", "v = 7 & c"); // Safe to remove - 7 is number literal
+        test("v = 3 ^ +d", "v = 3 ^ d"); // Safe to remove - 3 is number literal
+        
+        // Safety test cases - should not remove
+        test_same("v = a - +b"); // Don't remove - both operands unknown
+        test_same("v = +a - b"); // Don't remove - both operands unknown  
+        test_same("v = a | +b"); // Don't remove - a might not be number, unsafe for BigInt
+        test_same("v = +a | b"); // Don't remove - b might not be number, unsafe for BigInt
     }
 
     #[test]
