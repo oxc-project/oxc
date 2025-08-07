@@ -259,6 +259,16 @@ fn check_assert_function_used<'a>(
         Expression::AwaitExpression(expr) => {
             return check_assert_function_used(&expr.argument, assert_function_names, visited, ctx);
         }
+        Expression::ArrayExpression(array_expr) => {
+            for element in &array_expr.elements {
+                if let Some(element_expr) = element.as_expression() {
+                    if check_assert_function_used(element_expr, assert_function_names, visited, ctx)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
         _ => {}
     }
 
@@ -438,6 +448,17 @@ fn test() {
                 await expect(asyncFunction()).rejects.toThrow();
             });
             "#,
+            None,
+        ),
+        (
+            r"
+            it('should not warn on expect in Promise.all', async () => {
+                await Promise.all([
+                    expect(new Promise((resolve) => { resolve(1); }) ).resolves.toBe(1),
+                    expect(new Promise((_, reject) => { reject(new Error('Failed')); })).rejects.toThrowError('Failed'),
+                ]);
+            });
+            ",
             None,
         ),
         (
