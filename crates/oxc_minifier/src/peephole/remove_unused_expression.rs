@@ -474,14 +474,6 @@ impl<'a> PeepholeOptimizations {
                 Self::fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
-            BinaryOperator::Subtraction
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Division
-            | BinaryOperator::Remainder
-            | BinaryOperator::Exponential
-            | BinaryOperator::BitwiseAnd
-            | BinaryOperator::BitwiseOR
-            | BinaryOperator::BitwiseXOR => !e.may_have_side_effects(ctx),
             _ => !e.may_have_side_effects(ctx),
         }
     }
