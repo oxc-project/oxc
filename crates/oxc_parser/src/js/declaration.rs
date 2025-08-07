@@ -113,51 +113,81 @@ impl<'a> ParserImpl<'a> {
         kind: VariableDeclarationKind,
     ) -> VariableDeclarator<'a> {
         let span = self.start_span();
-
         let mut binding_kind = self.parse_binding_pattern_kind();
 
         let (id, definite) = if self.is_ts {
-            // const x!: number = 1
-            //        ^ definite
-            let definite = if binding_kind.is_binding_identifier()
-                && !self.cur_token().is_on_new_line()
-                && self.at(Kind::Bang)
-            {
-                let span = self.cur_token().span();
-                self.bump_any();
-                Some(span)
-            } else {
-                None
-            };
-            let optional = if self.at(Kind::Question) {
-                self.error(diagnostics::unexpected_token(self.cur_token().span()));
-                self.bump_any();
-                true
-            } else {
-                false
-            };
+            let definite = self.parse_definite_assignment_assertion(&binding_kind);
+            let optional = self.parse_optional_declarator_modifier();
             let type_annotation = self.parse_ts_type_annotation();
+            
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
+            
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
             (self.ast.binding_pattern(binding_kind, NONE, false), None)
         };
+
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl =
             self.ast.variable_declarator(self.end_span(span), kind, id, init, definite.is_some());
-        if decl_parent == VariableDeclarationParent::Statement {
-            self.check_missing_initializer(&decl);
-        }
-        if let Some(span) = definite {
-            if decl.init.is_some() {
-                self.error(diagnostics::variable_declarator_definite(span));
-            } else if decl.id.type_annotation.is_none() {
-                self.error(diagnostics::variable_declarator_definite_type_assertion(span));
-            }
-        }
+        
+        self.validate_variable_declarator(decl_parent, &decl, definite);
         decl
+    }
+
+    fn parse_definite_assignment_assertion(
+        &mut self,
+        binding_kind: &BindingPatternKind<'a>,
+    ) -> Option<oxc_span::Span> {
+        if binding_kind.is_binding_identifier()
+            && !self.cur_token().is_on_new_line()
+            && self.at(Kind::Bang)
+        {
+            let span = self.cur_token().span();
+            self.bump_any();
+            Some(span)
+        } else {
+            None
+        }
+    }
+
+    fn parse_optional_declarator_modifier(&mut self) -> bool {
+        if self.at(Kind::Question) {
+            self.error(diagnostics::unexpected_token(self.cur_token().span()));
+            self.bump_any();
+            true
+        } else {
+            false
+        }
+    }
+
+    fn validate_variable_declarator(
+        &mut self,
+        decl_parent: VariableDeclarationParent,
+        decl: &VariableDeclarator<'a>,
+        definite: Option<oxc_span::Span>,
+    ) {
+        if decl_parent == VariableDeclarationParent::Statement {
+            self.check_missing_initializer(decl);
+        }
+        
+        if let Some(span) = definite {
+            self.validate_definite_assignment_assertion(decl, span);
+        }
+    }
+
+    fn validate_definite_assignment_assertion(
+        &mut self,
+        decl: &VariableDeclarator<'a>,
+        span: oxc_span::Span,
+    ) {
+        if decl.init.is_some() {
+            self.error(diagnostics::variable_declarator_definite(span));
+        } else if decl.id.type_annotation.is_none() {
+            self.error(diagnostics::variable_declarator_definite_type_assertion(span));
+        }
     }
 
     pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
@@ -179,50 +209,61 @@ impl<'a> ParserImpl<'a> {
         statement_ctx: StatementContext,
     ) -> VariableDeclaration<'a> {
         let span = self.start_span();
-
         let is_await = self.eat(Kind::Await);
-
         self.expect(Kind::Using);
-
-        // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
-        loop {
-            let declaration = self.parse_variable_declarator(
-                VariableDeclarationParent::Statement,
-                if is_await {
-                    VariableDeclarationKind::AwaitUsing
-                } else {
-                    VariableDeclarationKind::Using
-                },
-            );
-
-            match declaration.id.kind {
-                BindingPatternKind::BindingIdentifier(_) => {}
-                _ => {
-                    self.error(diagnostics::invalid_identifier_in_using_declaration(
-                        declaration.id.span(),
-                    ));
-                }
-            }
-
-            // Excluding `for` loops, an initializer is required in a UsingDeclaration.
-            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
-                self.error(diagnostics::using_declarations_must_be_initialized(
-                    declaration.id.span(),
-                ));
-            }
-
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
 
         let kind = if is_await {
             VariableDeclarationKind::AwaitUsing
         } else {
             VariableDeclarationKind::Using
         };
+
+        let declarations = self.parse_using_binding_list(statement_ctx, kind);
         self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
+    }
+
+    fn parse_using_binding_list(
+        &mut self,
+        statement_ctx: StatementContext,
+        kind: VariableDeclarationKind,
+    ) -> oxc_allocator::Vec<'a, VariableDeclarator<'a>> {
+        let mut declarations = self.ast.vec();
+        
+        loop {
+            let declaration = self.parse_variable_declarator(
+                VariableDeclarationParent::Statement,
+                kind,
+            );
+
+            self.validate_using_declaration(&declaration, statement_ctx);
+            declarations.push(declaration);
+            
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+        
+        declarations
+    }
+
+    fn validate_using_declaration(
+        &mut self,
+        declaration: &VariableDeclarator<'a>,
+        statement_ctx: StatementContext,
+    ) {
+        match declaration.id.kind {
+            BindingPatternKind::BindingIdentifier(_) => {}
+            _ => {
+                self.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
+            }
+        }
+
+        if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
+            self.error(diagnostics::using_declarations_must_be_initialized(
+                declaration.id.span(),
+            ));
+        }
     }
 }

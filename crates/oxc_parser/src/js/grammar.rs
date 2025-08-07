@@ -44,50 +44,50 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
             }
-            Expression::TSAsExpression(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
+            Expression::TSAsExpression(expr) => {
+                if is_valid_ts_assignment_target(expr.expression.get_inner_expression()) {
                     SimpleAssignmentTarget::TSAsExpression(expr)
-                }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
-            Expression::TSSatisfiesExpression(expr) => {
-                match expr.expression.get_inner_expression() {
-                    Expression::Identifier(_)
-                    | Expression::StaticMemberExpression(_)
-                    | Expression::ComputedMemberExpression(_)
-                    | Expression::PrivateFieldExpression(_) => {
-                        SimpleAssignmentTarget::TSSatisfiesExpression(expr)
-                    }
-                    _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
+                } else {
+                    p.fatal_error(diagnostics::invalid_assignment(expr.span()))
                 }
             }
-            Expression::TSNonNullExpression(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
+            Expression::TSSatisfiesExpression(expr) => {
+                if is_valid_ts_assignment_target(expr.expression.get_inner_expression()) {
+                    SimpleAssignmentTarget::TSSatisfiesExpression(expr)
+                } else {
+                    p.fatal_error(diagnostics::invalid_assignment(expr.span()))
+                }
+            }
+            Expression::TSNonNullExpression(expr) => {
+                if is_valid_ts_assignment_target(expr.expression.get_inner_expression()) {
                     SimpleAssignmentTarget::TSNonNullExpression(expr)
+                } else {
+                    p.fatal_error(diagnostics::invalid_assignment(expr.span()))
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
-            Expression::TSTypeAssertion(expr) => match expr.expression.get_inner_expression() {
-                Expression::Identifier(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::PrivateFieldExpression(_) => {
+            }
+            Expression::TSTypeAssertion(expr) => {
+                if is_valid_ts_assignment_target(expr.expression.get_inner_expression()) {
                     SimpleAssignmentTarget::TSTypeAssertion(expr)
+                } else {
+                    p.fatal_error(diagnostics::invalid_assignment(expr.span()))
                 }
-                _ => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
-            },
+            }
             Expression::TSInstantiationExpression(expr) => {
                 p.fatal_error(diagnostics::invalid_lhs_assignment(expr.span()))
             }
             expr => p.fatal_error(diagnostics::invalid_assignment(expr.span())),
         }
     }
+}
+
+fn is_valid_ts_assignment_target<'a>(expr: &Expression<'a>) -> bool {
+    matches!(
+        expr,
+        Expression::Identifier(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
+    )
 }
 
 impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
@@ -107,25 +107,19 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                     if i == len - 1 {
                         let span = elem.span;
                         let argument = elem.unbox().argument;
-                        if !matches!(
-                            argument.get_inner_expression(),
-                            Expression::Identifier(_)
-                                | Expression::ArrayExpression(_)
-                                | Expression::ObjectExpression(_)
-                                | Expression::StaticMemberExpression(_)
-                                | Expression::ComputedMemberExpression(_)
-                                | Expression::PrivateFieldExpression(_)
-                        ) {
+                        
+                        if !is_valid_rest_target(&argument) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
+                        
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(p.ast.alloc_assignment_target_rest(span, target));
+                        
                         if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
                             p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
                     } else {
-                        let error = diagnostics::spread_last_element(elem.span);
-                        return p.fatal_error(error);
+                        return p.fatal_error(diagnostics::spread_last_element(elem.span));
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
@@ -134,6 +128,18 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
 
         p.ast.array_assignment_target(expr.span, elements, rest)
     }
+}
+
+fn is_valid_rest_target<'a>(argument: &Expression<'a>) -> bool {
+    matches!(
+        argument.get_inner_expression(),
+        Expression::Identifier(_)
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
+    )
 }
 
 impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
@@ -173,15 +179,11 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                     if i == len - 1 {
                         let span = spread.span;
                         let argument = spread.unbox().argument;
-                        if !matches!(
-                            argument.get_inner_expression(),
-                            Expression::Identifier(_)
-                                | Expression::StaticMemberExpression(_)
-                                | Expression::ComputedMemberExpression(_)
-                                | Expression::PrivateFieldExpression(_)
-                        ) {
+                        
+                        if !is_valid_object_rest_target(&argument) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
+                        
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(p.ast.alloc_assignment_target_rest(span, target));
                     } else {
@@ -195,31 +197,55 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
     }
 }
 
+fn is_valid_object_rest_target<'a>(argument: &Expression<'a>) -> bool {
+    matches!(
+        argument.get_inner_expression(),
+        Expression::Identifier(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
+    )
+}
+
 impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a>) -> Self {
         if property.shorthand {
-            let binding = match property.key {
-                PropertyKey::StaticIdentifier(ident) => {
-                    let ident = ident.unbox();
-                    p.ast.identifier_reference(ident.span, ident.name)
-                }
-                _ => return p.unexpected(),
-            };
-            // convert `CoverInitializedName`
-            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
-            p.ast.assignment_target_property_assignment_target_property_identifier(
-                property.span,
-                binding,
-                init,
-            )
+            handle_shorthand_assignment_property(property, p)
         } else {
-            let binding = AssignmentTargetMaybeDefault::cover(property.value, p);
-            p.ast.assignment_target_property_assignment_target_property_property(
-                property.span,
-                property.key,
-                binding,
-                property.computed,
-            )
+            handle_regular_assignment_property(property, p)
         }
     }
+}
+
+fn handle_shorthand_assignment_property<'a>(
+    property: ObjectProperty<'a>,
+    p: &mut ParserImpl<'a>,
+) -> AssignmentTargetProperty<'a> {
+    let binding = match property.key {
+        PropertyKey::StaticIdentifier(ident) => {
+            let ident = ident.unbox();
+            p.ast.identifier_reference(ident.span, ident.name)
+        }
+        _ => return p.unexpected(),
+    };
+    
+    let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
+    p.ast.assignment_target_property_assignment_target_property_identifier(
+        property.span,
+        binding,
+        init,
+    )
+}
+
+fn handle_regular_assignment_property<'a>(
+    property: ObjectProperty<'a>,
+    p: &mut ParserImpl<'a>,
+) -> AssignmentTargetProperty<'a> {
+    let binding = AssignmentTargetMaybeDefault::cover(property.value, p);
+    p.ast.assignment_target_property_assignment_target_property_property(
+        property.span,
+        property.key,
+        binding,
+        property.computed,
+    )
 }

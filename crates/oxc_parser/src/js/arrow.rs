@@ -72,122 +72,104 @@ impl<'a> ParserImpl<'a> {
         let second = self.cur_kind();
 
         match first {
-            Kind::LParen => {
-                match second {
-                    // Simple cases: "() =>", "(): ", and "() {".
-                    // This is an arrow function with no parameters.
-                    // The last one is not actually an arrow function,
-                    // but this is probably what the user intended.
-                    Kind::RParen => {
-                        self.bump_any();
-                        let third = self.cur_kind();
-                        match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
-                            Kind::Arrow | Kind::LCurly => Tristate::True,
-                            _ => Tristate::False,
-                        }
-                    }
-                    // If encounter "([" or "({", this could be the start of a binding pattern.
-                    // Examples:
-                    //      ([ x ]) => { }
-                    //      ({ x }) => { }
-                    //      ([ x ])
-                    //      ({ x })
-                    Kind::LBrack | Kind::LCurly => Tristate::Maybe,
-                    // Simple case: "(..."
-                    // This is an arrow function with a rest parameter.
-                    Kind::Dot3 => {
-                        self.bump_any();
-                        let third = self.cur_kind();
-                        match third {
-                            // '(...ident' is a lambda
-                            Kind::Ident => Tristate::True,
-                            // '(...null' is not a lambda
-                            kind if kind.is_literal() => Tristate::False,
-                            _ => Tristate::Maybe,
-                        }
-                    }
-                    _ => {
-                        self.bump_any();
-                        let third = self.cur_kind();
-
-                        // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
-                        // isn't actually allowed, but we want to treat it as a lambda so we can provide
-                        // a good error message.
-                        if second.is_modifier_kind()
-                            && second != Kind::Async
-                            && third.is_binding_identifier()
-                        {
-                            if third == Kind::As {
-                                return Tristate::False; // https://github.com/microsoft/TypeScript/issues/44466
-                            }
-                            return Tristate::True;
-                        }
-
-                        // If we had "(" followed by something that's not an identifier,
-                        // then this definitely doesn't look like a lambda.  "this" is not
-                        // valid, but we want to parse it and then give a semantic error.
-                        if !second.is_binding_identifier() && second != Kind::This {
-                            return Tristate::False;
-                        }
-
-                        match third {
-                            // If we have something like "(a:", then we must have a
-                            // type-annotated parameter in an arrow function expression.
-                            Kind::Colon => Tristate::True,
-                            // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
-                            Kind::Question => {
-                                self.bump_any();
-                                let fourth = self.cur_kind();
-                                if matches!(
-                                    fourth,
-                                    Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen
-                                ) {
-                                    return Tristate::True;
-                                }
-                                Tristate::False
-                            }
-                            // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
-                            // It is definitely not an arrow function
-                            _ => Tristate::False,
-                        }
-                    }
-                }
-            }
-            Kind::LAngle => {
-                // If we have "<" not followed by an identifier,
-                // then this definitely is not an arrow function.
-                if !second.is_binding_identifier() && second != Kind::Const {
-                    return Tristate::False;
-                }
-
-                // JSX overrides
-                if self.source_type.is_jsx() {
-                    // <const Ident extends Ident>
-                    //  ^^^^^ Optional
-                    self.bump(Kind::Const);
-                    self.bump_any();
-                    let third = self.cur_kind();
-                    return match third {
-                        Kind::Extends => {
-                            self.bump_any();
-                            let fourth = self.cur_kind();
-                            if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
-                                Tristate::False
-                            } else if fourth.is_binding_identifier() {
-                                Tristate::Maybe
-                            } else {
-                                Tristate::True
-                            }
-                        }
-                        Kind::Eq | Kind::Comma => Tristate::True,
-                        _ => Tristate::False,
-                    };
-                }
-                Tristate::Maybe
-            }
+            Kind::LParen => self.check_parenthesized_arrow_pattern(second),
+            Kind::LAngle => self.check_type_parameter_arrow_pattern(second),
             _ => unreachable!(),
+        }
+    }
+
+    fn check_parenthesized_arrow_pattern(&mut self, second: Kind) -> Tristate {
+        match second {
+            Kind::RParen => self.check_empty_parameter_list(),
+            Kind::LBrack | Kind::LCurly => Tristate::Maybe,
+            Kind::Dot3 => self.check_rest_parameter_pattern(),
+            _ => self.check_parameter_pattern(second),
+        }
+    }
+
+    fn check_empty_parameter_list(&mut self) -> Tristate {
+        self.bump_any();
+        let third = self.cur_kind();
+        match third {
+            Kind::Colon if self.is_ts => Tristate::Maybe,
+            Kind::Arrow | Kind::LCurly => Tristate::True,
+            _ => Tristate::False,
+        }
+    }
+
+    fn check_rest_parameter_pattern(&mut self) -> Tristate {
+        self.bump_any();
+        let third = self.cur_kind();
+        match third {
+            Kind::Ident => Tristate::True,
+            kind if kind.is_literal() => Tristate::False,
+            _ => Tristate::Maybe,
+        }
+    }
+
+    fn check_parameter_pattern(&mut self, second: Kind) -> Tristate {
+        self.bump_any();
+        let third = self.cur_kind();
+
+        if second.is_modifier_kind() && second != Kind::Async && third.is_binding_identifier() {
+            if third == Kind::As {
+                return Tristate::False;
+            }
+            return Tristate::True;
+        }
+
+        if !second.is_binding_identifier() && second != Kind::This {
+            return Tristate::False;
+        }
+
+        match third {
+            Kind::Colon => Tristate::True,
+            Kind::Question => self.check_optional_parameter_pattern(),
+            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+            _ => Tristate::False,
+        }
+    }
+
+    fn check_optional_parameter_pattern(&mut self) -> Tristate {
+        self.bump_any();
+        let fourth = self.cur_kind();
+        if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
+            Tristate::True
+        } else {
+            Tristate::False
+        }
+    }
+
+    fn check_type_parameter_arrow_pattern(&mut self, second: Kind) -> Tristate {
+        if !second.is_binding_identifier() && second != Kind::Const {
+            return Tristate::False;
+        }
+
+        if self.source_type.is_jsx() {
+            return self.check_jsx_type_parameter_pattern();
+        }
+        
+        Tristate::Maybe
+    }
+
+    fn check_jsx_type_parameter_pattern(&mut self) -> Tristate {
+        self.bump(Kind::Const);
+        self.bump_any();
+        let third = self.cur_kind();
+        match third {
+            Kind::Extends => {
+                self.bump_any();
+                let fourth = self.cur_kind();
+                if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
+                    Tristate::False
+                } else if fourth.is_binding_identifier() {
+                    Tristate::Maybe
+                } else {
+                    Tristate::True
+                }
+            }
+            Kind::Eq | Kind::Comma => Tristate::True,
+            _ => Tristate::False,
         }
     }
 
@@ -217,32 +199,11 @@ impl<'a> ParserImpl<'a> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
-        let params = {
-            let ident = match ident {
-                Expression::Identifier(ident) => {
-                    self.ast.alloc_binding_identifier(ident.span, ident.name)
-                }
-                _ => return self.unexpected(),
-            };
-            let params_span = self.end_span(ident.span.start);
-            let ident = BindingPatternKind::BindingIdentifier(ident);
-            let pattern = self.ast.binding_pattern(ident, NONE, false);
-            let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
-            self.ast.alloc_formal_parameters(
-                params_span,
-                FormalParameterKind::ArrowFormalParameters,
-                self.ast.vec1(formal_parameter),
-                NONE,
-            )
-        };
-
+        let params = self.create_simple_arrow_parameters(ident);
+        
         self.ctx = self.ctx.and_await(has_await);
 
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-        }
-
-        self.expect(Kind::Arrow);
+        self.expect_arrow_with_newline_check();
 
         self.parse_arrow_function_expression_body(
             ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, span },
@@ -250,10 +211,48 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    fn create_simple_arrow_parameters(&mut self, ident: Expression<'a>) -> Box<'a, FormalParameters<'a>> {
+        let ident = match ident {
+            Expression::Identifier(ident) => {
+                self.ast.alloc_binding_identifier(ident.span, ident.name)
+            }
+            _ => return self.unexpected(),
+        };
+        let params_span = self.end_span(ident.span.start);
+        let ident = BindingPatternKind::BindingIdentifier(ident);
+        let pattern = self.ast.binding_pattern(ident, NONE, false);
+        let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
+        self.ast.alloc_formal_parameters(
+            params_span,
+            FormalParameterKind::ArrowFormalParameters,
+            self.ast.vec1(formal_parameter),
+            NONE,
+        )
+    }
+
+    fn expect_arrow_with_newline_check(&mut self) {
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+        self.expect(Kind::Arrow);
+    }
+
     fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
+        let (type_parameters, params, return_type) = self.parse_arrow_function_signature(r#async);
+
+        self.expect_arrow_with_newline_check();
+
+        ArrowFunctionHead { type_parameters, params, return_type, r#async, span }
+    }
+
+    fn parse_arrow_function_signature(&mut self, r#async: bool) -> (
+        Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        Box<'a, FormalParameters<'a>>,
+        Option<Box<'a, TSTypeAnnotation<'a>>>,
+    ) {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
@@ -265,7 +264,6 @@ impl<'a> ParserImpl<'a> {
         );
 
         if let Some(this_param) = this_param {
-            // const x = (this: number) => {};
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
@@ -273,13 +271,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await);
 
-        if self.cur_token().is_on_new_line() {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
-        }
-
-        self.expect(Kind::Arrow);
-
-        ArrowFunctionHead { type_parameters, params, return_type, r#async, span }
+        (type_parameters, params, return_type)
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
