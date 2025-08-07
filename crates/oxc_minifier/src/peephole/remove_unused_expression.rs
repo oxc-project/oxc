@@ -4,7 +4,6 @@ use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToPrimitive,
-    constant_evaluation::DetermineValueType,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
@@ -482,11 +481,7 @@ impl<'a> PeepholeOptimizations {
             | BinaryOperator::Exponential
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::BitwiseOR
-            | BinaryOperator::BitwiseXOR => {
-                // Try to remove unary plus operators safely in mathematical operations
-                self.try_remove_unary_plus_in_mathematical_operation(binary_expr, ctx);
-                !e.may_have_side_effects(ctx)
-            }
+            | BinaryOperator::BitwiseXOR => !e.may_have_side_effects(ctx),
             _ => !e.may_have_side_effects(ctx),
         }
     }
@@ -533,37 +528,6 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
         false
-    }
-
-    /// Safely remove unary plus operators in mathematical operations.
-    /// Only removes unary plus when the other operand is a known number type to avoid BigInt issues.
-    /// Based on the logic from substitute_alternate_syntax.rs
-    fn try_remove_unary_plus_in_mathematical_operation(
-        &self,
-        binary_expr: &mut BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        // Check left operand for unary plus
-        if let Expression::UnaryExpression(unary_expr) = &mut binary_expr.left {
-            if unary_expr.operator == UnaryOperator::UnaryPlus {
-                // Only remove unary plus if the right operand is definitely a number
-                if binary_expr.right.value_type(ctx).is_number() {
-                    binary_expr.left = unary_expr.argument.take_in(ctx.ast);
-                    ctx.state.changed = true;
-                }
-            }
-        }
-
-        // Check right operand for unary plus
-        if let Expression::UnaryExpression(unary_expr) = &mut binary_expr.right {
-            if unary_expr.operator == UnaryOperator::UnaryPlus {
-                // Only remove unary plus if the left operand is definitely a number
-                if binary_expr.left.value_type(ctx).is_number() {
-                    binary_expr.right = unary_expr.argument.take_in(ctx.ast);
-                    ctx.state.changed = true;
-                }
-            }
-        }
     }
 
     fn fold_call_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
@@ -997,16 +961,6 @@ mod test {
         test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
         test_same("var a, b; a + ('' + b)");
         test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
-
-        // Test unary plus removal in mathematical operations - only when other operand is a number
-        test("Math.floor(+d / 1000)", "Math.floor(d / 1000)"); // Safe to remove - 1000 is number literal
-        test("Math.floor(1000 * +d)", "Math.floor(1000 * d)"); // Safe to remove - 1000 is number
-        test("Math.floor(+d * 1000)", "Math.floor(d * 1000)"); // Safe to remove - 1000 is number
-        test("2 - +this._x.call(null, node.data)", "2 - this._x.call(null, node.data)"); // Safe - 2 is number
-        test_same("a - +b"); // Don't remove - both operands unknown
-        test_same("+a - b"); // Don't remove - both operands unknown
-        test_same("a | +b"); // Don't remove - a might not be number, unsafe for BigInt
-        test("5 | +b", "5 | b"); // Safe to remove - 5 is number literal
     }
 
     #[test]
