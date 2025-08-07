@@ -5,8 +5,9 @@
 
 #![warn(missing_docs)]
 
-use std::{cmp, slice};
+use std::{borrow::Cow, cmp, slice};
 
+use cow_utils::CowUtils;
 use oxc_data_structures::pointer_ext::PointerExt;
 
 mod binary_expr_visitor;
@@ -17,8 +18,6 @@ mod operator;
 mod options;
 mod sourcemap_builder;
 mod str;
-
-use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
@@ -745,11 +744,7 @@ impl<'a> Codegen<'a> {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
         } else {
-            let s = Self::get_minified_number(num, &mut buffer);
-            self.print_str(&s);
-            if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-                self.need_space_before_dot = self.code_len();
-            }
+            self.print_minified_number(num, &mut buffer);
         }
     }
 
@@ -760,14 +755,16 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    // `get_minified_number` from terser
+    // Optimized version of `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+    // Instead of building all candidates and finding the shortest, we track the shortest as we go
+    // and use self.print_str directly instead of returning intermediate strings
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn get_minified_number(num: f64, buffer: &mut dragonbox_ecma::Buffer) -> Cow<'_, str> {
-        use cow_utils::CowUtils;
-
+    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
         if num < 1000.0 && num.fract() == 0.0 {
-            return Cow::Borrowed(buffer.format(num));
+            self.print_str(buffer.format(num));
+            self.need_space_before_dot = self.code_len();
+            return;
         }
 
         let mut s = buffer.format(num);
@@ -776,42 +773,75 @@ impl<'a> Codegen<'a> {
             s = &s[1..];
         }
 
-        let s = s.cow_replacen("e+", "e", 1);
+        let mut best_candidate = s.cow_replacen("e+", "e", 1);
+        let mut best_len = best_candidate.len();
+        let mut is_hex = false;
 
-        let mut candidates = vec![s.clone()];
-
+        // Track the best candidate found so far
         if num.fract() == 0.0 {
-            candidates.push(Cow::Owned(format!("0x{:x}", num as u128)));
+            // For integers, check hex format and other optimizations
+            let hex_candidate = format!("0x{:x}", num as u128);
+            if hex_candidate.len() < best_len {
+                is_hex = true;
+                best_candidate = hex_candidate.into();
+                best_len = best_candidate.len();
+            }
         }
-
-        // create `1e-2`
-        if s.starts_with(".0") {
-            if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
-                let len = i + 1; // `+1` to include the dot.
-                let digits = &s[len..];
-                candidates.push(Cow::Owned(format!("{digits}e-{}", digits.len() + len - 1)));
+        // Check for scientific notation optimizations for numbers starting with ".0"
+        else if best_candidate.starts_with(".0") {
+            // Skip the first '0' since we know it's there from the starts_with check
+            if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
+                let len = i + 2; // `+2` to include the dot and first zero.
+                let digits = &best_candidate[len..];
+                let exp = digits.len() + len - 1;
+                let exp_str_len = itoa::Buffer::new().format(exp).len();
+                // Calculate expected length: digits + 'e-' + exp_length
+                let expected_len = digits.len() + 2 + exp_str_len;
+                if expected_len < best_len {
+                    best_candidate = format!("{digits}e-{exp}").into();
+                    debug_assert_eq!(best_candidate.len(), expected_len);
+                    best_len = best_candidate.len();
+                }
             }
         }
 
-        // create 1e2
-        if s.ends_with('0') {
-            if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
-                candidates.push(Cow::Owned(format!("{}e{len}", &s[0..s.len() - len])));
+        // Check for numbers ending with zeros (but not hex numbers)
+        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
+        // from being incorrectly converted to scientific notation
+        if !is_hex && best_candidate.ends_with('0') {
+            if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
+                let base = &best_candidate[0..best_candidate.len() - len];
+                let exp_str_len = itoa::Buffer::new().format(len).len();
+                // Calculate expected length: base + 'e' + len
+                let expected_len = base.len() + 1 + exp_str_len;
+                if expected_len < best_len {
+                    best_candidate = format!("{base}e{len}").into();
+                    debug_assert_eq!(best_candidate.len(), expected_len);
+                    best_len = expected_len;
+                }
             }
         }
 
-        // `1.2e101` -> ("1", "2", "101")
-        // `1.3415205933077406e300` -> `13415205933077406e284;`
-        if let Some((integer, point, exponent)) =
-            s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        // Check for scientific notation optimization: `1.2e101` -> `12e100`
+        if let Some((integer, point, exponent)) = best_candidate
+            .split_once('.')
+            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
-            candidates.push(Cow::Owned(format!(
-                "{integer}{point}e{}",
-                exponent.parse::<isize>().unwrap() - point.len() as isize
-            )));
+            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
+            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
+            // Calculate expected length: integer + point + 'e' + new_exp_str_len
+            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
+            if expected_len < best_len {
+                best_candidate = format!("{integer}{point}e{new_expr}").into();
+                debug_assert_eq!(best_candidate.len(), expected_len);
+            }
         }
 
-        candidates.into_iter().min_by_key(|c| c.len()).unwrap()
+        // Print the best candidate and update need_space_before_dot
+        self.print_str(&best_candidate);
+        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+            self.need_space_before_dot = self.code_len();
+        }
     }
 
     fn add_source_mapping(&mut self, span: Span) {
