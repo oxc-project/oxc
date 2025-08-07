@@ -554,7 +554,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Check right operand for unary plus  
+        // Check right operand for unary plus
         if let Expression::UnaryExpression(unary_expr) = &mut binary_expr.right {
             if unary_expr.operator == UnaryOperator::UnaryPlus {
                 // Only remove unary plus if the left operand is definitely a number
