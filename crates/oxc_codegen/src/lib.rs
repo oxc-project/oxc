@@ -773,111 +773,71 @@ impl<'a> Codegen<'a> {
             s = &s[1..];
         }
 
-        let s = s.cow_replacen("e+", "e", 1);
+        let mut best_candidate = s.cow_replacen("e+", "e", 1);
+        let mut best_len = best_candidate.len();
+        let mut is_hex = false;
 
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
-            let mut best_candidate: Cow<'_, str> = s.into();
-            let mut best_len = best_candidate.len();
-
             let hex_candidate = format!("0x{:x}", num as u128);
             if hex_candidate.len() < best_len {
+                is_hex = true;
                 best_candidate = hex_candidate.into();
                 best_len = best_candidate.len();
             }
-
-            // Check for numbers ending with zeros (but not hex numbers)
-            // The 0x check is necessary to prevent hex numbers like 0x8000000000000000
-            // from being incorrectly converted to scientific notation
-            if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
-                if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
-                    let base = &best_candidate[0..best_candidate.len() - len];
-                    let scientific_candidate = format!("{base}e{len}");
-                    if scientific_candidate.len() < best_len {
-                        best_candidate = scientific_candidate.into();
-                        best_len = best_candidate.len();
-                    }
-                }
-            }
-
-            // Check for scientific notation optimization: `1.2e101` -> `12e100`
-            if let Some((integer, point, exponent)) = best_candidate
-                .split_once('.')
-                .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-            {
-                let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
-                // Calculate expected length: integer + point + 'e' + new_exp_str
-                let new_exp_str = new_exp.to_string();
-                let expected_len = integer.len() + point.len() + 1 + new_exp_str.len();
+        }
+        // Check for scientific notation optimizations for numbers starting with ".0"
+        else if best_candidate.starts_with(".0") {
+            // Skip the first '0' since we know it's there from the starts_with check
+            if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
+                let len = i + 2; // `+2` to include the dot and first zero.
+                let digits = &best_candidate[len..];
+                let exp = digits.len() + len - 1;
+                let exp_str_len = itoa::Buffer::new().format(exp).len();
+                // Calculate expected length: digits + 'e-' + exp_length
+                let expected_len = digits.len() + 2 + exp_str_len;
                 if expected_len < best_len {
-                    let optimized_candidate = format!("{integer}{point}e{new_exp}");
-                    best_candidate = optimized_candidate.into();
+                    best_candidate = format!("{digits}e-{exp}").into();
+                    best_len = best_candidate.len();
                 }
             }
+        }
 
-            // Print the best candidate and update need_space_before_dot
-            if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-                self.print_str(&best_candidate);
-                self.need_space_before_dot = self.code_len();
-            } else {
-                self.print_str(&best_candidate);
-            }
-        } else {
-            // For non-integers, check for ".0" optimizations and other cases
-            let mut best_candidate: Cow<'_, str> = s.into();
-            let mut best_len = best_candidate.len();
-
-            // Check for scientific notation optimizations for numbers starting with ".0"
-            if best_candidate.starts_with(".0") {
-                // Skip the first '0' since we know it's there from the starts_with check
-                if let Some(i) = best_candidate[2..].bytes().position(|c| c != b'0') {
-                    let len = i + 2; // `+2` to include the dot and first zero.
-                    let digits = &best_candidate[len..];
-                    let scientific_candidate = format!("{digits}e-{}", digits.len() + len - 1);
-                    if scientific_candidate.len() < best_len {
-                        best_candidate = scientific_candidate.into();
-                        best_len = best_candidate.len();
-                    }
-                }
-            }
-
-            // Check for numbers ending with zeros
-            if best_candidate.ends_with('0') {
-                // Skip the last '0' since we know it's there from the ends_with check
-                if let Some(len) = best_candidate.bytes().rev().skip(1).position(|c| c != b'0') {
-                    let len = len + 1; // Add back the skipped zero
-                    let base = &best_candidate[0..best_candidate.len() - len];
-                    let scientific_candidate = format!("{base}e{len}");
-                    if scientific_candidate.len() < best_len {
-                        best_candidate = scientific_candidate.into();
-                        best_len = best_candidate.len();
-                    }
-                }
-            }
-
-            // Check for scientific notation optimization: `1.2e101` -> `12e100`
-            if let Some((integer, point, exponent)) = best_candidate
-                .split_once('.')
-                .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-            {
-                let new_exp = exponent.parse::<isize>().unwrap() - point.len() as isize;
-                // Calculate expected length: integer + point + 'e' + new_exp_str
-                let new_exp_str = new_exp.to_string();
-                let expected_len = integer.len() + point.len() + 1 + new_exp_str.len();
+        // Check for numbers ending with zeros (but not hex numbers)
+        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
+        // from being incorrectly converted to scientific notation
+        if !is_hex && best_candidate.ends_with('0') {
+            if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
+                let base = &best_candidate[0..best_candidate.len() - len];
+                let exp_str_len = itoa::Buffer::new().format(len).len();
+                // Calculate expected length: base + 'e' + len
+                let expected_len = base.len() + 1 + exp_str_len;
                 if expected_len < best_len {
-                    let optimized_candidate = format!("{integer}{point}e{new_exp}");
-                    best_candidate = optimized_candidate.into();
+                    best_candidate = format!("{base}e{len}").into();
+                    best_len = expected_len;
                 }
             }
+        }
 
-            // Print the best candidate and update need_space_before_dot
-            if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-                self.print_str(&best_candidate);
-                self.need_space_before_dot = self.code_len();
-            } else {
-                self.print_str(&best_candidate);
+        // Check for scientific notation optimization: `1.2e101` -> `12e100`
+        if let Some((integer, point, exponent)) = best_candidate
+            .split_once('.')
+            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+        {
+            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
+            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
+            // Calculate expected length: integer + point + 'e' + new_exp_str_len
+            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
+            if expected_len < best_len {
+                best_candidate = format!("{integer}{point}e{new_expr}").into();
             }
+        }
+
+        // Print the best candidate and update need_space_before_dot
+        self.print_str(&best_candidate);
+        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+            self.need_space_before_dot = self.code_len();
         }
     }
 

@@ -34,6 +34,7 @@ cow-utils = { workspace = true }
 dragonbox_ecma = { workspace = true }
 nonmax = { workspace = true }
 rustc-hash = { workspace = true }
+itoa = { workspace = true }
 
 [dev-dependencies]
 base64 = { workspace = true }

@@ -1838,6 +1838,7 @@ dependencies = [
  "cow-utils",
  "dragonbox_ecma",
  "insta",
+ "itoa",
  "nonmax",
  "oxc_allocator",
  "oxc_ast",
