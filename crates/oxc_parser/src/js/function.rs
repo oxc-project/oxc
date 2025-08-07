@@ -47,6 +47,8 @@ impl<'a> ParserImpl<'a> {
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
         self.expect(Kind::LParen);
+
+        // Parse optional TypeScript 'this' parameter
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
             if !self.at(Kind::RParen) {
@@ -56,11 +58,14 @@ impl<'a> ParserImpl<'a> {
         } else {
             None
         };
+
+        // Parse parameter list with optional rest parameter
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
             |p| p.parse_formal_parameter(func_kind),
             diagnostics::rest_parameter_last,
         );
+
         self.expect(Kind::RParen);
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
@@ -71,12 +76,15 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
+
+        // Verify modifiers are appropriate for the current language mode
         if self.is_ts {
+            let allowed_flags = ModifierFlags::ACCESSIBILITY
+                .union(ModifierFlags::READONLY)
+                .union(ModifierFlags::OVERRIDE);
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ACCESSIBILITY
-                    .union(ModifierFlags::READONLY)
-                    .union(ModifierFlags::OVERRIDE),
+                allowed_flags,
                 diagnostics::cannot_appear_on_a_parameter,
             );
         } else {
@@ -86,12 +94,16 @@ impl<'a> ParserImpl<'a> {
                 diagnostics::parameter_modifiers_in_ts,
             );
         }
+
         let pattern = self.parse_binding_pattern_with_initializer();
+
+        // Validate decorator usage - only allowed on TypeScript class method parameters
         if func_kind != FunctionKind::ClassMethod || !self.is_ts {
             for decorator in &decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
         }
+
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,

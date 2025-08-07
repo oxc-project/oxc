@@ -432,22 +432,14 @@ impl<'a> ParserImpl<'a> {
         let mut program = self.parse_program();
         let mut panicked = false;
 
+        // Handle fatal errors first
         if let Some(fatal_error) = self.fatal_error.take() {
-            panicked = true;
-            self.errors.truncate(fatal_error.errors_len);
-            if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
-                // Noop
-            } else {
-                self.error(fatal_error.error);
-            }
-
-            program = Program::dummy(self.ast.allocator);
-            program.source_type = self.source_type;
-            program.source_text = self.source_text;
+            (program, panicked) = self.handle_fatal_error(fatal_error);
         }
 
         self.check_unfinished_errors();
 
+        // Check for source length overflow
         if let Some(overlong_error) = self.overlong_error() {
             panicked = true;
             self.lexer.errors.clear();
@@ -455,36 +447,25 @@ impl<'a> ParserImpl<'a> {
             self.error(overlong_error);
         }
 
-        let mut is_flow_language = false;
-        let mut errors = vec![];
-        // only check for `@flow` if the file failed to parse.
-        if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
-            if let Some(error) = self.flow_error() {
-                is_flow_language = true;
-                errors.push(error);
-            }
-        }
+        // Handle errors and Flow detection
+        let (errors, is_flow_language) = self.collect_all_errors();
+
+        // Build module record
         let (module_record, module_record_errors) = self.module_record_builder.build();
-        if errors.len() != 1 {
-            errors.reserve(self.lexer.errors.len() + self.errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
-            // Skip checking for exports in TypeScript {
-            if !self.source_type.is_typescript() {
-                errors.extend(module_record_errors);
-            }
-        }
+        let errors = Self::merge_module_errors_static(
+            errors,
+            module_record_errors,
+            is_flow_language,
+            &self.lexer.errors,
+            &self.errors,
+            self.source_type,
+        );
+
+        // Update source type for unambiguous modules
+        Self::update_program_source_type(&mut program, &module_record);
+
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
-
-        let source_type = program.source_type;
-        if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
-            } else {
-                source_type.with_script(true)
-            };
-        }
 
         ParserReturn {
             program,
@@ -535,13 +516,17 @@ impl<'a> ParserImpl<'a> {
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
+
+        // Enable top-level await for ES modules
         if source_type.module_kind() == ModuleKind::Module {
-            // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
+
+        // Allow return statements outside functions if configured
         if options.allow_return_outside_function {
             ctx = ctx.and_return(true);
         }
+
         ctx
     }
 
@@ -576,6 +561,79 @@ impl<'a> ParserImpl<'a> {
             return Some(diagnostics::overlong_source());
         }
         None
+    }
+
+    /// Handle fatal parsing errors and create dummy program
+    fn handle_fatal_error(&mut self, fatal_error: FatalError) -> (Program<'a>, bool) {
+        self.errors.truncate(fatal_error.errors_len);
+
+        if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
+            // Noop - EOF error already exists
+        } else {
+            self.error(fatal_error.error);
+        }
+
+        let mut program = Program::dummy(self.ast.allocator);
+        program.source_type = self.source_type;
+        program.source_text = self.source_text;
+
+        (program, true)
+    }
+
+    /// Collect all parser and lexer errors, with Flow language detection
+    fn collect_all_errors(&mut self) -> (Vec<OxcDiagnostic>, bool) {
+        let mut errors = vec![];
+        let mut is_flow_language = false;
+
+        // Only check for `@flow` if the file failed to parse
+        if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
+            if let Some(error) = self.flow_error() {
+                is_flow_language = true;
+                errors.push(error);
+                return (errors, is_flow_language);
+            }
+        }
+
+        (errors, is_flow_language)
+    }
+
+    /// Merge module record errors with existing errors
+    fn merge_module_errors_static(
+        mut errors: Vec<OxcDiagnostic>,
+        module_record_errors: Vec<OxcDiagnostic>,
+        is_flow_language: bool,
+        lexer_errors: &[OxcDiagnostic],
+        parser_errors: &[OxcDiagnostic],
+        source_type: SourceType,
+    ) -> Vec<OxcDiagnostic> {
+        // If Flow language was detected, only return the Flow error
+        if is_flow_language && errors.len() == 1 {
+            return errors;
+        }
+
+        // Otherwise, collect all errors
+        errors.reserve(lexer_errors.len() + parser_errors.len());
+        errors.extend(lexer_errors.iter().cloned());
+        errors.extend(parser_errors.iter().cloned());
+
+        // Skip checking for exports in TypeScript
+        if !source_type.is_typescript() {
+            errors.extend(module_record_errors);
+        }
+
+        errors
+    }
+
+    /// Update program source type for unambiguous modules
+    fn update_program_source_type(program: &mut Program<'a>, module_record: &ModuleRecord<'a>) {
+        let source_type = program.source_type;
+        if source_type.is_unambiguous() {
+            program.source_type = if module_record.has_module_syntax {
+                source_type.with_module(true)
+            } else {
+                source_type.with_script(true)
+            };
+        }
     }
 
     #[inline]

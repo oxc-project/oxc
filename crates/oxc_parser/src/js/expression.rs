@@ -34,18 +34,27 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_expr(&mut self) -> Expression<'a> {
         let span = self.start_span();
 
+        // Temporarily disable decorator context if active
         let has_decorator = self.ctx.has_decorator();
         if has_decorator {
             self.ctx = self.ctx.and_decorator(false);
         }
 
         let lhs = self.parse_assignment_expression_or_higher();
+
+        // Handle single expression case early
         if !self.at(Kind::Comma) {
+            // Restore decorator context if it was active
+            if has_decorator {
+                self.ctx = self.ctx.and_decorator(true);
+            }
             return lhs;
         }
 
+        // Parse sequence expression
         let expr = self.parse_sequence_expression(span, lhs);
 
+        // Restore decorator context if it was active
         if has_decorator {
             self.ctx = self.ctx.and_decorator(true);
         }
@@ -60,11 +69,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
-        // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
+
+        // Allow `await` and `yield` keywords - semantic analysis will report errors if invalid
         if !kind.is_identifier_reference(false, false) {
             return self.unexpected();
         }
+
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.ast.identifier_reference(span, name)
@@ -302,20 +313,26 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let span = token.span();
         let src = self.cur_src();
-        let value = match token.kind() {
+        let kind = token.kind();
+
+        // Parse the numeric value based on token type
+        let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, token.kind(), token.has_separator())
+                parse_int(src, kind, token.has_separator())
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src, token.has_separator())
             }
-            _ => unreachable!(),
+            _ => unreachable!("Expected numeric token"),
         };
+
         let value = value.unwrap_or_else(|err| {
             self.set_fatal_error(diagnostics::invalid_number(err, span));
-            0.0 // Dummy value
+            0.0 // Fallback to dummy value
         });
-        let base = match token.kind() {
+
+        // Determine the number base from token type
+        let base = match kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -330,23 +347,28 @@ impl<'a> ParserImpl<'a> {
             }
             _ => return self.unexpected(),
         };
+
         self.bump_any();
         self.ast.numeric_literal(span, value, Some(Atom::from(src)), base)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
-        let base = match self.cur_kind() {
+        let kind = self.cur_kind();
+        let base = match kind {
             Kind::Decimal => BigintBase::Decimal,
             Kind::Binary => BigintBase::Binary,
             Kind::Octal => BigintBase::Octal,
             Kind::Hex => BigintBase::Hex,
             _ => return self.unexpected(),
         };
+
         let token = self.cur_token();
         let span = token.span();
         let raw = self.cur_src();
+
+        // Remove the 'n' suffix to get the numeric part
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, token.kind(), token.has_separator(), self.ast.allocator);
+        let value = parse_big_int(src, kind, token.has_separator(), self.ast.allocator);
 
         self.bump_any();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
