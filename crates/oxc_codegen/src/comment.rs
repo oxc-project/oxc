@@ -165,9 +165,24 @@ impl Codegen<'_> {
         for comment in program.comments.iter().filter(|c| c.is_legal()) {
             let mut text = Cow::Borrowed(comment.span.source_text(source_text));
             if comment.is_block() && text.contains(is_line_terminator) {
-                let mut buffer = String::with_capacity(text.len());
-                // Print block comments with our own indentation.
-                for line in text.split(is_line_terminator) {
+                // Optimize comment formatting by pre-calculating capacity and building efficiently
+                let lines: Vec<&str> = text.split(is_line_terminator).collect();
+                
+                // Pre-calculate the exact capacity needed to avoid reallocations
+                let mut capacity = 0;
+                for line in &lines {
+                    if !line.starts_with("/*") {
+                        capacity += 1; // for '\t'
+                    }
+                    capacity += line.trim_start().len();
+                    if !line.ends_with("*/") {
+                        capacity += 1; // for '\n'
+                    }
+                }
+                
+                let mut buffer = String::with_capacity(capacity);
+                // Build the formatted comment with exact capacity
+                for line in lines {
                     if !line.starts_with("/*") {
                         buffer.push('\t');
                     }

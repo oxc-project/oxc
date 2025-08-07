@@ -780,11 +780,15 @@ impl<'a> Codegen<'a> {
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_len {
+            // Use more efficient hex formatting to avoid format! macro
+            let int_val = num as u128;
+            let hex_len = if int_val == 0 { 3 } else { 2 + (128 - int_val.leading_zeros() + 3) / 4 };
+            if hex_len < best_len as u32 {
+                // Only create the hex string if it will be shorter
+                let hex_candidate = format!("0x{:x}", int_val);
+                best_len = hex_candidate.len();
                 is_hex = true;
                 best_candidate = hex_candidate.into();
-                best_len = best_candidate.len();
             }
         }
         // Check for scientific notation optimizations for numbers starting with ".0"
@@ -798,7 +802,13 @@ impl<'a> Codegen<'a> {
                 // Calculate expected length: digits + 'e-' + exp_length
                 let expected_len = digits.len() + 2 + exp_str_len;
                 if expected_len < best_len {
-                    best_candidate = format!("{digits}e-{exp}").into();
+                    // Build string more efficiently than format! macro
+                    let mut new_candidate = String::with_capacity(expected_len);
+                    new_candidate.push_str(digits);
+                    new_candidate.push_str("e-");
+                    new_candidate.push_str(itoa::Buffer::new().format(exp));
+                    
+                    best_candidate = new_candidate.into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = best_candidate.len();
                 }
@@ -815,7 +825,13 @@ impl<'a> Codegen<'a> {
                 // Calculate expected length: base + 'e' + len
                 let expected_len = base.len() + 1 + exp_str_len;
                 if expected_len < best_len {
-                    best_candidate = format!("{base}e{len}").into();
+                    // Build string more efficiently than format! macro
+                    let mut new_candidate = String::with_capacity(expected_len);
+                    new_candidate.push_str(base);
+                    new_candidate.push('e');
+                    new_candidate.push_str(itoa::Buffer::new().format(len));
+                    
+                    best_candidate = new_candidate.into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
                     best_len = expected_len;
                 }
@@ -832,7 +848,14 @@ impl<'a> Codegen<'a> {
             // Calculate expected length: integer + point + 'e' + new_exp_str_len
             let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
             if expected_len < best_len {
-                best_candidate = format!("{integer}{point}e{new_expr}").into();
+                // Build string more efficiently than format! macro
+                let mut new_candidate = String::with_capacity(expected_len);
+                new_candidate.push_str(integer);
+                new_candidate.push_str(point);
+                new_candidate.push('e');
+                new_candidate.push_str(itoa::Buffer::new().format(new_expr));
+                
+                best_candidate = new_candidate.into();
                 debug_assert_eq!(best_candidate.len(), expected_len);
             }
         }
