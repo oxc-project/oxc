@@ -183,15 +183,34 @@ impl Config {
 
         let mut external_rules = FxHashMap::default();
 
+        // Track which plugins have already had their category rules applied.
+        // Start with the root plugins since they already have categories applied in base_rules.
+        let mut configured_plugins = self.base.config.plugins.builtin;
+
         for override_config in overrides_to_apply {
             if let Some(override_plugins) = &override_config.plugins {
                 if *override_plugins != plugins {
-                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                        self.categories
-                            .get(&rule.category())
-                            .map(|severity| (rule.clone(), severity))
-                    }) {
-                        rules.entry(rule).or_insert(*severity);
+                    // Only apply categories to plugins that:
+                    // 1. Are in the current accumulated plugin set
+                    // 2. Have NOT been configured yet (not in root or previous overrides)
+                    let unconfigured_plugins = plugins.builtin & !configured_plugins;
+
+                    if !unconfigured_plugins.is_empty() {
+                        for (rule, severity) in all_rules.iter().filter_map(|rule| {
+                            let rule_plugin = BuiltinLintPlugins::from(rule.plugin_name());
+                            // Only apply categories to rules from unconfigured plugins
+                            if unconfigured_plugins.contains(rule_plugin) {
+                                self.categories
+                                    .get(&rule.category())
+                                    .map(|severity| (rule.clone(), severity))
+                            } else {
+                                None
+                            }
+                        }) {
+                            rules.entry(rule).or_insert(*severity);
+                        }
+                        // Mark these plugins as configured
+                        configured_plugins |= unconfigured_plugins;
                     }
                 }
             }
@@ -326,14 +345,15 @@ mod test {
 
     use super::{ConfigStore, ResolvedOxlintOverrides};
     use crate::{
-        AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore, LintPlugins, RuleEnum,
+        AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore, LintPlugins, RuleCategory,
+        RuleEnum,
         config::{
             LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
         },
-        rules::{EslintNoUnusedVars, TypescriptNoExplicitAny},
+        rules::{EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny},
     };
 
     macro_rules! from_json {
@@ -710,5 +730,196 @@ mod test {
         let app = store.resolve("App.tsx".as_ref()).config;
         assert!(!app.globals.is_enabled("React"));
         assert!(!app.globals.is_enabled("Secret"));
+    }
+
+    #[test]
+    fn test_override_rule_not_reset_by_later_override_with_different_plugins() {
+        // This test reproduces the issue from https://github.com/oxc-project/oxc/issues/12859
+        // When multiple overrides apply to a file and they have different plugins,
+        // the later override should not reset rules that were explicitly set in earlier overrides.
+
+        // Root config with react, typescript, unicorn plugins and restriction category
+        let base_config = LintConfig {
+            plugins: LintPlugins::new(
+                BuiltinLintPlugins::REACT
+                    | BuiltinLintPlugins::TYPESCRIPT
+                    | BuiltinLintPlugins::UNICORN,
+                FxHashSet::default(),
+            ),
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        // Set up categories to enable restriction rules
+        let mut categories = OxlintCategories::default();
+        categories.insert(RuleCategory::Restriction, AllowWarnDeny::Warn);
+
+        // Create overrides similar to the user's config
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            // First override: typescript plugin for *.{ts,tsx,mts}
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.{ts,tsx,mts}"]).unwrap(),
+                plugins: Some(LintPlugins::new(
+                    BuiltinLintPlugins::TYPESCRIPT,
+                    FxHashSet::default(),
+                )),
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+            // Second override: react plugin for *.{ts,tsx} with jsx-filename-extension turned off
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.{ts,tsx}"]).unwrap(),
+                plugins: Some(LintPlugins::new(BuiltinLintPlugins::REACT, FxHashSet::default())),
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![(
+                        RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
+                        AllowWarnDeny::Allow,
+                    )],
+                    external_rules: vec![],
+                },
+            },
+            // Third override: unicorn plugin for *.{ts,tsx,mts}
+            ResolvedOxlintOverride {
+                env: None,
+                files: GlobSet::new(vec!["*.{ts,tsx,mts}"]).unwrap(),
+                plugins: Some(LintPlugins::new(BuiltinLintPlugins::UNICORN, FxHashSet::default())),
+                globals: None,
+                rules: ResolvedOxlintOverrideRules {
+                    builtin_rules: vec![],
+                    external_rules: vec![],
+                },
+            },
+        ]);
+
+        // Create base rules - jsx-filename-extension should be enabled by restriction category
+        let base_rules = vec![(
+            RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
+            AllowWarnDeny::Warn,
+        )];
+
+        let store = ConfigStore::new(
+            Config::new(base_rules, vec![], categories, base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // Resolve rules for a .tsx file
+        let rules_for_tsx = store.resolve("App.tsx".as_ref());
+
+        // The jsx-filename-extension rule should be disabled (Allow) because the second override
+        // explicitly set it to Allow, and the third override should not reset it
+        let jsx_filename_rule = rules_for_tsx
+            .rules
+            .iter()
+            .find(|(rule, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
+
+        // This test should fail with the current implementation
+        // The bug causes the rule to be re-enabled (Warn) instead of staying disabled (Allow)
+        assert!(
+            jsx_filename_rule.is_none(),
+            "jsx-filename-extension should be disabled (not present in active rules)"
+        );
+    }
+
+    #[test]
+    fn test_categories_only_applied_to_new_plugins_not_in_root() {
+        // Test that categories are only applied to plugins that weren't in the root config
+
+        // Root config with only typescript plugin
+        let base_config = LintConfig {
+            plugins: LintPlugins::new(BuiltinLintPlugins::TYPESCRIPT, FxHashSet::default()),
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        // Set up categories
+        let mut categories = OxlintCategories::default();
+        categories.insert(RuleCategory::Restriction, AllowWarnDeny::Warn);
+
+        // Override adds react plugin (new plugin not in root)
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            plugins: Some(LintPlugins::new(BuiltinLintPlugins::REACT, FxHashSet::default())),
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(vec![], vec![], categories, base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // For .tsx files, react rules should be enabled by categories since react wasn't in root
+        let rules_for_tsx = store.resolve("App.tsx".as_ref());
+
+        // Check that react rules are present (categories were applied to the new plugin)
+        let has_react_rules =
+            rules_for_tsx.rules.iter().any(|(rule, _)| rule.plugin_name() == "react");
+
+        assert!(has_react_rules, "React rules should be enabled by categories for new plugin");
+    }
+
+    #[test]
+    fn test_categories_not_reapplied_to_root_plugins() {
+        // Test that categories are NOT re-applied to plugins that were already in root
+
+        // Root config with react plugin
+        let base_config = LintConfig {
+            plugins: LintPlugins::new(BuiltinLintPlugins::REACT, FxHashSet::default()),
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        // Set up categories
+        let mut categories = OxlintCategories::default();
+        categories.insert(RuleCategory::Restriction, AllowWarnDeny::Warn);
+
+        // Base rules with jsx-filename-extension disabled
+        let base_rules = vec![(
+            RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
+            AllowWarnDeny::Allow, // Disabled at root
+        )];
+
+        // Override adds typescript plugin
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.tsx"]).unwrap(),
+            plugins: Some(LintPlugins::new(BuiltinLintPlugins::TYPESCRIPT, FxHashSet::default())),
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(base_rules, vec![], categories, base_config, overrides),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // For .tsx files, jsx-filename-extension should remain disabled
+        let rules_for_tsx = store.resolve("App.tsx".as_ref());
+
+        let jsx_filename_rule = rules_for_tsx
+            .rules
+            .iter()
+            .find(|(rule, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
+
+        assert!(
+            jsx_filename_rule.is_none(),
+            "jsx-filename-extension should remain disabled (not re-enabled by categories)"
+        );
     }
 }
