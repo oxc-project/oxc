@@ -4,6 +4,7 @@ use oxc_span::GetSpan;
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
+    /// Parse binding element with optional initializer
     /// `BindingElement`
     ///     `SingleNameBinding`
     ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
@@ -13,18 +14,31 @@ impl<'a> ParserImpl<'a> {
         self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, pattern))
     }
 
+    /// Parse binding pattern with optional TypeScript annotations
     pub(super) fn parse_binding_pattern(&mut self, allow_question: bool) -> BindingPattern<'a> {
         let mut kind = self.parse_binding_pattern_kind();
-        let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
+        
+        // Handle optional TypeScript question mark
+        let optional = if allow_question && self.is_ts { 
+            self.eat(Kind::Question) 
+        } else { 
+            false 
+        };
+        
+        // Parse optional TypeScript type annotation
         let type_annotation = self.parse_ts_type_annotation();
+        
+        // Extend span to include type annotation or optional marker
         if let Some(type_annotation) = &type_annotation {
             Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut kind);
         } else if optional {
             Self::extend_binding_pattern_span_end(self.prev_token_end, &mut kind);
         }
+        
         self.ast.binding_pattern(kind, type_annotation, optional)
     }
 
+    /// Parse the core binding pattern kind (identifier, object, or array)
     pub(crate) fn parse_binding_pattern_kind(&mut self) -> BindingPatternKind<'a> {
         match self.cur_kind() {
             Kind::LCurly => self.parse_object_binding_pattern(),
@@ -33,6 +47,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    /// Parse simple identifier binding pattern
     fn parse_binding_pattern_identifier(&mut self) -> BindingPatternKind<'a> {
         let ident = self.parse_binding_identifier();
         BindingPatternKind::BindingIdentifier(self.alloc(ident))

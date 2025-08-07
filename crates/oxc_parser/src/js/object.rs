@@ -11,6 +11,7 @@ use crate::{
 use super::FunctionKind;
 
 impl<'a> ParserImpl<'a> {
+    /// Parse object expression according to ECMAScript specification
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }
@@ -19,6 +20,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
+        
+        // Parse properties with 'In' context enabled
         let (object_expression_properties, _) = self.context(Context::In, Context::empty(), |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
@@ -26,6 +29,7 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_object_expression_property,
             )
         });
+        
         self.expect(Kind::RCurly);
         self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
     }
