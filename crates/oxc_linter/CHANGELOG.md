@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.11.0] - 2025-08-07
+
+### 🚀 Features
+
+- ac46347 oxlint: Add `tsgolint` integration (#12485) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 9c4bd42 linter/jest/expect-expect: Add support for expect in array expressions (#12877) (camc314)
+- 6b4a7a7 linter: Prevent category rules from being reapplied to already-configured plugins in overrides (#12875) (camc314)
+
+### ⚡ Performance
+
+- 2f8fc31 linter/new-cap: Use iterator chaining instead of cloning (#12879) (camc314)
+
+### 🧪 Testing
+
+- e15093c linter/new-cap: Add tests for `Intl.DateTimeFormat` (#12878) (camc314)
+
+
 ## [1.10.0] - 2025-08-06
 
 ### 🚀 Features
