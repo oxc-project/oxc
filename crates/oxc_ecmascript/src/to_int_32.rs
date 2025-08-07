@@ -56,6 +56,11 @@ unsafe fn f64_to_int32_arm64(number: f64) -> i32 {
 
 /// Generic implementation of ToInt32 for non-ARM64 architectures or ARM64 without JSCVT
 #[expect(clippy::float_cmp, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+#[cfg(any(
+    test,
+    not(target_arch = "aarch64"),
+    all(target_arch = "aarch64", not(target_os = "macos"))
+))]
 fn f64_to_int32_generic(number: f64) -> i32 {
     const SIGN_MASK: u64 = 0x8000_0000_0000_0000;
     const EXPONENT_MASK: u64 = 0x7FF0_0000_0000_0000;
