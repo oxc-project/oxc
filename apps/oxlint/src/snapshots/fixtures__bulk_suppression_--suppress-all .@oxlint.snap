@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --suppress-all .
+working directory: fixtures/bulk_suppression
+----------
+Generated suppression file: oxlint-suppressions.json
+----------
+CLI result: LintSucceeded
+----------

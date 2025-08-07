@@ -1,0 +1,63 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: .
+working directory: fixtures/bulk_suppression
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'anotherUnused' is declared but never used. Unused variables should start with a '_'.
+   ,-[another.js:1:5]
+ 1 | var anotherUnused = "test";
+   :     ^^^^^^|^^^^^^
+   :           `-- 'anotherUnused' is declared here
+ 2 | console.warn("warning message");
+   `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'unused_variable' is declared but never used. Unused variables should start with a '_'.
+   ,-[test.js:2:5]
+ 1 | console.log("This has violations");
+ 2 | var unused_variable = 123;
+   :     ^^^^^^^|^^^^^^^
+   :            `-- 'unused_variable' is declared here
+ 3 | debugger;
+   `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[test.js:3:1]
+ 2 | var unused_variable = 123;
+ 3 | debugger;
+   : ^^^^^^^^^
+ 4 | 
+   `----
+  help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'unusedFunction' is declared but never used.
+   ,-[test.js:5:10]
+ 4 | 
+ 5 | function unusedFunction() {
+   :          ^^^^^^^|^^^^^^
+   :                 `-- 'unusedFunction' is declared here
+ 6 |     return null;
+   `----
+  help: Consider removing this declaration.
+
+  x Identifier `redeclaredVar` has already been declared
+    ,-[typescript.ts:10:9]
+  9 |     debugger;
+ 10 |     var redeclaredVar = 1;
+    :         ^^^^^^|^^^^^^
+    :               `-- `redeclaredVar` has already been declared here
+ 11 |     let redeclaredVar = 2; // This should cause an error
+    :         ^^^^^^|^^^^^^
+    :               `-- It can not be redeclared here
+ 12 | }
+    `----
+
+Found 4 warnings and 1 error.
+Finished in <variable>ms on 3 files with 87 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
