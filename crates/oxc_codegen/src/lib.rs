@@ -788,7 +788,7 @@ impl<'a> Codegen<'a> {
             }
 
             // Check for numbers ending with zeros (but not hex numbers)
-            // The 0x check is necessary to prevent hex numbers like 0x8000000000000000 
+            // The 0x check is necessary to prevent hex numbers like 0x8000000000000000
             // from being incorrectly converted to scientific notation
             if best_candidate.ends_with('0') && !best_candidate.starts_with("0x") {
                 if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
