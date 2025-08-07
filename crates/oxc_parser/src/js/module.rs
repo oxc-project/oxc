@@ -69,103 +69,148 @@ impl<'a> ParserImpl<'a> {
         let token_after_import = self.cur_token();
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
-                // `import something ...`
                 Some(self.parse_binding_identifier())
             } else {
-                // `import ...`
                 None
             };
+
         let mut has_default_specifier = identifier_after_import.is_some();
         let mut should_parse_specifiers = true;
-
         let mut phase = None;
         let mut import_kind = ImportOrExportKind::Value;
 
         if self.at(Kind::Eq) && identifier_after_import.is_some() {
-            // `import something = ...`
             let decl = self.parse_ts_import_equals_declaration(
                 ImportOrExportKind::Value,
                 identifier_after_import.unwrap(),
                 span,
             );
             return Statement::from(decl);
-        } else if self.is_ts && token_after_import.kind() == Kind::Type {
-            // `import type ...`
-
-            if token_after_import.escaped() {
-                self.error(diagnostics::escaped_keyword(token_after_import.span()));
-            }
-
-            if self.at(Kind::LCurly) || self.at(Kind::Star) {
-                // `import type { ...`
-                // `import type * ...`
-                import_kind = ImportOrExportKind::Type;
-                has_default_specifier = false;
-            } else if self.cur_kind().is_binding_identifier() {
-                // `import type something ...`
-                let token = self.cur_token();
-                let identifier_after_type = self.parse_binding_identifier();
-                if token.kind() == Kind::From && self.at(Kind::Str) {
-                    // `import type from 'source'`
-                    has_default_specifier = true;
-                    import_kind = ImportOrExportKind::Value;
-                    should_parse_specifiers = false;
-                } else {
-                    identifier_after_import = Some(identifier_after_type);
-                    import_kind = ImportOrExportKind::Type;
-
-                    if self.at(Kind::Eq) {
-                        // `import type something = ...`
-                        let decl = self.parse_ts_import_equals_declaration(
-                            ImportOrExportKind::Type,
-                            identifier_after_import.unwrap(),
-                            span,
-                        );
-                        return Statement::from(decl);
-                    } else if self.at(Kind::From) {
-                        // `import type something from ...`
-                        has_default_specifier = true;
-                        should_parse_specifiers = false;
-                    }
-                }
+        }
+        
+        if self.is_ts && token_after_import.kind() == Kind::Type {
+            if let Some(result) = self.handle_type_import_syntax(
+                token_after_import,
+                &mut identifier_after_import,
+                &mut import_kind,
+                &mut has_default_specifier,
+                &mut should_parse_specifiers,
+                span,
+            ) {
+                return result;
             }
         } else if token_after_import.kind() == Kind::Defer && self.at(Kind::Star) {
-            // `import defer * ...`
             phase = Some(ImportPhase::Defer);
             has_default_specifier = false;
         } else if token_after_import.kind() == Kind::Source
             && self.cur_kind().is_binding_identifier()
         {
-            // `import source something ...`
-            let kind = self.cur_kind();
-            let identifier_after_source = self.parse_binding_identifier();
-            if kind == Kind::From {
-                // `import source from ...`
-                if self.at(Kind::From) {
-                    // `import source from from ...`
-                    identifier_after_import = Some(identifier_after_source);
-                    phase = Some(ImportPhase::Source);
-                    has_default_specifier = true;
-                } else if self.at(Kind::Str) {
-                    // `import source from 'source'`
-                    has_default_specifier = true;
-                    should_parse_specifiers = false;
-                }
-            } else if self.at(Kind::From) {
-                // `import source something from ...`
-                identifier_after_import = Some(identifier_after_source);
-                phase = Some(ImportPhase::Source);
-                has_default_specifier = true;
-            } else {
-                return self.unexpected();
+            if let Some(result) = self.handle_source_import_syntax(
+                &mut identifier_after_import,
+                &mut phase,
+                &mut has_default_specifier,
+                &mut should_parse_specifiers,
+            ) {
+                return result;
             }
         }
 
-        let specifiers = if self.at(Kind::Str) {
+        let specifiers = self.build_import_specifiers(
+            identifier_after_import,
+            has_default_specifier,
+            should_parse_specifiers,
+            import_kind,
+        );
+
+        self.finish_import_declaration(span, specifiers, phase, import_kind, should_record_module_record)
+    }
+
+    fn handle_type_import_syntax(
+        &mut self,
+        token_after_import: crate::lexer::Token,
+        identifier_after_import: &mut Option<BindingIdentifier<'a>>,
+        import_kind: &mut ImportOrExportKind,
+        has_default_specifier: &mut bool,
+        should_parse_specifiers: &mut bool,
+        span: u32,
+    ) -> Option<Statement<'a>> {
+        if token_after_import.escaped() {
+            self.error(diagnostics::escaped_keyword(token_after_import.span()));
+        }
+
+        if self.at(Kind::LCurly) || self.at(Kind::Star) {
+            *import_kind = ImportOrExportKind::Type;
+            *has_default_specifier = false;
+        } else if self.cur_kind().is_binding_identifier() {
+            let token = self.cur_token();
+            let identifier_after_type = self.parse_binding_identifier();
+            
+            if token.kind() == Kind::From && self.at(Kind::Str) {
+                *has_default_specifier = true;
+                *import_kind = ImportOrExportKind::Value;
+                *should_parse_specifiers = false;
+            } else {
+                *identifier_after_import = Some(identifier_after_type);
+                *import_kind = ImportOrExportKind::Type;
+
+                if self.at(Kind::Eq) {
+                    let decl = self.parse_ts_import_equals_declaration(
+                        ImportOrExportKind::Type,
+                        identifier_after_import.take().unwrap(),
+                        span,
+                    );
+                    return Some(Statement::from(decl));
+                } else if self.at(Kind::From) {
+                    *has_default_specifier = true;
+                    *should_parse_specifiers = false;
+                }
+            }
+        }
+        
+        None
+    }
+
+    fn handle_source_import_syntax(
+        &mut self,
+        identifier_after_import: &mut Option<BindingIdentifier<'a>>,
+        phase: &mut Option<ImportPhase>,
+        has_default_specifier: &mut bool,
+        should_parse_specifiers: &mut bool,
+    ) -> Option<Statement<'a>> {
+        let kind = self.cur_kind();
+        let identifier_after_source = self.parse_binding_identifier();
+        
+        if kind == Kind::From {
+            if self.at(Kind::From) {
+                *identifier_after_import = Some(identifier_after_source);
+                *phase = Some(ImportPhase::Source);
+                *has_default_specifier = true;
+            } else if self.at(Kind::Str) {
+                *has_default_specifier = true;
+                *should_parse_specifiers = false;
+            }
+        } else if self.at(Kind::From) {
+            *identifier_after_import = Some(identifier_after_source);
+            *phase = Some(ImportPhase::Source);
+            *has_default_specifier = true;
+        } else {
+            return Some(self.unexpected());
+        }
+        
+        None
+    }
+
+    fn build_import_specifiers(
+        &mut self,
+        identifier_after_import: Option<BindingIdentifier<'a>>,
+        has_default_specifier: bool,
+        should_parse_specifiers: bool,
+        import_kind: ImportOrExportKind,
+    ) -> Option<Vec<'a, ImportDeclarationSpecifier<'a>>> {
+        if self.at(Kind::Str) {
             if has_default_specifier && !should_parse_specifiers {
                 match identifier_after_import {
                     Some(identifier_after_import) => {
-                        // Special case: `import type from 'source'` where we already consumed `type` and `from`
                         Some(self.ast.vec1(
                             self.ast.import_declaration_specifier_import_default_specifier(
                                 identifier_after_import.span,
@@ -181,10 +226,18 @@ impl<'a> ParserImpl<'a> {
         } else {
             let default_specifier =
                 if has_default_specifier { identifier_after_import } else { None };
-
             Some(self.parse_import_declaration_specifiers(default_specifier, import_kind))
-        };
+        }
+    }
 
+    fn finish_import_declaration(
+        &mut self,
+        span: u32,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+        phase: Option<ImportPhase>,
+        import_kind: ImportOrExportKind,
+        should_record_module_record: bool,
+    ) -> Statement<'a> {
         let source = self.parse_literal_string();
         let with_clause = self.parse_import_attributes();
         self.asi();
