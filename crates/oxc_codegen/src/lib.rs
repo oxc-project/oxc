@@ -7,6 +7,7 @@
 
 use std::{cmp, slice};
 
+use cow_utils::CowUtils;
 use oxc_data_structures::pointer_ext::PointerExt;
 
 mod binary_expr_visitor;
@@ -774,17 +775,12 @@ impl<'a> Codegen<'a> {
             s = &s[1..];
         }
 
-        // Track the best candidate found so far
-        // Check hex format for integers first
-        if num.fract() == 0.0 {
-            // For integers, apply e+ replacement first, then check optimizations
-            let s = if let Some((prefix, suffix)) = s.split_once("e+") {
-                format!("{prefix}e{suffix}").into()
-            } else {
-                s.into()
-            };
+        let s = s.cow_replacen("e+", "e", 1);
 
-            let mut best_candidate: std::borrow::Cow<'_, str> = s;
+        // Track the best candidate found so far
+        if num.fract() == 0.0 {
+            // For integers, check hex format and other optimizations
+            let mut best_candidate = s.clone();
             let mut best_len = best_candidate.len();
 
             let hex_candidate = format!("0x{:x}", num as u128);
@@ -825,14 +821,8 @@ impl<'a> Codegen<'a> {
                 self.print_str(&best_candidate);
             }
         } else {
-            // For non-integers, apply e+ replacement and check for ".0" optimizations
-            let s = if let Some((prefix, suffix)) = s.split_once("e+") {
-                format!("{prefix}e{suffix}").into()
-            } else {
-                s.into()
-            };
-
-            let mut best_candidate: std::borrow::Cow<'_, str> = s;
+            // For non-integers, check for ".0" optimizations and other cases
+            let mut best_candidate = s.clone();
             let mut best_len = best_candidate.len();
 
             // Check for scientific notation optimizations for numbers starting with ".0"
