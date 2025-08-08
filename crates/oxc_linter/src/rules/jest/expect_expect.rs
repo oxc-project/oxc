@@ -494,6 +494,7 @@ fn test() {
             "#,
             None,
         ),
+        ("it('test', async () => { const array = [1]; for (const element of array) { expect(element).toBe(1); } });", None)
     ];
 
     let mut fail = vec![
