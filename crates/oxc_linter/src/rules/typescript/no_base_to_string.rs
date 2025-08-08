@@ -47,7 +47,7 @@ declare_oxc_lint!(
     /// ```
     NoBaseToString(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// ```
     NoConfusingVoidExpression(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

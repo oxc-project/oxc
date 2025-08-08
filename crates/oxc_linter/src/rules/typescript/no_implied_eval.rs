@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// ```
     NoImpliedEval(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

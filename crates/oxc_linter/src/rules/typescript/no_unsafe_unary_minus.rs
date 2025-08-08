@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeUnaryMinus(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

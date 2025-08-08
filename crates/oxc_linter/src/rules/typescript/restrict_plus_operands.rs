@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// ```
     RestrictPlusOperands(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

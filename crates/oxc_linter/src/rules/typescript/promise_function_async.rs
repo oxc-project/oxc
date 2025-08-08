@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// ```
     PromiseFunctionAsync(tsgolint),
     typescript,
-    suspicious,
+    restriction,
     pending,
 );
 

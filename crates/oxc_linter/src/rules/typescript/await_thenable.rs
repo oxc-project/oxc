@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// ```
     AwaitThenable(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

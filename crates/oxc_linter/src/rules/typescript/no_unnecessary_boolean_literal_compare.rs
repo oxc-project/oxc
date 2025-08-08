@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryBooleanLiteralCompare(tsgolint),
     typescript,
-    style,
+    suspicious,
     pending,
 );
 

@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryTemplateExpression(tsgolint),
     typescript,
-    style,
+    suspicious,
     pending,
 );
 

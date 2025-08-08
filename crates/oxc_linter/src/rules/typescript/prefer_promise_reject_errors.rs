@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     PreferPromiseRejectErrors(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

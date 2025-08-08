@@ -78,7 +78,7 @@ declare_oxc_lint!(
     /// ```
     UseUnknownInCatchCallbackVariable(tsgolint),
     typescript,
-    suspicious,
+    restriction,
     pending,
 );
 

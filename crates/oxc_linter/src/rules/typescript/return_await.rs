@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// ```
     ReturnAwait(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

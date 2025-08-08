@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeAssignment(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

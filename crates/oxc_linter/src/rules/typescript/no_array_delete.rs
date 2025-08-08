@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// ```
     NoArrayDelete(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

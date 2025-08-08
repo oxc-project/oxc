@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeCall(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// ```
     NoForInArray(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

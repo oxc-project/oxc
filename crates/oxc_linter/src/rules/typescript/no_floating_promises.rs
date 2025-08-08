@@ -72,7 +72,7 @@ declare_oxc_lint!(
     /// ```
     NoFloatingPromises(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

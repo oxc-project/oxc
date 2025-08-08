@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeReturn(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

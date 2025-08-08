@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// ```
     NoMixedEnums(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 
