@@ -192,6 +192,7 @@ mod eslint {
 mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
+    pub mod await_thenable;
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
@@ -201,8 +202,12 @@ mod typescript {
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
     pub mod explicit_module_boundary_types;
+    pub mod no_array_delete;
+    pub mod no_base_to_string;
     pub mod no_confusing_non_null_assertion;
+    pub mod no_confusing_void_expression;
     pub mod no_duplicate_enum_values;
+    pub mod no_duplicate_type_constituents;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
     pub mod no_empty_object_type;
@@ -210,6 +215,7 @@ mod typescript {
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
+    pub mod no_for_in_array;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
     pub mod no_misused_new;
@@ -958,6 +964,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_object_as_prop,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
+    typescript::await_thenable,
     typescript::ban_ts_comment,
     typescript::ban_tslint_comment,
     typescript::ban_types,
@@ -970,14 +977,19 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_misused_promises,
     typescript::no_floating_promises,
     typescript::no_inferrable_types,
+    typescript::no_array_delete,
+    typescript::no_base_to_string,
     typescript::no_confusing_non_null_assertion,
+    typescript::no_confusing_void_expression,
     typescript::no_duplicate_enum_values,
+    typescript::no_duplicate_type_constituents,
     typescript::no_dynamic_delete,
     typescript::no_empty_interface,
     typescript::no_empty_object_type,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_extraneous_class,
+    typescript::no_for_in_array,
     typescript::no_import_type_side_effects,
     typescript::no_misused_new,
     typescript::no_namespace,
