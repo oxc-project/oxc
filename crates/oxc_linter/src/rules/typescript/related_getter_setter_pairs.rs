@@ -71,7 +71,7 @@ declare_oxc_lint!(
     /// ```
     RelatedGetterSetterPairs(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

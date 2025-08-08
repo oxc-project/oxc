@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// ```
     NoDuplicateTypeConstituents(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

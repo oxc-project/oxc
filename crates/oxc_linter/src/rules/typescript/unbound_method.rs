@@ -85,7 +85,7 @@ declare_oxc_lint!(
     /// ```
     UnboundMethod(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     NoRedundantTypeConstituents(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 
