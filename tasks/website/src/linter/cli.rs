@@ -44,10 +44,10 @@ fn generate_cli() -> String {
             if let Some(line) = line.strip_prefix("**")
                 && let Some(line) = line.strip_suffix("**")
             {
-                return format!("## {line}");
+                format!("## {line}")
+            } else {
+                line.to_string()
             }
-
-            line.to_string()
         })
         .collect::<Vec<_>>()
         .join("\n")
