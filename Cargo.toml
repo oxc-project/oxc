@@ -191,7 +191,6 @@ fast-glob = "1.0.0"
 fixedbitset = "0.5.7"
 flate2 = "1.1.2"
 futures = "0.3.31"
-globset = "0.4.16"
 handlebars = "6.3.2"
 hashbrown = { version = "0.15.4", default-features = false }
 humansize = "2.1.3"

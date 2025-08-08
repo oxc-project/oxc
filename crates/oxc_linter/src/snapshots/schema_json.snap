@@ -193,6 +193,7 @@ expression: json
       }
     },
     "GlobSet": {
+      "description": "A set of glob patterns.",
       "type": "array",
       "items": {
         "type": "string"

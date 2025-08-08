@@ -2005,7 +2005,6 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
- "globset",
  "icu_segmenter",
  "indexmap",
  "insta",
