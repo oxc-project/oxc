@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     OnlyThrowError(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

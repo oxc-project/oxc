@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeMemberAccess(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

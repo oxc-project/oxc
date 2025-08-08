@@ -99,7 +99,7 @@ declare_oxc_lint!(
     /// ```
     SwitchExhaustivenessCheck(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 

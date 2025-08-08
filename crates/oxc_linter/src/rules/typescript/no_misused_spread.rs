@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// ```
     NoMisusedSpread(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     RequireArraySortCompare(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

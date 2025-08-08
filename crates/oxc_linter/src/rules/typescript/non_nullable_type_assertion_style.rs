@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// ```
     NonNullableTypeAssertionStyle(tsgolint),
     typescript,
-    style,
+    restriction,
     pending,
 );
 

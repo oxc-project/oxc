@@ -67,7 +67,7 @@ declare_oxc_lint!(
     /// ```
     RestrictTemplateExpressions(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// ```
     NoMeaninglessVoidOperator(tsgolint),
     typescript,
-    suspicious,
+    correctness,
     pending,
 );
 

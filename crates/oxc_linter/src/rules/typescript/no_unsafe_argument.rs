@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeArgument(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 
