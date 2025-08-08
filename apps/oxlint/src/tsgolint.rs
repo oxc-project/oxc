@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string,
-    rules::RuleEnum,
 };
 use oxc_span::Span;
 
@@ -28,8 +27,6 @@ pub struct TsGoLintState<'a> {
     cwd: PathBuf,
     /// The paths of files to lint
     paths: &'a Vec<Arc<OsStr>>,
-    /// The rules to run when linting
-    rules: Vec<(AllowWarnDeny, RuleEnum)>,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
     /// Channel to send errors from `tsgolint` to the main thread
@@ -43,17 +40,6 @@ impl<'a> TsGoLintState<'a> {
         paths: &'a Vec<Arc<OsStr>>,
         options: &LintServiceOptions,
     ) -> Self {
-        let rules = config_store
-            .rules()
-            .iter()
-            .filter_map(|(rule, status)| {
-                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                    Some((*status, rule.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect();
         TsGoLintState {
             error_sender,
             config_store,
@@ -61,14 +47,16 @@ impl<'a> TsGoLintState<'a> {
                 .unwrap_or(PathBuf::from("tsgolint")),
             cwd: options.cwd().to_path_buf(),
             paths,
-            rules,
         }
     }
 
     pub fn lint(self, stdout: &mut dyn Write) -> Option<CliRunResult> {
-        if self.rules.is_empty() || self.paths.is_empty() {
+        if self.paths.is_empty() {
             return None;
         }
+
+        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+
         // Feed JSON into STDIN of tsgolint in this format:
         // ```
         // {
@@ -86,7 +74,25 @@ impl<'a> TsGoLintState<'a> {
                 .iter()
                 .map(|path| TsGoLintInputFile {
                     file_path: path.to_string_lossy().to_string(),
-                    rules: self.rules.iter().map(|(_, r)| r.name().to_owned()).collect(),
+                    rules: {
+                        let path_buf = PathBuf::from(path);
+                        let resolved_config = resolved_configs
+                            .entry(path_buf.clone())
+                            .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                        // Collect the rules that are enabled for this file
+                        resolved_config
+                            .rules
+                            .iter()
+                            .filter_map(|(rule, status)| {
+                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                                    Some(rule.name().to_string())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    },
                 })
                 .collect(),
         };
@@ -117,11 +123,6 @@ impl<'a> TsGoLintState<'a> {
 
             match parse_tsgolint_output(&output.stdout) {
                 Ok(parsed) => {
-                    let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> =
-                        FxHashMap::default();
-                    let mut severities: FxHashMap<String, Option<AllowWarnDeny>> =
-                        FxHashMap::default();
-
                     let mut oxc_diagnostics: FxHashMap<PathBuf, Vec<OxcDiagnostic>> =
                         FxHashMap::default();
                     for tsgolint_diagnostic in parsed {
@@ -131,19 +132,18 @@ impl<'a> TsGoLintState<'a> {
                         }
 
                         let path = tsgolint_diagnostic.file_path.clone();
-                        let resolved_config = resolved_configs
-                            .entry(path.clone())
-                            .or_insert_with(|| self.config_store.resolve(&path));
+                        let Some(resolved_config) = resolved_configs.get(&path) else {
+                            // If we don't have a resolved config for this path, skip it. We should always
+                            // have a resolved config though, since we processed them already above.
+                            continue;
+                        };
 
-                        let rule = tsgolint_diagnostic.rule.clone();
-                        let severity = severities.entry(rule).or_insert_with(|| {
-                            resolved_config.rules.iter().find_map(|(rule, status)| {
-                                if rule.name() == tsgolint_diagnostic.rule {
-                                    Some(*status)
-                                } else {
-                                    None
-                                }
-                            })
+                        let severity = resolved_config.rules.iter().find_map(|(rule, status)| {
+                            if rule.name() == tsgolint_diagnostic.rule {
+                                Some(*status)
+                            } else {
+                                None
+                            }
                         });
 
                         let oxc_diagnostic: OxcDiagnostic = tsgolint_diagnostic.into();
@@ -152,7 +152,7 @@ impl<'a> TsGoLintState<'a> {
                             continue;
                         };
                         let oxc_diagnostic =
-                            oxc_diagnostic.with_severity(if *severity == AllowWarnDeny::Deny {
+                            oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
                                 Severity::Error
                             } else {
                                 Severity::Warning

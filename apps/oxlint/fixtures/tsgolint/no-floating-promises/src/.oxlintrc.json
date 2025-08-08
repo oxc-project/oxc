@@ -1,0 +1,16 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "typescript/no-floating-promises": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["overrides.ts"],
+      "rules": {
+        "typescript/no-floating-promises": "error"
+      }
+    }
+  ]
+}

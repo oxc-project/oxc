@@ -1219,7 +1219,7 @@ mod test {
     #[test]
     #[cfg(not(any(target_os = "windows", target_endian = "big")))]
     fn test_tsgolint() {
-        let args = &["--type-aware", "-c", ".oxlintrc.json"];
+        let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 }
