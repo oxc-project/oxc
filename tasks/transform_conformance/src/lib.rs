@@ -106,10 +106,10 @@ impl TestRunner {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| {
-                    if let Some(filter) = &options.filter {
-                        if !e.path().to_string_lossy().contains(filter) {
-                            return false;
-                        }
+                    if let Some(filter) = &options.filter
+                        && !e.path().to_string_lossy().contains(filter)
+                    {
+                        return false;
                     }
                     true
                 })

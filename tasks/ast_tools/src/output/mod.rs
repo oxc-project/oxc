@@ -89,10 +89,10 @@ impl RawOutput {
 
 fn write_to_file_impl(data: &[u8], path: &str) -> io::Result<()> {
     // If contents hasn't changed, don't touch the file
-    if let Ok(existing_data) = fs::read(path) {
-        if existing_data == data {
-            return Ok(());
-        }
+    if let Ok(existing_data) = fs::read(path)
+        && existing_data == data
+    {
+        return Ok(());
     }
 
     let path = Path::new(path);

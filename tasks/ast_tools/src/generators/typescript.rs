@@ -99,10 +99,10 @@ fn generate_ts_type_def_for_struct(
 
     // If struct has a converter defined with `#[estree(via = Converter)]` and that converter defines
     // a type alias, then it needs no type def
-    if let Some(converter_name) = &struct_def.estree.via {
-        if get_ts_type_for_converter(converter_name, schema).is_some() {
-            return None;
-        }
+    if let Some(converter_name) = &struct_def.estree.via
+        && get_ts_type_for_converter(converter_name, schema).is_some()
+    {
+        return None;
     }
 
     // If struct is marked as `#[estree(flatten)]`, and only has a single field which isn't skipped,
@@ -248,19 +248,19 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
     };
 
     if should_flatten_field(field, schema) {
-        if let TypeDef::Struct(field_type) = field.type_def(schema) {
-            if let Some(flatten_field) = get_single_field(field_type, schema) {
-                // Only one field to flatten. Add it as a field on the parent type, instead of extending.
-                generate_ts_type_def_for_struct_field_impl(
-                    field_type,
-                    flatten_field,
-                    fields_str,
-                    extends,
-                    output_as_type,
-                    schema,
-                );
-                return;
-            }
+        if let TypeDef::Struct(field_type) = field.type_def(schema)
+            && let Some(flatten_field) = get_single_field(field_type, schema)
+        {
+            // Only one field to flatten. Add it as a field on the parent type, instead of extending.
+            generate_ts_type_def_for_struct_field_impl(
+                field_type,
+                flatten_field,
+                fields_str,
+                extends,
+                output_as_type,
+                schema,
+            );
+            return;
         }
 
         // need `type` instead of `interface` when flattening BindingPattern
@@ -310,10 +310,10 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
 
     // If enum has a converter defined with `#[estree(via = Converter)]` and that converter defines
     // a type alias, then it needs no type def
-    if let Some(converter_name) = &enum_def.estree.via {
-        if get_ts_type_for_converter(converter_name, schema).is_some() {
-            return None;
-        }
+    if let Some(converter_name) = &enum_def.estree.via
+        && get_ts_type_for_converter(converter_name, schema).is_some()
+    {
+        return None;
     }
 
     // Get variant type names.
@@ -350,10 +350,10 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &struct_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
-                if let Some(converter_name) = &struct_def.estree.via {
-                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
-                        return Cow::Borrowed(type_name);
-                    }
+                if let Some(converter_name) = &struct_def.estree.via
+                    && let Some(type_name) = get_ts_type_for_converter(converter_name, schema)
+                {
+                    return Cow::Borrowed(type_name);
                 }
                 Cow::Borrowed(struct_def.name())
             }
@@ -362,10 +362,10 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &enum_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
-                if let Some(converter_name) = &enum_def.estree.via {
-                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
-                        return Cow::Borrowed(type_name);
-                    }
+                if let Some(converter_name) = &enum_def.estree.via
+                    && let Some(type_name) = get_ts_type_for_converter(converter_name, schema)
+                {
+                    return Cow::Borrowed(type_name);
                 }
                 Cow::Borrowed(enum_def.name())
             }
@@ -423,10 +423,10 @@ fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'
     let mut fields_which_are_not_skipped =
         struct_def.fields.iter().filter(|field| !should_skip_field(field, schema));
 
-    if let Some(field) = fields_which_are_not_skipped.next() {
-        if fields_which_are_not_skipped.next().is_none() {
-            return Some(field);
-        }
+    if let Some(field) = fields_which_are_not_skipped.next()
+        && fields_which_are_not_skipped.next().is_none()
+    {
+        return Some(field);
     }
     None
 }

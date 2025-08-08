@@ -144,10 +144,10 @@ impl TestRunner {
                 .filter_map(Result::ok)
                 .map(|e| {
                     let mut path = e.into_path();
-                    if path.is_file() {
-                        if let Some(parent_path) = path.parent() {
-                            path = parent_path.into();
-                        }
+                    if path.is_file()
+                        && let Some(parent_path) = path.parent()
+                    {
+                        path = parent_path.into();
                     }
                     path
                 })

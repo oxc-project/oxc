@@ -482,15 +482,13 @@ impl<'c> Parser<'c> {
         // Get doc comment
         let mut doc_comment = None;
         for attr in &field.attrs {
-            if let Meta::NameValue(name_value) = &attr.meta {
-                if name_value.path.is_ident("doc") {
-                    if let Expr::Lit(expr_lit) = &name_value.value {
-                        if let Lit::Str(lit_str) = &expr_lit.lit {
-                            doc_comment = Some(lit_str.value().trim().to_string());
-                            break;
-                        }
-                    }
-                }
+            if let Meta::NameValue(name_value) = &attr.meta
+                && name_value.path.is_ident("doc")
+                && let Expr::Lit(expr_lit) = &name_value.value
+                && let Lit::Str(lit_str) = &expr_lit.lit
+            {
+                doc_comment = Some(lit_str.value().trim().to_string());
+                break;
             }
         }
 

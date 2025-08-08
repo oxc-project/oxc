@@ -242,16 +242,16 @@ impl Renderer {
             let key_to_render = if key.is_empty() { None } else { Some(key) };
             let sections = self.render_properties(depth, key_to_render, schema);
 
-            if instance_type.as_ref().is_some_and(|it| it == "string") {
-                if let Some(r#enum) = &schema.enum_values {
-                    instance_type = Some(
-                        r#enum
-                            .iter()
-                            .map(|v| v.as_str().unwrap())
-                            .map(|s| format!(r#""{s}""#))
-                            .join(" | "),
-                    );
-                }
+            if instance_type.as_ref().is_some_and(|it| it == "string")
+                && let Some(r#enum) = &schema.enum_values
+            {
+                instance_type = Some(
+                    r#enum
+                        .iter()
+                        .map(|v| v.as_str().unwrap())
+                        .map(|s| format!(r#""{s}""#))
+                        .join(" | "),
+                );
             }
 
             (instance_type, sections)

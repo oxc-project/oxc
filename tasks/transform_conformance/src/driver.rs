@@ -63,12 +63,11 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) =
+        if self.check_semantic
+            && let Some(errors) =
                 check_semantic_after_transform(&transformer_return.scoping, program)
-            {
-                self.errors.extend(errors);
-            }
+        {
+            self.errors.extend(errors);
         }
         // Clear comments to avoid pure annotation comments that cause mismatch.
         program.comments.clear();

@@ -111,17 +111,17 @@ const source = `{}`;
 
     fn rule_config(&self, schema: &SchemaObject) -> String {
         let mut section = self.renderer.render_schema(2, "", schema);
-        if section.default.is_none() {
-            if let Some(SingleOrVec::Single(ty)) = &schema.instance_type {
-                match &**ty {
-                    InstanceType::Boolean => {
-                        section.default = Some(format!("{}", <bool>::default()));
-                    }
-                    InstanceType::Array => {
-                        section.default = Some("[]".to_string());
-                    }
-                    _ => {}
+        if section.default.is_none()
+            && let Some(SingleOrVec::Single(ty)) = &schema.instance_type
+        {
+            match &**ty {
+                InstanceType::Boolean => {
+                    section.default = Some(format!("{}", <bool>::default()));
                 }
+                InstanceType::Array => {
+                    section.default = Some("[]".to_string());
+                }
+                _ => {}
             }
         }
         let mut rendered = section.to_md(&self.renderer);

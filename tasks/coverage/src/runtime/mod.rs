@@ -236,12 +236,11 @@ impl Test262RuntimeCase {
                 if output.is_empty() {
                     TestResult::Passed
                 } else {
-                    if let Some(negative) = &self.base.meta().negative {
-                        if negative.phase.is_runtime()
-                            && output.starts_with(&negative.error_type.to_string())
-                        {
-                            return TestResult::Passed;
-                        }
+                    if let Some(negative) = &self.base.meta().negative
+                        && negative.phase.is_runtime()
+                        && output.starts_with(&negative.error_type.to_string())
+                    {
+                        return TestResult::Passed;
                     }
                     TestResult::GenericError(case, output)
                 }

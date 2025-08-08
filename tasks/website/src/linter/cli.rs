@@ -41,10 +41,10 @@ fn generate_cli() -> String {
         })
         .map(|line| {
             // Make `** title **` to `## title`
-            if let Some(line) = line.strip_prefix("**") {
-                if let Some(line) = line.strip_suffix("**") {
-                    return format!("## {line}");
-                }
+            if let Some(line) = line.strip_prefix("**")
+                && let Some(line) = line.strip_suffix("**")
+            {
+                return format!("## {line}");
             }
 
             line.to_string()

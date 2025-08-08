@@ -367,10 +367,10 @@ impl<'s> CacheKeyOffsets<'s> {
             .types
             .iter()
             .map(|type_def| {
-                if let TypeDef::Struct(struct_def) = type_def {
-                    if struct_def.generates_derive(estree_derive_id) {
-                        return UNCALCULATED;
-                    }
+                if let TypeDef::Struct(struct_def) = type_def
+                    && struct_def.generates_derive(estree_derive_id)
+                {
+                    return UNCALCULATED;
                 }
                 0
             })
@@ -384,10 +384,10 @@ impl<'s> CacheKeyOffsets<'s> {
         let mut cache_key_offsets = Self { offsets, estree_derive_id, span_type_id, schema };
 
         for type_def in &schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                if struct_def.generates_derive(estree_derive_id) {
-                    cache_key_offsets.calculate_struct_key_offset(struct_def);
-                }
+            if let TypeDef::Struct(struct_def) = type_def
+                && struct_def.generates_derive(estree_derive_id)
+            {
+                cache_key_offsets.calculate_struct_key_offset(struct_def);
             }
         }
 
