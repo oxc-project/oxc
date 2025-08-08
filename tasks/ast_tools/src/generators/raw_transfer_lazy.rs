@@ -370,9 +370,10 @@ impl<'s> CacheKeyOffsets<'s> {
                 if let TypeDef::Struct(struct_def) = type_def
                     && struct_def.generates_derive(estree_derive_id)
                 {
-                    return UNCALCULATED;
+                    UNCALCULATED
+                } else {
+                    0
                 }
-                0
             })
             .collect::<IndexVec<TypeId, u8>>();
 
