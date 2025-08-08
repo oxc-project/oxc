@@ -19,17 +19,17 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// Promise.reject('error'); // rejecting with string
-    /// 
+    ///
     /// Promise.reject(42); // rejecting with number
-    /// 
+    ///
     /// Promise.reject(true); // rejecting with boolean
-    /// 
+    ///
     /// Promise.reject({ message: 'error' }); // rejecting with plain object
-    /// 
+    ///
     /// Promise.reject(null); // rejecting with null
-    /// 
+    ///
     /// Promise.reject(); // rejecting with undefined
-    /// 
+    ///
     /// const error = 'Something went wrong';
     /// Promise.reject(error); // rejecting with non-Error variable
     /// ```
@@ -37,11 +37,11 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// Promise.reject(new Error('Something went wrong'));
-    /// 
+    ///
     /// Promise.reject(new TypeError('Invalid type'));
-    /// 
+    ///
     /// Promise.reject(new RangeError('Value out of range'));
-    /// 
+    ///
     /// // Custom Error subclasses
     /// class CustomError extends Error {
     ///   constructor(message: string) {
@@ -50,7 +50,7 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// Promise.reject(new CustomError('Custom error occurred'));
-    /// 
+    ///
     /// // Variables that are Error objects
     /// const error = new Error('Error message');
     /// Promise.reject(error);

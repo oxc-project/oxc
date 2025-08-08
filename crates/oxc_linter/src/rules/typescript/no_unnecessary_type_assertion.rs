@@ -20,15 +20,15 @@ declare_oxc_lint!(
     /// ```ts
     /// const str: string = 'hello';
     /// const redundant = str as string; // unnecessary, str is already string
-    /// 
+    ///
     /// function getString(): string {
     ///   return 'hello';
     /// }
     /// const result = getString() as string; // unnecessary, getString() already returns string
-    /// 
+    ///
     /// const num = 42;
     /// const alsoRedundant = num as 42; // unnecessary if TypeScript can infer literal type
-    /// 
+    ///
     /// // Unnecessary assertion to wider type
     /// const literal = 'hello' as string;
     /// ```
@@ -37,12 +37,12 @@ declare_oxc_lint!(
     /// ```ts
     /// const unknown: unknown = 'hello';
     /// const str = unknown as string; // necessary to narrow type
-    /// 
+    ///
     /// const element = document.getElementById('myElement') as HTMLInputElement; // necessary for specific element type
-    /// 
+    ///
     /// const obj = { name: 'John' };
     /// const name = obj.name as const; // necessary for literal type
-    /// 
+    ///
     /// // No assertion needed
     /// const str2: string = 'hello';
     /// const num: number = 42;

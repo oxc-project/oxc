@@ -19,38 +19,38 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// declare const someCondition: boolean;
-    /// 
+    ///
     /// if (someCondition === true) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// if (someCondition === false) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// if (someCondition !== true) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// if (someCondition !== false) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// const result = someCondition == true;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// declare const someCondition: boolean;
-    /// 
+    ///
     /// if (someCondition) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// if (!someCondition) {
     ///   // ...
     /// }
-    /// 
+    ///
     /// // Comparisons with non-boolean types are allowed
     /// declare const someValue: unknown;
     /// if (someValue === true) {

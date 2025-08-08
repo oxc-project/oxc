@@ -19,7 +19,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// type Status = 'pending' | 'approved' | 'rejected';
-    /// 
+    ///
     /// function handleStatus(status: Status) {
     ///   switch (status) {
     ///     case 'pending':
@@ -29,13 +29,13 @@ declare_oxc_lint!(
     ///     // Missing 'rejected' case
     ///   }
     /// }
-    /// 
+    ///
     /// enum Color {
     ///   Red,
     ///   Green,
     ///   Blue,
     /// }
-    /// 
+    ///
     /// function getColorName(color: Color) {
     ///   switch (color) {
     ///     case Color.Red:
@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// type Status = 'pending' | 'approved' | 'rejected';
-    /// 
+    ///
     /// function handleStatus(status: Status) {
     ///   switch (status) {
     ///     case 'pending':
@@ -61,7 +61,7 @@ declare_oxc_lint!(
     ///       return 'Request rejected';
     ///   }
     /// }
-    /// 
+    ///
     /// // Or with default case for exhaustiveness checking
     /// function handleStatusWithDefault(status: Status) {
     ///   switch (status) {
@@ -76,13 +76,13 @@ declare_oxc_lint!(
     ///       return _exhaustiveCheck;
     ///   }
     /// }
-    /// 
+    ///
     /// enum Color {
     ///   Red,
     ///   Green,
     ///   Blue,
     /// }
-    /// 
+    ///
     /// function getColorName(color: Color) {
     ///   switch (color) {
     ///     case Color.Red:

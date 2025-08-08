@@ -26,10 +26,10 @@ declare_oxc_lint!(
     /// ```ts
     /// declare const arr: number[];
     /// arr.splice(0, 1);
-    /// 
+    ///
     /// // or with a filter
     /// const filteredArr = arr.filter((_, index) => index !== 0);
-    /// 
+    ///
     /// // delete on object is allowed
     /// declare const obj: { a?: number };
     /// delete obj.a;

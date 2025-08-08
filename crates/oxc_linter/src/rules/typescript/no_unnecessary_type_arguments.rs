@@ -21,21 +21,21 @@ declare_oxc_lint!(
     /// function identity<T = string>(arg: T): T {
     ///   return arg;
     /// }
-    /// 
+    ///
     /// // Unnecessary type argument - string is the default
     /// const result = identity<string>('hello');
-    /// 
+    ///
     /// interface Container<T = number> {
     ///   value: T;
     /// }
-    /// 
+    ///
     /// // Unnecessary type argument - number is the default
     /// const container: Container<number> = { value: 42 };
-    /// 
+    ///
     /// class MyClass<T = boolean> {
     ///   constructor(public value: T) {}
     /// }
-    /// 
+    ///
     /// // Unnecessary type argument - boolean is the default
     /// const instance = new MyClass<boolean>(true);
     /// ```
@@ -45,20 +45,20 @@ declare_oxc_lint!(
     /// function identity<T = string>(arg: T): T {
     ///   return arg;
     /// }
-    /// 
+    ///
     /// // Using default type
     /// const result1 = identity('hello');
-    /// 
+    ///
     /// // Using different type
     /// const result2 = identity<number>(42);
-    /// 
+    ///
     /// interface Container<T = number> {
     ///   value: T;
     /// }
-    /// 
+    ///
     /// // Using default type
     /// const container1: Container = { value: 42 };
-    /// 
+    ///
     /// // Using different type
     /// const container2: Container<string> = { value: 'hello' };
     /// ```

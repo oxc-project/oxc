@@ -22,16 +22,16 @@ declare_oxc_lint!(
     /// async function fetchData() {
     ///   return fetch('/api/data'); // Should be: return await fetch('/api/data');
     /// }
-    /// 
+    ///
     /// async function processData() {
     ///   return someAsyncOperation(); // Should be: return await someAsyncOperation();
     /// }
-    /// 
+    ///
     /// // If configured to disallow unnecessary await:
     /// async function fetchData() {
     ///   return await fetch('/api/data'); // Should be: return fetch('/api/data');
     /// }
-    /// 
+    ///
     /// async function processData() {
     ///   return await someAsyncOperation(); // Should be: return someAsyncOperation();
     /// }
@@ -48,18 +48,18 @@ declare_oxc_lint!(
     ///     throw error;
     ///   }
     /// }
-    /// 
+    ///
     /// // When returning Promise directly for performance:
     /// async function fetchData() {
     ///   return fetch('/api/data');
     /// }
-    /// 
+    ///
     /// // Processing before return requires await:
     /// async function fetchAndProcess() {
     ///   const response = await fetch('/api/data');
     ///   return response.json();
     /// }
-    /// 
+    ///
     /// // Multiple async operations:
     /// async function multipleOperations() {
     ///   const data1 = await fetchData1();

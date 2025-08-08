@@ -20,16 +20,16 @@ declare_oxc_lint!(
     /// ```ts
     /// // unknown is redundant in unions
     /// type T1 = string | unknown;
-    /// 
+    ///
     /// // any is redundant in unions
     /// type T2 = string | any;
-    /// 
+    ///
     /// // never is redundant in unions
     /// type T3 = string | never;
-    /// 
+    ///
     /// // Literal types that are wider than other types
     /// type T4 = string | 'hello';
-    /// 
+    ///
     /// // Object types that are subsets
     /// type T5 = { a: string } | { a: string; b: number };
     /// ```
@@ -37,14 +37,14 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// type T1 = string | number;
-    /// 
+    ///
     /// type T2 = 'hello' | 'world';
-    /// 
+    ///
     /// type T3 = { a: string } | { b: number };
-    /// 
+    ///
     /// // unknown in intersections is meaningful
     /// type T4 = string & unknown;
-    /// 
+    ///
     /// // never in intersections is meaningful
     /// type T5 = string & never;
     /// ```

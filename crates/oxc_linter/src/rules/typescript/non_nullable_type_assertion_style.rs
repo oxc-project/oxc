@@ -19,38 +19,38 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// declare const value: string | null;
-    /// 
+    ///
     /// // Type assertion when non-null assertion would be clearer
     /// const result1 = value as string;
-    /// 
+    ///
     /// declare const maybe: number | undefined;
     /// const result2 = maybe as number;
-    /// 
+    ///
     /// // In function calls
     /// function takesString(s: string) {
     ///   console.log(s);
     /// }
-    /// 
+    ///
     /// takesString(value as string);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// declare const value: string | null;
-    /// 
+    ///
     /// // Non-null assertion for non-nullable types
     /// const result1 = value!;
-    /// 
+    ///
     /// declare const maybe: number | undefined;
     /// const result2 = maybe!;
-    /// 
+    ///
     /// // In function calls
     /// function takesString(s: string) {
     ///   console.log(s);
     /// }
-    /// 
+    ///
     /// takesString(value!);
-    /// 
+    ///
     /// // Type assertion for actual type changes is still fine
     /// declare const unknown: unknown;
     /// const str = unknown as string; // This is a different type, not just removing null

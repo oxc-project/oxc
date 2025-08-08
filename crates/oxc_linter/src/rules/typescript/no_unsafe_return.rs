@@ -19,13 +19,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// declare const anyValue: any;
-    /// 
+    ///
     /// function getString(): string {
     ///   return anyValue; // unsafe return
     /// }
-    /// 
+    ///
     /// const getNumber = (): number => anyValue; // unsafe return
-    /// 
+    ///
     /// function processData(): { name: string; age: number } {
     ///   return anyValue; // unsafe return
     /// }
@@ -36,17 +36,17 @@ declare_oxc_lint!(
     /// declare const stringValue: string;
     /// declare const numberValue: number;
     /// declare const unknownValue: unknown;
-    /// 
+    ///
     /// function getString(): string {
     ///   return stringValue; // safe
     /// }
-    /// 
+    ///
     /// const getNumber = (): number => numberValue; // safe
-    /// 
+    ///
     /// function processUnknown(): unknown {
     ///   return unknownValue; // safe - explicitly returning unknown
     /// }
-    /// 
+    ///
     /// // Type guard to safely return
     /// function safeGetString(): string | null {
     ///   if (typeof unknownValue === 'string') {

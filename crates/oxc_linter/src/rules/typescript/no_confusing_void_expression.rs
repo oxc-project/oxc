@@ -20,10 +20,10 @@ declare_oxc_lint!(
     /// ```ts
     /// // arrow function returning void expression
     /// const foo = () => void bar();
-    /// 
+    ///
     /// // conditional expression
     /// const result = condition ? void foo() : bar();
-    /// 
+    ///
     /// // void in conditional
     /// if (void foo()) {
     ///   // ...
@@ -34,16 +34,16 @@ declare_oxc_lint!(
     /// ```ts
     /// // proper use of void
     /// void foo();
-    /// 
+    ///
     /// // explicit return statement
     /// const foo = () => {
     ///   bar();
     ///   return;
     /// };
-    /// 
+    ///
     /// // statement expression
     /// foo();
-    /// 
+    ///
     /// // IIFE with void
     /// void (function() {
     ///   console.log('immediately invoked');
