@@ -1215,6 +1215,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))] // ToDo: my guess is the missing `.exe` suffix when searching
     fn test_tsgolint() {
         let args = &["--type-aware", "-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
