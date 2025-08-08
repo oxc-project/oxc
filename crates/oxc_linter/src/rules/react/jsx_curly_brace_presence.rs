@@ -465,15 +465,10 @@ impl JsxCurlyBracePresence {
                 if allowed.is_never()
                     && let Some(string) = template.single_quasi()
                 {
-                    if contains_quote_characters(string.as_str())
-                        || is_allowed_string_like(
-                            ctx,
-                            string.as_str(),
-                            container,
-                            node.id(),
-                            is_prop,
-                        )
-                    {
+                    if !is_prop && contains_quote_characters(&string) {
+                        return;
+                    }
+                    if is_allowed_string_like(ctx, string.as_str(), container, node.id(), is_prop) {
                         return;
                     }
                     report_unnecessary_curly(ctx, container, template.span);
@@ -499,7 +494,6 @@ fn is_allowed_string_like<'a>(
         || contains_multiline_comment(s)
         || contains_line_break_literal(s)
         || contains_utf8_escape(s)
-        || is_prop && contains_quote_characters(s)
         || has_adjacent_jsx_expression_containers(ctx, container, node_id)
 }
 
@@ -974,16 +968,16 @@ fn test() {
             "<App horror={<div />} />",
             Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
         ),
-        // (
-        //     r#"<Foo bar={"'"} />"#,
-        //     Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
-        // ),
-        //(
-        //    r#"
-        //	        <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
-        //	      "#,
-        //    Some(json!(["never"])),
-        //),
+        (
+            r#"<Foo bar={"'"} />"#,
+            Some(json!([{ "props": "never", "children": "never", "propElementValues": "never" }])),
+        ),
+        (
+            r#"
+        	        <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
+        	      "#,
+            Some(json!(["never"])),
+        ),
     ];
 
     // TODO: implement fixer

@@ -411,3 +411,17 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <App horror={<div />} />
    ·              ───────
    ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:11]
+ 1 │ <Foo bar={"'"} />
+   ·           ───
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:29]
+ 1 │ 
+ 2 │                     <Foo help={'The maximum time range for searches. (i.e. "P30D" for 30 days, "PT24H" for 24 hours)'} />
+   ·                                ──────────────────────────────────────────────────────────────────────────────────────
+ 3 │                   
+   ╰────
