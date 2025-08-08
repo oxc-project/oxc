@@ -6,6 +6,159 @@ arguments: --type-aware -c .oxlintrc.json
 working directory: fixtures/tsgolint
 ----------
 
+  x typescript-eslint(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+   ,-[await-thenable/index.ts:3:1]
+ 2 | 
+ 3 | await 12;
+   : ^^^^^^^^
+ 4 | await (() => {});
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[await-thenable/index.ts:4:1]
+ 3 | await 12;
+ 4 | await (() => {});
+   : ^^^^^
+ 5 | 
+   `----
+
+  x typescript-eslint(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+   ,-[await-thenable/index.ts:7:1]
+ 6 | // non-Promise values
+ 7 | await Math.random;
+   : ^^^^^^^^^^^^^^^^^
+ 8 | await { then() {} };
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[await-thenable/index.ts:8:9]
+ 7 | await Math.random;
+ 8 | await { then() {} };
+   :         ^^^^
+ 9 | 
+   `----
+
+  x typescript-eslint(await-thenable): Unexpected `await` of a non-Promise (non-"Thenable") value.
+    ,-[await-thenable/index.ts:12:1]
+ 11 | declare const getPromise: () => Promise<string>;
+ 12 | await getPromise;
+    : ^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-array-delete): Using the `delete` operator with an array expression is unsafe.
+   ,-[no-array-delete/index.ts:4:1]
+ 3 | declare const arr: number[];
+ 4 | delete arr[0];
+   : ^^^^^^^^^^^^^
+   `----
+
+  x typescript-eslint(no-base-to-string): '// Examples of incorrect code for no-base-to-string rule
+  | 
+  | // These will evaluate to '[object Object]'
+  | ({})' always use Object's default stringification format ('[object Object]') when stringified.
+   ,-[no-base-to-string/index.ts:4:1]
+ 3 | // These will evaluate to '[object Object]'
+ 4 | ({}).toString();
+   : ^^^^
+ 5 | ({foo: 'bar'}).toString();
+   `----
+
+  x typescript-eslint(no-base-to-string): '
+  | ({foo: 'bar'})' always use Object's default stringification format ('[object Object]') when stringified.
+   ,-[no-base-to-string/index.ts:5:1]
+ 4 | ({}).toString();
+ 5 | ({foo: 'bar'}).toString();
+   : ^^^^^^^^^^^^^^
+ 6 | ({foo: 'bar'}).toLocaleString();
+   `----
+
+  x typescript-eslint(no-base-to-string): '
+  | ({foo: 'bar'})' always use Object's default stringification format ('[object Object]') when stringified.
+   ,-[no-base-to-string/index.ts:6:1]
+ 5 | ({foo: 'bar'}).toString();
+ 6 | ({foo: 'bar'}).toLocaleString();
+   : ^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+   ,-[no-confusing-void-expression/index.ts:7:28]
+ 6 | // conditional expression
+ 7 | const result = condition ? void foo() : bar();
+   :                            ^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+   ,-[no-confusing-void-expression/index.ts:7:33]
+ 6 | // conditional expression
+ 7 | const result = condition ? void foo() : bar();
+   :                                 ^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+    ,-[no-confusing-void-expression/index.ts:10:5]
+  9 | // void in conditional
+ 10 | if (void foo()) {
+    :     ^^^^^^^^^^
+ 11 |   // ...
+    `----
+
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+    ,-[no-confusing-void-expression/index.ts:10:10]
+  9 | // void in conditional
+ 10 | if (void foo()) {
+    :          ^^^^^
+ 11 |   // ...
+    `----
+
+  x typescript-eslint(no-duplicate-type-constituents): Union type constituent is duplicated with  'A'.
+   ,-[no-duplicate-type-constituents/index.ts:3:17]
+ 2 | 
+ 3 | type T1 = 'A' | 'A';
+   :                 ^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'A' is an 'error' type that acts as 'any' and overrides all other types in this union type.
+   ,-[no-duplicate-type-constituents/index.ts:5:11]
+ 4 | 
+ 5 | type T2 = A | A | B;
+   :           ^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'A' is an 'error' type that acts as 'any' and overrides all other types in this union type.
+   ,-[no-duplicate-type-constituents/index.ts:5:15]
+ 4 | 
+ 5 | type T2 = A | A | B;
+   :               ^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'B' is an 'error' type that acts as 'any' and overrides all other types in this union type.
+   ,-[no-duplicate-type-constituents/index.ts:5:19]
+ 4 | 
+ 5 | type T2 = A | A | B;
+   :                   ^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-duplicate-type-constituents): Union type constituent is duplicated with  'foo'.
+    ,-[no-duplicate-type-constituents/index.ts:14:5]
+ 13 |   | 'bar'
+ 14 |   | 'foo';
+    :     ^^^^^
+    `----
+
+  x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function.
+   ,-[no-floating-promises/index.ts:1:51]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+   :                                                   ^^^^^^^^^^^^^^^^
+ 2 | promise;
+   `----
+
   x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
   | operator.
    ,-[no-floating-promises/index.ts:2:1]
@@ -13,6 +166,15 @@ working directory: fixtures/tsgolint
  2 | promise;
    : ^^^^^^^^
  3 | 
+   `----
+
+  x typescript-eslint(require-await): Function has no 'await' expression.
+   ,-[no-floating-promises/index.ts:4:1]
+ 3 |     
+ 4 | ,-> async function returnsPromise() {
+ 5 | |     return "value";
+ 6 | `-> }
+ 7 |     
    `----
 
   x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
@@ -24,6 +186,14 @@ working directory: fixtures/tsgolint
  9 | 
    `----
 
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+    ,-[no-floating-promises/index.ts:10:1]
+  9 | 
+ 10 | Promise.reject("value").catch();
+    : ^^^^^^^^^^^^^^^^^^^^^^^
+ 11 | 
+    `----
+
   x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
   | operator.
     ,-[no-floating-promises/index.ts:10:1]
@@ -31,6 +201,14 @@ working directory: fixtures/tsgolint
  10 | Promise.reject("value").catch();
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  11 | 
+    `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+    ,-[no-floating-promises/index.ts:12:1]
+ 11 | 
+ 12 | Promise.reject("value").finally();
+    : ^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | 
     `----
 
   x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
@@ -50,6 +228,606 @@ working directory: fixtures/tsgolint
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
+  x typescript-eslint(require-await): Function has no 'await' expression.
+    ,-[no-floating-promises/index.ts:14:15]
+ 13 | 
+ 14 | [1, 2, 3].map(async (x) => x + 1);
+    :               ^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-for-in-array): For-in loops over arrays skips holes, returns indices as strings, and may visit the prototype chain or other enumerable properties. Use a more robust
+  | iteration method such as for-of or array.forEach instead.
+   ,-[no-for-in-array/index.ts:5:1]
+ 4 | 
+ 5 | for (const i in arr) {
+   : ^^^^^^^^^^^^^^^^^^^^
+ 6 |   console.log(arr[i]);
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-for-in-array/index.ts:6:3]
+ 5 | for (const i in arr) {
+ 6 |   console.log(arr[i]);
+   :   ^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+   ,-[no-for-in-array/index.ts:6:11]
+ 5 | for (const i in arr) {
+ 6 |   console.log(arr[i]);
+   :           ^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-for-in-array): For-in loops over arrays skips holes, returns indices as strings, and may visit the prototype chain or other enumerable properties. Use a more robust
+  | iteration method such as for-of or array.forEach instead.
+    ,-[no-for-in-array/index.ts:9:1]
+  8 | 
+  9 | for (const i in arr) {
+    : ^^^^^^^^^^^^^^^^^^^^
+ 10 |   console.log(i, arr[i]);
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-for-in-array/index.ts:10:3]
+  9 | for (const i in arr) {
+ 10 |   console.log(i, arr[i]);
+    :   ^^^^^^^^^^^
+ 11 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[no-for-in-array/index.ts:10:11]
+  9 | for (const i in arr) {
+ 10 |   console.log(i, arr[i]);
+    :           ^^^
+ 11 | }
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-implied-eval/index.ts:3:1]
+ 2 | 
+ 3 | setTimeout('alert("Hi!");', 100);
+   : ^^^^^^^^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
+   ,-[no-implied-eval/index.ts:3:12]
+ 2 | 
+ 3 | setTimeout('alert("Hi!");', 100);
+   :            ^^^^^^^^^^^^^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-implied-eval/index.ts:5:1]
+ 4 | 
+ 5 | setInterval('alert("Hi!");', 100);
+   : ^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
+   ,-[no-implied-eval/index.ts:5:13]
+ 4 | 
+ 5 | setInterval('alert("Hi!");', 100);
+   :             ^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-implied-eval/index.ts:7:1]
+ 6 | 
+ 7 | setImmediate('alert("Hi!")');
+   : ^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
+   ,-[no-implied-eval/index.ts:7:14]
+ 6 | 
+ 7 | setImmediate('alert("Hi!")');
+   :              ^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-implied-eval/index.ts:9:1]
+  8 | 
+  9 | window.setTimeout('count = 5', 10);
+    : ^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .setTimeout on an `any` value.
+    ,-[no-implied-eval/index.ts:9:8]
+  8 | 
+  9 | window.setTimeout('count = 5', 10);
+    :        ^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
+    ,-[no-implied-eval/index.ts:9:19]
+  8 | 
+  9 | window.setTimeout('count = 5', 10);
+    :                   ^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-implied-eval/index.ts:11:1]
+ 10 | 
+ 11 | window.setInterval('foo = bar', 10);
+    : ^^^^^^^^^^^^^^^^^^
+ 12 | 
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .setInterval on an `any` value.
+    ,-[no-implied-eval/index.ts:11:8]
+ 10 | 
+ 11 | window.setInterval('foo = bar', 10);
+    :        ^^^^^^^^^^^
+ 12 | 
+    `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
+    ,-[no-implied-eval/index.ts:11:20]
+ 10 | 
+ 11 | window.setInterval('foo = bar', 10);
+    :                    ^^^^^^^^^^^
+ 12 | 
+    `----
+
+  x typescript-eslint(no-implied-eval): Implied eval. Do not use the Function constructor to create functions.
+    ,-[no-implied-eval/index.ts:13:12]
+ 12 | 
+ 13 | const fn = new Function('a', 'b', 'return a + b');
+    :            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+   ,-[no-meaningless-void-operator/index.ts:7:1]
+ 6 | 
+ 7 | void foo(); // meaningless, foo() already returns void
+   : ^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+   ,-[no-meaningless-void-operator/index.ts:7:6]
+ 6 | 
+ 7 | void foo(); // meaningless, foo() already returns void
+   :      ^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+    ,-[no-meaningless-void-operator/index.ts:9:1]
+  8 | 
+  9 | void undefined; // meaningless, undefined is already undefined
+    : ^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[no-misused-spread/index.ts:13:7]
+ 12 | const str = 'hello';
+ 13 | const obj = { ...str }; // Creates { '0': 'h', '1': 'e', ... } which might be unexpected
+    :       ^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
+   ,-[no-mixed-enums/index.ts:5:12]
+ 4 |   Open = 1,
+ 5 |   Closed = 'closed',
+   :            ^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
+    ,-[no-mixed-enums/index.ts:10:10]
+  9 |   Up = 'up',
+ 10 |   Down = 2,
+    :          ^
+ 11 |   Left = 'left',
+    `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'unknown' overrides all other types in this union type.
+   ,-[no-redundant-type-constituents/index.ts:4:20]
+ 3 | // unknown is redundant in unions
+ 4 | type T1 = string | unknown;
+   :                    ^^^^^^^
+ 5 | 
+   `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'any' overrides all other types in this union type.
+   ,-[no-redundant-type-constituents/index.ts:7:20]
+ 6 | // any is redundant in unions
+ 7 | type T2 = string | any;
+   :                    ^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-redundant-type-constituents): 'never' is overridden by other types in this union type.
+    ,-[no-redundant-type-constituents/index.ts:10:20]
+  9 | // never is redundant in unions
+ 10 | type T3 = string | never;
+    :                    ^^^^^
+    `----
+
+  x typescript-eslint(no-unnecessary-boolean-literal-compare): This expression unnecessarily compares a boolean value to a boolean instead of using it directly.
+   ,-[no-unnecessary-boolean-literal-compare/index.ts:5:5]
+ 4 | 
+ 5 | if (someCondition === true) {
+   :     ^^^^^^^^^^^^^^^^^^^^^^
+ 6 |   // ...
+   `----
+
+  x typescript-eslint(no-unnecessary-boolean-literal-compare): This expression unnecessarily compares a boolean value to a boolean instead of using it directly.
+    ,-[no-unnecessary-boolean-literal-compare/index.ts:9:5]
+  8 | 
+  9 | if (someCondition === false) {
+    :     ^^^^^^^^^^^^^^^^^^^^^^^
+ 10 |   // ...
+    `----
+
+  x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
+    ,-[no-unnecessary-template-expression/index.ts:10:15]
+  9 | // Template with only literal expressions
+ 10 | const str4 = `${'Hello'} ${'world'}`;
+    :               ^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
+    ,-[no-unnecessary-template-expression/index.ts:10:26]
+  9 | // Template with only literal expressions
+ 10 | const str4 = `${'Hello'} ${'world'}`;
+    :                          ^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unnecessary-type-arguments): This is the default value for this type parameter, so it can be omitted.
+   ,-[no-unnecessary-type-arguments/index.ts:8:25]
+ 7 | // Unnecessary type argument - string is the default
+ 8 | const result = identity<string>('hello');
+   :                         ^^^^^^
+ 9 | 
+   `----
+
+  x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
+    ,-[no-unnecessary-type-assertion/index.ts:9:16]
+  8 | }
+  9 | const result = getString() as string; // unnecessary, getString() already returns string
+    :                ^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
+    ,-[no-unnecessary-type-assertion/index.ts:12:23]
+ 11 | const num = 42;
+ 12 | const alsoRedundant = num as 42; // unnecessary if TypeScript can infer literal type
+    :                       ^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-unsafe-argument/index.ts:6:3]
+ 5 | function takesString(str: string): void {
+ 6 |   console.log(str.length);
+   :   ^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+   ,-[no-unsafe-argument/index.ts:6:11]
+ 5 | function takesString(str: string): void {
+ 6 |   console.log(str.length);
+   :           ^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-argument): Unsafe argument of type any assigned to a parameter of type string.
+    ,-[no-unsafe-argument/index.ts:9:13]
+  8 | 
+  9 | takesString(anyValue); // unsafe
+    :             ^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-argument): Unsafe argument of type any assigned to a parameter of type number.
+    ,-[no-unsafe-argument/index.ts:12:28]
+ 11 | declare function takesNumber(num: number): number;
+ 12 | const result = takesNumber(anyValue); // unsafe
+    :                            ^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+   ,-[no-unsafe-assignment/index.ts:5:7]
+ 4 | 
+ 5 | const str: string = anyValue; // unsafe assignment
+   :       ^^^^^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+   ,-[no-unsafe-assignment/index.ts:8:1]
+ 7 | let num: number;
+ 8 | num = anyValue; // unsafe assignment
+   : ^^^^^^^^^^^^^^
+ 9 | 
+   `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[no-unsafe-assignment/index.ts:11:3]
+ 10 | const obj = {
+ 11 |   prop: anyValue as any, // unsafe assignment
+    :   ^^^^^^^^^^^^^^^^^^^^^
+ 12 | };
+    `----
+
+  x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
+    ,-[no-unsafe-assignment/index.ts:11:9]
+ 10 | const obj = {
+ 11 |   prop: anyValue as any, // unsafe assignment
+    :         ^^^^^^^^^^^^^^^
+ 12 | };
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-unsafe-call/index.ts:5:1]
+ 4 | 
+ 5 | anyValue(); // unsafe call
+   : ^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[no-unsafe-call/index.ts:7:1]
+ 6 | 
+ 7 | anyValue(1, 2, 3); // unsafe call
+   : ^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[no-unsafe-call/index.ts:9:7]
+  8 | 
+  9 | const result = anyValue('hello'); // unsafe call
+    :       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-unsafe-call/index.ts:9:16]
+  8 | 
+  9 | const result = anyValue('hello'); // unsafe call
+    :                ^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-unsafe-call/index.ts:12:1]
+ 11 | // Chained unsafe calls
+ 12 | anyValue().then().catch(); // unsafe
+    : ^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-unsafe-call/index.ts:12:1]
+ 11 | // Chained unsafe calls
+ 12 | anyValue().then().catch(); // unsafe
+    : ^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-unsafe-call/index.ts:12:1]
+ 11 | // Chained unsafe calls
+ 12 | anyValue().then().catch(); // unsafe
+    : ^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .then on an `any` value.
+    ,-[no-unsafe-call/index.ts:12:12]
+ 11 | // Chained unsafe calls
+ 12 | anyValue().then().catch(); // unsafe
+    :            ^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .catch on an `any` value.
+    ,-[no-unsafe-call/index.ts:12:19]
+ 11 | // Chained unsafe calls
+ 12 | anyValue().then().catch(); // unsafe
+    :                   ^^^^^
+    `----
+
+  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
+   ,-[no-unsafe-enum-comparison/index.ts:4:10]
+ 3 | enum Status {
+ 4 |   Open = 'open',
+   :          ^^^^^^
+ 5 |   Closed = 'closed',
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
+   ,-[no-unsafe-member-access/index.ts:5:10]
+ 4 | 
+ 5 | anyValue.foo; // unsafe member access
+   :          ^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
+   ,-[no-unsafe-member-access/index.ts:7:10]
+ 6 | 
+ 7 | anyValue.bar.baz; // unsafe nested member access
+   :          ^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access ['key'] on an `any` value.
+    ,-[no-unsafe-member-access/index.ts:9:10]
+  8 | 
+  9 | anyValue['key']; // unsafe computed member access
+    :          ^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[no-unsafe-member-access/index.ts:11:7]
+ 10 | 
+ 11 | const result = anyValue.method(); // unsafe method access
+    :       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[no-unsafe-member-access/index.ts:11:16]
+ 10 | 
+ 11 | const result = anyValue.method(); // unsafe method access
+    :                ^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .method on an `any` value.
+    ,-[no-unsafe-member-access/index.ts:11:25]
+ 10 | 
+ 11 | const result = anyValue.method(); // unsafe method access
+    :                         ^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+   ,-[no-unsafe-return/index.ts:6:3]
+ 5 | function getString(): string {
+ 6 |   return anyValue; // unsafe return
+   :   ^^^^^^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[no-unsafe-return/index.ts:9:33]
+  8 | 
+  9 | const getNumber = (): number => anyValue; // unsafe return
+    :                                 ^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[no-unsafe-return/index.ts:12:3]
+ 11 | function processData(): { name: string; age: number } {
+ 12 |   return anyValue; // unsafe return
+    :   ^^^^^^^^^^^^^^^^
+ 13 | }
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+   ,-[no-unsafe-type-assertion/index.ts:5:7]
+ 4 | 
+ 5 | const str = value as any; // unsafe type assertion
+   :       ^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion to `any` detected: consider using a more specific type to ensure safety.
+   ,-[no-unsafe-type-assertion/index.ts:5:13]
+ 4 | 
+ 5 | const str = value as any; // unsafe type assertion
+   :             ^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion to `any` detected: consider using a more specific type to ensure safety.
+   ,-[no-unsafe-type-assertion/index.ts:7:13]
+ 6 | 
+ 7 | const obj = value as any as string; // double assertion through any
+   :             ^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion from `any` detected: consider using type guards or a safer assertion.
+   ,-[no-unsafe-type-assertion/index.ts:7:13]
+ 6 | 
+ 7 | const obj = value as any as string; // double assertion through any
+   :             ^^^^^^^^^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[no-unsafe-type-assertion/index.ts:10:9]
+  9 | function processValue(input: unknown) {
+ 10 |   const processed = input as any; // unsafe
+    :         ^^^^^^^^^^^^^^^^^^^^^^^^
+ 11 |   return processed.someProperty;
+    `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion to `any` detected: consider using a more specific type to ensure safety.
+    ,-[no-unsafe-type-assertion/index.ts:10:21]
+  9 | function processValue(input: unknown) {
+ 10 |   const processed = input as any; // unsafe
+    :                     ^^^^^^^^^^^^
+ 11 |   return processed.someProperty;
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[no-unsafe-type-assertion/index.ts:11:3]
+ 10 |   const processed = input as any; // unsafe
+ 11 |   return processed.someProperty;
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 12 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .someProperty on an `any` value.
+    ,-[no-unsafe-type-assertion/index.ts:11:20]
+ 10 |   const processed = input as any; // unsafe
+ 11 |   return processed.someProperty;
+    :                    ^^^^^^^^^^^^
+ 12 | }
+    `----
+
+  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is unknown instead.
+   ,-[no-unsafe-unary-minus/index.ts:4:17]
+ 3 | declare const value: any;
+ 4 | const result1 = -value; // unsafe on any
+   :                 ^^^^^^
+ 5 | 
+   `----
+
+  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is "hello" instead.
+   ,-[no-unsafe-unary-minus/index.ts:7:17]
+ 6 | declare const str: string;
+ 7 | const result2 = -str; // unsafe on string
+   :                 ^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is false instead.
+    ,-[no-unsafe-unary-minus/index.ts:10:17]
+  9 | declare const bool: boolean;
+ 10 | const result3 = -bool; // unsafe on boolean
+    :                 ^^^^^
+ 11 | 
+    `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe type assertion: type 'string' is more narrow than the original type.
+   ,-[non-nullable-type-assertion-style/index.ts:6:17]
+ 5 | // Type assertion when non-null assertion would be clearer
+ 6 | const result1 = value as string;
+   :                 ^^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe type assertion: type 'number' is more narrow than the original type.
+   ,-[non-nullable-type-assertion-style/index.ts:9:17]
+ 8 | declare const maybe: number | undefined;
+ 9 | const result2 = maybe as number;
+   :                 ^^^^^^^^^^^^^^^
+   `----
+
+  x typescript-eslint(non-nullable-type-assertion-style): Use a ! assertion to more succinctly remove null and undefined from the type.
+   ,-[non-nullable-type-assertion-style/index.ts:9:17]
+ 8 | declare const maybe: number | undefined;
+ 9 | const result2 = maybe as number;
+   :                 ^^^^^^^^^^^^^^^
+   `----
+
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[non-tsgolint.ts:1:1]
  1 | debugger;
@@ -57,8 +835,553 @@ working directory: fixtures/tsgolint
    `----
   help: Remove the debugger statement
 
-Found 0 warnings and 6 errors.
-Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+   ,-[only-throw-error/index.ts:3:7]
+ 2 | 
+ 3 | throw 'error'; // throwing string
+   :       ^^^^^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+   ,-[only-throw-error/index.ts:5:7]
+ 4 | 
+ 5 | throw 42; // throwing number
+   :       ^^
+ 6 | 
+   `----
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+   ,-[only-throw-error/index.ts:7:7]
+ 6 | 
+ 7 | throw true; // throwing boolean
+   :       ^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+    ,-[only-throw-error/index.ts:9:7]
+  8 | 
+  9 | throw { message: 'error' }; // throwing plain object
+    :       ^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(only-throw-error): Expected an error object to be thrown.
+    ,-[only-throw-error/index.ts:11:7]
+ 10 | 
+ 11 | throw null; // throwing null
+    :       ^^^^
+    `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+   ,-[prefer-promise-reject-errors/index.ts:3:1]
+ 2 | 
+ 3 | Promise.reject('error'); // rejecting with string
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+   ,-[prefer-promise-reject-errors/index.ts:3:1]
+ 2 | 
+ 3 | Promise.reject('error'); // rejecting with string
+   : ^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | 
+   `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+   ,-[prefer-promise-reject-errors/index.ts:5:1]
+ 4 | 
+ 5 | Promise.reject(42); // rejecting with number
+   : ^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+   ,-[prefer-promise-reject-errors/index.ts:5:1]
+ 4 | 
+ 5 | Promise.reject(42); // rejecting with number
+   : ^^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+   ,-[prefer-promise-reject-errors/index.ts:7:1]
+ 6 | 
+ 7 | Promise.reject(true); // rejecting with boolean
+   : ^^^^^^^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+   ,-[prefer-promise-reject-errors/index.ts:7:1]
+ 6 | 
+ 7 | Promise.reject(true); // rejecting with boolean
+   : ^^^^^^^^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+    ,-[prefer-promise-reject-errors/index.ts:9:1]
+  8 | 
+  9 | Promise.reject({ message: 'error' }); // rejecting with plain object
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+    ,-[prefer-promise-reject-errors/index.ts:9:1]
+  8 | 
+  9 | Promise.reject({ message: 'error' }); // rejecting with plain object
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+
+  x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
+    ,-[prefer-promise-reject-errors/index.ts:11:1]
+ 10 | 
+ 11 | Promise.reject(null); // rejecting with null
+    : ^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+    ,-[prefer-promise-reject-errors/index.ts:11:1]
+ 10 | 
+ 11 | Promise.reject(null); // rejecting with null
+    : ^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
+   ,-[prefer-reduce-type-parameter/index.ts:6:13]
+ 5 | // Casting the result
+ 6 | const sum = numbers.reduce((acc, val) => acc + val, 0) as number;
+   :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x typescript-eslint(prefer-reduce-type-parameter): Unnecessary assertion: Array#reduce accepts a type parameter for the default value.
+    ,-[prefer-reduce-type-parameter/index.ts:12:4]
+ 11 |   return acc;
+ 12 | }, [] as string[]);
+    :    ^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(prefer-return-this-type): Use `this` type instead.
+   ,-[prefer-return-this-type/index.ts:6:28]
+ 5 | 
+ 6 |   setValue(value: string): Builder { // Should return 'this'
+   :                            ^^^^^^^
+ 7 |     this.value = value;
+   `----
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+   ,-[promise-function-async/index.ts:4:1]
+ 3 |     // Function returning Promise without async
+ 4 | ,-> function fetchData(): Promise<string> {
+ 5 | |     return fetch('/api/data').then(res => res.text());
+ 6 | `-> }
+ 7 |     
+   `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+   ,-[promise-function-async/index.ts:5:3]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[promise-function-async/index.ts:5:10]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :          ^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[promise-function-async/index.ts:5:10]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :          ^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .then on an `any` value.
+   ,-[promise-function-async/index.ts:5:29]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :                             ^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[promise-function-async/index.ts:5:41]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :                                         ^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+   ,-[promise-function-async/index.ts:5:41]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :                                         ^^^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .text on an `any` value.
+   ,-[promise-function-async/index.ts:5:45]
+ 4 | function fetchData(): Promise<string> {
+ 5 |   return fetch('/api/data').then(res => res.text());
+   :                                             ^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(promise-function-async): Functions that return promises must be async.
+    ,-[promise-function-async/index.ts:10:3]
+  9 |     class DataService {
+ 10 | ,->   getData(): Promise<any> {
+ 11 | |       return fetch('/api/data').then(res => res.json());
+ 12 | `->   }
+ 13 |     }
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[promise-function-async/index.ts:11:5]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[promise-function-async/index.ts:11:12]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :            ^^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[promise-function-async/index.ts:11:12]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :            ^^^^^^^^^^^^^^^^^^^^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .then on an `any` value.
+    ,-[promise-function-async/index.ts:11:31]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :                               ^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[promise-function-async/index.ts:11:43]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :                                           ^^^^^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[promise-function-async/index.ts:11:43]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :                                           ^^^^^^^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .json on an `any` value.
+    ,-[promise-function-async/index.ts:11:47]
+ 10 |   getData(): Promise<any> {
+ 11 |     return fetch('/api/data').then(res => res.json());
+    :                                               ^^^^
+ 12 |   }
+    `----
+
+  x typescript-eslint(related-getter-setter-pairs): `get()` type should be assignable to its equivalent `set()` type.
+   ,-[related-getter-setter-pairs/index.ts:7:16]
+ 6 |   // Getter and setter with incompatible types
+ 7 |   get value(): string {
+   :                ^^^^^^
+ 8 |     return this._value.toString();
+   `----
+
+  x typescript-eslint(require-array-sort-compare): Require 'compare' argument.
+   ,-[require-array-sort-compare/index.ts:4:1]
+ 3 | const numbers = [3, 1, 4, 1, 5];
+ 4 | numbers.sort(); // Lexicographic sort, not numeric
+   : ^^^^^^^^^^^^^^
+ 5 | 
+   `----
+
+  x typescript-eslint(require-array-sort-compare): Require 'compare' argument.
+   ,-[require-array-sort-compare/index.ts:9:1]
+ 8 | 
+ 9 | [3, 1, 4].sort(); // Will sort as strings: ['1', '3', '4']
+   : ^^^^^^^^^^^^^^^^
+   `----
+
+  x typescript-eslint(require-await): Function has no 'await' expression.
+   ,-[require-await/index.ts:4:1]
+ 3 |     // Async function without await
+ 4 | ,-> async function fetchData() {
+ 5 | |     return fetch('/api/data');
+ 6 | `-> }
+ 7 |     
+   `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+   ,-[require-await/index.ts:5:3]
+ 4 | async function fetchData() {
+ 5 |   return fetch('/api/data');
+   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[require-await/index.ts:5:10]
+ 4 | async function fetchData() {
+ 5 |   return fetch('/api/data');
+   :          ^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(require-await): Function has no 'await' expression.
+    ,-[require-await/index.ts:9:21]
+  8 |     // Async arrow function without await
+  9 | ,-> const processData = async () => {
+ 10 | |     return someData.map(x => x * 2);
+ 11 | `-> };
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[require-await/index.ts:10:3]
+  9 | const processData = async () => {
+ 10 |   return someData.map(x => x * 2);
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 11 | };
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[require-await/index.ts:10:10]
+  9 | const processData = async () => {
+ 10 |   return someData.map(x => x * 2);
+    :          ^^^^^^^^^^^^
+ 11 | };
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .map on an `any` value.
+    ,-[require-await/index.ts:10:19]
+  9 | const processData = async () => {
+ 10 |   return someData.map(x => x * 2);
+    :                   ^^^
+ 11 | };
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[restrict-plus-operands/index.ts:11:7]
+ 10 | const result2 = str + bool; // string + boolean
+ 11 | const result3 = num + bool; // number + boolean
+    :       ^^^^^^^^^^^^^^^^^^^^
+ 12 | const result4 = obj + str; // object + string
+    `----
+
+  x typescript-eslint(restrict-template-expressions): Invalid type "symbol" of template literal expression.
+    ,-[restrict-template-expressions/index.ts:12:25]
+ 11 | // Symbols might not be what you expect
+ 12 | const str2 = `Symbol: ${sym}`;
+    :                         ^^^
+ 13 | 
+    `----
+
+  x typescript-eslint(restrict-template-expressions): Invalid type "Function" of template literal expression.
+    ,-[restrict-template-expressions/index.ts:15:27]
+ 14 | // Functions become their string representation
+ 15 | const str3 = `Function: ${fn}`;
+    :                           ^^
+ 16 | 
+    `----
+
+  x typescript-eslint(restrict-template-expressions): Invalid type "number[]" of template literal expression.
+    ,-[restrict-template-expressions/index.ts:18:24]
+ 17 | // Arrays of unknown might be unsafe
+ 18 | const str4 = `Array: ${arr}`;
+    :                        ^^^
+    `----
+
+  x typescript-eslint(require-await): Function has no 'await' expression.
+   ,-[return-await/index.ts:4:1]
+ 3 |     // If configured to require await:
+ 4 | ,-> async function fetchData() {
+ 5 | |     return fetch('/api/data'); // Should be: return await fetch('/api/data');
+ 6 | `-> }
+ 7 |     
+   `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+   ,-[return-await/index.ts:5:3]
+ 4 | async function fetchData() {
+ 5 |   return fetch('/api/data'); // Should be: return await fetch('/api/data');
+   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[return-await/index.ts:5:10]
+ 4 | async function fetchData() {
+ 5 |   return fetch('/api/data'); // Should be: return await fetch('/api/data');
+   :          ^^^^^
+ 6 | }
+   `----
+
+  x typescript-eslint(require-await): Function has no 'await' expression.
+    ,-[return-await/index.ts:8:1]
+  7 |     
+  8 | ,-> async function processData() {
+  9 | |     return someAsyncOperation(); // Should be: return await someAsyncOperation();
+ 10 | `-> }
+    `----
+
+  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `any`.
+    ,-[return-await/index.ts:9:3]
+  8 | async function processData() {
+  9 |   return someAsyncOperation(); // Should be: return await someAsyncOperation();
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | }
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[return-await/index.ts:9:10]
+  8 | async function processData() {
+  9 |   return someAsyncOperation(); // Should be: return await someAsyncOperation();
+    :          ^^^^^^^^^^^^^^^^^^
+ 10 | }
+    `----
+
+  x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
+   ,-[switch-exhaustiveness-check/index.ts:6:11]
+ 5 | function handleStatus(status: Status) {
+ 6 |   switch (status) {
+   :           ^^^^^^
+ 7 |     case 'pending':
+   `----
+
+  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
+   ,-[switch-exhaustiveness-check/index.ts:7:5]
+ 6 |       switch (status) {
+ 7 | ,->     case 'pending':
+ 8 | `->       return 'Waiting for approval';
+ 9 |         case 'approved':
+   `----
+
+  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
+    ,-[switch-exhaustiveness-check/index.ts:9:5]
+  8 |           return 'Waiting for approval';
+  9 | ,->     case 'approved':
+ 10 | `->       return 'Request approved';
+ 11 |         // Missing 'rejected' case
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[unbound-method/index.ts:18:7]
+ 17 | // Unbound method call - 'this' context lost
+ 18 | const getValue = obj.getValue;
+    :       ^^^^^^^^^^^^^^^^^^^^^^^
+ 19 | const result = getValue(); // 'this' is undefined
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .getValue on an `any` value.
+    ,-[unbound-method/index.ts:18:22]
+ 17 | // Unbound method call - 'this' context lost
+ 18 | const getValue = obj.getValue;
+    :                      ^^^^^^^^
+ 19 | const result = getValue(); // 'this' is undefined
+    `----
+
+  x typescript-eslint(no-unsafe-assignment): Unsafe assignment of an any value.
+    ,-[unbound-method/index.ts:19:7]
+ 18 | const getValue = obj.getValue;
+ 19 | const result = getValue(); // 'this' is undefined
+    :       ^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[unbound-method/index.ts:19:16]
+ 18 | const getValue = obj.getValue;
+ 19 | const result = getValue(); // 'this' is undefined
+    :                ^^^^^^^^
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:4:3]
+ 3 | try {
+ 4 |   somethingRisky();
+   :   ^^^^^^^^^^^^^^
+ 5 | } catch (error: any) { // Should use 'unknown'
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:6:3]
+ 5 | } catch (error: any) { // Should use 'unknown'
+ 6 |   console.log(error.message); // Unsafe access
+   :   ^^^^^^^^^^^
+ 7 |   error.someMethod(); // Unsafe call
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:6:11]
+ 5 | } catch (error: any) { // Should use 'unknown'
+ 6 |   console.log(error.message); // Unsafe access
+   :           ^^^
+ 7 |   error.someMethod(); // Unsafe call
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .message on an `any` value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:6:21]
+ 5 | } catch (error: any) { // Should use 'unknown'
+ 6 |   console.log(error.message); // Unsafe access
+   :                     ^^^^^^^
+ 7 |   error.someMethod(); // Unsafe call
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:7:3]
+ 6 |   console.log(error.message); // Unsafe access
+ 7 |   error.someMethod(); // Unsafe call
+   :   ^^^^^^^^^^^^^^^^
+ 8 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .someMethod on an `any` value.
+   ,-[use-unknown-in-catch-callback-variable/index.ts:7:9]
+ 6 |   console.log(error.message); // Unsafe access
+ 7 |   error.someMethod(); // Unsafe call
+   :         ^^^^^^^^^^
+ 8 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[use-unknown-in-catch-callback-variable/index.ts:12:3]
+ 11 | try {
+ 12 |   somethingRisky();
+    :   ^^^^^^^^^^^^^^
+ 13 | } catch (error) { // Should explicitly type as 'unknown'
+    `----
+
+Found 0 warnings and 173 errors.
+Finished in <variable>ms on 40 files with 40 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
