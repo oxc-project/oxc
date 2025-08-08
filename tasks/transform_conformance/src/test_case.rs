@@ -121,10 +121,10 @@ impl TestCase {
         if let Some(output_path) = Self::convert_to_override_path(&babel_output_path)
             && output_path.exists()
         {
-            return Some(output_path);
+            Some(output_path)
+        } else {
+            Some(babel_output_path)
         }
-
-        Some(babel_output_path)
     }
 
     pub fn write_override_output(&self) {

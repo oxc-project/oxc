@@ -235,13 +235,12 @@ impl Test262RuntimeCase {
             Ok(output) => {
                 if output.is_empty() {
                     TestResult::Passed
+                } else if let Some(negative) = &self.base.meta().negative
+                    && negative.phase.is_runtime()
+                    && output.starts_with(&negative.error_type.to_string())
+                {
+                    TestResult::Passed
                 } else {
-                    if let Some(negative) = &self.base.meta().negative
-                        && negative.phase.is_runtime()
-                        && output.starts_with(&negative.error_type.to_string())
-                    {
-                        return TestResult::Passed;
-                    }
                     TestResult::GenericError(case, output)
                 }
             }
