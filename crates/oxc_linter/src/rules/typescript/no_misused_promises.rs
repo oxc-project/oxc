@@ -51,14 +51,10 @@ declare_oxc_lint!(
     /// const getData = () => fetch('/');
     /// console.log({ foo: 42, ...(await getData()) });
     /// ```
-    NoMisusedPromises,
+    NoMisusedPromises(tsgolint),
     typescript,
     suspicious,
     pending,
 );
 
-impl Rule for NoMisusedPromises {
-    fn should_run(&self, _ctx: &crate::context::ContextHost) -> bool {
-        false
-    }
-}
+impl Rule for NoMisusedPromises {}

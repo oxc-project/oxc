@@ -73,6 +73,8 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
+    const IS_TSGOLINT_RULE: bool = false;
+
     /// What kind of auto-fixing can this rule do?
     const FIX: RuleFixMeta = RuleFixMeta::None;
 

@@ -136,7 +136,7 @@ impl Linter {
 
         let rules = rules
             .iter()
-            .filter(|(rule, _)| rule.should_run(&ctx_host))
+            .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
             .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
 
         let semantic = ctx_host.semantic();

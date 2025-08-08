@@ -70,14 +70,10 @@ declare_oxc_lint!(
     ///
     /// await Promise.all([1, 2, 3].map(async x => x + 1));
     /// ```
-    NoFloatingPromises,
+    NoFloatingPromises(tsgolint),
     typescript,
     suspicious,
     pending,
 );
 
-impl Rule for NoFloatingPromises {
-    fn should_run(&self, _ctx: &crate::context::ContextHost) -> bool {
-        false
-    }
-}
+impl Rule for NoFloatingPromises {}
