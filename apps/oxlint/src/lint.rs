@@ -1214,8 +1214,10 @@ mod test {
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
     }
 
+    // ToDo: `tsgolint` does not support `big-endian`?
+    // ToDo: windows: my guess is the missing `.exe` suffix when searching
     #[test]
-    #[cfg(not(target_os = "windows"))] // ToDo: my guess is the missing `.exe` suffix when searching
+    #[cfg(not(any(target_os = "windows", target_endian = "big")))]
     fn test_tsgolint() {
         let args = &["--type-aware", "-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
