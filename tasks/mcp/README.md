@@ -20,7 +20,7 @@ The Model Context Protocol (MCP) is a protocol for enabling AI assistants to sec
 ### As a Library
 
 ```rust
-use oxc_tasks_mcp::{OxcMcpServer, EchoTool, TextAnalyzerTool};
+use oxc_mcp::{OxcMcpServer, EchoTool, TextAnalyzerTool};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```bash
 # From the oxc root directory
-cargo run --bin oxc_tasks_mcp
+cargo run --bin oxc_mcp
 ```
 
 This will start an interactive demo that showcases the MCP server capabilities.

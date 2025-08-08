@@ -1,4 +1,4 @@
-use oxc_tasks_mcp::{EchoTool, OxcMcpServer, TextAnalyzerTool};
+use oxc_mcp::{EchoTool, OxcMcpServer, TextAnalyzerTool};
 use std::io;
 
 #[tokio::main]

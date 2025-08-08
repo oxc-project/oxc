@@ -2085,6 +2085,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_mcp"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "oxc_minifier"
 version = "0.81.0"
 dependencies = [
@@ -2358,15 +2367,6 @@ dependencies = [
  "project-root",
  "similar",
  "ureq",
-]
-
-[[package]]
-name = "oxc_tasks_mcp"
-version = "0.0.0"
-dependencies = [
- "serde",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
