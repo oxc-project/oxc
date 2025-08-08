@@ -64,7 +64,7 @@ impl<'a> Format<'a> for FormatTsTypeParameters<'a, '_> {
         if self.decl.params().is_empty() && self.options.is_type_or_interface_decl {
             write!(f, "<>")
         } else if self.decl.params().is_empty() {
-            return Err(FormatError::SyntaxError);
+            Err(FormatError::SyntaxError)
         } else {
             write!(
                 f,
