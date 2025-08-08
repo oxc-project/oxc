@@ -1,0 +1,64 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware -c .oxlintrc.json
+working directory: fixtures/tsgolint
+----------
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+   ,-[no-floating-promises/index.ts:2:1]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+ 2 | promise;
+   : ^^^^^^^^
+ 3 | 
+   `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+   ,-[no-floating-promises/index.ts:8:1]
+ 7 | 
+ 8 | returnsPromise().then(() => {});
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 | 
+   `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+    ,-[no-floating-promises/index.ts:10:1]
+  9 | 
+ 10 | Promise.reject("value").catch();
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 11 | 
+    `----
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
+  | operator.
+    ,-[no-floating-promises/index.ts:12:1]
+ 11 | 
+ 12 | Promise.reject("value").finally();
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | 
+    `----
+
+  x typescript-eslint(no-floating-promises): An array of Promises may be unintentional. Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking
+  | the expression as ignored with the `void` operator.
+    ,-[no-floating-promises/index.ts:14:1]
+ 13 | 
+ 14 | [1, 2, 3].map(async (x) => x + 1);
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[non-tsgolint.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 6 errors.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

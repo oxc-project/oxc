@@ -1216,7 +1216,7 @@ mod test {
 
     #[test]
     fn test_tsgolint() {
-        let args = &["fixtures/tsgolint", "--type-aware"];
-        Tester::new().test_and_snapshot(args);
+        let args = &["--type-aware", "-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 }
