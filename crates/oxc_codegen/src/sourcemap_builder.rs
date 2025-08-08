@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use nonmax::NonMaxU32;
+
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};

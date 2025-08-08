@@ -9,15 +9,6 @@ use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
 
-mod binary_expr_visitor;
-mod comment;
-mod context;
-mod r#gen;
-mod operator;
-mod options;
-mod sourcemap_builder;
-mod str;
-
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
@@ -28,18 +19,24 @@ use oxc_syntax::{
     precedence::Precedence,
 };
 
-use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor,
-    comment::CommentsMap,
-    operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
-    str::{Quote, cold_branch, is_script_close_tag},
-};
-pub use crate::{
-    context::Context,
-    r#gen::{Gen, GenExpr},
-    options::{CodegenOptions, CommentOptions, LegalComment},
-};
+mod binary_expr_visitor;
+mod comment;
+mod context;
+mod r#gen;
+mod operator;
+mod options;
+mod sourcemap_builder;
+mod str;
+
+use binary_expr_visitor::BinaryExpressionVisitor;
+use comment::CommentsMap;
+use operator::Operator;
+use sourcemap_builder::SourcemapBuilder;
+use str::{Quote, cold_branch, is_script_close_tag};
+
+pub use context::Context;
+pub use r#gen::{Gen, GenExpr};
+pub use options::{CodegenOptions, CommentOptions, LegalComment};
 
 // Re-export `IndentChar` from `oxc_data_structures`
 pub use oxc_data_structures::code_buffer::IndentChar;
