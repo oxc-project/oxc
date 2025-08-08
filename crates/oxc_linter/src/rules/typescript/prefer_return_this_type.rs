@@ -20,22 +20,22 @@ declare_oxc_lint!(
     /// ```ts
     /// class Builder {
     ///   private value: string = '';
-    /// 
+    ///
     ///   setValue(value: string): Builder { // Should return 'this'
     ///     this.value = value;
     ///     return this;
     ///   }
-    /// 
+    ///
     ///   build(): string {
     ///     return this.value;
     ///   }
     /// }
-    /// 
+    ///
     /// class FluentAPI {
     ///   method1(): FluentAPI { // Should return 'this'
     ///     return this;
     ///   }
-    /// 
+    ///
     ///   method2(): FluentAPI { // Should return 'this'
     ///     return this;
     ///   }
@@ -46,27 +46,27 @@ declare_oxc_lint!(
     /// ```ts
     /// class Builder {
     ///   private value: string = '';
-    /// 
+    ///
     ///   setValue(value: string): this {
     ///     this.value = value;
     ///     return this;
     ///   }
-    /// 
+    ///
     ///   build(): string {
     ///     return this.value;
     ///   }
     /// }
-    /// 
+    ///
     /// class FluentAPI {
     ///   method1(): this {
     ///     return this;
     ///   }
-    /// 
+    ///
     ///   method2(): this {
     ///     return this;
     ///   }
     /// }
-    /// 
+    ///
     /// // Now inheritance works correctly
     /// class ExtendedBuilder extends Builder {
     ///   setPrefix(prefix: string): this {

@@ -19,11 +19,11 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// const arr = [1, 2, 3];
-    /// 
+    ///
     /// for (const i in arr) {
     ///   console.log(arr[i]);
     /// }
-    /// 
+    ///
     /// for (const i in arr) {
     ///   console.log(i, arr[i]);
     /// }
@@ -32,22 +32,22 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// const arr = [1, 2, 3];
-    /// 
+    ///
     /// // Use for-of to iterate over array values
     /// for (const value of arr) {
     ///   console.log(value);
     /// }
-    /// 
+    ///
     /// // Use regular for loop with index
     /// for (let i = 0; i < arr.length; i++) {
     ///   console.log(i, arr[i]);
     /// }
-    /// 
+    ///
     /// // Use forEach
     /// arr.forEach((value, index) => {
     ///   console.log(index, value);
     /// });
-    /// 
+    ///
     /// // for-in is fine for objects
     /// const obj = { a: 1, b: 2 };
     /// for (const key in obj) {

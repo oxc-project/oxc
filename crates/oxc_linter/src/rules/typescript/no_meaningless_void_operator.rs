@@ -21,11 +21,11 @@ declare_oxc_lint!(
     /// function foo(): void {
     ///   return;
     /// }
-    /// 
+    ///
     /// void foo(); // meaningless, foo() already returns void
-    /// 
+    ///
     /// void undefined; // meaningless, undefined is already undefined
-    /// 
+    ///
     /// async function bar() {
     ///   void (await somePromise); // meaningless if somePromise resolves to void
     /// }
@@ -36,15 +36,15 @@ declare_oxc_lint!(
     /// function getValue(): number {
     ///   return 42;
     /// }
-    /// 
+    ///
     /// void getValue(); // meaningful, converts number to void
-    /// 
+    ///
     /// void console.log('hello'); // meaningful, console.log returns undefined but we want to be explicit
-    /// 
+    ///
     /// function processData() {
     ///   // some processing
     /// }
-    /// 
+    ///
     /// processData(); // no void needed since we don't care about return value
     /// ```
     NoMeaninglessVoidOperator(tsgolint),

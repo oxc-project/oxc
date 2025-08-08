@@ -19,17 +19,17 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// throw 'error'; // throwing string
-    /// 
+    ///
     /// throw 42; // throwing number
-    /// 
+    ///
     /// throw true; // throwing boolean
-    /// 
+    ///
     /// throw { message: 'error' }; // throwing plain object
-    /// 
+    ///
     /// throw null; // throwing null
-    /// 
+    ///
     /// throw undefined; // throwing undefined
-    /// 
+    ///
     /// const error = 'Something went wrong';
     /// throw error; // throwing non-Error variable
     /// ```
@@ -37,11 +37,11 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// throw new Error('Something went wrong');
-    /// 
+    ///
     /// throw new TypeError('Invalid type');
-    /// 
+    ///
     /// throw new RangeError('Value out of range');
-    /// 
+    ///
     /// // Custom Error subclasses
     /// class CustomError extends Error {
     ///   constructor(message: string) {
@@ -50,7 +50,7 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// throw new CustomError('Custom error occurred');
-    /// 
+    ///
     /// // Variables that are Error objects
     /// const error = new Error('Error message');
     /// throw error;

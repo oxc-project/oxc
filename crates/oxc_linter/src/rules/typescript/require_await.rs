@@ -22,19 +22,19 @@ declare_oxc_lint!(
     /// async function fetchData() {
     ///   return fetch('/api/data');
     /// }
-    /// 
+    ///
     /// // Async arrow function without await
     /// const processData = async () => {
     ///   return someData.map(x => x * 2);
     /// };
-    /// 
+    ///
     /// // Async method without await
     /// class DataService {
     ///   async getData() {
     ///     return this.data;
     ///   }
     /// }
-    /// 
+    ///
     /// // Async function that returns Promise but doesn't await
     /// async function getPromise() {
     ///   return Promise.resolve('value');
@@ -48,12 +48,12 @@ declare_oxc_lint!(
     ///   const response = await fetch('/api/data');
     ///   return response.json();
     /// }
-    /// 
+    ///
     /// // Regular function returning Promise
     /// function fetchDataSync() {
     ///   return fetch('/api/data');
     /// }
-    /// 
+    ///
     /// // Async function with await in conditional
     /// async function conditionalAwait(condition: boolean) {
     ///   if (condition) {
@@ -61,7 +61,7 @@ declare_oxc_lint!(
     ///   }
     ///   return 'default';
     /// }
-    /// 
+    ///
     /// // Async function with await in loop
     /// async function processItems(items: string[]) {
     ///   const results = [];

@@ -19,14 +19,14 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// type T1 = 'A' | 'A';
-    /// 
+    ///
     /// type T2 = A | A | B;
-    /// 
+    ///
     /// type T3 = { a: string } & { a: string };
-    /// 
+    ///
     /// type T4 = [A, A];
-    /// 
-    /// type T5 = 
+    ///
+    /// type T5 =
     ///   | 'foo'
     ///   | 'bar'
     ///   | 'foo';
@@ -35,14 +35,14 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// type T1 = 'A' | 'B';
-    /// 
+    ///
     /// type T2 = A | B | C;
-    /// 
+    ///
     /// type T3 = { a: string } & { b: string };
-    /// 
+    ///
     /// type T4 = [A, B];
-    /// 
-    /// type T5 = 
+    ///
+    /// type T5 =
     ///   | 'foo'
     ///   | 'bar'
     ///   | 'baz';

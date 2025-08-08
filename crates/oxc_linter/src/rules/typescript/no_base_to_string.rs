@@ -22,7 +22,7 @@ declare_oxc_lint!(
     /// ({}).toString();
     /// ({foo: 'bar'}).toString();
     /// ({foo: 'bar'}).toLocaleString();
-    /// 
+    ///
     /// // This will evaluate to 'Symbol()'
     /// Symbol('foo').toString();
     /// ```
@@ -31,13 +31,13 @@ declare_oxc_lint!(
     /// ```ts
     /// const someString = 'Hello world';
     /// someString.toString();
-    /// 
+    ///
     /// const someNumber = 42;
     /// someNumber.toString();
-    /// 
+    ///
     /// const someBoolean = true;
     /// someBoolean.toString();
-    /// 
+    ///
     /// class CustomToString {
     ///   toString() {
     ///     return 'CustomToString';

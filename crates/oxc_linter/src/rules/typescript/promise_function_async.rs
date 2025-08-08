@@ -22,14 +22,14 @@ declare_oxc_lint!(
     /// function fetchData(): Promise<string> {
     ///   return fetch('/api/data').then(res => res.text());
     /// }
-    /// 
+    ///
     /// // Method returning Promise without async
     /// class DataService {
     ///   getData(): Promise<any> {
     ///     return fetch('/api/data').then(res => res.json());
     ///   }
     /// }
-    /// 
+    ///
     /// // Arrow function returning Promise without async
     /// const processData = (): Promise<void> => {
     ///   return Promise.resolve();
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     ///   const response = await fetch('/api/data');
     ///   return response.text();
     /// }
-    /// 
+    ///
     /// // Async method
     /// class DataService {
     ///   async getData(): Promise<any> {
@@ -51,17 +51,17 @@ declare_oxc_lint!(
     ///     return response.json();
     ///   }
     /// }
-    /// 
+    ///
     /// // Async arrow function
     /// const processData = async (): Promise<void> => {
     ///   await someAsyncOperation();
     /// };
-    /// 
+    ///
     /// // Functions that don't return Promise are fine
     /// function syncFunction(): string {
     ///   return 'hello';
     /// }
-    /// 
+    ///
     /// // Functions returning Promise-like but not actual Promise
     /// function createThenable(): { then: Function } {
     ///   return { then: () => {} };

@@ -22,7 +22,7 @@ declare_oxc_lint!(
     ///   Open = 1,
     ///   Closed = 'closed',
     /// }
-    /// 
+    ///
     /// enum Direction {
     ///   Up = 'up',
     ///   Down = 2,
@@ -38,7 +38,7 @@ declare_oxc_lint!(
     ///   Open = 1,
     ///   Closed = 2,
     /// }
-    /// 
+    ///
     /// // All string
     /// enum Direction {
     ///   Up = 'up',
@@ -46,7 +46,7 @@ declare_oxc_lint!(
     ///   Left = 'left',
     ///   Right = 'right',
     /// }
-    /// 
+    ///
     /// // Auto-incremented numeric
     /// enum Color {
     ///   Red,

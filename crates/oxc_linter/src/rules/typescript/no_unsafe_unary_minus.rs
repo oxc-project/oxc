@@ -20,16 +20,16 @@ declare_oxc_lint!(
     /// ```ts
     /// declare const value: any;
     /// const result1 = -value; // unsafe on any
-    /// 
+    ///
     /// declare const str: string;
     /// const result2 = -str; // unsafe on string
-    /// 
+    ///
     /// declare const bool: boolean;
     /// const result3 = -bool; // unsafe on boolean
-    /// 
+    ///
     /// declare const obj: object;
     /// const result4 = -obj; // unsafe on object
-    /// 
+    ///
     /// declare const arr: any[];
     /// const result5 = -arr; // unsafe on array
     /// ```
@@ -38,17 +38,17 @@ declare_oxc_lint!(
     /// ```ts
     /// declare const num: number;
     /// const result1 = -num; // safe
-    /// 
+    ///
     /// declare const bigint: bigint;
     /// const result2 = -bigint; // safe
-    /// 
+    ///
     /// const literal = -42; // safe
-    /// 
+    ///
     /// const bigintLiteral = -42n; // safe
-    /// 
+    ///
     /// declare const union: number | bigint;
     /// const result3 = -union; // safe
-    /// 
+    ///
     /// // Convert to number first if needed
     /// declare const str: string;
     /// const result4 = -Number(str); // safe conversion

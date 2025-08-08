@@ -19,10 +19,10 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// const numbers = [1, 2, 3];
-    /// 
+    ///
     /// // Casting the result
     /// const sum = numbers.reduce((acc, val) => acc + val, 0) as number;
-    /// 
+    ///
     /// // Using type assertion on accumulator
     /// const result = [1, 2, 3].reduce((acc: string[], curr) => {
     ///   acc.push(curr.toString());
@@ -33,24 +33,24 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```ts
     /// const numbers = [1, 2, 3];
-    /// 
+    ///
     /// // Using type parameter
     /// const sum = numbers.reduce<number>((acc, val) => acc + val, 0);
-    /// 
+    ///
     /// // Type parameter for complex types
     /// const result = [1, 2, 3].reduce<string[]>((acc, curr) => {
     ///   acc.push(curr.toString());
     ///   return acc;
     /// }, []);
-    /// 
+    ///
     /// // When TypeScript can infer the type, no parameter needed
     /// const simpleSum = numbers.reduce((acc, val) => acc + val, 0);
-    /// 
+    ///
     /// // Object accumulator with type parameter
     /// interface Count {
     ///   [key: string]: number;
     /// }
-    /// 
+    ///
     /// const counts = ['a', 'b', 'a'].reduce<Count>((acc, item) => {
     ///   acc[item] = (acc[item] || 0) + 1;
     ///   return acc;

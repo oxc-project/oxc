@@ -24,7 +24,7 @@ declare_oxc_lint!(
     ///   console.log(error.message); // Unsafe access
     ///   error.someMethod(); // Unsafe call
     /// }
-    /// 
+    ///
     /// // Default catch variable is 'any' in older TypeScript
     /// try {
     ///   somethingRisky();
@@ -46,7 +46,7 @@ declare_oxc_lint!(
     ///     console.log('Unknown error:', error);
     ///   }
     /// }
-    /// 
+    ///
     /// // More comprehensive error handling
     /// try {
     ///   somethingRisky();
@@ -62,12 +62,12 @@ declare_oxc_lint!(
     ///     console.error('Unknown error type:', error);
     ///   }
     /// }
-    /// 
+    ///
     /// // Helper function for error handling
     /// function isError(error: unknown): error is Error {
     ///   return error instanceof Error;
     /// }
-    /// 
+    ///
     /// try {
     ///   somethingRisky();
     /// } catch (error: unknown) {
