@@ -58,7 +58,7 @@ impl NumericLiteral<'_> {
 
     /// Return raw source code for `NumericLiteral`.
     /// If `raw` is `None` (node is generated, not parsed from source), fallback to formatting `value`.
-    pub fn raw_str(&self) -> Cow<str> {
+    pub fn raw_str(&self) -> Cow<'_, str> {
         match self.raw.as_ref() {
             Some(raw) => Cow::Borrowed(raw),
             None => Cow::Owned(format!("{}", self.value)),

@@ -59,7 +59,7 @@ impl Utf8ToUtf16 {
     /// It will also correctly handle offsets in any order, but at a performance cost.
     ///
     /// Returns `None` if the source text is entirely ASCII, and so requires no conversion.
-    pub fn converter(&self) -> Option<Utf8ToUtf16Converter> {
+    pub fn converter(&self) -> Option<Utf8ToUtf16Converter<'_>> {
         if self.translations.is_empty() {
             None
         } else {

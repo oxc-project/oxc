@@ -57,7 +57,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
 
     /// Returns the comments from the context.
     #[inline]
-    pub fn comments(&self) -> &Comments {
+    pub fn comments(&self) -> &Comments<'_> {
         self.context().comments()
     }
 

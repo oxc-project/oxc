@@ -120,7 +120,7 @@ impl<'a> Semantic<'a> {
         (&mut self.scoping, &self.nodes)
     }
 
-    pub fn classes(&self) -> &ClassTable {
+    pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
     }
 

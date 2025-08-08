@@ -310,7 +310,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
 }
 
 #[inline]
-fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Atom {
+fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Atom<'_> {
     Atom::from(&jsx_runtime_importer[..react_importer_len as usize])
 }
 

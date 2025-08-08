@@ -786,7 +786,7 @@ impl CallExpression<'_> {
     /// require() // => false
     /// require(123) // => false
     /// ```
-    pub fn common_js_require(&self) -> Option<&StringLiteral> {
+    pub fn common_js_require(&self) -> Option<&StringLiteral<'_>> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
         }

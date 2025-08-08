@@ -24,7 +24,7 @@ impl AllocatorPool {
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    pub fn get(&self) -> AllocatorGuard {
+    pub fn get(&self) -> AllocatorGuard<'_> {
         let allocator = {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()

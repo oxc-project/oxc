@@ -472,7 +472,7 @@ impl Scoping {
     }
 
     #[inline]
-    pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
+    pub fn root_unresolved_references(&self) -> &UnresolvedReferences<'_> {
         &self.cell.borrow_dependent().root_unresolved_references
     }
 
@@ -635,7 +635,7 @@ impl Scoping {
 
     /// Get all bound identifiers in a scope.
     #[inline]
-    pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
+    pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings<'_> {
         &self.cell.borrow_dependent().bindings[scope_id]
     }
 
@@ -652,7 +652,7 @@ impl Scoping {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: Scoping::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings)> + '_ {
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings<'_>)> + '_ {
         self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 

@@ -367,7 +367,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 ///
 /// ## Warning
 /// It's your responsibility to format any skipped trivia.
-pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken {
+pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken<'_> {
     FormatTrimmedToken { token }
 }
 

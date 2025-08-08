@@ -1621,7 +1621,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// v.drain(..);
     /// assert_eq!(v, &[]);
     /// ```
-    pub fn drain<R>(&mut self, range: R) -> Drain<T, A>
+    pub fn drain<R>(&mut self, range: R) -> Drain<'_, '_, T, A>
     where
         R: RangeBounds<usize>,
     {
@@ -2280,7 +2280,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(u, &[1, 2]);
     /// ```
     #[inline]
-    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<I::IntoIter, A>
+    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, '_, I::IntoIter, A>
     where
         R: RangeBounds<usize>,
         I: IntoIterator<Item = T>,

@@ -795,7 +795,7 @@ impl Runtime {
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
-    ) -> ModuleProcessOutput {
+    ) -> ModuleProcessOutput<'_> {
         let default_output = || ModuleProcessOutput {
             path: Arc::clone(path),
             processed_module: ProcessedModule::default(),
