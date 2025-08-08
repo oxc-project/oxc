@@ -85,7 +85,7 @@ trait PointerExtImpl: Sized {
 
 /// Native version - just delegates to Rust's methods.
 #[rustversion::since(1.87.0)]
-#[expect(clippy::incompatible_msrv, clippy::undocumented_unsafe_blocks)]
+#[expect(clippy::undocumented_unsafe_blocks)]
 const _: () = {
     impl<T> PointerExtImpl for *const T {
         #[inline(always)]

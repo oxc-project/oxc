@@ -13,9 +13,9 @@ repository = "https://github.com/oxc-project/oxc"
 description = "A collection of JavaScript tools written in Rust."
 
 edition = "2024"
-# MSRV Policy N-2 (12 weeks) starting from v1.87.0
+# MSRV Policy N-2 (12 weeks).
 # Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
-rust-version = "1.86.0"
+rust-version = "1.87.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
