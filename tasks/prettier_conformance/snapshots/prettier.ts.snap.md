@@ -1,4 +1,4 @@
-ts compatibility: 249/573 (43.46%)
+ts compatibility: 250/573 (43.63%)
 
 # Failed
 
@@ -91,7 +91,6 @@ ts compatibility: 249/573 (43.46%)
 | typescript/class-comment/class-implements.ts | 💥 | 52.56% |
 | typescript/class-comment/declare.ts | 💥 | 48.00% |
 | typescript/class-comment/generic.ts | 💥 | 89.36% |
-| typescript/class-comment/misc.ts | 💥 | 71.43% |
 | typescript/classes/break-heritage.ts | 💥 | 51.06% |
 | typescript/classes/break.ts | 💥 | 39.39% |
 | typescript/comments/16065-2.ts | 💥 | 55.56% |
