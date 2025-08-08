@@ -518,7 +518,6 @@ mod test {
     }
 
     #[test]
-    #[expect(clippy::excessive_precision)]
     fn test_float_precision() {
         let cases = vec![
             ("1.7976931348623157e+308", 1.7976931348623157e+308),

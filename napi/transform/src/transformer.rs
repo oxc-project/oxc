@@ -123,8 +123,8 @@ pub struct TransformOptions {
     ///
     /// Example:
     ///
-    /// * 'es2015'
-    /// * ['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']
+    /// * `'es2015'`
+    /// * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
     ///
     /// @default `esnext` (No transformation)
     ///
@@ -454,7 +454,7 @@ pub struct StyledComponentsOptions {
     /// from this list, the directory name will be used instead of the file name for
     /// the component's display name.
     ///
-    /// @default ["index"]
+    /// @default `["index"]`
     pub meaningless_file_names: Option<Vec<String>>,
 
     /// Import paths to be considered as styled-components imports at the top level.

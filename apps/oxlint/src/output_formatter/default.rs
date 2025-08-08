@@ -63,6 +63,7 @@ impl DefaultOutputFormatter {
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
+#[cfg_attr(all(not(test), feature = "force_test_reporter"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
