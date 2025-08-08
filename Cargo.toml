@@ -96,7 +96,6 @@ unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
-unnecessary_unwrap = "allow" # FIXME
 needless_doctest_main = "allow" # FIXME
 zero_sized_map_values = "allow" # FIXME https://github.com/rust-lang/rust-clippy/issues/15429
 # cargo

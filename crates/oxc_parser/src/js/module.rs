@@ -81,11 +81,13 @@ impl<'a> ParserImpl<'a> {
         let mut phase = None;
         let mut import_kind = ImportOrExportKind::Value;
 
-        if self.at(Kind::Eq) && identifier_after_import.is_some() {
+        if self.at(Kind::Eq)
+            && let Some(identifier_after_import) = identifier_after_import
+        {
             // `import something = ...`
             let decl = self.parse_ts_import_equals_declaration(
                 ImportOrExportKind::Value,
-                identifier_after_import.unwrap(),
+                identifier_after_import,
                 span,
             );
             return Statement::from(decl);

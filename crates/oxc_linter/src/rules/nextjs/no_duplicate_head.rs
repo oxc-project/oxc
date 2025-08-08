@@ -110,13 +110,14 @@ impl Rule for NoDuplicateHead {
             }
 
             let node_id = reference.node_id();
-            if first_node_id.is_none() {
+            if labels.is_empty()
+                && let Some(first_node_id) = first_node_id
+            {
+                // 2nd `<Head>` found - populate `labels` with both
+                labels.extend([get_label(first_node_id), get_label(node_id)]);
+            } else if first_node_id.is_none() {
                 // First `<Head>` found
                 first_node_id = Some(node_id);
-            } else if labels.is_empty() {
-                // 2nd `<Head>` found - populate `labels` with both
-                let first_node_id = first_node_id.unwrap();
-                labels.extend([get_label(first_node_id), get_label(node_id)]);
             } else {
                 // Further `<Head>` found - add to `node_ids`
                 labels.push(get_label(node_id));
