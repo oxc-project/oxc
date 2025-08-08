@@ -19,15 +19,15 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// setTimeout('alert("Hi!");', 100);
-    /// 
+    ///
     /// setInterval('alert("Hi!");', 100);
-    /// 
+    ///
     /// setImmediate('alert("Hi!")');
-    /// 
+    ///
     /// window.setTimeout('count = 5', 10);
-    /// 
+    ///
     /// window.setInterval('foo = bar', 10);
-    /// 
+    ///
     /// const fn = new Function('a', 'b', 'return a + b');
     /// ```
     ///
@@ -36,15 +36,15 @@ declare_oxc_lint!(
     /// setTimeout(() => {
     ///   alert('Hi!');
     /// }, 100);
-    /// 
+    ///
     /// setInterval(() => {
     ///   alert('Hi!');
     /// }, 100);
-    /// 
+    ///
     /// setImmediate(() => {
     ///   alert('Hi!');
     /// });
-    /// 
+    ///
     /// const fn = (a: number, b: number) => a + b;
     /// ```
     NoImpliedEval(tsgolint),

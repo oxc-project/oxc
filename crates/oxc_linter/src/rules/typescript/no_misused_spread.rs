@@ -21,11 +21,11 @@ declare_oxc_lint!(
     /// // Spreading a non-iterable value in an array
     /// const num = 42;
     /// const arr = [...num]; // Runtime error: num is not iterable
-    /// 
+    ///
     /// // Spreading a Promise in an array
     /// const promise = Promise.resolve([1, 2, 3]);
     /// const arr2 = [...promise]; // Runtime error: Promise is not iterable
-    /// 
+    ///
     /// // Spreading non-object in object literal
     /// const str = 'hello';
     /// const obj = { ...str }; // Creates { '0': 'h', '1': 'e', ... } which might be unexpected
@@ -36,15 +36,15 @@ declare_oxc_lint!(
     /// // Spreading arrays
     /// const arr1 = [1, 2, 3];
     /// const arr2 = [...arr1];
-    /// 
+    ///
     /// // Spreading objects
     /// const obj1 = { a: 1, b: 2 };
     /// const obj2 = { ...obj1 };
-    /// 
+    ///
     /// // Spreading resolved Promise
     /// const promise = Promise.resolve([1, 2, 3]);
     /// const arr3 = [...(await promise)];
-    /// 
+    ///
     /// // Using Array.from for non-iterables if needed
     /// const str = 'hello';
     /// const arr4 = Array.from(str); // ['h', 'e', 'l', 'l', 'o']

@@ -19,13 +19,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// declare const anyValue: any;
-    /// 
+    ///
     /// function takesString(str: string): void {
     ///   console.log(str.length);
     /// }
-    /// 
+    ///
     /// takesString(anyValue); // unsafe
-    /// 
+    ///
     /// declare function takesNumber(num: number): number;
     /// const result = takesNumber(anyValue); // unsafe
     /// ```
@@ -35,18 +35,18 @@ declare_oxc_lint!(
     /// declare const stringValue: string;
     /// declare const numberValue: number;
     /// declare const unknownValue: unknown;
-    /// 
+    ///
     /// function takesString(str: string): void {
     ///   console.log(str.length);
     /// }
-    /// 
+    ///
     /// takesString(stringValue); // safe
-    /// 
+    ///
     /// // Type guard to safely use unknown
     /// if (typeof unknownValue === 'string') {
     ///   takesString(unknownValue); // safe after type guard
     /// }
-    /// 
+    ///
     /// // Type assertion if you're sure about the type
     /// takesString(unknownValue as string); // explicitly unsafe, but intentional
     /// ```

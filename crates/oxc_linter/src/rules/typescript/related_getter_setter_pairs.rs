@@ -23,14 +23,14 @@ declare_oxc_lint!(
     ///   get value(): string {
     ///     return this._value.toString();
     ///   }
-    /// 
+    ///
     ///   set value(val: number) { // Incompatible with getter
     ///     this._value = val;
     ///   }
-    /// 
+    ///
     ///   private _value: number = 0;
     /// }
-    /// 
+    ///
     /// // Getter without corresponding setter or vice versa might be flagged
     /// class IncompleteProperty {
     ///   get readOnlyValue(): string {
@@ -47,21 +47,21 @@ declare_oxc_lint!(
     ///   get value(): string {
     ///     return this._value;
     ///   }
-    /// 
+    ///
     ///   set value(val: string) {
     ///     this._value = val;
     ///   }
-    /// 
+    ///
     ///   private _value: string = '';
     /// }
-    /// 
+    ///
     /// // Read-only property with only getter
     /// class ReadOnlyProperty {
     ///   get constant(): string {
     ///     return 'constant value';
     ///   }
     /// }
-    /// 
+    ///
     /// // Write-only property with only setter (less common but valid)
     /// class WriteOnlyProperty {
     ///   set logger(message: string) {

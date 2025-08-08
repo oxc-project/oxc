@@ -19,13 +19,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// declare const anyValue: any;
-    /// 
+    ///
     /// anyValue(); // unsafe call
-    /// 
+    ///
     /// anyValue(1, 2, 3); // unsafe call
-    /// 
+    ///
     /// const result = anyValue('hello'); // unsafe call
-    /// 
+    ///
     /// // Chained unsafe calls
     /// anyValue().then().catch(); // unsafe
     /// ```
@@ -35,16 +35,16 @@ declare_oxc_lint!(
     /// declare const fn: () => void;
     /// declare const fnWithParams: (a: number, b: string) => boolean;
     /// declare const unknownValue: unknown;
-    /// 
+    ///
     /// fn(); // safe
-    /// 
+    ///
     /// const result = fnWithParams(1, 'hello'); // safe
-    /// 
+    ///
     /// // Type guard for unknown
     /// if (typeof unknownValue === 'function') {
     ///   unknownValue(); // safe after type guard
     /// }
-    /// 
+    ///
     /// // Explicit type assertion if you're certain
     /// (anyValue as () => void)(); // explicitly unsafe but intentional
     /// ```
