@@ -8,6 +8,7 @@ This crate provides specialized data structures and utilities that are used thro
 
 ## Key Features
 
+- **Stacks**: Efficient stack types, optimized for fast `push`, `pop`, and `last`
 - **Code buffer**: Efficient string building with segment tracking
 - **Inline strings**: Memory-efficient string storage for short strings
 - **Pointer extensions**: Utilities for safe pointer manipulation
