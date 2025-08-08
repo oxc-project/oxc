@@ -11,10 +11,7 @@ pub struct OxcMcpServer {
 impl OxcMcpServer {
     /// Create a new MCP server instance
     pub fn new() -> Self {
-        Self {
-            name: "oxc-mcp-server".to_string(),
-            version: "0.1.0".to_string(),
-        }
+        Self { name: "oxc-mcp-server".to_string(), version: "0.1.0".to_string() }
     }
 
     /// Get server information
@@ -22,9 +19,10 @@ impl OxcMcpServer {
         let mut info = HashMap::new();
         info.insert("name".to_string(), Value::String(self.name.clone()));
         info.insert("version".to_string(), Value::String(self.version.clone()));
-        info.insert("description".to_string(), Value::String(
-            "An MCP server boilerplate integrated with Oxc tools".to_string()
-        ));
+        info.insert(
+            "description".to_string(),
+            Value::String("An MCP server boilerplate integrated with Oxc tools".to_string()),
+        );
         info
     }
 
@@ -106,7 +104,7 @@ mod tests {
     fn test_text_analyzer_tool() {
         let tool = TextAnalyzerTool::new("Hello world\nThis is a test".to_string());
         let result = tool.execute();
-        
+
         assert_eq!(result["analysis"]["word_count"], 6);
         assert_eq!(result["analysis"]["line_count"], 2);
     }

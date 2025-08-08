@@ -17,8 +17,6 @@ name = "oxc_tasks_mcp"
 path = "src/main.rs"
 
 [dependencies]
-# Model Context Protocol SDK - ready for future MCP integration
-rmcp = "0.5.0"
 tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

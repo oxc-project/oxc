@@ -1,10 +1,10 @@
-use oxc_tasks_mcp::{OxcMcpServer, EchoTool, TextAnalyzerTool};
+use oxc_tasks_mcp::{EchoTool, OxcMcpServer, TextAnalyzerTool};
 use std::io;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Starting Oxc MCP Server Boilerplate");
-    
+
     // Create and initialize the MCP server
     let server = OxcMcpServer::new();
     server.initialize().await?;
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Demonstrate tools
     println!("\n🔧 Demonstrating MCP Tools:");
-    
+
     // Echo tool example
     println!("\n1. Echo Tool:");
     let echo_tool = EchoTool::new("Hello from Oxc MCP!".to_string());
@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut input = String::new();
         print!("\n> ");
         io::Write::flush(&mut io::stdout())?;
-        
+
         stdin.read_line(&mut input)?;
         let input = input.trim();
 
