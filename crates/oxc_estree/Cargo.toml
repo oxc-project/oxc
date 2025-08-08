@@ -19,7 +19,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_data_structures = { workspace = true, features = ["code_buffer", "pointer_ext", "slice_iter_ext", "stack"], optional = true }
+oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter_ext", "stack"], optional = true }
 
 dragonbox_ecma = { workspace = true, optional = true }
 itoa = { workspace = true, optional = true }

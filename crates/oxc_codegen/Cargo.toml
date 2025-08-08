@@ -22,7 +22,7 @@ doctest = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["code_buffer", "pointer_ext", "slice_iter_ext", "stack"] }
+oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter_ext", "stack"] }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_sourcemap = { workspace = true }

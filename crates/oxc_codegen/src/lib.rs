@@ -8,7 +8,6 @@
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;
-use oxc_data_structures::pointer_ext::PointerExt;
 
 mod binary_expr_visitor;
 mod comment;
@@ -280,7 +279,7 @@ impl<'a> Codegen<'a> {
                         // `index` is on `<`, so `index + 1` is in bounds and a UTF-8 char boundary.
                         // `consumed` is always less than `index + 1` as it's set on a previous round.
                         unsafe {
-                            let index = ptr.offset_from_usize(bytes.as_ptr());
+                            let index = ptr.offset_from_unsigned(bytes.as_ptr());
                             let before = bytes.get_unchecked(consumed..=index);
                             self.code.print_bytes_unchecked(before);
 

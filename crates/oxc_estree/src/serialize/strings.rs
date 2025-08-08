@@ -1,8 +1,6 @@
 use std::{num::NonZeroU64, slice};
 
-use oxc_data_structures::{
-    code_buffer::CodeBuffer, pointer_ext::PointerExt, slice_iter_ext::SliceIterExt,
-};
+use oxc_data_structures::{code_buffer::CodeBuffer, slice_iter_ext::SliceIterExt};
 
 use super::{ESTree, Serializer};
 
@@ -329,7 +327,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
                 // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
                 unsafe {
                     let current_ptr = iter.as_slice().as_ptr();
-                    let len = current_ptr.offset_from_usize(chunk_start_ptr);
+                    let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
                     let chunk = slice::from_raw_parts(chunk_start_ptr, len);
                     buffer.print_bytes_unchecked(chunk);
                 }
@@ -387,7 +385,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
         // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
         // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
         unsafe {
-            let len = current_ptr.offset_from_usize(chunk_start_ptr);
+            let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
             let chunk = slice::from_raw_parts(chunk_start_ptr, len);
             buffer.print_bytes_unchecked(chunk);
         }
@@ -410,7 +408,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
     // an ASCII character, so must be on a UTF-8 character boundary, and in bounds.
     // `chunk_start_ptr` is after a previous byte so must be `<= end_ptr`.
     unsafe {
-        let len = end_ptr.offset_from_usize(chunk_start_ptr);
+        let len = end_ptr.offset_from_unsigned(chunk_start_ptr);
         let chunk = slice::from_raw_parts(chunk_start_ptr, len);
         buffer.print_bytes_unchecked(chunk);
     }

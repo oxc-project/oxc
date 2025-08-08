@@ -11,9 +11,6 @@ pub mod code_buffer;
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
 
-#[cfg(feature = "pointer_ext")]
-pub mod pointer_ext;
-
 #[cfg(feature = "slice_iter_ext")]
 pub mod slice_iter_ext;
 

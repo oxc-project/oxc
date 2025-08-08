@@ -1,7 +1,5 @@
 use std::{cmp::Ordering, marker::PhantomData, slice, str};
 
-use oxc_data_structures::pointer_ext::PointerExt;
-
 use crate::{MAX_LEN, UniquePromise};
 
 use super::search::SEARCH_BATCH_SIZE;
@@ -637,7 +635,7 @@ impl<'a> SourcePosition<'a> {
     pub(super) unsafe fn offset_from(self, origin: Self) -> usize {
         // SAFETY: Caller guarantees `self` is not before `origin`.
         // All `SourcePosition<'a>`s are within bounds of same source text.
-        unsafe { self.ptr.offset_from_usize(origin.ptr) }
+        unsafe { self.ptr.offset_from_unsigned(origin.ptr) }
     }
 
     /// Get the distance between this [`SourcePosition`] and another [`SourcePosition`] as `u32`.
