@@ -114,11 +114,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// Converts `styled.div\`width: 100%;\`` to `styled.div(['width: 100%;'])`, which is
+    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`, which is
     /// more compact than the standard Babel template literal transformation.
     ///
     /// Default: `true`
-    #[expect(clippy::doc_link_with_quotes)]
     #[serde(default = "default_as_true")]
     pub transpile_template_literals: bool,
 
