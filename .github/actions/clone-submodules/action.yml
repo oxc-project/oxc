@@ -52,7 +52,7 @@ runs:
         persist-credentials: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: 1d4546bcb80009303aab386b59f4df1fd335c1d5
+        ref: 98d18aa4f66ce300a6a863bad223ab67b3fdf282
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       if: ${{ inputs.typescript == 'true' }}

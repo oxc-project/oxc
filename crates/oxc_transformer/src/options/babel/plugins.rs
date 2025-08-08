@@ -163,7 +163,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                     p.legacy_decorator =
                         entry.value::<DecoratorOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
-                "proposal-explicit-resource-management" => p.explicit_resource_management = true,
+                "transform-explicit-resource-management" => p.explicit_resource_management = true,
                 "styled-components" => {
                     p.styled_components = entry
                         .value::<StyledComponentsOptions>()

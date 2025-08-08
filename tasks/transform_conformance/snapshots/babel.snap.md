@@ -1,6 +1,6 @@
-commit: 1d4546bc
+commit: 98d18aa4
 
-Passed: 711/1200
+Passed: 705/1212
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -273,6 +273,62 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-explicit-resource-management (21/29)
+* integration/commonjs-transform/input.js
+x Output mismatch
+
+* transform-sync/for-head-shadow/input.js
+x Output mismatch
+
+* transform-sync/function-body/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+* transform-sync/multiple-nested/input.js
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx3", "z"]
+rebuilt        : ScopeId(3): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(4): ["z"]
+Symbol scope ID mismatch for "z":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(5): ScopeId(4)
+
+* transform-sync/named-evaluation/input.js
+x Output mismatch
+
+* transform-top-level/hoisting/input.mjs
+x Output mismatch
+
+* transform-top-level/hoisting-default-class/input.mjs
+x Output mismatch
+
+* transform-top-level/hoisting-mutate-outer-class-binding/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-unicode-sets-regex (0/4)
+* basic/basic/input.js
+x Output mismatch
+
+* basic/string-properties/input.js
+x Output mismatch
+
+* transform-u/basic/input.js
+x Output mismatch
+
+* transform-u/string-properties/input.js
+x Output mismatch
+
+
 # babel-plugin-transform-class-properties (212/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
@@ -455,7 +511,37 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (17/21)
+# babel-plugin-transform-class-static-block (10/24)
+* class-static-block/before-static-fields/input.js
+x Output mismatch
+
+* class-static-block/class-binding/input.js
+x Output mismatch
+
+* class-static-block/class-declaration/input.js
+x Output mismatch
+
+* class-static-block/class-inferred-name/input.js
+x Output mismatch
+
+* class-static-block/in-class-heritage/input.js
+x Output mismatch
+
+* class-static-block/multiple-static-initializers/input.js
+x Output mismatch
+
+* class-static-block/name-conflict/input.js
+x Output mismatch
+
+* class-static-block/new-target/input.js
+x Output mismatch
+
+* class-static-block/preserve-comments/input.js
+x Output mismatch
+
+* class-static-block/var-scope/input.js
+x Output mismatch
+
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -1195,6 +1281,17 @@ rebuilt        : [ReferenceId(0), ReferenceId(7)]
 
   x Option `loose` is not implemented for object-rest-spread.
 
+
+
+# babel-plugin-transform-dotall-regex (0/3)
+* dotall-regex/simple/input.js
+x Output mismatch
+
+* dotall-regex/with-unicode-flag/input.js
+x Output mismatch
+
+* dotall-regex/with-unicode-property-escape/input.js
+x Output mismatch
 
 
 # babel-plugin-transform-async-to-generator (10/31)
@@ -2815,45 +2912,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * cross-platform/within-ts-module-block/input.ts
-x Output mismatch
-
-
-# babel-plugin-proposal-explicit-resource-management (20/27)
-* integration/commonjs-transform/input.js
-x Output mismatch
-
-* transform-sync/function-body/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "x"]
-rebuilt        : ScopeId(1): ["_usingCtx"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/multiple-nested/input.js
-Bindings mismatch:
-after transform: ScopeId(3): ["_usingCtx3", "z"]
-rebuilt        : ScopeId(3): ["_usingCtx3"]
-Bindings mismatch:
-after transform: ScopeId(10): []
-rebuilt        : ScopeId(4): ["z"]
-Symbol scope ID mismatch for "z":
-after transform: SymbolId(2): ScopeId(3)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-* transform-sync/named-evaluation/input.js
-x Output mismatch
-
-* transform-top-level/hoisting/input.mjs
-x Output mismatch
-
-* transform-top-level/hoisting-default-class/input.mjs
-x Output mismatch
-
-* transform-top-level/hoisting-mutate-outer-class-binding/input.js
 x Output mismatch
 
 

@@ -1,13 +1,15 @@
 pub const PLUGINS: &[&str] = &[
     "babel-preset-env",
-    // // ES2024
-    // "babel-plugin-transform-unicode-sets-regex",
-    // // ES2022
+    // ES2026
+    "babel-plugin-transform-explicit-resource-management",
+    // ES2024
+    "babel-plugin-transform-unicode-sets-regex",
+    // ES2022
     "babel-plugin-transform-class-properties",
     "babel-plugin-transform-class-static-block",
     "babel-plugin-transform-private-methods",
     "babel-plugin-transform-private-property-in-object",
-    // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
+    // [Syntax] "babel-plugin-transform-syntax-top-level-await",
     // ES2021
     "babel-plugin-transform-logical-assignment-operators",
     // "babel-plugin-transform-numeric-separator",
@@ -16,19 +18,19 @@ pub const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-dynamic-import",
     "babel-plugin-transform-nullish-coalescing-operator",
     "babel-plugin-transform-optional-chaining",
-    // // [Syntax] "babel-plugin-transform-syntax-bigint",
-    // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
-    // // [Syntax] "babel-plugin-transform-syntax-import-meta",
+    // [Syntax] "babel-plugin-transform-syntax-bigint",
+    // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
+    // [Syntax] "babel-plugin-transform-syntax-import-meta",
     // ES2019
     "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
-    // // ES2018
+    // ES2018
     "babel-plugin-transform-async-generator-functions",
     "babel-plugin-transform-object-rest-spread",
-    // // [Regex] "babel-plugin-transform-unicode-property-regex",
-    // "babel-plugin-transform-dotall-regex",
-    // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
-    // // ES2017
+    // [Regex] "babel-plugin-transform-unicode-property-regex",
+    "babel-plugin-transform-dotall-regex",
+    // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
+    // ES2017
     "babel-plugin-transform-async-to-generator",
     // ES2016
     "babel-plugin-transform-exponentiation-operator",
@@ -56,7 +58,6 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
-    "babel-plugin-proposal-explicit-resource-management",
     // RegExp tests ported from esbuild + a few additions
     "regexp",
     // Legacy decorators, tests almost ported from TypeScript

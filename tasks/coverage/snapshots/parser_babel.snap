@@ -1,14 +1,24 @@
-commit: 1d4546bc
+commit: 98d18aa4
 
 parser_babel Summary:
-AST Parsed     : 2351/2362 (99.53%)
-Positive Passed: 2332/2362 (98.73%)
-Negative Passed: 1600/1698 (94.23%)
+AST Parsed     : 2403/2419 (99.34%)
+Positive Passed: 2381/2419 (98.43%)
+Negative Passed: 1640/1756 (93.39%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowAwaitOutsideFunction-false/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-false/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowNewTargetOutsideFunction-true/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 
@@ -29,6 +39,30 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-async/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-in-single-statement-context-sync/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-labeled-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
 
@@ -75,6 +109,8 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
 
@@ -218,6 +254,32 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
+
+  × Unexpected new.target expression
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js:1:1]
+ 1 │ new.target;
+   · ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js:1:1]
+ 1 │ return {} / 2
+   · ──────
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js:1:1]
+ 1 │ return
+   · ──────
+ 2 │ {}
+   ╰────
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 
   × 'arguments' is not allowed in class field initializer
@@ -324,6 +386,66 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    · ─────
  2 │ 
    ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:17]
+ 1 │ const m = module {
+   ·                 ▲
+ 2 │   await using foo = bar();
+   ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:18]
+ 1 │ for await (using \u006ff of of);
+   ·                  ───────
+   ╰────
+
+  × Expected `)` but found `of`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:29]
+ 1 │ for await (using \u006ff of of);
+   ·                             ─┬
+   ·                              ╰── `)` expected
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:12]
+ 1 │ for (using o\u0066 of of);
+   ·            ───────
+   ╰────
+
+  × Expected `)` but found `of`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:23]
+ 1 │ for (using o\u0066 of of);
+   ·                       ─┬
+   ·                        ╰── `)` expected
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js:2:17]
+ 1 │ {
+ 2 │   for (using of = reader();;);
+   ·                 ─
+ 3 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:7]
+ 1 │ module {
+   ·       ▲
+ 2 │   using foo = bar();
+   ╰────
+  help: Try insert a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 
@@ -1157,6 +1279,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
+  × TS(1108): A 'return' statement can only be used within a function body.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowReturnOutsideFunction-true-invalid-in-static-block/input.js:3:5]
+ 2 │   static {
+ 3 │     return 0;
+   ·     ──────
+ 4 │   }
+   ╰────
+
   × A 'yield' expression is only allowed in a generator body.
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowYieldOutsideFunction-false/input.js:1:1]
  1 │ yield 1;
@@ -1506,6 +1636,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ─────────────────────
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-top-level-await/input.js:1:1]
+ 1 │ await Promise.resolve();
+   · ─────
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-top-level-yield/input.js:1:1]
+ 1 │ yield 0;
+   · ─────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/108/input.js:1:17]
@@ -5932,7 +6074,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-decimal-babel-7/input.js:1:4]
+ 1 │ 1.0n
+   ·    ─
+   ╰────
+
+  × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-e/input.js:1:4]
+ 1 │ 2e9n
+   ·    ─
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-e-babel-7/input.js:1:4]
  1 │ 2e9n
    ·    ─
    ╰────
@@ -5944,7 +6098,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-non-octal-decimal-int-babel-7/input.js:1:4]
+ 1 │ 089n
+   ·    ─
+   ╰────
+
+  × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-octal-legacy/input.js:1:7]
+ 1 │ 016432n
+   ·       ─
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/bigint/invalid-octal-legacy-babel-7/input.js:1:7]
  1 │ 016432n
    ·       ─
    ╰────
@@ -7229,6 +7395,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-non-octal-decimal-int/input.js:1:3]
+ 1 │ 08_0n
+   ·   ─
+   ╰────
+
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-non-octal-decimal-int-babel-7/input.js:1:3]
  1 │ 08_0n
    ·   ─
    ╰────
@@ -8680,6 +8852,381 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/valid-syntax-with-invalid-value/input.js:1:55]
  1 │ import foo from "foo.json" with { type: "json", lazy: true, startAtLine: 1 };
    ·                                                       ────
+   ╰────
+
+  × Identifier `f` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-duplicate-using-bindings/input.js:3:17]
+ 2 │   {
+ 3 │     await using f = foo(), f = foo();
+   ·                 ┬          ┬
+   ·                 │          ╰── It can not be redeclared here
+   ·                 ╰── `f` has already been declared here
+ 4 │   }
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-duplicate-using-bindings/input.js:6:17]
+ 5 │   {
+ 6 │     await using g = foo();
+   ·                 ┬
+   ·                 ╰── `g` has already been declared here
+ 7 │     await using g = foo();
+   ·                 ┬
+   ·                 ╰── It can not be redeclared here
+ 8 │   }
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-export-await-using/input.js:1:8]
+ 1 │ export await using basic = reader();
+   ·        ─────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-export-default-await-using/input.js:1:27]
+ 1 │ export default await using basic = reader();
+   ·                           ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-for-of-await-linebreak-using/input.js:3:11]
+ 2 │   for (await
+ 3 │     using basic of []);
+   ·           ──┬──
+   ·             ╰── `;` expected
+ 4 │ }
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-for-of-await-using-linebreak/input.js:3:5]
+ 2 │   for (await using
+ 3 │     basic of []);
+   ·     ──┬──
+   ·       ╰── `;` expected
+ 4 │ }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-array-pattern/input.js:2:3]
+ 1 │ async function f() {
+ 2 │   await using [ foo ] = f();
+   ·   ───────────────────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:2:15]
+ 1 │ async function f () {
+ 2 │   await using await = h();
+   ·               ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:5:15]
+ 4 │ async function g () {
+ 5 │   await using \u0061wait = h();
+   ·               ──────────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:8:24]
+ 7 │ async function h () {
+ 8 │   await using x = h(), await = h();
+   ·                        ─────
+ 9 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:11:20]
+ 10 │ async function i () {
+ 11 │   for (await using await of []);
+    ·                    ─────
+ 12 │ }
+    ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:2:15]
+ 1 │ async function f () {
+ 2 │   await using await = h();
+   ·               ─────
+ 3 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:5:15]
+ 4 │ async function g () {
+ 5 │   await using \u0061wait = h();
+   ·               ──────────
+ 6 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:8:24]
+ 7 │ async function h () {
+ 8 │   await using x = h(), await = h();
+   ·                        ─────
+ 9 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:11:20]
+ 10 │ async function i () {
+ 11 │   for (await using await of []);
+    ·                    ─────
+ 12 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-script/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using await = h();
+   ·               ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-script/input.js:5:15]
+ 4 │ async function f() {
+ 5 │   await using \u0061wait = h();
+   ·               ──────────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-script/input.js:8:24]
+ 7 │ async function f() {
+ 8 │   await using x = h(), await = h();
+   ·                        ─────
+ 9 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-script/input.js:11:20]
+ 10 │ async function f() {
+ 11 │   for (await using await of []);
+    ·                    ─────
+ 12 │ }
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `await using` declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-let/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using let = h();
+   ·               ───
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-decl-as-expr/input.js:2:16]
+ 1 │ async function f() {
+ 2 │   0,await using basic = getReader();
+   ·                ▲
+ 3 │ }
+   ╰────
+  help: Try insert a semicolon here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-no-initializer/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using f;
+   ·               ─
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-object-pattern/input.js:2:14]
+ 1 │ async function f() {
+ 2 │   await using { foo } = f();
+   ·              ▲
+ 3 │ }
+   ╰────
+  help: Try insert a semicolon here
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/disallow-destructuring/input.js:1:17]
+ 1 │ using x = null, {} = null;
+   ·                 ──
+ 2 │ using y = null, [] = null;
+   ╰────
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/disallow-destructuring/input.js:2:17]
+ 1 │ using x = null, {} = null;
+ 2 │ using y = null, [] = null;
+   ·                 ──
+ 3 │ using {} = null;
+   ╰────
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/disallow-destructuring/input.js:3:7]
+ 2 │ using y = null, [] = null;
+ 3 │ using {} = null;
+   ·       ──
+   ╰────
+
+  × Identifier `f` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-duplicate-using-bindings/input.js:2:9]
+ 1 │ {
+ 2 │   using f = foo(), f = foo();
+   ·         ┬          ┬
+   ·         │          ╰── It can not be redeclared here
+   ·         ╰── `f` has already been declared here
+ 3 │ }
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-duplicate-using-bindings/input.js:5:9]
+ 4 │ {
+ 5 │   using g = foo();
+   ·         ┬
+   ·         ╰── `g` has already been declared here
+ 6 │   using g = foo();
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 7 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-export-default-using/input.js:1:21]
+ 1 │ export default using basic = reader();
+   ·                     ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-export-using/input.js:1:8]
+ 1 │ export using basic = reader();
+   ·        ─────
+   ╰────
+
+  × Expected `)` but found `of`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-await-using-binding-of-of/input.mjs:1:24]
+ 1 │ for await (using of of of);
+   ·                        ─┬
+   ·                         ╰── `)` expected
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-binding-in/input.js:1:6]
+ 1 │ for (using foo in {});
+   ·      ─────────
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-binding-of-in/input.js:1:15]
+ 1 │ for (using of in []);
+   ·               ──
+   ╰────
+
+  × Expected `)` but found `of`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-binding-of-of/input.js:1:18]
+ 1 │ for (using of of of);
+   ·                  ─┬
+   ·                   ╰── `)` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-equal-equal/input.js:1:15]
+ 1 │ for (using of == {};;);
+   ·               ──
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js:1:14]
+ 1 │ for (using of;of.isValid;);
+   ·              ─
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:2:9]
+ 1 │ {
+ 2 │   using await = h();
+   ·         ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:5:9]
+ 4 │ {
+ 5 │   using \u0061wait = h();
+   ·         ──────────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:8:18]
+ 7 │ {
+ 8 │   using x = h(), await = h();
+   ·                  ─────
+ 9 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:11:14]
+ 10 │ {
+ 11 │   for (using await of []);
+    ·              ─────
+ 12 │ }
+    ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:2:9]
+ 1 │ {
+ 2 │   using await = h();
+   ·         ─────
+ 3 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:5:9]
+ 4 │ {
+ 5 │   using \u0061wait = h();
+   ·         ──────────
+ 6 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:8:18]
+ 7 │ {
+ 8 │   using x = h(), await = h();
+   ·                  ─────
+ 9 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:11:14]
+ 10 │ {
+ 11 │   for (using await of []);
+    ·              ─────
+ 12 │ }
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `using` declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-let/input.js:2:9]
+ 1 │ {
+ 2 │   using let = h();
+   ·         ───
+ 3 │ }
+   ╰────
+
+  × Expected `;` but found `{`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-pattern-for-lhs/input.js:2:14]
+ 1 │ {
+ 2 │   for (using { qux } of h());
+   ·              ┬
+   ·              ╰── `;` expected
+ 3 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer/input.js:2:9]
+ 1 │ {
+ 2 │   using f;
+   ·         ─
+ 3 │ }
    ╰────
 
   × Identifier `x` has already been declared
@@ -12405,6 +12952,82 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ declare function foo() {}
    ·                        ▲
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-await-using-declaration/input.ts:1:8]
+ 1 │ declare await using basic;
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-await-using-declaration-with-initializer/input.ts:1:8]
+ 1 │ declare await using basic = null;
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:2:15]
+ 1 │ declare namespace invalid_namespace_var {
+ 2 │   await using A;
+   ·               ─
+ 3 │   await using A1 = 0;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:15]
+ 4 │   await using A2: number = 0;
+ 5 │   await using B, C;
+   ·               ─
+ 6 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:18]
+ 4 │   await using A2: number = 0;
+ 5 │   await using B, C;
+   ·                  ─
+ 6 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:2:9]
+ 1 │ declare namespace invalid_namespace_var {
+ 2 │   using A;
+   ·         ─
+ 3 │   using A1 = 0;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:9]
+ 4 │   using A2: number = 0;
+ 5 │   using B, C;
+   ·         ─
+ 6 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:12]
+ 4 │   using A2: number = 0;
+ 5 │   using B, C;
+   ·            ─
+ 6 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-using-declaration/input.ts:1:8]
+ 1 │ declare using basic;
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-using-declaration-with-initializer/input.ts:1:8]
+ 1 │ declare using basic = null;
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/await-non-null-before-exponential/input.ts:1:14]
