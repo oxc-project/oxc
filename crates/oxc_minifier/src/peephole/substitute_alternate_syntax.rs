@@ -1689,6 +1689,21 @@ mod test {
         test_same("v = +foo - bar");
         test_same("v = foo - +bar");
         test_same("v = 1 + +foo"); // cannot compress into `1 + foo` because `foo` can be a string
+
+        test("v = +d / 1000", "v = d / 1000");
+        test("v = 1000 * +d", "v = 1000 * d");
+        test("v = +d * 1000", "v = d * 1000");
+        test("v = 2 - +this._x.call(null, node.data)", "v = 2 - this._x.call(null, node.data)");
+
+        test("v = 5 | +b", "v = 5 | b");
+        test("v = +b | 5", "v = b | 5");
+        test("v = 7 & +c", "v = 7 & c");
+        test("v = 3 ^ +d", "v = 3 ^ d");
+        // Don't remove - unsafe for BigInt operations
+        test_same("v = a - +b");
+        test_same("v = +a - b");
+        test_same("v = a | +b");
+        test_same("v = +a | b");
     }
 
     #[test]
