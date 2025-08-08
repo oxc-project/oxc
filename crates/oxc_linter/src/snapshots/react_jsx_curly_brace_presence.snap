@@ -255,6 +255,12 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─────
    ╰────
 
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:25]
+ 1 │ <App prop={'foo'} attr={" foo "} />
+   ·                         ───────
+   ╰────
+
   ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.
    ╭─[jsx_curly_brace_presence.tsx:1:11]
  1 │ <App prop='foo' attr="bar" />

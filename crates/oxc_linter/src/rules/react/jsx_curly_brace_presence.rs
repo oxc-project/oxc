@@ -495,7 +495,7 @@ fn is_allowed_string_like<'a>(
         || is_line_break(s)
         || contains_html_entity(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
-        || s.trim() != s
+        || !is_prop && s.trim() != s
         || contains_multiline_comment(s)
         || contains_line_break_literal(s)
         || contains_utf8_escape(s)
