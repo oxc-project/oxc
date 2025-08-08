@@ -1,13 +1,11 @@
-// Examples of incorrect code for no-misused-spread rule
+declare const promise: Promise<number>;
+const spreadPromise = { ...promise };
 
-// Spreading a non-iterable value in an array
-const num = 42;
-const arr = [...num]; // Runtime error: num is not iterable
+declare function getObject(): Record<string, strings>;
+const getObjectSpread = { ...getObject };
 
-// Spreading a Promise in an array
-const promise = Promise.resolve([1, 2, 3]);
-const arr2 = [...promise]; // Runtime error: Promise is not iterable
+declare const map: Map<string, number>;
+const mapSpread = { ...map };
 
-// Spreading non-object in object literal
-const str = 'hello';
-const obj = { ...str }; // Creates { '0': 'h', '1': 'e', ... } which might be unexpected
+declare const userName: string;
+const characters = [...userName];

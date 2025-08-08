@@ -1,19 +1,31 @@
 // Examples of incorrect code for unbound-method rule
 
-class MyClass {
-  private value = 42;
+class Calculator {
+  private value: number = 0;
 
-  getValue() {
+  add(num: number): number {
+    this.value += num;
     return this.value;
   }
 
-  processValue() {
-    return this.value * 2;
+  getValue(): number {
+    return this.value;
   }
 }
 
-const obj = new MyClass();
+const calc = new Calculator();
 
-// Unbound method call - 'this' context lost
-const getValue = obj.getValue;
-const result = getValue(); // 'this' is undefined
+// Unbound method - loses 'this' context
+const addMethod = calc.add; 
+addMethod(5); // Error: 'this' is undefined
+
+// Array method callback loses context
+const getValue = calc.getValue;
+[1, 2, 3].map(getValue); // Error: each call loses 'this'
+
+// Unbound method in setTimeout
+setTimeout(calc.add, 1000, 10); // Error: 'this' context lost
+
+// Class method destructuring
+const { getValue: getVal } = calc;
+getVal(); // Error: 'this' context lost
