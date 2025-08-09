@@ -12,7 +12,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
-    "test": "node test/test.mjs"
+    "test": "node test/test.mjs",
+    "test:hello-world": "node test/echo_hello_world.mjs",
+    "echo": "node run_echo.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.2"

@@ -48,6 +48,31 @@ cd tasks/mcp
 pnpm test
 ```
 
+### Test "hello world" specifically
+
+Run the specific "hello world" echo test:
+
+```bash
+cd tasks/mcp
+pnpm test:hello-world
+```
+
+### Quick Echo Command
+
+Run the echo command directly with any message:
+
+```bash
+cd tasks/mcp
+pnpm echo "your message here"
+```
+
+Or run the default "hello world" message:
+
+```bash
+cd tasks/mcp
+pnpm echo
+```
+
 ## Available Tools
 
 ### echo
