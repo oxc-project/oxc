@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- 8c57153 npm/oxlint: Fix `oxlint-tsgolint` version range for yarn (Boshen)
+
+### 🚜 Refactor
+
+- 238b183 linter: Use `fast-glob` instead of `globset` for `GlobSet` (#12870) (shulaoda)
+
+
 ## [1.11.0] - 2025-08-07
 
 ### 🚀 Features
