@@ -770,17 +770,15 @@ impl<'a> Codegen<'a> {
         }
 
         let mut best_candidate = s.cow_replacen("e+", "e", 1);
-        let mut best_len = best_candidate.len();
         let mut is_hex = false;
 
         // Track the best candidate found so far
         if num.fract() == 0.0 {
             // For integers, check hex format and other optimizations
             let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_len {
+            if hex_candidate.len() < best_candidate.len() {
                 is_hex = true;
                 best_candidate = hex_candidate.into();
-                best_len = best_candidate.len();
             }
         }
         // Check for scientific notation optimizations for numbers starting with ".0"
@@ -793,10 +791,9 @@ impl<'a> Codegen<'a> {
                 let exp_str_len = itoa::Buffer::new().format(exp).len();
                 // Calculate expected length: digits + 'e-' + exp_length
                 let expected_len = digits.len() + 2 + exp_str_len;
-                if expected_len < best_len {
+                if expected_len < best_candidate.len() {
                     best_candidate = format!("{digits}e-{exp}").into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
-                    best_len = best_candidate.len();
                 }
             }
         }
@@ -810,10 +807,9 @@ impl<'a> Codegen<'a> {
                 let exp_str_len = itoa::Buffer::new().format(len).len();
                 // Calculate expected length: base + 'e' + len
                 let expected_len = base.len() + 1 + exp_str_len;
-                if expected_len < best_len {
+                if expected_len < best_candidate.len() {
                     best_candidate = format!("{base}e{len}").into();
                     debug_assert_eq!(best_candidate.len(), expected_len);
-                    best_len = expected_len;
                 }
             }
         }
@@ -827,7 +823,7 @@ impl<'a> Codegen<'a> {
             let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
             // Calculate expected length: integer + point + 'e' + new_exp_str_len
             let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
-            if expected_len < best_len {
+            if expected_len < best_candidate.len() {
                 best_candidate = format!("{integer}{point}e{new_expr}").into();
                 debug_assert_eq!(best_candidate.len(), expected_len);
             }
