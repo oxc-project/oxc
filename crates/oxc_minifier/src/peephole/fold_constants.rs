@@ -645,29 +645,31 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_object_spread(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+            match e {
+                Expression::ArrayExpression(o) if o.elements.is_empty() => true,
+                Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
+                e if e.is_literal() && !e.is_string_literal() => true,
+                e if e.evaluate_value(ctx).is_some_and(|v| !v.is_string())
+                    && !e.may_have_side_effects(ctx) =>
+                {
+                    true
+                }
+                _ => false,
+            }
+        }
         let (new_size, should_fold) =
             e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
                 let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
                     return (new_size + 1, should_fold);
                 };
-                let e = &spread_element.argument;
-                if ctx.is_expression_undefined(e) {
-                    return (new_size, true);
-                }
-                match e {
-                    Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::FunctionExpression(_) => (new_size, true),
+                match &spread_element.argument {
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
                         (new_size + o.properties.len(), true)
                     }
-                    Expression::ArrayExpression(o) if o.elements.is_empty() => (new_size, true),
+                    e if should_fold_spread_element(e, ctx) => (new_size, true),
                     _ => (new_size + 1, should_fold),
                 }
             });
@@ -683,15 +685,6 @@ impl<'a> PeepholeOptimizations {
                     continue;
                 }
                 match e {
-                    Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::FunctionExpression(_) => {
-                        // skip
-                    }
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
@@ -707,8 +700,8 @@ impl<'a> PeepholeOptimizations {
                             }
                         }));
                     }
-                    Expression::ArrayExpression(o) if o.elements.is_empty() => {
-                        // skip empty array
+                    e if should_fold_spread_element(e, ctx) => {
+                        // skip
                     }
                     _ => {
                         new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
@@ -2123,6 +2116,8 @@ mod test {
             fold("({ z, ...void 0 })", result);
             fold("({ z, ...null })", result);
             fold("({ z, ...true })", result);
+            fold("({ z, ...!0 })", result);
+            fold("({ z, ...!1 })", result);
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
