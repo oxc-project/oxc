@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- 7fc907f linter: Resolve configured rules for every file linted by `tsgolint` (#12886) (camchenry)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+### 🧪 Testing
+
+- 9d946aa oxlint: Skip `--type--aware` test for `big-endian` (#12911) (Sysix)
+- 695fbdd oxlint: Fix `--type-aware` test on `big-endian` and skip for `windows` (#12910) (Sysix)
+- 38118ab oxlint: Fix `--type-aware` snapshot + add non tsgolint rule (#12909) (Sysix)
+
+
 ## [1.11.0] - 2025-08-07
 
 ### 🚀 Features
