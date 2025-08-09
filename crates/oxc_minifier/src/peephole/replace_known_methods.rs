@@ -1627,18 +1627,13 @@ mod test {
 
     #[test]
     fn test_fold_encode_uri() {
-        // Basic ASCII characters that should not be encoded
         test("x = encodeURI('hello')", "x = 'hello'");
         test("x = encodeURI('hello world')", "x = 'hello%20world'");
-
-        // Reserved characters should not be encoded
         test(
             "x = encodeURI('http://example.com/path?a=1&b=2#hash')",
             "x = 'http://example.com/path?a=1&b=2#hash'",
         );
         test("x = encodeURI('a;b,c/d?e:f@g&h=i+j$k')", "x = 'a;b,c/d?e:f@g&h=i+j$k'");
-
-        // Unreserved characters should not be encoded
         test("x = encodeURI('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
 
         // Characters that should be encoded
