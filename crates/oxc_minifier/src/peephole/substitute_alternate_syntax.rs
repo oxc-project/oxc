@@ -2,7 +2,7 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
-use oxc_ecmascript::constant_evaluation::DetermineValueType;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
@@ -654,18 +654,10 @@ impl<'a> PeepholeOptimizations {
                 match arg {
                     // `String()` -> `''`
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
-                    // `String(a)` -> `'' + (a)`
-                    Some(arg) => {
-                        if !arg.is_literal() {
-                            return None;
-                        }
-                        Some(ctx.ast.expression_binary(
-                            span,
-                            ctx.ast.expression_string_literal(call_expr.span, "", None),
-                            BinaryOperator::Addition,
-                            arg.take_in(ctx.ast),
-                        ))
-                    }
+                    Some(arg) => arg
+                        .evaluate_value_to_string(ctx)
+                        .filter(|_| !arg.may_have_side_effects(ctx))
+                        .map(|s| ctx.value_to_expr(call_expr.span, ConstantValue::String(s))),
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(
@@ -1848,6 +1840,8 @@ mod test {
         test_same("var a = String?.(23)");
 
         test("var a = String('hello')", "var a = 'hello'");
+        test("var a = String(true)", "var a = 'true'");
+        test("var a = String(!0)", "var a = 'true'");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.('hello')");
 
