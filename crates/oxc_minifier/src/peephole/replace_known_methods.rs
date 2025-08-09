@@ -1627,6 +1627,7 @@ mod test {
 
     #[test]
     fn test_fold_encode_uri() {
+        test("x = encodeURI()", "x = 'undefined'");
         test("x = encodeURI('hello')", "x = 'hello'");
         test("x = encodeURI('hello world')", "x = 'hello%20world'");
         test(
@@ -1635,131 +1636,89 @@ mod test {
         );
         test("x = encodeURI('a;b,c/d?e:f@g&h=i+j$k')", "x = 'a;b,c/d?e:f@g&h=i+j$k'");
         test("x = encodeURI('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
-
-        // Characters that should be encoded
         test("x = encodeURI('hello<>\"')", "x = 'hello%3C%3E%22'");
         test("x = encodeURI('hello\\t\\n')", "x = 'hello%09%0A'");
-
-        // Unicode characters
         test("x = encodeURI('café')", "x = 'caf%C3%A9'");
         test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
-        // Wrong number of arguments
-        test_same("encodeURI()");
         test_same("encodeURI('a', 'b')");
-
-        // Not a literal
         test_same("encodeURI(x)");
     }
 
     #[test]
     fn test_fold_encode_uri_component() {
-        // Basic ASCII characters that should not be encoded
+        test("x = encodeURIComponent()", "x = 'undefined'");
         test("x = encodeURIComponent('hello')", "x = 'hello'");
-
-        // Unreserved characters should not be encoded
         test("x = encodeURIComponent('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
-
-        // Reserved characters SHOULD be encoded (unlike encodeURI)
         test(
             "x = encodeURIComponent('a;b,c/d?e:f@g&h=i+j$k')",
             "x = 'a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k'",
         );
         test("x = encodeURIComponent('#')", "x = '%23'");
-
-        // Characters that should be encoded
         test("x = encodeURIComponent('hello world')", "x = 'hello%20world'");
         test("x = encodeURIComponent('hello<>\"')", "x = 'hello%3C%3E%22'");
-
-        // Unicode characters
         test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'");
         test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
-        // Wrong number of arguments
-        test_same("encodeURIComponent()");
         test_same("encodeURIComponent('a', 'b')");
-
-        // Not a literal
         test_same("encodeURIComponent(x)");
     }
 
     #[test]
     fn test_fold_decode_uri() {
-        // Basic decoding
+        test("x = decodeURI()", "x = 'undefined'");
         test("x = decodeURI('hello%20world')", "x = 'hello world'");
         test("x = decodeURI('hello')", "x = 'hello'");
-
-        // Reserved characters should NOT be decoded
         test(
             "x = decodeURI('a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k')",
             "x = 'a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k'",
         );
+        test("x = decodeURI('%2f')", "x = '%2f'"); // `/`, lower case
+        test("x = decodeURI('%23')", "x = '%23'"); // `#`
         test("x = decodeURI('%23hash')", "x = '%23hash'");
-
-        // Other characters should be decoded
         test("x = decodeURI('hello%3C%3E%22')", "x = 'hello<>\"'");
         test("x = decodeURI('hello%09%0A')", "x = 'hello\\t\\n'");
-
-        // Unicode characters
         test("x = decodeURI('caf%C3%A9')", "x = 'café'");
         test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
-        // Invalid sequences should not be folded (for safety)
-        test_same("decodeURI('%ZZ')");
-        test_same("decodeURI('%A')");
+        test_same("decodeURI('%ZZ')"); // URIError
+        test_same("decodeURI('%A')"); // URIError
 
-        // Wrong number of arguments
-        test_same("decodeURI()");
         test_same("decodeURI('a', 'b')");
-
-        // Not a literal
         test_same("decodeURI(x)");
     }
 
     #[test]
     fn test_fold_decode_uri_component() {
-        // Basic decoding
+        test("x = decodeURIComponent()", "x = 'undefined'");
         test("x = decodeURIComponent('hello%20world')", "x = 'hello world'");
         test("x = decodeURIComponent('hello')", "x = 'hello'");
-
-        // All characters should be decoded (unlike decodeURI)
         test(
             "x = decodeURIComponent('a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k')",
             "x = 'a;b,c/d?e:f@g&h=i+j$k'",
         );
+        test("x = decodeURIComponent('%23')", "x = '#'");
         test("x = decodeURIComponent('%23hash')", "x = '#hash'");
-
-        // Other characters should be decoded
         test("x = decodeURIComponent('hello%3C%3E%22')", "x = 'hello<>\"'");
         test("x = decodeURIComponent('hello%09%0A')", "x = 'hello\\t\\n'");
-
-        // Unicode characters
         test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'");
         test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
-        // Invalid sequences should not be folded (for safety)
-        test_same("decodeURIComponent('%ZZ')");
-        test_same("decodeURIComponent('%A')");
+        test_same("decodeURIComponent('%ZZ')"); // URIError
+        test_same("decodeURIComponent('%A')"); // URIError
 
-        // Wrong number of arguments
-        test_same("decodeURIComponent()");
         test_same("decodeURIComponent('a', 'b')");
-
-        // Not a literal
         test_same("decodeURIComponent(x)");
     }
 
     #[test]
     fn test_fold_uri_roundtrip() {
-        // Test that encoding and decoding are inverse operations (where applicable)
         test("x = decodeURI(encodeURI('hello world'))", "x = 'hello world'");
         test("x = decodeURIComponent(encodeURIComponent('hello world'))", "x = 'hello world'");
         test(
             "x = decodeURIComponent(encodeURIComponent('a;b,c/d?e:f@g&h=i+j$k'))",
             "x = 'a;b,c/d?e:f@g&h=i+j$k'",
         );
-
-        // Unicode roundtrip
         test("x = decodeURI(encodeURI('café'))", "x = 'café'");
         test("x = decodeURIComponent(encodeURIComponent('测试'))", "x = '测试'");
     }
