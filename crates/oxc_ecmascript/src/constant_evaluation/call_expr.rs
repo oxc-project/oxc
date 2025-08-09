@@ -56,9 +56,9 @@ pub fn try_fold_known_global_methods<'a>(
                 return Some(result);
             }
         }
+        return None;
     }
 
-    // Handle method calls (e.g., string.toLowerCase(), Math.abs())
     let (name, object) = match callee {
         Expression::StaticMemberExpression(member) if !member.optional => {
             (member.property.name.as_str(), &member.object)
