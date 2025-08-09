@@ -43,3 +43,5 @@ jobs:
         with:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
+
+      - run: pnpm run --filter mcp-oxc build
