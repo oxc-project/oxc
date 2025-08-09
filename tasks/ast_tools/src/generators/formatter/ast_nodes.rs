@@ -9,7 +9,7 @@ use crate::{
     Codegen, Generator,
     generators::define_generator,
     output::{Output, output_path},
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
 };
 
 pub fn get_node_type(ty: &TokenStream) -> TokenStream {
@@ -23,13 +23,15 @@ const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] =
     &["AssignmentExpression", "FormalParameters", "StaticMemberExpression"];
 
+const AST_NODE_WITH_FOLLOWING_NODE_LIST: &[&str] = &["Function", "Class"];
+
 pub struct FormatterAstNodesGenerator;
 
 define_generator!(FormatterAstNodesGenerator);
 
 impl Generator for FormatterAstNodesGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        let all_statement_variants_names = get_all_statement_variants_names(schema);
+        let no_following_node_type_ids = get_no_following_node_type_ids(schema);
 
         let impls = schema
             .types
@@ -38,7 +40,7 @@ impl Generator for FormatterAstNodesGenerator {
                 TypeDef::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
-                    Some(generate_struct_impls(struct_def, &all_statement_variants_names, schema))
+                    Some(generate_struct_impls(struct_def, &no_following_node_type_ids, schema))
                 }
                 TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_impls(enum_def, schema))
@@ -196,14 +198,38 @@ impl Generator for FormatterAstNodesGenerator {
     }
 }
 
-fn get_all_statement_variants_names(schema: &Schema) -> Vec<&str> {
+/// Get [`TypeId`]s of types which do not have a following node.
+///
+/// These are:
+/// * All types which are variants of `Statement`.
+/// * PLUS types listed in `AST_NODE_WITHOUT_FOLLOWING_NODE_LIST`.
+/// * MINUS types listed in `AST_NODE_WITH_FOLLOWING_NODE_LIST`.
+fn get_no_following_node_type_ids(schema: &Schema) -> Vec<TypeId> {
+    let exclude_type_ids = AST_NODE_WITH_FOLLOWING_NODE_LIST
+        .iter()
+        .map(|&name| schema.type_names[name])
+        .collect::<Vec<_>>();
+
+    let mut type_ids = AST_NODE_WITHOUT_FOLLOWING_NODE_LIST
+        .iter()
+        .map(|&name| schema.type_names[name])
+        .collect::<Vec<_>>();
+
     let statement_enum = schema.type_by_name("Statement").as_enum().unwrap();
-    statement_enum.all_variants(schema).map(VariantDef::name).collect()
+    type_ids.extend(
+        statement_enum
+            .all_variants(schema)
+            .filter_map(|variant| variant.field_type(schema))
+            .map(|variant_type| variant_type.innermost_type(schema).id())
+            .filter(|type_id| !exclude_type_ids.contains(type_id)),
+    );
+
+    type_ids
 }
 
 fn generate_struct_impls(
     struct_def: &StructDef,
-    all_statement_variants_names: &[&str],
+    no_following_node_type_ids: &[TypeId],
     schema: &Schema,
 ) -> TokenStream {
     let type_ty = struct_def.ty(schema);
@@ -276,9 +302,8 @@ fn generate_struct_impls(
                 quote! { &self.inner.#field_name }
             };
 
-            let should_not_have_following_node = all_statement_variants_names
-                .contains(&struct_def.name.as_str())
-                || AST_NODE_WITHOUT_FOLLOWING_NODE_LIST.contains(&struct_def.name.as_str());
+            let should_not_have_following_node =
+                no_following_node_type_ids.contains(&struct_def.id);
             let mut following_node = if should_not_have_following_node {
                 quote! {
                     None
