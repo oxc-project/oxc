@@ -26,6 +26,14 @@ pub fn try_fold_known_global_methods<'a>(
     arguments: &Vec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
+    // Handle global function calls (e.g., encodeURI, decodeURI)
+    if let Expression::Identifier(ident) = callee {
+        if ctx.is_global_reference(ident) == Some(true) {
+            return try_fold_global_functions(arguments, ident.name.as_str(), ctx);
+        }
+    }
+
+    // Handle method calls (e.g., string.toLowerCase(), Math.abs())
     let (name, object) = match callee {
         Expression::StaticMemberExpression(member) if !member.optional => {
             (member.property.name.as_str(), &member.object)
@@ -498,4 +506,238 @@ fn try_fold_math_variadic<'a>(
         }
     };
     Some(ConstantValue::Number(result))
+}
+
+fn try_fold_global_functions<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    name: &str,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    match name {
+        "encodeURI" => try_fold_encode_uri(args, ctx),
+        "encodeURIComponent" => try_fold_encode_uri_component(args, ctx),
+        "decodeURI" => try_fold_decode_uri(args, ctx),
+        "decodeURIComponent" => try_fold_decode_uri_component(args, ctx),
+        _ => None,
+    }
+}
+
+fn try_fold_encode_uri<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // Characters that should NOT be encoded by encodeURI (reserved + unreserved + #)
+    // Unreserved: A-Z a-z 0-9 - _ . ! ~ * ' ( )
+    // Reserved: ; , / ? : @ & = + $
+    // Hash: #
+    fn should_encode_uri(c: char) -> bool {
+        match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' => false,
+            '-' | '_' | '.' | '!' | '~' | '*' | '\'' | '(' | ')' => false,
+            ';' | ',' | '/' | '?' | ':' | '@' | '&' | '=' | '+' | '$' => false,
+            '#' => false,
+            _ => true,
+        }
+    }
+
+    let encoded = encode_uri_chars(&string_value, should_encode_uri);
+    Some(ConstantValue::String(Cow::Owned(encoded)))
+}
+
+fn try_fold_encode_uri_component<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // Characters that should NOT be encoded by encodeURIComponent (only unreserved)
+    // Unreserved: A-Z a-z 0-9 - _ . ! ~ * ' ( )
+    fn should_encode_uri_component(c: char) -> bool {
+        match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' => false,
+            '-' | '_' | '.' | '!' | '~' | '*' | '\'' | '(' | ')' => false,
+            _ => true,
+        }
+    }
+
+    let encoded = encode_uri_chars(&string_value, should_encode_uri_component);
+    Some(ConstantValue::String(Cow::Owned(encoded)))
+}
+
+fn try_fold_decode_uri<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // Characters that should NOT be decoded by decodeURI (reserved + #)
+    // Reserved: ; , / ? : @ & = + $
+    // Hash: #
+    fn should_not_decode_uri(c: char) -> bool {
+        matches!(c, ';' | ',' | '/' | '?' | ':' | '@' | '&' | '=' | '+' | '$' | '#')
+    }
+
+    let decoded = decode_uri_chars(&string_value, should_not_decode_uri)?;
+    Some(ConstantValue::String(Cow::Owned(decoded)))
+}
+
+fn try_fold_decode_uri_component<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // decodeURIComponent decodes all percent-encoded sequences
+    let decoded = decode_uri_chars(&string_value, |_| false)?;
+    Some(ConstantValue::String(Cow::Owned(decoded)))
+}
+
+fn encode_uri_chars(input: &str, should_encode: fn(char) -> bool) -> String {
+    let mut result = String::new();
+    for c in input.chars() {
+        if should_encode(c) {
+            // Encode each byte of the UTF-8 representation
+            for byte in c.to_string().as_bytes() {
+                result.push_str(&format!("%{:02X}", byte));
+            }
+        } else {
+            result.push(c);
+        }
+    }
+    result
+}
+
+fn decode_uri_chars(input: &str, should_not_decode: fn(char) -> bool) -> Option<String> {
+    let mut result = String::new();
+    let mut chars = input.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c == '%' {
+            // Check if we have enough characters for a valid percent-encoded sequence
+            let hex1_opt = chars.peek().copied();
+            if hex1_opt.is_none() {
+                return None; // Invalid sequence
+            }
+            let hex1 = chars.next().unwrap();
+
+            let hex2_opt = chars.peek().copied();
+            if hex2_opt.is_none() {
+                return None; // Invalid sequence
+            }
+            let hex2 = chars.next().unwrap();
+
+            if hex1.is_ascii_hexdigit() && hex2.is_ascii_hexdigit() {
+                let hex_str = format!("{}{}", hex1, hex2);
+                let byte = u8::from_str_radix(&hex_str, 16).ok()?;
+
+                // For ASCII characters (single byte), check immediately
+                if byte < 0x80 {
+                    let decoded_char = byte as char;
+                    if should_not_decode(decoded_char) {
+                        // Keep the original percent-encoded form
+                        result.push('%');
+                        result.push(hex1);
+                        result.push(hex2);
+                    } else {
+                        result.push(decoded_char);
+                    }
+                } else {
+                    // For multi-byte UTF-8 sequences, we need to collect all bytes
+                    let mut bytes = vec![byte];
+                    let expected_bytes = if byte >= 0xF0 {
+                        4
+                    } else if byte >= 0xE0 {
+                        3
+                    } else {
+                        2
+                    };
+
+                    let mut valid_sequence = true;
+                    for _ in 1..expected_bytes {
+                        if chars.peek() == Some(&'%') {
+                            chars.next(); // consume '%'
+                            let h1_opt = chars.peek().copied();
+                            if h1_opt.is_none() {
+                                valid_sequence = false;
+                                break;
+                            }
+                            let h1 = chars.next().unwrap();
+
+                            let h2_opt = chars.peek().copied();
+                            if h2_opt.is_none() {
+                                valid_sequence = false;
+                                break;
+                            }
+                            let h2 = chars.next().unwrap();
+
+                            if h1.is_ascii_hexdigit() && h2.is_ascii_hexdigit() {
+                                let hex_str = format!("{}{}", h1, h2);
+                                if let Ok(b) = u8::from_str_radix(&hex_str, 16) {
+                                    bytes.push(b);
+                                } else {
+                                    valid_sequence = false;
+                                    break;
+                                }
+                            } else {
+                                valid_sequence = false;
+                                break;
+                            }
+                        } else {
+                            valid_sequence = false;
+                            break;
+                        }
+                    }
+
+                    if !valid_sequence {
+                        return None; // Invalid UTF-8 sequence
+                    }
+
+                    // Convert bytes to string
+                    if let Ok(decoded_str) = String::from_utf8(bytes) {
+                        if let Some(decoded_char) = decoded_str.chars().next() {
+                            if should_not_decode(decoded_char) {
+                                // For multi-byte sequences that shouldn't be decoded,
+                                // we conservatively don't fold to avoid complexity
+                                return None;
+                            } else {
+                                result.push_str(&decoded_str);
+                            }
+                        } else {
+                            return None;
+                        }
+                    } else {
+                        return None; // Invalid UTF-8
+                    }
+                }
+            } else {
+                return None; // Invalid hex digits
+            }
+        } else {
+            result.push(c);
+        }
+    }
+
+    Some(result)
 }
