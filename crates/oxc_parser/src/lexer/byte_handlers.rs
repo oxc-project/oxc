@@ -241,13 +241,7 @@ ascii_byte_handler!(QOS(lexer) {
 // #
 ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
-    // HashbangComment ::
-    //     `#!` SingleLineCommentChars?
-    if lexer.token.start() == 0 && lexer.next_ascii_byte_eq(b'!') {
-        lexer.read_hashbang_comment()
-    } else {
-        lexer.private_identifier()
-    }
+    lexer.private_identifier()
 });
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
