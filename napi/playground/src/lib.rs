@@ -30,8 +30,8 @@ use oxc::{
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_index::Idx;
 use oxc_linter::{
-    ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Linter, ModuleRecord,
-    Oxlintrc,
+    ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
+    ModuleRecord, Oxlintrc,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 
@@ -317,7 +317,11 @@ impl Oxc {
                 ConfigStore::new(lint_config, FxHashMap::default(), external_plugin_store),
                 None,
             )
-            .run(path, Rc::clone(&semantic), Arc::clone(module_record), allocator);
+            .run(
+                path,
+                vec![ContextSubHost::new(Rc::clone(&semantic), Arc::clone(module_record), 0)],
+                allocator,
+            );
             self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));
         }
     }
