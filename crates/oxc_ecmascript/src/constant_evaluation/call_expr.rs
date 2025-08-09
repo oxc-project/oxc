@@ -548,9 +548,29 @@ fn encode_uri(input: &str) -> String {
             let byte = ch as u8;
             match byte {
                 // Unreserved and reserved characters that are NOT encoded by encodeURI
-                b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' 
-                | b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'!'
-                | b'*' | b'\'' | b'(' | b')' | b'#' => {
+                b'A'..=b'Z'
+                | b'a'..=b'z'
+                | b'0'..=b'9'
+                | b'-'
+                | b'_'
+                | b'.'
+                | b'~'
+                | b';'
+                | b','
+                | b'/'
+                | b'?'
+                | b':'
+                | b'@'
+                | b'&'
+                | b'='
+                | b'+'
+                | b'$'
+                | b'!'
+                | b'*'
+                | b'\''
+                | b'('
+                | b')'
+                | b'#' => {
                     result.push(ch);
                 }
                 // Everything else gets percent-encoded
