@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- c8e200c linter: `react/jsx-curly-brace-presence` report for JSXAttributeItem with quote char inside (#12888) (Sysix)
+- dac0f33 linter: `react/jsx-curly-brace-presence` report for JSXAttributeItem with padding space (#12887) (Sysix)
+
+### 🚜 Refactor
+
+- 51aaafd rust: Enable `unnecessary_unwrap` lint (#12908) (camc314)
+- 106e7a7 linter/expect-expect: Use visitor pattern to detect `expect` calls (#12906) (camc314)
+- 238b183 linter: Use `fast-glob` instead of `globset` for `GlobSet` (#12870) (shulaoda)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+- 9e3963f linter: Allow marking rule as a tsgolint rule (#12890) (Cam McHenry)
+- 6437a3b linter/label-has-associated-control: Remove unnecessary globset (#12863) (shulaoda)
+- 78c311c linter/no-unassigned-import: Use `fast-glob` instead of `globset` (#12867) (shulaoda)
+- fcdb91d linter/no-restricted-imports: Use `fast-glob` instead of `globset` (#12868) (shulaoda)
+
+### ⚡ Performance
+
+- d94209b linter/new-cap: Remove unneeded clone (#12883) (camc314)
+
+### 🧪 Testing
+
+- 281f939 linter/expect-expect: Add test case for `expect` call in for loop (#12907) (camc314)
+
+
 ## [1.11.0] - 2025-08-07
 
 ### 🚀 Features

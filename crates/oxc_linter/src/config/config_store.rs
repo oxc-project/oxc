@@ -220,6 +220,7 @@ impl Config {
                 if *severity == AllowWarnDeny::Allow {
                     rules.remove(rule);
                 } else {
+                    let _ = rules.remove(rule);
                     rules.insert(rule.clone(), *severity);
                 }
             }
@@ -342,7 +343,10 @@ impl ConfigStore {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use rustc_hash::{FxHashMap, FxHashSet};
+    use serde_json::Value;
 
     use super::{ConfigStore, ResolvedOxlintOverrides};
     use crate::{
@@ -354,6 +358,7 @@ mod test {
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
         },
+        rule::Rule,
         rules::{EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny},
     };
 
@@ -870,6 +875,68 @@ mod test {
             rules_for_tsx.rules.iter().any(|(rule, _)| rule.plugin_name() == "react");
 
         assert!(has_react_rules, "React rules should be enabled by categories for new plugin");
+    }
+
+    #[test]
+    fn test_rule_config_override_replaces_properly() {
+        let base_rules = vec![(
+            RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+            AllowWarnDeny::Deny,
+        )];
+        let override_rule =
+            EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap());
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            env: None,
+            files: GlobSet::new(vec!["*.tsx"]),
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules {
+                builtin_rules: vec![(
+                    RuleEnum::EslintNoUnusedVars(override_rule),
+                    AllowWarnDeny::Deny,
+                )],
+                external_rules: vec![],
+            },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                base_rules.clone(),
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert!(
+            format!("{:?}", base_rules[0].0)
+                == format!(
+                    "{:?}",
+                    store
+                        .resolve("app.ts".as_ref())
+                        .rules
+                        .iter()
+                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                        .unwrap()
+                        .0
+                )
+        );
+        assert!(
+            format!("{:?}", base_rules[0].0)
+                != format!(
+                    "{:?}",
+                    store
+                        .resolve("app.tsx".as_ref())
+                        .rules
+                        .iter()
+                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                        .unwrap()
+                        .0
+                )
+        );
     }
 
     #[test]

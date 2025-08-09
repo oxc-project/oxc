@@ -42,6 +42,8 @@ mod from_raw_parts;
 pub mod hash_map;
 mod string_builder;
 mod take_in;
+#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+mod tracking;
 mod vec;
 mod vec2;
 

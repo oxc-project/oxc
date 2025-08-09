@@ -7,6 +7,7 @@ use std::{
 };
 
 use humansize::{DECIMAL, format_size};
+use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
@@ -38,7 +39,7 @@ fn reset_global_allocs() {
 #[expect(unsafe_code, clippy::undocumented_unsafe_blocks)]
 unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let ret = unsafe { mimalloc_safe::MiMalloc.alloc(layout) };
+        let ret = unsafe { MiMalloc.alloc(layout) };
         if !ret.is_null() {
             NUM_ALLOC.fetch_add(1, SeqCst);
         }
@@ -46,20 +47,19 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        unsafe {
-            mimalloc_safe::MiMalloc.dealloc(ptr, layout);
-        }
+        unsafe { MiMalloc.dealloc(ptr, layout) };
     }
 
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        let ret = unsafe { mimalloc_safe::MiMalloc.alloc_zeroed(layout) };
+        let ret = unsafe { MiMalloc.alloc_zeroed(layout) };
         if !ret.is_null() {
             NUM_ALLOC.fetch_add(1, SeqCst);
         }
         ret
     }
+
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        let ret = unsafe { mimalloc_safe::MiMalloc.realloc(ptr, layout, new_size) };
+        let ret = unsafe { MiMalloc.realloc(ptr, layout, new_size) };
         if !ret.is_null() {
             NUM_REALLOC.fetch_add(1, SeqCst);
         }
@@ -119,13 +119,9 @@ pub fn run() -> Result<(), io::Error> {
         let sys_allocs = NUM_ALLOC.load(SeqCst);
         let sys_reallocs = NUM_REALLOC.load(SeqCst);
         #[cfg(not(feature = "is_all_features"))]
-        let arena_allocs = allocator.num_alloc.load(SeqCst);
+        let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
         #[cfg(feature = "is_all_features")]
-        let arena_allocs = 0;
-        #[cfg(not(feature = "is_all_features"))]
-        let arena_reallocs = allocator.num_realloc.load(SeqCst);
-        #[cfg(feature = "is_all_features")]
-        let arena_reallocs = 0;
+        let (arena_allocs, arena_reallocs) = (0, 0);
         let arena_bytes = allocator.used_bytes();
 
         let s = format!(

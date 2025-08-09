@@ -1,6 +1,9 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -135,28 +138,30 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             }
         }
-        match &mut e.right {
-            Expression::BooleanLiteral(b) if left.is_boolean() => {
-                match e.operator {
-                    BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
-                        e.operator = BinaryOperator::Equality;
-                        b.value = !b.value;
-                    }
-                    BinaryOperator::StrictEquality => {
-                        e.operator = BinaryOperator::Equality;
-                    }
-                    BinaryOperator::Equality => {}
-                    _ => return None,
-                }
-                Some(if b.value {
-                    e.left.take_in(ctx.ast)
-                } else {
-                    let argument = e.left.take_in(ctx.ast);
-                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
-                })
-            }
-            _ => None,
+        if !left.is_boolean() {
+            return None;
         }
+        if e.right.may_have_side_effects(ctx) {
+            return None;
+        }
+        let mut b = e.right.evaluate_value(ctx).and_then(ConstantValue::into_boolean)?;
+        match e.operator {
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                e.operator = BinaryOperator::Equality;
+                b = !b;
+            }
+            BinaryOperator::StrictEquality => {
+                e.operator = BinaryOperator::Equality;
+            }
+            BinaryOperator::Equality => {}
+            _ => return None,
+        }
+        Some(if b {
+            e.left.take_in(ctx.ast)
+        } else {
+            let argument = e.left.take_in(ctx.ast);
+            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+        })
     }
 
     /// Compress `foo == true` into `foo == 1`.
@@ -1467,5 +1472,13 @@ mod test {
         test("v = x != !0", "v = x != 1");
         test("v = x == !1", "v = x == 0");
         test("v = x != !1", "v = x != 0");
+    }
+
+    #[test]
+    fn try_minimize_binary() {
+        test("f(!a === !0)", "f(!a)");
+        test("f(!a === !1)", "f(!!a)");
+        test("f(!a === true)", "f(!a)");
+        test("f(!a === false)", "f(!!a)");
     }
 }

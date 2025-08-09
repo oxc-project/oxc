@@ -1,6 +1,9 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
@@ -101,27 +104,6 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             _ => {}
-        }
-
-        // "a ? true : false" => "!!a"
-        // "a ? false : true" => "!a"
-        if let (Expression::BooleanLiteral(left), Expression::BooleanLiteral(right)) =
-            (&expr.consequent, &expr.alternate)
-        {
-            match (left.value, right.value) {
-                (true, false) => {
-                    let test = expr.test.take_in(ctx.ast);
-                    let test = self.minimize_not(expr.span, test, ctx);
-                    let test = self.minimize_not(expr.span, test, ctx);
-                    return Some(test);
-                }
-                (false, true) => {
-                    let test = expr.test.take_in(ctx.ast);
-                    let test = self.minimize_not(expr.span, test, ctx);
-                    return Some(test);
-                }
-                _ => {}
-            }
         }
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
@@ -387,6 +369,32 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
+        }
+
+        // "a ? true : false" => "!!a"
+        // "a ? false : true" => "!a"
+        match (
+            expr.consequent
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_boolean)
+                .filter(|_| !expr.consequent.may_have_side_effects(ctx)),
+            expr.alternate
+                .evaluate_value(ctx)
+                .and_then(ConstantValue::into_boolean)
+                .filter(|_| !expr.alternate.may_have_side_effects(ctx)),
+        ) {
+            (Some(true), Some(false)) => {
+                let test = expr.test.take_in(ctx.ast);
+                let test = self.minimize_not(expr.span, test, ctx);
+                let test = self.minimize_not(expr.span, test, ctx);
+                return Some(test);
+            }
+            (Some(false), Some(true)) => {
+                let test = expr.test.take_in(ctx.ast);
+                let test = self.minimize_not(expr.span, test, ctx);
+                return Some(test);
+            }
+            _ => {}
         }
 
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {

@@ -2,7 +2,7 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
-use oxc_ecmascript::constant_evaluation::DetermineValueType;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
@@ -15,7 +15,7 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations};
+use super::PeepholeOptimizations;
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -164,6 +164,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
             Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, ctx),
             Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, ctx),
+            Expression::NewExpression(e) => Self::try_compress_typed_array_constructor(e, ctx),
             _ => {}
         }
 
@@ -185,6 +186,8 @@ impl<'a> PeepholeOptimizations {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
                 })
                 .or_else(|| self.try_fold_simple_function_call(e, ctx)),
+            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
+            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -654,18 +657,10 @@ impl<'a> PeepholeOptimizations {
                 match arg {
                     // `String()` -> `''`
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
-                    // `String(a)` -> `'' + (a)`
-                    Some(arg) => {
-                        if !arg.is_literal() {
-                            return None;
-                        }
-                        Some(ctx.ast.expression_binary(
-                            span,
-                            ctx.ast.expression_string_literal(call_expr.span, "", None),
-                            BinaryOperator::Addition,
-                            arg.take_in(ctx.ast),
-                        ))
-                    }
+                    Some(arg) => arg
+                        .evaluate_value_to_string(ctx)
+                        .filter(|_| !arg.may_have_side_effects(ctx))
+                        .map(|s| ctx.value_to_expr(call_expr.span, ConstantValue::String(s))),
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(
@@ -999,22 +994,6 @@ impl<'a> PeepholeOptimizations {
         if class.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
             class.id = None;
             ctx.state.changed = true;
-        }
-    }
-}
-
-impl<'a> LatePeepholeOptimizations {
-    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        if let Expression::NewExpression(e) = expr {
-            Self::try_compress_typed_array_constructor(e, ctx);
-        }
-
-        if let Some(folded_expr) = match expr {
-            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
-            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
         }
     }
 
@@ -1848,6 +1827,8 @@ mod test {
         test_same("var a = String?.(23)");
 
         test("var a = String('hello')", "var a = 'hello'");
+        test("var a = String(true)", "var a = 'true'");
+        test("var a = String(!0)", "var a = 'true'");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.('hello')");
 

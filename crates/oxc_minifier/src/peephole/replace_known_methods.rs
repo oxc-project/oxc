@@ -1486,6 +1486,8 @@ mod test {
         test("x = false['toString']()", "x = 'false';");
         test("x = false.toString()", "x = 'false';");
         test("x = true.toString()", "x = 'true';");
+        test("x = (!0).toString()", "x = 'true';");
+        test("x = (!1).toString()", "x = 'false';");
         test("x = 'xy'.toString()", "x = 'xy';");
         test("x = 0 .toString()", "x = '0';");
         test("x = 123 .toString()", "x = '123';");
