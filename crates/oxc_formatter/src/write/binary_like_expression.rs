@@ -9,6 +9,7 @@ use crate::{
     Format,
     formatter::{FormatResult, Formatter},
     generated::ast_nodes::{AstNode, AstNodes},
+    utils::expression::FormatExpressionWithoutTrailingComments,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -308,6 +309,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 // // the formatting of the right hand side value but not of a nested binary expression.
                 // // This aligns with Prettier's behaviour.
                 // f.context().comments().mark_suppression_checked(binary_like_expression.syntax());
+                let parent = binary_like_expression.parent();
                 let right = binary_like_expression.right();
                 let operator = binary_like_expression.operator();
                 let operator_and_right_expression = format_with(|f| {
@@ -319,10 +321,15 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         write!(f, [soft_line_break_or_space()])?;
                     }
 
-                    write!(f, right)
+                    if matches!(
+                        parent,
+                        AstNodes::LogicalExpression(_) | AstNodes::BinaryExpression(_)
+                    ) {
+                        write!(f, right)
+                    } else {
+                        write!(f, FormatExpressionWithoutTrailingComments(right))
+                    }
                 });
-
-                let parent = binary_like_expression.parent();
 
                 // Doesn't match prettier that only distinguishes between logical and binary
                 let should_group =

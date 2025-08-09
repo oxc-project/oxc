@@ -3,8 +3,9 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Format, FormatResult, FormatWrite,
-    formatter::{Formatter, prelude::*},
+    formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
+    utils::expression::FormatExpressionWithoutTrailingComments,
     write,
 };
 
@@ -110,6 +111,61 @@ impl ConditionalLayout {
     fn is_jsx_chain(self) -> bool {
         matches!(self, Self::Root { jsx_chain: true })
     }
+}
+
+fn format_trailing_comments<'a>(
+    mut start: u32,
+    end: u32,
+    operator: u8,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    let mut get_comments = |f: &mut Formatter<'_, 'a>| -> &'a [Comment] {
+        let comments = f.context().comments().unprinted_comments();
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let source_text = f.context().source_text();
+        let mut index_before_operator = None;
+        for (index, comment) in comments.iter().enumerate() {
+            // This comment is after the `end` position, so we stop here and return the comments before this comment
+            if comment.span.end > end {
+                return &comments[..index_before_operator.unwrap_or(index)];
+            }
+
+            // `a /* c1 */ /* c2 */ ? b : c`
+            //   ^        ^        ^
+            //   |        |        |
+            //   |        |        |
+            //  these are the gaps between comments
+            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start as usize];
+
+            // If this comment is in a new line, we stop here and return the comments before this comment
+            if gap_str.contains(&b'\n') {
+                return &comments[..index];
+            }
+            // If this comment is a line comment, then it is a end of line comment, so we stop here and return the comments with this comment
+            else if comment.is_line() {
+                return &comments[..=index];
+            }
+            // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator
+            else if gap_str.contains(&operator) {
+                index_before_operator = Some(index + 1);
+            }
+
+            // Update the start position for the next iteration
+            start = comment.span.end;
+        }
+
+        &comments[..index_before_operator.unwrap_or(comments.len())]
+    };
+
+    let comments = get_comments(f);
+    if !comments.is_empty() {
+        FormatTrailingComments::Comments(comments).fmt(f)?;
+    }
+
+    Ok(())
 }
 
 impl<'a> ConditionalLike<'a, '_> {
@@ -303,7 +359,13 @@ impl<'a> ConditionalLike<'a, '_> {
     ) -> FormatResult<()> {
         let format_inner = format_with(|f| match self {
             Self::ConditionalExpression(conditional) => {
-                write!(f, [conditional.test()])
+                write!(f, FormatExpressionWithoutTrailingComments(conditional.test()))?;
+                format_trailing_comments(
+                    conditional.test.span().end,
+                    conditional.consequent.span().start,
+                    b'?',
+                    f,
+                )
             }
             Self::TSConditionalType(conditional) => {
                 write!(
@@ -346,6 +408,16 @@ impl<'a> ConditionalLike<'a, '_> {
                     }
                 };
 
+                let format_consequent = format_once(|f| {
+                    write!(f, FormatExpressionWithoutTrailingComments(conditional.consequent()))?;
+                    format_trailing_comments(
+                        conditional.consequent.span().end,
+                        conditional.alternate.span().start,
+                        b':',
+                        f,
+                    )
+                });
+
                 if is_consequent_nested && !layout.is_jsx_chain() {
                     // Add parentheses around the consequent if it is a conditional expression and fits on the same line
                     // so that it's easier to identify the parts that belong to a conditional expression.
@@ -354,12 +426,12 @@ impl<'a> ConditionalLike<'a, '_> {
                         f,
                         [
                             if_group_fits_on_line(&text("(")),
-                            conditional.consequent(),
+                            format_consequent,
                             if_group_fits_on_line(&text(")"))
                         ]
                     )
                 } else {
-                    write!(f, [conditional.consequent()])
+                    write!(f, format_consequent)
                 }
             }
             Self::TSConditionalType(conditional) => {

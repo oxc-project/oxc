@@ -63,10 +63,10 @@ js compatibility: 505/699 (72.25%)
 | js/comments-closure-typecast/satisfies.js | 💥 | 33.33% |
 | js/comments-closure-typecast/superclass.js | 💥 | 0.00% |
 | js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 15.38% |
-| js/conditional/comments.js | 💥💥 | 60.35% |
+| js/conditional/comments.js | 💥✨ | 23.69% |
 | js/conditional/new-ternary-examples.js | 💥💥 | 43.38% |
 | js/conditional/new-ternary-spec.js | 💥💥 | 58.16% |
-| js/conditional/postfix-ternary-regressions.js | 💥💥 | 65.17% |
+| js/conditional/postfix-ternary-regressions.js | 💥💥 | 65.71% |
 | js/decorators/classes.js | 💥 | 73.68% |
 | js/decorators/comments.js | 💥 | 73.33% |
 | js/decorators/member-expression.js | 💥 | 80.60% |
