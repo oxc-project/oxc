@@ -28,6 +28,7 @@
 //!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
 
 #![warn(missing_docs)]
+#![cfg_attr(nightly, feature(allocator_api))]
 
 mod accessor;
 mod address;
