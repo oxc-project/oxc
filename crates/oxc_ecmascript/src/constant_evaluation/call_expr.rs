@@ -679,7 +679,7 @@ mod tests {
         assert_eq!(encode_uri("hello world"), "hello%20world");
 
         // Test non-ASCII characters (should be encoded)
-        assert_eq!(encode_uri("café"), "caf%C3%A9");
+        assert_eq!(encode_uri("hello🌍"), "hello%F0%9F%8C%8D");
     }
 
     #[test]
@@ -700,7 +700,7 @@ mod tests {
         assert_eq!(encode_uri_component("hello world"), "hello%20world");
 
         // Test non-ASCII characters (should be encoded)
-        assert_eq!(encode_uri_component("café"), "caf%C3%A9");
+        assert_eq!(encode_uri_component("hello🌍"), "hello%F0%9F%8C%8D");
     }
 
     #[test]
@@ -709,7 +709,7 @@ mod tests {
         assert_eq!(decode_uri("hello%20world").unwrap(), "hello world");
 
         // Test encoded non-ASCII
-        assert_eq!(decode_uri("caf%C3%A9").unwrap(), "café");
+        assert_eq!(decode_uri("hello%F0%9F%8C%8D").unwrap(), "hello🌍");
 
         // Test reserved characters should NOT be decoded
         assert_eq!(decode_uri("%2F%3A%40").unwrap(), "%2F%3A%40");
@@ -731,7 +731,7 @@ mod tests {
         assert_eq!(decode_uri_component("hello%20world").unwrap(), "hello world");
 
         // Test encoded non-ASCII
-        assert_eq!(decode_uri_component("caf%C3%A9").unwrap(), "café");
+        assert_eq!(decode_uri_component("hello%F0%9F%8C%8D").unwrap(), "hello🌍");
 
         // Test reserved characters SHOULD be decoded (unlike decodeURI)
         assert_eq!(decode_uri_component("%2F%3A%40").unwrap(), "/:@");
