@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                 if let Some(bool_value) = Self::get_known_boolean_value(&e.argument, ctx) {
                     return Some(ctx.value_to_expr(e.span, ConstantValue::Boolean(!bool_value)));
                 }
-                
+
                 // Fall back to standard evaluation for side-effect-free expressions
                 if !e.may_have_side_effects(ctx) {
                     e.argument
@@ -87,22 +87,22 @@ impl<'a> PeepholeOptimizations {
     fn get_known_boolean_value(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> Option<bool> {
         match expr {
             // Object expressions are always truthy
-            Expression::NewExpression(_) 
+            Expression::NewExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::ObjectExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::ClassExpression(_)
             | Expression::RegExpLiteral(_) => Some(true),
-            
+
             // Literal values
             Expression::NullLiteral(_) => Some(false),
             Expression::BooleanLiteral(lit) => Some(lit.value),
             Expression::NumericLiteral(lit) => Some(!lit.value.is_nan() && lit.value != 0.0),
             Expression::BigIntLiteral(lit) => Some(!lit.is_zero()),
             Expression::StringLiteral(lit) => Some(!lit.value.is_empty()),
-            
-            // Global references  
+
+            // Global references
             Expression::Identifier(ident) if ctx.is_global_reference(ident) => {
                 match ident.name.as_str() {
                     "undefined" | "NaN" => Some(false),
@@ -110,7 +110,7 @@ impl<'a> PeepholeOptimizations {
                     _ => None,
                 }
             }
-            
+
             _ => None,
         }
     }
@@ -118,7 +118,7 @@ impl<'a> PeepholeOptimizations {
     /// Check if an expression is always an object (never null or undefined) and has no side effects
     fn is_always_object(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         match expr {
-            Expression::NewExpression(_) 
+            Expression::NewExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::ObjectExpression(_)
             | Expression::FunctionExpression(_)
@@ -146,19 +146,15 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         use BinaryOperator::*;
-        
+
         if !matches!(e.operator, Equality | Inequality | StrictEquality | StrictInequality) {
             return None;
         }
 
-        let (is_object_left, is_null_undefined_right) = (
-            Self::is_always_object(&e.left, ctx),
-            Self::is_null_or_undefined(&e.right, ctx),
-        );
-        let (is_object_right, is_null_undefined_left) = (
-            Self::is_always_object(&e.right, ctx),
-            Self::is_null_or_undefined(&e.left, ctx),
-        );
+        let (is_object_left, is_null_undefined_right) =
+            (Self::is_always_object(&e.left, ctx), Self::is_null_or_undefined(&e.right, ctx));
+        let (is_object_right, is_null_undefined_left) =
+            (Self::is_always_object(&e.right, ctx), Self::is_null_or_undefined(&e.left, ctx));
 
         if is_object_left && is_null_undefined_right || is_object_right && is_null_undefined_left {
             let result = match e.operator {
@@ -1322,7 +1318,7 @@ mod test {
 
     #[test]
     fn test_object_comparison1() {
-        // Test that object expressions are folded correctly  
+        // Test that object expressions are folded correctly
         fold("!{}", "!1");
         fold("![]", "!1");
         fold("!!{}", "!0");
