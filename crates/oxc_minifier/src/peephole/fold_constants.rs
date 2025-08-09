@@ -55,6 +55,23 @@ impl<'a> PeepholeOptimizations {
             }
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => None,
+            // For logical not, try to fold based on known truthiness of objects and other expressions
+            UnaryOperator::LogicalNot => {
+                // Check for known truthy expressions that always evaluate to the same boolean value
+                // regardless of side effects (like object constructions)
+                if let Some(bool_value) = Self::get_known_boolean_value(&e.argument, ctx) {
+                    return Some(ctx.value_to_expr(e.span, ConstantValue::Boolean(!bool_value)));
+                }
+                
+                // Fall back to standard evaluation for side-effect-free expressions
+                if !e.may_have_side_effects(ctx) {
+                    e.argument
+                        .evaluate_value_to_boolean(ctx)
+                        .map(|b| ctx.value_to_expr(e.span, ConstantValue::Boolean(!b)))
+                } else {
+                    None
+                }
+            }
             _ => {
                 if e.may_have_side_effects(ctx) {
                     None
@@ -63,6 +80,96 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
+    }
+
+    /// Get the boolean value for expressions that always evaluate to the same boolean value
+    /// regardless of side effects, like object constructions.
+    fn get_known_boolean_value(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> Option<bool> {
+        match expr {
+            // Object expressions are always truthy
+            Expression::NewExpression(_) 
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::RegExpLiteral(_) => Some(true),
+            
+            // Literal values
+            Expression::NullLiteral(_) => Some(false),
+            Expression::BooleanLiteral(lit) => Some(lit.value),
+            Expression::NumericLiteral(lit) => Some(!lit.value.is_nan() && lit.value != 0.0),
+            Expression::BigIntLiteral(lit) => Some(!lit.is_zero()),
+            Expression::StringLiteral(lit) => Some(!lit.value.is_empty()),
+            
+            // Global references  
+            Expression::Identifier(ident) if ctx.is_global_reference(ident) => {
+                match ident.name.as_str() {
+                    "undefined" | "NaN" => Some(false),
+                    "Infinity" => Some(true),
+                    _ => None,
+                }
+            }
+            
+            _ => None,
+        }
+    }
+
+    /// Check if an expression is always an object (never null or undefined) and has no side effects
+    fn is_always_object(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::NewExpression(_) 
+            | Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::RegExpLiteral(_) => !expr.may_have_side_effects(ctx),
+            _ => false,
+        }
+    }
+
+    /// Check if an expression is null or undefined
+    fn is_null_or_undefined(expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        match expr {
+            Expression::NullLiteral(_) => true,
+            Expression::Identifier(ident) if ctx.is_global_reference(ident) => {
+                ident.name.as_str() == "undefined"
+            }
+            _ => false,
+        }
+    }
+
+    /// Try to fold comparisons between objects and null/undefined
+    fn try_fold_object_null_undefined_comparison(
+        e: &BinaryExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        use BinaryOperator::*;
+        
+        if !matches!(e.operator, Equality | Inequality | StrictEquality | StrictInequality) {
+            return None;
+        }
+
+        let (is_object_left, is_null_undefined_right) = (
+            Self::is_always_object(&e.left, ctx),
+            Self::is_null_or_undefined(&e.right, ctx),
+        );
+        let (is_object_right, is_null_undefined_left) = (
+            Self::is_always_object(&e.right, ctx),
+            Self::is_null_or_undefined(&e.left, ctx),
+        );
+
+        if is_object_left && is_null_undefined_right || is_object_right && is_null_undefined_left {
+            let result = match e.operator {
+                Equality | StrictEquality => false,
+                Inequality | StrictInequality => true,
+                _ => return None,
+            };
+            return Some(ctx.value_to_expr(e.span, ConstantValue::Boolean(result)));
+        }
+
+        None
     }
 
     fn try_fold_static_member_expr(
@@ -272,6 +379,11 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
+
+        // Try to fold object comparisons with null/undefined
+        if let Some(result) = Self::try_fold_object_null_undefined_comparison(e, ctx) {
+            return Some(result);
+        }
 
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1136
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1222
@@ -1210,17 +1322,22 @@ mod test {
 
     #[test]
     fn test_object_comparison1() {
-        fold("!new Date()", "false");
-        fold("!!new Date()", "true");
+        // Test that object expressions are folded correctly  
+        fold("!{}", "!1");
+        fold("![]", "!1");
+        fold("!!{}", "!0");
+        fold("!![]", "!0");
+        fold("!new Date()", "!1");
+        fold("!!new Date()", "!0");
 
-        fold("new Date() == null", "false");
-        fold("new Date() == undefined", "false");
-        fold("new Date() != null", "true");
-        fold("new Date() != undefined", "true");
-        fold("null == new Date()", "false");
-        fold("undefined == new Date()", "false");
-        fold("null != new Date()", "true");
-        fold("undefined != new Date()", "true");
+        fold("new Date() == null", "!1");
+        fold("new Date() == undefined", "!1");
+        fold("new Date() != null", "!0");
+        fold("new Date() != undefined", "!0");
+        fold("null == new Date()", "!1");
+        fold("undefined == new Date()", "!1");
+        fold("null != new Date()", "!0");
+        fold("undefined != new Date()", "!0");
     }
 
     #[test]
