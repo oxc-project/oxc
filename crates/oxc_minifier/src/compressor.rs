@@ -5,10 +5,7 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     CompressOptions,
-    peephole::{
-        DeadCodeElimination, LatePeepholeOptimizations, Normalize, NormalizeOptions,
-        PeepholeOptimizations,
-    },
+    peephole::{DeadCodeElimination, Normalize, NormalizeOptions, PeepholeOptimizations},
     state::MinifierState,
 };
 
@@ -38,7 +35,6 @@ impl<'a> Compressor<'a> {
             NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
         Normalize::new(normalize_options).build(program, &mut ctx);
         PeepholeOptimizations::new().run_in_loop(program, &mut ctx);
-        LatePeepholeOptimizations::new().build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) {

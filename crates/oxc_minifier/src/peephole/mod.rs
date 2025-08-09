@@ -189,16 +189,16 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         }
     }
 
-    fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-
-        self.substitute_call_expression(expr, &mut ctx);
+        self.substitute_call_expression(e, &mut ctx);
+        Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
-    fn exit_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-
-        self.substitute_new_expression(expr, &mut ctx);
+        self.substitute_new_expression(e, &mut ctx);
+        Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -262,27 +262,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
         self.substitute_accessor_property(prop, &mut ctx);
     }
-}
 
-/// Changes that do not interfere with optimizations that are run inside the fixed-point loop,
-/// which can be done as a last AST pass.
-pub struct LatePeepholeOptimizations;
-
-impl<'a> LatePeepholeOptimizations {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn build(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
     fn exit_member_expression(
         &mut self,
         expr: &mut MemberExpression<'a>,
@@ -297,22 +277,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
         Self::remove_dead_code_exit_class_body(body, &mut ctx);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        Self::substitute_exit_expression(expr, &mut ctx);
-    }
-
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
         self.substitute_catch_clause(catch, &mut ctx);
-    }
-
-    fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        Self::remove_empty_spread_arguments(&mut e.arguments);
-    }
-
-    fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 }
 
