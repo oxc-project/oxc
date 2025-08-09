@@ -1,4 +1,4 @@
-js compatibility: 503/699 (71.96%)
+js compatibility: 505/699 (72.25%)
 
 # Failed
 
@@ -124,8 +124,6 @@ js compatibility: 503/699 (71.96%)
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/strings/escaped.js | 💥💥 | 73.68% |
 | js/strings/template-literals.js | 💥💥 | 51.49% |
-| js/switch/comments.js | 💥 | 90.37% |
-| js/switch/comments2.js | 💥 | 84.21% |
 | js/template/comment.js | 💥 | 23.08% |
 | js/template/graphql.js | 💥 | 81.25% |
 | js/template/indent.js | 💥 | 85.71% |
