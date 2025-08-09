@@ -28,6 +28,23 @@ fn is_uri_always_unescaped(c: char) -> bool {
     URI_ALWAYS_UNESCAPED.contains(c)
 }
 
+fn try_fold_url_related_function<'a>(
+    ident: &oxc_ast::ast::IdentifierReference<'a>,
+    arguments: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if ctx.is_global_reference(ident) == Some(true) {
+        match ident.name.as_str() {
+            "encodeURI" => return try_fold_encode_uri(arguments, ctx),
+            "encodeURIComponent" => return try_fold_encode_uri_component(arguments, ctx),
+            "decodeURI" => return try_fold_decode_uri(arguments, ctx),
+            "decodeURIComponent" => return try_fold_decode_uri_component(arguments, ctx),
+            _ => return None,
+        }
+    }
+    None
+}
+
 pub fn try_fold_known_global_methods<'a>(
     callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,
@@ -35,14 +52,8 @@ pub fn try_fold_known_global_methods<'a>(
 ) -> Option<ConstantValue<'a>> {
     // Handle global function calls (e.g., encodeURI, decodeURI)
     if let Expression::Identifier(ident) = callee {
-        if ctx.is_global_reference(ident) == Some(true) {
-            match ident.name.as_str() {
-                "encodeURI" => return try_fold_encode_uri(arguments, ctx),
-                "encodeURIComponent" => return try_fold_encode_uri_component(arguments, ctx),
-                "decodeURI" => return try_fold_decode_uri(arguments, ctx),
-                "decodeURIComponent" => return try_fold_decode_uri_component(arguments, ctx),
-                _ => return None,
-            }
+        if let Some(result) = try_fold_url_related_function(ident, arguments, ctx) {
+            return Some(result);
         }
     }
 
