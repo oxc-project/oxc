@@ -1209,7 +1209,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_object_comparison1() {
         fold("!new Date()", "false");
         fold("!!new Date()", "true");
