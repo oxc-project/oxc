@@ -604,25 +604,28 @@ pub enum RuleKind {
     Vue,
 }
 
-impl RuleKind {
-    fn from(kind: &str) -> Self {
-        match kind {
-            "jest" => Self::Jest,
-            "typescript" => Self::Typescript,
-            "unicorn" => Self::Unicorn,
-            "import" => Self::Import,
-            "react" => Self::React,
-            "react-perf" => Self::ReactPerf,
-            "jsx-a11y" => Self::JSXA11y,
-            "oxc" => Self::Oxc,
-            "nextjs" => Self::NextJS,
-            "jsdoc" => Self::JSDoc,
-            "n" => Self::Node,
-            "promise" => Self::Promise,
-            "vitest" => Self::Vitest,
-            "regexp" => Self::Regexp,
-            "vue" => Self::Vue,
-            _ => Self::ESLint,
+impl TryFrom<&str> for RuleKind {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "eslint" => Ok(Self::ESLint),
+            "jest" => Ok(Self::Jest),
+            "typescript" => Ok(Self::Typescript),
+            "unicorn" => Ok(Self::Unicorn),
+            "import" => Ok(Self::Import),
+            "react" => Ok(Self::React),
+            "react-perf" => Ok(Self::ReactPerf),
+            "jsx-a11y" => Ok(Self::JSXA11y),
+            "oxc" => Ok(Self::Oxc),
+            "nextjs" => Ok(Self::NextJS),
+            "jsdoc" => Ok(Self::JSDoc),
+            "n" => Ok(Self::Node),
+            "promise" => Ok(Self::Promise),
+            "vitest" => Ok(Self::Vitest),
+            "regexp" => Ok(Self::Regexp),
+            "vue" => Ok(Self::Vue),
+            _ => Err(format!("Invalid `RuleKind`, got `{value}`")),
         }
     }
 }
@@ -656,7 +659,9 @@ fn main() {
     args.next();
 
     let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
-    let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
+    let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| {
+        RuleKind::try_from(kind.as_str()).expect("Invalid `RuleKind`")
+    });
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
 
