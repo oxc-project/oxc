@@ -1277,6 +1277,8 @@ mod test {
         fold_same("a=+foo()");
         fold_same("a=+f");
         fold("a=+(f?true:false)", "a=+!!f");
+        fold("a=+(f?!0:!1)", "a=+!!f");
+        fold_same("a=+(f?(foo, !0):(bar, !1))");
         fold("a=+0", "a=0");
         fold("a=+Infinity", "a=Infinity");
         fold("a=+NaN", "a=NaN");
