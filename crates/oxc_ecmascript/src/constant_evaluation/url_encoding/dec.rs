@@ -6,11 +6,11 @@ use std::panic::panic_any;
 
 /// Implements <https://tc39.es/ecma262/2025/multipage/global-object.html#sec-decode>
 #[inline]
-pub fn decode(data_str: &str, should_not_decode: impl Fn(u8) -> bool) -> Option<Cow<'_, str>> {
+pub fn decode(data_str: Cow<'_, str>, should_not_decode: impl Fn(u8) -> bool) -> Option<Cow<'_, str>> {
     let data = data_str.as_bytes();
     let offset = data.iter().take_while(|&&c| c != b'%').count();
     if offset >= data.len() {
-        return Some(Cow::Borrowed(data_str));
+        return Some(data_str);
     }
 
     let mut decoded = Vec::new();
@@ -29,7 +29,7 @@ pub fn decode(data_str: &str, should_not_decode: impl Fn(u8) -> bool) -> Option<
         let rest = parts.next();
         if rest.is_none() && out.0.is_empty() {
             // if empty there were no '%' in the string
-            return Some(Cow::Borrowed(data_str));
+            return Some(data_str);
         }
         out.extend_from_slice(non_escaped_part);
 
@@ -95,7 +95,7 @@ impl<T> NeverRealloc<'_, T> {
 
 #[test]
 fn dec_borrows() {
-    assert!(matches!(decode("hello", |_| false), Some(Cow::Borrowed("hello"))));
-    assert!(matches!(decode("hello%20", |_| false), Some(Cow::Owned(s)) if s == "hello "));
-    assert!(matches!(decode("%20hello", |_| false), Some(Cow::Owned(s)) if s == " hello"));
+    assert!(matches!(decode("hello".into(), |_| false), Some(Cow::Borrowed("hello"))));
+    assert!(matches!(decode("hello%20".into(), |_| false), Some(Cow::Owned(s)) if s == "hello "));
+    assert!(matches!(decode("%20hello".into(), |_| false), Some(Cow::Owned(s)) if s == " hello"));
 }

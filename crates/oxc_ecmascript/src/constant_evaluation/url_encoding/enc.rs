@@ -7,28 +7,25 @@ use std::borrow::Cow;
 /// # Safety
 /// `should_encode` should only return false for characters that are ascii
 #[must_use]
-pub unsafe fn encode(data: &str, should_encode: impl Fn(u8) -> bool) -> Cow<'_, str> {
-    let data = data.as_bytes();
+pub unsafe fn encode(data_str: Cow<'_, str>, should_encode: impl Fn(u8) -> bool) -> Cow<'_, str> {
+    let data = data_str.as_bytes();
     // add maybe extra capacity, but try not to exceed allocator's bucket size
     let mut escaped = String::new();
     let _ = escaped.try_reserve(data.len() | 15);
     let unmodified = encode_into(data, should_encode, |s| {
         escaped.push_str(s);
-        Ok::<_, std::convert::Infallible>(())
-    })
-    .unwrap();
+    });
     if unmodified {
-        // SAFETY: encode_into has checked it's ASCII
-        return Cow::Borrowed(unsafe { str::from_utf8_unchecked(data) });
+        return data_str;
     }
     Cow::Owned(escaped)
 }
 
-fn encode_into<E>(
+fn encode_into(
     mut data: &[u8],
     should_encode: impl Fn(u8) -> bool,
-    mut push_str: impl FnMut(&str) -> Result<(), E>,
-) -> Result<bool, E> {
+    mut push_str: impl FnMut(&str),
+) -> bool {
     let mut pushed = false;
     loop {
         // Fast path to skip over safe chars at the beginning of the remaining string
@@ -36,7 +33,7 @@ fn encode_into<E>(
 
         let (safe, rest) = if ascii_len >= data.len() {
             if !pushed {
-                return Ok(true);
+                return true;
             }
             (data, &[][..]) // redundant to optimize out a panic in split_at
         } else {
@@ -45,7 +42,7 @@ fn encode_into<E>(
         pushed = true;
         if !safe.is_empty() {
             // SAFETY: should_encode has checked it's ASCII
-            push_str(unsafe { str::from_utf8_unchecked(safe) })?;
+            push_str(unsafe { str::from_utf8_unchecked(safe) });
         }
         if rest.is_empty() {
             break;
@@ -55,13 +52,13 @@ fn encode_into<E>(
             Some((byte, rest)) => {
                 let enc = &[b'%', to_hex_digit(byte >> 4), to_hex_digit(byte & 15)];
                 // SAFETY: `%` is a valid UTF-8 char and to_hex_digit returns a valid UTF-8 char
-                push_str(unsafe { str::from_utf8_unchecked(enc) })?;
+                push_str(unsafe { str::from_utf8_unchecked(enc) });
                 data = rest;
             }
             None => break,
         }
     }
-    Ok(false)
+    false
 }
 
 #[inline]
