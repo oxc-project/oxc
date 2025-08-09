@@ -324,16 +324,14 @@ fn try_fold_to_string<'a>(
             let result = format_radix(i, radix);
             Some(ConstantValue::String(Cow::Owned(result)))
         }
-        // `null` returns type errors
-        Expression::BooleanLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::StringLiteral(_)
-            if args.is_empty() =>
-        {
-            object.to_js_string(ctx).map(ConstantValue::String)
+        Expression::RegExpLiteral(lit) if args.is_empty() => {
+            lit.to_js_string(ctx).map(ConstantValue::String)
         }
+        e if args.is_empty() => e
+            .evaluate_value(ctx)
+            // `null` and `undefined` returns type errors
+            .filter(|v| !v.is_undefined() && !v.is_null())
+            .and_then(|v| v.to_js_string(ctx).map(ConstantValue::String)),
         _ => None,
     }
 }

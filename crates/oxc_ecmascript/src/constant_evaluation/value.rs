@@ -36,6 +36,10 @@ impl<'a> ConstantValue<'a> {
         matches!(self, Self::Undefined)
     }
 
+    pub fn is_null(&self) -> bool {
+        matches!(self, Self::Null)
+    }
+
     pub fn into_string(self) -> Option<Cow<'a, str>> {
         match self {
             Self::String(s) => Some(s),
