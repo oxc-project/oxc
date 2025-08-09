@@ -1624,4 +1624,55 @@ mod test {
             "const node_env = 'production'; v = !0",
         );
     }
+
+    #[test]
+    fn test_fold_uri_methods() {
+        // encodeURI tests
+        test("x = encodeURI('hello world')", "x = 'hello%20world'");
+        test("x = encodeURI('hello/world?param=value')", "x = 'hello/world?param=value'");
+        test("x = encodeURI('café')", "x = 'caf%C3%A9'");
+        test("x = encodeURI('hello#world')", "x = 'hello#world'");
+        test("x = encodeURI('')", "x = ''");
+        
+        // encodeURIComponent tests
+        test("x = encodeURIComponent('hello world')", "x = 'hello%20world'");
+        test("x = encodeURIComponent('hello/world?param=value')", "x = 'hello%2Fworld%3Fparam%3Dvalue'");
+        test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'");
+        test("x = encodeURIComponent('hello#world')", "x = 'hello%23world'");
+        test("x = encodeURIComponent('')", "x = ''");
+        test("x = encodeURIComponent('hello&world')", "x = 'hello%26world'");
+        
+        // decodeURI tests
+        test("x = decodeURI('hello%20world')", "x = 'hello world'");
+        test("x = decodeURI('hello/world?param=value')", "x = 'hello/world?param=value'");
+        test("x = decodeURI('caf%C3%A9')", "x = 'café'");
+        test("x = decodeURI('')", "x = ''");
+        
+        // decodeURIComponent tests
+        test("x = decodeURIComponent('hello%20world')", "x = 'hello world'");
+        test("x = decodeURIComponent('hello%2Fworld%3Fparam%3Dvalue')", "x = 'hello/world?param=value'");
+        test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'");
+        test("x = decodeURIComponent('')", "x = ''");
+        test("x = decodeURIComponent('hello%26world')", "x = 'hello&world'");
+        
+        // Invalid cases should not be folded
+        test_same("x = encodeURI()");
+        test_same("x = encodeURI('hello', 'world')");
+        test_same("x = encodeURIComponent()");
+        test_same("x = encodeURIComponent('hello', 'world')");
+        test_same("x = decodeURI()");
+        test_same("x = decodeURI('hello', 'world')");
+        test_same("x = decodeURIComponent()");
+        test_same("x = decodeURIComponent('hello', 'world')");
+        
+        // Non-string arguments should not be folded
+        test_same("x = encodeURI(123)");
+        test_same("x = encodeURIComponent(variable)");
+        test_same("x = decodeURI(null)");
+        test_same("x = decodeURIComponent(void 0)");  // undefined becomes void 0
+        
+        // Invalid percent encoding should not be folded
+        test_same("x = decodeURI('%GG')");
+        test_same("x = decodeURIComponent('%2')");
+    }
 }
