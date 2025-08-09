@@ -119,13 +119,9 @@ pub fn run() -> Result<(), io::Error> {
         let sys_allocs = NUM_ALLOC.load(SeqCst);
         let sys_reallocs = NUM_REALLOC.load(SeqCst);
         #[cfg(not(feature = "is_all_features"))]
-        let arena_allocs = allocator.num_alloc.load(SeqCst);
+        let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
         #[cfg(feature = "is_all_features")]
-        let arena_allocs = 0;
-        #[cfg(not(feature = "is_all_features"))]
-        let arena_reallocs = allocator.num_realloc.load(SeqCst);
-        #[cfg(feature = "is_all_features")]
-        let arena_reallocs = 0;
+        let (arena_allocs, arena_reallocs) = (0, 0);
         let arena_bytes = allocator.used_bytes();
 
         let s = format!(

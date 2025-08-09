@@ -95,17 +95,11 @@ impl Alloc for Bump {
     /// Panics if reserving space for `layout` fails.
     #[inline(always)]
     fn alloc(&self, layout: Layout) -> NonNull<u8> {
-        // SAFETY: We only use `Bump` inside of `Allocator` in oxc, so the `self` reference should
-        // also be pointing to a valid `Allocator` struct, which we can use for finding the stats fields.
-        // This will go away when we add a custom allocator to oxc.
+        // SAFETY: This is UNSOUND (see comment on `get_stats_ref`). But usage is gated behind
+        // `track_allocations` feature, so should never be compiled in production code.
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         unsafe {
-            use crate::allocator::NUM_ALLOC_FIELD_OFFSET;
-            use std::sync::atomic::{AtomicUsize, Ordering};
-            let num_alloc_ptr =
-                std::ptr::from_ref(self).byte_offset(NUM_ALLOC_FIELD_OFFSET).cast::<AtomicUsize>();
-            let num_alloc = num_alloc_ptr.as_ref().unwrap_unchecked();
-            num_alloc.fetch_add(1, Ordering::SeqCst);
+            crate::tracking::get_stats_ref(self).record_allocation();
         }
 
         self.alloc_layout(layout)
@@ -146,18 +140,11 @@ impl Alloc for Bump {
     /// Panics / aborts if reserving space for `new_layout` fails.
     #[inline(always)]
     unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8> {
-        // SAFETY: We only use `Bump` inside of `Allocator` in oxc, so the `self` reference should
-        // also be pointing to a valid `Allocator` struct, which we can use for finding the stats fields.
-        // This will go away when we add a custom allocator to oxc.
+        // SAFETY: This is UNSOUND (see comment on `get_stats_ref`). But usage is gated behind
+        // `track_allocations` feature, so should never be compiled in production code.
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         unsafe {
-            use crate::allocator::NUM_REALLOC_FIELD_OFFSET;
-            use std::sync::atomic::{AtomicUsize, Ordering};
-            let num_realloc_ptr = std::ptr::from_ref(self)
-                .byte_offset(NUM_REALLOC_FIELD_OFFSET)
-                .cast::<AtomicUsize>();
-            let num_realloc = num_realloc_ptr.as_ref().unwrap_unchecked();
-            num_realloc.fetch_add(1, Ordering::SeqCst);
+            crate::tracking::get_stats_ref(self).record_reallocation();
         }
 
         // SAFETY: Safety requirements of `Allocator::grow` are the same as for this method
