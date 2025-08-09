@@ -369,10 +369,14 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
         }
     }
 
+    // executing a sub command in windows, needs a `cmd` or `ps1` extension.
+    // `cmd` is the most compatible one with older systems
+    let file = if cfg!(windows) { "tsgolint.CMD" } else { "tsgolint" };
+
     // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
     let mut current_dir = cwd.to_path_buf();
     loop {
-        let node_modules_bin = current_dir.join("node_modules").join(".bin").join("tsgolint");
+        let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
         if node_modules_bin.exists() {
             return Some(node_modules_bin);
         }
