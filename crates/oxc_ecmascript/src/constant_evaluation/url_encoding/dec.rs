@@ -6,7 +6,10 @@ use std::panic::panic_any;
 
 /// Implements <https://tc39.es/ecma262/2025/multipage/global-object.html#sec-decode>
 #[inline]
-pub fn decode(data_str: Cow<'_, str>, should_not_decode: impl Fn(u8) -> bool) -> Option<Cow<'_, str>> {
+pub fn decode(
+    data_str: Cow<'_, str>,
+    should_not_decode: impl Fn(u8) -> bool,
+) -> Option<Cow<'_, str>> {
     let data = data_str.as_bytes();
     let offset = data.iter().take_while(|&&c| c != b'%').count();
     if offset >= data.len() {
