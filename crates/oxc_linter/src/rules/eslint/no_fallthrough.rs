@@ -483,7 +483,7 @@ fn get_switch_semantic_cases(
     } else {
         (None, exit)
     };
-    cfg_ids.sort_by_key(|cfg_id| nodes.iter().position(|it| it.cfg_id() == *cfg_id ));
+    cfg_ids.sort_by_key(|cfg_id| nodes.iter().position(|it| it.cfg_id() == *cfg_id));
     (cfg_ids, FxHashMap::from_iter(tests), default, exit)
 }
 
