@@ -377,7 +377,9 @@ fn try_fold_uri_encoding<'a>(
 
     match name {
         "encodeURI" => Some(ConstantValue::String(Cow::Owned(encode_uri(input)))),
-        "encodeURIComponent" => Some(ConstantValue::String(Cow::Owned(encode_uri_component(input)))),
+        "encodeURIComponent" => {
+            Some(ConstantValue::String(Cow::Owned(encode_uri_component(input))))
+        }
         "decodeURI" => decode_uri(input).map(|s| ConstantValue::String(Cow::Owned(s))),
         "decodeURIComponent" => {
             decode_uri_component(input).map(|s| ConstantValue::String(Cow::Owned(s)))
@@ -396,9 +398,29 @@ fn encode_uri(input: &str) -> String {
     for ch in input.chars() {
         match ch {
             // All unencoded characters grouped together
-            ';' | '/' | '?' | ':' | '@' | '&' | '=' | '+' | '$' | ',' | '#'
-            | 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~'
-            | '!' | '*' | '\'' | '(' | ')' => {
+            ';'
+            | '/'
+            | '?'
+            | ':'
+            | '@'
+            | '&'
+            | '='
+            | '+'
+            | '$'
+            | ','
+            | '#'
+            | 'A'..='Z'
+            | 'a'..='z'
+            | '0'..='9'
+            | '-'
+            | '_'
+            | '.'
+            | '~'
+            | '!'
+            | '*'
+            | '\''
+            | '('
+            | ')' => {
                 result.push(ch);
             }
             // Everything else gets percent-encoded
@@ -422,8 +444,18 @@ fn encode_uri_component(input: &str) -> String {
     for ch in input.chars() {
         match ch {
             // All unencoded characters grouped together
-            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~'
-            | '!' | '*' | '\'' | '(' | ')' => {
+            'A'..='Z'
+            | 'a'..='z'
+            | '0'..='9'
+            | '-'
+            | '_'
+            | '.'
+            | '~'
+            | '!'
+            | '*'
+            | '\''
+            | '('
+            | ')' => {
                 result.push(ch);
             }
             // Everything else gets percent-encoded
