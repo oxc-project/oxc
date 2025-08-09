@@ -2,6 +2,7 @@ mod call_expr;
 mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
+mod url_encoding;
 mod value;
 mod value_type;
 

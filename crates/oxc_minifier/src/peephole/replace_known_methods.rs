@@ -1624,4 +1624,102 @@ mod test {
             "const node_env = 'production'; v = !0",
         );
     }
+
+    #[test]
+    fn test_fold_encode_uri() {
+        test("x = encodeURI()", "x = 'undefined'");
+        test("x = encodeURI('hello')", "x = 'hello'");
+        test("x = encodeURI('hello world')", "x = 'hello%20world'");
+        test(
+            "x = encodeURI('http://example.com/path?a=1&b=2#hash')",
+            "x = 'http://example.com/path?a=1&b=2#hash'",
+        );
+        test("x = encodeURI('a;b,c/d?e:f@g&h=i+j$k')", "x = 'a;b,c/d?e:f@g&h=i+j$k'");
+        test("x = encodeURI('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
+        test("x = encodeURI('hello<>\"')", "x = 'hello%3C%3E%22'");
+        test("x = encodeURI('hello\\t\\n')", "x = 'hello%09%0A'");
+        test("x = encodeURI('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+        test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
+
+        test_same("encodeURI('a', 'b')");
+        test_same("encodeURI(x)");
+    }
+
+    #[test]
+    fn test_fold_encode_uri_component() {
+        test("x = encodeURIComponent()", "x = 'undefined'");
+        test("x = encodeURIComponent('hello')", "x = 'hello'");
+        test("x = encodeURIComponent('ABC-_abc.!~*()123')", "x = 'ABC-_abc.!~*()123'");
+        test(
+            "x = encodeURIComponent('a;b,c/d?e:f@g&h=i+j$k')",
+            "x = 'a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k'",
+        );
+        test("x = encodeURIComponent('#')", "x = '%23'");
+        test("x = encodeURIComponent('hello world')", "x = 'hello%20world'");
+        test("x = encodeURIComponent('hello<>\"')", "x = 'hello%3C%3E%22'");
+        test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
+        test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
+
+        test_same("encodeURIComponent('a', 'b')");
+        test_same("encodeURIComponent(x)");
+    }
+
+    #[test]
+    fn test_fold_decode_uri() {
+        test("x = decodeURI()", "x = 'undefined'");
+        test("x = decodeURI('hello%20world')", "x = 'hello world'");
+        test("x = decodeURI('hello')", "x = 'hello'");
+        test(
+            "x = decodeURI('a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k')",
+            "x = 'a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k'",
+        );
+        test("x = decodeURI('%2f')", "x = '%2f'"); // `/`, lower case
+        test("x = decodeURI('%23')", "x = '%23'"); // `#`
+        test("x = decodeURI('%23hash')", "x = '%23hash'");
+        test("x = decodeURI('hello%3C%3E%22')", "x = 'hello<>\"'");
+        test("x = decodeURI('hello%09%0A')", "x = 'hello\\t\\n'");
+        test("x = decodeURI('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+        test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
+
+        test_same("decodeURI('%ZZ')"); // URIError
+        test_same("decodeURI('%A')"); // URIError
+
+        test_same("decodeURI('a', 'b')");
+        test_same("decodeURI(x)");
+    }
+
+    #[test]
+    fn test_fold_decode_uri_component() {
+        test("x = decodeURIComponent()", "x = 'undefined'");
+        test("x = decodeURIComponent('hello%20world')", "x = 'hello world'");
+        test("x = decodeURIComponent('hello')", "x = 'hello'");
+        test(
+            "x = decodeURIComponent('a%3Bb%2Cc%2Fd%3Fe%3Af%40g%26h%3Di%2Bj%24k')",
+            "x = 'a;b,c/d?e:f@g&h=i+j$k'",
+        );
+        test("x = decodeURIComponent('%23')", "x = '#'");
+        test("x = decodeURIComponent('%23hash')", "x = '#hash'");
+        test("x = decodeURIComponent('hello%3C%3E%22')", "x = 'hello<>\"'");
+        test("x = decodeURIComponent('hello%09%0A')", "x = 'hello\\t\\n'");
+        test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
+        test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
+
+        test_same("decodeURIComponent('%ZZ')"); // URIError
+        test_same("decodeURIComponent('%A')"); // URIError
+
+        test_same("decodeURIComponent('a', 'b')");
+        test_same("decodeURIComponent(x)");
+    }
+
+    #[test]
+    fn test_fold_uri_roundtrip() {
+        test("x = decodeURI(encodeURI('hello world'))", "x = 'hello world'");
+        test("x = decodeURIComponent(encodeURIComponent('hello world'))", "x = 'hello world'");
+        test(
+            "x = decodeURIComponent(encodeURIComponent('a;b,c/d?e:f@g&h=i+j$k'))",
+            "x = 'a;b,c/d?e:f@g&h=i+j$k'",
+        );
+        test("x = decodeURI(encodeURI('café'))", "x = 'café'");
+        test("x = decodeURIComponent(encodeURIComponent('测试'))", "x = '测试'");
+    }
 }
