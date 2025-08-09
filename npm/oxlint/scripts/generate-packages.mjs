@@ -94,7 +94,7 @@ function writeManifest() {
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);
-  manifestData.optionalDependencies['oxlint-tsgolint'] = '*';
+  manifestData.optionalDependencies['oxlint-tsgolint'] = '>=0.0.1';
 
   console.log(`Update manifest ${manifestPath}`);
   const content = JSON.stringify(manifestData);
