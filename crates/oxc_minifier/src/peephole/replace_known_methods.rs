@@ -1630,7 +1630,7 @@ mod test {
         // encodeURI tests
         test("x = encodeURI('hello world')", "x = 'hello%20world'");
         test("x = encodeURI('hello/world?param=value')", "x = 'hello/world?param=value'");
-        test("x = encodeURI('café')", "x = 'caf%C3%A9'");
+        test("x = encodeURI('naïve')", "x = 'na%C3%AFve'");
         test("x = encodeURI('hello#world')", "x = 'hello#world'");
         test("x = encodeURI('')", "x = ''");
 
@@ -1640,7 +1640,7 @@ mod test {
             "x = encodeURIComponent('hello/world?param=value')",
             "x = 'hello%2Fworld%3Fparam%3Dvalue'",
         );
-        test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'");
+        test("x = encodeURIComponent('naïve')", "x = 'na%C3%AFve'");
         test("x = encodeURIComponent('hello#world')", "x = 'hello%23world'");
         test("x = encodeURIComponent('')", "x = ''");
         test("x = encodeURIComponent('hello&world')", "x = 'hello%26world'");
@@ -1648,7 +1648,7 @@ mod test {
         // decodeURI tests
         test("x = decodeURI('hello%20world')", "x = 'hello world'");
         test("x = decodeURI('hello/world?param=value')", "x = 'hello/world?param=value'");
-        test("x = decodeURI('caf%C3%A9')", "x = 'café'");
+        test("x = decodeURI('na%C3%AFve')", "x = 'naïve'");
         test("x = decodeURI('')", "x = ''");
 
         // decodeURIComponent tests
@@ -1657,7 +1657,7 @@ mod test {
             "x = decodeURIComponent('hello%2Fworld%3Fparam%3Dvalue')",
             "x = 'hello/world?param=value'",
         );
-        test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'");
+        test("x = decodeURIComponent('na%C3%AFve')", "x = 'naïve'");
         test("x = decodeURIComponent('')", "x = ''");
         test("x = decodeURIComponent('hello%26world')", "x = 'hello&world'");
 
