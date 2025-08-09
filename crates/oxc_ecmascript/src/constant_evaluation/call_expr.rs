@@ -58,6 +58,9 @@ pub fn try_fold_known_global_methods<'a>(
             try_fold_math_unary(arguments, name, object, ctx)
         }
         "min" | "max" => try_fold_math_variadic(arguments, name, object, ctx),
+        "encodeURI" | "encodeURIComponent" | "decodeURI" | "decodeURIComponent" => {
+            try_fold_uri_encoding(arguments, name, object, ctx)
+        }
         _ => None,
     }
 }
@@ -352,6 +355,158 @@ fn format_radix(mut x: u32, radix: u32) -> String {
     result.into_iter().rev().collect()
 }
 
+fn try_fold_uri_encoding<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    name: &str,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    // These are global functions, so object should be the global identifier
+    let Expression::Identifier(ident) = object else { return None };
+    if ctx.is_global_reference(ident) != Some(true) || ident.name != name {
+        return None;
+    }
+
+    if args.len() != 1 {
+        return None;
+    }
+
+    let arg = args.first()?;
+    let Argument::StringLiteral(string_arg) = arg else { return None };
+    let input = string_arg.value.as_str();
+
+    match name {
+        "encodeURI" => Some(ConstantValue::String(Cow::Owned(encode_uri(input)))),
+        "encodeURIComponent" => Some(ConstantValue::String(Cow::Owned(encode_uri_component(input)))),
+        "decodeURI" => decode_uri(input).map(|s| ConstantValue::String(Cow::Owned(s))),
+        "decodeURIComponent" => {
+            decode_uri_component(input).map(|s| ConstantValue::String(Cow::Owned(s)))
+        }
+        _ => None,
+    }
+}
+
+fn encode_uri(input: &str) -> String {
+    // Per ECMAScript spec, encodeURI encodes all characters except:
+    // Reserved: ; / ? : @ & = + $ ,
+    // Unescaped: - _ . ! ~ * ' ( )
+    // Alphanumeric: A-Z a-z 0-9
+    // Hash: #
+    let mut result = String::new();
+    for ch in input.chars() {
+        match ch {
+            // All unencoded characters grouped together
+            ';' | '/' | '?' | ':' | '@' | '&' | '=' | '+' | '$' | ',' | '#'
+            | 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~'
+            | '!' | '*' | '\'' | '(' | ')' => {
+                result.push(ch);
+            }
+            // Everything else gets percent-encoded
+            _ => {
+                let bytes = ch.to_string().as_bytes().to_vec();
+                for byte in bytes {
+                    use std::fmt::Write;
+                    write!(result, "%{byte:02X}").unwrap();
+                }
+            }
+        }
+    }
+    result
+}
+
+fn encode_uri_component(input: &str) -> String {
+    // Per ECMAScript spec, encodeURIComponent encodes all characters except:
+    // Unescaped: - _ . ! ~ * ' ( )
+    // Alphanumeric: A-Z a-z 0-9
+    let mut result = String::new();
+    for ch in input.chars() {
+        match ch {
+            // All unencoded characters grouped together
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~'
+            | '!' | '*' | '\'' | '(' | ')' => {
+                result.push(ch);
+            }
+            // Everything else gets percent-encoded
+            _ => {
+                let bytes = ch.to_string().as_bytes().to_vec();
+                for byte in bytes {
+                    use std::fmt::Write;
+                    write!(result, "%{byte:02X}").unwrap();
+                }
+            }
+        }
+    }
+    result
+}
+
+fn decode_uri(input: &str) -> Option<String> {
+    decode_uri_helper(input, false)
+}
+
+fn decode_uri_component(input: &str) -> Option<String> {
+    decode_uri_helper(input, true)
+}
+
+fn decode_uri_helper(input: &str, decode_reserved: bool) -> Option<String> {
+    let mut result = String::new();
+    let chars: std::vec::Vec<char> = input.chars().collect();
+    let mut i = 0;
+
+    while i < chars.len() {
+        if chars[i] == '%' && i + 2 < chars.len() {
+            // Collect consecutive percent-encoded bytes to handle UTF-8 properly
+            let mut bytes = std::vec::Vec::new();
+            let mut j = i;
+
+            while j + 2 < chars.len() && chars[j] == '%' {
+                let hex_str: String = chars[j + 1..=j + 2].iter().collect();
+                if let Ok(byte_value) = u8::from_str_radix(&hex_str, 16) {
+                    bytes.push(byte_value);
+                    j += 3;
+                } else {
+                    // Invalid hex sequence, return None to indicate error
+                    return None;
+                }
+            }
+
+            if bytes.is_empty() {
+                result.push(chars[i]);
+                i += 1;
+            } else {
+                // Try to decode as UTF-8
+                match String::from_utf8(bytes) {
+                    Ok(decoded_str) => {
+                        // Check if any character in the decoded string is a reserved character
+                        if !decode_reserved && decoded_str.chars().any(is_uri_reserved) {
+                            // Don't decode - output the original percent-encoded form
+                            result.push_str(&chars[i..j].iter().collect::<String>());
+                        } else {
+                            result.push_str(&decoded_str);
+                        }
+                        i = j;
+                    }
+                    Err(_) => {
+                        // Invalid UTF-8 sequence, return None to indicate error
+                        return None;
+                    }
+                }
+            }
+        } else if chars[i] == '%' {
+            // Incomplete percent sequence at end of string, treat as error
+            return None;
+        } else {
+            result.push(chars[i]);
+            i += 1;
+        }
+    }
+
+    Some(result)
+}
+
+fn is_uri_reserved(ch: char) -> bool {
+    matches!(ch, ';' | '/' | '?' | ':' | '@' | '&' | '=' | '+' | '$' | ',' | '#')
+}
+
 fn validate_global_reference<'a>(
     expr: &Expression<'a>,
     target: &str,
@@ -500,4 +655,95 @@ fn try_fold_math_variadic<'a>(
         }
     };
     Some(ConstantValue::Number(result))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_encode_uri() {
+        // Test alphanumeric characters (should not be encoded)
+        assert_eq!(encode_uri("abc123"), "abc123");
+
+        // Test reserved characters (should not be encoded)
+        assert_eq!(encode_uri("/:@&=+$,#"), "/:@&=+$,#");
+
+        // Test unreserved characters (should not be encoded)
+        assert_eq!(encode_uri("-_.~"), "-_.~");
+
+        // Test mark characters (should not be encoded)
+        assert_eq!(encode_uri("!*'()"), "!*'()");
+
+        // Test space (should be encoded)
+        assert_eq!(encode_uri("hello world"), "hello%20world");
+
+        // Test non-ASCII characters (should be encoded)
+        assert_eq!(encode_uri("café"), "caf%C3%A9");
+    }
+
+    #[test]
+    fn test_encode_uri_component() {
+        // Test alphanumeric characters (should not be encoded)
+        assert_eq!(encode_uri_component("abc123"), "abc123");
+
+        // Test unreserved characters (should not be encoded)
+        assert_eq!(encode_uri_component("-_.~"), "-_.~");
+
+        // Test mark characters (should not be encoded)
+        assert_eq!(encode_uri_component("!*'()"), "!*'()");
+
+        // Test reserved characters (SHOULD be encoded, unlike encodeURI)
+        assert_eq!(encode_uri_component("/:@&=+$,#"), "%2F%3A%40%26%3D%2B%24%2C%23");
+
+        // Test space (should be encoded)
+        assert_eq!(encode_uri_component("hello world"), "hello%20world");
+
+        // Test non-ASCII characters (should be encoded)
+        assert_eq!(encode_uri_component("café"), "caf%C3%A9");
+    }
+
+    #[test]
+    fn test_decode_uri() {
+        // Test encoded space
+        assert_eq!(decode_uri("hello%20world").unwrap(), "hello world");
+
+        // Test encoded non-ASCII
+        assert_eq!(decode_uri("caf%C3%A9").unwrap(), "café");
+
+        // Test reserved characters should NOT be decoded
+        assert_eq!(decode_uri("%2F%3A%40").unwrap(), "%2F%3A%40");
+
+        // Test regular characters (no change)
+        assert_eq!(decode_uri("abc123").unwrap(), "abc123");
+
+        // Test invalid hex sequence
+        assert_eq!(decode_uri("hello%ZZ"), None);
+
+        // Test incomplete percent sequence
+        assert_eq!(decode_uri("hello%"), None);
+        assert_eq!(decode_uri("hello%2"), None);
+    }
+
+    #[test]
+    fn test_decode_uri_component() {
+        // Test encoded space
+        assert_eq!(decode_uri_component("hello%20world").unwrap(), "hello world");
+
+        // Test encoded non-ASCII
+        assert_eq!(decode_uri_component("caf%C3%A9").unwrap(), "café");
+
+        // Test reserved characters SHOULD be decoded (unlike decodeURI)
+        assert_eq!(decode_uri_component("%2F%3A%40").unwrap(), "/:@");
+
+        // Test regular characters (no change)
+        assert_eq!(decode_uri_component("abc123").unwrap(), "abc123");
+
+        // Test invalid hex sequence
+        assert_eq!(decode_uri_component("hello%ZZ"), None);
+
+        // Test incomplete percent sequence
+        assert_eq!(decode_uri_component("hello%"), None);
+        assert_eq!(decode_uri_component("hello%2"), None);
+    }
 }
