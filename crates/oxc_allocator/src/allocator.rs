@@ -4,6 +4,9 @@ use std::{
     slice, str,
 };
 
+#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+use std::mem::offset_of;
+
 use bumpalo::Bump;
 
 use oxc_data_structures::assert_unchecked;
@@ -214,12 +217,7 @@ use oxc_data_structures::assert_unchecked;
 /// [`HashMap::new_in`]: crate::HashMap::new_in
 #[derive(Default)]
 pub struct Allocator {
-    #[cfg(not(all(feature = "track_allocations", not(feature = "disable_track_allocations"))))]
     bump: Bump,
-    // NOTE: We need to expose `bump` publicly here for calculating its field offset in memory.
-    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-    #[doc(hidden)]
-    pub bump: Bump,
     /// Used to track the total number of allocations made in this allocator when the `track_allocations` feature is enabled.
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     #[doc(hidden)]
@@ -229,6 +227,16 @@ pub struct Allocator {
     #[doc(hidden)]
     pub num_realloc: std::sync::atomic::AtomicUsize,
 }
+
+// Consts used in `Alloc` trait for allocation tracking
+#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+#[expect(clippy::cast_possible_wrap)]
+pub const NUM_ALLOC_FIELD_OFFSET: isize =
+    (offset_of!(Allocator, num_alloc) as isize) - (offset_of!(Allocator, bump) as isize);
+#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+#[expect(clippy::cast_possible_wrap)]
+pub const NUM_REALLOC_FIELD_OFFSET: isize =
+    (offset_of!(Allocator, num_realloc) as isize) - (offset_of!(Allocator, bump) as isize);
 
 impl Allocator {
     /// Create a new [`Allocator`] with no initial capacity.

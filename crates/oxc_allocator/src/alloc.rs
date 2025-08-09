@@ -100,16 +100,10 @@ impl Alloc for Bump {
         // This will go away when we add a custom allocator to oxc.
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         unsafe {
-            use crate::Allocator;
-            use std::{
-                mem::offset_of,
-                ptr,
-                sync::atomic::{AtomicUsize, Ordering},
-            };
-            #[expect(clippy::cast_possible_wrap)]
-            const OFFSET: isize = (offset_of!(Allocator, num_alloc) as isize)
-                - (offset_of!(Allocator, bump) as isize);
-            let num_alloc_ptr = ptr::from_ref(self).byte_offset(OFFSET).cast::<AtomicUsize>();
+            use crate::allocator::NUM_ALLOC_FIELD_OFFSET;
+            use std::sync::atomic::{AtomicUsize, Ordering};
+            let num_alloc_ptr =
+                std::ptr::from_ref(self).byte_offset(NUM_ALLOC_FIELD_OFFSET).cast::<AtomicUsize>();
             let num_alloc = num_alloc_ptr.as_ref().unwrap_unchecked();
             num_alloc.fetch_add(1, Ordering::SeqCst);
         }
@@ -157,16 +151,11 @@ impl Alloc for Bump {
         // This will go away when we add a custom allocator to oxc.
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         unsafe {
-            use crate::Allocator;
-            use std::{
-                mem::offset_of,
-                ptr,
-                sync::atomic::{AtomicUsize, Ordering},
-            };
-            #[expect(clippy::cast_possible_wrap)]
-            const OFFSET: isize = (offset_of!(Allocator, num_realloc) as isize)
-                - (offset_of!(Allocator, bump) as isize);
-            let num_realloc_ptr = ptr::from_ref(self).byte_offset(OFFSET).cast::<AtomicUsize>();
+            use crate::allocator::NUM_REALLOC_FIELD_OFFSET;
+            use std::sync::atomic::{AtomicUsize, Ordering};
+            let num_realloc_ptr = std::ptr::from_ref(self)
+                .byte_offset(NUM_REALLOC_FIELD_OFFSET)
+                .cast::<AtomicUsize>();
             let num_realloc = num_realloc_ptr.as_ref().unwrap_unchecked();
             num_realloc.fetch_add(1, Ordering::SeqCst);
         }
