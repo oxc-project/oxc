@@ -434,6 +434,7 @@ fn get_switch_semantic_cases(
     /* default */ Option<BlockNodeId>,
     /* exit */ Option<BlockNodeId>,
 ) {
+    let nodes = ctx.nodes();
     let cfg = ctx.cfg();
     let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
@@ -459,7 +460,7 @@ fn get_switch_semantic_cases(
                             .instructions()
                             .first()
                             .and_then(|it| it.node_id)
-                            .map(|id| ctx.nodes().parent_kind(id))
+                            .map(|id| nodes.parent_kind(id))
                             .and_then(|it| match it {
                                 AstKind::SwitchCase(case) => Some(case),
                                 _ => None,
@@ -482,6 +483,7 @@ fn get_switch_semantic_cases(
     } else {
         (None, exit)
     };
+    cfg_ids.sort_by_key(|cfg_id| nodes.iter().position(|it| it.cfg_id() == *cfg_id ));
     (cfg_ids, FxHashMap::from_iter(tests), default, exit)
 }
 
@@ -535,6 +537,7 @@ fn test() {
             "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
             None,
         ),
+        ("switch(foo) { case 0: default: a(); break; case 1: b(); }", None),
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{
