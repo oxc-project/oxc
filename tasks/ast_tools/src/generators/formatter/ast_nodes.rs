@@ -9,7 +9,7 @@ use crate::{
     Codegen, Generator,
     generators::define_generator,
     output::{Output, output_path},
-    schema::{self, Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
 };
 
 pub fn get_node_type(ty: &TokenStream) -> TokenStream {
@@ -197,21 +197,8 @@ impl Generator for FormatterAstNodesGenerator {
 }
 
 fn get_all_statement_variants_names(schema: &Schema) -> Vec<&str> {
-    let Some(type_id) = schema.type_names.get("Statement") else {
-        return vec![];
-    };
-
-    let enum_def = schema.types.get(*type_id).unwrap().as_enum().unwrap();
-
-    enum_def
-        .variants
-        .iter()
-        .map(schema::VariantDef::name)
-        .chain(enum_def.inherits_types(schema).flat_map(|inherited_type| {
-            let inherited_enum_def = inherited_type.as_enum().unwrap();
-            inherited_enum_def.variants.iter().map(schema::VariantDef::name)
-        }))
-        .collect()
+    let statement_enum = schema.type_by_name("Statement").as_enum().unwrap();
+    statement_enum.all_variants(schema).map(VariantDef::name).collect()
 }
 
 fn generate_struct_impls(
