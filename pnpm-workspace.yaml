@@ -5,6 +5,7 @@ packages:
   - editors/*
   - tasks/transform_conformance
   - tasks/compat_data
+  - tasks/mcp
 
 catalog:
   '@napi-rs/cli': 3.0.0
