@@ -36,11 +36,13 @@ pub fn decode(data_str: &str, should_not_decode: impl Fn(u8) -> bool) -> Option<
         // then decode one %xx
         match rest {
             Some(rest) => {
-                let  Some(&[first, second]) = rest.get(0..2) else {
+                let Some(&[first, second]) = rest.get(0..2) else {
                     // 4.c.i.
                     return None;
                 };
-                let (Some(first_val), Some(second_val)) = (from_hex_digit(first), from_hex_digit(second)) else {
+                let (Some(first_val), Some(second_val)) =
+                    (from_hex_digit(first), from_hex_digit(second))
+                else {
                     // 4.c.iii.
                     return None;
                 };
