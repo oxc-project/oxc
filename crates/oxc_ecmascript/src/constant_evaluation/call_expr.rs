@@ -518,64 +518,64 @@ fn try_fold_uri_methods<'a>(
     if !ctx.is_global_reference(ident).unwrap_or(false) {
         return None;
     }
-    
+
     if args.len() != 1 {
         return None;
     }
-    
+
     let arg = args.first()?;
     let Argument::StringLiteral(string_literal) = arg else { return None };
     let input = string_literal.value.as_str();
-    
+
     let result = match name {
-        "encodeURI" => encode_uri(input),
-        "encodeURIComponent" => encode_uri_component(input),
+        "encodeURI" => Some(encode_uri(input)),
+        "encodeURIComponent" => Some(encode_uri_component(input)),
         "decodeURI" => decode_uri(input).ok(),
         "decodeURIComponent" => decode_uri_component(input).ok(),
         _ => return None,
     };
-    
+
     result.map(|s| ConstantValue::String(Cow::Owned(s)))
 }
 
 /// Encode a string using encodeURI rules
 /// Does not encode: A-Z a-z 0-9 ; , / ? : @ & = + $ - _ . ! ~ * ' ( ) #
-fn encode_uri(input: &str) -> Option<String> {
+fn encode_uri(input: &str) -> String {
     let mut result = String::new();
-    
+
     for ch in input.chars() {
         if ch.is_ascii() {
             let byte = ch as u8;
             match byte {
-                // Unreserved characters: A-Z a-z 0-9 - _ . ~
-                b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                    result.push(ch);
-                }
-                // Reserved characters that are NOT encoded by encodeURI
-                b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'!' | b'*' | b'\'' | b'(' | b')' | b'#' => {
+                // Unreserved and reserved characters that are NOT encoded by encodeURI
+                b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' 
+                | b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'!'
+                | b'*' | b'\'' | b'(' | b')' | b'#' => {
                     result.push(ch);
                 }
                 // Everything else gets percent-encoded
                 _ => {
-                    result.push_str(&format!("%{:02X}", byte));
+                    use std::fmt::Write;
+                    let _ = write!(result, "%{byte:02X}");
                 }
             }
         } else {
             // For non-ASCII characters, encode each UTF-8 byte
             for byte in ch.to_string().bytes() {
-                result.push_str(&format!("%{:02X}", byte));
+                use std::fmt::Write;
+                let _ = write!(result, "%{byte:02X}");
             }
         }
     }
-    
-    Some(result)
+
+    result
 }
 
 /// Encode a string using encodeURIComponent rules
 /// Only does not encode: A-Z a-z 0-9 - _ . ~
-fn encode_uri_component(input: &str) -> Option<String> {
+fn encode_uri_component(input: &str) -> String {
     let mut result = String::new();
-    
+
     for ch in input.chars() {
         if ch.is_ascii() {
             let byte = ch as u8;
@@ -586,18 +586,20 @@ fn encode_uri_component(input: &str) -> Option<String> {
                 }
                 // Everything else gets percent-encoded
                 _ => {
-                    result.push_str(&format!("%{:02X}", byte));
+                    use std::fmt::Write;
+                    let _ = write!(result, "%{byte:02X}");
                 }
             }
         } else {
             // For non-ASCII characters, encode each UTF-8 byte
             for byte in ch.to_string().bytes() {
-                result.push_str(&format!("%{:02X}", byte));
+                use std::fmt::Write;
+                let _ = write!(result, "%{byte:02X}");
             }
         }
     }
-    
-    Some(result)
+
+    result
 }
 
 /// Decode a percent-encoded string using decodeURI rules
@@ -615,30 +617,30 @@ fn decode_percent_encoded(input: &str) -> Result<String, &'static str> {
     let mut result = std::vec::Vec::new();
     let bytes = input.as_bytes();
     let mut i = 0;
-    
+
     while i < bytes.len() {
         if bytes[i] == b'%' {
             if i + 2 >= bytes.len() {
                 return Err("Invalid percent encoding");
             }
-            
+
             let hex1 = bytes[i + 1];
             let hex2 = bytes[i + 2];
-            
+
             let val1 = match hex1 {
                 b'0'..=b'9' => hex1 - b'0',
                 b'A'..=b'F' => hex1 - b'A' + 10,
                 b'a'..=b'f' => hex1 - b'a' + 10,
                 _ => return Err("Invalid hex digit"),
             };
-            
+
             let val2 = match hex2 {
                 b'0'..=b'9' => hex2 - b'0',
                 b'A'..=b'F' => hex2 - b'A' + 10,
                 b'a'..=b'f' => hex2 - b'a' + 10,
                 _ => return Err("Invalid hex digit"),
             };
-            
+
             result.push((val1 << 4) | val2);
             i += 3;
         } else {
@@ -646,6 +648,6 @@ fn decode_percent_encoded(input: &str) -> Result<String, &'static str> {
             i += 1;
         }
     }
-    
+
     String::from_utf8(result).map_err(|_| "Invalid UTF-8 sequence")
 }
