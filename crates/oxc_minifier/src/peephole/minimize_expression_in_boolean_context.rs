@@ -34,6 +34,10 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> bool {
+        // All operations should be completed in the first iteration because this is a recursive function.
+        if self.iteration > 0 {
+            return false;
+        }
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
