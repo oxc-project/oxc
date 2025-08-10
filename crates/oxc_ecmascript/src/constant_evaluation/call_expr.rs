@@ -41,7 +41,9 @@ fn try_fold_global_functions<'a>(
         }
         "isNaN" if ctx.is_global_reference(ident) => try_fold_global_is_nan(arguments, ctx),
         "isFinite" if ctx.is_global_reference(ident) => try_fold_global_is_finite(arguments, ctx),
-        "parseFloat" if ctx.is_global_reference(ident) => try_fold_global_parse_float(arguments, ctx),
+        "parseFloat" if ctx.is_global_reference(ident) => {
+            try_fold_global_parse_float(arguments, ctx)
+        }
         "parseInt" if ctx.is_global_reference(ident) => try_fold_global_parse_int(arguments, ctx),
         _ => None,
     }
@@ -633,7 +635,7 @@ fn try_fold_global_is_nan<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    
+
     match expr {
         // Only handle numeric literals directly
         Expression::NumericLiteral(n) => Some(ConstantValue::Boolean(n.value.is_nan())),
@@ -645,19 +647,21 @@ fn try_fold_global_is_nan<'a>(
                 true // If parsing fails, it's NaN
             };
             Some(ConstantValue::Boolean(result))
-        },
+        }
         Expression::BooleanLiteral(_b) => {
             // true -> 1, false -> 0, both are not NaN
             Some(ConstantValue::Boolean(false))
-        },
+        }
         Expression::NullLiteral(_) => {
             // null -> 0, which is not NaN
             Some(ConstantValue::Boolean(false))
-        },
-        Expression::Identifier(ident) if ident.name == "undefined" && ctx.is_global_reference(ident) => {
+        }
+        Expression::Identifier(ident)
+            if ident.name == "undefined" && ctx.is_global_reference(ident) =>
+        {
             // undefined -> NaN
             Some(ConstantValue::Boolean(true))
-        },
+        }
         _ => None,
     }
 }
@@ -673,7 +677,7 @@ fn try_fold_global_is_finite<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    
+
     match expr {
         // Only handle numeric literals directly
         Expression::NumericLiteral(n) => Some(ConstantValue::Boolean(n.value.is_finite())),
@@ -685,19 +689,21 @@ fn try_fold_global_is_finite<'a>(
                 false // If parsing fails, it's NaN which is not finite
             };
             Some(ConstantValue::Boolean(result))
-        },
+        }
         Expression::BooleanLiteral(_b) => {
             // true -> 1, false -> 0, both are finite
             Some(ConstantValue::Boolean(true))
-        },
+        }
         Expression::NullLiteral(_) => {
             // null -> 0, which is finite
             Some(ConstantValue::Boolean(true))
-        },
-        Expression::Identifier(ident) if ident.name == "undefined" && ctx.is_global_reference(ident) => {
+        }
+        Expression::Identifier(ident)
+            if ident.name == "undefined" && ctx.is_global_reference(ident) =>
+        {
             // undefined -> NaN, which is not finite
             Some(ConstantValue::Boolean(false))
-        },
+        }
         _ => None,
     }
 }
@@ -712,8 +718,8 @@ fn try_fold_global_parse_float<'a>(
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    
-    // Handle string literals, simple template literals, and numeric literals  
+
+    // Handle string literals, simple template literals, and numeric literals
     let string_value = match expr {
         Expression::StringLiteral(s) => s.value.as_str(),
         Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() && tpl.quasis.len() == 1 => {
@@ -723,7 +729,7 @@ fn try_fold_global_parse_float<'a>(
             } else {
                 return None;
             }
-        },
+        }
         Expression::NumericLiteral(n) => {
             // Convert number to string as JavaScript would
             let num_string = n.value.to_string();
@@ -731,15 +737,15 @@ fn try_fold_global_parse_float<'a>(
                 Some(value) => Some(ConstantValue::Number(value)),
                 None => Some(ConstantValue::Number(f64::NAN)),
             };
-        },
+        }
         _ => return None,
     };
-    
+
     let trimmed = string_value.trim_start();
     if trimmed.is_empty() {
         return Some(ConstantValue::Number(f64::NAN));
     }
-    
+
     // Be conservative with numbers that have many decimal places to avoid precision issues
     if trimmed.contains('.') {
         let parts: std::vec::Vec<&str> = trimmed.split('.').collect();
@@ -747,7 +753,7 @@ fn try_fold_global_parse_float<'a>(
             return None;
         }
     }
-    
+
     // Try to parse as float
     match parse_float_like_js(trimmed) {
         Some(value) => Some(ConstantValue::Number(value)),
@@ -763,10 +769,10 @@ fn try_fold_global_parse_int<'a>(
     if args.is_empty() || args.len() > 2 {
         return None;
     }
-    
+
     let string_arg = args.first()?;
     let string_expr = string_arg.as_expression()?;
-    
+
     // Get radix if provided
     let radix = if args.len() == 2 {
         let radix_arg = args.get(1)?;
@@ -775,7 +781,9 @@ fn try_fold_global_parse_int<'a>(
         match radix_expr {
             Expression::NumericLiteral(n) => {
                 let radix_val = n.value;
-                if radix_val == 0.0 || (radix_val >= 2.0 && radix_val <= 36.0 && radix_val.fract() == 0.0) {
+                if radix_val == 0.0
+                    || (radix_val >= 2.0 && radix_val <= 36.0 && radix_val.fract() == 0.0)
+                {
                     Some(radix_val)
                 } else if radix_val.fract() == 0.0 && radix_val >= 2.0 && radix_val <= 36.0 {
                     // Valid integer radix
@@ -784,7 +792,7 @@ fn try_fold_global_parse_int<'a>(
                     // Other cases (including invalid radix) - be conservative
                     return None;
                 }
-            },
+            }
             _ => return None, // Don't optimize if radix is not a literal
         }
     } else {
@@ -801,7 +809,7 @@ fn try_fold_global_parse_int<'a>(
             } else {
                 return None;
             }
-        },
+        }
         Expression::NumericLiteral(n) => {
             // Convert number to string as JavaScript would, then parse as int
             let num_string = n.value.to_string();
@@ -809,10 +817,10 @@ fn try_fold_global_parse_int<'a>(
                 Some(value) => Some(ConstantValue::Number(value)),
                 None => Some(ConstantValue::Number(f64::NAN)),
             };
-        },
+        }
         _ => return None,
     };
-    
+
     match parse_int_like_js(string_value, radix) {
         Some(value) => Some(ConstantValue::Number(value)),
         None => Some(ConstantValue::Number(f64::NAN)),
@@ -825,7 +833,7 @@ fn parse_float_like_js(s: &str) -> Option<f64> {
     if trimmed.is_empty() {
         return None;
     }
-    
+
     // Handle special cases
     if trimmed.starts_with("Infinity") {
         return Some(f64::INFINITY);
@@ -836,18 +844,18 @@ fn parse_float_like_js(s: &str) -> Option<f64> {
     if trimmed.starts_with("+Infinity") {
         return Some(f64::INFINITY);
     }
-    
+
     // Find the longest prefix that forms a valid decimal literal
     let mut end_pos = 0;
     let bytes = trimmed.as_bytes();
     let mut has_decimal = false;
     let mut has_exponent = false;
-    
+
     // Handle sign
     if bytes.get(end_pos) == Some(&b'+') || bytes.get(end_pos) == Some(&b'-') {
         end_pos += 1;
     }
-    
+
     // Parse digits and decimal point
     while end_pos < bytes.len() {
         match bytes[end_pos] {
@@ -855,7 +863,7 @@ fn parse_float_like_js(s: &str) -> Option<f64> {
             b'.' if !has_decimal && !has_exponent => {
                 has_decimal = true;
                 end_pos += 1;
-            },
+            }
             b'e' | b'E' if !has_exponent && end_pos > 0 => {
                 has_exponent = true;
                 end_pos += 1;
@@ -863,15 +871,15 @@ fn parse_float_like_js(s: &str) -> Option<f64> {
                 if bytes.get(end_pos) == Some(&b'+') || bytes.get(end_pos) == Some(&b'-') {
                     end_pos += 1;
                 }
-            },
+            }
             _ => break,
         }
     }
-    
+
     if end_pos == 0 || (trimmed.starts_with(&['+', '-']) && end_pos == 1) {
         return None;
     }
-    
+
     let number_part = &trimmed[..end_pos];
     number_part.parse::<f64>().ok()
 }
@@ -882,11 +890,11 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
     if trimmed.is_empty() {
         return None;
     }
-    
+
     let mut start_pos = 0;
     let bytes = trimmed.as_bytes();
     let mut is_negative = false;
-    
+
     // Handle sign
     if bytes.get(start_pos) == Some(&b'-') {
         is_negative = true;
@@ -894,7 +902,7 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
     } else if bytes.get(start_pos) == Some(&b'+') {
         start_pos += 1;
     }
-    
+
     // Determine radix
     let radix = if let Some(r) = radix {
         if r.is_nan() || r == 0.0 {
@@ -909,24 +917,29 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
         }
     } else {
         // Auto-detect radix after handling sign
-        if start_pos + 1 < bytes.len() && bytes[start_pos] == b'0' && (bytes[start_pos + 1] == b'x' || bytes[start_pos + 1] == b'X') {
+        if start_pos + 1 < bytes.len()
+            && bytes[start_pos] == b'0'
+            && (bytes[start_pos + 1] == b'x' || bytes[start_pos + 1] == b'X')
+        {
             16
         } else {
             10
         }
     };
-    
+
     // Handle hex prefix for radix 16
     if radix == 16 && start_pos + 1 < bytes.len() {
-        if bytes[start_pos] == b'0' && (bytes[start_pos + 1] == b'x' || bytes[start_pos + 1] == b'X') {
+        if bytes[start_pos] == b'0'
+            && (bytes[start_pos + 1] == b'x' || bytes[start_pos + 1] == b'X')
+        {
             start_pos += 2;
         }
     }
-    
+
     // Parse digits
     let mut result = 0.0;
     let mut found_digit = false;
-    
+
     for &byte in &bytes[start_pos..] {
         let digit = match byte {
             b'0'..=b'9' => (byte - b'0') as u32,
@@ -934,23 +947,23 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
             b'A'..=b'Z' => (byte - b'A' + 10) as u32,
             _ => break,
         };
-        
+
         if digit >= radix {
             break;
         }
-        
+
         found_digit = true;
         result = result * radix as f64 + digit as f64;
     }
-    
+
     if !found_digit {
         return None;
     }
-    
+
     if is_negative {
         result = -result;
     }
-    
+
     Some(result)
 }
 
@@ -961,7 +974,7 @@ fn js_string_to_number(s: &str) -> Option<f64> {
     if trimmed.is_empty() {
         return Some(0.0);
     }
-    
+
     // Handle special cases
     if trimmed == "Infinity" || trimmed == "+Infinity" {
         return Some(f64::INFINITY);
@@ -969,7 +982,7 @@ fn js_string_to_number(s: &str) -> Option<f64> {
     if trimmed == "-Infinity" {
         return Some(f64::NEG_INFINITY);
     }
-    
+
     // Try to parse as number
     trimmed.parse::<f64>().ok()
 }

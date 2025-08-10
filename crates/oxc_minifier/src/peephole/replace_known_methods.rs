@@ -1743,7 +1743,7 @@ mod test {
         test_value("isNaN(null)", "!1");
         test_value("isNaN(Infinity)", "!1");
         test_value("isNaN(-Infinity)", "!1");
-        
+
         // Should not optimize unknown expressions
         test_same_value("isNaN(Math.random())");
         test_same_value("isNaN(unknown)");
@@ -1762,7 +1762,7 @@ mod test {
         test_value("isFinite(Infinity)", "!1");
         test_value("isFinite(-Infinity)", "!1");
         test_value("isFinite('abc')", "!1");
-        
+
         // Should not optimize unknown expressions
         test_same_value("isFinite(Math.random())");
         test_same_value("isFinite(unknown)");
@@ -1777,28 +1777,28 @@ mod test {
         test_value("parseFloat('+123.45')", "123.45");
         test_value("parseFloat('123.45.67')", "123.45");
         test_value("parseFloat('123abc')", "123");
-        
+
         // Whitespace handling
         test_value("parseFloat(' 123')", "123");
         test_value("parseFloat('\\t123')", "123");
         test_value("parseFloat('\\n123')", "123");
-        
+
         // Special values
         test_value("parseFloat('Infinity')", "Infinity");
         test_value("parseFloat('-Infinity')", "-Infinity");
         test_value("parseFloat('+Infinity')", "Infinity");
-        
+
         // Invalid cases
         test_value("parseFloat('')", "NaN");
         test_value("parseFloat(' ')", "NaN");
         test_value("parseFloat('abc')", "NaN");
-        
+
         // Scientific notation
         test_value("parseFloat('1e2')", "100");
         test_value("parseFloat('1E2')", "100");
         test_value("parseFloat('1e+2')", "100");
         test_value("parseFloat('1e-2')", "0.01");
-        
+
         // Should optimize numeric literals too
         test_value("parseFloat(123)", "123");
         test_same_value("parseFloat(unknown)");
@@ -1812,15 +1812,15 @@ mod test {
         test_value("parseInt('+123')", "123");
         test_value("parseInt('123.45')", "123");
         test_value("parseInt('123abc')", "123");
-        
+
         // Whitespace handling
         test_value("parseInt(' 123')", "123");
         test_value("parseInt('\\t123')", "123");
-        
+
         // Hex auto-detection
         test_value("parseInt('0x10')", "16");
         test_value("parseInt('0X10')", "16");
-        
+
         // Explicit radix
         test_value("parseInt('123', 10)", "123");
         test_value("parseInt('10', 16)", "16");
@@ -1828,22 +1828,22 @@ mod test {
         test_value("parseInt('10', 2)", "2");
         test_value("parseInt('ff', 16)", "255");
         test_value("parseInt('FF', 16)", "255");
-        
+
         // Radix edge cases
         test_value("parseInt('10', 0)", "10"); // radix 0 becomes 10
         test_value("parseInt('0x10', 16)", "16"); // hex prefix with radix 16
-        
+
         // Invalid cases - be conservative with edge cases
         test_value("parseInt('')", "NaN");
         test_value("parseInt(' ')", "NaN");
         test_value("parseInt('abc')", "NaN");
         test_same_value("parseInt('123', 1)"); // invalid radix - be conservative  
         test_same_value("parseInt('123', 37)"); // invalid radix - be conservative
-        
+
         // Partial parsing
         test_value("parseInt('123xyz')", "123");
         test_value("parseInt('ff', 10)", "NaN"); // f not valid in base 10
-        
+
         // Should optimize numeric literals but be conservative with unknown expressions
         test_value("parseInt(123)", "123");
         test_same_value("parseInt(unknown)");
