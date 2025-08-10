@@ -26,8 +26,8 @@ impl Default for Ctx {
     }
 }
 impl<'a> GlobalContext<'a> for Ctx {
-    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
-        Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
+        self.global_variable_names.iter().any(|name| name == ident.name.as_str())
     }
 }
 impl MayHaveSideEffectsContext<'_> for Ctx {

@@ -78,9 +78,8 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
 impl<'a> ToJsString<'a> for IdentifierReference<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
         let name = self.name.as_str();
-        (matches!(name, "undefined" | "Infinity" | "NaN")
-            && ctx.is_global_reference(self) == Some(true))
-        .then_some(Cow::Borrowed(name))
+        (matches!(name, "undefined" | "Infinity" | "NaN") && ctx.is_global_reference(self))
+            .then_some(Cow::Borrowed(name))
     }
 }
 
