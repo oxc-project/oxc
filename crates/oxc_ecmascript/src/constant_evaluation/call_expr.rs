@@ -636,34 +636,9 @@ fn try_fold_global_is_nan<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    match expr {
-        // Only handle numeric literals directly
-        Expression::NumericLiteral(n) => Some(ConstantValue::Boolean(n.value.is_nan())),
-        Expression::StringLiteral(s) => {
-            // Try to convert string to number following JS rules
-            let result = if let Some(num) = js_string_to_number(&s.value) {
-                num.is_nan()
-            } else {
-                true // If parsing fails, it's NaN
-            };
-            Some(ConstantValue::Boolean(result))
-        }
-        Expression::BooleanLiteral(_b) => {
-            // true -> 1, false -> 0, both are not NaN
-            Some(ConstantValue::Boolean(false))
-        }
-        Expression::NullLiteral(_) => {
-            // null -> 0, which is not NaN
-            Some(ConstantValue::Boolean(false))
-        }
-        Expression::Identifier(ident)
-            if ident.name == "undefined" && ctx.is_global_reference(ident) =>
-        {
-            // undefined -> NaN
-            Some(ConstantValue::Boolean(true))
-        }
-        _ => None,
-    }
+    // Use evaluate_value_to_number to convert to number following JS coercion rules
+    let num = expr.evaluate_value_to_number(ctx)?;
+    Some(ConstantValue::Boolean(num.is_nan()))
 }
 
 /// Global isFinite(value) - converts value to Number then tests if finite
@@ -678,40 +653,15 @@ fn try_fold_global_is_finite<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    match expr {
-        // Only handle numeric literals directly
-        Expression::NumericLiteral(n) => Some(ConstantValue::Boolean(n.value.is_finite())),
-        Expression::StringLiteral(s) => {
-            // Try to convert string to number following JS rules
-            let result = if let Some(num) = js_string_to_number(&s.value) {
-                num.is_finite()
-            } else {
-                false // If parsing fails, it's NaN which is not finite
-            };
-            Some(ConstantValue::Boolean(result))
-        }
-        Expression::BooleanLiteral(_b) => {
-            // true -> 1, false -> 0, both are finite
-            Some(ConstantValue::Boolean(true))
-        }
-        Expression::NullLiteral(_) => {
-            // null -> 0, which is finite
-            Some(ConstantValue::Boolean(true))
-        }
-        Expression::Identifier(ident)
-            if ident.name == "undefined" && ctx.is_global_reference(ident) =>
-        {
-            // undefined -> NaN, which is not finite
-            Some(ConstantValue::Boolean(false))
-        }
-        _ => None,
-    }
+    // Use evaluate_value_to_number to convert to number following JS coercion rules
+    let num = expr.evaluate_value_to_number(ctx)?;
+    Some(ConstantValue::Boolean(num.is_finite()))
 }
 
 /// Global parseFloat(string) - parses string as floating point number
 fn try_fold_global_parse_float<'a>(
     args: &Vec<'a, Argument<'a>>,
-    _ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.len() != 1 {
         return None;
@@ -719,28 +669,14 @@ fn try_fold_global_parse_float<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    // Handle string literals, simple template literals, and numeric literals
-    let string_value = match expr {
-        Expression::StringLiteral(s) => s.value.as_str(),
-        Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() && tpl.quasis.len() == 1 => {
-            // Simple template literal without interpolation
-            if let Some(cooked) = &tpl.quasis[0].value.cooked {
-                cooked.as_str()
-            } else {
-                return None;
-            }
-        }
-        Expression::NumericLiteral(n) => {
-            // Convert number to string as JavaScript would
-            let num_string = n.value.to_string();
-            return match parse_float_like_js(&num_string) {
-                Some(value) => Some(ConstantValue::Number(value)),
-                None => Some(ConstantValue::Number(f64::NAN)),
-            };
-        }
-        _ => return None,
-    };
+    // Use evaluate_value_to_string to convert to string following JS rules
+    let string_value = expr.evaluate_value_to_string(ctx)?;
 
+    // Following ECMAScript spec for parseFloat:
+    // 1. Let inputString be ? ToString(string).
+    // 2. Let trimmedString be StringValue of trimmedString.
+    // 3. Let trimmed be StringToCodePoints(trimmedString).
+    // 4. Let trimmedPrefix be the longest prefix of trimmed that satisfies the syntax of a StrDecimalLiteral
     let trimmed = string_value.trim_start();
     if trimmed.is_empty() {
         return Some(ConstantValue::Number(f64::NAN));
@@ -754,7 +690,7 @@ fn try_fold_global_parse_float<'a>(
         }
     }
 
-    // Try to parse as float
+    // Try to parse as float following ECMAScript rules
     match parse_float_like_js(trimmed) {
         Some(value) => Some(ConstantValue::Number(value)),
         None => Some(ConstantValue::Number(f64::NAN)),
@@ -764,7 +700,7 @@ fn try_fold_global_parse_float<'a>(
 /// Global parseInt(string, radix) - parses string as integer in given radix
 fn try_fold_global_parse_int<'a>(
     args: &Vec<'a, Argument<'a>>,
-    _ctx: &impl ConstantEvaluationCtx<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() || args.len() > 2 {
         return None;
@@ -773,55 +709,30 @@ fn try_fold_global_parse_int<'a>(
     let string_arg = args.first()?;
     let string_expr = string_arg.as_expression()?;
 
+    // Use evaluate_value_to_string to convert to string following JS rules
+    let string_value = string_expr.evaluate_value_to_string(ctx)?;
+
     // Get radix if provided
     let radix = if args.len() == 2 {
         let radix_arg = args.get(1)?;
         let radix_expr = radix_arg.as_expression()?;
-        // Only handle literal radix values in a safe range to be conservative
-        match radix_expr {
-            Expression::NumericLiteral(n) => {
-                let radix_val = n.value;
-                if radix_val == 0.0
-                    || (radix_val >= 2.0 && radix_val <= 36.0 && radix_val.fract() == 0.0)
-                {
-                    Some(radix_val)
-                } else if radix_val.fract() == 0.0 && radix_val >= 2.0 && radix_val <= 36.0 {
-                    // Valid integer radix
-                    Some(radix_val)
-                } else {
-                    // Other cases (including invalid radix) - be conservative
-                    return None;
-                }
-            }
-            _ => return None, // Don't optimize if radix is not a literal
+        // Use evaluate_value_to_number to convert to number and then use to_int_32
+        let radix_num = radix_expr.evaluate_value_to_number(ctx)?;
+        let radix_val = radix_num.to_int_32();
+        
+        if radix_val == 0 {
+            None // radix 0 means auto-detect
+        } else if radix_val < 2 || radix_val > 36 {
+            // Invalid radix - be conservative and don't optimize
+            return None;
+        } else {
+            Some(radix_val as f64)
         }
     } else {
         None
     };
 
-    // Handle string literals, simple template literals, and numeric literals
-    let string_value = match string_expr {
-        Expression::StringLiteral(s) => &s.value,
-        Expression::TemplateLiteral(tpl) if tpl.expressions.is_empty() && tpl.quasis.len() == 1 => {
-            // Simple template literal without interpolation
-            if let Some(cooked) = &tpl.quasis[0].value.cooked {
-                cooked
-            } else {
-                return None;
-            }
-        }
-        Expression::NumericLiteral(n) => {
-            // Convert number to string as JavaScript would, then parse as int
-            let num_string = n.value.to_string();
-            return match parse_int_like_js(&num_string, radix) {
-                Some(value) => Some(ConstantValue::Number(value)),
-                None => Some(ConstantValue::Number(f64::NAN)),
-            };
-        }
-        _ => return None,
-    };
-
-    match parse_int_like_js(string_value, radix) {
+    match parse_int_like_js(&string_value, radix) {
         Some(value) => Some(ConstantValue::Number(value)),
         None => Some(ConstantValue::Number(f64::NAN)),
     }
@@ -967,22 +878,4 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
     Some(result)
 }
 
-/// Convert a string to number following JavaScript rules
-/// Returns None if the string cannot be converted to a valid number
-fn js_string_to_number(s: &str) -> Option<f64> {
-    let trimmed = s.trim();
-    if trimmed.is_empty() {
-        return Some(0.0);
-    }
 
-    // Handle special cases
-    if trimmed == "Infinity" || trimmed == "+Infinity" {
-        return Some(f64::INFINITY);
-    }
-    if trimmed == "-Infinity" {
-        return Some(f64::NEG_INFINITY);
-    }
-
-    // Try to parse as number
-    trimmed.parse::<f64>().ok()
-}
