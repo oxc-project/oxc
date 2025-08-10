@@ -1,10 +1,13 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::AssignmentExpression;
 use oxc_span::Span;
 
 pub struct ParserState<'a> {
-    pub not_parenthesized_arrow: FxHashSet<u32>,
+    /// Stores the position of the previous start token for a potential arrow function which was
+    /// found to not be an arrow function, but some other syntax. This signals we should parse as
+    /// some other syntax instead.
+    pub not_parenthesized_arrow: Option<Span>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
@@ -20,7 +23,7 @@ pub struct ParserState<'a> {
 impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
-            not_parenthesized_arrow: FxHashSet::default(),
+            not_parenthesized_arrow: None,
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
         }
