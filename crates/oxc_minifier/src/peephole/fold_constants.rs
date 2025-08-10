@@ -1209,19 +1209,20 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_object_comparison1() {
-        fold("!new Date()", "false");
-        fold("!!new Date()", "true");
+        fold("!new Date()", "!1");
+        fold("!!new Date()", "!0");
+        fold_same("!new Date(foo)");
 
-        fold("new Date() == null", "false");
-        fold("new Date() == undefined", "false");
-        fold("new Date() != null", "true");
-        fold("new Date() != undefined", "true");
-        fold("null == new Date()", "false");
-        fold("undefined == new Date()", "false");
-        fold("null != new Date()", "true");
-        fold("undefined != new Date()", "true");
+        fold("new Date() == null", "!1");
+        fold("new Date() == undefined", "!1");
+        fold("new Date() != null", "!0");
+        fold("new Date() != undefined", "!0");
+        fold("null == new Date()", "!1");
+        fold("undefined == new Date()", "!1");
+        fold("null != new Date()", "!0");
+        fold("undefined != new Date()", "!0");
+        fold("new Date(foo) != undefined", "new Date(foo) != null");
     }
 
     #[test]

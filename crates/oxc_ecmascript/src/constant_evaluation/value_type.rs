@@ -1,7 +1,4 @@
-use oxc_ast::ast::{
-    AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, LogicalOperator, StaticMemberExpression, UnaryExpression,
-};
+use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{
@@ -111,6 +108,7 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
             Expression::LogicalExpression(e) => e.value_type(is_global_reference),
             Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
             Expression::StaticMemberExpression(e) => e.value_type(is_global_reference),
+            Expression::NewExpression(e) => e.value_type(is_global_reference),
             _ => ValueType::Undetermined,
         }
     }
@@ -283,6 +281,19 @@ impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
                 {
                     return ValueType::Number;
                 }
+            }
+        }
+        ValueType::Undetermined
+    }
+}
+
+impl<'a> DetermineValueType<'a> for NewExpression<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+        if let Some(ident) = self.callee.get_identifier_reference() {
+            if ident.name.as_str() == "Date"
+                && is_global_reference.is_global_reference(ident) == Some(true)
+            {
+                return ValueType::Object;
             }
         }
         ValueType::Undetermined
