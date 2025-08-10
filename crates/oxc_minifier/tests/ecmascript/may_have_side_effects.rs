@@ -320,7 +320,7 @@ fn closure_compiler_tests() {
     test("(class C { static {} })", false);
     // test("(class C { static { [1]; } })", false);
     test("(class C { static { let x; } })", true);
-    test("(class C { static { const x =1 ; } })", true);
+    test("(class C { static { const x =1 ; } })", false); // Updated: const with simple literal is now side-effect-free
     test("(class C { static { var x; } })", true);
     test("(class C { static { this.x = 1; } })", true);
     test("(class C { static { function f() { } } })", true);
@@ -831,4 +831,118 @@ fn test_object_with_to_primitive_related_properties_overridden() {
     test("+{ ...{ toString() { return Symbol() } } }", true);
     test("+{ ...{ valueOf() { return Symbol() } } }", true);
     test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);
+}
+
+#[test]
+fn test_new_side_effect_relaxations() {
+    // Test global constructor side-effect-free relaxations
+    let ctx = Ctx {
+        global_variable_names: vec!["Map".to_string(), "Set".to_string(), "WeakMap".to_string(), "WeakSet".to_string(), "Date".to_string(), "undefined".to_string()],
+        ..Default::default()
+    };
+
+    // Map constructor tests
+    test_with_ctx("new Map()", &ctx, false);
+    test_with_ctx("new Map(null)", &ctx, false);
+    test_with_ctx("new Map(undefined)", &ctx, false);
+    test_with_ctx("new Map([[1, 2], [3, 4]])", &ctx, false);
+    test_with_ctx("new Map([])", &ctx, false);
+    test_with_ctx("new Map([1, 2])", &ctx, true); // Not all elements are arrays
+    
+    // Set constructor tests
+    test_with_ctx("new Set()", &ctx, false);
+    test_with_ctx("new Set(null)", &ctx, false);
+    test_with_ctx("new Set(undefined)", &ctx, false);
+    test_with_ctx("new Set([1, 2, 3])", &ctx, false);
+    test_with_ctx("new Set([])", &ctx, false);
+
+    // WeakMap/WeakSet constructor tests
+    test_with_ctx("new WeakMap()", &ctx, false);
+    test_with_ctx("new WeakMap(null)", &ctx, false);
+    test_with_ctx("new WeakMap(undefined)", &ctx, false);
+    test_with_ctx("new WeakMap([])", &ctx, false);
+    test_with_ctx("new WeakSet()", &ctx, false);
+    test_with_ctx("new WeakSet(null)", &ctx, false);
+    test_with_ctx("new WeakSet(undefined)", &ctx, false);
+    test_with_ctx("new WeakSet([])", &ctx, false);
+
+    // Date constructor tests
+    test_with_ctx("new Date()", &ctx, false);
+    test_with_ctx("new Date('')", &ctx, false);
+    test_with_ctx("new Date(null)", &ctx, false);
+    test_with_ctx("new Date(false)", &ctx, false);
+    test_with_ctx("new Date(undefined)", &ctx, false);
+    test_with_ctx("new Date(123)", &ctx, false);
+}
+
+#[test]
+fn test_global_member_reads() {
+    let ctx = Ctx {
+        global_variable_names: vec!["Object".to_string(), "JSON".to_string(), "Reflect".to_string(), "Math".to_string(), "Symbol".to_string(), "foo".to_string()],
+        ..Default::default()
+    };
+
+    // Test side-effect-free global member reads
+    test_with_ctx("Object.assign", &ctx, false);
+    test_with_ctx("Object.create", &ctx, false);
+    test_with_ctx("Object.prototype", &ctx, false);
+    test_with_ctx("Object.prototype.propertyIsEnumerable", &ctx, false);
+    test_with_ctx("JSON.stringify", &ctx, false);
+    test_with_ctx("Reflect.apply", &ctx, false);
+    test_with_ctx("Math.E", &ctx, false);
+    test_with_ctx("Symbol.asyncDispose", &ctx, false);
+
+    // Test that other global member reads still have side effects
+    test_with_ctx("Object.test", &ctx, true);
+    test_with_ctx("Object.prototype.two", &ctx, true);
+    test_with_ctx("Reflect.something", &ctx, true);
+    test_with_ctx("Math.random", &ctx, true);
+    test_with_ctx("foo.bar", &ctx, true);
+}
+
+#[test]
+fn test_symbol_iterator_property_key() {
+    let ctx = Ctx {
+        global_variable_names: vec!["Symbol".to_string()],
+        ..Default::default()
+    };
+
+    // Test Symbol.iterator computed property key is side-effect-free
+    test_with_ctx("({ [Symbol.iterator]: 1 })", &ctx, false);
+    test_with_ctx("(class { [Symbol.iterator]() {} })", &ctx, false);
+
+    // Other computed keys still have potential side effects
+    test_with_ctx("({ [Symbol.foo]: 1 })", &ctx, true);
+    test_with_ctx("({ [foo()]: 1 })", &ctx, true);
+}
+
+#[test]
+fn test_expanded_global_identifier_whitelist() {
+    let ctx = Ctx {
+        global_variable_names: vec!["String".to_string(), "Proxy".to_string(), "NaN".to_string(), "Infinity".to_string(), "undefined".to_string(), "foo".to_string()],
+        ..Default::default()
+    };
+
+    // Test expanded whitelist
+    test_with_ctx("String", &ctx, false);
+    test_with_ctx("Proxy", &ctx, false);
+    test_with_ctx("NaN", &ctx, false);
+    test_with_ctx("Infinity", &ctx, false);
+    test_with_ctx("undefined", &ctx, false);
+
+    // Other global identifiers still have side effects
+    test_with_ctx("foo", &ctx, true);
+}
+
+#[test]
+fn test_static_class_blocks_improved() {
+    // Test improved static class block analysis
+    test("(class { static {} })", false); // Empty block
+    test("(class { static { const x = 1; } })", false); // Const with literal
+    test("(class { static { const x = 1; const y = 'hello'; } })", false); // Multiple const with literals
+    test("(class { static { let x; } })", true); // Let declaration
+    test("(class { static { var x; } })", true); // Var declaration
+    test("(class { static { const x = foo(); } })", true); // Const with side-effect call
+    test("(class { static { this.x = 1; } })", true); // Assignment
+    test("(class { static { function f() {} } })", true); // Function declaration
 }

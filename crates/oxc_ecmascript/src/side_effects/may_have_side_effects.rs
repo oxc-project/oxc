@@ -77,7 +77,7 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
 impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self.name.as_str() {
-            "NaN" | "Infinity" | "undefined" => false,
+            "NaN" | "Infinity" | "undefined" | "String" | "Proxy" => false,
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
@@ -337,9 +337,15 @@ impl<'a> MayHaveSideEffects<'a> for PropertyKey<'a> {
         match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
-                // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
-                // But we can ignore that by using the assumption.
-                self.to_expression().may_have_side_effects(ctx)
+                let expr = self.to_expression();
+                // Check if this is Symbol.iterator
+                if is_symbol_iterator_key(expr, ctx) {
+                    false
+                } else {
+                    // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                    // But we can ignore that by using the assumption.
+                    expr.may_have_side_effects(ctx)
+                }
             }
         }
     }
@@ -372,8 +378,7 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
 impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            // TODO: check side effects inside the block
-            ClassElement::StaticBlock(block) => !block.body.is_empty(),
+            ClassElement::StaticBlock(block) => static_block_may_have_side_effects(block, ctx),
             ClassElement::MethodDefinition(e) => {
                 !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
             }
@@ -451,9 +456,15 @@ fn property_access_may_have_side_effects<'a>(
     property: &str,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
+    // Check for known side-effect-free global member reads first
+    if is_side_effect_free_global_member(object, property, ctx) {
+        return false;
+    }
+
     if object.may_have_side_effects(ctx) {
         return true;
     }
+
     if ctx.property_read_side_effects() == PropertyReadSideEffects::None {
         return false;
     }
@@ -513,6 +524,13 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
+        } else if let Some(is_side_effect_free) = maybe_side_effect_free_global_constructor(self, ctx) {
+            if is_side_effect_free {
+                // Still evaluate arguments for side effects
+                self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
+            } else {
+                true
+            }
         } else {
             true
         }
@@ -540,5 +558,224 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
             },
             match_expression!(Argument) => self.to_expression().may_have_side_effects(ctx),
         }
+    }
+}
+
+/// Helper function to check if an identifier is a global reference with a specific name
+fn is_global_ident_with_name<'a>(
+    ident: &IdentifierReference<'a>,
+    name: &str,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    ident.name.as_str() == name && ctx.is_global_reference(ident)
+}
+
+/// Helper function to check if a member expression is a side-effect-free global member read
+fn is_side_effect_free_global_member<'a>(
+    object_expr: &Expression<'a>,
+    property: &str,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    match object_expr {
+        Expression::Identifier(ident) => {
+            // Direct global object access
+            match ident.name.as_str() {
+                "Object" if ctx.is_global_reference(ident) => {
+                    matches!(property, "assign" | "create" | "prototype")
+                }
+                "JSON" if ctx.is_global_reference(ident) => matches!(property, "stringify"),
+                "Reflect" if ctx.is_global_reference(ident) => matches!(property, "apply"),
+                "Math" if ctx.is_global_reference(ident) => matches!(property, "E"),
+                "Symbol" if ctx.is_global_reference(ident) => matches!(property, "asyncDispose"),
+                _ => false,
+            }
+        }
+        Expression::StaticMemberExpression(member_expr) => {
+            // Handle chain length 3: Object.prototype.propertyIsEnumerable
+            if property == "propertyIsEnumerable" {
+                if let Expression::Identifier(obj_ident) = &member_expr.object {
+                    is_global_ident_with_name(obj_ident, "Object", ctx)
+                        && member_expr.property.name.as_str() == "prototype"
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
+/// Helper function to check if a computed property key is Symbol.iterator
+fn is_symbol_iterator_key<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    if let Expression::StaticMemberExpression(member_expr) = expr {
+        if let Expression::Identifier(ident) = &member_expr.object {
+            is_global_ident_with_name(ident, "Symbol", ctx)
+                && member_expr.property.name.as_str() == "iterator"
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+/// Helper function to check if a static class block has side effects
+fn static_block_may_have_side_effects<'a>(
+    block: &StaticBlock<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    for stmt in &block.body {
+        match stmt {
+            Statement::EmptyStatement(_) => continue,
+            Statement::VariableDeclaration(var_decl) => {
+                // For now, be more conservative - only allow const declarations with simple literals
+                // that don't have side effects
+                for declarator in &var_decl.declarations {
+                    // Check if pattern is a simple BindingIdentifier
+                    if !matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
+                        return true;
+                    }
+                    
+                    // Only allow const declarations with side-effect-free initializers
+                    // Let and var declarations are still considered to have side effects
+                    if !matches!(var_decl.kind, VariableDeclarationKind::Const) {
+                        return true;
+                    }
+                    
+                    // Must have an initializer for const
+                    let Some(init) = &declarator.init else {
+                        return true;
+                    };
+                    
+                    // Check if initializer is side-effect-free
+                    if init.may_have_side_effects(ctx) {
+                        return true;
+                    }
+                }
+            }
+            _ => return true, // Any other statement type is considered to have side effects
+        }
+    }
+    false
+}
+
+/// Helper function to check if a global constructor call is side-effect-free
+fn maybe_side_effect_free_global_constructor<'a>(
+    new_expr: &NewExpression<'a>,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> Option<bool> {
+    let Expression::Identifier(ident) = &new_expr.callee else {
+        return None;
+    };
+
+    if !ctx.is_global_reference(ident) {
+        return None;
+    }
+
+    match ident.name.as_str() {
+        "Map" => {
+            match new_expr.arguments.len() {
+                0 => Some(true), // new Map() is side-effect-free
+                1 => {
+                    let arg = &new_expr.arguments[0];
+                    match arg {
+                        Argument::SpreadElement(_) => None, // Conservative - don't handle spread
+                        match_expression!(Argument) => {
+                            let arg_expr = arg.to_expression();
+                            match arg_expr {
+                                Expression::NullLiteral(_) => Some(true),
+                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                Expression::ArrayExpression(arr) => {
+                                    // Check if every element is also an array
+                                    let all_arrays = arr.elements.iter().all(|elem| {
+                                        match elem {
+                                            ArrayExpressionElement::SpreadElement(_) => false,
+                                            ArrayExpressionElement::Elision(_) => true, // elision is fine
+                                            match_expression!(ArrayExpressionElement) => {
+                                                matches!(elem.to_expression(), Expression::ArrayExpression(_))
+                                            }
+                                        }
+                                    });
+                                    Some(all_arrays)
+                                }
+                                _ => None,
+                            }
+                        }
+                    }
+                }
+                _ => None, // More than 1 argument - use default behavior
+            }
+        }
+        "Set" => {
+            match new_expr.arguments.len() {
+                0 => Some(true), // new Set() is side-effect-free
+                1 => {
+                    let arg = &new_expr.arguments[0];
+                    match arg {
+                        Argument::SpreadElement(_) => None, // Conservative - don't handle spread
+                        match_expression!(Argument) => {
+                            let arg_expr = arg.to_expression();
+                            match arg_expr {
+                                Expression::NullLiteral(_) => Some(true),
+                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                Expression::ArrayExpression(_) => Some(true), // Any array is fine for Set
+                                _ => None,
+                            }
+                        }
+                    }
+                }
+                _ => None, // More than 1 argument - use default behavior
+            }
+        }
+        "WeakMap" | "WeakSet" => {
+            match new_expr.arguments.len() {
+                0 => Some(true), // new WeakMap()/new WeakSet() is side-effect-free
+                1 => {
+                    let arg = &new_expr.arguments[0];
+                    match arg {
+                        Argument::SpreadElement(_) => None, // Conservative - don't handle spread
+                        match_expression!(Argument) => {
+                            let arg_expr = arg.to_expression();
+                            match arg_expr {
+                                Expression::NullLiteral(_) => Some(true),
+                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                Expression::ArrayExpression(arr) if arr.elements.is_empty() => Some(true), // empty array [] is fine
+                                _ => None,
+                            }
+                        }
+                    }
+                }
+                _ => None, // More than 1 argument - use default behavior
+            }
+        }
+        "Date" => {
+            match new_expr.arguments.len() {
+                0 => Some(true), // new Date() is side-effect-free
+                1 => {
+                    let arg = &new_expr.arguments[0];
+                    match arg {
+                        Argument::SpreadElement(_) => None, // Conservative - don't handle spread
+                        match_expression!(Argument) => {
+                            let arg_expr = arg.to_expression();
+                            match arg_expr {
+                                Expression::NumericLiteral(_)
+                                | Expression::StringLiteral(_)
+                                | Expression::BooleanLiteral(_)
+                                | Expression::NullLiteral(_) => Some(true),
+                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                _ => None, // Unknown type - use default behavior
+                            }
+                        }
+                    }
+                }
+                _ => None, // More than 1 argument or different arity - use default behavior
+            }
+        }
+        _ => None, // Not a constructor we handle
     }
 }
