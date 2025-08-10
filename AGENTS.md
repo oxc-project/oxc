@@ -29,7 +29,12 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.86.0), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.87.0), Node.js, pnpm, just
+
+**Setup Notes:**
+- `just init` has already been run, all tools (`cargo-insta`, `typos-cli`, `cargo-shear`, `dprint`) are already installed, do not run `just init`.
+- Rust and `cargo` components `clippy`, `rust-docs` and `rustfmt` has already been installed, do not install them.
+- Always run `just ready` as the last step after code has been committed to the repository.
 
 Key commands (tools already installed):
 ```bash
