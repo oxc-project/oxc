@@ -633,7 +633,7 @@ fn static_block_may_have_side_effects<'a>(
 ) -> bool {
     for stmt in &block.body {
         match stmt {
-            Statement::EmptyStatement(_) => {}, // No side effects
+            Statement::EmptyStatement(_) => {} // No side effects
             Statement::VariableDeclaration(var_decl) => {
                 // For now, be more conservative - only allow const declarations with simple literals
                 // that don't have side effects
@@ -730,7 +730,9 @@ fn maybe_side_effect_free_global_constructor<'a>(
                         match_expression!(Argument) => {
                             let arg_expr = arg.to_expression();
                             match arg_expr {
-                                Expression::NullLiteral(_) | Expression::ArrayExpression(_) => Some(true), // Any array is fine for Set
+                                Expression::NullLiteral(_) | Expression::ArrayExpression(_) => {
+                                    Some(true)
+                                } // Any array is fine for Set
                                 Expression::Identifier(id)
                                     if is_global_ident_with_name(id, "undefined", ctx) =>
                                 {
