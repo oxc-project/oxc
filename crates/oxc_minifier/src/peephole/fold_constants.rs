@@ -103,12 +103,23 @@ impl<'a> PeepholeOptimizations {
         chain_expr: &ChainExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let member_expr = chain_expr.expression.as_member_expression()?;
-        if !member_expr.optional() {
-            return None;
-        }
-        let object = member_expr.object();
-        let ty = object.value_type(ctx);
+        let left_expr = match &chain_expr.expression {
+            match_member_expression!(ChainElement) => {
+                let member_expr = chain_expr.expression.to_member_expression();
+                if !member_expr.optional() {
+                    return None;
+                }
+                member_expr.object()
+            }
+            ChainElement::CallExpression(call_expr) => {
+                if !call_expr.optional {
+                    return None;
+                }
+                &call_expr.callee
+            }
+            ChainElement::TSNonNullExpression(_) => return None,
+        };
+        let ty = left_expr.value_type(ctx);
         (ty.is_null() || ty.is_undefined())
             .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
@@ -1478,6 +1489,8 @@ mod test {
         fold("x = null?.y", "x = void 0");
         fold("x = undefined?.[foo]", "x = void 0");
         fold("x = null?.[foo]", "x = void 0");
+        fold("x = undefined?.()", "x = void 0");
+        fold("x = null?.()", "x = void 0");
     }
 
     #[test]
