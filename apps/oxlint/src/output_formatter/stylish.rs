@@ -88,7 +88,9 @@ fn format_stylish(diagnostics: &[Error]) -> String {
             };
 
             let info = Info::new(diagnostic);
-            let rule = diagnostic.code().map_or_else(|| CommonStrings::empty().to_string(), |code| code.to_string());
+            let rule = diagnostic
+                .code()
+                .map_or_else(|| CommonStrings::empty().to_string(), |code| code.to_string());
             let position = CommonStrings::position(info.start.line, info.start.column);
             writeln!(
                 output,

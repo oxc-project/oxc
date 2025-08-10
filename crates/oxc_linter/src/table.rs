@@ -139,7 +139,9 @@ impl RuleTableSection {
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
             let rendered_name = if let Some(prefix) = link_prefix {
-                let link = intern_string(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"));
+                let link = intern_string(format!(
+                    "[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"
+                ));
                 Cow::Borrowed(link)
             } else {
                 Cow::Borrowed(rule_name)

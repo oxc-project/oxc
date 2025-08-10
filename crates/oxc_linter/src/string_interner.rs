@@ -9,9 +9,7 @@ pub struct StringInterner {
 
 impl StringInterner {
     fn new() -> Self {
-        Self {
-            strings: HashMap::new(),
-        }
+        Self { strings: HashMap::new() }
     }
 
     /// Intern a string, returning a static reference to the interned version.
@@ -29,7 +27,7 @@ impl StringInterner {
 }
 
 /// Global string interner instance
-static INTERNER: LazyLock<std::sync::Mutex<StringInterner>> = 
+static INTERNER: LazyLock<std::sync::Mutex<StringInterner>> =
     LazyLock::new(|| std::sync::Mutex::new(StringInterner::new()));
 
 /// Intern a string globally, returning a static reference.
@@ -46,8 +44,7 @@ impl CommonUrls {
     pub fn rule_url(plugin_name: &str, rule_name: &str) -> &'static str {
         let url = format!(
             "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
-            plugin_name,
-            rule_name
+            plugin_name, rule_name
         );
         intern_string(url)
     }
@@ -61,7 +58,7 @@ impl CommonStrings {
     pub fn empty() -> &'static str {
         intern_string(String::new())
     }
-    
+
     /// Get an interned position string like "10:5"
     pub fn position(line: usize, column: usize) -> &'static str {
         intern_string(format!("{}:{}", line, column))
@@ -76,7 +73,7 @@ mod tests {
     fn test_string_interning() {
         let s1 = intern_string("test".to_string());
         let s2 = intern_string("test".to_string());
-        
+
         // Should return the same reference
         assert_eq!(s1.as_ptr(), s2.as_ptr());
     }
@@ -85,7 +82,7 @@ mod tests {
     fn test_rule_url_generation() {
         let url1 = CommonUrls::rule_url("eslint", "no-unused-vars");
         let url2 = CommonUrls::rule_url("eslint", "no-unused-vars");
-        
+
         // Should return the same reference for identical URLs
         assert_eq!(url1.as_ptr(), url2.as_ptr());
         assert_eq!(url1, "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html");
