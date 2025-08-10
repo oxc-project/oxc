@@ -24,13 +24,19 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
     pub fn replace_known_methods_exit_expression(
         &self,
-        node: &mut Expression<'a>,
-
+        e: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        self.try_fold_concat_chain(node, ctx);
-        self.try_fold_known_global_methods(node, ctx);
-        self.try_fold_known_property_access(node, ctx);
+        match e {
+            Expression::CallExpression(_) => {
+                self.try_fold_concat_chain(e, ctx);
+                self.try_fold_known_global_methods(e, ctx);
+            }
+            Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_) => {
+                self.try_fold_known_property_access(e, ctx);
+            }
+            _ => {}
+        }
     }
 
     fn try_fold_known_global_methods(&self, node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
