@@ -719,7 +719,7 @@ fn try_fold_global_parse_int<'a>(
         // Use evaluate_value_to_number to convert to number and then use to_int_32
         let radix_num = radix_expr.evaluate_value_to_number(ctx)?;
         let radix_val = radix_num.to_int_32();
-        
+
         if radix_val == 0 {
             None // radix 0 means auto-detect
         } else if radix_val < 2 || radix_val > 36 {
@@ -877,5 +877,3 @@ fn parse_int_like_js(s: &str, radix: Option<f64>) -> Option<f64> {
 
     Some(result)
 }
-
-

@@ -8,10 +8,10 @@ pub trait StringToNumber {
 impl StringToNumber for &str {
     fn string_to_number(&self) -> f64 {
         let s = *self;
-        
+
         // 1. Let trimmed be StringTrimAsciiWhitespace(argument).
         let trimmed = s.trim();
-        
+
         match trimmed {
             // 2. If trimmed is the empty String, return +0𝔽.
             "" => return 0.0,
