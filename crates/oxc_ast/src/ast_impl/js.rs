@@ -91,6 +91,7 @@ impl<'a> Expression<'a> {
     /// Returns `true` for [string literals](StringLiteral) matching the
     /// expected value. Note that [non-substitution template
     /// literals](TemplateLiteral) are not considered.
+    #[inline]
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         match self {
             Self::StringLiteral(s) => s.value == string,

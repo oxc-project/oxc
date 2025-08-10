@@ -242,11 +242,8 @@ impl<'a> PeepholeOptimizations {
         expr: &mut BinaryExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let Expression::UnaryExpression(unary_expr) = &expr.left else { return None };
+        let Expression::UnaryExpression(unary_expr) = &mut expr.left else { return None };
         if !unary_expr.operator.is_typeof() {
-            return None;
-        }
-        if !expr.right.is_specific_string_literal("undefined") {
             return None;
         }
         let (new_eq_op, new_comp_op) = match expr.operator {
@@ -258,19 +255,22 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return None,
         };
-        if let Expression::Identifier(ident) = &unary_expr.argument {
-            if ctx.is_global_reference(ident) {
-                let left = expr.left.take_in(ctx.ast);
-                let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
-                return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
-            }
+        if !expr.right.is_specific_string_literal("undefined") {
+            return None;
         }
-
-        let Expression::UnaryExpression(unary_expr) = expr.left.take_in(ctx.ast) else {
-            unreachable!()
-        };
-        let right = ctx.ast.void_0(expr.right.span());
-        Some(ctx.ast.expression_binary(expr.span, unary_expr.unbox().argument, new_eq_op, right))
+        if let Expression::Identifier(ident) = &unary_expr.argument
+            && ctx.is_global_reference(ident)
+        {
+            let left = expr.left.take_in(ctx.ast);
+            let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
+            return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
+        }
+        Some(ctx.ast.expression_binary(
+            expr.span,
+            unary_expr.take_in(ctx.ast).argument,
+            new_eq_op,
+            ctx.ast.void_0(expr.right.span()),
+        ))
     }
 
     /// Remove unary `+` if `ToNumber` conversion is done by the parent expression
