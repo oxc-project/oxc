@@ -1253,7 +1253,6 @@ mod test {
         test("x = parseInt('12', 13)", "x = 15");
         test("x = parseInt(15.99, 10)", "x = 15");
         test("x = parseInt(-15.99, 10)", "x = -15");
-        // JavaScript parseInt parses decimal strings correctly (unlike Java)
         test("x = parseInt('-15.99', 10)", "x = -15");
         test("x = parseFloat('3.14')", "x = 3.14");
         test("x = parseFloat(3.14)", "x = 3.14");

@@ -8,12 +8,7 @@ pub trait StringToNumber {
 impl StringToNumber for &str {
     fn string_to_number(&self) -> f64 {
         let s = *self;
-
-        // 1. Let trimmed be StringTrimAsciiWhitespace(argument).
-        let trimmed = s.trim();
-
-        match trimmed {
-            // 2. If trimmed is the empty String, return +0𝔽.
+        match s {
             "" => return 0.0,
             "-Infinity" => return f64::NEG_INFINITY,
             "Infinity" | "+Infinity" => return f64::INFINITY,
@@ -21,7 +16,7 @@ impl StringToNumber for &str {
                 // Make sure that no further variants of "infinity" are parsed by `f64::parse`.
                 // Note that alphabetical characters are not case-sensitive.
                 // <https://doc.rust-lang.org/std/primitive.f64.html#method.from_str>
-                let mut bytes = trimmed.trim_start_matches(['-', '+']).bytes();
+                let mut bytes = s.trim_start_matches(['-', '+']).bytes();
                 if bytes
                     .next()
                     .filter(|c| c.eq_ignore_ascii_case(&b'i'))
@@ -34,9 +29,9 @@ impl StringToNumber for &str {
             }
         }
 
-        let mut bytes = trimmed.bytes();
+        let mut bytes = s.bytes();
 
-        if trimmed.len() > 2 && bytes.next() == Some(b'0') {
+        if s.len() > 2 && bytes.next() == Some(b'0') {
             // `| 32` converts upper case ASCII letters to lower case.
             // A bit more efficient than testing for `b'x' | b'X'`.
             // https://godbolt.org/z/Korrhd4TE
@@ -48,7 +43,7 @@ impl StringToNumber for &str {
             };
 
             if radix != 0 {
-                let s = &trimmed[2..];
+                let s = &s[2..];
 
                 // Fast path
                 if let Ok(value) = u32::from_str_radix(s, radix) {
@@ -68,7 +63,6 @@ impl StringToNumber for &str {
             }
         }
 
-        // 3. Let trimmedStringToNumber be ParseStringValue(trimmed).
-        trimmed.parse::<f64>().unwrap_or(f64::NAN)
+        s.parse::<f64>().unwrap_or(f64::NAN)
     }
 }

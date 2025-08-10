@@ -624,6 +624,25 @@ fn try_fold_decode_uri_component<'a>(
     Some(ConstantValue::String(decoded))
 }
 
+/// Helper function to convert expression to number with proper ECMAScript string trimming
+/// This ensures that string literals like ' ' are properly converted to 0
+fn evaluate_to_number_with_trimming<'a>(
+    expr: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<f64> {
+    use crate::StringToNumber;
+    use oxc_ast::ast::Expression;
+
+    match expr {
+        Expression::StringLiteral(lit) => {
+            // For string literals, apply ECMAScript-compliant trimming before conversion
+            let trimmed = lit.value.trim();
+            Some(trimmed.string_to_number())
+        }
+        _ => expr.evaluate_value_to_number(ctx),
+    }
+}
+
 /// Global isNaN(value) - converts value to Number then tests if NaN
 /// Unlike Number.isNaN(), this does type coercion
 fn try_fold_global_is_nan<'a>(
@@ -636,8 +655,7 @@ fn try_fold_global_is_nan<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    // Use evaluate_value_to_number to convert to number following JS coercion rules
-    let num = expr.evaluate_value_to_number(ctx)?;
+    let num = evaluate_to_number_with_trimming(expr, ctx)?;
     Some(ConstantValue::Boolean(num.is_nan()))
 }
 
@@ -653,8 +671,7 @@ fn try_fold_global_is_finite<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    // Use evaluate_value_to_number to convert to number following JS coercion rules
-    let num = expr.evaluate_value_to_number(ctx)?;
+    let num = evaluate_to_number_with_trimming(expr, ctx)?;
     Some(ConstantValue::Boolean(num.is_finite()))
 }
 
@@ -669,7 +686,6 @@ fn try_fold_global_parse_float<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
 
-    // Use evaluate_value_to_string to convert to string following JS rules
     let string_value = expr.evaluate_value_to_string(ctx)?;
 
     // Following ECMAScript spec for parseFloat:
@@ -709,14 +725,12 @@ fn try_fold_global_parse_int<'a>(
     let string_arg = args.first()?;
     let string_expr = string_arg.as_expression()?;
 
-    // Use evaluate_value_to_string to convert to string following JS rules
     let string_value = string_expr.evaluate_value_to_string(ctx)?;
 
     // Get radix if provided
     let radix = if args.len() == 2 {
         let radix_arg = args.get(1)?;
         let radix_expr = radix_arg.as_expression()?;
-        // Use evaluate_value_to_number to convert to number and then use to_int_32
         let radix_num = radix_expr.evaluate_value_to_number(ctx)?;
         let radix_val = radix_num.to_int_32();
 
