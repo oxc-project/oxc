@@ -471,7 +471,7 @@ fn get_switch_semantic_cases(
                 (cfg_ids, conds, exit)
             } else {
                 if has_default {
-                    cfg_ids.push(target)
+                    cfg_ids.push(target);
                 }
                 (cfg_ids, conds, Some(target))
             }
