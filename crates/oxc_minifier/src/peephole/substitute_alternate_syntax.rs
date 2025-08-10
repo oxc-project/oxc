@@ -1016,6 +1016,9 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
+        if !ctx.state.options.booleans {
+            return None;
+        }
         let Expression::BooleanLiteral(lit) = expr else { return None };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
@@ -1909,5 +1912,11 @@ mod test {
         test("var {y: y} = x", "var {y} = x");
         test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
         test("var {y: y, 'z': z} = x", "var {y, z} = x");
+    }
+
+    #[test]
+    fn try_compress_boolean() {
+        let options = CompressOptions { booleans: false, ..default_options() };
+        test_same_options("var a = true", &options);
     }
 }

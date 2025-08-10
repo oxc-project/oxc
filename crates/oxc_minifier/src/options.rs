@@ -14,6 +14,11 @@ pub struct CompressOptions {
     /// Default `ESTarget::ESNext`
     pub target: ESTarget,
 
+    /// Change `true` and `false` to `!0` and `!1`.
+    ///
+    /// Default `true`
+    pub booleans: bool,
+
     /// Remove `debugger;` statements.
     ///
     /// Default `true`
@@ -57,12 +62,13 @@ impl CompressOptions {
     pub fn smallest() -> Self {
         Self {
             target: ESTarget::ESNext,
-            keep_names: CompressOptionsKeepNames::all_false(),
+            booleans: true,
             drop_debugger: true,
             drop_console: false,
             join_vars: true,
             sequences: true,
             unused: CompressOptionsUnused::Remove,
+            keep_names: CompressOptionsKeepNames::all_false(),
             treeshake: TreeShakeOptions::default(),
         }
     }
@@ -70,12 +76,13 @@ impl CompressOptions {
     pub fn safest() -> Self {
         Self {
             target: ESTarget::ESNext,
-            keep_names: CompressOptionsKeepNames::all_true(),
+            booleans: true,
             drop_debugger: false,
             drop_console: false,
             join_vars: true,
             sequences: true,
             unused: CompressOptionsUnused::Keep,
+            keep_names: CompressOptionsKeepNames::all_true(),
             treeshake: TreeShakeOptions::default(),
         }
     }
@@ -83,12 +90,13 @@ impl CompressOptions {
     pub fn dce() -> Self {
         Self {
             target: ESTarget::ESNext,
-            keep_names: CompressOptionsKeepNames::all_true(),
+            booleans: false,
             drop_debugger: false,
             drop_console: false,
             join_vars: false,
             sequences: false,
             unused: CompressOptionsUnused::Remove,
+            keep_names: CompressOptionsKeepNames::all_true(),
             treeshake: TreeShakeOptions::default(),
         }
     }
