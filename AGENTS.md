@@ -98,6 +98,142 @@ pnpm test
 
 Always run `just ready` as the last step after code has been committed to the repository.
 
+## 🚀 Running Example Applications
+
+The repository includes numerous example applications in the `examples/` directories of various crates. These examples demonstrate how to use different parts of the Oxc toolchain and serve as practical learning resources.
+
+### Quick Start
+
+Most examples follow this pattern:
+```bash
+# Create a test file (many examples default to "test.js")
+echo "console.log('Hello, World!');" > test.js
+
+# Run an example
+cargo run -p <package_name> --example <example_name> [filename] [options]
+```
+
+### Available Examples by Category
+
+#### Parser Examples (`oxc_parser`)
+```bash
+# Basic JavaScript/TypeScript parsing with AST display
+cargo run -p oxc_parser --example parser [filename] [--ast] [--estree] [--comments]
+
+# TypeScript JSX parsing demonstration  
+cargo run -p oxc_parser --example parser_tsx
+
+# Regular expression parsing within JavaScript
+cargo run -p oxc_parser --example regular_expression
+
+# AST visitor pattern demonstration
+cargo run -p oxc_parser --example visitor [filename]
+```
+
+#### Linter Examples (`oxc_linter`)
+```bash
+# Simple linter with basic rules (debugger detection, empty destructuring)
+cargo run -p oxc_linter --example linter [filename]
+```
+
+#### Semantic Analysis Examples (`oxc_semantic`)
+```bash
+# Control flow graph generation and analysis
+cargo run -p oxc_semantic --example cfg [filename]
+
+# Semantic analysis with symbol information
+cargo run -p oxc_semantic --example semantic [filename] [--symbols]
+```
+
+#### Code Generation Examples (`oxc_codegen`)
+```bash
+# Code generation from AST
+cargo run -p oxc_codegen --example codegen [filename] [--minify] [--twice]
+
+# Source map generation
+cargo run -p oxc_codegen --example sourcemap [filename]
+```
+
+#### Transformer Examples (`oxc_transformer`)
+```bash
+# Code transformation with Babel compatibility
+cargo run -p oxc_transformer --example transformer [filename] [options]
+# Options: --babel-options <path>, --targets <targets>, --target <target>
+```
+
+#### Minifier Examples (`oxc_minifier`)
+```bash
+# Dead code elimination
+cargo run -p oxc_minifier --example dce [filename] [--nospace] [--twice]
+
+# Variable name mangling
+cargo run -p oxc_minifier --example mangler [filename] [options]
+
+# Complete minification pipeline
+cargo run -p oxc_minifier --example minifier [filename] [options]
+```
+
+#### Formatter Examples (`oxc_formatter`)
+```bash
+# Code formatting
+cargo run -p oxc_formatter --example formatter [filename]
+```
+
+#### Isolated Declarations Examples (`oxc_isolated_declarations`)
+```bash
+# TypeScript isolated declarations generation
+cargo run -p oxc_isolated_declarations --example isolated_declarations [filename]
+```
+
+#### Regular Expression Examples (`oxc_regular_expression`)
+```bash
+# Regular expression literal parsing
+cargo run -p oxc_regular_expression --example parse_literal
+
+# Regular expression AST visitor
+cargo run -p oxc_regular_expression --example regex_visitor
+```
+
+#### Complete Compiler Examples (`oxc`)
+```bash
+# Full compilation pipeline (parsing, semantic analysis, transformation, codegen)
+cargo run -p oxc --example compiler --features="full" [filename]
+```
+
+### Example Usage Patterns
+
+1. **File Input**: Most examples accept an optional filename parameter. If not provided, they default to `test.js`.
+
+2. **Creating Test Files**: Create appropriate test files for different examples:
+   ```bash
+   # For JavaScript examples
+   echo "const x = 1; console.log(x);" > test.js
+   
+   # For TypeScript examples  
+   echo "const x: number = 1; console.log(x);" > test.ts
+   
+   # For JSX examples
+   echo "const App = () => <div>Hello</div>;" > test.jsx
+   ```
+
+3. **Development Workflow**: Use `just watch` for continuous development:
+   ```bash
+   just watch "cargo run -p oxc_parser --example parser"
+   ```
+
+4. **Special Requirements**: 
+   - The `oxc` compiler example requires `--features="full"`
+   - Some examples have additional command-line options for different modes
+   - Examples automatically detect file type from extension (`.js`, `.ts`, `.jsx`, `.tsx`)
+
+### Tips for AI Development
+
+- Use examples to understand how different Oxc components work together
+- Examples serve as integration tests for the APIs
+- Modify examples temporarily to experiment with different inputs
+- Examples demonstrate best practices for using the allocator pattern
+- Check example source code for detailed usage patterns and error handling
+
 ## 🧭 Code Navigation Tips
 
 ### Understanding the AST
