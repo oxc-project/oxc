@@ -2977,10 +2977,7 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("type", &JsonSafeString("TSImportType"));
         state.serialize_field("argument", &self.argument);
         state.serialize_field("options", &self.options);
-        state.serialize_field(
-            "qualifier",
-            &crate::serialize::ts::TSImportTypeQualifierConverter(self),
-        );
+        state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_span(self.span);
         state.end();
@@ -2999,7 +2996,7 @@ impl ESTree for TSImportTypeQualifier<'_> {
 impl ESTree for TSImportTypeQualifiedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportTypeQualifiedName"));
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.serialize_span(self.span);

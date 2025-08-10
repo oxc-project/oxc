@@ -2005,58 +2005,11 @@ function deserializeTSTypeQuery(pos) {
 }
 
 function deserializeTSImportType(pos) {
-  let qualifier = deserializeOptionTSImportTypeQualifier(pos + 32);
-  if (qualifier !== null) {
-    if (qualifier.type === 'IdentifierName') {
-      qualifier = {
-        type: 'Identifier',
-        decorators: [],
-        name: qualifier.name,
-        optional: false,
-        typeAnnotation: null,
-        start: qualifier.start,
-        end: qualifier.end,
-      };
-    } else if (qualifier.type === 'TSImportTypeQualifiedName') {
-      // Convert TSImportTypeQualifiedName to TSQualifiedName
-      const convertQualifier = (q) => {
-        if (q.type === 'IdentifierName') {
-          return {
-            type: 'Identifier',
-            decorators: [],
-            name: q.name,
-            optional: false,
-            typeAnnotation: null,
-            start: q.start,
-            end: q.end,
-          };
-        } else if (q.type === 'TSImportTypeQualifiedName') {
-          return {
-            type: 'TSQualifiedName',
-            left: convertQualifier(q.left),
-            right: {
-              type: 'Identifier',
-              decorators: [],
-              name: q.right.name,
-              optional: false,
-              typeAnnotation: null,
-              start: q.right.start,
-              end: q.right.end,
-            },
-            start: q.start,
-            end: q.end,
-          };
-        }
-        return q;
-      };
-      qualifier = convertQualifier(qualifier);
-    }
-  }
   return {
     type: 'TSImportType',
     argument: deserializeTSType(pos + 8),
     options: deserializeOptionBoxObjectExpression(pos + 24),
-    qualifier,
+    qualifier: deserializeOptionTSImportTypeQualifier(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -2065,7 +2018,7 @@ function deserializeTSImportType(pos) {
 
 function deserializeTSImportTypeQualifiedName(pos) {
   return {
-    type: 'TSImportTypeQualifiedName',
+    type: 'TSQualifiedName',
     left: deserializeTSImportTypeQualifier(pos + 8),
     right: deserializeIdentifierName(pos + 24),
     start: deserializeU32(pos),

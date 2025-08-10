@@ -1359,7 +1359,6 @@ pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
-    #[estree(via = TSImportTypeQualifierConverter)]
     pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
@@ -1386,6 +1385,7 @@ pub enum TSImportTypeQualifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSQualifiedName")]
 pub struct TSImportTypeQualifiedName<'a> {
     pub span: Span,
     pub left: TSImportTypeQualifier<'a>,
