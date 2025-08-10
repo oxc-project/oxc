@@ -1,5 +1,5 @@
 use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of

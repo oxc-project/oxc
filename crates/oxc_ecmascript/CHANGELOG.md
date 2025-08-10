@@ -73,7 +73,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🚜 Refactor
 
-- 5a46641 ecmascript: Move `get_constant_value_for_reference_id` to `IsGlobalReference` trait (#11810) (Boshen)
+- 5a46641 ecmascript: Move `get_constant_value_for_reference_id` to `GlobalContext` trait (#11810) (Boshen)
 
 
 
@@ -204,11 +204,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - b164072 ecmascript: Extract to_numeric (#9111) (sapphi-red)
 - fc53cdd ecmascript: Generalize ToPrimitive (#9109) (sapphi-red)
 - d951390 ecmascript: Use value_type in to_primitive (#9108) (sapphi-red)
-- 8f79012 ecmascript: Pass IsGlobalReference to DetermineValueType instead of extending it (#9107) (sapphi-red)
+- 8f79012 ecmascript: Pass GlobalContext to DetermineValueType instead of extending it (#9107) (sapphi-red)
 - db1744c ecmascript: Remove "constant_evaluation" / "side_effects" features (#9114) (sapphi-red)
 - 329de94 ecmascript: Extract ToPrimitive (#9102) (sapphi-red)
-- d670ec7 ecmascript: Pass IsGlobalReference to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
-- f4e2d4e ecmascript: Allow IsGlobalReference to return None (#9100) (sapphi-red)
+- d670ec7 ecmascript: Pass GlobalContext to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
+- f4e2d4e ecmascript: Allow GlobalContext to return None (#9100) (sapphi-red)
 
 ## [0.49.0] - 2025-02-10
 

@@ -29,12 +29,13 @@ mod to_string;
 mod to_integer_index;
 
 pub mod constant_evaluation;
-pub mod is_global_reference;
+mod global_context;
 pub mod side_effects;
 
 pub use self::{
     array_join::ArrayJoin,
     bound_names::BoundNames,
+    global_context::{GlobalContext, WithoutGlobalReferenceInformation},
     is_simple_parameter_list::IsSimpleParameterList,
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,

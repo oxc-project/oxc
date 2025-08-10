@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_member_expression,
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};

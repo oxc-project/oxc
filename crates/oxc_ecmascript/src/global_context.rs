@@ -3,7 +3,7 @@ use oxc_syntax::reference::ReferenceId;
 
 use crate::constant_evaluation::ConstantValue;
 
-pub trait IsGlobalReference<'a>: Sized {
+pub trait GlobalContext<'a>: Sized {
     /// Whether the reference is a global reference.
     ///
     /// - None means it is unknown.
@@ -21,7 +21,7 @@ pub trait IsGlobalReference<'a>: Sized {
 
 pub struct WithoutGlobalReferenceInformation;
 
-impl<'a> IsGlobalReference<'a> for WithoutGlobalReferenceInformation {
+impl<'a> GlobalContext<'a> for WithoutGlobalReferenceInformation {
     fn is_global_reference(&self, _reference: &IdentifierReference<'a>) -> Option<bool> {
         None
     }

@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};

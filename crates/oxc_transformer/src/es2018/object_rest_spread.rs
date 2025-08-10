@@ -34,9 +34,7 @@ use serde::Deserialize;
 use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{
-    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
-};
+use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};

@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
-    is_global_reference::IsGlobalReference,
+    GlobalContext,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
 };
 use oxc_parser::Parser;
@@ -25,7 +25,7 @@ impl Default for Ctx {
         }
     }
 }
-impl<'a> IsGlobalReference<'a> for Ctx {
+impl<'a> GlobalContext<'a> for Ctx {
     fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }

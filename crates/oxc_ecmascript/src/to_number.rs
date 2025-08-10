@@ -1,19 +1,18 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    is_global_reference::IsGlobalReference,
-    to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
+    GlobalContext, to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
 };
 
 /// `ToNumber`
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber>
 pub trait ToNumber<'a> {
-    fn to_number(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<f64>;
+    fn to_number(&self, ctx: &impl GlobalContext<'a>) -> Option<f64>;
 }
 
 impl<'a> ToNumber<'a> for Expression<'a> {
-    fn to_number(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<f64> {
+    fn to_number(&self, ctx: &impl GlobalContext<'a>) -> Option<f64> {
         match self {
             Expression::NumericLiteral(number_literal) => Some(number_literal.value),
             Expression::BooleanLiteral(bool_literal) => {
@@ -25,12 +24,8 @@ impl<'a> ToNumber<'a> for Expression<'a> {
             }
             Expression::NullLiteral(_) => Some(0.0),
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "Infinity" if is_global_reference.is_global_reference(ident) == Some(true) => {
-                    Some(f64::INFINITY)
-                }
-                "NaN" | "undefined"
-                    if is_global_reference.is_global_reference(ident) == Some(true) =>
-                {
+                "Infinity" if ctx.is_global_reference(ident) == Some(true) => Some(f64::INFINITY),
+                "NaN" | "undefined" if ctx.is_global_reference(ident) == Some(true) => {
                     Some(f64::NAN)
                 }
                 _ => None,
@@ -40,7 +35,7 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 Some(lit.value.as_str().string_to_number())
             }
             Expression::UnaryExpression(unary) if unary.operator.is_not() => {
-                let number = unary.argument.to_number(is_global_reference)?;
+                let number = unary.argument.to_number(ctx)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })
             }
             Expression::ObjectExpression(obj) => {
@@ -67,7 +62,7 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                         // `ToPrimitive` returns `""` for `[,]`
                         ArrayExpressionElement::Elision(_) => Some(0.0),
                         match_expression!(ArrayExpressionElement) => {
-                            first_element.to_expression().to_number(is_global_reference)
+                            first_element.to_expression().to_number(ctx)
                         }
                     };
                 }

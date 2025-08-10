@@ -159,7 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🚜 Refactor
 
-- 5a46641 ecmascript: Move `get_constant_value_for_reference_id` to `IsGlobalReference` trait (#11810) (Boshen)
+- 5a46641 ecmascript: Move `get_constant_value_for_reference_id` to `GlobalContext` trait (#11810) (Boshen)
 - d5a8f18 minifier: Make `Ctx` take `&mut TraverseCtx` (#11771) (Boshen)
 
 
@@ -525,10 +525,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - 8bd6eef ecmascript: Merge constant evaluation logics (#9120) (sapphi-red)
 - b164072 ecmascript: Extract to_numeric (#9111) (sapphi-red)
-- 8f79012 ecmascript: Pass IsGlobalReference to DetermineValueType instead of extending it (#9107) (sapphi-red)
+- 8f79012 ecmascript: Pass GlobalContext to DetermineValueType instead of extending it (#9107) (sapphi-red)
 - db1744c ecmascript: Remove "constant_evaluation" / "side_effects" features (#9114) (sapphi-red)
-- d670ec7 ecmascript: Pass IsGlobalReference to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
-- f4e2d4e ecmascript: Allow IsGlobalReference to return None (#9100) (sapphi-red)
+- d670ec7 ecmascript: Pass GlobalContext to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
+- f4e2d4e ecmascript: Allow GlobalContext to return None (#9100) (sapphi-red)
 - 29be94d minifier: Inline more minification methods (#9088) (Boshen)
 - 80f719e minifier: Clean up minimize_statements.rs (#9076) (Boshen)
 - d5edde0 minifier: Minimize `if (!foo) foo = bar;` -> `foo ||= bar` in the same AST pass (#9075) (Boshen)
@@ -1259,7 +1259,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 067f9b5 semantic: Introduce `IsGlobalReference` trait (#5672) (Boshen)
+- 067f9b5 semantic: Introduce `GlobalContext` trait (#5672) (Boshen)
 
 ## [0.27.0] - 2024-09-06
 

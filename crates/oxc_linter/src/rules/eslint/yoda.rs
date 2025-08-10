@@ -6,7 +6,7 @@ use oxc_ast::{
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{ToBigInt, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
