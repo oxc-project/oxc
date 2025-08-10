@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{RuleCategory, RuleFixMeta, rules::RULES};
+use crate::{RuleCategory, RuleFixMeta, rules::RULES, string_interner::intern_string};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -139,7 +139,8 @@ impl RuleTableSection {
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
             let rendered_name = if let Some(prefix) = link_prefix {
-                Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
+                let link = intern_string(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"));
+                Cow::Borrowed(link)
             } else {
                 Cow::Borrowed(rule_name)
             };

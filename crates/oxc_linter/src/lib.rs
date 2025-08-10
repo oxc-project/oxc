@@ -26,6 +26,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+pub mod string_interner;
 mod utils;
 
 pub mod loader;

@@ -17,6 +17,7 @@ use crate::{
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    string_interner::CommonUrls,
 };
 
 mod host;
@@ -69,8 +70,6 @@ impl<'a> Deref for LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
-    const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
 
     /// Set the plugin name for the current rule.
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
@@ -228,12 +227,7 @@ impl<'a> LintContext<'a> {
         message.error = message
             .error
             .with_error_code(self.current_plugin_prefix, self.current_rule_name)
-            .with_url(format!(
-                "{}/{}/{}.html",
-                Self::WEBSITE_BASE_URL,
-                self.current_plugin_name,
-                self.current_rule_name
-            ));
+            .with_url(CommonUrls::rule_url(self.current_plugin_name, self.current_rule_name));
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }

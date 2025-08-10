@@ -4,6 +4,7 @@ use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
+use oxc_linter::string_interner::CommonStrings;
 use rustc_hash::FxHashMap;
 
 use crate::output_formatter::InternalFormatter;
@@ -87,8 +88,8 @@ fn format_stylish(diagnostics: &[Error]) -> String {
             };
 
             let info = Info::new(diagnostic);
-            let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
-            let position = format!("{}:{}", info.start.line, info.start.column);
+            let rule = diagnostic.code().map_or_else(|| CommonStrings::empty().to_string(), |code| code.to_string());
+            let position = CommonStrings::position(info.start.line, info.start.column);
             writeln!(
                 output,
                 "  \u{1b}[2m{position:max_len_width$}\u{1b}[0m  {severity_str}  {diagnostic}  \u{1b}[2m{rule}\u{1b}[0m"
