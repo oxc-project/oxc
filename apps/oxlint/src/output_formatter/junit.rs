@@ -2,6 +2,7 @@ use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
+use oxc_allocator::FxHashMapExt;
 use rustc_hash::FxHashMap;
 
 use super::{InternalFormatter, xml_utils::xml_escape};
@@ -32,7 +33,7 @@ impl DiagnosticReporter for JUnitReporter {
 }
 
 fn format_junit(diagnostics: &[Error]) -> String {
-    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
+    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::for_diagnostic_grouping(diagnostics.len());
     let mut total_errors = 0;
     let mut total_warnings = 0;
 

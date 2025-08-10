@@ -10,6 +10,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
+use oxc_allocator::FxHashMapExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
@@ -453,8 +454,8 @@ impl LintRunner {
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
-        let mut nested_configs = FxHashMap::<PathBuf, Config>::default();
+        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::for_config_storage(paths.len());
+        let mut nested_configs = FxHashMap::<PathBuf, Config>::for_config_storage(paths.len());
         // get all of the unique directories among the paths to use for search for
         // oxlint config files in those directories and their ancestors
         // e.g. `/some/file.js` will check `/some` and `/`

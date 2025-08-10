@@ -7,6 +7,7 @@
 
 use std::{cell::RefCell, mem};
 
+use oxc_allocator::FxHashMapExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
@@ -185,9 +186,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
         // Use span to identify transformed nodes
         let mut transformed_spans: FxHashSet<Span> = FxHashSet::default();
-        let mut transformed_stmts: FxHashMap<Span, Statement<'a>> = FxHashMap::default();
+        let mut transformed_stmts: FxHashMap<Span, Statement<'a>> = FxHashMap::medium();
         let mut transformed_variable_declarator: FxHashMap<Span, VariableDeclarator<'a>> =
-            FxHashMap::default();
+            FxHashMap::small();
         // When transforming `export default` with expression or `export = expression`,
         // we will emit an extra variable declaration to store the inferred type of expression
         let mut extra_export_var_statement = None;
@@ -502,7 +503,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn get_assignable_properties_for_namespaces(
         stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> FxHashMap<&'a str, FxHashSet<Atom<'a>>> {
-        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
+        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::medium();
         for stmt in stmts {
             let decl = match stmt {
                 Statement::ExportNamedDeclaration(decl) => {

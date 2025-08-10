@@ -1,6 +1,7 @@
 use std::cell::Cell;
 
 use bitflags::bitflags;
+use oxc_allocator::FxHashMapExt;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::ast::*;
@@ -27,7 +28,7 @@ struct Scope<'a> {
 
 impl Scope<'_> {
     fn new(flags: ScopeFlags) -> Self {
-        Self { bindings: FxHashMap::default(), references: FxHashMap::default(), flags }
+        Self { bindings: FxHashMap::small(), references: FxHashMap::small(), flags }
     }
 }
 

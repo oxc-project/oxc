@@ -40,6 +40,7 @@ mod convert;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
+mod hash_map_utils;
 mod string_builder;
 mod take_in;
 mod vec;
@@ -52,6 +53,7 @@ pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
+pub use hash_map_utils::{CapacityHints, FxHashMapExt, HashMapUtils};
 pub use string_builder::StringBuilder;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;

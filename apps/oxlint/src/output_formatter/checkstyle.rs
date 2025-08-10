@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use oxc_allocator::FxHashMapExt;
 use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::{
@@ -39,7 +40,7 @@ impl DiagnosticReporter for CheckstyleReporter {
 
 fn format_checkstyle(diagnostics: &[Error]) -> String {
     let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
-    let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
+    let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::for_diagnostic_grouping(diagnostics.len());
     for info in infos {
         grouped.entry(info.filename.clone()).or_default().push(info);
     }

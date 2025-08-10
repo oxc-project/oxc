@@ -4,6 +4,7 @@ use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
+use oxc_allocator::FxHashMapExt;
 use oxc_linter::string_interner::CommonStrings;
 use rustc_hash::FxHashMap;
 
@@ -43,7 +44,7 @@ fn format_stylish(diagnostics: &[Error]) -> String {
     let mut total_errors = 0;
     let mut total_warnings = 0;
 
-    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
+    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::for_diagnostic_grouping(diagnostics.len());
     let mut sorted = diagnostics.iter().collect::<Vec<_>>();
 
     sorted.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
