@@ -16,16 +16,49 @@ use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, side_effects::MayHaveSideEffects,
+    StringSubstring, ToInt32, ToJsString as ToJsStringTrait,
+    constant_evaluation::url_encoding::{
+        decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
+    },
+    side_effects::MayHaveSideEffects,
 };
 
 use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
+
+fn try_fold_url_related_function<'a>(
+    ident: &IdentifierReference<'a>,
+    arguments: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    match ident.name.as_str() {
+        "encodeURI" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_encode_uri(arguments, ctx)
+        }
+        "encodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_encode_uri_component(arguments, ctx)
+        }
+        "decodeURI" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_decode_uri(arguments, ctx)
+        }
+        "decodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_decode_uri_component(arguments, ctx)
+        }
+        _ => None,
+    }
+}
 
 pub fn try_fold_known_global_methods<'a>(
     callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
+    if let Expression::Identifier(ident) = callee {
+        if let Some(result) = try_fold_url_related_function(ident, arguments, ctx) {
+            return Some(result);
+        }
+        return None;
+    }
+
     let (name, object) = match callee {
         Expression::StaticMemberExpression(member) if !member.optional => {
             (member.property.name.as_str(), &member.object)
@@ -488,4 +521,103 @@ fn try_fold_math_variadic<'a>(
         }
     };
     Some(ConstantValue::Number(result))
+}
+
+fn try_fold_encode_uri<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.is_empty() {
+        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+    }
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // SAFETY: should_encode only returns false for ascii chars
+    let encoded = unsafe {
+        encode_uri_chars(
+            string_value,
+            #[inline(always)]
+            |c| match c {
+                c if is_uri_always_unescaped(c) => false,
+                b';' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b',' | b'#' => false,
+                _ => true,
+            },
+        )
+    };
+    Some(ConstantValue::String(encoded))
+}
+
+fn try_fold_encode_uri_component<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.is_empty() {
+        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+    }
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // SAFETY: should_encode only returns false for ascii chars
+    let encoded = unsafe {
+        encode_uri_chars(
+            string_value,
+            #[inline(always)]
+            |c| !is_uri_always_unescaped(c),
+        )
+    };
+    Some(ConstantValue::String(encoded))
+}
+
+fn try_fold_decode_uri<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.is_empty() {
+        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+    }
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    let decoded = decode_uri_chars(
+        string_value,
+        #[inline(always)]
+        |c| matches!(c, b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'#'),
+    )?;
+    Some(ConstantValue::String(decoded))
+}
+
+fn try_fold_decode_uri_component<'a>(
+    args: &Vec<'a, Argument<'a>>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if args.is_empty() {
+        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+    }
+    if args.len() != 1 {
+        return None;
+    }
+    let arg = args.first()?;
+    let expr = arg.as_expression()?;
+    let string_value = expr.get_side_free_string_value(ctx)?;
+
+    // decodeURIComponent decodes all percent-encoded sequences
+    let decoded = decode_uri_chars(
+        string_value,
+        #[inline(always)]
+        |_| false,
+    )?;
+    Some(ConstantValue::String(decoded))
 }
