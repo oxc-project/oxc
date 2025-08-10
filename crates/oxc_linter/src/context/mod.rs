@@ -70,7 +70,6 @@ impl<'a> Deref for LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-
     /// Set the plugin name for the current rule.
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
         self.current_plugin_name = plugin;

@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
+use oxc_allocator::FxHashMapExt;
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
-use oxc_allocator::FxHashMapExt;
 use oxc_linter::string_interner::CommonStrings;
 use rustc_hash::FxHashMap;
 
@@ -44,7 +44,8 @@ fn format_stylish(diagnostics: &[Error]) -> String {
     let mut total_errors = 0;
     let mut total_warnings = 0;
 
-    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::for_diagnostic_grouping(diagnostics.len());
+    let mut grouped: FxHashMap<String, Vec<&Error>> =
+        FxHashMap::for_diagnostic_grouping(diagnostics.len());
     let mut sorted = diagnostics.iter().collect::<Vec<_>>();
 
     sorted.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
@@ -89,7 +90,9 @@ fn format_stylish(diagnostics: &[Error]) -> String {
             };
 
             let info = Info::new(diagnostic);
-            let rule = diagnostic.code().map_or_else(|| CommonStrings::empty().to_string(), |code| code.to_string());
+            let rule = diagnostic
+                .code()
+                .map_or_else(|| CommonStrings::empty().to_string(), |code| code.to_string());
             let position = CommonStrings::position(info.start.line, info.start.column);
             writeln!(
                 output,
