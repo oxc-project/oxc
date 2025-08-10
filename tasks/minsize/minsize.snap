@@ -3,7 +3,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
 72.14 kB   | 23.47 kB   | 23.70 kB   | 8.47 kB    | 8.54 kB    | react.development.js
 
-173.90 kB  | 59.51 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   | moment.js 
+173.90 kB  | 59.48 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   | moment.js 
 
 287.63 kB  | 89.34 kB   | 90.07 kB   | 30.94 kB   | 31.95 kB   | jquery.js 
 
@@ -11,17 +11,17 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 544.10 kB  | 71.38 kB   | 72.48 kB   | 25.85 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 270.88 kB  | 270.13 kB  | 88.23 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 270.87 kB  | 270.13 kB  | 88.23 kB   | 90.80 kB   | d3.js     
 
 1.01 MB    | 440.04 kB  | 458.89 kB  | 122.28 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 647.00 kB  | 646.76 kB  | 160.27 kB  | 163.73 kB  | three.js  
+1.25 MB    | 646.98 kB  | 646.76 kB  | 160.27 kB  | 163.73 kB  | three.js  
 
-2.14 MB    | 717.55 kB  | 724.14 kB  | 161.88 kB  | 181.07 kB  | victory.js
+2.14 MB    | 717.51 kB  | 724.14 kB  | 161.88 kB  | 181.07 kB  | victory.js
 
-3.20 MB    | 1.01 MB    | 1.01 MB    | 324.10 kB  | 331.56 kB  | echarts.js
+3.20 MB    | 1.01 MB    | 1.01 MB    | 324.08 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.25 MB    | 2.31 MB    | 463.14 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.25 MB    | 2.31 MB    | 463.12 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.35 MB    | 3.49 MB    | 860.96 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.35 MB    | 3.49 MB    | 860.97 kB  | 915.50 kB  | typescript.js
 

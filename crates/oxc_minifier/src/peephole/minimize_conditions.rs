@@ -1436,6 +1436,21 @@ mod test {
         let target = ESTarget::ES2019;
         let options = CompressOptions { target, ..CompressOptions::default() };
         test_same_options("x || (x = 3)", &options);
+
+        test("x || (a, x = 3)", "x ||= (a, 3)");
+        test("x && (a, x = 3)", "x &&= (a, 3)");
+        test("x ?? (a, x = 3)", "x ??= (a, 3)");
+        test("x || (a, x = g())", "x ||= (a, g())");
+        test("x && (a, x = g())", "x &&= (a, g())");
+        test("x ?? (a, x = g())", "x ??= (a, g())");
+        test("var x; x.y || (a, x.y = 3)", "var x; x.y ||= (a, 3)");
+        test("var x; x.y && (a, x.y = 3)", "var x; x.y &&= (a, 3)");
+        test("var x; x.y ?? (a, x.y = 3)", "var x; x.y ??= (a, 3)");
+        // x may have a sideeffect
+        // Example case: `var a; Object.defineProperty(globalThis, 'x', { get() { console.log('x'); return {} } }); x.y || (a, x.y = 3);`
+        test_same("x.y || (a, x.y = 3)");
+        test_same("x.y && (a, x.y = 3)");
+        test_same("x.y ?? (a, x.y = 3)");
     }
 
     #[test]

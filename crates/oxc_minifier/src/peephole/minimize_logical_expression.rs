@@ -202,6 +202,8 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a || (a = b)` to `a ||= b`
+    ///
+    /// Also `a || (foo, bar, a = b)` to `a ||= (foo, bar, b)`
     fn try_compress_logical_expression_to_assignment_expression(
         &self,
         expr: &mut LogicalExpression<'a>,
@@ -210,6 +212,41 @@ impl<'a> PeepholeOptimizations {
         if ctx.options().target < ESTarget::ES2020 {
             return None;
         }
+
+        if let Expression::SequenceExpression(sequence_expr) = &mut expr.right {
+            let Some(Expression::AssignmentExpression(assignment_expr)) =
+                sequence_expr.expressions.last()
+            else {
+                return None;
+            };
+            if assignment_expr.operator != AssignmentOperator::Assign {
+                return None;
+            }
+
+            if !Self::has_no_side_effect_for_evaluation_same_target(
+                &assignment_expr.left,
+                &expr.left,
+                ctx,
+            ) {
+                return None;
+            }
+
+            let Some(Expression::AssignmentExpression(mut assignment_expr)) =
+                sequence_expr.expressions.pop()
+            else {
+                unreachable!()
+            };
+
+            let assign_value = assignment_expr.right.take_in(ctx.ast);
+            sequence_expr.expressions.push(assign_value);
+            return Some(ctx.ast.expression_assignment(
+                expr.span,
+                expr.operator.to_assignment_operator(),
+                assignment_expr.left.take_in(ctx.ast),
+                expr.right.take_in(ctx.ast),
+            ));
+        }
+
         let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
             return None;
         };
