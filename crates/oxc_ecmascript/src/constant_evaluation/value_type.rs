@@ -85,7 +85,7 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                 }
             }
             Expression::Identifier(ident) => {
-                if ctx.is_global_reference(ident) == Some(true) {
+                if ctx.is_global_reference(ident) {
                     match ident.name.as_str() {
                         "undefined" => ValueType::Undefined,
                         "NaN" | "Infinity" => ValueType::Number,
@@ -269,12 +269,10 @@ impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
 
 impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY") {
-            if let Some(ident) = self.object.get_identifier_reference() {
-                if ident.name.as_str() == "Number" && ctx.is_global_reference(ident) == Some(true) {
-                    return ValueType::Number;
-                }
-            }
+        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY")
+            && ctx.is_global_expr("Number", &self.object)
+        {
+            return ValueType::Number;
         }
         ValueType::Undetermined
     }
@@ -282,10 +280,8 @@ impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
 
 impl<'a> DetermineValueType<'a> for NewExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        if let Some(ident) = self.callee.get_identifier_reference() {
-            if ident.name.as_str() == "Date" && ctx.is_global_reference(ident) == Some(true) {
-                return ValueType::Object;
-            }
+        if ctx.is_global_expr("Date", &self.callee) {
+            return ValueType::Object;
         }
         ValueType::Undetermined
     }

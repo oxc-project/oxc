@@ -122,9 +122,9 @@ impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
         _target_ty: Option<ValueType>,
     ) -> Option<ConstantValue<'a>> {
         match self.name.as_str() {
-            "undefined" if ctx.is_global_reference(self)? => Some(ConstantValue::Undefined),
-            "NaN" if ctx.is_global_reference(self)? => Some(ConstantValue::Number(f64::NAN)),
-            "Infinity" if ctx.is_global_reference(self)? => {
+            "undefined" if ctx.is_global_reference(self) => Some(ConstantValue::Undefined),
+            "NaN" if ctx.is_global_reference(self) => Some(ConstantValue::Number(f64::NAN)),
+            "Infinity" if ctx.is_global_reference(self) => {
                 Some(ConstantValue::Number(f64::INFINITY))
             }
             _ => self
@@ -346,7 +346,7 @@ fn binary_operation_evaluate_value_to<'a>(
             if let Expression::Identifier(right_ident) = right {
                 let name = right_ident.name.as_str();
                 if matches!(name, "Object" | "Number" | "Boolean" | "String")
-                    && ctx.is_global_reference(right_ident) == Some(true)
+                    && ctx.is_global_reference(right_ident)
                 {
                     let left_ty = left.value_type(ctx);
                     if left_ty.is_undetermined() {

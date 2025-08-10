@@ -265,8 +265,7 @@ fn try_fold_string_from_char_code<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    let Expression::Identifier(ident) = object else { return None };
-    if ident.name != "String" || ctx.is_global_reference(ident) != Some(true) {
+    if !ctx.is_global_expr("String", object) {
         return None;
     }
     let mut s = String::with_capacity(args.len());
@@ -350,15 +349,6 @@ fn format_radix(mut x: u32, radix: u32) -> String {
     result.into_iter().rev().collect()
 }
 
-fn validate_global_reference<'a>(
-    expr: &Expression<'a>,
-    target: &str,
-    ctx: &impl ConstantEvaluationCtx<'a>,
-) -> bool {
-    let Expression::Identifier(ident) = expr else { return false };
-    ctx.is_global_reference(ident) == Some(true) && ident.name == target
-}
-
 fn validate_arguments(args: &Vec<'_, Argument<'_>>, expected_len: usize) -> bool {
     (args.len() == expected_len) && args.iter().all(Argument::is_expression)
 }
@@ -369,7 +359,7 @@ fn try_fold_number_methods<'a>(
     name: &str,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !validate_global_reference(object, "Number", ctx) {
+    if !ctx.is_global_expr("Number", object) {
         return None;
     }
     if args.len() != 1 {
@@ -400,7 +390,7 @@ fn try_fold_roots<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !validate_global_reference(object, "Math", ctx) || !validate_arguments(args, 1) {
+    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
         return None;
     }
     let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
@@ -424,7 +414,7 @@ fn try_fold_math_unary<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !validate_global_reference(object, "Math", ctx) || !validate_arguments(args, 1) {
+    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
         return None;
     }
     let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
@@ -465,7 +455,7 @@ fn try_fold_math_variadic<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !validate_global_reference(object, "Math", ctx) {
+    if !ctx.is_global_expr("Math", object) {
         return None;
     }
     let mut numbers = std::vec::Vec::new();

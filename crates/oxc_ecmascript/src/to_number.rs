@@ -24,10 +24,8 @@ impl<'a> ToNumber<'a> for Expression<'a> {
             }
             Expression::NullLiteral(_) => Some(0.0),
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "Infinity" if ctx.is_global_reference(ident) == Some(true) => Some(f64::INFINITY),
-                "NaN" | "undefined" if ctx.is_global_reference(ident) == Some(true) => {
-                    Some(f64::NAN)
-                }
+                "Infinity" if ctx.is_global_reference(ident) => Some(f64::INFINITY),
+                "NaN" | "undefined" if ctx.is_global_reference(ident) => Some(f64::NAN),
                 _ => None,
             },
             Expression::StringLiteral(lit) => {

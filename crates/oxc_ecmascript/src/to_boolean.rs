@@ -17,8 +17,8 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
         // 4. Return true.
         match self {
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "NaN" | "undefined" if ctx.is_global_reference(ident) == Some(true) => Some(false),
-                "Infinity" if ctx.is_global_reference(ident) == Some(true) => Some(true),
+                "NaN" | "undefined" if ctx.is_global_reference(ident) => Some(false),
+                "Infinity" if ctx.is_global_reference(ident) => Some(true),
                 _ => None,
             },
             Expression::RegExpLiteral(_)

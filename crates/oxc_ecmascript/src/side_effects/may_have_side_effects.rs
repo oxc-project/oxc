@@ -81,7 +81,7 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
-            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self) != Some(false),
+            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self),
         }
     }
 }
@@ -149,7 +149,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                     // Any known global non-constructor functions can be allowed here.
                     // But because non-constructor functions are not likely to be used, we ignore them.
                     if is_known_global_constructor(name)
-                        && ctx.is_global_reference(right_ident) == Some(true)
+                        && ctx.is_global_reference(right_ident)
                         && !self.left.value_type(ctx).is_undetermined()
                     {
                         return false;
