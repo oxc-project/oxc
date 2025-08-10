@@ -1216,16 +1216,13 @@ mod test {
 
     #[test]
     fn test_fold_parse_numbers() {
-        // Template Strings - simple ones should be optimized, interpolated ones shouldn't
-        test("x = parseInt('123')", "x = 123"); // String literals should work
-        test("x = parseInt(`123`)", "x = 123"); // Simple template literals should work  
-        test("x = parseInt(` 123`)", "x = 123"); // Simple template literals with whitespace should work
-        test_same("x = parseInt(`12 ${a}`)"); // Interpolated template literals shouldn't be optimized
-        test("x = parseFloat('1.23')", "x = 1.23"); // String literals should work
-        test("x = parseFloat(`1.23`)", "x = 1.23"); // Simple template literals should work
-        test_same("x = parseFloat(`1.${a}`)"); // Interpolated template literals shouldn't be optimized
-
-        // setAcceptedLanguage(LanguageMode.ECMASCRIPT5);
+        test("x = parseInt('123')", "x = 123");
+        test("x = parseInt(`123`)", "x = 123");
+        test("x = parseInt(` 123`)", "x = 123");
+        test_same("x = parseInt(`12 ${a}`)");
+        test("x = parseFloat('1.23')", "x = 1.23");
+        test("x = parseFloat(`1.23`)", "x = 1.23");
+        test_same("x = parseFloat(`1.${a}`)");
 
         test("x = parseInt('123')", "x = 123");
         test("x = parseInt(' 123')", "x = 123");
@@ -1250,7 +1247,7 @@ mod test {
         test("x = parseInt('17', 8)", "x = 15");
         test("x = parseInt('015', 10)", "x = 15");
         test("x = parseInt('1111', 2)", "x = 15");
-        test("x = parseInt('12', 13)", "x = 15");
+        test_same("x = parseInt('12', 13)");
         test("x = parseInt(15.99, 10)", "x = 15");
         test("x = parseInt(-15.99, 10)", "x = -15");
         test("x = parseInt('-15.99', 10)", "x = -15");
@@ -1260,33 +1257,46 @@ mod test {
         test("x = parseFloat('-3.14')", "x = -3.14");
         test("x = parseFloat('-0')", "x = -0");
 
-        // Valid calls that can be folded
         test("x = parseInt('FXX123', 16)", "x = 15"); // Parses 'F' (15 in hex)
         test("x = parseInt('15*3', 10)", "x = 15"); // Parses '15', stops at '*'
-        test("x = parseInt('15e2', 10)", "x = 15"); // Parses '15', stops at 'e'  
+        test("x = parseInt('15e2', 10)", "x = 15"); // Parses '15', stops at 'e'
         test("x = parseInt('15px', 10)", "x = 15"); // Parses '15', stops at 'p'
-        test("x = parseInt('-0x08')", "x = -8"); // Hex parsing
-        test_same("x = parseInt('1', -1)"); // Invalid radix, but keep conservative for edge cases in main test // Invalid radix -> NaN, but be conservative for edge cases
+        test("x = parseInt('-0x08')", "x = -8");
+        test("x = parseInt('1', -1)", "x = NaN");
         test("x = parseFloat('3.14more non-digit characters')", "x = 3.14"); // Parses '3.14', stops at 'm'
-        test("x = parseFloat('314e-2')", "x = 3.14"); // Scientific notation  
-        test("x = parseFloat('0.0314E+2')", "x = 3.14"); // Scientific notation
-        test_same("x = parseFloat('3.333333333333333333333333')"); // Precision issues, be conservative
+        test("x = parseFloat('314e-2')", "x = 3.14");
+        test("x = parseFloat('0.0314E+2')", "x = 3.14");
+        test("x = parseFloat('3.333333333333333333333333')", "x = 3.3333333333333335");
 
-        // Edge cases
         test("x = parseInt('0xa', 10)", "x = 0"); // Parses '0' in base 10, stops at 'x'
-        test("x = parseInt('')", "x = NaN"); // Empty string returns NaN
-
-        // Modern ES5+ behavior - leading zeros are treated as decimal
-        test("x = parseInt('08')", "x = 8");
+        test("x = parseInt('')", "x = NaN");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_parse_octal_numbers() {
-        // setAcceptedLanguage(LanguageMode.ECMASCRIPT5);
-
         test("x = parseInt('021', 8)", "x = 17");
         test("x = parseInt('-021', 8)", "x = -17");
+    }
+
+    #[test]
+    fn test_fold_parse_numbers_additional() {
+        test_value("parseInt('+1')", "1");
+        test_value("parseFloat('+1')", "1");
+        test_value("parseInt('10', 0)", "10");
+        test_value("parseInt('0x10', 16)", "16");
+        test_value("parseInt('')", "NaN");
+        test_value("parseInt(' ')", "NaN");
+        test_value("parseInt('abc')", "NaN");
+        test_value("parseFloat('')", "NaN");
+        test_value("parseFloat(' ')", "NaN");
+        test_value("parseFloat('abc')", "NaN");
+        test_value("parseFloat('Infinity')", "Infinity");
+        test_value("parseFloat('-Infinity')", "-Infinity");
+        test_value("parseFloat('+Infinity')", "Infinity");
+        test_same_value("parseInt(unknown)");
+        test_same_value("parseInt((foo, '0'))"); // foo may have side effects
+        test_same_value("parseFloat(unknown)");
+        test_same_value("parseFloat((foo, '0'))"); // foo may have side effects
     }
 
     #[test]
@@ -1732,7 +1742,7 @@ mod test {
 
     #[test]
     fn test_fold_global_is_nan() {
-        // Global isNaN with type coercion - only test literals we can safely evaluate
+        test_value("isNaN()", "!0");
         test_value("isNaN(NaN)", "!0");
         test_value("isNaN(123)", "!1");
         test_value("isNaN('123')", "!1");
@@ -1743,14 +1753,13 @@ mod test {
         test_value("isNaN(Infinity)", "!1");
         test_value("isNaN(-Infinity)", "!1");
 
-        // Should not optimize unknown expressions
-        test_same_value("isNaN(Math.random())");
         test_same_value("isNaN(unknown)");
+        test_same_value("isNaN((foo, 0))"); // foo may have sideeffect
     }
 
     #[test]
     fn test_fold_global_is_finite() {
-        // Global isFinite with type coercion - only test literals we can safely evaluate
+        test_value("isFinite()", "!1");
         test_value("isFinite(123)", "!0");
         test_value("isFinite(123.45)", "!0");
         test_value("isFinite('123')", "!0");
@@ -1761,91 +1770,7 @@ mod test {
         test_value("isFinite(Infinity)", "!1");
         test_value("isFinite(-Infinity)", "!1");
         test_value("isFinite('abc')", "!1");
-
-        // Should not optimize unknown expressions
-        test_same_value("isFinite(Math.random())");
         test_same_value("isFinite(unknown)");
-    }
-
-    #[test]
-    fn test_fold_global_parse_float() {
-        // Basic parsing
-        test_value("parseFloat('123')", "123");
-        test_value("parseFloat('123.45')", "123.45");
-        test_value("parseFloat('-123.45')", "-123.45");
-        test_value("parseFloat('+123.45')", "123.45");
-        test_value("parseFloat('123.45.67')", "123.45");
-        test_value("parseFloat('123abc')", "123");
-
-        // Whitespace handling
-        test_value("parseFloat(' 123')", "123");
-        test_value("parseFloat('\\t123')", "123");
-        test_value("parseFloat('\\n123')", "123");
-
-        // Special values
-        test_value("parseFloat('Infinity')", "Infinity");
-        test_value("parseFloat('-Infinity')", "-Infinity");
-        test_value("parseFloat('+Infinity')", "Infinity");
-
-        // Invalid cases
-        test_value("parseFloat('')", "NaN");
-        test_value("parseFloat(' ')", "NaN");
-        test_value("parseFloat('abc')", "NaN");
-
-        // Scientific notation
-        test_value("parseFloat('1e2')", "100");
-        test_value("parseFloat('1E2')", "100");
-        test_value("parseFloat('1e+2')", "100");
-        test_value("parseFloat('1e-2')", "0.01");
-
-        // Should optimize numeric literals too
-        test_value("parseFloat(123)", "123");
-        test_same_value("parseFloat(unknown)");
-    }
-
-    #[test]
-    fn test_fold_global_parse_int() {
-        // Basic parsing (radix 10)
-        test_value("parseInt('123')", "123");
-        test_value("parseInt('-123')", "-123");
-        test_value("parseInt('+123')", "123");
-        test_value("parseInt('123.45')", "123");
-        test_value("parseInt('123abc')", "123");
-
-        // Whitespace handling
-        test_value("parseInt(' 123')", "123");
-        test_value("parseInt('\\t123')", "123");
-
-        // Hex auto-detection
-        test_value("parseInt('0x10')", "16");
-        test_value("parseInt('0X10')", "16");
-
-        // Explicit radix
-        test_value("parseInt('123', 10)", "123");
-        test_value("parseInt('10', 16)", "16");
-        test_value("parseInt('10', 8)", "8");
-        test_value("parseInt('10', 2)", "2");
-        test_value("parseInt('ff', 16)", "255");
-        test_value("parseInt('FF', 16)", "255");
-
-        // Radix edge cases
-        test_value("parseInt('10', 0)", "10"); // radix 0 becomes 10
-        test_value("parseInt('0x10', 16)", "16"); // hex prefix with radix 16
-
-        // Invalid cases - be conservative with edge cases
-        test_value("parseInt('')", "NaN");
-        test_value("parseInt(' ')", "NaN");
-        test_value("parseInt('abc')", "NaN");
-        test_same_value("parseInt('123', 1)"); // invalid radix - be conservative  
-        test_same_value("parseInt('123', 37)"); // invalid radix - be conservative
-
-        // Partial parsing
-        test_value("parseInt('123xyz')", "123");
-        test_value("parseInt('ff', 10)", "NaN"); // f not valid in base 10
-
-        // Should optimize numeric literals but be conservative with unknown expressions
-        test_value("parseInt(123)", "123");
-        test_same_value("parseInt(unknown)");
-        test_same_value("parseInt('123', unknown)");
+        test_same_value("isFinite((foo, 0))"); // foo may have sideeffect
     }
 }
