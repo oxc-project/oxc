@@ -524,7 +524,9 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
-        } else if let Some(is_side_effect_free) = maybe_side_effect_free_global_constructor(self, ctx) {
+        } else if let Some(is_side_effect_free) =
+            maybe_side_effect_free_global_constructor(self, ctx)
+        {
             if is_side_effect_free {
                 // Still evaluate arguments for side effects
                 self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
@@ -631,7 +633,7 @@ fn static_block_may_have_side_effects<'a>(
 ) -> bool {
     for stmt in &block.body {
         match stmt {
-            Statement::EmptyStatement(_) => continue,
+            Statement::EmptyStatement(_) => {}, // No side effects
             Statement::VariableDeclaration(var_decl) => {
                 // For now, be more conservative - only allow const declarations with simple literals
                 // that don't have side effects
@@ -640,18 +642,18 @@ fn static_block_may_have_side_effects<'a>(
                     if !matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)) {
                         return true;
                     }
-                    
+
                     // Only allow const declarations with side-effect-free initializers
                     // Let and var declarations are still considered to have side effects
                     if !matches!(var_decl.kind, VariableDeclarationKind::Const) {
                         return true;
                     }
-                    
+
                     // Must have an initializer for const
                     let Some(init) = &declarator.init else {
                         return true;
                     };
-                    
+
                     // Check if initializer is side-effect-free
                     if init.may_have_side_effects(ctx) {
                         return true;
@@ -689,7 +691,11 @@ fn maybe_side_effect_free_global_constructor<'a>(
                             let arg_expr = arg.to_expression();
                             match arg_expr {
                                 Expression::NullLiteral(_) => Some(true),
-                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                Expression::Identifier(id)
+                                    if is_global_ident_with_name(id, "undefined", ctx) =>
+                                {
+                                    Some(true)
+                                }
                                 Expression::ArrayExpression(arr) => {
                                     // Check if every element is also an array
                                     let all_arrays = arr.elements.iter().all(|elem| {
@@ -697,7 +703,10 @@ fn maybe_side_effect_free_global_constructor<'a>(
                                             ArrayExpressionElement::SpreadElement(_) => false,
                                             ArrayExpressionElement::Elision(_) => true, // elision is fine
                                             match_expression!(ArrayExpressionElement) => {
-                                                matches!(elem.to_expression(), Expression::ArrayExpression(_))
+                                                matches!(
+                                                    elem.to_expression(),
+                                                    Expression::ArrayExpression(_)
+                                                )
                                             }
                                         }
                                     });
@@ -721,9 +730,12 @@ fn maybe_side_effect_free_global_constructor<'a>(
                         match_expression!(Argument) => {
                             let arg_expr = arg.to_expression();
                             match arg_expr {
-                                Expression::NullLiteral(_) => Some(true),
-                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
-                                Expression::ArrayExpression(_) => Some(true), // Any array is fine for Set
+                                Expression::NullLiteral(_) | Expression::ArrayExpression(_) => Some(true), // Any array is fine for Set
+                                Expression::Identifier(id)
+                                    if is_global_ident_with_name(id, "undefined", ctx) =>
+                                {
+                                    Some(true)
+                                }
                                 _ => None,
                             }
                         }
@@ -743,8 +755,14 @@ fn maybe_side_effect_free_global_constructor<'a>(
                             let arg_expr = arg.to_expression();
                             match arg_expr {
                                 Expression::NullLiteral(_) => Some(true),
-                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
-                                Expression::ArrayExpression(arr) if arr.elements.is_empty() => Some(true), // empty array [] is fine
+                                Expression::Identifier(id)
+                                    if is_global_ident_with_name(id, "undefined", ctx) =>
+                                {
+                                    Some(true)
+                                }
+                                Expression::ArrayExpression(arr) if arr.elements.is_empty() => {
+                                    Some(true)
+                                } // empty array [] is fine
                                 _ => None,
                             }
                         }
@@ -767,7 +785,11 @@ fn maybe_side_effect_free_global_constructor<'a>(
                                 | Expression::StringLiteral(_)
                                 | Expression::BooleanLiteral(_)
                                 | Expression::NullLiteral(_) => Some(true),
-                                Expression::Identifier(id) if is_global_ident_with_name(id, "undefined", ctx) => Some(true),
+                                Expression::Identifier(id)
+                                    if is_global_ident_with_name(id, "undefined", ctx) =>
+                                {
+                                    Some(true)
+                                }
                                 _ => None, // Unknown type - use default behavior
                             }
                         }

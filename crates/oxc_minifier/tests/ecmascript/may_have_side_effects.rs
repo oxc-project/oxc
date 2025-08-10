@@ -837,7 +837,14 @@ fn test_object_with_to_primitive_related_properties_overridden() {
 fn test_new_side_effect_relaxations() {
     // Test global constructor side-effect-free relaxations
     let ctx = Ctx {
-        global_variable_names: vec!["Map".to_string(), "Set".to_string(), "WeakMap".to_string(), "WeakSet".to_string(), "Date".to_string(), "undefined".to_string()],
+        global_variable_names: vec![
+            "Map".to_string(),
+            "Set".to_string(),
+            "WeakMap".to_string(),
+            "WeakSet".to_string(),
+            "Date".to_string(),
+            "undefined".to_string(),
+        ],
         ..Default::default()
     };
 
@@ -848,7 +855,7 @@ fn test_new_side_effect_relaxations() {
     test_with_ctx("new Map([[1, 2], [3, 4]])", &ctx, false);
     test_with_ctx("new Map([])", &ctx, false);
     test_with_ctx("new Map([1, 2])", &ctx, true); // Not all elements are arrays
-    
+
     // Set constructor tests
     test_with_ctx("new Set()", &ctx, false);
     test_with_ctx("new Set(null)", &ctx, false);
@@ -878,7 +885,14 @@ fn test_new_side_effect_relaxations() {
 #[test]
 fn test_global_member_reads() {
     let ctx = Ctx {
-        global_variable_names: vec!["Object".to_string(), "JSON".to_string(), "Reflect".to_string(), "Math".to_string(), "Symbol".to_string(), "foo".to_string()],
+        global_variable_names: vec![
+            "Object".to_string(),
+            "JSON".to_string(),
+            "Reflect".to_string(),
+            "Math".to_string(),
+            "Symbol".to_string(),
+            "foo".to_string(),
+        ],
         ..Default::default()
     };
 
@@ -902,10 +916,7 @@ fn test_global_member_reads() {
 
 #[test]
 fn test_symbol_iterator_property_key() {
-    let ctx = Ctx {
-        global_variable_names: vec!["Symbol".to_string()],
-        ..Default::default()
-    };
+    let ctx = Ctx { global_variable_names: vec!["Symbol".to_string()], ..Default::default() };
 
     // Test Symbol.iterator computed property key is side-effect-free
     test_with_ctx("({ [Symbol.iterator]: 1 })", &ctx, false);
@@ -919,7 +930,14 @@ fn test_symbol_iterator_property_key() {
 #[test]
 fn test_expanded_global_identifier_whitelist() {
     let ctx = Ctx {
-        global_variable_names: vec!["String".to_string(), "Proxy".to_string(), "NaN".to_string(), "Infinity".to_string(), "undefined".to_string(), "foo".to_string()],
+        global_variable_names: vec![
+            "String".to_string(),
+            "Proxy".to_string(),
+            "NaN".to_string(),
+            "Infinity".to_string(),
+            "undefined".to_string(),
+            "foo".to_string(),
+        ],
         ..Default::default()
     };
 
