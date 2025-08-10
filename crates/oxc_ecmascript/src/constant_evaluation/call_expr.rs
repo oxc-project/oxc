@@ -31,16 +31,12 @@ fn try_fold_url_related_function<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     match ident.name.as_str() {
-        "encodeURI" if ctx.is_global_reference(ident) == Some(true) => {
-            try_fold_encode_uri(arguments, ctx)
-        }
-        "encodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+        "encodeURI" if ctx.is_global_reference(ident) => try_fold_encode_uri(arguments, ctx),
+        "encodeURIComponent" if ctx.is_global_reference(ident) => {
             try_fold_encode_uri_component(arguments, ctx)
         }
-        "decodeURI" if ctx.is_global_reference(ident) == Some(true) => {
-            try_fold_decode_uri(arguments, ctx)
-        }
-        "decodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+        "decodeURI" if ctx.is_global_reference(ident) => try_fold_decode_uri(arguments, ctx),
+        "decodeURIComponent" if ctx.is_global_reference(ident) => {
             try_fold_decode_uri_component(arguments, ctx)
         }
         _ => None,
