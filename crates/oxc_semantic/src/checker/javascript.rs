@@ -765,7 +765,9 @@ pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             // label cannot cross boundary on function or static block
-            AstKind::Function(_) | AstKind::StaticBlock(_) => break,
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => break,
             // check label name redeclaration
             AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
                 return ctx.error(label_redeclaration(
