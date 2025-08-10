@@ -477,11 +477,7 @@ fn get_switch_semantic_cases(
             }
         });
 
-    let (default, exit) = if has_default {
-        (exit, None)
-    } else {
-        (None, exit)
-    };
+    let (default, exit) = if has_default { (exit, None) } else { (None, exit) };
     cfg_ids.reverse();
     (cfg_ids, FxHashMap::from_iter(tests), default, exit)
 }
