@@ -26,20 +26,25 @@ use crate::{
 use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
 
 fn try_fold_url_related_function<'a>(
-    ident: &oxc_ast::ast::IdentifierReference<'a>,
+    ident: &IdentifierReference<'a>,
     arguments: &Vec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if ctx.is_global_reference(ident) == Some(true) {
-        match ident.name.as_str() {
-            "encodeURI" => return try_fold_encode_uri(arguments, ctx),
-            "encodeURIComponent" => return try_fold_encode_uri_component(arguments, ctx),
-            "decodeURI" => return try_fold_decode_uri(arguments, ctx),
-            "decodeURIComponent" => return try_fold_decode_uri_component(arguments, ctx),
-            _ => return None,
+    match ident.name.as_str() {
+        "encodeURI" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_encode_uri(arguments, ctx)
         }
+        "encodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_encode_uri_component(arguments, ctx)
+        }
+        "decodeURI" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_decode_uri(arguments, ctx)
+        }
+        "decodeURIComponent" if ctx.is_global_reference(ident) == Some(true) => {
+            try_fold_decode_uri_component(arguments, ctx)
+        }
+        _ => None,
     }
-    None
 }
 
 pub fn try_fold_known_global_methods<'a>(
@@ -48,13 +53,8 @@ pub fn try_fold_known_global_methods<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if let Expression::Identifier(ident) = callee {
-        if matches!(
-            ident.name.as_str(),
-            "encodeURI" | "encodeURIComponent" | "decodeURI" | "decodeURIComponent"
-        ) {
-            if let Some(result) = try_fold_url_related_function(ident, arguments, ctx) {
-                return Some(result);
-            }
+        if let Some(result) = try_fold_url_related_function(ident, arguments, ctx) {
+            return Some(result);
         }
         return None;
     }
