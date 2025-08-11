@@ -90,7 +90,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+        {
             if property_key_parent.should_keep_as_computed_property(&str.value) {
                 return;
             }
