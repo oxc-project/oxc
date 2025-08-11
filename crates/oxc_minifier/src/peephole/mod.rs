@@ -59,7 +59,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
+    ) -> u8 {
         loop {
             self.changed = false;
             self.build(program, ctx);
@@ -72,6 +72,7 @@ impl<'a> PeepholeOptimizations {
             }
             self.iteration += 1;
         }
+        self.iteration
     }
 
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(

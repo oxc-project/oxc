@@ -93,12 +93,14 @@ pub fn run() -> Result<(), io::Error> {
     .unwrap();
     writeln!(
         out,
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture",
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$}",
         "Original",
         "minified",
         "minified",
         "gzip",
         "gzip",
+        "Iterations",
+        "File",
         width = width,
     )
     .unwrap();
@@ -116,18 +118,19 @@ pub fn run() -> Result<(), io::Error> {
     let save_path = Path::new("./target/minifier").join(marker);
 
     for file in files.files() {
-        let minified = minify_twice(file, options);
+        let (minified, iterations) = minify_twice(file, options);
 
         fs::create_dir_all(&save_path).unwrap();
         fs::write(save_path.join(&file.file_name), &minified).unwrap();
 
         let s = format!(
-            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$}\n\n",
+            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$} \n\n",
             format_size(file.source_text.len(), DECIMAL),
             format_size(minified.len(), DECIMAL),
             targets[file.file_name.as_str()],
             format_size(gzip_size(&minified), DECIMAL),
             gzip_targets[file.file_name.as_str()],
+            iterations,
             &file.file_name,
             width = width
         );
@@ -144,15 +147,15 @@ pub fn run() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn minify_twice(file: &TestFile, options: Options) -> String {
+fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
     let source_type = SourceType::cjs();
-    let code1 = minify(&file.source_text, source_type, options);
-    let code2 = minify(&code1, source_type, options);
+    let (code1, iterations) = minify(&file.source_text, source_type, options);
+    let (code2, _) = minify(&code1, source_type, options);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
-    code2
+    (code2, iterations)
 }
 
-fn minify(source_text: &str, source_type: SourceType, options: Options) -> String {
+fn minify(source_text: &str, source_type: SourceType, options: Options) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
@@ -167,11 +170,12 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> Strin
         compress: Some(CompressOptions::default()),
     })
     .build(&allocator, &mut program);
-    Codegen::new()
+    let code = Codegen::new()
         .with_options(CodegenOptions { minify: !options.compress_only, ..CodegenOptions::minify() })
         .with_scoping(ret.scoping)
         .build(&program)
-        .code
+        .code;
+    (code, ret.iterations)
 }
 
 fn gzip_size(s: &str) -> usize {
