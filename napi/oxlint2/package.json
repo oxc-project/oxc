@@ -35,7 +35,7 @@
   ],
   "devDependencies": {
     "execa": "^9.6.0",
-    "tsdown": "^0.13.0",
+    "tsdown": "^0.14.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
