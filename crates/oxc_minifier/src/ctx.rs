@@ -26,7 +26,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Deref for Ctx<'a, 'b> {
+impl<'a> Deref for Ctx<'a, '_> {
     type Target = TraverseCtx<'a>;
 
     fn deref(&self) -> &Self::Target {
@@ -34,7 +34,7 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
     }
 }
 
-impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
+impl<'a> DerefMut for Ctx<'a, '_> {
     fn deref_mut(&mut self) -> &mut TraverseCtx<'a> {
         self.0
     }
