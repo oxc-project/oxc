@@ -120,7 +120,9 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(p.ast.alloc_assignment_target_rest(span, target));
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
+                        if let Some(span) =
+                            p.state.trailing_commas_ref().and_then(|map| map.get(&expr.span.start))
+                        {
                             p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
                     } else {
@@ -206,7 +208,8 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
                 _ => return p.unexpected(),
             };
             // convert `CoverInitializedName`
-            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
+            let init =
+                p.state.cover_initialized_name().remove(&property.span.start).map(|e| e.right);
             p.ast.assignment_target_property_assignment_target_property_identifier(
                 property.span,
                 binding,

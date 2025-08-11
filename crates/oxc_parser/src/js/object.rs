@@ -106,7 +106,7 @@ impl<'a> ParserImpl<'a> {
                         left,
                         right,
                     );
-                    self.state.cover_initialized_name.insert(span, expr);
+                    self.state.cover_initialized_name().insert(span, expr);
                 }
                 self.ast.alloc_object_property(
                     self.end_span(span),

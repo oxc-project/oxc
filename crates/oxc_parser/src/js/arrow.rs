@@ -338,7 +338,7 @@ impl<'a> ParserImpl<'a> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         let pos = self.cur_token().start();
-        if self.state.not_parenthesized_arrow.contains(&pos) {
+        if self.state.contains_not_parenthesized_arrow(&pos) {
             return None;
         }
 
@@ -346,7 +346,7 @@ impl<'a> ParserImpl<'a> {
 
         let head = self.parse_parenthesized_arrow_function_head();
         if self.has_fatal_error() {
-            self.state.not_parenthesized_arrow.insert(pos);
+            self.state.not_parenthesized_arrow().insert(pos);
             self.rewind(checkpoint);
             return None;
         }
@@ -379,7 +379,7 @@ impl<'a> ParserImpl<'a> {
             // be a syntax error in JavaScript (as the second colon shouldn't be there).
 
             if !self.at(Kind::Colon) {
-                self.state.not_parenthesized_arrow.insert(pos);
+                self.state.not_parenthesized_arrow().insert(pos);
                 self.rewind(checkpoint);
                 return None;
             }

@@ -436,7 +436,8 @@ impl<'a> ParserImpl<'a> {
             p.parse_delimited_list(Kind::RBrack, Kind::Comma, Self::parse_array_expression_element)
         });
         if let Some(comma_span) = comma_span {
-            self.state.trailing_commas.insert(span, self.end_span(comma_span));
+            let end_span = self.end_span(comma_span);
+            self.state.trailing_commas().insert(span, end_span);
         }
         self.expect(Kind::RBrack);
         self.ast.expression_array(self.end_span(span), elements)

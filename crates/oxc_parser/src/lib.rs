@@ -565,7 +565,7 @@ impl<'a> ParserImpl<'a> {
         use oxc_span::GetSpan;
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for expr in self.state.cover_initialized_name.values() {
+        for expr in self.state.cover_initialized_name_ref().iter().flat_map(|map| map.values()) {
             self.errors.push(diagnostics::cover_initialized_name(expr.span()));
         }
     }
