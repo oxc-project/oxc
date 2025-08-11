@@ -221,15 +221,6 @@ mod test {
         test("const test1 = {['default']:87};", "const test1 = {default:87};");
         test_same("class C { ['constructor']() {} }");
         test_same("class C { ['constructor'] = 0 }");
-
-        // Test case for the issue: quoted constructor should be converted to unquoted
-        test("class C { \"constructor\"() {} }", "class C { constructor() {} }");
-        test("class C { static \"constructor\"() {} }", "class C { static constructor() {} }");
-
-        // Ensure other method types work correctly
-        test("class C { \"method\"() {} }", "class C { method() {} }");
-        test("class C { get \"prop\"() {} }", "class C { get prop() {} }");
-        test("class C { set \"prop\"(v) {} }", "class C { set prop(v) {} }");
     }
 
     #[test]

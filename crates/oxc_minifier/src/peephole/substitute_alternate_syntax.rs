@@ -106,10 +106,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -120,10 +122,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -1696,16 +1700,36 @@ mod test {
             "class F { '0'(){}; 'a'(){}; [1](){}; ['1'](){}; ['b'](){}; ['c.c'](){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
             "class F {  0(){};   a(){};    1(){};    1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
         );
+        // Constructor method tests - quoted constructor should be converted to unquoted
+        test("class C { \"constructor\"() {} }", "class C { constructor() {} }");
+        test("class C { static \"constructor\"() {} }", "class C { static constructor() {} }");
+        // Note: get/set constructor is invalid syntax in JavaScript
+        // Computed constructor properties: non-static should remain unchanged, static can be converted
+        test_same("class C { ['constructor']() {} }");
+        test("class C { static ['constructor']() {} }", "class C { static constructor() {} }");
         // Property Definition
         test(
             "class F { '0' = _; 'a' = _; [1] = _; ['1'] = _; ['b'] = _; ['c.c'] = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
             "class F {  0 = _;   a = _;    1 = _;    1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
         );
+        // Constructor property tests - these cause parse errors so they don't reach the minifier
+        // The minifier tests should only test valid syntax that parses successfully
+        // test_same("class C { \"constructor\" = func }"); // Parse error: "Classes can't have a field named 'constructor'"
+        // test_same("class C { static \"constructor\" = func }"); // Parse error
+        // Computed constructor properties should remain unchanged per should_keep_as_computed_property logic
+        test_same("class C { ['constructor'] = func }");
+        test_same("class C { static ['constructor'] = func }");
         // Accessor Property
         test(
             "class F { accessor '0' = _; accessor 'a' = _; accessor [1] = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
             "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
         );
+        // Constructor accessor tests - these also cause parse errors
+        // test_same("class C { accessor \"constructor\" = value }"); // Parse error
+        // test_same("class C { static accessor \"constructor\" = value }"); // Parse error
+        // Computed constructor accessors should remain unchanged per should_keep_as_computed_property logic
+        test_same("class C { accessor ['constructor'] = value }");
+        test_same("class C { static accessor ['constructor'] = value }");
 
         test("class C { ['-1']() {} }", "class C { '-1'() {} }");
 
