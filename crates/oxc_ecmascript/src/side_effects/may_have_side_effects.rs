@@ -542,3 +542,109 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
         }
     }
 }
+
+/// Checks if accessing an unbound identifier reference is side-effect-free based on a guard condition.
+///
+/// This function analyzes patterns like:
+/// - `typeof x === 'undefined' && x` (safe to access x in the right branch)
+/// - `typeof x !== 'undefined' || x` (safe to access x in the right branch)
+/// - `typeof x < 'u' && x` (safe to access x in the right branch)
+///
+/// Ported from: https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_ast/js_ast_helpers.go#L2594-L2639
+pub fn is_side_effect_free_unbound_identifier_ref<'a>(
+    value: &Expression<'a>,
+    guard_condition: &Expression<'a>,
+    mut is_yes_branch: bool,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> Option<bool> {
+    // First check if value is an identifier
+    let ident = value.get_identifier_reference()?;
+
+    // Only applicable for global/unbound references
+    if !ctx.is_global_reference(ident) {
+        return Some(false);
+    }
+
+    // Check if guard_condition is a binary expression
+    let Expression::BinaryExpression(bin_expr) = guard_condition else {
+        return Some(false);
+    };
+
+    match bin_expr.operator {
+        BinaryOperator::StrictEquality
+        | BinaryOperator::StrictInequality
+        | BinaryOperator::Equality
+        | BinaryOperator::Inequality => {
+            let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
+            if matches!(ty_of, Expression::StringLiteral(_)) {
+                std::mem::swap(&mut string, &mut ty_of);
+            }
+
+            let Expression::UnaryExpression(unary) = ty_of else {
+                return Some(false);
+            };
+
+            if !(unary.operator == UnaryOperator::Typeof
+                && matches!(unary.argument, Expression::Identifier(_)))
+            {
+                return Some(false);
+            }
+
+            let Expression::StringLiteral(string) = string else {
+                return Some(false);
+            };
+
+            if ((string.value == "undefined") == is_yes_branch)
+                == matches!(
+                    bin_expr.operator,
+                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
+                )
+            {
+                let type_of_value = unary.argument.get_identifier_reference()?;
+                if type_of_value.name == ident.name {
+                    return Some(true);
+                }
+            }
+        }
+        BinaryOperator::LessThan
+        | BinaryOperator::LessEqualThan
+        | BinaryOperator::GreaterThan
+        | BinaryOperator::GreaterEqualThan => {
+            let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
+            if matches!(ty_of, Expression::StringLiteral(_)) {
+                std::mem::swap(&mut string, &mut ty_of);
+                is_yes_branch = !is_yes_branch;
+            }
+
+            let Expression::UnaryExpression(unary) = ty_of else {
+                return Some(false);
+            };
+
+            if !(unary.operator == UnaryOperator::Typeof
+                && matches!(unary.argument, Expression::Identifier(_)))
+            {
+                return Some(false);
+            }
+
+            let Expression::StringLiteral(string) = string else {
+                return Some(false);
+            };
+
+            if string.value == "u"
+                && is_yes_branch
+                    == matches!(
+                        bin_expr.operator,
+                        BinaryOperator::LessThan | BinaryOperator::LessEqualThan
+                    )
+            {
+                let type_of_value = unary.argument.get_identifier_reference()?;
+                if type_of_value.name == ident.name {
+                    return Some(true);
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Some(false)
+}
