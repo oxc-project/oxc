@@ -210,6 +210,12 @@ fn is_in_array_or_iter<'a, 'b>(
                             })
                         {
                             return Some(InsideArrayOrIterator::Iterator(span));
+                        } else if ident == "push"
+                            && argument.is_some_and(|argument| {
+                                v.arguments.iter().any(|arg| argument.span() == arg.span())
+                            })
+                        {
+                            return Some(InsideArrayOrIterator::Array);
                         }
                     }
                 }
@@ -505,6 +511,8 @@ fn test() {
            }))}
         ",
         r"const DummyComponent: FC<{ children: ReactNode }> = ({ children }) => { const wrappedChildren = Children.map(children, (child) => { return <div>{child}</div>; }); return <main>{wrappedChildren}</main>; };",
+        "const arr = [];arr.push(<div key={0} />);",
+        "const arr = [];arr.push(<div key={0} />, <div key={1} />);",
     ];
 
     let fail = vec![
@@ -618,6 +626,10 @@ fn test() {
         Children.toArray([1, 2 ,3].map(x => <App />));
         Children.toArray(Array.from([1, 2 ,3], x => <App />));
         ",
+        "const arr = [];arr.push(<div />);",
+        "const arr = [];arr.push(<div key={0} />, <div />);",
+        "const arr = [];arr.push(<div />, <div key={0} />);",
+        "const arr = [];arr.push(<div />, <div />);",
     ];
 
     Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
