@@ -338,7 +338,7 @@ impl<'a> ParserImpl<'a> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         let pos = self.cur_token().start();
-        if self.state.contains_not_parenthesized_arrow(&pos) {
+        if self.state.contains_not_parenthesized_arrow(pos) {
             return None;
         }
 

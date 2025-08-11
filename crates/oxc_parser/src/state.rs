@@ -30,8 +30,8 @@ impl<'a> ParserState<'a> {
 
     /// Check if position is in not_parenthesized_arrow set
     #[inline]
-    pub fn contains_not_parenthesized_arrow(&self, pos: &u32) -> bool {
-        self.not_parenthesized_arrow.as_ref().map_or(false, |set| set.contains(pos))
+    pub fn contains_not_parenthesized_arrow(&self, pos: u32) -> bool {
+        self.not_parenthesized_arrow.as_ref().is_some_and(|set| set.contains(&pos))
     }
 
     /// Get or create the cover_initialized_name map
@@ -67,21 +67,21 @@ mod tests {
     fn test_lazy_initialization() {
         // Create a new parser state
         let mut state = ParserState::new();
-        
+
         // Verify all collections start as None (not allocated)
         assert!(state.cover_initialized_name_ref().is_none());
         assert!(state.trailing_commas_ref().is_none());
-        assert!(!state.contains_not_parenthesized_arrow(&42));
-        
+        assert!(!state.contains_not_parenthesized_arrow(42));
+
         // Access collections to trigger lazy initialization
         let _trailing_commas = state.trailing_commas();
         let _not_parenthesized = state.not_parenthesized_arrow();
         let _cover_init = state.cover_initialized_name();
-        
+
         // Verify collections are now allocated
         assert!(state.cover_initialized_name_ref().is_some());
         assert!(state.trailing_commas_ref().is_some());
-        
+
         // Verify they're empty but allocated
         assert_eq!(state.cover_initialized_name_ref().unwrap().len(), 0);
         assert_eq!(state.trailing_commas_ref().unwrap().len(), 0);
