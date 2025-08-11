@@ -22,6 +22,18 @@ use super::PeepholeOptimizations;
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
+    /// Optimizes object property syntax by removing unnecessary quotes and computed access.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// { "validIdentifier": value }
+    /// { ["computedProp"]: value }
+    /// 
+    /// // After:
+    /// { validIdentifier: value }
+    /// { computedProp: value }
+    /// ```
     pub fn substitute_object_property(&self, prop: &mut ObjectProperty<'a>, ctx: &mut Ctx<'a, '_>) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
         if !prop.method {
@@ -36,6 +48,18 @@ impl<'a> PeepholeOptimizations {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
+    /// Optimizes property keys in assignment target property patterns.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// ({ "prop": target } = obj);
+    /// ({ ["computed"]: target } = obj);
+    /// 
+    /// // After:
+    /// ({ prop: target } = obj);
+    /// ({ computed: target } = obj);
+    /// ```
     pub fn substitute_assignment_target_property_property(
         &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
@@ -44,6 +68,16 @@ impl<'a> PeepholeOptimizations {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
 
+    /// Optimizes assignment target properties for destructuring assignments.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// ({ ["key"]: value } = object);
+    /// 
+    /// // After:
+    /// ({ key: value } = object);
+    /// ```
     pub fn substitute_assignment_target_property(
         &self,
         prop: &mut AssignmentTargetProperty<'a>,
