@@ -51,31 +51,14 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 if e.test.may_have_side_effects(ctx) {
                     return true;
                 }
-
-                // Check if consequent is a safe unbound identifier access
-                // Pattern: typeof x === 'undefined' ? fallback : x
-                if is_side_effect_free_unbound_identifier_ref(
-                    &e.alternate,
-                    &e.test,
-                    false, // no branch (false branch of conditional)
-                    ctx,
-                ) && !e.consequent.may_have_side_effects(ctx)
-                {
-                    return false;
+                // typeof x === 'undefined' ? fallback : x
+                if is_side_effect_free_unbound_identifier_ref(&e.alternate, &e.test, false, ctx) {
+                    return e.consequent.may_have_side_effects(ctx);
                 }
-
-                // Check if alternate is a safe unbound identifier access
-                // Pattern: typeof x !== 'undefined' ? x : fallback
-                if is_side_effect_free_unbound_identifier_ref(
-                    &e.consequent,
-                    &e.test,
-                    true, // yes branch (true branch of conditional)
-                    ctx,
-                ) && !e.alternate.may_have_side_effects(ctx)
-                {
-                    return false;
+                // typeof x !== 'undefined' ? x : fallback
+                if is_side_effect_free_unbound_identifier_ref(&e.consequent, &e.test, true, ctx) {
+                    return e.alternate.may_have_side_effects(ctx);
                 }
-
                 e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
             Expression::SequenceExpression(e) => {
@@ -314,38 +297,21 @@ impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
         if self.left.may_have_side_effects(ctx) {
             return true;
         }
-
-        // For logical AND and OR expressions, check if the right side is a safe unbound identifier access
         match self.operator {
             LogicalOperator::And => {
                 // Pattern: typeof x !== 'undefined' && x
-                // The right side is safe if the left side ensures x is defined
-                if is_side_effect_free_unbound_identifier_ref(
-                    &self.right,
-                    &self.left,
-                    true, // yes branch for AND
-                    ctx,
-                ) {
+                if is_side_effect_free_unbound_identifier_ref(&self.right, &self.left, true, ctx) {
                     return false;
                 }
             }
             LogicalOperator::Or => {
                 // Pattern: typeof x === 'undefined' || x
-                // The right side is safe if the left side ensures x is undefined in the false branch
-                if is_side_effect_free_unbound_identifier_ref(
-                    &self.right,
-                    &self.left,
-                    false, // no branch for OR
-                    ctx,
-                ) {
+                if is_side_effect_free_unbound_identifier_ref(&self.right, &self.left, false, ctx) {
                     return false;
                 }
             }
-            LogicalOperator::Coalesce => {
-                // Nullish coalescing doesn't involve typeof checks for undefined
-            }
+            LogicalOperator::Coalesce => {}
         }
-
         self.right.may_have_side_effects(ctx)
     }
 }
@@ -618,21 +584,16 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
     mut is_yes_branch: bool,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> bool {
-    // First check if value is an identifier
     let Some(ident) = value.get_identifier_reference() else {
         return false;
     };
-
-    // Only applicable for global/unbound references
     if !ctx.is_global_reference(ident) {
         return false;
     }
 
-    // Check if guard_condition is a binary expression
     let Expression::BinaryExpression(bin_expr) = guard_condition else {
         return false;
     };
-
     match bin_expr.operator {
         BinaryOperator::StrictEquality
         | BinaryOperator::StrictInequality
@@ -646,7 +607,6 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
             let Expression::UnaryExpression(unary) = ty_of else {
                 return false;
             };
-
             if !(unary.operator == UnaryOperator::Typeof
                 && matches!(unary.argument, Expression::Identifier(_)))
             {
@@ -657,19 +617,15 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
                 return false;
             };
 
-            let is_undefined_check = (string.value == "undefined") == is_yes_branch;
-            if is_undefined_check
+            let is_undefined_check = string.value == "undefined";
+            if (is_undefined_check == is_yes_branch)
                 == matches!(
                     bin_expr.operator,
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
                 )
+                && unary.argument.is_specific_id(&ident.name)
             {
-                let Some(type_of_value) = unary.argument.get_identifier_reference() else {
-                    return false;
-                };
-                if type_of_value.name == ident.name {
-                    return true;
-                }
+                return true;
             }
         }
         BinaryOperator::LessThan
@@ -685,7 +641,6 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
             let Expression::UnaryExpression(unary) = ty_of else {
                 return false;
             };
-
             if !(unary.operator == UnaryOperator::Typeof
                 && matches!(unary.argument, Expression::Identifier(_)))
             {
@@ -695,20 +650,18 @@ fn is_side_effect_free_unbound_identifier_ref<'a>(
             let Expression::StringLiteral(string) = string else {
                 return false;
             };
+            if string.value != "u" {
+                return false;
+            }
 
-            if string.value == "u"
-                && is_yes_branch
-                    == matches!(
-                        bin_expr.operator,
-                        BinaryOperator::LessThan | BinaryOperator::LessEqualThan
-                    )
+            if is_yes_branch
+                == matches!(
+                    bin_expr.operator,
+                    BinaryOperator::LessThan | BinaryOperator::LessEqualThan
+                )
+                && unary.argument.is_specific_id(&ident.name)
             {
-                let Some(type_of_value) = unary.argument.get_identifier_reference() else {
-                    return false;
-                };
-                if type_of_value.name == ident.name {
-                    return true;
-                }
+                return true;
             }
         }
         _ => {}

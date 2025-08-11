@@ -835,46 +835,32 @@ fn test_object_with_to_primitive_related_properties_overridden() {
 
 #[test]
 fn test_typeof_guard_patterns() {
-    // Test patterns with global variables that should be side-effect-free
-    // when properly guarded with typeof checks
-
-    // Logical AND patterns - typeof x !== 'undefined' && x
     test_with_global_variables("typeof x !== 'undefined' && x", vec!["x".to_string()], false);
     test_with_global_variables("typeof x != 'undefined' && x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' !== typeof x && x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' != typeof x && x", vec!["x".to_string()], false);
-
-    // Logical OR patterns - typeof x === 'undefined' || x
     test_with_global_variables("typeof x === 'undefined' || x", vec!["x".to_string()], false);
     test_with_global_variables("typeof x == 'undefined' || x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' === typeof x || x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' == typeof x || x", vec!["x".to_string()], false);
-
-    // String comparison patterns - typeof x < 'u' && x
     test_with_global_variables("typeof x < 'u' && x", vec!["x".to_string()], false);
     test_with_global_variables("typeof x <= 'u' && x", vec!["x".to_string()], false);
     test_with_global_variables("'u' > typeof x && x", vec!["x".to_string()], false);
     test_with_global_variables("'u' >= typeof x && x", vec!["x".to_string()], false);
-
-    // String comparison patterns - typeof x > 'u' || x
     test_with_global_variables("typeof x > 'u' || x", vec!["x".to_string()], false);
     test_with_global_variables("typeof x >= 'u' || x", vec!["x".to_string()], false);
     test_with_global_variables("'u' < typeof x || x", vec!["x".to_string()], false);
     test_with_global_variables("'u' <= typeof x || x", vec!["x".to_string()], false);
 
-    // Conditional patterns - typeof x === 'undefined' ? fallback : x
     test_with_global_variables("typeof x === 'undefined' ? 0 : x", vec!["x".to_string()], false);
     test_with_global_variables("typeof x == 'undefined' ? 0 : x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' === typeof x ? 0 : x", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' == typeof x ? 0 : x", vec!["x".to_string()], false);
-
-    // Conditional patterns - typeof x !== 'undefined' ? x : fallback
     test_with_global_variables("typeof x !== 'undefined' ? x : 0", vec!["x".to_string()], false);
     test_with_global_variables("typeof x != 'undefined' ? x : 0", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' !== typeof x ? x : 0", vec!["x".to_string()], false);
     test_with_global_variables("'undefined' != typeof x ? x : 0", vec!["x".to_string()], false);
 
-    // These should still have side effects because the fallback/other expressions have side effects
     test_with_global_variables(
         "typeof x !== 'undefined' && (x + foo())",
         vec!["x".to_string()],
@@ -887,13 +873,9 @@ fn test_typeof_guard_patterns() {
     );
     test_with_global_variables("typeof x === 'undefined' ? foo() : x", vec!["x".to_string()], true);
     test_with_global_variables("typeof x !== 'undefined' ? x : foo()", vec!["x".to_string()], true);
-
-    // These should still have side effects because the guard condition itself has side effects
     test_with_global_variables("typeof foo() !== 'undefined' && x", vec!["x".to_string()], true);
     test_with_global_variables("typeof foo() === 'undefined' || x", vec!["x".to_string()], true);
     test_with_global_variables("typeof foo() === 'undefined' ? 0 : x", vec!["x".to_string()], true);
-
-    // These should still have side effects because the variable name doesn't match
     test_with_global_variables(
         "typeof y !== 'undefined' && x",
         vec!["x".to_string(), "y".to_string()],
@@ -910,24 +892,13 @@ fn test_typeof_guard_patterns() {
         true,
     );
 
-    // Test that accessing non-global variables is side-effect-free
-    test("localVar", false);
-
-    // These should be side-effect-free when the variable is not declared as global
-    // because such variables are treated as having no side effects when accessed
     test("typeof localVar !== 'undefined' && localVar", false);
     test("typeof localVar === 'undefined' || localVar", false);
     test("typeof localVar === 'undefined' ? 0 : localVar", false);
 
-    // Test multiple variables
     test_with_global_variables(
         "typeof x !== 'undefined' && typeof y !== 'undefined' && x && y",
         vec!["x".to_string(), "y".to_string()],
-        true,
-    ); // Still has side effects because both x and y are accessed
-    test_with_global_variables(
-        "typeof x !== 'undefined' && x",
-        vec!["x".to_string(), "y".to_string()],
-        false,
+        true, // This can be improved
     );
 }
