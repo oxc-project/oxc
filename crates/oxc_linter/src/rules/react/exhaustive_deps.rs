@@ -1463,9 +1463,9 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use itertools::Itertools;
-    use oxc_ast::ast::ArrayExpression;
-    use oxc_span::GetSpan;
+    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_ast::{AstBuilder, ast::ArrayExpression};
+    use oxc_span::{Atom, SPAN};
 
     use crate::fixer::{RuleFix, RuleFixer};
 
@@ -1474,27 +1474,23 @@ mod fix {
         names: &[Name<'a>],
         deps: &ArrayExpression<'a>,
     ) -> RuleFix<'a> {
-        let names_as_deps = names.iter().map(|n| n.name.as_ref()).join(", ");
-        let Some(last) = deps.elements.last() else {
-            return fixer.replace(deps.span, format!("[{names_as_deps}]"));
-        };
-        // look for a trailing comma. we'll need to add one if its not there already
-        let mut needs_comma = true;
-        let last_span = last.span();
-        for c in fixer.source_text()[(last_span.end as usize)..].chars() {
-            match c {
-                ',' => {
-                    needs_comma = false;
-                    break;
-                }
-                ']' => break,
-                _ => {} // continue
-            }
+        let mut codegen = fixer.codegen();
+
+        let alloc = Allocator::default();
+        let ast_builder = AstBuilder::new(&alloc);
+
+        let mut vec = deps.elements.clone_in(&alloc);
+
+        for name in names {
+            vec.push(
+                ast_builder
+                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
+                    .into(),
+            );
         }
-        fixer.insert_text_after_range(
-            last_span,
-            if needs_comma { format!(", {names_as_deps}") } else { format!(" {names_as_deps}") },
-        )
+
+        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        fixer.replace(deps.span, codegen.into_source_text())
     }
 }
 
@@ -4089,17 +4085,33 @@ fn test() {
             // FixKind::DangerousSuggestion,
         ),
         (
-            r"const useHook = () => {
+            "const useHook = () => {
               const [x] = useState(0);
               const [y] = useState(0);
               const [z] = useState(0);
               const foo = useCallback(() => x + y + z, [x]);
             }",
+            "const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [\n\tx,\n\ty,\n\tz\n]);
+            }",
+            // None,
+            // FixKind::DangerousSuggestion,
+        ),
+        (
             r"const useHook = () => {
               const [x] = useState(0);
               const [y] = useState(0);
               const [z] = useState(0);
-              const foo = useCallback(() => x + y + z, [x, y, z]);
+              const foo = useCallback(() => x + y + z, [x, y]);
+            }",
+            "const useHook = () => {
+              const [x] = useState(0);
+              const [y] = useState(0);
+              const [z] = useState(0);
+              const foo = useCallback(() => x + y + z, [\n\tx,\n\ty,\n\tz\n]);
             }",
             // None,
             // FixKind::DangerousSuggestion,
