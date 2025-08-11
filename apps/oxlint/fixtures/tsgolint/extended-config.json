@@ -7,7 +7,7 @@
   },
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": ["*.ts", "*.vue"],
       "rules": {
         "typescript/no-floating-promises": "warn"
       }
