@@ -93,10 +93,9 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
         {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -107,10 +106,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -121,10 +122,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
