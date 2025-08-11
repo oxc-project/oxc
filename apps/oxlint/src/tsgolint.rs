@@ -29,19 +29,15 @@ pub struct TsGoLintState<'a> {
     paths: &'a Vec<Arc<OsStr>>,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
-    /// Channel to send errors from `tsgolint` to the main thread
-    error_sender: DiagnosticSender,
 }
 
 impl<'a> TsGoLintState<'a> {
     pub fn new(
-        error_sender: DiagnosticSender,
         config_store: ConfigStore,
         paths: &'a Vec<Arc<OsStr>>,
         options: &LintServiceOptions,
     ) -> Self {
         TsGoLintState {
-            error_sender,
             config_store,
             executable_path: try_find_tsgolint_executable(options.cwd())
                 .unwrap_or(PathBuf::from("tsgolint")),
@@ -50,7 +46,11 @@ impl<'a> TsGoLintState<'a> {
         }
     }
 
-    pub fn lint(self, stdout: &mut dyn Write) -> Option<CliRunResult> {
+    pub fn lint(
+        self,
+        error_sender: DiagnosticSender,
+        stdout: &mut dyn Write,
+    ) -> Option<CliRunResult> {
         if self.paths.is_empty() {
             return None;
         }
@@ -172,7 +172,7 @@ impl<'a> TsGoLintState<'a> {
                             &read_to_string(&file_path).unwrap_or_else(|_| String::new()),
                             diagnostics,
                         );
-                        self.error_sender
+                        error_sender
                             .send((file_path.clone(), diagnostics))
                             .expect("Failed to send diagnostic");
                     }

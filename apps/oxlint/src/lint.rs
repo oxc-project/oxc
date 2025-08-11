@@ -307,8 +307,8 @@ impl LintRunner {
         if let Some(ret) = self
             .options
             .type_aware
-            .then(|| TsGoLintState::new(tx_error.clone(), config_store.clone(), &paths, &options))
-            .and_then(|s| s.lint(stdout))
+            .then(|| TsGoLintState::new(config_store.clone(), &paths, &options))
+            .and_then(|s| s.lint(tx_error.clone(), stdout))
         {
             return ret;
         }
