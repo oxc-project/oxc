@@ -577,7 +577,7 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
 /// - `typeof x !== 'undefined' || x` (safe to access x in the right branch)
 /// - `typeof x < 'u' && x` (safe to access x in the right branch)
 ///
-/// Ported from: https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_ast/js_ast_helpers.go#L2594-L2639
+/// Ported from: <https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_ast/js_ast_helpers.go#L2594-L2639>
 fn is_side_effect_free_unbound_identifier_ref<'a>(
     value: &Expression<'a>,
     guard_condition: &Expression<'a>,
