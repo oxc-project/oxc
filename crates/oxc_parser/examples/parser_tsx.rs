@@ -49,7 +49,7 @@ export const Counter: React.FC = () => {
     if panicked {
         return Err("Parser panicked".to_string());
     }
-    
+
     if !errors.is_empty() {
         return Err(format!("Parsing errors: {}", errors.len()));
     }
