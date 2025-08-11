@@ -194,6 +194,7 @@ jobs:
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
+      # Playground has no tests
       - if: steps.filter.outputs.src == 'true' && matrix.component != 'playground'
         name: Run tests
         working-directory: napi/${{ matrix.component }}
