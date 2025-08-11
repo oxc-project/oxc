@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
             Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
             Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, ctx),
             Expression::BinaryExpression(_) => self.fold_binary_expression(e, ctx),
-            Expression::CallExpression(_) => self.fold_call_expression(e, ctx),
+            Expression::CallExpression(_) => self.remove_unused_call_expression(e, ctx),
             Expression::AssignmentExpression(_) => self.remove_unused_assignment_expression(e, ctx),
             Expression::ClassExpression(_) => self.remove_unused_class_expression(e, ctx),
             _ => !e.may_have_side_effects(ctx),
@@ -520,7 +520,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn fold_call_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_call_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
         if call_expr.pure && ctx.annotations() {

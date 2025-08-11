@@ -152,40 +152,7 @@ impl<'a> PeepholeOptimizations {
         self.try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
-    pub fn substitute_exit_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        // Change syntax
-        match expr {
-            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
-            Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
-            Expression::BinaryExpression(e) => {
-                Self::swap_binary_expressions(e);
-                Self::try_fold_loose_equals_undefined(expr, ctx);
-                Self::try_compress_typeof_undefined(expr, ctx);
-            }
-            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, ctx),
-            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, ctx),
-            Expression::NewExpression(e) => {
-                Self::try_compress_typed_array_constructor(e, ctx);
-                Self::try_fold_new_expression(expr, ctx);
-                Self::try_fold_object_or_array_constructor(expr, ctx);
-            }
-            Expression::CallExpression(_) => {
-                self.try_fold_simple_function_call(expr, ctx);
-                Self::try_fold_object_or_array_constructor(expr, ctx);
-            }
-            Expression::LogicalExpression(_) => {
-                Self::try_compress_is_object_and_not_null(expr, ctx);
-                Self::try_rotate_logical_expression(expr, ctx);
-            }
-            Expression::TemplateLiteral(_) => Self::try_fold_template_literal(expr, ctx),
-            Expression::UnaryExpression(_) => Self::try_remove_unary_plus(expr, ctx),
-            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
-            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
-            _ => {}
-        }
-    }
-
-    fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
+    pub fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
             && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
             && !e.right.is_literal()
@@ -195,7 +162,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `() => { return foo })` -> `() => foo`
-    fn try_compress_arrow_expression(
+    pub fn try_compress_arrow_expression(
         &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -228,7 +195,7 @@ impl<'a> PeepholeOptimizations {
     /// - `typeof foo.bar != "undefined"` -> `foo.bar !== undefined` (for any expression e.g.`typeof (foo + "")`)
     ///
     /// Enabled by `compress.typeofs`
-    fn try_compress_typeof_undefined(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_typeof_undefined(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         let Expression::UnaryExpression(unary_expr) = &e.left else { return };
         if !unary_expr.operator.is_typeof() {
@@ -269,7 +236,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `1 - +b` => `1 - b` (for other operators as well)
     /// - `+a - 1` => `a - 1` (for other operators as well)
-    fn try_remove_unary_plus(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_remove_unary_plus(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };
         if e.operator != UnaryOperator::UnaryPlus {
             return;
@@ -335,7 +302,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `a || (b || c);` -> `(a || b) || c;`
-    fn try_rotate_logical_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_rotate_logical_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         let Expression::LogicalExpression(right) = &e.right else { return };
         if right.operator != e.operator {
@@ -367,7 +334,7 @@ impl<'a> PeepholeOptimizations {
     /// - If `foo` is an object, then `!!foo` is `true`. If `foo` is null, then `!!foo` is `false`.
     ///
     /// This compression is safe for `document.all` because `typeof document.all` is not `'object'`.
-    fn try_compress_is_object_and_not_null(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_is_object_and_not_null(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         let inversed = match e.operator {
             LogicalOperator::And => false,
@@ -506,7 +473,7 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    fn try_fold_loose_equals_undefined(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_loose_equals_undefined(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
@@ -578,7 +545,7 @@ impl<'a> PeepholeOptimizations {
     /// `Number(0)` -> `0`
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
-    fn try_fold_simple_function_call(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_simple_function_call(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
         if e.optional || e.arguments.len() >= 2 {
             return;
@@ -679,7 +646,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `window.Object()`, `new Object()`, `Object()`  -> `{}`
     /// `window.Array()`, `new Array()`, `Array()`  -> `[]`
-    fn try_fold_object_or_array_constructor(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_object_or_array_constructor(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let callee = match expr {
             Expression::NewExpression(e) => &e.callee,
             Expression::CallExpression(e) => &e.callee,
@@ -765,7 +732,7 @@ impl<'a> PeepholeOptimizations {
     /// `new AggregateError()` -> `AggregateError()`
     /// `new Function()` -> `Function()`
     /// `new RegExp()` -> `RegExp()`
-    fn try_fold_new_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_new_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::NewExpression(e) = expr else { return };
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
@@ -818,12 +785,9 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    fn try_compress_chain_call_expression(
-        &self,
-        chain_expr: &mut ChainExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+    pub fn try_compress_chain_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ChainExpression(e) = expr else { return };
+        if let ChainElement::CallExpression(call_expr) = &mut e.expression {
             // `window.Object?.()` -> `Object?.()`
             if call_expr.arguments.is_empty()
                 && call_expr
@@ -837,7 +801,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_template_literal(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_template_literal(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx) else { return };
         *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
@@ -950,7 +914,7 @@ impl<'a> PeepholeOptimizations {
     /// e.g. `var a = function f() {}` -> `var a = function () {}`
     ///
     /// This compression is not safe if the code relies on `Function::name`.
-    fn try_remove_name_from_functions(&self, func: &mut Function<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_remove_name_from_functions(func: &mut Function<'a>, ctx: &mut Ctx<'a, '_>) {
         if ctx.options().keep_names.function {
             return;
         }
@@ -966,7 +930,7 @@ impl<'a> PeepholeOptimizations {
     /// e.g. `var a = class C {}` -> `var a = class {}`
     ///
     /// This compression is not safe if the code relies on `Class::name`.
-    fn try_remove_name_from_classes(&self, class: &mut Class<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_remove_name_from_classes(class: &mut Class<'a>, ctx: &mut Ctx<'a, '_>) {
         if ctx.options().keep_names.class {
             return;
         }
@@ -978,7 +942,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
@@ -992,7 +956,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    fn try_compress_boolean(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_boolean(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BooleanLiteral(lit) = expr else { return };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
@@ -1005,7 +969,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Transforms long array expression with string literals to `"str1,str2".split(',')`
-    fn try_compress_array_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_array_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         // this threshold is chosen by hand by checking the minsize output
         const THRESHOLD: usize = 40;
 

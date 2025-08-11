@@ -15,34 +15,6 @@ use super::PeepholeOptimizations;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_conditions_exit_expression(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        match expr {
-            Expression::UnaryExpression(_) => self.try_minimize_not(expr, ctx),
-            Expression::BinaryExpression(e) => {
-                Self::try_compress_is_loose_boolean(e, ctx);
-                Self::try_minimize_binary(expr, ctx);
-            }
-            Expression::LogicalExpression(_) => self.minimize_logical_expression(expr, ctx),
-            Expression::ConditionalExpression(logical_expr) => {
-                self.try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx);
-                if let Some(changed) = self.try_minimize_conditional(logical_expr, ctx) {
-                    *expr = changed;
-                    ctx.state.changed = true;
-                }
-            }
-            Expression::AssignmentExpression(e) => {
-                self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
-                Self::try_compress_normal_assignment_to_combined_assignment(e, ctx);
-                Self::try_compress_assignment_to_update_expression(expr, ctx);
-            }
-            _ => {}
-        }
-    }
-
     // The goal of this function is to "rotate" the AST if it's possible to use the
     // left-associative property of the operator to avoid unnecessary parentheses.
     //
@@ -95,7 +67,7 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
     // `x >> +y !== 0` -> `x >> +y`
     //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
-    fn try_minimize_binary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_minimize_binary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         if !e.operator.is_equality() {
             return;
@@ -152,7 +124,8 @@ impl<'a> PeepholeOptimizations {
     ///
     /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
-    fn try_compress_is_loose_boolean(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_is_loose_boolean(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = e else { return };
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }
@@ -198,7 +171,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a || b` to `a ||= b`
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
-    fn try_compress_normal_assignment_to_combined_logical_assignment(
+    pub fn try_compress_normal_assignment_to_combined_logical_assignment(
         &self,
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -236,7 +209,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a = a + b` to `a += b`
-    fn try_compress_normal_assignment_to_combined_assignment(
+    pub fn try_compress_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -256,7 +229,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
     #[expect(clippy::float_cmp)]
-    fn try_compress_assignment_to_update_expression(
+    pub fn try_compress_assignment_to_update_expression(
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {

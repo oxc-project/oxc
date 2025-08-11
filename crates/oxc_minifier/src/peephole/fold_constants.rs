@@ -12,32 +12,12 @@ use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
+/// Constant Folding
+///
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 impl<'a> PeepholeOptimizations {
-    /// Constant Folding
-    ///
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        match e {
-            Expression::TemplateLiteral(t) => {
-                self.try_inline_values_in_template_literal(t, ctx);
-            }
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
-            Expression::BinaryExpression(_) => {
-                Self::try_fold_binary_expr(e, ctx);
-                Self::try_fold_binary_typeof_comparison(e, ctx);
-            }
-            Expression::UnaryExpression(_) => Self::try_fold_unary_expr(e, ctx),
-            Expression::StaticMemberExpression(_) => Self::try_fold_static_member_expr(e, ctx),
-            Expression::ComputedMemberExpression(_) => Self::try_fold_computed_member_expr(e, ctx),
-            Expression::LogicalExpression(_) => Self::try_fold_logical_expr(e, ctx),
-            Expression::ChainExpression(_) => Self::try_fold_optional_chain(e, ctx),
-            Expression::CallExpression(_) => Self::try_fold_number_constructor(e, ctx),
-            _ => {}
-        }
-    }
-
     #[expect(clippy::float_cmp)]
-    fn try_fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
@@ -57,7 +37,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) {
@@ -69,7 +49,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
@@ -81,7 +61,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = match e.operator {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
@@ -92,7 +72,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_optional_chain(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::ChainExpression(e) = expr else { return };
         let left_expr = match &e.expression {
             match_member_expression!(ChainElement) => {
@@ -273,7 +253,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    fn try_fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // TODO: tryReduceOperandsForOp
 
@@ -537,7 +517,7 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    fn try_fold_number_constructor(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
         if !ctx.is_global_expr("Number", &e.callee) {
             return;
@@ -577,7 +557,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn try_fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
         if e.operator.is_equality() {
@@ -644,7 +624,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_object_spread(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_object_exp(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
@@ -739,12 +719,7 @@ impl<'a> PeepholeOptimizations {
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    fn try_inline_values_in_template_literal(
-        &self,
-        t: &mut TemplateLiteral<'a>,
-
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn inline_template_literal(&self, t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
         let has_expr_to_inline = t
             .expressions
             .iter()

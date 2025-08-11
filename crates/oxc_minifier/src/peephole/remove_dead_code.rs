@@ -34,18 +34,6 @@ impl<'a> PeepholeOptimizations {
         self.try_fold_expression_stmt(stmt, ctx);
     }
 
-    pub fn remove_dead_code_exit_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        match e {
-            Expression::ConditionalExpression(_) => self.try_fold_conditional_expression(e, ctx),
-            Expression::SequenceExpression(_) => self.try_fold_sequence_expression(e, ctx),
-            Expression::CallExpression(_) => self.remove_call_expression(e, ctx),
-            Expression::AssignmentExpression(_) => {
-                self.remove_unused_assignment_expression(e, ctx);
-            }
-            _ => {}
-        }
-    }
-
     /// Remove block from single line blocks
     /// `{ block } -> block`
     fn try_optimize_block(
@@ -306,7 +294,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
-    fn try_fold_conditional_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_conditional_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         ctx.state.changed = true;
@@ -340,7 +332,7 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    fn try_fold_sequence_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_sequence_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::SequenceExpression(e) = expr else { return };
         let should_keep_as_sequence_expr = e
             .expressions
@@ -452,7 +444,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_call_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_dead_code_call_expression(
+        &self,
+        expr: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
             if let Some(reference_id) = ident.reference_id.get() {

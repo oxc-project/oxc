@@ -172,13 +172,81 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        self.fold_constants_exit_expression(expr, &mut ctx);
-        self.minimize_conditions_exit_expression(expr, &mut ctx);
-        self.remove_dead_code_exit_expression(expr, &mut ctx);
-        self.replace_known_methods_exit_expression(expr, &mut ctx);
-        self.substitute_exit_expression(expr, &mut ctx);
-        self.inline_identifier_reference(expr, &mut ctx);
+        let ctx = &mut Ctx::new(ctx);
+        match expr {
+            Expression::TemplateLiteral(t) => {
+                self.inline_template_literal(t, ctx);
+                Self::try_fold_template_literal(expr, ctx);
+            }
+            Expression::ObjectExpression(e) => self.fold_object_exp(e, ctx),
+            Expression::BinaryExpression(e) => {
+                Self::swap_binary_expressions(e);
+                Self::fold_binary_expr(expr, ctx);
+                Self::fold_binary_typeof_comparison(expr, ctx);
+                Self::try_compress_is_loose_boolean(expr, ctx);
+                Self::try_minimize_binary(expr, ctx);
+                Self::try_fold_loose_equals_undefined(expr, ctx);
+                Self::try_compress_typeof_undefined(expr, ctx);
+            }
+            Expression::UnaryExpression(_) => {
+                Self::fold_unary_expr(expr, ctx);
+                self.try_minimize_not(expr, ctx);
+                Self::try_remove_unary_plus(expr, ctx);
+            }
+            Expression::StaticMemberExpression(_) => {
+                Self::fold_static_member_expr(expr, ctx);
+                self.try_fold_known_property_access(expr, ctx);
+            }
+            Expression::ComputedMemberExpression(_) => {
+                Self::fold_computed_member_expr(expr, ctx);
+                self.try_fold_known_property_access(expr, ctx);
+            }
+            Expression::LogicalExpression(_) => {
+                Self::fold_logical_expr(expr, ctx);
+                self.minimize_logical_expression(expr, ctx);
+                Self::try_compress_is_object_and_not_null(expr, ctx);
+                Self::try_rotate_logical_expression(expr, ctx);
+            }
+            Expression::ChainExpression(_) => {
+                Self::fold_chain_expr(expr, ctx);
+                Self::try_compress_chain_call_expression(expr, ctx);
+            }
+            Expression::CallExpression(_) => {
+                Self::fold_call_expression(expr, ctx);
+                self.remove_dead_code_call_expression(expr, ctx);
+                self.try_fold_concat_chain(expr, ctx);
+                self.try_fold_known_global_methods(expr, ctx);
+                self.try_fold_simple_function_call(expr, ctx);
+                Self::try_fold_object_or_array_constructor(expr, ctx);
+            }
+            Expression::ConditionalExpression(logical_expr) => {
+                self.try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx);
+                if let Some(changed) = self.try_minimize_conditional(logical_expr, ctx) {
+                    *expr = changed;
+                    ctx.state.changed = true;
+                }
+                self.try_fold_conditional_expression(expr, ctx);
+            }
+            Expression::AssignmentExpression(e) => {
+                self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
+                Self::try_compress_normal_assignment_to_combined_assignment(e, ctx);
+                Self::try_compress_assignment_to_update_expression(expr, ctx);
+                self.remove_unused_assignment_expression(expr, ctx);
+            }
+            Expression::SequenceExpression(_) => self.try_fold_sequence_expression(expr, ctx),
+            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
+            Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
+            Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
+            Expression::NewExpression(e) => {
+                Self::try_compress_typed_array_constructor(e, ctx);
+                Self::try_fold_new_expression(expr, ctx);
+                Self::try_fold_object_or_array_constructor(expr, ctx);
+            }
+            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
+            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
+            Expression::Identifier(_) => self.inline_identifier_reference(expr, ctx),
+            _ => {}
+        }
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -328,10 +396,37 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        self.inner.fold_constants_exit_expression(expr, &mut ctx);
-        self.inner.remove_dead_code_exit_expression(expr, &mut ctx);
+    fn exit_expression(&mut self, e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = &mut Ctx::new(ctx);
+        match e {
+            Expression::TemplateLiteral(t) => self.inner.inline_template_literal(t, ctx),
+            Expression::ObjectExpression(e) => self.inner.fold_object_exp(e, ctx),
+            Expression::BinaryExpression(_) => {
+                PeepholeOptimizations::fold_binary_expr(e, ctx);
+                PeepholeOptimizations::fold_binary_typeof_comparison(e, ctx);
+            }
+            Expression::UnaryExpression(_) => PeepholeOptimizations::fold_unary_expr(e, ctx),
+            Expression::StaticMemberExpression(_) => {
+                PeepholeOptimizations::fold_static_member_expr(e, ctx);
+            }
+            Expression::ComputedMemberExpression(_) => {
+                PeepholeOptimizations::fold_computed_member_expr(e, ctx);
+            }
+            Expression::LogicalExpression(_) => PeepholeOptimizations::fold_logical_expr(e, ctx),
+            Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expr(e, ctx),
+            Expression::CallExpression(_) => {
+                PeepholeOptimizations::fold_call_expression(e, ctx);
+                self.inner.remove_dead_code_call_expression(e, ctx);
+            }
+            Expression::ConditionalExpression(_) => {
+                self.inner.try_fold_conditional_expression(e, ctx);
+            }
+            Expression::SequenceExpression(_) => self.inner.try_fold_sequence_expression(e, ctx),
+            Expression::AssignmentExpression(_) => {
+                self.inner.remove_unused_assignment_expression(e, ctx);
+            }
+            _ => {}
+        }
     }
 }
 

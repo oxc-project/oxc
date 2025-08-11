@@ -171,15 +171,13 @@ impl<'a> PeepholeOptimizations {
                                 Self::join_sequence(&mut prev_if.test, &mut b, ctx)
                             } else {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
-                                let mut expr = self.minimize_conditional(
+                                self.minimize_conditional(
                                     prev_if.span,
                                     prev_if.test.take_in(ctx.ast),
                                     left,
                                     right,
                                     ctx,
-                                );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
-                                expr
+                                )
                             };
                             let last_return_stmt =
                                 ctx.ast.statement_return(right_span, Some(argument));
@@ -258,15 +256,13 @@ impl<'a> PeepholeOptimizations {
                                 Self::join_sequence(&mut prev_if.test, &mut b, ctx)
                             } else {
                                 // "if (a) throw b; throw c;" => "throw a ? b : c;"
-                                let mut expr = self.minimize_conditional(
+                                self.minimize_conditional(
                                     prev_if.span,
                                     prev_if.test.take_in(ctx.ast),
                                     left,
                                     right,
                                     ctx,
-                                );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
-                                expr
+                                )
                             };
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
                             result.push(last_throw_stmt);
