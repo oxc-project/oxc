@@ -48,9 +48,37 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::LogicalExpression(e) => e.may_have_side_effects(ctx),
             Expression::ParenthesizedExpression(e) => e.expression.may_have_side_effects(ctx),
             Expression::ConditionalExpression(e) => {
-                e.test.may_have_side_effects(ctx)
-                    || e.consequent.may_have_side_effects(ctx)
-                    || e.alternate.may_have_side_effects(ctx)
+                if e.test.may_have_side_effects(ctx) {
+                    return true;
+                }
+
+                // Check if consequent is a safe unbound identifier access
+                // Pattern: typeof x === 'undefined' ? fallback : x
+                if let Some(is_safe) = is_side_effect_free_unbound_identifier_ref(
+                    &e.alternate,
+                    &e.test,
+                    false, // no branch (false branch of conditional)
+                    ctx,
+                ) {
+                    if is_safe && !e.consequent.may_have_side_effects(ctx) {
+                        return false;
+                    }
+                }
+
+                // Check if alternate is a safe unbound identifier access
+                // Pattern: typeof x !== 'undefined' ? x : fallback
+                if let Some(is_safe) = is_side_effect_free_unbound_identifier_ref(
+                    &e.consequent,
+                    &e.test,
+                    true, // yes branch (true branch of conditional)
+                    ctx,
+                ) {
+                    if is_safe && !e.alternate.may_have_side_effects(ctx) {
+                        return false;
+                    }
+                }
+
+                e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
             Expression::SequenceExpression(e) => {
                 e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
@@ -285,7 +313,46 @@ fn is_known_global_constructor(name: &str) -> bool {
 
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        self.left.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+        if self.left.may_have_side_effects(ctx) {
+            return true;
+        }
+
+        // For logical AND and OR expressions, check if the right side is a safe unbound identifier access
+        match self.operator {
+            LogicalOperator::And => {
+                // Pattern: typeof x !== 'undefined' && x
+                // The right side is safe if the left side ensures x is defined
+                if let Some(is_safe) = is_side_effect_free_unbound_identifier_ref(
+                    &self.right,
+                    &self.left,
+                    true, // yes branch for AND
+                    ctx,
+                ) {
+                    if is_safe {
+                        return false;
+                    }
+                }
+            }
+            LogicalOperator::Or => {
+                // Pattern: typeof x === 'undefined' || x
+                // The right side is safe if the left side ensures x is undefined in the false branch
+                if let Some(is_safe) = is_side_effect_free_unbound_identifier_ref(
+                    &self.right,
+                    &self.left,
+                    false, // no branch for OR
+                    ctx,
+                ) {
+                    if is_safe {
+                        return false;
+                    }
+                }
+            }
+            LogicalOperator::Coalesce => {
+                // Nullish coalescing doesn't involve typeof checks for undefined
+            }
+        }
+
+        self.right.may_have_side_effects(ctx)
     }
 }
 
@@ -543,7 +610,7 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
     }
 }
 
-/// Checks if accessing an unbound identifier reference is side-effect-free based on a guard condition.
+/// Helper function to check if accessing an unbound identifier reference is side-effect-free based on a guard condition.
 ///
 /// This function analyzes patterns like:
 /// - `typeof x === 'undefined' && x` (safe to access x in the right branch)
@@ -551,7 +618,7 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
 /// - `typeof x < 'u' && x` (safe to access x in the right branch)
 ///
 /// Ported from: https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_ast/js_ast_helpers.go#L2594-L2639
-pub fn is_side_effect_free_unbound_identifier_ref<'a>(
+fn is_side_effect_free_unbound_identifier_ref<'a>(
     value: &Expression<'a>,
     guard_condition: &Expression<'a>,
     mut is_yes_branch: bool,
