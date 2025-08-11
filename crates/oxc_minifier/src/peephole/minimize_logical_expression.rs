@@ -8,13 +8,13 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_logical_expression(
-        &self,
-        e: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        Self::try_compress_is_null_or_undefined(e, ctx)
-            .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
+    pub fn minimize_logical_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::LogicalExpression(e) = expr else { return };
+        if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
+            *expr = changed;
+            ctx.state.changed = true;
+        }
+        Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -205,32 +205,31 @@ impl<'a> PeepholeOptimizations {
     ///
     /// Also `a || (foo, bar, a = b)` to `a ||= (foo, bar, b)`
     fn try_compress_logical_expression_to_assignment_expression(
-        &self,
-        expr: &mut LogicalExpression<'a>,
+        expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    ) {
         if ctx.options().target < ESTarget::ES2020 {
-            return None;
+            return;
         }
-
-        if let Expression::SequenceExpression(sequence_expr) = &mut expr.right {
+        let Expression::LogicalExpression(e) = expr else { return };
+        if let Expression::SequenceExpression(sequence_expr) = &e.right {
             let Some(Expression::AssignmentExpression(assignment_expr)) =
                 sequence_expr.expressions.last()
             else {
-                return None;
+                return;
             };
             if assignment_expr.operator != AssignmentOperator::Assign {
-                return None;
+                return;
             }
-
             if !Self::has_no_side_effect_for_evaluation_same_target(
                 &assignment_expr.left,
-                &expr.left,
+                &e.left,
                 ctx,
             ) {
-                return None;
+                return;
             }
 
+            let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
             let Some(Expression::AssignmentExpression(mut assignment_expr)) =
                 sequence_expr.expressions.pop()
             else {
@@ -239,30 +238,34 @@ impl<'a> PeepholeOptimizations {
 
             let assign_value = assignment_expr.right.take_in(ctx.ast);
             sequence_expr.expressions.push(assign_value);
-            return Some(ctx.ast.expression_assignment(
-                expr.span,
-                expr.operator.to_assignment_operator(),
+            *expr = ctx.ast.expression_assignment(
+                e.span,
+                e.operator.to_assignment_operator(),
                 assignment_expr.left.take_in(ctx.ast),
-                expr.right.take_in(ctx.ast),
-            ));
+                e.right.take_in(ctx.ast),
+            );
+            ctx.state.changed = true;
+            return;
         }
 
-        let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
-            return None;
+        let Expression::AssignmentExpression(assignment_expr) = &e.right else {
+            return;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {
-            return None;
+            return;
         }
-        let new_op = expr.operator.to_assignment_operator();
-        if !Self::has_no_side_effect_for_evaluation_same_target(
-            &assignment_expr.left,
-            &expr.left,
-            ctx,
-        ) {
-            return None;
+        let new_op = e.operator.to_assignment_operator();
+        if !Self::has_no_side_effect_for_evaluation_same_target(&assignment_expr.left, &e.left, ctx)
+        {
+            return;
         }
-        assignment_expr.span = expr.span;
+        let span = e.span;
+        let Expression::AssignmentExpression(assignment_expr) = &mut e.right else {
+            return;
+        };
+        assignment_expr.span = span;
         assignment_expr.operator = new_op;
-        Some(expr.right.take_in(ctx.ast))
+        *expr = e.right.take_in(ctx.ast);
+        ctx.state.changed = true;
     }
 }

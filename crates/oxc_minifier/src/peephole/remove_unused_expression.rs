@@ -68,10 +68,8 @@ impl<'a> PeepholeOptimizations {
 
     fn fold_logical_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::LogicalExpression(logical_expr) = e else { return false };
-        if !logical_expr.operator.is_coalesce()
-            && self.try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx)
-        {
-            ctx.state.changed = true;
+        if !logical_expr.operator.is_coalesce() {
+            self.try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
         }
         if self.remove_unused_expression(&mut logical_expr.right, ctx) {
             self.remove_unused_expression(&mut logical_expr.left, ctx);

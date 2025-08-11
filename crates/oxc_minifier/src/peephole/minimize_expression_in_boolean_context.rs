@@ -33,7 +33,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    ) {
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
@@ -42,7 +42,7 @@ impl<'a> PeepholeOptimizations {
                         let mut e = u2.argument.take_in(ctx.ast);
                         self.try_fold_expr_in_boolean_context(&mut e, ctx);
                         *expr = e;
-                        return true;
+                        ctx.state.changed = true;
                     }
                 }
             }
@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                     // `if ((a | b) === 0);", "if (!(a | b));")`
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 };
-                return true;
+                ctx.state.changed = true;
             }
             // "if (!!a && !!b)" => "if (a && b)"
             Expression::LogicalExpression(e) if e.operator.is_and() => {
@@ -71,7 +71,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(true) {
                     *expr = e.left.take_in(ctx.ast);
-                    return true;
+                    ctx.state.changed = true;
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
@@ -81,7 +81,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
                 if e.right.get_side_free_boolean_value(ctx) == Some(false) {
                     *expr = e.left.take_in(ctx.ast);
-                    return true;
+                    ctx.state.changed = true;
                 }
             }
             Expression::ConditionalExpression(e) => {
@@ -100,7 +100,8 @@ impl<'a> PeepholeOptimizations {
                         (LogicalOperator::And, self.minimize_not(left.span(), left, ctx))
                     };
                     *expr = self.join_with_left_associative_op(span, op, left, right, ctx);
-                    return true;
+                    ctx.state.changed = true;
+                    return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
                     let left = e.test.take_in(ctx.ast);
@@ -114,17 +115,16 @@ impl<'a> PeepholeOptimizations {
                         (LogicalOperator::And, left)
                     };
                     *expr = self.join_with_left_associative_op(span, op, left, right, ctx);
-                    return true;
+                    ctx.state.changed = true;
                 }
             }
             Expression::SequenceExpression(seq_expr) => {
                 if let Some(last) = seq_expr.expressions.last_mut() {
-                    return self.try_fold_expr_in_boolean_context(last, ctx);
+                    self.try_fold_expr_in_boolean_context(last, ctx);
                 }
             }
             _ => {}
         }
-        false
     }
 }
 

@@ -182,11 +182,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        if expr.operator.is_not()
-            && self.try_fold_expr_in_boolean_context(&mut expr.argument, &mut ctx)
-        {
-            ctx.state.changed = true;
+        if expr.operator.is_not() {
+            let mut ctx = Ctx::new(ctx);
+            self.try_fold_expr_in_boolean_context(&mut expr.argument, &mut ctx);
         }
     }
 
