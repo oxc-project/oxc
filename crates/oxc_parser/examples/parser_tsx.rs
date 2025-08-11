@@ -14,7 +14,7 @@ use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
 /// Parse a TypeScript JSX file and validate the results
-fn main() {
+fn main() -> Result<(), String> {
     let source_text = r"
 import React from 'react';
 
@@ -45,8 +45,16 @@ export const Counter: React.FC = () => {
         ..
     } = Parser::new(&allocator, source_text, source_type).parse();
 
-    assert!(!panicked);
-    assert!(errors.is_empty());
+    if panicked {
+        return Err("Parser panicked".to_string());
+    }
+
+    if !errors.is_empty() {
+        return Err(format!("Parsing errors: {}", errors.len()));
+    }
+
     assert!(!program.body.is_empty());
     assert_eq!(program.comments.len(), 1);
+
+    Ok(())
 }
