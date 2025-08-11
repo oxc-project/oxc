@@ -20,6 +20,23 @@ use super::PeepholeOptimizations;
 type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 
 impl<'a> PeepholeOptimizations {
+    /// Replaces known method calls with more efficient equivalents or constant values.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// String.fromCharCode(65)
+    /// Math.pow(2, 3)
+    /// Array.of(1, 2, 3)
+    /// "hello".charAt(0)
+    /// 
+    /// // After:
+    /// "A"
+    /// 8
+    /// [1, 2, 3]
+    /// "h"
+    /// ```
+    /// 
     /// Minimize With Known Methods
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
     pub fn replace_known_methods_exit_expression(
@@ -39,6 +56,20 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold known global method calls by evaluating them at compile time.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// parseInt("42", 10)
+    /// isNaN(NaN)
+    /// Number.isInteger(42)
+    /// 
+    /// // After:
+    /// 42
+    /// true
+    /// true
+    /// ```
     fn try_fold_known_global_methods(&self, node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
 

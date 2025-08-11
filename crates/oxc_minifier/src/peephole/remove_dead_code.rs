@@ -16,6 +16,21 @@ use super::PeepholeOptimizations;
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a> PeepholeOptimizations {
+    /// Removes various forms of dead code from statements, including unreachable code after returns,
+    /// empty blocks, and other unnecessary constructs.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// if (false) { unreachableCode(); }
+    /// { singleStatement; }
+    /// function unused() {}  // (if unused)
+    /// 
+    /// // After:
+    /// // (removed)
+    /// singleStatement;
+    /// // (removed if unused)
+    /// ```
     pub fn remove_dead_code_exit_statement(&self, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
@@ -34,6 +49,21 @@ impl<'a> PeepholeOptimizations {
         self.try_fold_expression_stmt(stmt, ctx);
     }
 
+    /// Removes dead code from expressions, including unreachable branches in conditionals,
+    /// unused parts of sequence expressions, and no-op function calls.
+    /// 
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// true ? used : unreachable
+    /// (sideEffect(), unused, result)
+    /// func() || fallback  // if func() always returns truthy
+    /// 
+    /// // After:
+    /// used
+    /// (sideEffect(), result)
+    /// func()
+    /// ```
     pub fn remove_dead_code_exit_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         match e {
             Expression::ConditionalExpression(_) => self.try_fold_conditional_expression(e, ctx),
