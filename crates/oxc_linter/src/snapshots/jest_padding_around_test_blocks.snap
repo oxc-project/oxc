@@ -1,0 +1,97 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:1:23]
+ 1 │ test('foo', () => {});test('bar', () => {});
+   ·                       ▲
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:2:1]
+ 1 │ test('foo', () => {});
+ 2 │ test('bar', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:2:1]
+ 1 │ it('foo', () => {});
+ 2 │ fit('bar', () => {});
+   · ▲
+ 3 │ test('baz', () => {});
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:3:1]
+ 2 │ fit('bar', () => {});
+ 3 │ test('baz', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:4:6]
+ 3 │      const thing = 123;
+ 4 │      test('is another bar w/ test', () => {
+   ·      ▲
+ 5 │      });
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+   ╭─[padding_around_test_blocks.tsx:6:6]
+ 5 │      });
+ 6 │      // With a comment
+   ·      ▲
+ 7 │      it('is another bar w/ it', () => {
+   ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+    ╭─[padding_around_test_blocks.tsx:9:6]
+  8 │      });
+  9 │      test.skip('skipping', () => {}); // Another comment
+    ·      ▲
+ 10 │      it.skip('skipping too', () => {});
+    ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+    ╭─[padding_around_test_blocks.tsx:10:6]
+  9 │      test.skip('skipping', () => {}); // Another comment
+ 10 │      it.skip('skipping too', () => {});
+    ·      ▲
+ 11 │  });xtest('weird', () => {});
+    ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+    ╭─[padding_around_test_blocks.tsx:11:5]
+ 10 │      it.skip('skipping too', () => {});
+ 11 │  });xtest('weird', () => {});
+    ·     ▲
+ 12 │  test
+    ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+    ╭─[padding_around_test_blocks.tsx:12:2]
+ 11 │  });xtest('weird', () => {});
+ 12 │  test
+    ·  ▲
+ 13 │    .skip('skippy skip', () => {});
+    ╰────
+  help: Make sure there is an empty new line before the test/it block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test/it block
+    ╭─[padding_around_test_blocks.tsx:14:2]
+ 13 │    .skip('skippy skip', () => {});
+ 14 │  xit('bar foo', () => {});
+    ·  ▲
+ 15 │             
+    ╰────
+  help: Make sure there is an empty new line before the test/it block
