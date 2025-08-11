@@ -1,0 +1,497 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = 'hello, ' + name + '!';
+   ·           ──────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + 'baz';
+   ·           ───────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + `baz`;
+   ·           ───────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = +100 + 'yen';
+   ·           ────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = 'bar' + baz;
+   ·           ───────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = '￥' + (n * 1000) + '-'
+   ·           ───────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;
+   ·           ───────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:34]
+ 1 │ var foo = 'aaa' + aaa; var bar = 'bbb' + bbb;
+   ·                                  ───────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:14]
+ 1 │ var string = (number + 1) + 'px';
+   ·              ───────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = 'bar' + baz + 'qux';
+   ·           ───────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = '0 backslashes: ${bar}' + baz;
+   ·           ─────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = '1 backslash: \${bar}' + baz;
+   ·           ────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = '2 backslashes: \${bar}' + baz;
+   ·           ──────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = '3 backslashes: \\\${bar}' + baz;
+   ·           ────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + 'this is a backtick: `' + baz;
+   ·           ───────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + 'this is a backtick preceded by a backslash: \`' + baz;
+   ·           ────────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + 'this is a backtick preceded by two backslashes: \`' + baz;
+   ·           ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + `${baz}foo`;
+   ·           ─────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + baz + 'qux';
+   ·           ─────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:19]
+ 1 │ var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;
+   ·                   ───────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = bar + ('baz') + 'qux' + (boop);
+   ·           ──────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  × Unterminated string
+   ╭─[prefer_template.tsx:1:70]
+ 1 │ foo + 'unescapes an escaped single quote in a single-quoted string: ''
+   ·                                                                      ─
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[prefer_template.tsx:1:70]
+ 1 │ foo + 'unescapes an escaped single quote in a single-quoted string: ''
+   ·                                                                      ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Unterminated string
+   ╭─[prefer_template.tsx:1:70]
+ 1 │ foo + "unescapes an escaped double quote in a double-quoted string: ""
+   ·                                                                      ─
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[prefer_template.tsx:1:70]
+ 1 │ foo + "unescapes an escaped double quote in a double-quoted string: ""
+   ·                                                                      ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + 'does not unescape an escaped double quote in a single-quoted string: "'
+   · ──────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + "does not unescape an escaped single quote in a double-quoted string: \'"
+   · ───────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  × Unterminated string
+   ╭─[prefer_template.tsx:1:44]
+ 1 │ foo + 'handles unicode escapes correctly: ''
+   ·                                            ─
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[prefer_template.tsx:1:44]
+ 1 │ foo + 'handles unicode escapes correctly: ''
+   ·                                            ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + 'does not autofix octal escape sequence' + ' 33'
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + 'does not autofix non-octal decimal escape sequence' + '\8'
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  × Unterminated string
+   ╭─[prefer_template.tsx:1:7]
+ 1 │ foo + '
+   ·       ──
+ 2 │  other text  33'
+   ╰────
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + '\0\1'
+   · ────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ' 8'
+   · ─────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + '\033'
+   · ────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ' '
+   · ────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ ╭─▶ "default-src 'self' https://*.google.com;"
+ 2 │ │                           + "frame-ancestors 'none';"
+ 3 │ ╰─▶                         + "report-to " + foo + ";"
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo
+   · ───────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + 'c' + 'd'
+   · ───────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b + c' + foo + 'd' + 'e'
+   · ───────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + 'd')
+   · ─────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('a' + 'b')
+   · ─────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + 'd') + ('e' + 'f')
+   · ───────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ('a' + 'b') + ('c' + 'd')
+   · ───────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + foo + ('b' + 'c') + ('d' + bar + 'e')
+   · ───────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ('b' + 'c') + ('d' + bar + 'e')
+   · ─────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + 'd' + 'e')
+   · ───────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + bar + 'd')
+   · ───────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + bar + ('d' + 'e') + 'f')
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + 'b' + foo + ('c' + bar + 'e') + 'f' + test
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + foo + ('b' + bar + 'c') + ('d' + test)
+   · ────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + foo + ('b' + 'c') + ('d' + bar)
+   · ─────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ('a' + bar + 'b') + 'c' + test
+   · ────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + '`b`' + c
+   · ───────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + '`b` + `c`' + d
+   · ─────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + b + ('`c`' + '`d`')
+   · ─────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ '`a`' + b + ('`c`' + '`d`')
+   · ───────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + ('`a`' + bar + '`b`') + '`c`' + test
+   · ──────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + ('b' + 'c') + d
+   · ─────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + ('`b`' + '`c`') + d
+   · ─────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + ('b' + 'c') + d
+   · ───────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + ('b' + 'c') + (d + 'e')
+   · ───────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + ('`b`' + '`c`') + d
+   · ───────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + ('`b` + `c`' + '`d`') + e
+   · ─────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + ('b' + 'c' + 'd') + e
+   · ───────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'a' + ('b' + 'c' + 'd' + (e + 'f') + 'g' +'h' + 'i') + j
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ a + (('b' + 'c') + 'd')
+   · ───────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ (a + 'b') + ('c' + 'd') + e
+   · ───────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:11]
+ 1 │ var foo = "Hello " + "world " + "another " + test
+   ·           ───────────────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ 'Hello ' + '"world" ' + test
+   · ────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
+
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ "Hello " + "'world' " + test
+   · ────────────────────────────
+   ╰────
+  help: Unexpected string concatenation.
