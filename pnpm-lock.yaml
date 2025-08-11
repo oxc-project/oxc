@@ -9,6 +9,9 @@ catalogs:
     '@napi-rs/cli':
       specifier: 3.0.0
       version: 3.0.0
+    '@napi-rs/wasm-runtime':
+      specifier: 1.0.0
+      version: 1.0.0
     typescript:
       specifier: 5.9.2
       version: 5.9.2
@@ -110,8 +113,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.1(vite@7.1.1(@types/node@24.2.1)(jiti@2.5.1))(vitest@3.2.4)
       '@napi-rs/wasm-runtime':
-        specifier: ^1.0.0
-        version: 1.0.3
+        specifier: 'catalog:'
+        version: 1.0.0
       '@vitest/browser':
         specifier: 3.2.4
         version: 3.2.4(playwright@1.54.2)(vite@7.1.1(@types/node@24.2.1)(jiti@2.5.1))(vitest@3.2.4)
@@ -134,8 +137,8 @@ importers:
   napi/playground:
     dependencies:
       '@napi-rs/wasm-runtime':
-        specifier: ^1.0.0
-        version: 1.0.3
+        specifier: 'catalog:'
+        version: 1.0.0
 
   napi/transform:
     devDependencies:
@@ -1070,6 +1073,9 @@ packages:
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
+
+  '@napi-rs/wasm-runtime@1.0.0':
+    resolution: {integrity: sha512-OInwPIZhcQ+aWOBFMUXzv95RLDTBRPaNPm5kSFJaL3gVAMVxrzc0YXNsVeLPHf+4sTviOy2e5wZdvKILb7dC/w==}
 
   '@napi-rs/wasm-runtime@1.0.3':
     resolution: {integrity: sha512-rZxtMsLwjdXkMUGC3WwsPwLNVqVqnTJT6MNIB6e+5fhMcSCPP0AOsNWuMQ5mdCq6HNjs/ZeWAEchpqeprqBD2Q==}
@@ -4752,11 +4758,18 @@ snapshots:
       '@tybys/wasm-util': 0.10.0
     optional: true
 
+  '@napi-rs/wasm-runtime@1.0.0':
+    dependencies:
+      '@emnapi/core': 1.4.5
+      '@emnapi/runtime': 1.4.5
+      '@tybys/wasm-util': 0.10.0
+
   '@napi-rs/wasm-runtime@1.0.3':
     dependencies:
       '@emnapi/core': 1.4.5
       '@emnapi/runtime': 1.4.5
       '@tybys/wasm-util': 0.10.0
+    optional: true
 
   '@napi-rs/wasm-tools-android-arm-eabi@0.0.3':
     optional: true
