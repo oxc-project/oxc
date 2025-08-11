@@ -1215,15 +1215,14 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_parse_numbers() {
-        // Template Strings
-        test_same("x = parseInt(`123`)");
-        test_same("x = parseInt(` 123`)");
+        test("x = parseInt('123')", "x = 123");
+        test("x = parseInt(`123`)", "x = 123");
+        test("x = parseInt(` 123`)", "x = 123");
         test_same("x = parseInt(`12 ${a}`)");
-        test_same("x = parseFloat(`1.23`)");
-
-        // setAcceptedLanguage(LanguageMode.ECMASCRIPT5);
+        test("x = parseFloat('1.23')", "x = 1.23");
+        test("x = parseFloat(`1.23`)", "x = 1.23");
+        test_same("x = parseFloat(`1.${a}`)");
 
         test("x = parseInt('123')", "x = 123");
         test("x = parseInt(' 123')", "x = 123");
@@ -1248,44 +1247,56 @@ mod test {
         test("x = parseInt('17', 8)", "x = 15");
         test("x = parseInt('015', 10)", "x = 15");
         test("x = parseInt('1111', 2)", "x = 15");
-        test("x = parseInt('12', 13)", "x = 15");
+        test_same("x = parseInt('12', 13)");
         test("x = parseInt(15.99, 10)", "x = 15");
         test("x = parseInt(-15.99, 10)", "x = -15");
-        // Java's Integer.parseInt("-15.99", 10) throws an exception, because of the decimal point.
-        test_same("x = parseInt('-15.99', 10)");
+        test("x = parseInt('-15.99', 10)", "x = -15");
         test("x = parseFloat('3.14')", "x = 3.14");
         test("x = parseFloat(3.14)", "x = 3.14");
         test("x = parseFloat(-3.14)", "x = -3.14");
         test("x = parseFloat('-3.14')", "x = -3.14");
         test("x = parseFloat('-0')", "x = -0");
 
-        // Valid calls - unable to fold
-        test_same("x = parseInt('FXX123', 16)");
-        test_same("x = parseInt('15*3', 10)");
-        test_same("x = parseInt('15e2', 10)");
-        test_same("x = parseInt('15px', 10)");
-        test_same("x = parseInt('-0x08')");
-        test_same("x = parseInt('1', -1)");
-        test_same("x = parseFloat('3.14more non-digit characters')");
-        test_same("x = parseFloat('314e-2')");
-        test_same("x = parseFloat('0.0314E+2')");
-        test_same("x = parseFloat('3.333333333333333333333333')");
+        test("x = parseInt('FXX123', 16)", "x = 15"); // Parses 'F' (15 in hex)
+        test("x = parseInt('15*3', 10)", "x = 15"); // Parses '15', stops at '*'
+        test("x = parseInt('15e2', 10)", "x = 15"); // Parses '15', stops at 'e'
+        test("x = parseInt('15px', 10)", "x = 15"); // Parses '15', stops at 'p'
+        test("x = parseInt('-0x08')", "x = -8");
+        test("x = parseInt('1', -1)", "x = NaN");
+        test("x = parseFloat('3.14more non-digit characters')", "x = 3.14"); // Parses '3.14', stops at 'm'
+        test("x = parseFloat('314e-2')", "x = 3.14");
+        test("x = parseFloat('0.0314E+2')", "x = 3.14");
+        test("x = parseFloat('3.333333333333333333333333')", "x = 3.3333333333333335");
 
-        // Invalid calls
-        test_same("x = parseInt('0xa', 10)");
-        test_same("x = parseInt('')");
-
-        // setAcceptedLanguage(LanguageMode.ECMASCRIPT3);
-        test_same("x = parseInt('08')");
+        test("x = parseInt('0xa', 10)", "x = 0"); // Parses '0' in base 10, stops at 'x'
+        test("x = parseInt('')", "x = NaN");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_parse_octal_numbers() {
-        // setAcceptedLanguage(LanguageMode.ECMASCRIPT5);
-
         test("x = parseInt('021', 8)", "x = 17");
         test("x = parseInt('-021', 8)", "x = -17");
+    }
+
+    #[test]
+    fn test_fold_parse_numbers_additional() {
+        test_value("parseInt('+1')", "1");
+        test_value("parseFloat('+1')", "1");
+        test_value("parseInt('10', 0)", "10");
+        test_value("parseInt('0x10', 16)", "16");
+        test_value("parseInt('')", "NaN");
+        test_value("parseInt(' ')", "NaN");
+        test_value("parseInt('abc')", "NaN");
+        test_value("parseFloat('')", "NaN");
+        test_value("parseFloat(' ')", "NaN");
+        test_value("parseFloat('abc')", "NaN");
+        test_value("parseFloat('Infinity')", "Infinity");
+        test_value("parseFloat('-Infinity')", "-Infinity");
+        test_value("parseFloat('+Infinity')", "Infinity");
+        test_same_value("parseInt(unknown)");
+        test_same_value("parseInt((foo, '0'))"); // foo may have side effects
+        test_same_value("parseFloat(unknown)");
+        test_same_value("parseFloat((foo, '0'))"); // foo may have side effects
     }
 
     #[test]
@@ -1727,5 +1738,39 @@ mod test {
         );
         test("x = decodeURI(encodeURI('café'))", "x = 'café'");
         test("x = decodeURIComponent(encodeURIComponent('测试'))", "x = '测试'");
+    }
+
+    #[test]
+    fn test_fold_global_is_nan() {
+        test_value("isNaN()", "!0");
+        test_value("isNaN(NaN)", "!0");
+        test_value("isNaN(123)", "!1");
+        test_value("isNaN('123')", "!1");
+        test_value("isNaN('abc')", "!0");
+        test_value("isNaN('')", "!1");
+        test_value("isNaN(' ')", "!1");
+        test_value("isNaN(null)", "!1");
+        test_value("isNaN(Infinity)", "!1");
+        test_value("isNaN(-Infinity)", "!1");
+
+        test_same_value("isNaN(unknown)");
+        test_same_value("isNaN((foo, 0))"); // foo may have sideeffect
+    }
+
+    #[test]
+    fn test_fold_global_is_finite() {
+        test_value("isFinite()", "!1");
+        test_value("isFinite(123)", "!0");
+        test_value("isFinite(123.45)", "!0");
+        test_value("isFinite('123')", "!0");
+        test_value("isFinite('')", "!0");
+        test_value("isFinite(' ')", "!0");
+        test_value("isFinite(null)", "!0");
+        test_value("isFinite(NaN)", "!1");
+        test_value("isFinite(Infinity)", "!1");
+        test_value("isFinite(-Infinity)", "!1");
+        test_value("isFinite('abc')", "!1");
+        test_same_value("isFinite(unknown)");
+        test_same_value("isFinite((foo, 0))"); // foo may have sideeffect
     }
 }
