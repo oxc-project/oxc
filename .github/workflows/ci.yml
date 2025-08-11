@@ -175,12 +175,6 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      # Submodules only needed for parser tests
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true' && matrix.component == 'parser'
-        with:
-          babel: false
-          prettier: false
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
@@ -194,6 +188,12 @@ jobs:
         run: |
           rustup target add wasm32-wasip1-threads
           pnpm run build-test
+      # Submodules only needed for parser tests
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true' && matrix.component == 'parser'
+        with:
+          babel: false
+          prettier: false
       # Playground has no tests
       - if: steps.filter.outputs.src == 'true' && matrix.component != 'playground'
         name: Run tests
