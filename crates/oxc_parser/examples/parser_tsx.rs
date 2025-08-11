@@ -49,6 +49,6 @@ export const Counter: React.FC = () => {
     assert!(errors.is_empty());
     assert!(!program.body.is_empty());
     assert_eq!(program.comments.len(), 1);
-    
+
     Ok(())
 }
