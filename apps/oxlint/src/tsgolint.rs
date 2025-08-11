@@ -98,16 +98,20 @@ impl<'a> TsGoLintState<'a> {
         };
 
         let handler = std::thread::spawn(move || {
-            let child = std::process::Command::new(self.executable_path)
+            let child = std::process::Command::new(&self.executable_path)
                 .arg("headless")
                 .stdin(std::process::Stdio::piped())
                 .stdout(std::process::Stdio::piped())
                 .spawn();
 
-            let Ok(mut child) = child else {
-                // For now, silently ignore errors if `tsgolint` does not appear to be installed, or cannot
-                // be spawned correctly.
-                return Ok(());
+            let mut child = match child {
+                Ok(c) => c,
+                Err(e) => {
+                    return Err(format!(
+                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                        self.executable_path.display()
+                    ));
+                }
             };
 
             let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
