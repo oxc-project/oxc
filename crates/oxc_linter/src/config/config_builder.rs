@@ -448,7 +448,10 @@ impl ConfigStoreBuilder {
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(plugins: BuiltinLintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+    fn warn_correctness(mut plugins: BuiltinLintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+        if plugins.contains(BuiltinLintPlugins::VITEST) {
+            plugins = plugins.union(BuiltinLintPlugins::JEST);
+        }
         RULES
             .iter()
             .filter(|rule| {
