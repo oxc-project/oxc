@@ -99,7 +99,7 @@ impl Tester {
         settings.set_snapshot_suffix("oxlint");
 
         let output_string = &String::from_utf8(output).unwrap();
-        let regex = Regex::new(r"\d+ms").unwrap();
+        let regex = Regex::new(r"\d+(?:\.\d+)?s|\d+ms").unwrap();
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
         let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
         let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);
