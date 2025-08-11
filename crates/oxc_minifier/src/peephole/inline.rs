@@ -9,13 +9,13 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Initializes the constant value for a symbol when a variable is declared.
     /// This is used to track constant values that can later be inlined.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before: Symbol value tracked for inlining
     /// const x = 5;
     /// let y = "hello";
-    /// 
+    ///
     /// // After: Values will be available for inlining
     /// // (no visible change at this stage, used for tracking)
     /// ```
@@ -34,7 +34,7 @@ impl<'a> PeepholeOptimizations {
     /// Inlines constant identifier references with their literal values.
     /// This optimization replaces variable references with their constant values
     /// when it's beneficial for code size reduction.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
@@ -42,7 +42,7 @@ impl<'a> PeepholeOptimizations {
     /// const name = "test";
     /// const flag = true;
     /// console.log(x, name, flag);
-    /// 
+    ///
     /// // After:
     /// console.log(5, "test", true);
     /// ```

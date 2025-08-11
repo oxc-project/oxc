@@ -10,20 +10,20 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Attempts to minimize if statements by converting them to more compact forms.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// if (!condition) statement();
     /// if (test) action(); else alternative();
     /// if (condition) {}
-    /// 
+    ///
     /// // After:
     /// condition || statement();
     /// test ? action() : alternative();
     /// condition;
     /// ```
-    /// 
+    ///
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
         &self,
@@ -139,16 +139,16 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Wraps nested if statements to avoid ambiguous else clause parsing.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// if (foo) if (bar) return baz; else quux;
-    /// 
+    ///
     /// // After:  
     /// if (foo) { if (bar) return baz; else quux; }
     /// ```
-    /// 
+    ///
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     #[expect(clippy::cast_possible_truncation)]
@@ -169,13 +169,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Checks if a statement is effectively empty (block statement with no body or empty statement).
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // These are considered empty:
     /// {}           // Empty block statement
     /// ;            // Empty statement
-    /// 
+    ///
     /// // These are not empty:
     /// { a(); }     // Block with content
     /// a();         // Expression statement

@@ -44,7 +44,7 @@ pub struct PeepholeOptimizations {
 
 impl<'a> PeepholeOptimizations {
     /// Creates a new instance of PeepholeOptimizations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // This is used internally to set up the optimization passes
@@ -55,15 +55,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Runs a single pass of peephole optimizations on the AST.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// function test() {
-    ///   var x = 1; 
+    ///   var x = 1;
     ///   return x;
     /// }
-    /// 
+    ///
     /// // After single pass:
     /// function test() {
     ///   return 1;
@@ -78,13 +78,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Repeatedly runs peephole optimizations until no more changes are made or maximum iterations reached.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// var a = 1, b = a, c = b;
     /// console.log(c);
-    /// 
+    ///
     /// // After multiple passes:
     /// console.log(1);
     /// ```

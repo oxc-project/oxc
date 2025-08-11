@@ -6,14 +6,14 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Determines if an unused variable declarator should be removed based on various safety criteria.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// var unused = 5;        // Never referenced
     /// var used = 10;         // Referenced somewhere  
     /// console.log(used);
-    /// 
+    ///
     /// // After:
     /// // unused removed
     /// var used = 10;
@@ -42,14 +42,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Removes unused function declarations by replacing them with empty statements.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// function unusedFunc() { return 42; }  // Never called
     /// function usedFunc() { return 24; }    // Called somewhere
     /// usedFunc();
-    /// 
+    ///
     /// // After:
     /// // unusedFunc removed entirely
     /// function usedFunc() { return 24; }
@@ -74,14 +74,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Removes unused class declarations by replacing them with empty statements.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// class UnusedClass {}        // Never instantiated
     /// class UsedClass {}          // Used somewhere
     /// new UsedClass();
-    /// 
+    ///
     /// // After:
     /// // UnusedClass removed entirely
     /// class UsedClass {}
@@ -113,16 +113,16 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Determines whether to keep top-level variables in script mode to avoid potential issues.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // In script mode (not module):
     /// var topLevel = 1;  // Kept even if unused (could be accessed via window.topLevel)
-    /// 
+    ///
     /// // In module mode:
     /// var topLevel = 1;  // Can be safely removed if unused
     /// ```
-    /// 
+    ///
     /// Do remove top level vars in script mode.
     pub fn keep_top_level_var_in_script_mode(ctx: &Ctx<'a, '_>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()

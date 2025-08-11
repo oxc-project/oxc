@@ -9,12 +9,12 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Creates a minimized NOT expression by applying various optimizations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// var result = !someCondition;
-    /// 
+    ///
     /// // After (with optimizations applied):
     /// var result = optimizedCondition;  // Various NOT optimizations applied
     /// ```
@@ -30,20 +30,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to minimize NOT expressions by applying De Morgan's laws and other optimizations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// !!value           // Double negation
     /// !(a == b)         // Negated equality
     /// !(a, b)           // Negated sequence
-    /// 
+    ///
     /// // After:
     /// value             // Remove double negation
     /// a != b            // Invert comparison
     /// (a, !b)           // Move negation to last expression
     /// ```
-    /// 
+    ///
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     pub fn try_minimize_not(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };

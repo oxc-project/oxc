@@ -43,14 +43,14 @@ pub struct Normalize {
 
 impl<'a> Normalize {
     /// Applies normalization passes to the program to make subsequent optimizations easier.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// const x = 1;  // (if const_to_let enabled)
     /// while (true) break;
-    /// debugger;     // (if debug removal enabled) 
-    /// 
+    /// debugger;     // (if debug removal enabled)
+    ///
     /// // After:
     /// let x = 1;
     /// for (;;) break;

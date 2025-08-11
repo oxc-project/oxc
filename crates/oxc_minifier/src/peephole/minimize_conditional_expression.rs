@@ -13,12 +13,12 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Creates a minimized conditional expression by applying various optimizations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// condition ? value : alternate
-    /// 
+    ///
     /// // After (with various optimizations applied):
     /// optimizedCondition ? optimizedValue : optimizedAlternate
     /// ```
@@ -36,20 +36,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to minimize conditional expressions through various optimizations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// (a, b) ? c : d        // Sequence in test
     /// true ? x : y          // Constant test
     /// test ? true : false   // Boolean result
-    /// 
+    ///
     /// // After:
     /// a, b ? c : d          // Hoist sequence
     /// x                     // Use consequent
     /// !!test                // Boolean conversion
     /// ```
-    /// 
+    ///
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     pub fn try_minimize_conditional(
         &self,

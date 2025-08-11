@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
 
     #[expect(clippy::float_cmp)]
     /// Attempts to fold unary expressions by evaluating them at compile time.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
     /// +3.14
     /// !"hello"
     /// !0
-    /// 
+    ///
     /// // After:
     /// -5    // (unchanged, already literal)
     /// 3.14  // (unchanged, already literal)
@@ -74,13 +74,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold static member expressions when accessing properties of literals.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// "hello".length
     /// [1, 2, 3].length
-    /// 
+    ///
     /// // After:
     /// 5
     /// 3
@@ -98,14 +98,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold computed member expressions when both object and property are known.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// "hello"[0]
     /// [1, 2, 3][1]
     /// {a: 5}["a"]
-    /// 
+    ///
     /// // After:
     /// "h"
     /// 2
@@ -124,14 +124,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold logical expressions (&&, ||, ??) when operands are known.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// true && "value"
     /// false || "default"
     /// null ?? "fallback"
-    /// 
+    ///
     /// // After:
     /// "value"
     /// "default"
@@ -149,13 +149,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold optional chaining expressions when the left operand is known to be null or undefined.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// null?.property
     /// undefined?.method()
-    /// 
+    ///
     /// // After:
     /// undefined
     /// undefined
@@ -188,7 +188,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold logical AND/OR expressions when the left operand can be evaluated.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
@@ -196,14 +196,14 @@ impl<'a> PeepholeOptimizations {
     /// false || defaultValue
     /// 0 && sideEffect()
     /// 1 || backup
-    /// 
+    ///
     /// // After:
     /// someExpression
     /// defaultValue
     /// 0
     /// 1
     /// ```
-    /// 
+    ///
     /// Try to fold a AND / OR node.
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
@@ -281,7 +281,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Attempts to fold nullish coalescing expressions when the left operand is known.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
@@ -289,14 +289,14 @@ impl<'a> PeepholeOptimizations {
     /// undefined ?? "fallback"
     /// 0 ?? "zero is falsy but not nullish"
     /// "" ?? "empty string is falsy but not nullish"
-    /// 
+    ///
     /// // After:
     /// "default"
     /// "fallback"
     /// 0
     /// ""
     /// ```
-    /// 
+    ///
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,

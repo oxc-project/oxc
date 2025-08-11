@@ -8,18 +8,18 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Optimizes for loops by hoisting conditions from if statements into the for loop test.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// for (;;) if (x) break;
     /// for (; a;) if (x) break; else y();
-    /// 
+    ///
     /// // After:
     /// for (; !x;) ;
     /// for (; a && !x;) y();
     /// ```
-    /// 
+    ///
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
     pub fn minimize_for_statement(&self, for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         // Get the first statement in the loop
@@ -116,15 +116,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Helper function to remove the first statement from a block and optionally replace it.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before (when dropping first statement):
     /// { if (x) break; doSomething(); }
-    /// 
+    ///
     /// // After (when only one statement remains):
     /// doSomething();
-    /// 
+    ///
     /// // Or when replacing:
     /// { newStatement; doSomething(); }
     /// ```

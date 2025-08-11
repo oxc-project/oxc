@@ -15,7 +15,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Performs comprehensive statement minimization including variable declaration collapsing,
     /// statement fusion, and dead code elimination after control flow statements.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
@@ -24,13 +24,13 @@ impl<'a> PeepholeOptimizations {
     /// var c = 2;
     /// return x;
     /// unreachableCode();
-    /// 
+    ///
     /// // After:
     /// var a, b = 1, c = 2;
     /// return x;
     /// // unreachableCode() removed
     /// ```
-    /// 
+    ///
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
     /// See also

@@ -9,13 +9,13 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// Attempts to simplify expressions in control flow statements that use boolean contexts.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// if (!!someValue) {}
     /// while (true === condition) {}
-    /// 
+    ///
     /// // After:
     /// if (someValue) {}
     /// while (condition) {}
@@ -39,20 +39,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Simplifies expressions when they are used in a boolean context by removing redundant boolean operations.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// !!value               // Double negation
     /// value === true        // Explicit boolean comparison
     /// 0 == false           // Type coercion comparison
-    /// 
+    ///
     /// // After:
     /// value                // Just the value
     /// value                // Direct value check
     /// true                 // Constant folded
     /// ```
-    /// 
+    ///
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>

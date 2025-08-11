@@ -23,13 +23,13 @@ use super::PeepholeOptimizations;
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
     /// Optimizes object property syntax by removing unnecessary quotes and computed access.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// { "validIdentifier": value }
     /// { ["computedProp"]: value }
-    /// 
+    ///
     /// // After:
     /// { validIdentifier: value }
     /// { computedProp: value }
@@ -49,13 +49,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Optimizes property keys in assignment target property patterns.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// ({ "prop": target } = obj);
     /// ({ ["computed"]: target } = obj);
-    /// 
+    ///
     /// // After:
     /// ({ prop: target } = obj);
     /// ({ computed: target } = obj);
@@ -69,12 +69,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Optimizes assignment target properties for destructuring assignments.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// ({ ["key"]: value } = object);
-    /// 
+    ///
     /// // After:
     /// ({ key: value } = object);
     /// ```

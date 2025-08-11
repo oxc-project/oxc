@@ -18,14 +18,14 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Removes various forms of dead code from statements, including unreachable code after returns,
     /// empty blocks, and other unnecessary constructs.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// if (false) { unreachableCode(); }
     /// { singleStatement; }
     /// function unused() {}  // (if unused)
-    /// 
+    ///
     /// // After:
     /// // (removed)
     /// singleStatement;
@@ -51,14 +51,14 @@ impl<'a> PeepholeOptimizations {
 
     /// Removes dead code from expressions, including unreachable branches in conditionals,
     /// unused parts of sequence expressions, and no-op function calls.
-    /// 
+    ///
     /// JavaScript example:
     /// ```javascript
     /// // Before:
     /// true ? used : unreachable
     /// (sideEffect(), unused, result)
     /// func() || fallback  // if func() always returns truthy
-    /// 
+    ///
     /// // After:
     /// used
     /// (sideEffect(), result)
