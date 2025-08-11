@@ -1,4 +1,3 @@
-#![expect(clippy::print_stdout)]
 //! # TypeScript JSX Parsing Example
 //!
 //! This example demonstrates parsing TypeScript files with JSX syntax.
@@ -56,10 +55,6 @@ export const Counter: React.FC = () => {
 
     assert!(!program.body.is_empty());
     assert_eq!(program.comments.len(), 1);
-
-    println!("✅ Successfully parsed TypeScript JSX file!");
-    println!("   - Statements: {}", program.body.len());
-    println!("   - Comments: {}", program.comments.len());
 
     Ok(())
 }
