@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -357,7 +357,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx) {
             if let Some(v) = e.evaluate_value(ctx) {
                 return Some(ctx.value_to_expr(e.span, v));
@@ -398,7 +398,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_add_op(
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
@@ -485,7 +485,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_left_child_op(
         e: &mut BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = e.operator;
         debug_assert!(matches!(
@@ -624,8 +624,13 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+<<<<<<< HEAD
     pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+=======
+    pub fn fold_object_exp(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+>>>>>>> 2ac489b42 (Remove allow directives for clippy warnings in oxc_minifier and fix all underlying issues)
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
                 Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
@@ -698,7 +703,7 @@ impl<'a> PeepholeOptimizations {
 
     fn is_spread_inlineable_object_literal(
         e: &ObjectExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,

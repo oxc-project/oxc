@@ -13,7 +13,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if Ctx::is_identifier_name_patched(&s.value) {

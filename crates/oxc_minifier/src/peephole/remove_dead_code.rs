@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
     /// `{ block } -> block`
     fn try_optimize_block(
         stmt: &mut BlockStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         match stmt.body.len() {
             0 => {
@@ -215,7 +215,7 @@ impl<'a> PeepholeOptimizations {
     /// ```
     fn try_fold_labeled(
         s: &mut LabeledStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
@@ -251,7 +251,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Statement<'a>> {
+    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &Ctx<'a, '_>) -> Option<Statement<'a>> {
         if let Some(handler) = &mut s.handler {
             if s.block.body.is_empty() {
                 let mut var = KeepVar::new(ctx.ast);
@@ -469,7 +469,7 @@ impl<'a> PeepholeOptimizations {
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
     pub fn should_keep_indirect_access(
         access_value: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
