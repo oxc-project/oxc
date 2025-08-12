@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 54d1750 ecmascript: Handle `typeof` guarded global access as side effect free (#12981) (Copilot)
+- 7b9a781 minifier: Return total number of iterations for debugging (#12995) (Boshen)
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+- 577d742 minifier: Logical assignment with sequential (#12957) (sapphi-red)
+- 96a1a4f minifier: Remove optional chaining calls when the function is `undefined` or `null` (#12956) (sapphi-red)
+- 208e6f7 ecmascript: Add URI encoding/decoding support to constant evaluation (#12934) (Copilot)
+- 53f7a9f minifier: `new Date()` has `ValueType::Object` (#12951) (Boshen)
+- e0e835b minifier: `f(!a === !1)` -> `f(!!a)` (#12942) (Boshen)
+- 6e393ec minifier: Evaluate String constructor (#12943) (Boshen)
+- 784796d minifier: Fold `(!0).toString()` to `true` (#12938) (Boshen)
+- 2c303f5 minifier: Fold `({ ...!0 })` into `({})` (#12935) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 64326c1 minifier: Improve quoted property key handling for class methods and properties (#12999) (Copilot)
+- ad4aeaf minifier: Evaluate `e ? consequent : alternate` (#12940) (Boshen)
+
+### 🚜 Refactor
+
+- ca91a26 minfier: Single match expression (#13000) (Boshen)
+- 70f742a minifier: Change AST in-place instead of returning `Option<Expression>` (#12993) (Boshen)
+- d3ba782 minifier: Fix double mut in DerefMut for Ctx by correcting Target type (#12994) (Copilot)
+- 451bc07 minifier: Change AST in-place instead of returning `Option<Expression>` (#12969) (Boshen)
+- e5e2496 minifier: Clean up `try_compress_typeof_undefined` (#12958) (Boshen)
+- 8a5c9b9 minifier,ecmascript: Clean up `is_global_reference` (#12953) (Boshen)
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+
+### 📚 Documentation
+
+- 3ce27e9 ecmascript, minifier: Revert changes to changelogs (#12962) (overlookmotel)
+
+### ⚡ Performance
+
+- 96b4009 minifier: Remove late optimization pass (#12670) (Boshen)
+
+### 🧪 Testing
+
+- 2c06eda minifier: Add comprehensive test coverage for unary plus removal (#12860) (Copilot)
+
+
 ## [0.81.0] - 2025-08-06
 
 ### 🐛 Bug Fixes

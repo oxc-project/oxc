@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- 4f31b73 allocator: Move allocation tracking code into own module (#12937) (overlookmotel)
+- ff1d93b allocator: Do not make `Allocator::bump` field public (#12936) (overlookmotel)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
 ## [0.81.0] - 2025-08-06
 
 ### 🧪 Testing

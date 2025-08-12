@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- f6475e1 codegen: Remove the redundant `base_len` variable (#12882) (Dunqing)
+
+### ⚡ Performance
+
+- 017e200 codegen: Comprehensive optimization of `print_minified_number` method (#12847) (Copilot)
+
+### 🎨 Styling
+
+- af065ff codegen: Re-order imports (#12918) (overlookmotel)
+
+
 ## [0.81.0] - 2025-08-06
 
 ### 💥 BREAKING CHANGES
