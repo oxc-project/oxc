@@ -54,8 +54,7 @@ use oxc_span::{Atom, SPAN};
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 mod options;
@@ -63,7 +62,7 @@ mod options;
 pub use options::RegExpOptions;
 
 pub struct RegExp<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
@@ -72,7 +71,7 @@ pub struct RegExp<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> RegExp<'a, 'ctx> {
-    pub fn new(options: RegExpOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: RegExpOptions, ctx: &'ctx TransformState<'a>) -> Self {
         // Get unsupported flags
         let mut unsupported_flags = RegExpFlags::empty();
         if options.dot_all_flag {

@@ -2,8 +2,7 @@ use oxc_ast::ast::{Expression, Function, Statement};
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 mod async_to_generator;
@@ -19,7 +18,7 @@ pub struct ES2017<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2017<'a, 'ctx> {
-    pub fn new(options: ES2017Options, ctx: &'ctx TransformCtx<'a>) -> ES2017<'a, 'ctx> {
+    pub fn new(options: ES2017Options, ctx: &'ctx TransformState<'a>) -> ES2017<'a, 'ctx> {
         ES2017 { async_to_generator: AsyncToGenerator::new(ctx), options }
     }
 }

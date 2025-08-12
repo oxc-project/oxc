@@ -21,8 +21,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 use super::options::ReactRefreshOptions;
@@ -115,7 +114,7 @@ pub struct ReactRefresh<'a, 'ctx> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     /// Used to wrap call expression with signature.
@@ -132,7 +131,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     pub fn new(
         options: &ReactRefreshOptions,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
     ) -> Self {
         Self {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),

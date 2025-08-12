@@ -3,8 +3,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 mod annotations;
@@ -45,7 +44,7 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
 pub struct TypeScript<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     annotations: TypeScriptAnnotations<'a, 'ctx>,
     r#enum: TypeScriptEnum<'a>,
@@ -57,7 +56,7 @@ pub struct TypeScript<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             ctx,
             annotations: TypeScriptAnnotations::new(options, ctx),

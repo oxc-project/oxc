@@ -71,8 +71,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -285,7 +284,7 @@ impl StyledComponentsHelper {
 
 pub struct StyledComponents<'a, 'ctx> {
     pub options: StyledComponentsOptions,
-    pub ctx: &'ctx TransformCtx<'a>,
+    pub ctx: &'ctx TransformState<'a>,
 
     // State
     /// Tracks which variables are bound to styled-components imports
@@ -299,7 +298,7 @@ pub struct StyledComponents<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
-    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             options,
             ctx,

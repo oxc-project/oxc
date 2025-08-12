@@ -2,8 +2,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 mod exponentiation_operator;
@@ -20,7 +19,7 @@ pub struct ES2016<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2016<'a, 'ctx> {
-    pub fn new(options: ES2016Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ES2016Options, ctx: &'ctx TransformState<'a>) -> Self {
         Self { exponentiation_operator: ExponentiationOperator::new(ctx), options }
     }
 }

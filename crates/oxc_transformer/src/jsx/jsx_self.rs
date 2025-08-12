@@ -34,18 +34,17 @@ use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 const SELF: &str = "__self";
 
 pub struct JsxSelf<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }

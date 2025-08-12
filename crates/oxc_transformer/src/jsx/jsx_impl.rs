@@ -103,9 +103,8 @@ use oxc_syntax::{
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
-    state::TransformState,
 };
 
 use super::{
@@ -120,7 +119,7 @@ pub struct JsxImpl<'a, 'ctx> {
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     pub(super) jsx_self: JsxSelf<'a, 'ctx>,
     pub(super) jsx_source: JsxSource<'a, 'ctx>,
@@ -149,7 +148,7 @@ struct ClassicBindings<'a> {
 }
 
 struct AutomaticScriptBindings<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
@@ -159,7 +158,7 @@ struct AutomaticScriptBindings<'a, 'ctx> {
 
 impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     fn new(
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -212,7 +211,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
 }
 
 struct AutomaticModuleBindings<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
@@ -224,7 +223,7 @@ struct AutomaticModuleBindings<'a, 'ctx> {
 
 impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
     fn new(
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -338,7 +337,7 @@ impl<'a> Pragma<'a> {
         pragma: Option<&str>,
         default_property_name: &'static str,
         ast: AstBuilder<'a>,
-        ctx: &TransformCtx<'a>,
+        ctx: &TransformState<'a>,
     ) -> Self {
         if let Some(pragma) = pragma {
             if pragma.is_empty() {
@@ -413,7 +412,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
     ) -> Self {
         // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
         let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());
@@ -1240,7 +1239,7 @@ mod test {
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Pragma;
-    use crate::{TransformCtx, TransformOptions, state::TransformState};
+    use crate::{TransformState, TransformOptions, state::TransformState};
 
     macro_rules! setup {
         ($traverse_ctx:ident, $transform_ctx:ident) => {
@@ -1256,7 +1255,7 @@ mod test {
             let $traverse_ctx = &mut traverse_ctx;
 
             let $transform_ctx =
-                TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
+                TransformState::new(Path::new("test.jsx"), &TransformOptions::default());
         };
     }
 

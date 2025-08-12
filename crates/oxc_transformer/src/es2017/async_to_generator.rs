@@ -66,17 +66,16 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 pub struct AsyncToGenerator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     executor: AsyncGeneratorExecutor<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
     }
 }
@@ -186,11 +185,11 @@ impl<'a> AsyncToGenerator<'a, '_> {
 
 pub struct AsyncGeneratorExecutor<'a, 'ctx> {
     helper: Helper,
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
-    pub fn new(helper: Helper, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(helper: Helper, ctx: &'ctx TransformState<'a>) -> Self {
         Self { helper, ctx }
     }
 

@@ -7,8 +7,7 @@ use oxc_traverse::Traverse;
 
 use crate::{
     EnvOptions,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 pub mod arrow_function_converter;
@@ -34,7 +33,7 @@ pub struct Common<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
-    pub fn new(options: &EnvOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &EnvOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             module_imports: ModuleImports::new(ctx),
             var_declarations: VarDeclarations::new(ctx),

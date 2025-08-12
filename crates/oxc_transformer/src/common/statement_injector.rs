@@ -1,6 +1,6 @@
 //! Utility transform to add new statements before or after the specified statement.
 //!
-//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformCtx`.
+//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformState`.
 //!
 //! `StatementInjector` transform inserts new statements before or after a statement which is determined by the address of the statement.
 //!
@@ -21,17 +21,16 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 /// Transform that inserts any statements which have been requested insertion via `StatementInjectorStore`
 pub struct StatementInjector<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }

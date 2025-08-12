@@ -41,8 +41,7 @@ use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 const SOURCE: &str = "__source";
@@ -51,11 +50,11 @@ const FILE_NAME_VAR: &str = "jsxFileName";
 pub struct JsxSource<'a, 'ctx> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> JsxSource<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { filename_var: None, source_rope: None, ctx }
     }
 }

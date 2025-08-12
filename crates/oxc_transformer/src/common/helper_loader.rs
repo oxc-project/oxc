@@ -5,14 +5,14 @@
 //!
 //! ## Usage
 //!
-//! You can call [`TransformCtx::helper_load`] to load a helper function and use it in your CallExpression.
+//! You can call [`TransformState::helper_load`] to load a helper function and use it in your CallExpression.
 //!
 //! ```rs
 //! let callee = self.ctx.helper_load("helperName");
 //! let call = self.ctx.ast.call_expression(callee, ...arguments);
 //! ```
 //!
-//! And also you can call [`TransformCtx::helper_call`] directly to load and call a helper function.
+//! And also you can call [`TransformState::helper_call`] directly to load and call a helper function.
 //!
 //! ```rs
 //! let call_expression = self.ctx.helper_call("helperName", ...arguments);
@@ -79,7 +79,7 @@ use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::{TransformCtx, TraverseCtx};
+use crate::{state::TransformState, context::TraverseCtx};
 
 /// Defines the mode for loading helper functions.
 #[derive(Default, Clone, Copy, Debug, Deserialize)]
@@ -209,7 +209,7 @@ impl Helper {
     }
 }
 
-/// Stores the state of the helper loader in [`TransformCtx`].
+/// Stores the state of the helper loader in [`TransformState`].
 pub struct HelperLoaderStore<'a> {
     module_name: Cow<'static, str>,
     mode: HelperLoaderMode,
@@ -229,8 +229,8 @@ impl HelperLoaderStore<'_> {
     }
 }
 
-// Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
-impl<'a> TransformCtx<'a> {
+// Public methods implemented directly on `TransformState`, as they need access to `TransformState::module_imports`.
+impl<'a> TransformState<'a> {
     /// Load and call a helper function and return a `CallExpression`.
     pub fn helper_call(
         &self,
@@ -244,7 +244,7 @@ impl<'a> TransformCtx<'a> {
         ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
     }
 
-    /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
+    /// Same as [`TransformState::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
     pub fn helper_call_expr(
         &self,
         helper: Helper,
@@ -283,7 +283,7 @@ impl<'a> HelperLoaderStore<'a> {
         &self,
         helper: Helper,
         source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
@@ -296,7 +296,7 @@ impl<'a> HelperLoaderStore<'a> {
     fn get_runtime_helper(
         helper: Helper,
         source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let helper_name = helper.name();

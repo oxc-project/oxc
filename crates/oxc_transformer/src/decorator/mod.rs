@@ -5,8 +5,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 use legacy::LegacyDecorator;
@@ -20,7 +19,7 @@ pub struct Decorator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Decorator<'a, 'ctx> {
-    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata, ctx),
             options,

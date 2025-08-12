@@ -8,18 +8,17 @@ use oxc_traverse::Traverse;
 use super::diagnostics;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 pub struct TypeScriptModule<'a, 'ctx> {
     /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
     only_remove_type_imports: bool,
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
-    pub fn new(only_remove_type_imports: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(only_remove_type_imports: bool, ctx: &'ctx TransformState<'a>) -> Self {
         Self { only_remove_type_imports, ctx }
     }
 }

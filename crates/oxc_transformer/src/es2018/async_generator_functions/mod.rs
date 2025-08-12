@@ -73,18 +73,17 @@ use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     es2017::AsyncGeneratorExecutor,
-    state::TransformState,
 };
 
 pub struct AsyncGeneratorFunctions<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     executor: AsyncGeneratorExecutor<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
     }
 }

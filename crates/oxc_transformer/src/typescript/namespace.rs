@@ -10,8 +10,7 @@ use oxc_syntax::{
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 use super::{
@@ -20,14 +19,14 @@ use super::{
 };
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     // Options
     allow_namespaces: bool,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }

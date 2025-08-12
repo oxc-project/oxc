@@ -1,6 +1,6 @@
 //! Utility transform to add statements to top of program.
 //!
-//! `TopLevelStatementsStore` contains a `Vec<Statement>`. It is stored on `TransformCtx`.
+//! `TopLevelStatementsStore` contains a `Vec<Statement>`. It is stored on `TransformState`.
 //!
 //! `TopLevelStatements` transform inserts those statements at top of program.
 //!
@@ -16,8 +16,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 /// Transform that inserts any statements which have been requested insertion via `TopLevelStatementsStore`
@@ -27,11 +26,11 @@ use crate::{
 ///
 /// Must run after all other transforms.
 pub struct TopLevelStatements<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }

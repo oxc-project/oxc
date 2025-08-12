@@ -11,7 +11,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
     },
@@ -1921,13 +1921,13 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldLooseBase(object, _prop)[_prop]`.
     ///
-    /// Takes `&TransformCtx` instead of `&self` to allow passing a `&BoundIdentifier<'a>` returned by
+    /// Takes `&TransformState` instead of `&self` to allow passing a `&BoundIdentifier<'a>` returned by
     /// `self.private_props_stack.find()`, which takes a partial mut borrow of `self`.
     fn create_private_field_member_expr_loose(
         object: Expression<'a>,
         prop_binding: &BoundIdentifier<'a>,
         span: Span,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
         let call_expr = transform_ctx.helper_call_expr(

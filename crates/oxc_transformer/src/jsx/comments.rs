@@ -4,7 +4,7 @@ use memchr::memchr;
 
 use oxc_ast::Comment;
 
-use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
+use crate::{JsxOptions, JsxRuntime, TransformState, TypeScriptOptions};
 
 /// Scan through all comments and find the following pragmas:
 ///
@@ -24,7 +24,7 @@ pub fn update_options_with_comments(
     comments: &[Comment],
     typescript: &mut TypeScriptOptions,
     jsx: &mut JsxOptions,
-    ctx: &TransformCtx,
+    ctx: &TransformState,
 ) {
     let source_text = ctx.source_text;
     for comment in comments {

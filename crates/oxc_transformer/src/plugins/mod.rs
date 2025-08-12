@@ -7,9 +7,8 @@ use oxc_traverse::Traverse;
 pub use styled_components::StyledComponentsOptions;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     plugins::styled_components::StyledComponents,
-    state::TransformState,
 };
 
 pub struct Plugins<'a, 'ctx> {
@@ -17,7 +16,7 @@ pub struct Plugins<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Plugins<'a, 'ctx> {
-    pub fn new(options: PluginsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: PluginsOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             styled_components: options
                 .styled_components

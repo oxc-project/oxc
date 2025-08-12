@@ -55,8 +55,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
@@ -71,7 +70,7 @@ enum CallContext<'a> {
 }
 
 pub struct OptionalChaining<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     // states
     is_inside_function_parameter: bool,
@@ -82,7 +81,7 @@ pub struct OptionalChaining<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             ctx,
             is_inside_function_parameter: false,

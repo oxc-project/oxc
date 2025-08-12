@@ -1,6 +1,6 @@
 use oxc_traverse::Traverse;
 
-use crate::{context::TransformCtx, state::TransformState};
+use crate::state::TransformState;
 
 mod arrow_functions;
 mod options;
@@ -18,7 +18,7 @@ pub struct ES2015<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2015<'a, 'ctx> {
-    pub fn new(options: ES2015Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ES2015Options, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(options.arrow_function.unwrap_or_default(), ctx),
             options,

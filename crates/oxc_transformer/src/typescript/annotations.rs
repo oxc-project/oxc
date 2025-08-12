@@ -13,12 +13,11 @@ use oxc_traverse::Traverse;
 
 use crate::{
     TypeScriptOptions,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 pub struct TypeScriptAnnotations<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 
     // Options
     only_remove_type_imports: bool,
@@ -34,7 +33,7 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {

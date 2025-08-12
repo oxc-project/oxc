@@ -95,17 +95,16 @@ use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::create_property_access,
 };
 
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         LegacyDecoratorMetadata { ctx }
     }
 }

@@ -15,7 +15,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::create_assignment,
 };
 
@@ -840,7 +840,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
         name: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         transform_ctx.helper_call_expr(

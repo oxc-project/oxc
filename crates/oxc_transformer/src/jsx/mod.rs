@@ -2,9 +2,8 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     es2018::ObjectRestSpreadOptions,
-    state::TransformState,
 };
 
 mod comments;
@@ -47,7 +46,7 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();

@@ -2,7 +2,7 @@
 //!
 //! `VarDeclarationsStore` contains a stack of `Declarators`s, each comprising
 //! 2 x `Vec<Declarator<'a>>` (1 for `var`s, 1 for `let`s).
-//! `VarDeclarationsStore` is stored on `TransformCtx`.
+//! `VarDeclarationsStore` is stored on `TransformState`.
 //!
 //! `VarDeclarations` transform pushes an empty entry onto this stack when entering a statement block,
 //! and when exiting the block, writes `var` / `let` statements to top of block.
@@ -23,8 +23,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, ast_operations::GatherNodeParts};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 /// Transform that maintains the stack of `Vec<VariableDeclarator>`s, and adds a `var` statement
@@ -32,11 +31,11 @@ use crate::{
 ///
 /// Must run after all other transforms except `TopLevelStatements`.
 pub struct VarDeclarations<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }
@@ -233,7 +232,7 @@ impl<'a> VarDeclarationsStore<'a> {
         }
     }
 
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_into_program(&self, transform_ctx: &TransformState<'a>, ctx: &TraverseCtx<'a>) {
         if let Some((var_statement, let_statement)) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
             transform_ctx
