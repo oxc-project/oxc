@@ -103,8 +103,19 @@ const loadPluginTypeScriptRules = (linter) => {
 
     const prefixedName = `typescript/${name}`;
 
-    // Presented but type is `string | false`
-    rule.meta.docs.recommended = typeof rule.meta.docs.recommended === 'string';
+    // Recommended can either be
+    // - a string describing which configuration it belongs to (recommended, strict, stylistic)
+    // - an object with a `recommended` property (ban-ts-comment)
+    // - undefined
+    let isRecommended = rule.meta.docs.recommended;
+    if (typeof isRecommended === 'object' && isRecommended !== null) {
+      isRecommended = isRecommended.recommended === true;
+    } else if (typeof isRecommended === 'string') {
+      isRecommended = isRecommended === 'recommended';
+    } else {
+      isRecommended = false;
+    }
+    rule.meta.docs.recommended = isRecommended;
 
     linter.defineRule(prefixedName, rule);
   }
