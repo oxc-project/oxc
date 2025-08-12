@@ -1223,7 +1223,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(not(any(target_os = "windows", target_endian = "big")))]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_config() {
         let args = &["--type-aware", "-c", "config-test.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
