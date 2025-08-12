@@ -48,7 +48,7 @@ impl<'a> PeepholeOptimizations {
         };
         let replacement = match name {
             "concat" => self.try_fold_concat(*span, arguments, callee, ctx),
-            "pow" => self.try_fold_pow(*span, arguments, object, ctx),
+            "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
         };
@@ -60,7 +60,6 @@ impl<'a> PeepholeOptimizations {
 
     /// `Math.pow(a, b)` -> `+(a) ** +b`
     fn try_fold_pow(
-        &self,
         span: Span,
         arguments: &mut Arguments<'a>,
         object: &Expression<'a>,
@@ -118,7 +117,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    pub fn try_fold_concat_chain(&self, node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_concat_chain(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {

@@ -166,7 +166,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut ctx = Ctx::new(ctx);
-        self.init_symbol_value(decl, &mut ctx);
+        Self::init_symbol_value(decl, &mut ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -201,7 +201,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::LogicalExpression(_) => {
                 Self::fold_logical_expr(expr, ctx);
-                self.minimize_logical_expression(expr, ctx);
+                Self::minimize_logical_expression(expr, ctx);
                 Self::try_compress_is_object_and_not_null(expr, ctx);
                 Self::try_rotate_logical_expression(expr, ctx);
             }
@@ -212,7 +212,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             Expression::CallExpression(_) => {
                 Self::fold_call_expression(expr, ctx);
                 self.remove_dead_code_call_expression(expr, ctx);
-                self.try_fold_concat_chain(expr, ctx);
+                Self::try_fold_concat_chain(expr, ctx);
                 self.try_fold_known_global_methods(expr, ctx);
                 self.try_fold_simple_function_call(expr, ctx);
                 Self::try_fold_object_or_array_constructor(expr, ctx);
@@ -242,7 +242,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
             Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
-            Expression::Identifier(_) => self.inline_identifier_reference(expr, ctx),
+            Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
             _ => {}
         }
     }
@@ -412,7 +412,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut ctx = Ctx::new(ctx);
-        self.inner.init_symbol_value(decl, &mut ctx);
+        PeepholeOptimizations::init_symbol_value(decl, &mut ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -56,7 +56,7 @@ impl<'a> PeepholeOptimizations {
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         let mut logic_expr = ctx.ast.expression_logical(span, a, op, b);
-        self.minimize_logical_expression(&mut logic_expr, ctx);
+        Self::minimize_logical_expression(&mut logic_expr, ctx);
         logic_expr
     }
 

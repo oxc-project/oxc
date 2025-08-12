@@ -8,7 +8,7 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_logical_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
             *expr = changed;
