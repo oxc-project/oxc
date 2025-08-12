@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let replacement = match name {
-            "concat" => self.try_fold_concat(*span, arguments, callee, ctx),
+            "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
             "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
@@ -199,7 +199,6 @@ impl<'a> PeepholeOptimizations {
     /// `[].concat(1, 2)` -> `[1, 2]`
     /// `"".concat(a, "b")` -> "`${a}b`"
     fn try_fold_concat(
-        &self,
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
@@ -411,7 +410,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         let replacement = match ident.name.as_str() {
-            "Number" => self.try_fold_number_constants(name, span, ctx),
+            "Number" => Self::try_fold_number_constants(name, span, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -422,7 +421,6 @@ impl<'a> PeepholeOptimizations {
 
     /// replace `Number.*` constants
     fn try_fold_number_constants(
-        &self,
         name: &str,
         span: Span,
         ctx: &mut Ctx<'a, '_>,

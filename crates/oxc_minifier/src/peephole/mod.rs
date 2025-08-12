@@ -428,7 +428,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_expression(&mut self, e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
         match e {
-            Expression::TemplateLiteral(t) => PeepholeOptimizations::inline_template_literal(t, ctx),
+            Expression::TemplateLiteral(t) => {
+                PeepholeOptimizations::inline_template_literal(t, ctx)
+            }
             Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_exp(e, ctx),
             Expression::BinaryExpression(_) => {
                 PeepholeOptimizations::fold_binary_expr(e, ctx);

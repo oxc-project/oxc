@@ -49,11 +49,10 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        self.try_compress_assignment_target_property(prop, ctx);
+        Self::try_compress_assignment_target_property(prop, ctx);
     }
 
     pub fn try_compress_assignment_target_property(
-        &self,
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -137,7 +136,7 @@ impl<'a> PeepholeOptimizations {
         stmt: &mut ReturnStatement<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        self.compress_return_statement(stmt, ctx);
+        Self::compress_return_statement(stmt, ctx);
     }
 
     pub fn substitute_variable_declaration(
@@ -500,7 +499,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(&self, stmt: &mut ReturnStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn compress_return_statement(stmt: &mut ReturnStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
