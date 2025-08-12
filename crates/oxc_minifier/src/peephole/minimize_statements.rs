@@ -31,12 +31,11 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(&self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut Ctx<'a, '_>) {
-        let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
+        let mut old_stmts = stmts.take_in(ctx.ast);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        let mut new_stmts = stmts.take_in(ctx.ast);
-        for i in 0..new_stmts.len() {
-            let stmt = new_stmts[i].take_in(ctx.ast);
+        for i in 0..old_stmts.len() {
+            let stmt = old_stmts[i].take_in(ctx.ast);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -45,31 +44,24 @@ impl<'a> PeepholeOptimizations {
                 continue;
             }
             if self
-                .minimize_statement(
-                    stmt,
-                    i,
-                    &mut new_stmts,
-                    &mut result,
-                    &mut is_control_flow_dead,
-                    ctx,
-                )
+                .minimize_statement(stmt, i, &mut old_stmts, stmts, &mut is_control_flow_dead, ctx)
                 .is_break()
             {
                 break;
             }
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
-            result.push(stmt);
+            stmts.push(stmt);
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        if let Some(last_stmt) = result.last() {
+        if let Some(last_stmt) = stmts.last() {
             match last_stmt {
                 // "while (x) { y(); continue; }" => "while (x) { y(); }"
                 Statement::ContinueStatement(s) if s.label.is_none() => {
                     let mut changed = false;
                     if let Some(Ancestor::ForStatementBody(_)) = ctx.ancestors().nth(1) {
-                        result.pop();
+                        stmts.pop();
                         changed = true;
                     }
                     if changed {
@@ -79,7 +71,7 @@ impl<'a> PeepholeOptimizations {
                 // "function f() { x(); return; }" => "function f() { x(); }"
                 Statement::ReturnStatement(s) if s.argument.is_none() => {
                     if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
-                        result.pop();
+                        stmts.pop();
                         ctx.state.changed = true;
                     }
                 }
@@ -88,25 +80,25 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Merge certain statements in reverse order
-        if result.len() >= 2 && ctx.options().sequences {
-            if let Some(Statement::ReturnStatement(_)) = result.last() {
-                'return_loop: while result.len() >= 2 {
-                    let prev_index = result.len() - 2;
-                    let prev_stmt = &result[prev_index];
+        if stmts.len() >= 2 && ctx.options().sequences {
+            if let Some(Statement::ReturnStatement(_)) = stmts.last() {
+                'return_loop: while stmts.len() >= 2 {
+                    let prev_index = stmts.len() - 2;
+                    let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
                         Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = result.last() {
+                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last() {
                                 if last_return.argument.is_none() {
                                     break 'return_loop;
                                 }
                             }
                             ctx.state.changed = true;
                             // "a(); return b;" => "return a(), b;"
-                            let last_stmt = result.pop().unwrap();
+                            let last_stmt = stmts.pop().unwrap();
                             let Statement::ReturnStatement(mut last_return) = last_stmt else {
                                 unreachable!()
                             };
-                            let prev_stmt = result.pop().unwrap();
+                            let prev_stmt = stmts.pop().unwrap();
                             let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
                                 unreachable!()
                             };
@@ -115,7 +107,7 @@ impl<'a> PeepholeOptimizations {
                             let right_span = last_return.span;
                             let last_return_stmt =
                                 ctx.ast.statement_return(right_span, Some(argument));
-                            result.push(last_return_stmt);
+                            stmts.push(last_return_stmt);
                         }
                         // Merge the last two statements
                         Statement::IfStatement(if_stmt) => {
@@ -129,11 +121,11 @@ impl<'a> PeepholeOptimizations {
                             };
 
                             ctx.state.changed = true;
-                            let last_stmt = result.pop().unwrap();
+                            let last_stmt = stmts.pop().unwrap();
                             let Statement::ReturnStatement(last_return) = last_stmt else {
                                 unreachable!()
                             };
-                            let prev_stmt = result.pop().unwrap();
+                            let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
                             let mut prev_if = prev_if.unbox();
                             let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
@@ -181,24 +173,24 @@ impl<'a> PeepholeOptimizations {
                             };
                             let last_return_stmt =
                                 ctx.ast.statement_return(right_span, Some(argument));
-                            result.push(last_return_stmt);
+                            stmts.push(last_return_stmt);
                         }
                         _ => break 'return_loop,
                     }
                 }
-            } else if let Some(Statement::ThrowStatement(_)) = result.last() {
-                'throw_loop: while result.len() >= 2 {
-                    let prev_index = result.len() - 2;
-                    let prev_stmt = &result[prev_index];
+            } else if let Some(Statement::ThrowStatement(_)) = stmts.last() {
+                'throw_loop: while stmts.len() >= 2 {
+                    let prev_index = stmts.len() - 2;
+                    let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
                         Statement::ExpressionStatement(_) => {
                             ctx.state.changed = true;
                             // "a(); throw b;" => "throw a(), b;"
-                            let last_stmt = result.pop().unwrap();
+                            let last_stmt = stmts.pop().unwrap();
                             let Statement::ThrowStatement(mut last_throw) = last_stmt else {
                                 unreachable!()
                             };
-                            let prev_stmt = result.pop().unwrap();
+                            let prev_stmt = stmts.pop().unwrap();
                             let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
                                 unreachable!()
                             };
@@ -209,7 +201,7 @@ impl<'a> PeepholeOptimizations {
                             );
                             let right_span = last_throw.span;
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
-                            result.push(last_throw_stmt);
+                            stmts.push(last_throw_stmt);
                         }
                         // Merge the last two statements
                         Statement::IfStatement(if_stmt) => {
@@ -223,11 +215,11 @@ impl<'a> PeepholeOptimizations {
                             };
 
                             ctx.state.changed = true;
-                            let last_stmt = result.pop().unwrap();
+                            let last_stmt = stmts.pop().unwrap();
                             let Statement::ThrowStatement(last_throw) = last_stmt else {
                                 unreachable!()
                             };
-                            let prev_stmt = result.pop().unwrap();
+                            let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
                             let mut prev_if = prev_if.unbox();
                             let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
@@ -265,15 +257,13 @@ impl<'a> PeepholeOptimizations {
                                 )
                             };
                             let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
-                            result.push(last_throw_stmt);
+                            stmts.push(last_throw_stmt);
                         }
                         _ => break 'throw_loop,
                     }
                 }
             }
         }
-
-        *stmts = result;
     }
 
     fn minimize_statement(
