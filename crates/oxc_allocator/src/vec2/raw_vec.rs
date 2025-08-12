@@ -193,6 +193,16 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     }
 
     /// Returns a shared reference to the allocator backing this RawVec.
+    ///
+    /// IMPORTANT:
+    /// The ability to obtain a reference to the allocator MUST NOT be exposed outside of `Vec`.
+    ///
+    /// `Bump` is not `Sync` (and can't be because it contains `Cell`s which provide no synchronization),
+    /// but `Vec<T>` is `Sync` if `T` is.
+    ///
+    /// If external code could obtain a `&Bump` from a `&Vec`, then it could obtain 2 references to same
+    /// `Bump` on different threads, and use both those refs to allocate into same `Bump` simultaneously.
+    /// This could result in data corruption, aliasing violations, or writing out of bounds of the arena.
     pub fn bump(&self) -> &'a A {
         self.alloc
     }
