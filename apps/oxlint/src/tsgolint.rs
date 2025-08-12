@@ -12,7 +12,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severi
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string,
 };
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 
 use crate::cli::CliRunResult;
 
@@ -72,6 +72,7 @@ impl<'a> TsGoLintState<'a> {
             files: self
                 .paths
                 .iter()
+                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
                 .map(|path| TsGoLintInputFile {
                     file_path: path.to_string_lossy().to_string(),
                     rules: {
