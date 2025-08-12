@@ -7,7 +7,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, Token, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, SEARCH_BATCH_SIZE},
+    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, safe_byte_match_table},
 };
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
@@ -83,7 +83,11 @@ impl Lexer<'_> {
 
                     let mut pos = self.source.position();
                     // Silence warnings if macro called in unsafe code
-                    #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+                    #[allow(
+                        unused_unsafe,
+                        clippy::unnecessary_safety_comment,
+                        clippy::allow_attributes
+                    )]
                     'outer: loop {
                         let byte = if pos.can_read_batch_from(&self.source) {
                             // Search a batch of `SEARCH_BATCH_SIZE` bytes.
@@ -153,7 +157,8 @@ impl Lexer<'_> {
                         };
 
                         // Found match. Check if should continue.
-                        if false { // continue_if: (byte, pos) false
+                        if false {
+                            // continue_if: (byte, pos) false
                             // Not a match after all - continue searching.
                             // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                             // See above about UTF-8 character boundaries invariant.
@@ -280,7 +285,8 @@ impl Lexer<'_> {
                 };
 
                 // Found match. Check if should continue.
-                if false { // continue_if: (byte, pos) false
+                if false {
+                    // continue_if: (byte, pos) false
                     // Not a match after all - continue searching.
                     // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                     // See above about UTF-8 character boundaries invariant.

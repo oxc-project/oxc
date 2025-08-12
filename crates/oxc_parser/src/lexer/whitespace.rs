@@ -1,6 +1,6 @@
 use super::{
     Kind, Lexer,
-    search::{SafeByteMatchTable, safe_byte_match_table, SEARCH_BATCH_SIZE},
+    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, safe_byte_match_table},
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
@@ -90,7 +90,8 @@ impl Lexer<'_> {
                 };
 
                 // Found match. Check if should continue.
-                if false { // continue_if: (byte, pos) false
+                if false {
+                    // continue_if: (byte, pos) false
                     // Not a match after all - continue searching.
                     // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                     // See above about UTF-8 character boundaries invariant.

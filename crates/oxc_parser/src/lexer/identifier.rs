@@ -10,7 +10,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, SEARCH_BATCH_SIZE},
+    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -125,7 +125,9 @@ impl<'a> Lexer<'a> {
                                 // Return identifier minus its first char.
                                 // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
                                 // of `after_first` which could be after current position.
-                                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
+                                return unsafe {
+                                    self.source.str_from_pos_to_current_unchecked(after_first)
+                                };
                             };
                             break 'outer eof_ret;
                         }
@@ -133,7 +135,8 @@ impl<'a> Lexer<'a> {
                 };
 
                 // Found match. Check if should continue.
-                if false { // continue_if: (byte, pos) false
+                if false {
+                    // continue_if: (byte, pos) false
                     // Not a match after all - continue searching.
                     // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                     // See above about UTF-8 character boundaries invariant.
@@ -400,7 +403,8 @@ impl<'a> Lexer<'a> {
                 };
 
                 // Found match. Check if should continue.
-                if false { // continue_if: (byte, pos) false
+                if false {
+                    // continue_if: (byte, pos) false
                     // Not a match after all - continue searching.
                     // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                     // See above about UTF-8 character boundaries invariant.

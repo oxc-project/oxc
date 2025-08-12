@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
-    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
+    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
@@ -42,57 +42,151 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
 
-        byte_search! {
-            lexer: self,
-            table: TEMPLATE_LITERAL_TABLE,
-            continue_if: (next_byte, pos) {
-                match next_byte {
-                    b'$' => {
-                        // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
-                        let after_dollar = unsafe { pos.add(1) };
-                        if after_dollar.is_not_end_of(&self.source) {
-                            // If `${`, exit.
-                            // SAFETY: Have checked there's at least 1 further byte to read.
-                            if unsafe { after_dollar.read() } == b'{' {
-                                // Skip `${` and stop searching.
-                                // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                                pos = unsafe { pos.add(2) };
-                                false
-                            } else {
-                                // Not `${`. Continue searching.
-                                true
+        {
+            // Inlined byte_search! macro with continue_if
+            #[allow(clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+            TEMPLATE_LITERAL_TABLE.use_table();
+
+            let mut pos = self.source.position();
+            // Silence warnings if macro called in unsafe code
+            #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+            'outer: loop {
+                let byte = if pos.can_read_batch_from(&self.source) {
+                    // Search a batch of `SEARCH_BATCH_SIZE` bytes.
+                    //
+                    // `'inner: loop {}` is not a real loop - it always exits on first turn.
+                    // Only using `loop {}` so that can use `break 'inner` to get out of it.
+                    // This allows complex logic of `$should_continue` and `$match_handler` to be
+                    // outside the `for` loop, keeping it as minimal as possible, to encourage
+                    // compiler to unroll it.
+                    //
+                    // SAFETY:
+                    // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
+                    // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
+                    // So `$pos.add()` in this loop cannot go out of bounds.
+                    let batch = unsafe { pos.slice(SEARCH_BATCH_SIZE) };
+                    'inner: loop {
+                        for (i, &byte) in batch.iter().enumerate() {
+                            if TEMPLATE_LITERAL_TABLE.matches(byte) {
+                                // SAFETY: Cannot go out of bounds (see above).
+                                // Also see above about UTF-8 character boundaries invariant.
+                                pos = unsafe { pos.add(i) };
+                                break 'inner byte;
                             }
-                        } else {
-                            // This is last byte in file. Continue to `handle_eof`.
-                            // This is illegal in valid JS, so mark this branch cold.
-                            cold_branch(|| true)
                         }
-                    },
-                    b'`' => {
-                        // Skip '`' and stop searching.
-                        // SAFETY: Char at `pos` is '`', so `pos + 1` is a UTF-8 char boundary.
-                        pos = unsafe { pos.add(1) };
-                        ret = tail;
-                        false
-                    },
-                    b'\r' => {
-                        // SAFETY: Byte at `pos` is `\r`.
-                        // `pos` has only been advanced relative to `self.source.position()`.
-                        return unsafe { self.template_literal_carriage_return(pos, substitute, tail) };
+                        // No match in batch - search next batch.
+                        // SAFETY: Cannot go out of bounds (see above).
+                        // Also see above about UTF-8 character boundaries invariant.
+                        pos = unsafe { pos.add(SEARCH_BATCH_SIZE) };
+                        continue 'outer;
                     }
-                    _ => {
-                        // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
-                        debug_assert!(next_byte == b'\\');
-                        // SAFETY: Byte at `pos` is `\`.
-                        // `pos` has only been advanced relative to `self.source.position()`.
-                        return unsafe { self.template_literal_backslash(pos, substitute, tail) };
+                } else {
+                    // Not enough bytes remaining for a batch. Process byte-by-byte.
+                    // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
+                    'inner: loop {
+                        // SAFETY: `$pos` is before or equal to end of source
+                        let remaining = unsafe {
+                            let remaining_len = self.source.end().offset_from(pos);
+                            pos.slice(remaining_len)
+                        };
+                        for (i, &byte) in remaining.iter().enumerate() {
+                            if TEMPLATE_LITERAL_TABLE.matches(byte) {
+                                // SAFETY: `i` is less than number of bytes remaining after `$pos`,
+                                // so `$pos + i` cannot be out of bounds
+                                pos = unsafe { pos.add(i) };
+                                break 'inner byte;
+                            }
+                        }
+
+                        // EOF.
+                        // Advance `lexer.source`'s position to end of file.
+                        self.source.advance_to_end();
+
+                        // Avoid lint errors if `$eof_handler` contains `return` statement
+                        #[allow(
+                            unused_variables,
+                            unreachable_code,
+                            clippy::diverging_sub_expression,
+                            clippy::allow_attributes
+                        )]
+                        {
+                            let eof_ret = {
+                                self.error(diagnostics::unterminated_string(
+                                    self.unterminated_range(),
+                                ));
+                                return Kind::Undetermined;
+                            };
+                            break 'outer eof_ret;
+                        }
                     }
+                };
+
+                // Found match. Check if should continue.
+                let should_continue = {
+                    let next_byte = byte;
+                    match next_byte {
+                        b'$' => {
+                            // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
+                            let after_dollar = unsafe { pos.add(1) };
+                            if after_dollar.is_not_end_of(&self.source) {
+                                // If `${`, exit.
+                                // SAFETY: Have checked there's at least 1 further byte to read.
+                                if unsafe { after_dollar.read() } == b'{' {
+                                    // Skip `${` and stop searching.
+                                    // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
+                                    pos = unsafe { pos.add(2) };
+                                    false
+                                } else {
+                                    // Not `${`. Continue searching.
+                                    true
+                                }
+                            } else {
+                                // This is last byte in file. Continue to `handle_eof`.
+                                // This is illegal in valid JS, so mark this branch cold.
+                                cold_branch(|| true)
+                            }
+                        }
+                        b'`' => {
+                            // Skip '`' and stop searching.
+                            // SAFETY: Char at `pos` is '`', so `pos + 1` is a UTF-8 char boundary.
+                            pos = unsafe { pos.add(1) };
+                            ret = tail;
+                            false
+                        }
+                        b'\r' => {
+                            // SAFETY: Byte at `pos` is `\r`.
+                            // `pos` has only been advanced relative to `self.source.position()`.
+                            return unsafe {
+                                self.template_literal_carriage_return(pos, substitute, tail)
+                            };
+                        }
+                        _ => {
+                            // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
+                            debug_assert!(next_byte == b'\\');
+                            // SAFETY: Byte at `pos` is `\`.
+                            // `pos` has only been advanced relative to `self.source.position()`.
+                            return unsafe {
+                                self.template_literal_backslash(pos, substitute, tail)
+                            };
+                        }
+                    }
+                };
+
+                if should_continue {
+                    // Not a match after all - continue searching.
+                    // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                    // See above about UTF-8 character boundaries invariant.
+                    pos = unsafe { pos.add(1) };
+                    continue;
                 }
-            },
-            handle_eof: {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                return Kind::Undetermined;
-            },
+
+                // Match confirmed.
+                // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
+                // SAFETY: See above about UTF-8 character boundaries invariant.
+                self.source.set_position(pos);
+
+                break byte;
+            }
         };
 
         ret
@@ -221,162 +315,264 @@ impl<'a> Lexer<'a> {
     ) -> Kind {
         let mut ret = substitute;
 
-        byte_search! {
-            lexer: self,
-            table: TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE,
-            start: pos,
-            continue_if: (next_byte, pos) {
-                if next_byte == b'$' {
-                    // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
-                    let after_dollar = unsafe {pos.add(1)};
-                    if after_dollar.is_not_end_of(&self.source) {
-                        // If `${`, exit.
-                        // SAFETY: Have checked there's at least 1 further byte to read.
-                        if unsafe {after_dollar.read()} == b'{' {
-                            // Add last chunk to `str`.
-                            // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
-                            // this function. `pos` only increases during searching.
-                            // Where `chunk_start` is updated, it's always before or equal to `pos`.
-                            // So `chunk_start` cannot be after `pos`.
-                            let chunk = unsafe {self.source.str_between_positions_unchecked(chunk_start, pos)};
-                            str.push_str(chunk);
+        {
+            // Inlined byte_search! macro with start and continue_if
+            #[allow(clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+            TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE.use_table();
 
-                            // Skip `${` and stop searching.
-                            // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                            pos = unsafe {pos.add(2)};
-                            false
-                        } else {
-                            // Not `${`. Continue searching.
-                            true
+            let mut pos = pos;
+            // Silence warnings if macro called in unsafe code
+            #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
+            'outer: loop {
+                let byte = if pos.can_read_batch_from(&self.source) {
+                    // Search a batch of `SEARCH_BATCH_SIZE` bytes.
+                    //
+                    // `'inner: loop {}` is not a real loop - it always exits on first turn.
+                    // Only using `loop {}` so that can use `break 'inner` to get out of it.
+                    // This allows complex logic of `$should_continue` and `$match_handler` to be
+                    // outside the `for` loop, keeping it as minimal as possible, to encourage
+                    // compiler to unroll it.
+                    //
+                    // SAFETY:
+                    // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
+                    // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
+                    // So `$pos.add()` in this loop cannot go out of bounds.
+                    let batch = unsafe { pos.slice(SEARCH_BATCH_SIZE) };
+                    'inner: loop {
+                        for (i, &byte) in batch.iter().enumerate() {
+                            if TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE.matches(byte) {
+                                // SAFETY: Cannot go out of bounds (see above).
+                                // Also see above about UTF-8 character boundaries invariant.
+                                pos = unsafe { pos.add(i) };
+                                break 'inner byte;
+                            }
                         }
-                    } else {
-                        // This is last byte in file. Continue to `handle_eof`.
-                        // This is illegal in valid JS, so mark this branch cold.
-                        cold_branch(|| true)
+                        // No match in batch - search next batch.
+                        // SAFETY: Cannot go out of bounds (see above).
+                        // Also see above about UTF-8 character boundaries invariant.
+                        pos = unsafe { pos.add(SEARCH_BATCH_SIZE) };
+                        continue 'outer;
                     }
                 } else {
-                    // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
-                    // Add chunk up to before this char to `str`.
-                    // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
-                    // this function. `pos` only increases during searching.
-                    // Where `chunk_start` is updated, it's always before or equal to `pos`.
-                    // So `chunk_start` cannot be after `pos`.
-                    let chunk = unsafe {self.source.str_between_positions_unchecked(chunk_start, pos)};
-                    str.push_str(chunk);
-
-                    match next_byte {
-                        b'`' => {
-                            // Skip '`' and stop searching.
-                            // SAFETY: Byte at `pos` is '`' (ASCII), so `pos + 1` is a UTF-8 char boundary.
-                            pos = unsafe {pos.add(1)};
-                            ret = tail;
-                            false
-                        }
-                        b'\r' => {
-                            // Set next chunk to start after `\r`.
-                            // SAFETY: Next byte is `\r` which is ASCII, so after it is a UTF-8 char boundary.
-                            // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
-                            // increments `pos` when return `true` from `continue_if`, so `pos` will be
-                            // brought up to `chunk_start` again.
-                            chunk_start = unsafe {pos.add(1)};
-
-                            if chunk_start.is_not_end_of(&self.source) {
-                                // Either `\r` alone or `\r\n` needs to be converted to `\n`.
-                                // SAFETY: Have checked not at EOF.
-                                if unsafe {chunk_start.read()} == b'\n' {
-                                    // We have `\r\n`.
-                                    // Start next search after the `\n`.
-                                    // `chunk_start` is before the `\n`, so no need to push an `\n`
-                                    // to `str` here. The `\n` is first char of next chunk, so it'll get
-                                    // pushed to `str` later on when that next chunk is pushed.
-                                    // Note: `byte_search!` macro already advances `pos` by 1, so only
-                                    // advance by 1 here, so that in total we skip 2 bytes for `\r\n`.
-                                    pos = chunk_start;
-                                } else {
-                                    // We have a lone `\r`.
-                                    // Convert it to `\n` by pushing an `\n` to `str`.
-                                    // `chunk_start` is *after* the `\r`, so the `\r` is not included in
-                                    // next chunk, so it will not also get included in `str` when that
-                                    // next chunk is pushed.
-                                    // Note: `byte_search!` macro already advances `pos` by 1,
-                                    // which steps past the `\r`, so don't advance `pos` here.
-                                    str.push('\n');
-                                }
-                            } else {
-                                // This is last byte in file. Continue to `handle_eof`.
-                                // This is illegal in valid JS, so mark this branch cold.
-                                cold_branch(|| {});
+                    // Not enough bytes remaining for a batch. Process byte-by-byte.
+                    // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
+                    'inner: loop {
+                        // SAFETY: `$pos` is before or equal to end of source
+                        let remaining = unsafe {
+                            let remaining_len = self.source.end().offset_from(pos);
+                            pos.slice(remaining_len)
+                        };
+                        for (i, &byte) in remaining.iter().enumerate() {
+                            if TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE.matches(byte) {
+                                // SAFETY: `i` is less than number of bytes remaining after `$pos`,
+                                // so `$pos + i` cannot be out of bounds
+                                pos = unsafe { pos.add(i) };
+                                break 'inner byte;
                             }
-
-                            // Continue searching
-                            true
                         }
-                        b'\\' => {
-                            // Decode escape sequence into `str`.
-                            // `read_string_escape_sequence` expects `self.source` to be positioned after `\`.
-                            // SAFETY: Next byte is `\`, which is ASCII, so `pos + 1` is UTF-8 char boundary.
-                            let after_backslash = unsafe {pos.add(1)};
-                            self.source.set_position(after_backslash);
-                            self.read_string_escape_sequence(&mut str, true, &mut is_valid_escape_sequence);
 
-                            // Start next chunk after escape sequence
-                            chunk_start = self.source.position();
-                            assert!(chunk_start >= after_backslash);
+                        // EOF.
+                        // Advance `lexer.source`'s position to end of file.
+                        self.source.advance_to_end();
 
-                            // Continue search after escape sequence.
-                            // NB: `byte_search!` macro increments `pos` when return `true`,
-                            // so need to subtract 1 here to counteract that.
-                            // SAFETY: Added 1 to `pos` above, and checked `chunk_start` hasn't moved
-                            // backwards from that, so subtracting 1 again is within bounds.
-                            pos = unsafe {chunk_start.sub(1)};
-
-                            // Continue searching
-                            true
-                        }
-                        _ => {
-                            // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
-                            // or first byte of lossy replacement character
-                            debug_assert!(next_byte == LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
-
-                            // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
-                            // so there must be 2 more bytes to read
-                            let next2 = unsafe { pos.add(1).read2() };
-                            if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                                && self.token.lone_surrogates()
-                            {
-                                str.push_str("\u{FFFD}fffd");
-                            } else {
-                                let bytes = [LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]];
-                                // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
-                                // so these 3 bytes must comprise a valid UTF-8 string
-                                let s = unsafe { str::from_utf8_unchecked(&bytes) };
-                                str.push_str(s);
-                            }
-
-                            // Advance past this character.
-                            // SAFETY: Character is 3 bytes, so `pos + 2` is in bounds.
-                            // Note: `byte_search!` macro already advances `pos` by 1, so only
-                            // advance by 2 here, so that in total we skip 3 bytes.
-                            pos = unsafe { pos.add(2) };
-
-                            // Set next chunk to start after this character.
-                            // SAFETY: It's a 3 byte character, and we added 2 to `pos` above,
-                            // so `pos + 1` must be a UTF-8 char boundary.
-                            // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
-                            // increments `pos` when return `true` from `continue_if`, so `pos` will be
-                            // brought up to `chunk_start` again.
-                            chunk_start = unsafe { pos.add(1) };
-
-                            // Continue searching
-                            true
+                        // Avoid lint errors if `$eof_handler` contains `return` statement
+                        #[allow(
+                            unused_variables,
+                            unreachable_code,
+                            clippy::diverging_sub_expression,
+                            clippy::allow_attributes
+                        )]
+                        {
+                            let eof_ret = {
+                                self.error(diagnostics::unterminated_string(
+                                    self.unterminated_range(),
+                                ));
+                                return Kind::Undetermined;
+                            };
+                            break 'outer eof_ret;
                         }
                     }
+                };
+
+                // Found match. Check if should continue.
+                let should_continue = {
+                    let next_byte = byte;
+                    if next_byte == b'$' {
+                        // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
+                        let after_dollar = unsafe { pos.add(1) };
+                        if after_dollar.is_not_end_of(&self.source) {
+                            // If `${`, exit.
+                            // SAFETY: Have checked there's at least 1 further byte to read.
+                            if unsafe { after_dollar.read() } == b'{' {
+                                // Add last chunk to `str`.
+                                // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
+                                // this function. `pos` only increases during searching.
+                                // Where `chunk_start` is updated, it's always before or equal to `pos`.
+                                // So `chunk_start` cannot be after `pos`.
+                                let chunk = unsafe {
+                                    self.source.str_between_positions_unchecked(chunk_start, pos)
+                                };
+                                str.push_str(chunk);
+
+                                // Skip `${` and stop searching.
+                                // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
+                                pos = unsafe { pos.add(2) };
+                                false
+                            } else {
+                                // Not `${`. Continue searching.
+                                true
+                            }
+                        } else {
+                            // This is last byte in file. Continue to `handle_eof`.
+                            // This is illegal in valid JS, so mark this branch cold.
+                            cold_branch(|| true)
+                        }
+                    } else {
+                        // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
+                        // Add chunk up to before this char to `str`.
+                        // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
+                        // this function. `pos` only increases during searching.
+                        // Where `chunk_start` is updated, it's always before or equal to `pos`.
+                        // So `chunk_start` cannot be after `pos`.
+                        let chunk = unsafe {
+                            self.source.str_between_positions_unchecked(chunk_start, pos)
+                        };
+                        str.push_str(chunk);
+
+                        match next_byte {
+                            b'`' => {
+                                // Skip '`' and stop searching.
+                                // SAFETY: Byte at `pos` is '`' (ASCII), so `pos + 1` is a UTF-8 char boundary.
+                                pos = unsafe { pos.add(1) };
+                                ret = tail;
+                                false
+                            }
+                            b'\r' => {
+                                // Set next chunk to start after `\r`.
+                                // SAFETY: Next byte is `\r` which is ASCII, so after it is a UTF-8 char boundary.
+                                // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
+                                // increments `pos` when return `true` from `continue_if`, so `pos` will be
+                                // brought up to `chunk_start` again.
+                                chunk_start = unsafe { pos.add(1) };
+
+                                if chunk_start.is_not_end_of(&self.source) {
+                                    // Either `\r` alone or `\r\n` needs to be converted to `\n`.
+                                    // SAFETY: Have checked not at EOF.
+                                    if unsafe { chunk_start.read() } == b'\n' {
+                                        // We have `\r\n`.
+                                        // Start next search after the `\n`.
+                                        // `chunk_start` is before the `\n`, so no need to push an `\n`
+                                        // to `str` here. The `\n` is first char of next chunk, so it'll get
+                                        // pushed to `str` later on when that next chunk is pushed.
+                                        // Note: `byte_search!` macro already advances `pos` by 1, so only
+                                        // advance by 1 here, so that in total we skip 2 bytes for `\r\n`.
+                                        pos = chunk_start;
+                                    } else {
+                                        // We have a lone `\r`.
+                                        // Convert it to `\n` by pushing an `\n` to `str`.
+                                        // `chunk_start` is *after* the `\r`, so the `\r` is not included in
+                                        // next chunk, so it will not also get included in `str` when that
+                                        // next chunk is pushed.
+                                        // Note: `byte_search!` macro already advances `pos` by 1,
+                                        // which steps past the `\r`, so don't advance `pos` here.
+                                        str.push('\n');
+                                    }
+                                } else {
+                                    // This is last byte in file. Continue to `handle_eof`.
+                                    // This is illegal in valid JS, so mark this branch cold.
+                                    cold_branch(|| {});
+                                }
+
+                                // Continue searching
+                                true
+                            }
+                            b'\\' => {
+                                // Decode escape sequence into `str`.
+                                // `read_string_escape_sequence` expects `self.source` to be positioned after `\`.
+                                // SAFETY: Next byte is `\`, which is ASCII, so `pos + 1` is UTF-8 char boundary.
+                                let after_backslash = unsafe { pos.add(1) };
+                                self.source.set_position(after_backslash);
+                                self.read_string_escape_sequence(
+                                    &mut str,
+                                    true,
+                                    &mut is_valid_escape_sequence,
+                                );
+
+                                // Start next chunk after escape sequence
+                                chunk_start = self.source.position();
+                                assert!(chunk_start >= after_backslash);
+
+                                // Continue search after escape sequence.
+                                // NB: `byte_search!` macro increments `pos` when return `true`,
+                                // so need to subtract 1 here to counteract that.
+                                // SAFETY: Added 1 to `pos` above, and checked `chunk_start` hasn't moved
+                                // backwards from that, so subtracting 1 again is within bounds.
+                                pos = unsafe { chunk_start.sub(1) };
+
+                                // Continue searching
+                                true
+                            }
+                            _ => {
+                                // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
+                                // or first byte of lossy replacement character
+                                debug_assert!(next_byte == LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+
+                                // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
+                                // so there must be 2 more bytes to read
+                                let next2 = unsafe { pos.add(1).read2() };
+                                if next2
+                                    == [
+                                        LOSSY_REPLACEMENT_CHAR_BYTES[1],
+                                        LOSSY_REPLACEMENT_CHAR_BYTES[2],
+                                    ]
+                                    && self.token.lone_surrogates()
+                                {
+                                    str.push_str("\u{FFFD}fffd");
+                                } else {
+                                    let bytes =
+                                        [LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]];
+                                    // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
+                                    // so these 3 bytes must comprise a valid UTF-8 string
+                                    let s = unsafe { str::from_utf8_unchecked(&bytes) };
+                                    str.push_str(s);
+                                }
+
+                                // Advance past this character.
+                                // SAFETY: Character is 3 bytes, so `pos + 2` is in bounds.
+                                // Note: `byte_search!` macro already advances `pos` by 1, so only
+                                // advance by 2 here, so that in total we skip 3 bytes.
+                                pos = unsafe { pos.add(2) };
+
+                                // Set next chunk to start after this character.
+                                // SAFETY: It's a 3 byte character, and we added 2 to `pos` above,
+                                // so `pos + 1` must be a UTF-8 char boundary.
+                                // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
+                                // increments `pos` when return `true` from `continue_if`, so `pos` will be
+                                // brought up to `chunk_start` again.
+                                chunk_start = unsafe { pos.add(1) };
+
+                                // Continue searching
+                                true
+                            }
+                        }
+                    }
+                };
+
+                if should_continue {
+                    // Not a match after all - continue searching.
+                    // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                    // See above about UTF-8 character boundaries invariant.
+                    pos = unsafe { pos.add(1) };
+                    continue;
                 }
-            },
-            handle_eof: {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                return Kind::Undetermined;
-            },
+
+                // Match confirmed.
+                // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
+                // SAFETY: See above about UTF-8 character boundaries invariant.
+                self.source.set_position(pos);
+
+                break byte;
+            }
         };
 
         self.save_template_string(is_valid_escape_sequence, str.into_str());
