@@ -157,7 +157,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut ctx = Ctx::new(ctx);
-        self.substitute_variable_declaration(decl, &mut ctx);
+        Self::substitute_variable_declaration(decl, &mut ctx);
     }
 
     fn exit_variable_declarator(
@@ -231,8 +231,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::try_compress_assignment_to_update_expression(expr, ctx);
                 self.remove_unused_assignment_expression(expr, ctx);
             }
-            Expression::SequenceExpression(_) => self.try_fold_sequence_expression(expr, ctx),
-            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
+            Expression::SequenceExpression(_) => Self::try_fold_sequence_expression(expr, ctx),
+            Expression::ArrowFunctionExpression(e) => Self::try_compress_arrow_expression(e, ctx),
             Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
             Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
             Expression::NewExpression(e) => {
@@ -256,13 +256,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-        self.substitute_call_expression(e, &mut ctx);
+        Self::substitute_call_expression(e, &mut ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-        self.substitute_new_expression(e, &mut ctx);
+        Self::substitute_new_expression(e, &mut ctx);
         Self::remove_empty_spread_arguments(&mut e.arguments);
     }
 
@@ -344,7 +344,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-        self.substitute_catch_clause(catch, &mut ctx);
+        Self::substitute_catch_clause(catch, &mut ctx);
     }
 }
 
@@ -429,7 +429,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
         let ctx = &mut Ctx::new(ctx);
         match e {
             Expression::TemplateLiteral(t) => {
-                PeepholeOptimizations::inline_template_literal(t, ctx)
+                PeepholeOptimizations::inline_template_literal(t, ctx);
             }
             Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_exp(e, ctx),
             Expression::BinaryExpression(_) => {
@@ -452,7 +452,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::ConditionalExpression(_) => {
                 self.inner.try_fold_conditional_expression(e, ctx);
             }
-            Expression::SequenceExpression(_) => self.inner.try_fold_sequence_expression(e, ctx),
+            Expression::SequenceExpression(_) => {
+                PeepholeOptimizations::try_fold_sequence_expression(e, ctx)
+            }
             Expression::AssignmentExpression(_) => {
                 self.inner.remove_unused_assignment_expression(e, ctx);
             }

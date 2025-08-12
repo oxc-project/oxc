@@ -33,7 +33,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_assignment_target_property_property(
@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
 
     pub fn substitute_assignment_target_property(
@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut BindingProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_method_definition(
@@ -96,7 +96,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_property_definition(
@@ -112,7 +112,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_accessor_property(
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+        Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_return_statement(
@@ -140,21 +140,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_variable_declaration(
-        &self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
-            self.compress_variable_declarator(declarator, ctx);
+            Self::compress_variable_declarator(declarator, ctx);
         }
     }
 
-    pub fn substitute_call_expression(&self, expr: &mut CallExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    pub fn substitute_call_expression(expr: &mut CallExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        Self::try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
-    pub fn substitute_new_expression(&self, expr: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    pub fn substitute_new_expression(expr: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        Self::try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
     pub fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
@@ -168,7 +167,6 @@ impl<'a> PeepholeOptimizations {
 
     /// `() => { return foo })` -> `() => foo`
     pub fn try_compress_arrow_expression(
-        &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -522,11 +520,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn compress_variable_declarator(
-        &self,
-        decl: &mut VariableDeclarator<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    fn compress_variable_declarator(decl: &mut VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         // Destructuring Pattern has error throwing side effect.
         if matches!(
             decl.kind,
@@ -815,7 +809,6 @@ impl<'a> PeepholeOptimizations {
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
     fn try_compress_property_key(
-        &self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
         ctx: &mut Ctx<'a, '_>,
@@ -859,7 +852,7 @@ impl<'a> PeepholeOptimizations {
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
     // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
-    fn try_flatten_arguments(&self, args: &mut Vec<'a, Argument<'a>>, ctx: &mut Ctx<'a, '_>) {
+    fn try_flatten_arguments(args: &mut Vec<'a, Argument<'a>>, ctx: &mut Ctx<'a, '_>) {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
@@ -1044,7 +1037,7 @@ impl<'a> PeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
         if ctx.options().target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {

@@ -324,7 +324,7 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    pub fn try_fold_sequence_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::SequenceExpression(e) = expr else { return };
         let should_keep_as_sequence_expr = e
             .expressions
@@ -436,10 +436,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn remove_dead_code_call_expression(
-        expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
             if let Some(reference_id) = ident.reference_id.get() {
