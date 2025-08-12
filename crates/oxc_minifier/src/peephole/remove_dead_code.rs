@@ -16,11 +16,11 @@ use super::PeepholeOptimizations;
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statement(&self, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_dead_code_exit_statement(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
             Statement::IfStatement(s) => Self::try_fold_if(s, ctx),
-            Statement::ForStatement(s) => self.try_fold_for(s, ctx),
+            Statement::ForStatement(s) => Self::try_fold_for(s, ctx),
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             Statement::FunctionDeclaration(f) => Self::remove_unused_function_declaration(f, ctx),
@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
-        self.try_fold_expression_stmt(stmt, ctx);
+        Self::try_fold_expression_stmt(stmt, ctx);
     }
 
     /// Remove block from single line blocks
@@ -144,21 +144,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_for(
-        &self,
         for_stmt: &mut ForStatement<'a>,
 
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         if let Some(init) = &mut for_stmt.init {
             if let Some(init) = init.as_expression_mut() {
-                if self.remove_unused_expression(init, ctx) {
+                if Self::remove_unused_expression(init, ctx) {
                     for_stmt.init = None;
                     ctx.state.changed = true;
                 }
             }
         }
         if let Some(update) = &mut for_stmt.update {
-            if self.remove_unused_expression(update, ctx) {
+            if Self::remove_unused_expression(update, ctx) {
                 for_stmt.update = None;
                 ctx.state.changed = true;
             }
@@ -236,7 +235,7 @@ impl<'a> PeepholeOptimizations {
         var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
     }
 
-    fn try_fold_expression_stmt(&self, stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
@@ -246,7 +245,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if self.remove_unused_expression(&mut expr_stmt.expression, ctx) {
+        if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
             ctx.state.changed = true;
         }
@@ -286,11 +285,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
-    pub fn try_fold_conditional_expression(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         ctx.state.changed = true;
@@ -299,7 +294,7 @@ impl<'a> PeepholeOptimizations {
             let exprs = ctx.ast.vec_from_array([
                 {
                     let mut test = e.test.take_in(ctx.ast);
-                    self.remove_unused_expression(&mut test, ctx);
+                    Self::remove_unused_expression(&mut test, ctx);
                     test
                 },
                 if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) },
@@ -341,7 +336,7 @@ impl<'a> PeepholeOptimizations {
         e.expressions.retain_mut(|e| {
             i += 1;
             if should_keep_as_sequence_expr && i == old_len - 1 {
-                if self.remove_unused_expression(e, ctx) {
+                if Self::remove_unused_expression(e, ctx) {
                     *e = ctx.ast.expression_numeric_literal(
                         e.span(),
                         0.0,
@@ -355,7 +350,7 @@ impl<'a> PeepholeOptimizations {
             if i == old_len {
                 return true;
             }
-            !self.remove_unused_expression(e, ctx)
+            !Self::remove_unused_expression(e, ctx)
         });
         if e.expressions.len() != old_len {
             ctx.state.changed = true;

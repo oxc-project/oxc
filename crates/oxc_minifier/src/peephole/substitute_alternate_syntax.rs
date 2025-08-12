@@ -22,7 +22,7 @@ use super::PeepholeOptimizations;
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
-    pub fn substitute_object_property(&self, prop: &mut ObjectProperty<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn substitute_object_property(prop: &mut ObjectProperty<'a>, ctx: &mut Ctx<'a, '_>) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
         if !prop.method {
             if let PropertyKey::StringLiteral(str) = &prop.key {
@@ -37,7 +37,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_assignment_target_property_property(
-        &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -45,7 +44,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_assignment_target_property(
-        &self,
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -75,19 +73,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn substitute_binding_property(
-        &self,
-        prop: &mut BindingProperty<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn substitute_binding_property(prop: &mut BindingProperty<'a>, ctx: &mut Ctx<'a, '_>) {
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    pub fn substitute_method_definition(
-        &self,
-        prop: &mut MethodDefinition<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn substitute_method_definition(prop: &mut MethodDefinition<'a>, ctx: &mut Ctx<'a, '_>) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
@@ -100,7 +90,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_property_definition(
-        &self,
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
@@ -115,11 +104,7 @@ impl<'a> PeepholeOptimizations {
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    pub fn substitute_accessor_property(
-        &self,
-        prop: &mut AccessorProperty<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn substitute_accessor_property(prop: &mut AccessorProperty<'a>, ctx: &mut Ctx<'a, '_>) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
@@ -131,11 +116,7 @@ impl<'a> PeepholeOptimizations {
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    pub fn substitute_return_statement(
-        &self,
-        stmt: &mut ReturnStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn substitute_return_statement(stmt: &mut ReturnStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         Self::compress_return_statement(stmt, ctx);
     }
 
@@ -544,7 +525,7 @@ impl<'a> PeepholeOptimizations {
     /// `Number(0)` -> `0`
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
-    pub fn try_fold_simple_function_call(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_simple_function_call(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
         if e.optional || e.arguments.len() >= 2 {
             return;
@@ -575,9 +556,9 @@ impl<'a> PeepholeOptimizations {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
                     let mut arg = arg.take_in(ctx.ast);
-                    self.try_fold_expr_in_boolean_context(&mut arg, ctx);
+                    Self::try_fold_expr_in_boolean_context(&mut arg, ctx);
                     let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
-                    Some(self.minimize_not(span, arg, ctx))
+                    Some(Self::minimize_not(span, arg, ctx))
                 }
             },
             "String" => {

@@ -8,7 +8,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
-    pub fn minimize_for_statement(&self, for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_for_statement(for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
         if let Statement::BlockStatement(block_stmt) = first {
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
-                e => self.minimize_not(e.span(), e, ctx),
+                e => Self::minimize_not(e.span(), e, ctx),
             };
 
             if let Some(test) = &mut for_stmt.test {
