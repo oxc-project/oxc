@@ -25,7 +25,7 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
     }
 
     /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].
-    pub fn into_scoping(self) -> Scoping {
+    pub fn into_scoping(self) -> Scoping<'a> {
         self.0.scoping.into_scoping()
     }
 

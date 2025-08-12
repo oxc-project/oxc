@@ -134,7 +134,7 @@ pub fn check_semantic_after_transform(
     // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
-    let scoping_rebuilt = SemanticBuilder::new()
+    let scoping_rebuilt = SemanticBuilder::new(&allocator)
         .with_scope_tree_child_ids(scoping_after_transform.has_scope_child_ids())
         .build(&program)
         .semantic
@@ -174,8 +174,8 @@ pub fn check_semantic_ids(program: &Program) -> Option<Vec<OxcDiagnostic>> {
 }
 
 struct PostTransformChecker<'a, 's> {
-    scoping_after_transform: &'s Scoping,
-    scoping_rebuilt: Scoping,
+    scoping_after_transform: &'s Scoping<'s>,
+    scoping_rebuilt: Scoping<'s>,
     // Mappings from after transform ID to rebuilt ID
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,

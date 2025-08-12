@@ -22,7 +22,7 @@ use super::uid::UidGenerator;
 /// `current_scope_id` is the ID of current scope during traversal.
 /// `walk_*` functions update this field when entering/exiting a scope.
 pub struct TraverseScoping<'a> {
-    scoping: Scoping,
+    scoping: Scoping<'a>,
     uid_generator: Option<UidGenerator<'a>>,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,

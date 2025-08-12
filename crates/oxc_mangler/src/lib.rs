@@ -258,9 +258,9 @@ impl<'t> Mangler<'t> {
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> Scoping {
+    pub fn build(self, allocator: &'t Allocator, program: &'t Program<'_>) -> Scoping<'t> {
         let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+            SemanticBuilder::new(allocator).with_scope_tree_child_ids(true).build(program).semantic;
         self.build_with_semantic(&mut semantic, program);
         semantic.into_scoping()
     }

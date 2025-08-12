@@ -44,7 +44,7 @@ pub fn collect_name_symbols(
 /// Collects symbols that are used to set `name` properties of functions and classes.
 struct NameSymbolCollector<'a, 'b> {
     options: MangleOptionsKeepNames,
-    scoping: &'b Scoping,
+    scoping: &'b Scoping<'a>,
     ast_nodes: &'b AstNodes<'a>,
 }
 
@@ -260,7 +260,7 @@ mod test {
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
         assert!(!ret.panicked, "{source_text}");
         assert!(ret.errors.is_empty(), "{source_text}");
-        let ret = SemanticBuilder::new().build(&ret.program);
+        let ret = SemanticBuilder::new(&allocator).build(&ret.program);
         assert!(ret.errors.is_empty(), "{source_text}");
         let semantic = ret.semantic;
         let symbols = collect_name_symbols(opts, semantic.scoping(), semantic.nodes());

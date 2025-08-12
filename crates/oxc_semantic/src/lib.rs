@@ -64,7 +64,7 @@ pub struct Semantic<'a> {
     /// The Abstract Syntax Tree (AST) nodes.
     nodes: AstNodes<'a>,
 
-    scoping: Scoping,
+    scoping: Scoping<'a>,
 
     classes: ClassTable<'a>,
 
@@ -84,12 +84,12 @@ pub struct Semantic<'a> {
 
 impl<'a> Semantic<'a> {
     /// Extract [`Scoping`] from [`Semantic`].
-    pub fn into_scoping(self) -> Scoping {
+    pub fn into_scoping(self) -> Scoping<'a> {
         self.scoping
     }
 
     /// Extract [`Scoping`] and [`AstNode`] from the [`Semantic`].
-    pub fn into_scoping_and_nodes(self) -> (Scoping, AstNodes<'a>) {
+    pub fn into_scoping_and_nodes(self) -> (Scoping<'a>, AstNodes<'a>) {
         (self.scoping, self.nodes)
     }
 
@@ -108,15 +108,15 @@ impl<'a> Semantic<'a> {
         &self.nodes
     }
 
-    pub fn scoping(&self) -> &Scoping {
+    pub fn scoping(&self) -> &Scoping<'a> {
         &self.scoping
     }
 
-    pub fn scoping_mut(&mut self) -> &mut Scoping {
+    pub fn scoping_mut(&mut self) -> &mut Scoping<'a> {
         &mut self.scoping
     }
 
-    pub fn scoping_mut_and_nodes(&mut self) -> (&mut Scoping, &AstNodes<'a>) {
+    pub fn scoping_mut_and_nodes(&mut self) -> (&mut Scoping<'a>, &AstNodes<'a>) {
         (&mut self.scoping, &self.nodes)
     }
 
@@ -237,7 +237,7 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
+        let semantic = SemanticBuilder::new(allocator).build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }

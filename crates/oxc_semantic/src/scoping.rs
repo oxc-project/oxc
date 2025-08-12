@@ -40,7 +40,7 @@ pub struct Redeclaration {
 /// - All scopes have a parent scope, except the root scope.
 /// - Scopes can have 0 or more child scopes.
 /// - Nodes that create a scope store the [`ScopeId`] of the scope they create.
-pub struct Scoping {
+pub struct Scoping<'ast> {
     /* Symbol Table Fields */
     pub(crate) symbol_spans: IndexVec<SymbolId, Span>,
     pub(crate) symbol_flags: IndexVec<SymbolId, SymbolFlags>,
@@ -65,43 +65,18 @@ pub struct Scoping {
 
     scope_flags: IndexVec<ScopeId, ScopeFlags>,
 
-    pub(crate) cell: ScopingCell,
+    pub(crate) cell: ScopingCell<'ast>,
 }
 
-impl fmt::Debug for Scoping {
+impl<'a> fmt::Debug for Scoping<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.debug_struct("Scoping").finish()
     }
 }
 
-impl Default for Scoping {
-    fn default() -> Self {
-        Self {
-            symbol_spans: IndexVec::new(),
-            symbol_flags: IndexVec::new(),
-            symbol_scope_ids: IndexVec::new(),
-            symbol_declarations: IndexVec::new(),
-            references: IndexVec::new(),
-            no_side_effects: FxHashSet::default(),
-            scope_parent_ids: IndexVec::new(),
-            scope_build_child_ids: false,
-            scope_node_ids: IndexVec::new(),
-            scope_flags: IndexVec::new(),
-            cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
-                symbol_names: ArenaVec::new_in(allocator),
-                resolved_references: ArenaVec::new_in(allocator),
-                symbol_redeclarations: FxHashMap::default(),
-                bindings: IndexVec::new(),
-                scope_child_ids: ArenaVec::new_in(allocator),
-                root_unresolved_references: UnresolvedReferences::new_in(allocator),
-            }),
-        }
-    }
-}
-
 self_cell::self_cell!(
-    pub struct ScopingCell {
-        owner: Allocator,
+    pub struct ScopingCell<'ast> {
+        owner: &'ast Allocator,
         #[covariant]
         dependent: ScopingInner,
     }
@@ -131,7 +106,30 @@ pub struct ScopingInner<'cell> {
 }
 
 // Symbol Table Methods
-impl Scoping {
+impl<'a> Scoping<'a> {
+    pub fn new_with_allocator(allocator: &'a Allocator) -> Self {
+        Self {
+            symbol_spans: IndexVec::new(),
+            symbol_flags: IndexVec::new(),
+            symbol_scope_ids: IndexVec::new(),
+            symbol_declarations: IndexVec::new(),
+            references: IndexVec::new(),
+            no_side_effects: FxHashSet::default(),
+            scope_parent_ids: IndexVec::new(),
+            scope_build_child_ids: false,
+            scope_node_ids: IndexVec::new(),
+            scope_flags: IndexVec::new(),
+            cell: ScopingCell::new(allocator, |allocator| ScopingInner {
+                symbol_names: ArenaVec::new_in(allocator),
+                resolved_references: ArenaVec::new_in(allocator),
+                symbol_redeclarations: FxHashMap::default(),
+                bindings: IndexVec::new(),
+                scope_child_ids: ArenaVec::new_in(allocator),
+                root_unresolved_references: UnresolvedReferences::new_in(allocator),
+            }),
+        }
+    }
+
     /// Returns the number of symbols in this table.
     #[inline]
     pub fn symbols_len(&self) -> usize {
@@ -423,7 +421,7 @@ impl Scoping {
 }
 
 /// Scope Tree Methods
-impl Scoping {
+impl<'a> Scoping<'a> {
     const ROOT_SCOPE_ID: ScopeId = ScopeId::new(0);
 
     /// Returns the number of scopes found in the program. Includes the root
@@ -482,9 +480,9 @@ impl Scoping {
         self.cell.borrow_dependent().root_unresolved_references.values().map(|v| v.iter().copied())
     }
 
-    pub(crate) fn set_root_unresolved_references<'a>(
+    pub(crate) fn set_root_unresolved_references<'b>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, Vec<ReferenceId>)>,
+        entries: impl Iterator<Item = (&'b str, Vec<ReferenceId>)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {
@@ -835,10 +833,10 @@ impl Scoping {
     }
 }
 
-impl Scoping {
+impl<'a> Scoping<'a> {
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
-    pub fn clone_in_with_semantic_ids_with_another_arena(&self) -> Self {
+    pub fn clone_in_with_semantic_ids_with_another_arena(&self, allocator: &'a Allocator) -> Self {
         Self {
             symbol_spans: self.symbol_spans.clone(),
             symbol_flags: self.symbol_flags.clone(),
@@ -850,8 +848,7 @@ impl Scoping {
             scope_build_child_ids: self.scope_build_child_ids,
             scope_node_ids: self.scope_node_ids.clone(),
             scope_flags: self.scope_flags.clone(),
-            cell: self.cell.with_dependent(|allocator, cell| {
-                let allocator = Allocator::with_capacity(allocator.used_bytes());
+            cell: self.cell.with_dependent(|_, cell| {
                 ScopingCell::new(allocator, |allocator| ScopingInner {
                     symbol_names: cell.symbol_names.clone_in_with_semantic_ids(allocator),
                     resolved_references: cell

@@ -7,7 +7,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, Allocator};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_cfg::{
@@ -74,7 +74,7 @@ pub struct SemanticBuilder<'a> {
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
-    pub(crate) scoping: Scoping,
+    pub(crate) scoping: Scoping<'a>,
 
     pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
 
@@ -102,15 +102,9 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl Default for SemanticBuilder<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<'a> SemanticBuilder<'a> {
-    pub fn new() -> Self {
-        let scoping = Scoping::default();
+    pub fn new(allocator: &'a Allocator) -> Self {
+        let scoping = Scoping::new_with_allocator(allocator);
         let current_scope_id = scoping.root_scope_id();
 
         Self {
