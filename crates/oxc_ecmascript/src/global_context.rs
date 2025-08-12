@@ -5,10 +5,6 @@ use crate::constant_evaluation::ConstantValue;
 
 pub trait GlobalContext<'a>: Sized {
     /// Whether the reference is a global reference.
-    ///
-    /// - None means it is unknown.
-    /// - Some(true) means it is a global reference.
-    /// - Some(false) means it is not a global reference.
     fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool;
 
     fn is_global_expr(&self, name: &str, expr: &Expression<'a>) -> bool {
