@@ -624,13 +624,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-<<<<<<< HEAD
     pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
-        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
-=======
-    pub fn fold_object_exp(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
->>>>>>> 2ac489b42 (Remove allow directives for clippy warnings in oxc_minifier and fix all underlying issues)
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
                 Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
@@ -701,10 +696,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(
-        e: &ObjectExpression<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> bool {
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: &Ctx<'a, '_>) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {

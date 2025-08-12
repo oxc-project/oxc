@@ -528,11 +528,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn validate_global_reference(
-        expr: &Expression<'a>,
-        target: &str,
-        ctx: &Ctx<'a, '_>,
-    ) -> bool {
+    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: &Ctx<'a, '_>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }
