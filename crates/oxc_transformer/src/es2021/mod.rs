@@ -11,15 +11,15 @@ mod options;
 pub use logical_assignment_operators::LogicalAssignmentOperators;
 pub use options::ES2021Options;
 
-pub struct ES2021<'a, 'ctx> {
+pub struct ES2021<'a> {
     options: ES2021Options,
 
     // Plugins
-    logical_assignment_operators: LogicalAssignmentOperators<'a, 'ctx>,
+    logical_assignment_operators: LogicalAssignmentOperators<'a>,
 }
 
-impl<'a, 'ctx> ES2021<'a, 'ctx> {
-    pub fn new(options: ES2021Options, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ES2021<'a> {
+    pub fn new(options: ES2021Options, ) -> Self {
         Self { logical_assignment_operators: LogicalAssignmentOperators::new(ctx), options }
     }
 }

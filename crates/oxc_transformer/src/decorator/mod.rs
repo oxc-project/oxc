@@ -11,15 +11,15 @@ use crate::{
 use legacy::LegacyDecorator;
 pub use options::DecoratorOptions;
 
-pub struct Decorator<'a, 'ctx> {
+pub struct Decorator<'a> {
     options: DecoratorOptions,
 
     // Plugins
-    legacy_decorator: LegacyDecorator<'a, 'ctx>,
+    legacy_decorator: LegacyDecorator<'a>,
 }
 
-impl<'a, 'ctx> Decorator<'a, 'ctx> {
-    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> Decorator<'a> {
+    pub fn new(options: DecoratorOptions, ) -> Self {
         Self {
             legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata, ctx),
             options,

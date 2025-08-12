@@ -29,10 +29,10 @@ use refresh::ReactRefresh;
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-pub struct Jsx<'a, 'ctx> {
-    implementation: JsxImpl<'a, 'ctx>,
-    display_name: ReactDisplayName<'a, 'ctx>,
-    refresh: ReactRefresh<'a, 'ctx>,
+pub struct Jsx<'a> {
+    implementation: JsxImpl<'a>,
+    display_name: ReactDisplayName<'a>,
+    refresh: ReactRefresh<'a>,
     enable_jsx_plugin: bool,
     display_name_plugin: bool,
     self_plugin: bool,
@@ -41,12 +41,12 @@ pub struct Jsx<'a, 'ctx> {
 }
 
 // Constructors
-impl<'a, 'ctx> Jsx<'a, 'ctx> {
+impl<'a> Jsx<'a> {
     pub fn new(
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformState<'a>,
+        ,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();

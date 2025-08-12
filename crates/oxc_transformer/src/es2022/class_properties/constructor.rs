@@ -440,14 +440,14 @@ impl<'a> ClassProperties<'a, '_> {
 }
 
 /// Visitor for transforming `super()` in class constructor params.
-struct ConstructorParamsSuperReplacer<'a, 'ctx> {
+struct ConstructorParamsSuperReplacer<'a> {
     /// Binding for `_super` function.
     /// Initially `None`. Binding is created if `super()` is found.
     super_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
+impl<'a> ConstructorParamsSuperReplacer<'a> {
     fn new(ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { super_binding: None, ctx }
     }
@@ -587,7 +587,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
 }
 
 /// Visitor for transforming `super()` in class constructor body.
-struct ConstructorBodySuperReplacer<'a, 'ctx> {
+struct ConstructorBodySuperReplacer<'a> {
     /// Scope of class constructor
     constructor_scope_id: ScopeId,
     /// Binding for `_super` function.
@@ -597,7 +597,7 @@ struct ConstructorBodySuperReplacer<'a, 'ctx> {
     ctx: &'ctx mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
+impl<'a> ConstructorBodySuperReplacer<'a> {
     fn new(constructor_scope_id: ScopeId, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { constructor_scope_id, super_binding: None, ctx }
     }

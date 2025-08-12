@@ -282,9 +282,9 @@ impl StyledComponentsHelper {
     }
 }
 
-pub struct StyledComponents<'a, 'ctx> {
+pub struct StyledComponents<'a> {
     pub options: StyledComponentsOptions,
-    pub ctx: &'ctx TransformState<'a>,
+    pub ,
 
     // State
     /// Tracks which variables are bound to styled-components imports
@@ -297,8 +297,8 @@ pub struct StyledComponents<'a, 'ctx> {
     block_name: Option<Atom<'a>>,
 }
 
-impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
-    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> StyledComponents<'a> {
+    pub fn new(options: StyledComponentsOptions, ) -> Self {
         Self {
             options,
             ctx,

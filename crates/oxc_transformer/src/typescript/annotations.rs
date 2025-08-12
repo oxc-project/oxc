@@ -16,8 +16,8 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct TypeScriptAnnotations<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct TypeScriptAnnotations<'a> {
+    ,
 
     // Options
     only_remove_type_imports: bool,
@@ -32,8 +32,8 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     jsx_fragment_import_name: String,
 }
 
-impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> TypeScriptAnnotations<'a> {
+    pub fn new(options: &TypeScriptOptions, ) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {

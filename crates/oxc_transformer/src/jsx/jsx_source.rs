@@ -47,14 +47,14 @@ use crate::{
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
 
-pub struct JsxSource<'a, 'ctx> {
+pub struct JsxSource<'a> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,
-    ctx: &'ctx TransformState<'a>,
+    ,
 }
 
-impl<'a, 'ctx> JsxSource<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> JsxSource<'a> {
+    pub fn new() -> Self {
         Self { filename_var: None, source_rope: None, ctx }
     }
 }

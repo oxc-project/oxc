@@ -43,13 +43,13 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct ExponentiationOperator<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct ExponentiationOperator<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> ExponentiationOperator<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

@@ -10,15 +10,15 @@ mod options;
 pub use async_to_generator::{AsyncGeneratorExecutor, AsyncToGenerator};
 pub use options::ES2017Options;
 
-pub struct ES2017<'a, 'ctx> {
+pub struct ES2017<'a> {
     options: ES2017Options,
 
     // Plugins
-    async_to_generator: AsyncToGenerator<'a, 'ctx>,
+    async_to_generator: AsyncToGenerator<'a>,
 }
 
-impl<'a, 'ctx> ES2017<'a, 'ctx> {
-    pub fn new(options: ES2017Options, ctx: &'ctx TransformState<'a>) -> ES2017<'a, 'ctx> {
+impl<'a> ES2017<'a> {
+    pub fn new(options: ES2017Options, ) -> ES2017<'a> {
         ES2017 { async_to_generator: AsyncToGenerator::new(ctx), options }
     }
 }

@@ -64,13 +64,13 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct LogicalAssignmentOperators<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct LogicalAssignmentOperators<'a> {
+    ,
 }
 
-impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> LogicalAssignmentOperators<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

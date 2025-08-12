@@ -52,16 +52,16 @@ pub struct ObjectRestSpreadOptions {
     pub use_built_ins: bool,
 }
 
-pub struct ObjectRestSpread<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct ObjectRestSpread<'a> {
+    ,
 
     options: ObjectRestSpreadOptions,
 
     excluded_variable_declarators: Vec<VariableDeclarator<'a>>,
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ObjectRestSpread<'a> {
+    pub fn new(options: ObjectRestSpreadOptions, ) -> Self {
         if options.loose {
             ctx.error(OxcDiagnostic::error(
                 "Option `loose` is not implemented for object-rest-spread.",
@@ -106,7 +106,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::ObjectExpression(_) => {
-                Self::transform_object_expression(self.options, expr, self.ctx, ctx);
+                Self::transform_object_expression(self.options, expr, ctx);
             }
             Expression::AssignmentExpression(_) => {
                 self.transform_assignment_expression(expr, ctx);
@@ -474,13 +474,12 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `({ x, ..y })`.
     // `pub` for jsx spread.
     pub fn transform_object_expression(
         _options: ObjectRestSpreadOptions,
         expr: &mut Expression<'a>,
-        transform_ctx: &'ctx TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
@@ -494,7 +493,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
 
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
-                Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
+                Self::make_object_spread(&mut call_expr, &mut props, ctx);
                 let arg = spread_prop.argument.take_in(ctx.ast);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
@@ -503,7 +502,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         }
 
         if !props.is_empty() {
-            Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
+            Self::make_object_spread(&mut call_expr, &mut props, ctx);
         }
 
         *expr = Expression::CallExpression(call_expr.unwrap());
@@ -512,7 +511,6 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     fn make_object_spread(
         expr: &mut Option<ArenaBox<'a, CallExpression<'a>>>,
         props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
-        transform_ctx: &'ctx TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
@@ -533,7 +531,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         } else {
             ctx.ast.vec1(Argument::from(obj))
         };
-        let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
+        let new_expr = ctx.state.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
         expr.replace(ctx.ast.alloc(new_expr));
     }
 }
@@ -1095,7 +1093,7 @@ impl<'a> SpreadPair<'a> {
                 SPAN,
                 {
                     let mut sequence = ctx.ast.vec();
-                    sequence.push(transform_ctx.helper_call_expr(
+                    sequence.push(ctx.state.helper_call_expr(
                         Helper::ObjectDestructuringEmpty,
                         SPAN,
                         ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx))),
@@ -1105,7 +1103,7 @@ impl<'a> SpreadPair<'a> {
                     sequence
                 },
             )));
-            transform_ctx.helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
+            ctx.state.helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
@@ -1140,13 +1138,13 @@ impl<'a> SpreadPair<'a> {
                 );
                 let arguments = ctx
                     .ast
-                    .vec1(Argument::from(transform_ctx.helper_load(Helper::ToPropertyKey, ctx)));
+                    .vec1(Argument::from(ctx.state.helper_load(Helper::ToPropertyKey, ctx)));
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
             } else {
                 key_expression
             };
             arguments.push(Argument::from(key_expression));
-            transform_ctx.helper_call_expr(Helper::ObjectWithoutProperties, SPAN, arguments, ctx)
+            ctx.state.helper_call_expr(Helper::ObjectWithoutProperties, SPAN, arguments, ctx)
         };
         (self.lhs, rhs)
     }

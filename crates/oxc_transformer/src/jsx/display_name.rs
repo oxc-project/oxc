@@ -53,13 +53,13 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct ReactDisplayName<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct ReactDisplayName<'a> {
+    ,
 }
 
-impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> ReactDisplayName<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

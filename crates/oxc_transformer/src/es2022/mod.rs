@@ -14,17 +14,17 @@ pub use class_properties::ClassPropertiesOptions;
 use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
-pub struct ES2022<'a, 'ctx> {
+pub struct ES2022<'a> {
     // Plugins
     class_static_block: Option<ClassStaticBlock>,
-    class_properties: Option<ClassProperties<'a, 'ctx>>,
+    class_properties: Option<ClassProperties<'a>>,
 }
 
-impl<'a, 'ctx> ES2022<'a, 'ctx> {
+impl<'a> ES2022<'a> {
     pub fn new(
         options: ES2022Options,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformState<'a>,
+        ,
     ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.

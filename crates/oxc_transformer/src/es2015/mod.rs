@@ -8,17 +8,17 @@ mod options;
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
 
-pub struct ES2015<'a, 'ctx> {
+pub struct ES2015<'a> {
     #[expect(unused)]
     options: ES2015Options,
 
     // Plugins
     #[expect(unused)]
-    arrow_functions: ArrowFunctions<'a, 'ctx>,
+    arrow_functions: ArrowFunctions<'a>,
 }
 
-impl<'a, 'ctx> ES2015<'a, 'ctx> {
-    pub fn new(options: ES2015Options, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ES2015<'a> {
+    pub fn new(options: ES2015Options, ) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(options.arrow_function.unwrap_or_default(), ctx),
             options,

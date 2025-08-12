@@ -39,13 +39,13 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct NullishCoalescingOperator<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct NullishCoalescingOperator<'a> {
+    ,
 }
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> NullishCoalescingOperator<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

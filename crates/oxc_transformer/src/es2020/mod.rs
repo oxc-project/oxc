@@ -13,17 +13,17 @@ use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use optional_chaining::OptionalChaining;
 pub use options::ES2020Options;
 
-pub struct ES2020<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct ES2020<'a> {
+    ,
     options: ES2020Options,
 
     // Plugins
-    nullish_coalescing_operator: NullishCoalescingOperator<'a, 'ctx>,
-    optional_chaining: OptionalChaining<'a, 'ctx>,
+    nullish_coalescing_operator: NullishCoalescingOperator<'a>,
+    optional_chaining: OptionalChaining<'a>,
 }
 
-impl<'a, 'ctx> ES2020<'a, 'ctx> {
-    pub fn new(options: ES2020Options, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ES2020<'a> {
+    pub fn new(options: ES2020Options, ) -> Self {
         Self {
             ctx,
             options,

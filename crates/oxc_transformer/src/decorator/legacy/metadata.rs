@@ -99,12 +99,12 @@ use crate::{
     utils::ast_builder::create_property_access,
 };
 
-pub struct LegacyDecoratorMetadata<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct LegacyDecoratorMetadata<'a> {
+    ,
 }
 
-impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> LegacyDecoratorMetadata<'a> {
+    pub fn new() -> Self {
         LegacyDecoratorMetadata { ctx }
     }
 }

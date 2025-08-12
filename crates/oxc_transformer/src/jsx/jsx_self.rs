@@ -39,13 +39,13 @@ use crate::{
 
 const SELF: &str = "__self";
 
-pub struct JsxSelf<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct JsxSelf<'a> {
+    ,
 }
 
-impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> JsxSelf<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

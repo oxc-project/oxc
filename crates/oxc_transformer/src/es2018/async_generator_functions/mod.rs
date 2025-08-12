@@ -77,13 +77,13 @@ use crate::{
     es2017::AsyncGeneratorExecutor,
 };
 
-pub struct AsyncGeneratorFunctions<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
-    executor: AsyncGeneratorExecutor<'a, 'ctx>,
+pub struct AsyncGeneratorFunctions<'a> {
+    ,
+    executor: AsyncGeneratorExecutor<'a>,
 }
 
-impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> AsyncGeneratorFunctions<'a> {
+    pub fn new() -> Self {
         Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
     }
 }

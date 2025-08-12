@@ -109,7 +109,7 @@ struct PrivateMethodVisitor<'a, 'ctx, 'v> {
 impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     fn new(
         is_static: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let mode = if is_static {

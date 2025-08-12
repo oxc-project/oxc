@@ -69,8 +69,8 @@ enum CallContext<'a> {
     Binding(MaybeBoundIdentifier<'a>),
 }
 
-pub struct OptionalChaining<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct OptionalChaining<'a> {
+    ,
 
     // states
     is_inside_function_parameter: bool,
@@ -80,8 +80,8 @@ pub struct OptionalChaining<'a, 'ctx> {
     call_context: CallContext<'a>,
 }
 
-impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> OptionalChaining<'a> {
+    pub fn new() -> Self {
         Self {
             ctx,
             is_inside_function_parameter: false,

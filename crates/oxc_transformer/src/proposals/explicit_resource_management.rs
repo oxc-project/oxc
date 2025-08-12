@@ -49,14 +49,14 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct ExplicitResourceManagement<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct ExplicitResourceManagement<'a> {
+    ,
 
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 }
 
-impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ExplicitResourceManagement<'a> {
+    pub fn new() -> Self {
         Self { ctx, top_level_using: FxHashMap::default() }
     }
 }

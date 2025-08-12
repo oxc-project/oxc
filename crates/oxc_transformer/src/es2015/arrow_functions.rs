@@ -141,15 +141,15 @@ pub struct ArrowFunctionsOptions {
     pub spec: bool,
 }
 
-pub struct ArrowFunctions<'a, 'ctx> {
+pub struct ArrowFunctions<'a> {
     _options: ArrowFunctionsOptions,
-    _ctx: &'ctx TransformState<'a>,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> ArrowFunctions<'a, 'ctx> {
-    pub fn new(options: ArrowFunctionsOptions, ctx: &'ctx TransformState<'a>) -> Self {
-        Self { _options: options, _ctx: ctx }
+impl<'a> ArrowFunctions<'a> {
+    pub fn new(options: ArrowFunctionsOptions) -> Self {
+        Self { _options: options, _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctions<'a, '_> {}
+impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctions<'a> {}

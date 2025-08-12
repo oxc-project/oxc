@@ -11,12 +11,12 @@ use crate::{
     plugins::styled_components::StyledComponents,
 };
 
-pub struct Plugins<'a, 'ctx> {
-    styled_components: Option<StyledComponents<'a, 'ctx>>,
+pub struct Plugins<'a> {
+    styled_components: Option<StyledComponents<'a>>,
 }
 
-impl<'a, 'ctx> Plugins<'a, 'ctx> {
-    pub fn new(options: PluginsOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> Plugins<'a> {
+    pub fn new(options: PluginsOptions, ) -> Self {
         Self {
             styled_components: options
                 .styled_components

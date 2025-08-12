@@ -238,7 +238,7 @@ pub struct ClassPropertiesOptions {
 /// See [module docs] for details.
 ///
 /// [module docs]: self
-pub struct ClassProperties<'a, 'ctx> {
+pub struct ClassProperties<'a> {
     // ----- Options -----
     //
     /// If `true`, set properties with `=`, instead of `_defineProperty` helper (loose option).
@@ -252,7 +252,7 @@ pub struct ClassProperties<'a, 'ctx> {
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
 
-    ctx: &'ctx TransformState<'a>,
+    ,
 
     // ----- State used during all phases of transform -----
     //
@@ -287,13 +287,13 @@ pub struct ClassProperties<'a, 'ctx> {
     insert_after_stmts: Vec<Statement<'a>>,
 }
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a> {
     /// Create `ClassProperties` transformer
     pub fn new(
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformState<'a>,
+        ,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
         let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;

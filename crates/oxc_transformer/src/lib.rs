@@ -177,23 +177,23 @@ impl<'a> Transformer<'a> {
     }
 }
 
-struct TransformerImpl<'a, 'ctx> {
+struct TransformerImpl<'a> {
     // NOTE: all callbacks must run in order.
-    x0_typescript: Option<TypeScript<'a, 'ctx>>,
-    decorator: Decorator<'a, 'ctx>,
-    plugins: Plugins<'a, 'ctx>,
-    explicit_resource_management: Option<ExplicitResourceManagement<'a, 'ctx>>,
-    x1_jsx: Jsx<'a, 'ctx>,
-    x2_es2022: ES2022<'a, 'ctx>,
-    x2_es2021: ES2021<'a, 'ctx>,
-    x2_es2020: ES2020<'a, 'ctx>,
+    x0_typescript: Option<TypeScript<'a>>,
+    decorator: Decorator<'a>,
+    plugins: Plugins<'a>,
+    explicit_resource_management: Option<ExplicitResourceManagement<'a>>,
+    x1_jsx: Jsx<'a>,
+    x2_es2022: ES2022<'a>,
+    x2_es2021: ES2021<'a>,
+    x2_es2020: ES2020<'a>,
     x2_es2019: ES2019,
-    x2_es2018: ES2018<'a, 'ctx>,
-    x2_es2017: ES2017<'a, 'ctx>,
-    x2_es2016: ES2016<'a, 'ctx>,
+    x2_es2018: ES2018<'a>,
+    x2_es2017: ES2017<'a>,
+    x2_es2016: ES2016<'a>,
     #[expect(unused)]
-    x3_es2015: ES2015<'a, 'ctx>,
-    x4_regexp: RegExp<'a, 'ctx>,
+    x3_es2015: ES2015<'a>,
+    x4_regexp: RegExp<'a>,
     common: Common<'a>,
 }
 

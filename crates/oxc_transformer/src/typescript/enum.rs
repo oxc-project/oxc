@@ -559,14 +559,14 @@ impl<'a> TypeScriptEnum<'a> {
 ///   d = A.c,
 /// }
 /// ```
-struct IdentifierReferenceRename<'a, 'ctx> {
+struct IdentifierReferenceRename<'a> {
     enum_name: Atom<'a>,
     previous_enum_members: PrevMembers<'a>,
     scope_stack: NonEmptyStack<ScopeId>,
     ctx: &'ctx TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
+impl<'a> IdentifierReferenceRename<'a> {
     fn new(
         enum_name: Atom<'a>,
         enum_scope_id: ScopeId,

@@ -11,14 +11,14 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct TypeScriptModule<'a, 'ctx> {
+pub struct TypeScriptModule<'a> {
     /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
     only_remove_type_imports: bool,
-    ctx: &'ctx TransformState<'a>,
+    ,
 }
 
-impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
-    pub fn new(only_remove_type_imports: bool, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> TypeScriptModule<'a> {
+    pub fn new(only_remove_type_imports: bool, ) -> Self {
         Self { only_remove_type_imports, ctx }
     }
 }

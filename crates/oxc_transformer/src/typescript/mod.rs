@@ -43,20 +43,20 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
-pub struct TypeScript<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct TypeScript<'a> {
+    ,
 
-    annotations: TypeScriptAnnotations<'a, 'ctx>,
+    annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,
-    namespace: TypeScriptNamespace<'a, 'ctx>,
-    module: TypeScriptModule<'a, 'ctx>,
+    namespace: TypeScriptNamespace<'a>,
+    module: TypeScriptModule<'a>,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
     remove_class_fields_without_initializer: bool,
 }
 
-impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> TypeScript<'a> {
+    pub fn new(options: &TypeScriptOptions, ) -> Self {
         Self {
             ctx,
             annotations: TypeScriptAnnotations::new(options, ctx),

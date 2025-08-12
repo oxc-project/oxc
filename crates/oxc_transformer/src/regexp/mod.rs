@@ -61,8 +61,8 @@ mod options;
 
 pub use options::RegExpOptions;
 
-pub struct RegExp<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct RegExp<'a> {
+    ,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
@@ -70,8 +70,8 @@ pub struct RegExp<'a, 'ctx> {
     unicode_property_escapes: bool,
 }
 
-impl<'a, 'ctx> RegExp<'a, 'ctx> {
-    pub fn new(options: RegExpOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> RegExp<'a> {
+    pub fn new(options: RegExpOptions, ) -> Self {
         // Get unsupported flags
         let mut unsupported_flags = RegExpFlags::empty();
         if options.dot_all_flag {

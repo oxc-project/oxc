@@ -69,13 +69,13 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct AsyncToGenerator<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
-    executor: AsyncGeneratorExecutor<'a, 'ctx>,
+pub struct AsyncToGenerator<'a> {
+    ,
+    executor: AsyncGeneratorExecutor<'a>,
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> AsyncToGenerator<'a> {
+    pub fn new() -> Self {
         Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
     }
 }
@@ -183,13 +183,13 @@ impl<'a> AsyncToGenerator<'a, '_> {
     }
 }
 
-pub struct AsyncGeneratorExecutor<'a, 'ctx> {
+pub struct AsyncGeneratorExecutor<'a> {
     helper: Helper,
-    ctx: &'ctx TransformState<'a>,
+    ,
 }
 
-impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
-    pub fn new(helper: Helper, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> AsyncGeneratorExecutor<'a> {
+    pub fn new(helper: Helper, ) -> Self {
         Self { helper, ctx }
     }
 
@@ -867,12 +867,12 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 }
 
 /// Moves the bindings from original scope to target scope.
-struct BindingMover<'a, 'ctx> {
+struct BindingMover<'a> {
     ctx: &'ctx mut TraverseCtx<'a>,
     target_scope_id: ScopeId,
 }
 
-impl<'a, 'ctx> BindingMover<'a, 'ctx> {
+impl<'a> BindingMover<'a> {
     fn new(target_scope_id: ScopeId, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { ctx, target_scope_id }
     }

@@ -18,15 +18,15 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
-pub struct TypeScriptNamespace<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct TypeScriptNamespace<'a> {
+    ,
 
     // Options
     allow_namespaces: bool,
 }
 
-impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> TypeScriptNamespace<'a> {
+    pub fn new(options: &TypeScriptOptions, ) -> Self {
         Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }

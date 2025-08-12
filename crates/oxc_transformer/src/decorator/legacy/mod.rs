@@ -80,9 +80,9 @@ struct ClassDecoratedData<'a> {
     alias_binding: Option<BoundIdentifier<'a>>,
 }
 
-pub struct LegacyDecorator<'a, 'ctx> {
+pub struct LegacyDecorator<'a> {
     emit_decorator_metadata: bool,
-    metadata: LegacyDecoratorMetadata<'a, 'ctx>,
+    metadata: LegacyDecoratorMetadata<'a>,
     /// Decorated class data exists when a class or constructor is decorated.
     ///
     /// The data assigned in [`Self::transform_class`] and used in places where statements contain
@@ -94,11 +94,11 @@ pub struct LegacyDecorator<'a, 'ctx> {
     class_decorated_data: Option<ClassDecoratedData<'a>>,
     /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
     decorations: FxHashMap<Address, Vec<Statement<'a>>>,
-    ctx: &'ctx TransformState<'a>,
+    ,
 }
 
-impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
-    pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> LegacyDecorator<'a> {
+    pub fn new(emit_decorator_metadata: bool, ) -> Self {
         Self {
             emit_decorator_metadata,
             metadata: LegacyDecoratorMetadata::new(ctx),
@@ -448,7 +448,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
         let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx, self.ctx)
+            ClassReferenceChanger::new(id.clone(), ctx)
                 .get_class_alias_if_needed(&mut class.body)
         });
         let class_binding = class_binding
@@ -1103,16 +1103,14 @@ struct ClassReferenceChanger<'a, 'ctx> {
     // `Some` if there are references to the class inside the class body
     class_alias_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
-    transformer_ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     fn new(
         class_binding: BoundIdentifier<'a>,
         ctx: &'ctx mut TraverseCtx<'a>,
-        transformer_ctx: &'ctx TransformState<'a>,
     ) -> Self {
-        Self { class_binding, class_alias_binding: None, ctx, transformer_ctx }
+        Self { class_binding, class_alias_binding: None, ctx }
     }
 
     fn get_class_alias_if_needed(
@@ -1145,7 +1143,7 @@ impl<'a> ClassReferenceChanger<'a, '_> {
 
     fn get_alias_ident_reference(&mut self) -> IdentifierReference<'a> {
         let binding = self.class_alias_binding.get_or_insert_with(|| {
-            self.transformer_ctx.var_declarations.create_uid_var(&self.class_binding.name, self.ctx)
+            self.ctx.state.var_declarations.create_uid_var(&self.class_binding.name, self.ctx)
         });
 
         binding.create_read_reference(self.ctx)

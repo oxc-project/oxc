@@ -13,16 +13,16 @@ pub use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 
-pub struct ES2018<'a, 'ctx> {
+pub struct ES2018<'a> {
     options: ES2018Options,
 
     // Plugins
-    object_rest_spread: ObjectRestSpread<'a, 'ctx>,
-    async_generator_functions: AsyncGeneratorFunctions<'a, 'ctx>,
+    object_rest_spread: ObjectRestSpread<'a>,
+    async_generator_functions: AsyncGeneratorFunctions<'a>,
 }
 
-impl<'a, 'ctx> ES2018<'a, 'ctx> {
-    pub fn new(options: ES2018Options, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> ES2018<'a> {
+    pub fn new(options: ES2018Options, ) -> Self {
         Self {
             object_rest_spread: ObjectRestSpread::new(
                 options.object_rest_spread.unwrap_or_default(),

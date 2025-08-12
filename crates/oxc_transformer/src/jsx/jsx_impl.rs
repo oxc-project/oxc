@@ -114,25 +114,25 @@ use super::{
     options::{JsxOptions, JsxRuntime},
 };
 
-pub struct JsxImpl<'a, 'ctx> {
+pub struct JsxImpl<'a> {
     pure: bool,
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
-    ctx: &'ctx TransformState<'a>,
+    ,
 
-    pub(super) jsx_self: JsxSelf<'a, 'ctx>,
-    pub(super) jsx_source: JsxSource<'a, 'ctx>,
+    pub(super) jsx_self: JsxSelf<'a>,
+    pub(super) jsx_source: JsxSource<'a>,
 
     // States
-    bindings: Bindings<'a, 'ctx>,
+    bindings: Bindings<'a>,
 }
 
 /// Bindings for different import options
-enum Bindings<'a, 'ctx> {
+enum Bindings<'a> {
     Classic(ClassicBindings<'a>),
-    AutomaticScript(AutomaticScriptBindings<'a, 'ctx>),
-    AutomaticModule(AutomaticModuleBindings<'a, 'ctx>),
+    AutomaticScript(AutomaticScriptBindings<'a>),
+    AutomaticModule(AutomaticModuleBindings<'a>),
 }
 
 impl Bindings<'_, '_> {
@@ -147,8 +147,8 @@ struct ClassicBindings<'a> {
     pragma_frag: Pragma<'a>,
 }
 
-struct AutomaticScriptBindings<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+struct AutomaticScriptBindings<'a> {
+    ,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
@@ -156,9 +156,9 @@ struct AutomaticScriptBindings<'a, 'ctx> {
     is_development: bool,
 }
 
-impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
+impl<'a> AutomaticScriptBindings<'a> {
     fn new(
-        ctx: &'ctx TransformState<'a>,
+        ,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -210,8 +210,8 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     }
 }
 
-struct AutomaticModuleBindings<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+struct AutomaticModuleBindings<'a> {
+    ,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
@@ -221,9 +221,9 @@ struct AutomaticModuleBindings<'a, 'ctx> {
     is_development: bool,
 }
 
-impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
+impl<'a> AutomaticModuleBindings<'a> {
     fn new(
-        ctx: &'ctx TransformState<'a>,
+        ,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -407,12 +407,12 @@ impl<'a> Pragma<'a> {
     }
 }
 
-impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
+impl<'a> JsxImpl<'a> {
     pub fn new(
         options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ctx: &'ctx TransformState<'a>,
+        ,
     ) -> Self {
         // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
         let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());

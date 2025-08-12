@@ -223,7 +223,7 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     fn new(
         make_sloppy_mode: bool,
         reparent_scopes: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let walk_deep =
