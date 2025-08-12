@@ -26,7 +26,7 @@ pub struct TypeScriptNamespace<'a> {
 
 impl<'a> TypeScriptNamespace<'a> {
     pub fn new(options: &TypeScriptOptions, ) -> Self {
-        Self { ctx, allow_namespaces: options.allow_namespaces }
+        Self { allow_namespaces: options.allow_namespaces }
     }
 }
 

@@ -46,6 +46,7 @@ impl<'a> Jsx<'a> {
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
+        state: &TransformState<'a>,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();
@@ -55,14 +56,14 @@ impl<'a> Jsx<'a> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            implementation: JsxImpl::new(options, object_rest_spread_options, ast, ctx),
-            display_name: ReactDisplayName::new(ctx),
+            implementation: JsxImpl::new(options, object_rest_spread_options, ast, state),
+            display_name: ReactDisplayName::new(),
             enable_jsx_plugin: jsx_plugin,
             display_name_plugin,
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast, ctx),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast),
         }
     }
 }

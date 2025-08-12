@@ -59,9 +59,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
 }
 
 impl<'a> JsxSelf<'a, '_> {
-    pub fn report_error(&self, span: Span) {
+    pub fn report_error(&self, span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        self.ctx.error(error);
+        ctx.state.errors.borrow_mut().push(error);
     }
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
@@ -105,7 +105,7 @@ impl<'a> JsxSelf<'a, '_> {
             if let JSXAttributeItem::Attribute(attribute) = item {
                 if let JSXAttributeName::Identifier(ident) = &attribute.name {
                     if ident.name == SELF {
-                        self.report_error(ident.span);
+                        self.report_error(ident.span, ctx);
                         return;
                     }
                 }

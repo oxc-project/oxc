@@ -46,7 +46,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         };
 
         Self {
-            ctx,
             only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],

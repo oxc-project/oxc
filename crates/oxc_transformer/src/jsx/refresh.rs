@@ -136,7 +136,6 @@ impl<'a> ReactRefresh<'a> {
             refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
             emit_full_signatures: options.emit_full_signatures,
             registrations: Vec::default(),
-            ctx,
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),

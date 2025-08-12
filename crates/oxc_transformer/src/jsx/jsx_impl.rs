@@ -160,7 +160,6 @@ impl<'a> AutomaticScriptBindings<'a> {
         is_development: bool,
     ) -> Self {
         Self {
-            ctx,
             jsx_runtime_importer,
             react_importer_len,
             require_create_element: None,
@@ -201,7 +200,7 @@ impl<'a> AutomaticScriptBindings<'a> {
     ) -> BoundIdentifier<'a> {
         let binding =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        self.ctx.module_imports.add_default_import(source, binding.clone(), front);
+        ctx.state.module_imports.add_default_import(source, binding.clone(), front);
         binding
     }
 }
@@ -223,7 +222,6 @@ impl<'a> AutomaticModuleBindings<'a> {
         is_development: bool,
     ) -> Self {
         Self {
-            ctx,
             jsx_runtime_importer,
             react_importer_len,
             import_create_element: None,
@@ -297,7 +295,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
-        self.ctx.module_imports.add_named_import(source, Atom::from(name), binding.clone(), false);
+        ctx.state.module_imports.add_named_import(source, Atom::from(name), binding.clone(), false);
         binding
     }
 }
@@ -406,22 +404,23 @@ impl<'a> JsxImpl<'a> {
         options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
+        state: &TransformState<'a>,
     ) -> Self {
         // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
         let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
                 if options.import_source.is_some() {
-                    ctx.error(diagnostics::import_source_cannot_be_set());
+                    state.errors.borrow_mut().push(diagnostics::import_source_cannot_be_set());
                 }
-                let pragma = Pragma::parse(options.pragma.as_deref(), "createElement", ast, ctx);
+                let pragma = Pragma::parse(options.pragma.as_deref(), "createElement", ast, state);
                 let pragma_frag =
-                    Pragma::parse(options.pragma_frag.as_deref(), "Fragment", ast, ctx);
+                    Pragma::parse(options.pragma_frag.as_deref(), "Fragment", ast, state);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             JsxRuntime::Automatic => {
                 if options.pragma.is_some() || options.pragma_frag.is_some() {
-                    ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
+                    state.errors.borrow_mut().push(diagnostics::pragma_and_pragma_frag_cannot_be_set());
                 }
 
                 let is_development = options.development;
@@ -431,7 +430,7 @@ impl<'a> JsxImpl<'a> {
                         let mut import_source = &**import_source;
                         let source_len = match u32::try_from(import_source.len()) {
                             Ok(0) | Err(_) => {
-                                ctx.error(diagnostics::invalid_import_source());
+                                state.errors.borrow_mut().push(diagnostics::invalid_import_source());
                                 import_source = "react";
                                 import_source.len() as u32
                             }
@@ -454,16 +453,14 @@ impl<'a> JsxImpl<'a> {
                     }
                 };
 
-                if ctx.source_type.is_script() {
+                if state.source_type.is_script() {
                     Bindings::AutomaticScript(AutomaticScriptBindings::new(
-                        ctx,
                         jsx_runtime_importer,
                         source_len,
                         is_development,
                     ))
                 } else {
                     Bindings::AutomaticModule(AutomaticModuleBindings::new(
-                        ctx,
                         jsx_runtime_importer,
                         source_len,
                         is_development,
@@ -476,9 +473,8 @@ impl<'a> JsxImpl<'a> {
             pure,
             options,
             object_rest_spread_options,
-            ctx,
-            jsx_self: JsxSelf::new(ctx),
-            jsx_source: JsxSource::new(ctx),
+            jsx_self: JsxSelf::new(),
+            jsx_source: JsxSource::new(),
             bindings,
         }
     }
@@ -503,18 +499,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
 }
 
 impl<'a> JsxImpl<'a, '_> {
-    fn is_script(&self) -> bool {
-        self.ctx.source_type.is_script()
+    fn is_script(&self, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.state.source_type.is_script()
     }
 
-    fn insert_filename_var_statement(&self, ctx: &TraverseCtx<'a>) {
+    fn insert_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) {
         let Some(declarator) = self.jsx_source.get_filename_var_declarator(ctx) else { return };
 
         // If is a module, add filename statements before `import`s. If script, then after `require`s.
         // This is the same behavior as Babel.
         // If in classic mode, then there are no import statements, so it doesn't matter either way.
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
-        if self.bindings.is_classic() || !self.is_script() {
+        if self.bindings.is_classic() || !self.is_script(ctx) {
             // Insert before imports - add to `top_level_statements` immediately
             let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
                 SPAN,
@@ -522,10 +518,10 @@ impl<'a> JsxImpl<'a, '_> {
                 ctx.ast.vec1(declarator),
                 false,
             ));
-            self.ctx.top_level_statements.insert_statement(stmt);
+            ctx.state.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
-            self.ctx.var_declarations.insert_var_declarator(declarator, ctx);
+            ctx.state.var_declarations.insert_var_declarator(declarator, ctx);
         }
     }
 
@@ -589,11 +585,11 @@ impl<'a> JsxImpl<'a, '_> {
                                     && self.options.jsx_source_plugin
                                     && ident.name == "__source" =>
                             {
-                                self.jsx_source.report_error(ident.span);
+                                self.jsx_source.report_error(ident.span, ctx);
                             }
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {
                                 if value.is_none() {
-                                    self.ctx.error(diagnostics::valueless_key(ident.span));
+                                    ctx.state.errors.borrow_mut().push(diagnostics::valueless_key(ident.span));
                                 } else if is_automatic {
                                     // In automatic mode, extract the key before spread prop,
                                     // and add it to the third argument later.
@@ -679,7 +675,6 @@ impl<'a> JsxImpl<'a, '_> {
                 ObjectRestSpread::transform_object_expression(
                     options,
                     &mut object_expression,
-                    self.ctx,
                     ctx,
                 );
             }
@@ -735,7 +730,6 @@ impl<'a> JsxImpl<'a, '_> {
                     ObjectRestSpread::transform_object_expression(
                         options,
                         &mut object_expression,
-                        self.ctx,
                         ctx,
                     );
                 }
@@ -786,7 +780,7 @@ impl<'a> JsxImpl<'a, '_> {
             }
             JSXElementName::NamespacedName(namespaced) => {
                 if self.options.throw_if_namespace {
-                    self.ctx.error(diagnostics::namespace_does_not_support(namespaced.span));
+                    ctx.state.errors.borrow_mut().push(diagnostics::namespace_does_not_support(namespaced.span));
                 }
                 let namespace_name = ctx.ast.atom_from_strs_array([
                     &namespaced.namespace.name,

@@ -207,7 +207,7 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
 use crate::{
-    state::TransformState, context::TraverseCtx,
+    state::TransformState, context::TraverseCtx, CompilerAssumptions,
 };
 
 mod class;
@@ -291,19 +291,19 @@ impl<'a> ClassProperties<'a> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
+        assumptions: &CompilerAssumptions,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
-        let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
+        let set_public_class_fields = options.loose || assumptions.set_public_class_fields;
         // TODO: Raise error if these 2 options are inconsistent
         let private_fields_as_properties =
-            options.loose || ctx.assumptions.private_fields_as_properties;
+            options.loose || assumptions.private_fields_as_properties;
 
         Self {
             set_public_class_fields,
             private_fields_as_properties,
             transform_static_blocks,
             remove_class_fields_without_initializer,
-            ctx,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed

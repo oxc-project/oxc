@@ -101,7 +101,6 @@ impl<'a> RegExp<'a> {
             look_behind_assertions || named_capture_groups || unicode_property_escapes;
 
         Self {
-            ctx,
             unsupported_flags,
             some_unsupported_patterns,
             look_behind_assertions,

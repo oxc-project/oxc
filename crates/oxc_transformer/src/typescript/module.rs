@@ -18,7 +18,7 @@ pub struct TypeScriptModule<'a> {
 
 impl<'a> TypeScriptModule<'a> {
     pub fn new(only_remove_type_imports: bool, ) -> Self {
-        Self { only_remove_type_imports, ctx }
+        Self { only_remove_type_imports }
     }
 }
 

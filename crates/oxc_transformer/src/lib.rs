@@ -148,11 +148,12 @@ impl<'a> Transformer<'a> {
                 .source_type
                 .is_typescript()
                 .then(|| TypeScript::new(&self.typescript)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder),
+            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.state),
             x2_es2022: ES2022::new(
                 self.env.es2022,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
+                &self.state.assumptions,
             ),
             x2_es2021: ES2021::new(self.env.es2021),
             x2_es2020: ES2020::new(self.env.es2020),

@@ -57,11 +57,10 @@ pub struct TypeScript<'a> {
 impl<'a> TypeScript<'a> {
     pub fn new(options: &TypeScriptOptions, ) -> Self {
         Self {
-            ctx,
-            annotations: TypeScriptAnnotations::new(options, ctx),
+            annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(),
-            namespace: TypeScriptNamespace::new(options, ctx),
-            module: TypeScriptModule::new(options.only_remove_type_imports, ctx),
+            namespace: TypeScriptNamespace::new(options),
+            module: TypeScriptModule::new(options.only_remove_type_imports),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,

@@ -20,7 +20,7 @@ pub struct ES2021<'a> {
 
 impl<'a> ES2021<'a> {
     pub fn new(options: ES2021Options, ) -> Self {
-        Self { logical_assignment_operators: LogicalAssignmentOperators::new(ctx), options }
+        Self { logical_assignment_operators: LogicalAssignmentOperators::new(), options }
     }
 }
 

@@ -56,7 +56,7 @@ pub struct ExplicitResourceManagement<'a> {
 
 impl<'a> ExplicitResourceManagement<'a> {
     pub fn new() -> Self {
-        Self { ctx, top_level_using: FxHashMap::default() }
+        Self { top_level_using: FxHashMap::default() }
     }
 }
 

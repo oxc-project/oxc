@@ -100,9 +100,8 @@ impl<'a> LegacyDecorator<'a> {
     pub fn new(emit_decorator_metadata: bool, ) -> Self {
         Self {
             emit_decorator_metadata,
-            metadata: LegacyDecoratorMetadata::new(ctx),
+            metadata: LegacyDecoratorMetadata::new(),
             class_decorated_data: None,
-            ctx,
             decorations: FxHashMap::default(),
         }
     }

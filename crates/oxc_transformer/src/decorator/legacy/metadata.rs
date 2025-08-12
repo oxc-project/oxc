@@ -100,11 +100,12 @@ use crate::{
 };
 
 pub struct LegacyDecoratorMetadata<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> LegacyDecoratorMetadata<'a> {
     pub fn new() -> Self {
-        LegacyDecoratorMetadata { ctx }
+        LegacyDecoratorMetadata { _marker: std::marker::PhantomData }
     }
 }
 
