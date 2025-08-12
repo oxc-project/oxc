@@ -65,7 +65,7 @@ impl<'a> ObjectRestSpread<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a> {
     // For excluded keys when destructuring inside a function.
     // `function foo() { ({a, ...b} = c) }` -> `const _excluded = ["a"]; function foo() { ... }`
     fn exit_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -163,7 +163,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `({ x, ..y } = foo)`.
     // Transform `([{ x, ..y }] = foo)`.
     fn transform_assignment_expression(
@@ -211,7 +211,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                         false,
                     );
                     let statement = Statement::VariableDeclaration(declaration);
-                    self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                    ctx.state.statement_injector.insert_before(&decl.address(), statement);
                     break;
                 }
             }
@@ -380,7 +380,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                     false,
                 );
                 let statement = Statement::VariableDeclaration(declaration);
-                self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                ctx.state.statement_injector.insert_before(&decl.address(), statement);
                 break;
             }
         }
@@ -515,7 +515,7 @@ impl<'a> ObjectRestSpread<'a> {
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `function foo({...x}) {}`.
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
@@ -762,7 +762,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `let { x, ..y } = foo`.
     // Transform `let [{ x, ..y }] = foo`.
     fn transform_variable_declaration(

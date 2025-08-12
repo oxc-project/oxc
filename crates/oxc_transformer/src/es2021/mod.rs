@@ -24,7 +24,7 @@ impl<'a> ES2021<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2021<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2021<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.logical_assignment_operators {
             self.logical_assignment_operators.enter_expression(expr, ctx);

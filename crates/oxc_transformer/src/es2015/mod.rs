@@ -26,4 +26,4 @@ impl<'a> ES2015<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2015<'a, '_> {}
+impl<'a> Traverse<'a, TransformState<'a>> for ES2015<'a> {}

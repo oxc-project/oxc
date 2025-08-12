@@ -35,9 +35,9 @@ impl<'a> TopLevelStatements<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TopLevelStatements<'a, '_> {
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.ctx.top_level_statements.insert_into_program(program);
+impl<'a> Traverse<'a, TransformState<'a>> for TopLevelStatements<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.top_level_statements.insert_into_program(program);
     }
 }
 

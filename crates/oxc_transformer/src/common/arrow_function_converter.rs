@@ -1282,7 +1282,7 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
                         // Insert `_this = this;` after `super();`
                         let assignment = self.create_assignment_to_this_temp_var();
-                        let assignment = self.ctx.ast.statement_expression(SPAN, assignment);
+                        let assignment = ctx.ast.statement_expression(SPAN, assignment);
                         statements.insert(index + 1, assignment);
 
                         // `super();` found as top-level statement in this block of statements.
@@ -1312,22 +1312,22 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     }
 }
 
-impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
+impl<'a> ConstructorBodyThisAfterSuperInserter<'a> {
     /// `super()` -> `(super(), _this = this)`
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = self.ctx.ast.vec_from_array([expr.take_in(self.ctx.ast), assignment]);
-        *expr = self.ctx.ast.expression_sequence(span, exprs);
+        let exprs = ctx.ast.vec_from_array([expr.take_in(self.ctx.ast), assignment]);
+        *expr = ctx.ast.expression_sequence(span, exprs);
     }
 
     /// `_this = this`
     fn create_assignment_to_this_temp_var(&mut self) -> Expression<'a> {
-        self.ctx.ast.expression_assignment(
+        ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
             self.this_var_binding.create_write_target(self.ctx),
-            self.ctx.ast.expression_this(SPAN),
+            ctx.ast.expression_this(SPAN),
         )
     }
 }

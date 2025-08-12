@@ -109,7 +109,7 @@ impl<'a> LegacyDecoratorMetadata<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if class.is_expression() || class.declare {
             return;
@@ -192,7 +192,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
     }
 }
 
-impl<'a> LegacyDecoratorMetadata<'a, '_> {
+impl<'a> LegacyDecoratorMetadata<'a> {
     fn serialize_type_annotation(
         &mut self,
         type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
@@ -343,7 +343,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             // Reach here means the referent is a type symbol, so use `Object` as fallback.
             return Self::global_object(ctx);
         };
-        let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&serialized_type, ctx);
+        let binding = ctx.state.var_declarations.create_uid_var_based_on_node(&serialized_type, ctx);
         let target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
@@ -395,7 +395,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let mut left =
                         self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx)?;
                     let binding =
-                        self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
+                        ctx.state.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
                     let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
@@ -618,7 +618,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
             Argument::from(value),
         ]);
-        let expr = self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx);
+        let expr = ctx.state.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx);
         ctx.ast.decorator(SPAN, expr)
     }
 

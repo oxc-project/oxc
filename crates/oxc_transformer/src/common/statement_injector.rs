@@ -7,9 +7,9 @@
 //! Other transforms can add statements to the store with following methods:
 //!
 //! ```rs
-//! self.ctx.statement_injector.insert_before(address, statement);
-//! self.ctx.statement_injector.insert_after(address, statement);
-//! self.ctx.statement_injector.insert_many_after(address, statements);
+//! ctx.state.statement_injector.insert_before(address, statement);
+//! ctx.state.statement_injector.insert_after(address, statement);
+//! ctx.state.statement_injector.insert_many_after(address, statements);
 //! ```
 
 use std::{cell::RefCell, collections::hash_map::Entry};
@@ -35,18 +35,18 @@ impl<'a> StatementInjector<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a> {
     fn exit_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.ctx.statement_injector.insert_into_statements(statements, ctx);
+        ctx.state.statement_injector.insert_into_statements(statements, ctx);
     }
 
     #[inline]
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.ctx.statement_injector.assert_no_insertions_remaining();
+        ctx.state.statement_injector.assert_no_insertions_remaining();
     }
 }
 

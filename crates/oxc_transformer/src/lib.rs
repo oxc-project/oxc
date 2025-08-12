@@ -198,7 +198,7 @@ struct TransformerImpl<'a> {
     common: Common<'a>,
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);

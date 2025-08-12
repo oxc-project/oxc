@@ -20,12 +20,12 @@ impl<'a> Plugins<'a> {
         Self {
             styled_components: options
                 .styled_components
-                .map(|options| StyledComponents::new(options, ctx)),
+                .map(|options| StyledComponents::new(options)),
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_program(node, ctx);

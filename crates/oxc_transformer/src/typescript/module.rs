@@ -22,11 +22,11 @@ impl<'a> TypeScriptModule<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // In Babel, it will insert `use strict` in `@babel/transform-modules-commonjs` plugin.
         // Once we have a commonjs plugin, we can consider moving this logic there.
-        if self.ctx.module.is_commonjs() {
+        if ctx.state.module.is_commonjs() {
             let has_use_strict = program.directives.iter().any(Directive::is_use_strict);
             if !has_use_strict {
                 program.directives.insert(0, ctx.ast.use_strict_directive());
@@ -51,15 +51,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptModule<'a, '_> {
+impl<'a> TypeScriptModule<'a> {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
         &self,
         export_assignment: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        if self.ctx.module.is_esm() {
-            self.ctx.error(diagnostics::export_assignment_cannot_bed_used_in_esm(
+        if ctx.state.module.is_esm() {
+            ctx.state.errors.borrow_mut().push(diagnostics::export_assignment_cannot_bed_used_in_esm(
                 export_assignment.span,
             ));
         }
@@ -144,8 +144,8 @@ impl<'a> TypeScriptModule<'a, '_> {
             TSModuleReference::ExternalModuleReference(reference) => {
                 flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
 
-                if self.ctx.module.is_esm() {
-                    self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
+                if ctx.state.module.is_esm() {
+                    ctx.state.errors.borrow_mut().push(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
                 let require_symbol_id =

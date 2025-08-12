@@ -62,7 +62,7 @@ impl<'a> ReactDisplayName<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a> {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -129,7 +129,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
     }
 }
 
-impl<'a> ReactDisplayName<'a, '_> {
+impl<'a> ReactDisplayName<'a> {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,

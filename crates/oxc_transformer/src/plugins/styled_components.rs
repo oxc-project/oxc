@@ -300,7 +300,6 @@ impl<'a> StyledComponents<'a> {
     pub fn new(options: StyledComponentsOptions, ) -> Self {
         Self {
             options,
-            ctx,
             styled_bindings: StyledComponentsBinding::default(),
             component_id_prefix: None,
             component_count: 0,
@@ -309,7 +308,7 @@ impl<'a> StyledComponents<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.collect_styled_bindings(program, ctx);
     }
@@ -343,7 +342,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
     }
 }
 
-impl<'a> StyledComponents<'a, '_> {
+impl<'a> StyledComponents<'a> {
     fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -651,7 +650,7 @@ impl<'a> StyledComponents<'a, '_> {
         if self.ctx.source_path.is_absolute() {
             self.ctx.source_path.hash(&mut hasher);
         } else {
-            self.ctx.source_text.hash(&mut hasher);
+            ctx.state.source_text.hash(&mut hasher);
         }
 
         base36_encode(hasher.finish())

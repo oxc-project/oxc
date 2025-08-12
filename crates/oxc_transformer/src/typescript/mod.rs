@@ -68,9 +68,9 @@ impl<'a> TypeScript<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.ctx.source_type.is_typescript_definition() {
+        if ctx.state.source_type.is_typescript_definition() {
             // Output empty file for TS definitions
             program.directives.clear();
             program.hashbang = None;
@@ -120,8 +120,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.ctx.is_class_properties_plugin_enabled
-            && self.ctx.assumptions.set_public_class_fields
+        if !ctx.state.is_class_properties_plugin_enabled
+            && ctx.state.assumptions.set_public_class_fields
         {
             self.transform_class_fields(class, ctx);
         }
@@ -132,7 +132,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.ctx.is_class_properties_plugin_enabled {
+        if !ctx.state.is_class_properties_plugin_enabled {
             self.transform_class_on_exit(class, ctx);
         }
     }
@@ -183,8 +183,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if self.ctx.is_class_properties_plugin_enabled
-            || !self.ctx.assumptions.set_public_class_fields
+        if ctx.state.is_class_properties_plugin_enabled
+            || !ctx.state.assumptions.set_public_class_fields
         {
             Self::transform_class_constructor(def, ctx);
         }

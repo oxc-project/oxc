@@ -60,7 +60,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
@@ -514,7 +514,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
     }
 }
 
-impl<'a> ExplicitResourceManagement<'a, '_> {
+impl<'a> ExplicitResourceManagement<'a> {
     /// Transform block statement.
     ///
     /// Input:

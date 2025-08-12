@@ -31,7 +31,7 @@ impl<'a> ES2020<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.nullish_coalescing_operator {
             self.nullish_coalescing_operator.enter_expression(expr, ctx);
@@ -68,7 +68,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
                 "Big integer literals are not available in the configured target environment.",
             )
             .with_label(node.span);
-            self.ctx.error(warning);
+            ctx.state.errors.borrow_mut().push(warning);
         }
     }
 }

@@ -589,7 +589,7 @@ impl IdentifierReferenceRename<'_, '_> {
             return false;
         }
 
-        let scoping = self.ctx.scoping.scoping();
+        let scoping = ctx.scoping();
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             // No symbol found, yet the name is found in previous_enum_members.
             // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
@@ -638,9 +638,9 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
-                let property = self.ctx.ast.identifier_name(SPAN, ident.name);
-                *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
+                let object = ctx.ast.expression_identifier(SPAN, self.enum_name);
+                let property = ctx.ast.identifier_name(SPAN, ident.name);
+                *expr = ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }
             _ => {
                 walk_mut::walk_expression(self, expr);

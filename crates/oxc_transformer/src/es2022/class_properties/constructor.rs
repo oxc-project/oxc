@@ -146,7 +146,7 @@ pub(super) struct InstanceInitScopes {
     pub constructor_scope_id: Option<ScopeId>,
 }
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Replace `super()` call(s) in constructor, if required.
     ///
     /// Returns:
@@ -405,7 +405,7 @@ impl<'a> ClassProperties<'a, '_> {
             self.insert_after_exprs.push(assignment);
             None
         };
-        self.ctx.var_declarations.insert_let(super_binding, init, ctx);
+        ctx.state.var_declarations.insert_let(super_binding, init, ctx);
     }
 
     /// Rename any symbols in constructor which clash with symbols used in initializers
@@ -558,7 +558,7 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     }
 }
 
-impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
+impl<'a> ConstructorParamsSuperReplacer<'a> {
     /// Wrap `super()` -> `_super.call(super())`
     fn wrap_super(&mut self, expr: &mut Expression<'a>, span: Span) {
         let super_binding = self.super_binding.get_or_insert_with(|| {
@@ -742,7 +742,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     }
 }
 
-impl<'a> ConstructorBodySuperReplacer<'a, '_> {
+impl<'a> ConstructorBodySuperReplacer<'a> {
     /// Replace `super(arg1, arg2)` with `_super(arg1, arg2)`
     fn replace_super(&mut self, call_expr: &mut CallExpression<'a>, span: Span) {
         if self.super_binding.is_none() {

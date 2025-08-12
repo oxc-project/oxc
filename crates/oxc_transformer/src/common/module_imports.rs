@@ -11,7 +11,7 @@
 //!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_named_import(
+//! ctx.state.module_imports.add_named_import(
 //!     Atom::from("react"),
 //!     Atom::from("jsx"),
 //!     Atom::from("_jsx"),
@@ -20,7 +20,7 @@
 //!
 //! // ESM: import React from 'react';
 //! // CJS: var _React = require('react');
-//! self.ctx.module_imports.add_default_import(
+//! ctx.state.module_imports.add_default_import(
 //!     Atom::from("react"),
 //!     Atom::from("React"),
 //!     symbol_id

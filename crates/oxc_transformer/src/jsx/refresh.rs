@@ -144,7 +144,7 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
@@ -310,7 +310,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             // `Function` is always stored in a `Box`, so has a stable memory address.
             _ => Address::from_ptr(func),
         };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     fn enter_call_expression(
@@ -379,17 +379,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         let declarator_id = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
             // TODO: if there is no LHS, consider some other heuristic.
-            declarator.id().span().source_text(self.ctx.source_text)
+            declarator.id().span().source_text(ctx.state.source_text)
         } else {
             ""
         };
 
         let args = &call_expr.arguments;
         let (args_key, mut key_len) = if hook_name == "useState" && !args.is_empty() {
-            let args_key = args[0].span().source_text(self.ctx.source_text);
+            let args_key = args[0].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else if hook_name == "useReducer" && args.len() > 1 {
-            let args_key = args[1].span().source_text(self.ctx.source_text);
+            let args_key = args[1].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else {
             ("", 2)
@@ -425,7 +425,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 }
 
 // Internal Methods
-impl<'a> ReactRefresh<'a, '_> {
+impl<'a> ReactRefresh<'a> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -484,7 +484,7 @@ impl<'a> ReactRefresh<'a, '_> {
                         format!(
                             "{}${}",
                             inferred_name,
-                            callee_span.source_text(self.ctx.source_text)
+                            callee_span.source_text(ctx.state.source_text)
                         )
                         .as_str(),
                         argument_expr,
@@ -644,7 +644,7 @@ impl<'a> ReactRefresh<'a, '_> {
             ctx.ast.vec(),
             false,
         );
-        let binding = self.ctx.var_declarations.create_uid_var_with_init("s", init, ctx);
+        let binding = ctx.state.var_declarations.create_uid_var_with_init("s", init, ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
@@ -861,7 +861,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
                 var_decl.address()
             };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     /// Convert arrow function expression to normal arrow function

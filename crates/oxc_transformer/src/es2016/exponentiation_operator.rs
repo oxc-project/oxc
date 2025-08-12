@@ -53,7 +53,7 @@ impl<'a> ExponentiationOperator<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
@@ -100,7 +100,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a, '_> {
     }
 }
 
-impl<'a> ExponentiationOperator<'a, '_> {
+impl<'a> ExponentiationOperator<'a> {
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`
@@ -556,7 +556,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         // var _name;
-        let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&expr, ctx);
+        let binding = ctx.state.var_declarations.create_uid_var_based_on_node(&expr, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

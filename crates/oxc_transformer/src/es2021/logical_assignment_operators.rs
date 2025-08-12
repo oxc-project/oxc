@@ -73,7 +73,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a> {
     // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
     // with a logical operator. So we want to bail out as fast as possible for everything else,
     // without the cost of a function call.
@@ -88,7 +88,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_>
     }
 }
 
-impl<'a> LogicalAssignmentOperators<'a, '_> {
+impl<'a> LogicalAssignmentOperators<'a> {
     fn transform_logical_assignment(
         &self,
         expr: &mut Expression<'a>,

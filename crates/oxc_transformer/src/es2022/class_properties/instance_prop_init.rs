@@ -18,7 +18,7 @@ use crate::context::TraverseCtx;
 
 use super::ClassProperties;
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Reparent property initializers scope.
     ///
     /// Instance property initializers move from the class body into either class constructor,
@@ -114,7 +114,7 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
     }
 }
 
-impl<'a> InstanceInitializerVisitor<'a, '_> {
+impl<'a> InstanceInitializerVisitor<'a> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
         self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));

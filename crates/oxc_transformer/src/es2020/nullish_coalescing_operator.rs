@@ -48,7 +48,7 @@ impl<'a> NullishCoalescingOperator<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -65,7 +65,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> 
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a, '_> {
+impl<'a> NullishCoalescingOperator<'a> {
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -173,7 +173,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_var(&binding, ctx);
+            ctx.state.var_declarations.insert_var(&binding, ctx);
         }
 
         new_expr

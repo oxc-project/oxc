@@ -21,13 +21,13 @@ pub struct Decorator<'a> {
 impl<'a> Decorator<'a> {
     pub fn new(options: DecoratorOptions, ) -> Self {
         Self {
-            legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata, ctx),
+            legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_statement(stmt, ctx);
@@ -82,7 +82,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     }
 }
 
-impl<'a> Decorator<'a, '_> {
+impl<'a> Decorator<'a> {
     pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_class_at_end(class, ctx);

@@ -46,7 +46,7 @@ impl<'a> ES2022<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {

@@ -110,7 +110,7 @@ impl<'a> RegExp<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a> {
     // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -120,7 +120,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a, '_> {
     }
 }
 
-impl<'a> RegExp<'a, '_> {
+impl<'a> RegExp<'a> {
     /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::RegExpLiteral(regexp) = expr else {
@@ -148,7 +148,7 @@ impl<'a> RegExp<'a, '_> {
                 let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
                 let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
                 let flags_text =
-                    Span::new(flags_span_start, literal_span.end).source_text(self.ctx.source_text);
+                    Span::new(flags_span_start, literal_span.end).source_text(ctx.state.source_text);
                 // Try to parse pattern
                 match try_parse_pattern(
                     pattern_text.as_str(),
@@ -162,7 +162,7 @@ impl<'a> RegExp<'a, '_> {
                         owned_pattern.as_ref().unwrap()
                     }
                     Err(error) => {
-                        self.ctx.error(error);
+                        ctx.state.errors.borrow_mut().push(error);
                         return;
                     }
                 }

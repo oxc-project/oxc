@@ -9,7 +9,7 @@
 //!
 //! ```rs
 //! let callee = self.ctx.helper_load("helperName");
-//! let call = self.ctx.ast.call_expression(callee, ...arguments);
+//! let call = ctx.ast.call_expression(callee, ...arguments);
 //! ```
 //!
 //! And also you can call [`TransformState::helper_call`] directly to load and call a helper function.

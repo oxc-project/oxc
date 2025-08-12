@@ -79,7 +79,7 @@ impl<'a> AsyncToGenerator<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -132,7 +132,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
         if let Some(function) = function {
             if function.r#async && !function.generator && !function.is_typescript_syntax() {
                 let new_statement = self.executor.transform_function_declaration(function, ctx);
-                self.ctx.statement_injector.insert_after(stmt, new_statement);
+                ctx.state.statement_injector.insert_after(stmt, new_statement);
             }
         }
     }
@@ -147,7 +147,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
     }
 }
 
-impl<'a> AsyncToGenerator<'a, '_> {
+impl<'a> AsyncToGenerator<'a> {
     /// Check whether the current node is inside an async function.
     fn is_inside_async_function(ctx: &TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
@@ -689,7 +689,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        self.ctx.helper_call_expr(self.helper, SPAN, arguments, ctx)
+        ctx.state.helper_call_expr(self.helper, SPAN, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

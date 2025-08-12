@@ -14,7 +14,7 @@ use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert method definition where the key is a private identifier and
     /// insert it after the class.
     ///
@@ -89,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(brand.create_read_expression(ctx)),
         ]);
-        self.ctx.helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
+        ctx.state.helper_call_expr(Helper::ClassPrivateMethodInitSpec, SPAN, arguments, ctx)
     }
 }
 

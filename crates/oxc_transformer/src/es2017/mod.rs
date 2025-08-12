@@ -23,7 +23,7 @@ impl<'a> ES2017<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2017<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2017<'a> {
     fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_to_generator {
             self.async_to_generator.exit_expression(node, ctx);

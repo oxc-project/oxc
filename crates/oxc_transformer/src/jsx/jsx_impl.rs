@@ -480,7 +480,7 @@ impl<'a> JsxImpl<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.insert_filename_var_statement(ctx);
     }
@@ -498,7 +498,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
     }
 }
 
-impl<'a> JsxImpl<'a, '_> {
+impl<'a> JsxImpl<'a> {
     fn is_script(&self, ctx: &TraverseCtx<'a>) -> bool {
         ctx.state.source_type.is_script()
     }

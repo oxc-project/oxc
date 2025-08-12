@@ -25,7 +25,7 @@ use super::{
     },
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform private field expression.
     ///
     /// Not loose:
@@ -1015,7 +1015,7 @@ impl<'a> ClassProperties<'a, '_> {
             };
 
             // `_object$prop = _assertClassBrand(Class, object, _prop)._`
-            let temp_binding = self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
+            let temp_binding = ctx.state.var_declarations.create_uid_var(&temp_var_name_base, ctx);
             let assignment = create_assignment(&temp_binding, get_expr, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
@@ -1049,7 +1049,7 @@ impl<'a> ClassProperties<'a, '_> {
 
                 // `_object$prop2 = _object$prop++`
                 let temp_binding2 =
-                    self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
+                    ctx.state.var_declarations.create_uid_var(&temp_var_name_base, ctx);
                 let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
@@ -1112,7 +1112,7 @@ impl<'a> ClassProperties<'a, '_> {
             );
 
             // `_object$prop = _classPrivateFieldGet(_prop, object)`
-            let temp_binding = self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
+            let temp_binding = ctx.state.var_declarations.create_uid_var(&temp_var_name_base, ctx);
             let assignment = create_assignment(&temp_binding, get_call, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
@@ -1141,7 +1141,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // Source = `object.#prop++` (postfix `++`)
                 // `_object$prop2 = _object$prop++`
                 let temp_binding2 =
-                    self.ctx.var_declarations.create_uid_var(&temp_var_name_base, ctx);
+                    ctx.state.var_declarations.create_uid_var(&temp_var_name_base, ctx);
                 let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
                 // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
@@ -1602,7 +1602,7 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// Returns `left === null`
     fn wrap_null_check(&self, left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        let operator = if self.ctx.assumptions.no_document_all {
+        let operator = if ctx.state.assumptions.no_document_all {
             BinaryOperator::Equality
         } else {
             BinaryOperator::StrictEquality
@@ -1624,7 +1624,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
-        if self.ctx.assumptions.no_document_all {
+        if ctx.state.assumptions.no_document_all {
             null_check
         } else {
             let void0_check = Self::wrap_void0_check(left2, ctx);
@@ -1955,7 +1955,7 @@ impl<'a> ClassProperties<'a, '_> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        ctx.state.helper_call_expr(
             Helper::ClassPrivateFieldGet2,
             span,
             ctx.ast.vec_from_array([Argument::from(prop_ident), Argument::from(object)]),
@@ -1972,7 +1972,7 @@ impl<'a> ClassProperties<'a, '_> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        ctx.state.helper_call_expr(
             Helper::ClassPrivateFieldSet2,
             span,
             ctx.ast.vec_from_array([
@@ -2003,7 +2003,7 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(self.ctx.helper_load(Helper::ClassPrivateFieldSet2, ctx)),
             Argument::from(arguments),
         ]);
-        let call = self.ctx.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = ctx.state.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
@@ -2017,7 +2017,7 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let prop_call = create_bind_call(prop_ident, object, span, ctx);
         let arguments = ctx.ast.vec_from_array([Argument::from(prop_call)]);
-        let call = self.ctx.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        let call = ctx.state.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
         Self::create_underscore_member_expression(call, span, ctx)
     }
 
@@ -2030,7 +2030,7 @@ impl<'a> ClassProperties<'a, '_> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        ctx.state.helper_call_expr(
             Helper::AssertClassBrand,
             span,
             ctx.ast.vec_from_array([
@@ -2051,7 +2051,7 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let arguments =
             ctx.ast.vec_from_array([Argument::from(class_ident), Argument::from(object)]);
-        self.ctx.helper_call_expr(Helper::AssertClassBrand, SPAN, arguments, ctx)
+        ctx.state.helper_call_expr(Helper::AssertClassBrand, SPAN, arguments, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`
@@ -2169,7 +2169,7 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let message = ctx.ast.atom_from_strs_array(["#", private_name]);
         let message = ctx.ast.expression_string_literal(SPAN, message, None);
-        self.ctx.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
+        ctx.state.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 
     /// `object, value, _readOnlyError("#method")`
@@ -2216,7 +2216,7 @@ impl<'a> ClassProperties<'a, '_> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        ctx.state.helper_call_expr(
             Helper::CheckInRHS,
             span,
             ctx.ast.vec1(Argument::from(object)),

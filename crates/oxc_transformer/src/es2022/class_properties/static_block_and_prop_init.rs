@@ -15,7 +15,7 @@ use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform static property initializer.
     ///
     /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
@@ -534,7 +534,7 @@ impl<'a> StaticVisitor<'a, '_, '_> {
     /// Replace `delete this` with `true`.
     fn replace_delete_this_with_true(&self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            *expr = self.ctx.ast.expression_boolean_literal(span, true);
+            *expr = ctx.ast.expression_boolean_literal(span, true);
         }
     }
 

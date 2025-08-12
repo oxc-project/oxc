@@ -42,7 +42,7 @@ use super::{
 // Maybe force transform of static blocks if any static properties?
 // Or alternatively could insert static property initializers into static blocks.
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Perform first phase of transformation of class.
     ///
     /// This is the only entry point into the transform upon entering class body.
@@ -200,7 +200,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                self.ctx.var_declarations.insert_var(&temp_binding, ctx);
+                ctx.state.var_declarations.insert_var(&temp_binding, ctx);
             }
             Some(temp_binding)
         } else {
@@ -446,7 +446,7 @@ impl<'a> ClassProperties<'a, '_> {
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in entry phase
                 if !class_details.bindings.temp_var_is_created {
-                    self.ctx.var_declarations.insert_var(temp_binding, ctx);
+                    ctx.state.var_declarations.insert_var(temp_binding, ctx);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -474,7 +474,7 @@ impl<'a> ClassProperties<'a, '_> {
         };
 
         if !self.insert_before.is_empty() {
-            self.ctx.statement_injector.insert_many_before(
+            ctx.state.statement_injector.insert_many_before(
                 &stmt_address,
                 exprs_into_stmts(self.insert_before.drain(..), ctx),
             );
@@ -496,7 +496,7 @@ impl<'a> ClassProperties<'a, '_> {
                     })
                     .peekable();
                 if private_props.peek().is_some() {
-                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                    ctx.state.statement_injector.insert_many_before(&stmt_address, private_props);
                 }
             } else {
                 let mut weakmap_symbol_id = None;
@@ -521,7 +521,7 @@ impl<'a> ClassProperties<'a, '_> {
                     })
                     .peekable();
                 if private_props.peek().is_some() {
-                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                    ctx.state.statement_injector.insert_many_before(&stmt_address, private_props);
                 }
             }
         }
@@ -642,7 +642,7 @@ impl<'a> ClassProperties<'a, '_> {
                     }
 
                     // Insert `var _prop;` declaration
-                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
+                    ctx.state.var_declarations.insert_var(&prop.binding, ctx);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
                     let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
@@ -663,13 +663,13 @@ impl<'a> ClassProperties<'a, '_> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        self.ctx.var_declarations.insert_var(binding, ctx);
+                        ctx.state.var_declarations.insert_var(binding, ctx);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
+                    ctx.state.var_declarations.insert_var(&prop.binding, ctx);
 
                     if prop.is_static {
                         return None;
@@ -705,7 +705,7 @@ impl<'a> ClassProperties<'a, '_> {
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in entry phase
             if !class_details.bindings.temp_var_is_created {
-                self.ctx.var_declarations.insert_var(binding, ctx);
+                ctx.state.var_declarations.insert_var(binding, ctx);
             }
 
             // `_Class = class {}`

@@ -13,7 +13,7 @@ use crate::{
 
 use super::TypeScript;
 
-impl<'a> TypeScript<'a, '_> {
+impl<'a> TypeScript<'a> {
     /// Transform class fields, and constructor parameters that includes modifiers into `this` assignments.
     ///
     /// This transformation is doing 2 things:
@@ -116,7 +116,7 @@ impl<'a> TypeScript<'a, '_> {
                             // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
                             // `IdentifierReference` without symbol is not kept.
                             // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
-                            if self.ctx.key_needs_temp_var(key, ctx) {
+                            if ctx.state.key_needs_temp_var(key, ctx) {
                                 // When `remove_class_fields_without_initializer` is true, the property without initializer
                                 // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
                                 // keeps and is evaluated in the same order as the original class field in static block.
@@ -287,9 +287,9 @@ impl<'a> TypeScript<'a, '_> {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
-                let new_key = if self.ctx.key_needs_temp_var(key, ctx) {
+                let new_key = if ctx.state.key_needs_temp_var(key, ctx) {
                     let (assignment, ident) =
-                        self.ctx.create_computed_key_temp_var(key.take_in(ctx.ast), ctx);
+                        ctx.state.create_computed_key_temp_var(key.take_in(ctx.ast), ctx);
                     computed_key_assignments.push(assignment);
                     ident
                 } else {

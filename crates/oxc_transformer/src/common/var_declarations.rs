@@ -10,8 +10,8 @@
 //! Other transforms can add declarators to the store by calling methods of `VarDeclarationsStore`:
 //!
 //! ```rs
-//! self.ctx.var_declarations.insert_var(name, binding, None, ctx);
-//! self.ctx.var_declarations.insert_let(name2, binding2, None, ctx);
+//! ctx.state.var_declarations.insert_var(name, binding, None, ctx);
+//! ctx.state.var_declarations.insert_let(name2, binding2, None, ctx);
 //! ```
 
 use std::cell::RefCell;
@@ -40,13 +40,13 @@ impl<'a> VarDeclarations<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for VarDeclarations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for VarDeclarations<'a> {
     fn enter_statements(
         &mut self,
         _stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.ctx.var_declarations.record_entering_statements();
+        ctx.state.var_declarations.record_entering_statements();
     }
 
     fn exit_statements(
@@ -54,11 +54,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for VarDeclarations<'a, '_> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.ctx.var_declarations.insert_into_statements(stmts, ctx);
+        ctx.state.var_declarations.insert_into_statements(stmts, ctx);
     }
 
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.ctx.var_declarations.insert_into_program(self.ctx, ctx);
+        ctx.state.var_declarations.insert_into_program(&ctx.state, ctx);
     }
 }
 

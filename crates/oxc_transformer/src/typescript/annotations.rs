@@ -57,7 +57,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -161,7 +161,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
+        if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
@@ -276,7 +276,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 }
                 _ => {
                     // This should be never hit until more syntax is added to the JavaScript/TypeScrips
-                    self.ctx.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
+                    ctx.state.errors.borrow_mut().push(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
                 }
             }
         }
@@ -393,7 +393,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         }
 
         // Add assignments after super calls
-        self.ctx.statement_injector.insert_many_after(
+        ctx.state.statement_injector.insert_many_after(
             stmt,
             self.assignments
                 .iter()
@@ -502,7 +502,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptAnnotations<'a, '_> {
+impl<'a> TypeScriptAnnotations<'a> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

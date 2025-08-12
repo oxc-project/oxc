@@ -48,7 +48,7 @@ impl<'a> JsxSelf<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a> {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -58,7 +58,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
     }
 }
 
-impl<'a> JsxSelf<'a, '_> {
+impl<'a> JsxSelf<'a> {
     pub fn report_error(&self, span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
         ctx.state.errors.borrow_mut().push(error);

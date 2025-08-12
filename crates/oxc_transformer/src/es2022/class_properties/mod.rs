@@ -315,7 +315,7 @@ impl<'a> ClassProperties<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {

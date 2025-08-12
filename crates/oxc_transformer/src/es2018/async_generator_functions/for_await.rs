@@ -10,7 +10,7 @@ use crate::{common::helper_loader::Helper, context::TraverseCtx};
 
 use super::AsyncGeneratorFunctions;
 
-impl<'a> AsyncGeneratorFunctions<'a, '_> {
+impl<'a> AsyncGeneratorFunctions<'a> {
     /// Check the parent node to see if multiple statements are allowed.
     fn is_multiple_statements_allowed(ctx: &TraverseCtx<'a>) -> bool {
         matches!(
@@ -74,7 +74,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 for_statement,
             ));
         }
-        self.ctx.statement_injector.insert_many_before(&new_stmt, statements);
+        ctx.state.statement_injector.insert_many_before(&new_stmt, statements);
 
         // If the parent node doesn't allow multiple statements, we need to wrap the new statement
         // with a block statement, this way we can ensure can insert statement correctly.
@@ -147,7 +147,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         };
 
         let iterator = stmt.right.take_in(ctx.ast);
-        let iterator = self.ctx.helper_call_expr(
+        let iterator = ctx.state.helper_call_expr(
             Helper::AsyncIterator,
             SPAN,
             ctx.ast.vec1(Argument::from(iterator)),

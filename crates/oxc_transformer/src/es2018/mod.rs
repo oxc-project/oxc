@@ -33,7 +33,7 @@ impl<'a> ES2018<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2018<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2018<'a> {
     fn exit_program(&mut self, program: &mut oxc_ast::ast::Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.exit_program(program, ctx);
