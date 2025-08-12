@@ -107,28 +107,70 @@ pub struct OxcMinifierOptions {
 
 #[napi(object)]
 pub struct OxcCompressOptions {
-    pub booleans: bool,
-    pub drop_debugger: bool,
-    pub drop_console: bool,
-    pub evaluate: bool,
-    pub join_vars: bool,
-    pub loops: bool,
-    pub typeofs: bool,
+    /// Set desired EcmaScript standard version for output
+    pub target: Option<String>,
+    /// Remove `debugger;` statements
+    pub drop_debugger: Option<bool>,
+    /// Remove `console.*` statements
+    pub drop_console: Option<bool>,
+    /// Join consecutive var, let and const statements
+    pub join_vars: Option<bool>,
+    /// Join consecutive simple statements using the comma operator
+    pub sequences: Option<bool>,
+    /// Drop unreferenced functions and variables ('remove', 'keep_assign', 'keep')
+    pub unused: Option<String>,
+    /// Keep function / class names
+    pub keep_names: Option<OxcCompressKeepNamesOptions>,
+    /// Treeshake options
+    pub treeshake: Option<OxcTreeShakeOptions>,
+    // Legacy options for backward compatibility
+    pub booleans: Option<bool>,
+    pub evaluate: Option<bool>,
+    pub loops: Option<bool>,
+    pub typeofs: Option<bool>,
 }
 
 // keep same with `oxc_minifier::options::CompressOptions`
 impl Default for OxcCompressOptions {
     fn default() -> Self {
         Self {
-            booleans: true,
-            drop_debugger: true,
-            drop_console: false,
-            evaluate: true,
-            join_vars: true,
-            loops: true,
-            typeofs: true,
+            target: None,
+            drop_debugger: Some(true),
+            drop_console: Some(false),
+            join_vars: Some(true),
+            sequences: Some(true),
+            unused: Some("remove".to_string()),
+            keep_names: None,
+            treeshake: None,
+            // Legacy options
+            booleans: Some(true),
+            evaluate: Some(true),
+            loops: Some(true),
+            typeofs: Some(true),
         }
     }
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct OxcCompressKeepNamesOptions {
+    /// Keep function names
+    pub function: Option<bool>,
+    /// Keep class names
+    pub class: Option<bool>,
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct OxcTreeShakeOptions {
+    /// Whether to respect the pure annotations
+    pub annotations: Option<bool>,
+    /// Manual pure functions (array of function names)
+    pub manual_pure_functions: Option<Vec<String>>,
+    /// Property read side effects ('all', 'none', 'only_member')
+    pub property_read_side_effects: Option<String>,
+    /// Whether accessing a global variable has side effects
+    pub unknown_global_side_effects: Option<bool>,
 }
 
 #[napi(object)]

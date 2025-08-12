@@ -17,14 +17,15 @@ use oxc::{
     codegen::{Codegen, CodegenOptions, CommentOptions, LegalComment, IndentChar},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
-    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
+    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions,
+        CompressOptionsUnused, CompressOptionsKeepNames, TreeShakeOptions, PropertyReadSideEffects},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
-    syntax::reference::ReferenceFlags,
+    syntax::{reference::ReferenceFlags, es_target::ESTarget},
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{FormatOptions, Formatter};
@@ -232,11 +233,7 @@ impl Oxc {
             let options = MinifierOptions {
                 mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
                 compress: Some(if minifier_options.compress.unwrap_or_default() {
-                    CompressOptions {
-                        drop_console: compress_options.drop_console,
-                        drop_debugger: compress_options.drop_debugger,
-                        ..CompressOptions::default()
-                    }
+                    Self::build_compress_options(&compress_options)
                 } else {
                     CompressOptions::default()
                 }),
@@ -479,5 +476,71 @@ impl Oxc {
             .collect::<Vec<_>>();
 
         serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
+    }
+
+    fn build_compress_options(compress_options: &crate::options::OxcCompressOptions) -> CompressOptions {
+        
+        let target = if let Some(ref target_str) = compress_options.target {
+            match target_str.as_str() {
+                "es2015" | "es6" => ESTarget::ES2015,
+                "es2016" => ESTarget::ES2016,
+                "es2017" => ESTarget::ES2017,
+                "es2018" => ESTarget::ES2018,
+                "es2019" => ESTarget::ES2019,
+                "es2020" => ESTarget::ES2020,
+                "es2021" => ESTarget::ES2021,
+                "es2022" => ESTarget::ES2022,
+                "es2023" => ESTarget::ES2023,
+                "es2024" => ESTarget::ES2024,
+                "es2025" => ESTarget::ES2025,
+                "esnext" => ESTarget::ESNext,
+                _ => ESTarget::ESNext,
+            }
+        } else {
+            ESTarget::ESNext
+        };
+
+        let unused = match compress_options.unused.as_deref() {
+            Some("keep") => CompressOptionsUnused::Keep,
+            Some("keep_assign") => CompressOptionsUnused::KeepAssign,
+            Some("remove") | None => CompressOptionsUnused::Remove,
+            _ => CompressOptionsUnused::Remove,
+        };
+
+        let keep_names = if let Some(ref keep_names_opts) = compress_options.keep_names {
+            CompressOptionsKeepNames {
+                function: keep_names_opts.function.unwrap_or(false),
+                class: keep_names_opts.class.unwrap_or(false),
+            }
+        } else {
+            CompressOptionsKeepNames::all_false()
+        };
+
+        let treeshake = if let Some(ref treeshake_opts) = compress_options.treeshake {
+            TreeShakeOptions {
+                annotations: treeshake_opts.annotations.unwrap_or(true),
+                manual_pure_functions: treeshake_opts.manual_pure_functions.clone().unwrap_or_default(),
+                property_read_side_effects: match treeshake_opts.property_read_side_effects.as_deref() {
+                    Some("none") => PropertyReadSideEffects::None,
+                    Some("only_member") => PropertyReadSideEffects::OnlyMemberPropertyAccess,
+                    Some("all") | None => PropertyReadSideEffects::All,
+                    _ => PropertyReadSideEffects::All,
+                },
+                unknown_global_side_effects: treeshake_opts.unknown_global_side_effects.unwrap_or(true),
+            }
+        } else {
+            TreeShakeOptions::default()
+        };
+
+        CompressOptions {
+            target,
+            drop_debugger: compress_options.drop_debugger.unwrap_or(true),
+            drop_console: compress_options.drop_console.unwrap_or(false),
+            join_vars: compress_options.join_vars.unwrap_or(true),
+            sequences: compress_options.sequences.unwrap_or(true),
+            unused,
+            keep_names,
+            treeshake,
+        }
     }
 }

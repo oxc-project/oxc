@@ -85,14 +85,34 @@ export interface OxcCodegenOptions {
   comments?: OxcCodegenCommentOptions
 }
 
+export interface OxcCompressKeepNamesOptions {
+  /** Keep function names */
+  function?: boolean
+  /** Keep class names */
+  class?: boolean
+}
+
 export interface OxcCompressOptions {
-  booleans: boolean
-  dropDebugger: boolean
-  dropConsole: boolean
-  evaluate: boolean
-  joinVars: boolean
-  loops: boolean
-  typeofs: boolean
+  /** Set desired EcmaScript standard version for output */
+  target?: string
+  /** Remove `debugger;` statements */
+  dropDebugger?: boolean
+  /** Remove `console.*` statements */
+  dropConsole?: boolean
+  /** Join consecutive var, let and const statements */
+  joinVars?: boolean
+  /** Join consecutive simple statements using the comma operator */
+  sequences?: boolean
+  /** Drop unreferenced functions and variables ('remove', 'keep_assign', 'keep') */
+  unused?: string
+  /** Keep function / class names */
+  keepNames?: OxcCompressKeepNamesOptions
+  /** Treeshake options */
+  treeshake?: OxcTreeShakeOptions
+  booleans?: boolean
+  evaluate?: boolean
+  loops?: boolean
+  typeofs?: boolean
 }
 
 export interface OxcControlFlowOptions {
@@ -273,6 +293,17 @@ export interface OxcTransformerOptions {
   es2021?: OxcES2021Options
   /** ES2022 transformation options */
   es2022?: OxcES2022Options
+}
+
+export interface OxcTreeShakeOptions {
+  /** Whether to respect the pure annotations */
+  annotations?: boolean
+  /** Manual pure functions (array of function names) */
+  manualPureFunctions?: Array<string>
+  /** Property read side effects ('all', 'none', 'only_member') */
+  propertyReadSideEffects?: string
+  /** Whether accessing a global variable has side effects */
+  unknownGlobalSideEffects?: boolean
 }
 
 export interface OxcTypeScriptOptions {
