@@ -134,10 +134,7 @@ impl<'a> Normalize {
         matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
     }
 
-    fn compress_console(
-        expr: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
+    fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         debug_assert!(ctx.state.options.drop_console);
         Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
