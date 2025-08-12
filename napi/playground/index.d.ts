@@ -48,10 +48,41 @@ export declare class Oxc {
   run(sourceText: string, options: OxcOptions): void
 }
 
+export interface OxcArrowFunctionOptions {
+  /** Whether arrow function expressions with parameter destructuring should use assign variable declarations */
+  spec?: boolean
+}
+
+export interface OxcClassPropertiesOptions {
+  /** Whether to use loose mode */
+  loose?: boolean
+}
+
+export interface OxcCodegenCommentOptions {
+  /** Print normal comments that do not have special meanings */
+  normal?: boolean
+  /** Print jsdoc comments (`/** jsdoc */`) */
+  jsdoc?: boolean
+  /** Print annotation comments (pure, webpack, vite, coverage) */
+  annotation?: boolean
+  /** Print legal comments ('inline', 'eof', 'none', 'external') */
+  legal?: string
+}
+
 export interface OxcCodegenOptions {
   indentation?: number
   enableTypescript?: boolean
   enableSourcemap?: boolean
+  /** Use single quotes instead of double quotes */
+  singleQuote?: boolean
+  /** Remove whitespace */
+  minify?: boolean
+  /** Indentation character ('tab' or 'space') */
+  indentChar?: string
+  /** Number of characters per indentation level */
+  indentWidth?: number
+  /** Enable comments */
+  comments?: OxcCodegenCommentOptions
 }
 
 export interface OxcCompressOptions {
@@ -68,6 +99,104 @@ export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcEs2015Options {
+  /** Transform arrow functions */
+  arrowFunction?: OxcArrowFunctionOptions
+}
+
+export interface OxcEs2016Options {
+  /** Transform exponentiation operator */
+  exponentiationOperator?: boolean
+}
+
+export interface OxcEs2017Options {
+  /** Transform async to generator */
+  asyncToGenerator?: boolean
+}
+
+export interface OxcEs2018Options {
+  /** Transform object rest spread */
+  objectRestSpread?: OxcObjectRestSpreadOptions
+  /** Transform async generator functions */
+  asyncGeneratorFunctions?: boolean
+}
+
+export interface OxcEs2019Options {
+  /** Transform optional catch binding */
+  optionalCatchBinding?: boolean
+}
+
+export interface OxcEs2020Options {
+  /** Transform optional chaining */
+  optionalChaining?: boolean
+  /** Transform nullish coalescing operator */
+  nullishCoalescingOperator?: boolean
+  /** Transform BigInt */
+  bigInt?: boolean
+}
+
+export interface OxcEs2021Options {
+  /** Transform logical assignment operators */
+  logicalAssignmentOperators?: boolean
+}
+
+export interface OxcEs2022Options {
+  /** Transform class static block */
+  classStaticBlock?: boolean
+  /** Transform class properties */
+  classProperties?: OxcClassPropertiesOptions
+}
+
+export interface OxcFormatterOptions {
+  /** The indent style ('tab' or 'space') */
+  indentStyle?: string
+  /** The indent width */
+  indentWidth?: number
+  /** The type of line ending ('lf', 'crlf', 'cr') */
+  lineEnding?: string
+  /** What's the max width of a line */
+  lineWidth?: number
+  /** The style for quotes ('double' or 'single') */
+  quoteStyle?: string
+  /** The style for JSX quotes ('double' or 'single') */
+  jsxQuoteStyle?: string
+  /** When properties in objects are quoted ('as-needed' or 'preserve') */
+  quoteProperties?: string
+  /** Print trailing commas wherever possible ('all', 'es5', 'none') */
+  trailingCommas?: string
+  /** Whether the formatter prints semicolons ('always' or 'as-needed') */
+  semicolons?: string
+  /** Whether to add non-necessary parentheses to arrow functions ('always' or 'as-needed') */
+  arrowParentheses?: string
+  /** Whether to insert spaces around brackets in object literals */
+  bracketSpacing?: boolean
+  /** Whether to hug the closing bracket of multiline HTML/JSX tags to the end of the last line */
+  bracketSameLine?: boolean
+  /** Attribute position style ('auto' or 'multiline') */
+  attributePosition?: string
+  /** Whether to expand object and array literals to multiple lines ('auto', 'always', 'never') */
+  expand?: string
+  /** Controls the position of operators in binary expressions ('start' or 'end') */
+  experimentalOperatorPosition?: string
+}
+
+export interface OxcJsxOptions {
+  /** The JSX runtime to use ('automatic' or 'classic') */
+  runtime?: string
+  /** Whether to use React development mode */
+  development?: boolean
+  /** The import source for automatic runtime */
+  importSource?: string
+  /** The JSX pragma for classic runtime */
+  pragma?: string
+  /** The JSX pragma fragment for classic runtime   */
+  pragmaFrag?: string
+  /** Whether to throw if a XML namespaced tag name is used */
+  throwIfNamespace?: boolean
+  /** Whether to use React.createElement for every JSX element */
+  pure?: boolean
+}
+
 export interface OxcLinterOptions {
   config?: string
 }
@@ -79,6 +208,15 @@ export interface OxcMinifierOptions {
   compressOptions?: OxcCompressOptions
 }
 
+export interface OxcObjectRestSpreadOptions {
+  /** Whether to use Object.assign() instead of spread syntax */
+  loose?: boolean
+  /** Whether to use extends helper instead of Object.assign for rest destructuring */
+  useBuiltIns?: boolean
+  /** Whether to set enumerable false for computed properties */
+  setSpreadProperties?: boolean
+}
+
 export interface OxcOptions {
   run?: OxcRunOptions
   parser?: OxcParserOptions
@@ -86,6 +224,7 @@ export interface OxcOptions {
   transformer?: OxcTransformerOptions
   codegen?: OxcCodegenOptions
   minifier?: OxcMinifierOptions
+  formatter?: OxcFormatterOptions
   controlFlow?: OxcControlFlowOptions
 }
 
@@ -93,6 +232,8 @@ export interface OxcParserOptions {
   allowReturnOutsideFunction?: boolean
   preserveParens?: boolean
   allowV8Intrinsics?: boolean
+  /** Whether to parse regular expressions or not */
+  parseRegularExpression?: boolean
   sourceType?: string
   sourceFilename?: string
 }
@@ -112,4 +253,33 @@ export interface OxcRunOptions {
 export interface OxcTransformerOptions {
   target?: string
   isolatedDeclarations?: boolean
+  /** TypeScript transformation options */
+  typescript?: OxcTypeScriptOptions
+  /** JSX transformation options */
+  jsx?: OxcJsxOptions
+  /** ES2015 transformation options */
+  es2015?: OxcES2015Options
+  /** ES2016 transformation options   */
+  es2016?: OxcES2016Options
+  /** ES2017 transformation options */
+  es2017?: OxcES2017Options
+  /** ES2018 transformation options */
+  es2018?: OxcES2018Options
+  /** ES2019 transformation options */
+  es2019?: OxcES2019Options
+  /** ES2020 transformation options */
+  es2020?: OxcES2020Options
+  /** ES2021 transformation options */
+  es2021?: OxcES2021Options
+  /** ES2022 transformation options */
+  es2022?: OxcES2022Options
+}
+
+export interface OxcTypeScriptOptions {
+  /** Only transform TypeScript syntax, do not downlevel it to earlier JavaScript */
+  onlyRemoveTypeImports?: boolean
+  /** Allow declare module syntax */
+  allowDeclareModule?: boolean
+  /** Allow namespace syntax */
+  allowNamespaces?: boolean
 }

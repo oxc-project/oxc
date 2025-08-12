@@ -14,7 +14,7 @@ use oxc::{
     allocator::Allocator,
     ast::ast::Program,
     ast_visit::Visit,
-    codegen::{Codegen, CodegenOptions, CommentOptions},
+    codegen::{Codegen, CodegenOptions, CommentOptions, LegalComment, IndentChar},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
@@ -93,6 +93,7 @@ impl Oxc {
             transformer: transform_options,
             codegen: codegen_options,
             minifier: minifier_options,
+            formatter: formatter_options,
             control_flow: control_flow_options,
         } = options;
         let run_options = run_options.unwrap_or_default();
@@ -101,6 +102,7 @@ impl Oxc {
         let minifier_options = minifier_options.unwrap_or_default();
         let codegen_options = codegen_options.unwrap_or_default();
         let transform_options = transform_options.unwrap_or_default();
+        let formatter_options = formatter_options.unwrap_or_default();
         let control_flow_options = control_flow_options.unwrap_or_default();
 
         let allocator = Allocator::default();
@@ -117,7 +119,9 @@ impl Oxc {
 
         let default_parser_options = ParseOptions::default();
         let oxc_parser_options = ParseOptions {
-            parse_regular_expression: true,
+            parse_regular_expression: parser_options
+                .parse_regular_expression
+                .unwrap_or(true),
             allow_return_outside_function: parser_options
                 .allow_return_outside_function
                 .unwrap_or(default_parser_options.allow_return_outside_function),
@@ -245,12 +249,35 @@ impl Oxc {
         let codegen_result = Codegen::new()
             .with_scoping(symbol_table)
             .with_options(CodegenOptions {
-                minify: minifier_options.whitespace.unwrap_or_default(),
+                single_quote: codegen_options.single_quote.unwrap_or_default(),
+                minify: codegen_options.minify.unwrap_or(minifier_options.whitespace.unwrap_or_default()),
+                comments: if let Some(ref comment_opts) = codegen_options.comments {
+                    CommentOptions {
+                        normal: comment_opts.normal.unwrap_or(true),
+                        jsdoc: comment_opts.jsdoc.unwrap_or(true),
+                        annotation: comment_opts.annotation.unwrap_or(true),
+                        legal: match comment_opts.legal.as_deref() {
+                            Some("none") => LegalComment::None,
+                            Some("eof") => LegalComment::Eof,
+                            Some("external") => LegalComment::External,
+                            _ => LegalComment::Inline,
+                        },
+                    }
+                } else {
+                    CommentOptions::default()
+                },
                 source_map_path: codegen_options
                     .enable_sourcemap
                     .unwrap_or_default()
                     .then(|| path.clone()),
-                ..CodegenOptions::default()
+                indent_char: match codegen_options.indent_char.as_deref() {
+                    Some("space") => IndentChar::Space,
+                    Some("tab") => IndentChar::Tab,
+                    _ => IndentChar::default(),
+                },
+                indent_width: codegen_options.indent_width.unwrap_or(
+                    codegen_options.indentation.unwrap_or(1)
+                ) as usize,
             })
             .build(&program);
         self.codegen_text = codegen_result.code;
