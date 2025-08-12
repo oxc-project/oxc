@@ -8,18 +8,6 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Minimizes logical expressions by applying various optimizations.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// foo === null || foo === undefined
-    /// obj.prop && (obj.prop = value)
-    ///
-    /// // After:
-    /// foo == null
-    /// obj.prop &&= value
-    /// ```
     pub fn minimize_logical_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
@@ -29,19 +17,6 @@ impl<'a> PeepholeOptimizations {
         Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
     }
 
-    /// Compresses strict null/undefined checks into loose equality checks for smaller code.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// foo === null || foo === undefined    // 33 characters
-    /// foo !== null && foo !== undefined    // 33 characters
-    ///
-    /// // After:
-    /// foo == null                          // 11 characters
-    /// foo != null                          // 11 characters
-    /// ```
-    ///
     /// Compress `foo === null || foo === undefined` into `foo == null`.
     ///
     /// `foo === null || foo === undefined` => `foo == null`

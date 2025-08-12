@@ -5,20 +5,6 @@ use crate::{CompressOptionsUnused, ctx::Ctx};
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Determines if an unused variable declarator should be removed based on various safety criteria.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// var unused = 5;        // Never referenced
-    /// var used = 10;         // Referenced somewhere  
-    /// console.log(used);
-    ///
-    /// // After:
-    /// // unused removed
-    /// var used = 10;
-    /// console.log(used);
-    /// ```
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -41,20 +27,6 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    /// Removes unused function declarations by replacing them with empty statements.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// function unusedFunc() { return 42; }  // Never called
-    /// function usedFunc() { return 24; }    // Called somewhere
-    /// usedFunc();
-    ///
-    /// // After:
-    /// // unusedFunc removed entirely
-    /// function usedFunc() { return 24; }
-    /// usedFunc();
-    /// ```
     pub fn remove_unused_function_declaration(
         f: &Function<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -73,20 +45,6 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.statement_empty(f.span))
     }
 
-    /// Removes unused class declarations by replacing them with empty statements.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// class UnusedClass {}        // Never instantiated
-    /// class UsedClass {}          // Used somewhere
-    /// new UsedClass();
-    ///
-    /// // After:
-    /// // UnusedClass removed entirely
-    /// class UsedClass {}
-    /// new UsedClass();
-    /// ```
     pub fn remove_unused_class_declaration(
         c: &mut Class<'a>,
         ctx: &mut Ctx<'a, '_>,
@@ -112,17 +70,6 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
-    /// Determines whether to keep top-level variables in script mode to avoid potential issues.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // In script mode (not module):
-    /// var topLevel = 1;  // Kept even if unused (could be accessed via window.topLevel)
-    ///
-    /// // In module mode:
-    /// var topLevel = 1;  // Can be safely removed if unused
-    /// ```
-    ///
     /// Do remove top level vars in script mode.
     pub fn keep_top_level_var_in_script_mode(ctx: &Ctx<'a, '_>) -> bool {
         ctx.scoping.current_scope_id() == ctx.scoping().root_scope_id()

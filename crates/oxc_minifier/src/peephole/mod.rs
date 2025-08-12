@@ -43,32 +43,10 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
-    /// Creates a new instance of PeepholeOptimizations.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // This is used internally to set up the optimization passes
-    /// // No direct JavaScript equivalent
-    /// ```
     pub fn new() -> Self {
         Self { iteration: 0, changed: false }
     }
 
-    /// Runs a single pass of peephole optimizations on the AST.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// function test() {
-    ///   var x = 1;
-    ///   return x;
-    /// }
-    ///
-    /// // After single pass:
-    /// function test() {
-    ///   return 1;
-    /// }
-    /// ```
     pub fn build(
         &mut self,
         program: &mut Program<'a>,
@@ -77,17 +55,6 @@ impl<'a> PeepholeOptimizations {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
-    /// Repeatedly runs peephole optimizations until no more changes are made or maximum iterations reached.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// var a = 1, b = a, c = b;
-    /// console.log(c);
-    ///
-    /// // After multiple passes:
-    /// console.log(1);
-    /// ```
     pub fn run_in_loop(
         &mut self,
         program: &mut Program<'a>,

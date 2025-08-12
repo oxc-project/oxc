@@ -14,21 +14,6 @@ use crate::{CompressOptionsUnused, ctx::Ctx};
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Removes or simplifies expressions that don't have observable side effects.
-    ///
-    /// JavaScript example:
-    /// ```javascript
-    /// // Before:
-    /// void 0;              // Unused void expression
-    /// [1, 2, 3];           // Unused array literal
-    /// true && something;   // Short-circuit evaluation
-    ///
-    /// // After:
-    /// 0;                   // Simplified
-    /// // removed            // (if completely unused)
-    /// something;           // Simplified
-    /// ```
-    ///
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         match e {
