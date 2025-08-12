@@ -16082,8 +16082,8 @@ rebuilt        : ["Function", "Number", "dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importHelpersInTsx.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "o", "x"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "x"]
+after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "o", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "x"]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
 rebuilt        : <None>
@@ -19219,8 +19219,8 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadFirstUnionNoErrors.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Info", "React", "_jsxFileName", "a", "b", "c", "infoProps"]
-rebuilt        : ScopeId(0): ["Info", "React", "_jsxFileName", "a", "b", "c"]
+after transform: ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c", "infoProps"]
+rebuilt        : ScopeId(0): ["Info", "React", "_jsxFileName", "_objectSpread", "a", "b", "c"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -25874,8 +25874,8 @@ rebuilt        : ["print"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(9)]
-rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
+rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
 Bindings mismatch:
@@ -28859,10 +28859,10 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/spreadIntersectionJsx.tsx
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(1): [ReferenceId(0)]
-rebuilt        : SymbolId(3): []
+rebuilt        : SymbolId(4): []
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(2): [ReferenceId(1)]
-rebuilt        : SymbolId(4): []
+rebuilt        : SymbolId(5): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/spreadObjectNoCircular1.ts
 Bindings mismatch:
@@ -30329,13 +30329,13 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Button", "CustomButton", "React", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["CustomButton", "React", "_jsxFileName"]
+after transform: ScopeId(0): ["Button", "CustomButton", "React", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["CustomButton", "React", "_jsxFileName", "_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(12)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(14)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Button":
 after transform: SymbolId(3) "Button"
@@ -46555,8 +46555,8 @@ rebuilt        : ["React", "__proto__"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxExternalModuleEmit2.tsx
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "Main", "React", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["Main", "_jsxFileName"]
+after transform: ScopeId(0): ["Foo", "Main", "React", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["Main", "_jsxFileName", "_objectSpread"]
 Reference symbol mismatch for "React":
 after transform: SymbolId(2) "React"
 rebuilt        : <None>

@@ -624,7 +624,12 @@ impl<'a> JsxImpl<'a, '_> {
                     // optimize `{...prop}` to `prop` in static mode
                     JSXAttributeItem::SpreadAttribute(spread) => {
                         let JSXSpreadAttribute { argument, span } = spread.unbox();
-                        if is_classic && attributes_len == 1 {
+                        if is_classic
+                            && attributes_len == 1
+                            // Don't optimize when dev plugins are enabled - spread must be preserved
+                            // to merge with injected `__self` and `__source` props
+                            && !(self.options.jsx_self_plugin || self.options.jsx_source_plugin)
+                        {
                             // deopt if spreading an object with `__proto__` key
                             if !matches!(&argument, Expression::ObjectExpression(o) if has_proto(o))
                             {
