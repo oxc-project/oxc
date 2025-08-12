@@ -62,7 +62,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a> {
         }
     }
 
-    fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.big_int {
             let warning = OxcDiagnostic::warn(
                 "Big integer literals are not available in the configured target environment.",

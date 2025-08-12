@@ -45,7 +45,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a> {
     }
 
     #[inline]
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.statement_injector.assert_no_insertions_remaining();
     }
 }

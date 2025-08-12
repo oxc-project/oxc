@@ -784,7 +784,7 @@ impl<'a> LegacyDecorator<'a> {
 
     /// Injects the class decorator statements after class-properties plugin has run, ensuring that
     /// all transformed fields are injected before the class decorator statements.
-    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         for (address, stmts) in mem::take(&mut self.decorations) {
             ctx.state.statement_injector.insert_many_after(&address, stmts);
         }
