@@ -100,7 +100,6 @@ use crate::{
 };
 
 pub struct LegacyDecoratorMetadata<'a> {
-    ,
 }
 
 impl<'a> LegacyDecoratorMetadata<'a> {

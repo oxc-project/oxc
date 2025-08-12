@@ -18,9 +18,9 @@ pub struct ES2015<'a> {
 }
 
 impl<'a> ES2015<'a> {
-    pub fn new(options: ES2015Options, ) -> Self {
+    pub fn new(options: ES2015Options) -> Self {
         Self {
-            arrow_functions: ArrowFunctions::new(options.arrow_function.unwrap_or_default(), ctx),
+            arrow_functions: ArrowFunctions::new(options.arrow_function.unwrap_or_default()),
             options,
         }
     }

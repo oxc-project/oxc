@@ -46,7 +46,6 @@ impl<'a> Jsx<'a> {
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();

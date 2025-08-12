@@ -17,7 +17,6 @@ use crate::{
 };
 
 pub struct TypeScriptAnnotations<'a> {
-    ,
 
     // Options
     only_remove_type_imports: bool,

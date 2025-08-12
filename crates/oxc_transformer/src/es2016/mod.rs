@@ -19,8 +19,8 @@ pub struct ES2016<'a> {
 }
 
 impl<'a> ES2016<'a> {
-    pub fn new(options: ES2016Options, ) -> Self {
-        Self { exponentiation_operator: ExponentiationOperator::new(ctx), options }
+    pub fn new(options: ES2016Options) -> Self {
+        Self { exponentiation_operator: ExponentiationOperator::new(), options }
     }
 }
 

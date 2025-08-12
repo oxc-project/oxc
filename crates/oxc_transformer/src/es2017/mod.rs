@@ -18,8 +18,8 @@ pub struct ES2017<'a> {
 }
 
 impl<'a> ES2017<'a> {
-    pub fn new(options: ES2017Options, ) -> ES2017<'a> {
-        ES2017 { async_to_generator: AsyncToGenerator::new(ctx), options }
+    pub fn new(options: ES2017Options) -> ES2017<'a> {
+        ES2017 { async_to_generator: AsyncToGenerator::new(), options }
     }
 }
 

@@ -22,13 +22,12 @@ pub struct ES2018<'a> {
 }
 
 impl<'a> ES2018<'a> {
-    pub fn new(options: ES2018Options, ) -> Self {
+    pub fn new(options: ES2018Options) -> Self {
         Self {
             object_rest_spread: ObjectRestSpread::new(
                 options.object_rest_spread.unwrap_or_default(),
-                ctx,
             ),
-            async_generator_functions: AsyncGeneratorFunctions::new(ctx),
+            async_generator_functions: AsyncGeneratorFunctions::new(),
             options,
         }
     }

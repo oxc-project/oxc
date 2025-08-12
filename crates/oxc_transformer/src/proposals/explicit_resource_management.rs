@@ -50,7 +50,6 @@ use crate::{
 };
 
 pub struct ExplicitResourceManagement<'a> {
-    ,
 
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 }

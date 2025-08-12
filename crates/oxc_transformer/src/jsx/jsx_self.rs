@@ -40,7 +40,6 @@ use crate::{
 const SELF: &str = "__self";
 
 pub struct JsxSelf<'a> {
-    ,
 }
 
 impl<'a> JsxSelf<'a> {

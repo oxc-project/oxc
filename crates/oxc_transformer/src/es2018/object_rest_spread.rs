@@ -53,7 +53,6 @@ pub struct ObjectRestSpreadOptions {
 }
 
 pub struct ObjectRestSpread<'a> {
-    ,
 
     options: ObjectRestSpreadOptions,
 
@@ -61,28 +60,8 @@ pub struct ObjectRestSpread<'a> {
 }
 
 impl<'a> ObjectRestSpread<'a> {
-    pub fn new(options: ObjectRestSpreadOptions, ) -> Self {
-        if options.loose {
-            ctx.error(OxcDiagnostic::error(
-                "Option `loose` is not implemented for object-rest-spread.",
-            ));
-        }
-        if options.use_built_ins {
-            ctx.error(OxcDiagnostic::error(
-                "Option `useBuiltIns` is not implemented for object-rest-spread.",
-            ));
-        }
-        if ctx.assumptions.object_rest_no_symbols {
-            ctx.error(OxcDiagnostic::error(
-                "Compiler assumption `objectRestNoSymbols` is not implemented for object-rest-spread.",
-            ));
-        }
-        if ctx.assumptions.ignore_function_length {
-            ctx.error(OxcDiagnostic::error(
-                "Compiler assumption `ignoreFunctionLength` is not implemented for object-rest-spread.",
-            ));
-        }
-        Self { ctx, options, excluded_variable_declarators: vec![] }
+    pub fn new(options: ObjectRestSpreadOptions) -> Self {
+        Self { options, excluded_variable_declarators: vec![] }
     }
 }
 
@@ -95,7 +74,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
             let kind = VariableDeclarationKind::Const;
             let declaration = ctx.ast.alloc_variable_declaration(SPAN, kind, declarators, false);
             let statement = Statement::VariableDeclaration(declaration);
-            self.ctx.top_level_statements.insert_statement(statement);
+            ctx.state.top_level_statements.insert_statement(statement);
         }
     }
 

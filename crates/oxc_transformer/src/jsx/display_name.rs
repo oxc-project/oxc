@@ -54,7 +54,6 @@ use crate::{
 };
 
 pub struct ReactDisplayName<'a> {
-    ,
 }
 
 impl<'a> ReactDisplayName<'a> {

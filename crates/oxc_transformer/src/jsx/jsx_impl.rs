@@ -119,8 +119,6 @@ pub struct JsxImpl<'a> {
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
-    ,
-
     pub(super) jsx_self: JsxSelf<'a>,
     pub(super) jsx_source: JsxSource<'a>,
 
@@ -148,7 +146,6 @@ struct ClassicBindings<'a> {
 }
 
 struct AutomaticScriptBindings<'a> {
-    ,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
@@ -158,7 +155,6 @@ struct AutomaticScriptBindings<'a> {
 
 impl<'a> AutomaticScriptBindings<'a> {
     fn new(
-        ,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -211,7 +207,6 @@ impl<'a> AutomaticScriptBindings<'a> {
 }
 
 struct AutomaticModuleBindings<'a> {
-    ,
     jsx_runtime_importer: Atom<'a>,
     react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
@@ -223,7 +218,6 @@ struct AutomaticModuleBindings<'a> {
 
 impl<'a> AutomaticModuleBindings<'a> {
     fn new(
-        ,
         jsx_runtime_importer: Atom<'a>,
         react_importer_len: u32,
         is_development: bool,
@@ -412,7 +406,6 @@ impl<'a> JsxImpl<'a> {
         options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
         ast: AstBuilder<'a>,
-        ,
     ) -> Self {
         // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
         let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());
@@ -1248,14 +1241,13 @@ mod test {
             let mut scoping = Scoping::default();
             scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
 
-            let state = TransformState::default();
+            let state = TransformState::new(Path::new("test.jsx"), &TransformOptions::default());
             let traverse_ctx = ReusableTraverseCtx::new(state, scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TransCtx`, which cannot be abused
             let mut traverse_ctx = unsafe { traverse_ctx.unwrap() };
             let $traverse_ctx = &mut traverse_ctx;
 
-            let $transform_ctx =
-                TransformState::new(Path::new("test.jsx"), &TransformOptions::default());
+            let $transform_ctx = &$traverse_ctx.state;
         };
     }
 

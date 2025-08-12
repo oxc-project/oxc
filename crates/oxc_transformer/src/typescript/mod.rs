@@ -44,7 +44,6 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
 pub struct TypeScript<'a> {
-    ,
 
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,

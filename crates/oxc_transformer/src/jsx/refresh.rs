@@ -114,7 +114,6 @@ pub struct ReactRefresh<'a> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     /// Used to wrap call expression with signature.
@@ -131,7 +130,6 @@ impl<'a> ReactRefresh<'a> {
     pub fn new(
         options: &ReactRefreshOptions,
         ast: AstBuilder<'a>,
-        ,
     ) -> Self {
         Self {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),

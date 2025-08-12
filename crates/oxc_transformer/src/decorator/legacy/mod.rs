@@ -94,7 +94,6 @@ pub struct LegacyDecorator<'a> {
     class_decorated_data: Option<ClassDecoratedData<'a>>,
     /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
     decorations: FxHashMap<Address, Vec<Statement<'a>>>,
-    ,
 }
 
 impl<'a> LegacyDecorator<'a> {

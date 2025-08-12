@@ -50,7 +50,6 @@ const FILE_NAME_VAR: &str = "jsxFileName";
 pub struct JsxSource<'a> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,
-    ,
 }
 
 impl<'a> JsxSource<'a> {

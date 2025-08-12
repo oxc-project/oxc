@@ -14,7 +14,6 @@ pub use optional_chaining::OptionalChaining;
 pub use options::ES2020Options;
 
 pub struct ES2020<'a> {
-    ,
     options: ES2020Options,
 
     // Plugins
@@ -23,12 +22,11 @@ pub struct ES2020<'a> {
 }
 
 impl<'a> ES2020<'a> {
-    pub fn new(options: ES2020Options, ) -> Self {
+    pub fn new(options: ES2020Options) -> Self {
         Self {
-            ctx,
             options,
-            nullish_coalescing_operator: NullishCoalescingOperator::new(ctx),
-            optional_chaining: OptionalChaining::new(ctx),
+            nullish_coalescing_operator: NullishCoalescingOperator::new(),
+            optional_chaining: OptionalChaining::new(),
         }
     }
 }

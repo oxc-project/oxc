@@ -65,7 +65,6 @@ use crate::{
 };
 
 pub struct LogicalAssignmentOperators<'a> {
-    ,
 }
 
 impl<'a> LogicalAssignmentOperators<'a> {

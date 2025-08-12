@@ -70,13 +70,12 @@ use crate::{
 };
 
 pub struct AsyncToGenerator<'a> {
-    ,
     executor: AsyncGeneratorExecutor<'a>,
 }
 
 impl<'a> AsyncToGenerator<'a> {
     pub fn new() -> Self {
-        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
+        Self { executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator) }
     }
 }
 
@@ -185,12 +184,11 @@ impl<'a> AsyncToGenerator<'a, '_> {
 
 pub struct AsyncGeneratorExecutor<'a> {
     helper: Helper,
-    ,
 }
 
 impl<'a> AsyncGeneratorExecutor<'a> {
-    pub fn new(helper: Helper, ) -> Self {
-        Self { helper, ctx }
+    pub fn new(helper: Helper) -> Self {
+        Self { helper }
     }
 
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
@@ -867,12 +865,12 @@ impl<'a> AsyncGeneratorExecutor<'a> {
 }
 
 /// Moves the bindings from original scope to target scope.
-struct BindingMover<'a> {
+struct BindingMover<'a, 'ctx> {
     ctx: &'ctx mut TraverseCtx<'a>,
     target_scope_id: ScopeId,
 }
 
-impl<'a> BindingMover<'a> {
+impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     fn new(target_scope_id: ScopeId, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { ctx, target_scope_id }
     }

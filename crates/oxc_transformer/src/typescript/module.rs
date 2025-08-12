@@ -14,7 +14,6 @@ use crate::{
 pub struct TypeScriptModule<'a> {
     /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
     only_remove_type_imports: bool,
-    ,
 }
 
 impl<'a> TypeScriptModule<'a> {

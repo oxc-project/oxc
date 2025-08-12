@@ -62,7 +62,6 @@ mod options;
 pub use options::RegExpOptions;
 
 pub struct RegExp<'a> {
-    ,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,

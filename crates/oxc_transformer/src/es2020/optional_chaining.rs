@@ -70,7 +70,6 @@ enum CallContext<'a> {
 }
 
 pub struct OptionalChaining<'a> {
-    ,
 
     // states
     is_inside_function_parameter: bool,
@@ -83,7 +82,6 @@ pub struct OptionalChaining<'a> {
 impl<'a> OptionalChaining<'a> {
     pub fn new() -> Self {
         Self {
-            ctx,
             is_inside_function_parameter: false,
             temp_binding: None,
             call_context: CallContext::None,

@@ -19,7 +19,6 @@ use super::{
 };
 
 pub struct TypeScriptNamespace<'a> {
-    ,
 
     // Options
     allow_namespaces: bool,

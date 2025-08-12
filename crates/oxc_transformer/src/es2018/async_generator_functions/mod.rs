@@ -78,13 +78,12 @@ use crate::{
 };
 
 pub struct AsyncGeneratorFunctions<'a> {
-    ,
     executor: AsyncGeneratorExecutor<'a>,
 }
 
 impl<'a> AsyncGeneratorFunctions<'a> {
     pub fn new() -> Self {
-        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator, ctx) }
+        Self { executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator) }
     }
 }
 

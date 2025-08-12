@@ -24,7 +24,6 @@ impl<'a> ES2022<'a> {
     pub fn new(
         options: ES2022Options,
         remove_class_fields_without_initializer: bool,
-        ,
     ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.

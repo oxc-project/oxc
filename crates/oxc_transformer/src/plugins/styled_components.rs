@@ -284,7 +284,6 @@ impl StyledComponentsHelper {
 
 pub struct StyledComponents<'a> {
     pub options: StyledComponentsOptions,
-    pub ,
 
     // State
     /// Tracks which variables are bound to styled-components imports

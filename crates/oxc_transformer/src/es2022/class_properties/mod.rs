@@ -252,8 +252,6 @@ pub struct ClassProperties<'a> {
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
 
-    ,
-
     // ----- State used during all phases of transform -----
     //
     /// Stack of classes.
@@ -293,7 +291,6 @@ impl<'a> ClassProperties<'a> {
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
-        ,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
         let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;

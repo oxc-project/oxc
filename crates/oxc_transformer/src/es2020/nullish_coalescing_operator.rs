@@ -40,7 +40,6 @@ use crate::{
 };
 
 pub struct NullishCoalescingOperator<'a> {
-    ,
 }
 
 impl<'a> NullishCoalescingOperator<'a> {
