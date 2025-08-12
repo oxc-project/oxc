@@ -100,7 +100,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
                 None
             }
             Expression::CallExpression(_) if ctx.state.options.drop_console => {
-                self.compress_console(expr, ctx)
+                Self::compress_console(expr, ctx)
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -135,7 +135,6 @@ impl<'a> Normalize {
     }
 
     fn compress_console(
-        &self,
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {

@@ -211,7 +211,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::CallExpression(_) => {
                 Self::fold_call_expression(expr, ctx);
-                self.remove_dead_code_call_expression(expr, ctx);
+                Self::remove_dead_code_call_expression(expr, ctx);
                 Self::try_fold_concat_chain(expr, ctx);
                 self.try_fold_known_global_methods(expr, ctx);
                 self.try_fold_simple_function_call(expr, ctx);
@@ -447,7 +447,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expr(e, ctx),
             Expression::CallExpression(_) => {
                 PeepholeOptimizations::fold_call_expression(e, ctx);
-                self.inner.remove_dead_code_call_expression(e, ctx);
+                PeepholeOptimizations::remove_dead_code_call_expression(e, ctx);
             }
             Expression::ConditionalExpression(_) => {
                 self.inner.try_fold_conditional_expression(e, ctx);

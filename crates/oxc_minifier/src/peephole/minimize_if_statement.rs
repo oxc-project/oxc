@@ -15,7 +15,7 @@ impl<'a> PeepholeOptimizations {
         if_stmt: &mut IfStatement<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
-        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
+        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
@@ -95,7 +95,7 @@ impl<'a> PeepholeOptimizations {
                         // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                         if_stmt.test = unary_expr.argument.take_in(ctx.ast);
                         std::mem::swap(&mut if_stmt.consequent, alternate);
-                        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
+                        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
                         ctx.state.changed = true;
                     }
                 }
@@ -126,7 +126,7 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     #[expect(clippy::cast_possible_truncation)]
-    fn wrap_to_avoid_ambiguous_else(&self, if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
                 let scope_id = ScopeId::new(ctx.scoping.scoping().scopes_len() as u32);

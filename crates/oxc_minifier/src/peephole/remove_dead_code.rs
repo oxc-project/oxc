@@ -437,7 +437,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn remove_dead_code_call_expression(
-        &self,
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
