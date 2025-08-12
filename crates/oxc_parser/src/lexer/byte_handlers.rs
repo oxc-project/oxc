@@ -41,663 +41,1041 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
 ];
 
-/// Macro for defining a byte handler.
+/// The macro definitions have been removed and replaced with individual functions below.
+/// This eliminates the need for the complex macro expansions while maintaining the same functionality.
 ///
-/// Use `ascii_byte_handler!` macro for ASCII characters, which adds optimizations for ASCII.
-///
-/// Handlers are defined as functions instead of closures, so they have names in flame graphs.
-///
-/// ```
-/// byte_handler!(UNI(lexer) {
-///   lexer.unicode_char_handler()
-/// });
-/// ```
-///
-/// expands to:
-///
-/// ```
-/// const UNI: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn UNI(lexer: &mut Lexer) -> Kind {
-///     lexer.unicode_char_handler()
-///   }
-///   UNI
-/// };
-/// ```
-macro_rules! byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
-        const $id: ByteHandler = {
-            #[expect(non_snake_case)]
-            fn $id($lex: &mut Lexer) -> Kind {
-                $body
-            }
-            $id
-        };
-    };
-}
-
-/// Macro for defining byte handler for an ASCII character.
-///
-/// In addition to defining a `const` for the handler, it also asserts that lexer
-/// is not at end of file, and that next char is ASCII.
-/// Where the handler is for an ASCII character, these assertions are self-evidently true.
-///
-/// These assertions produce no runtime code, but hint to the compiler that it can assume that
-/// next char is ASCII, and it uses that information to optimize the rest of the handler.
-/// e.g. `lexer.consume_char()` becomes just a single assembler instruction.
-/// Without the assertions, the compiler is unable to deduce the next char is ASCII, due to
-/// the indirection of the `BYTE_HANDLERS` jump table.
-///
-/// These assertions are unchecked (i.e. won't panic) and will cause UB if they're incorrect.
-///
-/// # SAFETY
-/// Only use this macro to define byte handlers for ASCII characters.
-///
-/// ```
-/// ascii_byte_handler!(SPS(lexer) {
-///   lexer.consume_char();
-///   Kind::WhiteSpace
-/// });
-/// ```
-///
-/// expands to:
-///
-/// ```
-/// const SPS: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn SPS(lexer: &mut Lexer) {
-///     // SAFETY: This macro is only used for ASCII characters
-///     unsafe {
-///       use oxc_data_structures::assert_unchecked;
-///       assert_unchecked!(!lexer.source.is_eof());
-///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
-///     }
-///     {
-///       lexer.consume_char();
-///       Kind::WhiteSpace
-///     }
-///   }
-///   SPS
-/// };
-/// ```
-macro_rules! ascii_byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
-        byte_handler!($id($lex) {
-            // SAFETY: This macro is only used for ASCII characters
-            unsafe {
-                use oxc_data_structures::assert_unchecked;
-                assert_unchecked!(!$lex.source.is_eof());
-                assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
-            }
-            $body
-        });
-    };
-}
-
-/// Macro for defining byte handler for an ASCII character which is start of an identifier
-/// (`a`-`z`, `A`-`Z`, `$` or `_`).
-///
-/// Macro calls `Lexer::identifier_name_handler` to get the text of the identifier,
-/// minus its first character.
-///
-/// `Lexer::identifier_name_handler` is an unsafe function, but if byte being consumed is ASCII,
-/// its requirements are met.
-///
-/// # SAFETY
-/// Only use this macro to define byte handlers for ASCII characters.
-///
-/// ```
-/// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
-///   "et" => Kind::Get,
-///   "lobal" => Kind::Global,
-///   _ => Kind::Ident,
-/// });
-/// ```
-///
-/// expands to:
-///
-/// ```
-/// const L_G: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn L_G(lexer: &mut Lexer) -> Kind {
-///     // SAFETY: This macro is only used for ASCII characters
-///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
-///     match id_without_first_char {
-///       "et" => Kind::Get,
-///       "lobal" => Kind::Global,
-///       _ => Kind::Ident,
-///     }
-///   }
-///   L_G
-/// };
-/// ```
-macro_rules! ascii_identifier_handler {
-    ($id:ident($str:ident) $body:expr) => {
-        byte_handler!($id(lexer) {
-            // SAFETY: This macro is only used for ASCII characters
-            let $str = unsafe { lexer.identifier_name_handler() };
-            $body
-        });
-    };
-}
+/// For ASCII byte handlers, the unsafe assertions for optimization hints are preserved.
+/// For identifier handlers, the unsafe call to identifier_name_handler is preserved.
 
 // `\0` `\1` etc
-ascii_byte_handler!(ERR(lexer) {
-    let c = lexer.consume_char();
-    lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
-    Kind::Undetermined
-});
+const ERR: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn ERR(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        let c = lexer.consume_char();
+        lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
+        Kind::Undetermined
+    }
+    ERR
+};
 
 // <SPACE> <TAB> Normal Whitespace
-ascii_byte_handler!(SPS(lexer) {
-    lexer.consume_char();
-    Kind::Skip
-});
+const SPS: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn SPS(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::Skip
+    }
+    SPS
+};
 
 // <VT> <FF> Irregular Whitespace
-ascii_byte_handler!(ISP(lexer) {
-    lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start(), lexer.offset());
-    Kind::Skip
-});
+const ISP: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn ISP(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.trivia_builder.add_irregular_whitespace(lexer.token.start(), lexer.offset());
+        Kind::Skip
+    }
+    ISP
+};
 
 // '\r' '\n'
-ascii_byte_handler!(LIN(lexer) {
-    lexer.consume_char();
-    lexer.line_break_handler()
-});
+const LIN: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn LIN(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.line_break_handler()
+    }
+    LIN
+};
 
 // !
-ascii_byte_handler!(EXL(lexer) {
-    lexer.consume_char();
-    // Try to peek at next byte for common case first
-    match lexer.peek_byte() {
-        Some(b'=') => {
-            lexer.consume_char();
-            // Check for !== (triple equals)
-            if lexer.peek_byte() == Some(b'=') {
-                lexer.consume_char();
-                Kind::Neq2
-            } else {
-                Kind::Neq
-            }
+const EXL: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn EXL(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
         }
-        _ => Kind::Bang
+        lexer.consume_char();
+        // Try to peek at next byte for common case first
+        match lexer.peek_byte() {
+            Some(b'=') => {
+                lexer.consume_char();
+                // Check for !== (triple equals)
+                if lexer.peek_byte() == Some(b'=') {
+                    lexer.consume_char();
+                    Kind::Neq2
+                } else {
+                    Kind::Neq
+                }
+            }
+            _ => Kind::Bang,
+        }
     }
-});
+    EXL
+};
 
 // "
-ascii_byte_handler!(QOD(lexer) {
-    // SAFETY: This function is only called for `"`
-    unsafe { lexer.read_string_literal_double_quote() }
-});
+const QOD: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn QOD(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        // SAFETY: This function is only called for `"`
+        unsafe { lexer.read_string_literal_double_quote() }
+    }
+    QOD
+};
 
 // '
-ascii_byte_handler!(QOS(lexer) {
-    // SAFETY: This function is only called for `'`
-    unsafe { lexer.read_string_literal_single_quote() }
-});
+const QOS: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn QOS(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        // SAFETY: This function is only called for `'`
+        unsafe { lexer.read_string_literal_single_quote() }
+    }
+    QOS
+};
 
 // #
-ascii_byte_handler!(HAS(lexer) {
-    lexer.consume_char();
-    lexer.private_identifier()
-});
+const HAS: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn HAS(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.private_identifier()
+    }
+    HAS
+};
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
-ascii_identifier_handler!(IDT(_id_without_first_char) {
-    Kind::Ident
-});
+const IDT: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn IDT(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let _id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        Kind::Ident
+    }
+    IDT
+};
 
 // %
-ascii_byte_handler!(PRC(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PercentEq
-    } else {
-        Kind::Percent
+const PRC: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PRC(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'=') { Kind::PercentEq } else { Kind::Percent }
     }
-});
+    PRC
+};
 
 // &
-ascii_byte_handler!(AMP(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'&') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Amp2Eq
-        } else {
-            Kind::Amp2
+const AMP: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn AMP(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::AmpEq
-    } else {
-        Kind::Amp
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'&') {
+            if lexer.next_ascii_byte_eq(b'=') { Kind::Amp2Eq } else { Kind::Amp2 }
+        } else if lexer.next_ascii_byte_eq(b'=') {
+            Kind::AmpEq
+        } else {
+            Kind::Amp
+        }
     }
-});
+    AMP
+};
 
 // (
-ascii_byte_handler!(PNO(lexer) {
-    lexer.consume_char();
-    Kind::LParen
-});
+const PNO: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PNO(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::LParen
+    }
+    PNO
+};
 
 // )
-ascii_byte_handler!(PNC(lexer) {
-    lexer.consume_char();
-    Kind::RParen
-});
+const PNC: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PNC(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::RParen
+    }
+    PNC
+};
 
 // *
-ascii_byte_handler!(ATR(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'*') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Star2Eq
-        } else {
-            Kind::Star2
+const ATR: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn ATR(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::StarEq
-    } else {
-        Kind::Star
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'*') {
+            if lexer.next_ascii_byte_eq(b'=') { Kind::Star2Eq } else { Kind::Star2 }
+        } else if lexer.next_ascii_byte_eq(b'=') {
+            Kind::StarEq
+        } else {
+            Kind::Star
+        }
     }
-});
+    ATR
+};
 
 // +
-ascii_byte_handler!(PLS(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'+') {
-        Kind::Plus2
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PlusEq
-    } else {
-        Kind::Plus
+const PLS: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PLS(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'+') {
+            Kind::Plus2
+        } else if lexer.next_ascii_byte_eq(b'=') {
+            Kind::PlusEq
+        } else {
+            Kind::Plus
+        }
     }
-});
+    PLS
+};
 
 // ,
-ascii_byte_handler!(COM(lexer) {
-    lexer.consume_char();
-    Kind::Comma
-});
+const COM: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn COM(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::Comma
+    }
+    COM
+};
 
 // -
-ascii_byte_handler!(MIN(lexer) {
-    lexer.consume_char();
-    lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment())
-});
+const MIN: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn MIN(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment())
+    }
+    MIN
+};
 
 // .
-ascii_byte_handler!(PRD(lexer) {
-    lexer.consume_char();
-    lexer.read_dot()
-});
+const PRD: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PRD(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.read_dot()
+    }
+    PRD
+};
 
 // /
-ascii_byte_handler!(SLH(lexer) {
-    lexer.consume_char();
-    match lexer.peek_byte() {
-        Some(b'/') => {
-            lexer.consume_char();
-            lexer.skip_single_line_comment()
+const SLH: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn SLH(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
         }
-        Some(b'*') => {
-            lexer.consume_char();
-            lexer.skip_multi_line_comment()
-        }
-        _ => {
-            // regex is handled separately, see `next_regex`
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::SlashEq
-            } else {
-                Kind::Slash
+        lexer.consume_char();
+        match lexer.peek_byte() {
+            Some(b'/') => {
+                lexer.consume_char();
+                lexer.skip_single_line_comment()
+            }
+            Some(b'*') => {
+                lexer.consume_char();
+                lexer.skip_multi_line_comment()
+            }
+            _ => {
+                // regex is handled separately, see `next_regex`
+                if lexer.next_ascii_byte_eq(b'=') { Kind::SlashEq } else { Kind::Slash }
             }
         }
     }
-});
+    SLH
+};
 
 // 0
-ascii_byte_handler!(ZER(lexer) {
-    lexer.consume_char();
-    lexer.read_zero()
-});
+const ZER: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn ZER(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.read_zero()
+    }
+    ZER
+};
 
 // 1 to 9
-ascii_byte_handler!(DIG(lexer) {
-    lexer.consume_char();
-    lexer.decimal_literal_after_first_digit()
-});
+const DIG: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn DIG(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.decimal_literal_after_first_digit()
+    }
+    DIG
+};
 
 // :
-ascii_byte_handler!(COL(lexer) {
-    lexer.consume_char();
-    Kind::Colon
-});
+const COL: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn COL(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::Colon
+    }
+    COL
+};
 
 // ;
-ascii_byte_handler!(SEM(lexer) {
-    lexer.consume_char();
-    Kind::Semicolon
-});
+const SEM: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn SEM(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::Semicolon
+    }
+    SEM
+};
 
 // <
-ascii_byte_handler!(LSS(lexer) {
-    lexer.consume_char();
-    lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment())
-});
+const LSS: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn LSS(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment())
+    }
+    LSS
+};
 
 // =
-ascii_byte_handler!(EQL(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Eq3
-        } else {
-            Kind::Eq2
+const EQL: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn EQL(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
         }
-    } else if lexer.next_ascii_byte_eq(b'>') {
-        Kind::Arrow
-    } else {
-        Kind::Eq
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'=') {
+            if lexer.next_ascii_byte_eq(b'=') { Kind::Eq3 } else { Kind::Eq2 }
+        } else if lexer.next_ascii_byte_eq(b'>') {
+            Kind::Arrow
+        } else {
+            Kind::Eq
+        }
     }
-});
+    EQL
+};
 
 // >
-ascii_byte_handler!(GTR(lexer) {
-    lexer.consume_char();
-    // `>=` is re-lexed with [Lexer::next_jsx_child]
-    Kind::RAngle
-});
+const GTR: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn GTR(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        // `>=` is re-lexed with [Lexer::next_jsx_child]
+        Kind::RAngle
+    }
+    GTR
+};
 
 // ?
-ascii_byte_handler!(QST(lexer) {
-    lexer.consume_char();
+const QST: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn QST(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
 
-    match lexer.peek_byte() {
-        Some(b'?') => {
-            lexer.consume_char();
-            // Check for ??= (nullish coalescing assignment)
-            if lexer.peek_byte() == Some(b'=') {
+        match lexer.peek_byte() {
+            Some(b'?') => {
                 lexer.consume_char();
-                Kind::Question2Eq
-            } else {
-                Kind::Question2
+                // Check for ??= (nullish coalescing assignment)
+                if lexer.peek_byte() == Some(b'=') {
+                    lexer.consume_char();
+                    Kind::Question2Eq
+                } else {
+                    Kind::Question2
+                }
             }
-        }
-        Some(b'.') => {
-            // Only consume if not followed by digit (to parse `?.1` as `?` `.1`)
-            if lexer.peek_2_bytes().is_none_or(|bytes| !bytes[1].is_ascii_digit()) {
-                lexer.consume_char();
-                Kind::QuestionDot
-            } else {
-                Kind::Question
+            Some(b'.') => {
+                // Only consume if not followed by digit (to parse `?.1` as `?` `.1`)
+                if lexer.peek_2_bytes().is_none_or(|bytes| !bytes[1].is_ascii_digit()) {
+                    lexer.consume_char();
+                    Kind::QuestionDot
+                } else {
+                    Kind::Question
+                }
             }
+            _ => Kind::Question,
         }
-        _ => Kind::Question,
     }
-});
+    QST
+};
 
 // @
-ascii_byte_handler!(AT_(lexer) {
-    lexer.consume_char();
-    Kind::At
-});
+const AT_: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn AT_(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::At
+    }
+    AT_
+};
 
 // [
-ascii_byte_handler!(BTO(lexer) {
-    lexer.consume_char();
-    Kind::LBrack
-});
+const BTO: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn BTO(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::LBrack
+    }
+    BTO
+};
 
 // \
-ascii_byte_handler!(ESC(lexer) {
-    lexer.identifier_backslash_handler()
-});
+const ESC: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn ESC(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.identifier_backslash_handler()
+    }
+    ESC
+};
 
 // ]
-ascii_byte_handler!(BTC(lexer) {
-    lexer.consume_char();
-    Kind::RBrack
-});
+const BTC: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn BTC(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::RBrack
+    }
+    BTC
+};
 
 // ^
-ascii_byte_handler!(CRT(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        Kind::CaretEq
-    } else {
-        Kind::Caret
+const CRT: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn CRT(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        if lexer.next_ascii_byte_eq(b'=') { Kind::CaretEq } else { Kind::Caret }
     }
-});
+    CRT
+};
 
 // `
-ascii_byte_handler!(TPL(lexer) {
-    lexer.consume_char();
-    lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
-});
+const TPL: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn TPL(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
+    }
+    TPL
+};
 
 // {
-ascii_byte_handler!(BEO(lexer) {
-    lexer.consume_char();
-    Kind::LCurly
-});
+const BEO: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn BEO(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::LCurly
+    }
+    BEO
+};
 
 // |
-ascii_byte_handler!(PIP(lexer) {
-    lexer.consume_char();
+const PIP: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn PIP(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
 
-    match lexer.peek_byte() {
-        Some(b'|') => {
-            lexer.consume_char();
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::Pipe2Eq
-            } else {
-                Kind::Pipe2
+        match lexer.peek_byte() {
+            Some(b'|') => {
+                lexer.consume_char();
+                if lexer.next_ascii_byte_eq(b'=') { Kind::Pipe2Eq } else { Kind::Pipe2 }
             }
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::PipeEq
+            }
+            _ => Kind::Pipe,
         }
-        Some(b'=') => {
-            lexer.consume_char();
-            Kind::PipeEq
-        }
-        _ => Kind::Pipe
     }
-});
+    PIP
+};
 
 // }
-ascii_byte_handler!(BEC(lexer) {
-    lexer.consume_char();
-    Kind::RCurly
-});
+const BEC: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn BEC(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::RCurly
+    }
+    BEC
+};
 
 // ~
-ascii_byte_handler!(TLD(lexer) {
-    lexer.consume_char();
-    Kind::Tilde
-});
+const TLD: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn TLD(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        unsafe {
+            use oxc_data_structures::assert_unchecked;
+            assert_unchecked!(!lexer.source.is_eof());
+            assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+        }
+        lexer.consume_char();
+        Kind::Tilde
+    }
+    TLD
+};
 
-ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char {
-    "wait" => Kind::Await,
-    "sync" => Kind::Async,
-    "bstract" => Kind::Abstract,
-    "ccessor" => Kind::Accessor,
-    "ny" => Kind::Any,
-    "s" => Kind::As,
-    "ssert" => Kind::Assert,
-    "sserts" => Kind::Asserts,
-    _ => Kind::Ident,
-});
+const L_A: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_A(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "wait" => Kind::Await,
+            "sync" => Kind::Async,
+            "bstract" => Kind::Abstract,
+            "ccessor" => Kind::Accessor,
+            "ny" => Kind::Any,
+            "s" => Kind::As,
+            "ssert" => Kind::Assert,
+            "sserts" => Kind::Asserts,
+            _ => Kind::Ident,
+        }
+    }
+    L_A
+};
 
-ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char {
-    "reak" => Kind::Break,
-    "oolean" => Kind::Boolean,
-    "igint" => Kind::BigInt,
-    _ => Kind::Ident,
-});
+const L_B: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_B(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "reak" => Kind::Break,
+            "oolean" => Kind::Boolean,
+            "igint" => Kind::BigInt,
+            _ => Kind::Ident,
+        }
+    }
+    L_B
+};
 
-ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char {
-    "onst" => Kind::Const,
-    "lass" => Kind::Class,
-    "ontinue" => Kind::Continue,
-    "atch" => Kind::Catch,
-    "ase" => Kind::Case,
-    "onstructor" => Kind::Constructor,
-    _ => Kind::Ident,
-});
+const L_C: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_C(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "onst" => Kind::Const,
+            "lass" => Kind::Class,
+            "ontinue" => Kind::Continue,
+            "atch" => Kind::Catch,
+            "ase" => Kind::Case,
+            "onstructor" => Kind::Constructor,
+            _ => Kind::Ident,
+        }
+    }
+    L_C
+};
 
-ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char {
-    "o" => Kind::Do,
-    "elete" => Kind::Delete,
-    "eclare" => Kind::Declare,
-    "efault" => Kind::Default,
-    "ebugger" => Kind::Debugger,
-    "efer" => Kind::Defer,
-    _ => Kind::Ident,
-});
+const L_D: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_D(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "o" => Kind::Do,
+            "elete" => Kind::Delete,
+            "eclare" => Kind::Declare,
+            "efault" => Kind::Default,
+            "ebugger" => Kind::Debugger,
+            "efer" => Kind::Defer,
+            _ => Kind::Ident,
+        }
+    }
+    L_D
+};
 
-ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char {
-    "lse" => Kind::Else,
-    "num" => Kind::Enum,
-    "xport" => Kind::Export,
-    "xtends" => Kind::Extends,
-    _ => Kind::Ident,
-});
+const L_E: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_E(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "lse" => Kind::Else,
+            "num" => Kind::Enum,
+            "xport" => Kind::Export,
+            "xtends" => Kind::Extends,
+            _ => Kind::Ident,
+        }
+    }
+    L_E
+};
 
-ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char {
-    "unction" => Kind::Function,
-    "alse" => Kind::False,
-    "or" => Kind::For,
-    "inally" => Kind::Finally,
-    "rom" => Kind::From,
-    _ => Kind::Ident,
-});
+const L_F: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_F(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "unction" => Kind::Function,
+            "alse" => Kind::False,
+            "or" => Kind::For,
+            "inally" => Kind::Finally,
+            "rom" => Kind::From,
+            _ => Kind::Ident,
+        }
+    }
+    L_F
+};
 
-ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
-    "et" => Kind::Get,
-    "lobal" => Kind::Global,
-    _ => Kind::Ident,
-});
+const L_G: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_G(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "et" => Kind::Get,
+            "lobal" => Kind::Global,
+            _ => Kind::Ident,
+        }
+    }
+    L_G
+};
 
-ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char {
-    "f" => Kind::If,
-    "nstanceof" => Kind::Instanceof,
-    "n" => Kind::In,
-    "mplements" => Kind::Implements,
-    "mport" => Kind::Import,
-    "nfer" => Kind::Infer,
-    "nterface" => Kind::Interface,
-    "ntrinsic" => Kind::Intrinsic,
-    "s" => Kind::Is,
-    _ => Kind::Ident,
-});
+const L_I: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_I(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "f" => Kind::If,
+            "nstanceof" => Kind::Instanceof,
+            "n" => Kind::In,
+            "mplements" => Kind::Implements,
+            "mport" => Kind::Import,
+            "nfer" => Kind::Infer,
+            "nterface" => Kind::Interface,
+            "ntrinsic" => Kind::Intrinsic,
+            "s" => Kind::Is,
+            _ => Kind::Ident,
+        }
+    }
+    L_I
+};
 
-ascii_identifier_handler!(L_K(id_without_first_char) match id_without_first_char {
-    "eyof" => Kind::KeyOf,
-    _ => Kind::Ident,
-});
+const L_K: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_K(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "eyof" => Kind::KeyOf,
+            _ => Kind::Ident,
+        }
+    }
+    L_K
+};
 
-ascii_identifier_handler!(L_L(id_without_first_char) match id_without_first_char {
-    "et" => Kind::Let,
-    _ => Kind::Ident,
-});
+const L_L: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_L(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "et" => Kind::Let,
+            _ => Kind::Ident,
+        }
+    }
+    L_L
+};
 
-ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char {
-    "eta" => Kind::Meta,
-    "odule" => Kind::Module,
-    _ => Kind::Ident,
-});
+const L_M: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_M(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "eta" => Kind::Meta,
+            "odule" => Kind::Module,
+            _ => Kind::Ident,
+        }
+    }
+    L_M
+};
 
-ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char {
-    "ull" => Kind::Null,
-    "ew" => Kind::New,
-    "umber" => Kind::Number,
-    "amespace" => Kind::Namespace,
-    "ever" => Kind::Never,
-    _ => Kind::Ident,
-});
+const L_N: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_N(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "ull" => Kind::Null,
+            "ew" => Kind::New,
+            "umber" => Kind::Number,
+            "amespace" => Kind::Namespace,
+            "ever" => Kind::Never,
+            _ => Kind::Ident,
+        }
+    }
+    L_N
+};
 
-ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char {
-    "f" => Kind::Of,
-    "bject" => Kind::Object,
-    "ut" => Kind::Out,
-    "verride" => Kind::Override,
-    _ => Kind::Ident,
-});
+const L_O: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_O(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "f" => Kind::Of,
+            "bject" => Kind::Object,
+            "ut" => Kind::Out,
+            "verride" => Kind::Override,
+            _ => Kind::Ident,
+        }
+    }
+    L_O
+};
 
-ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char {
-    "ackage" => Kind::Package,
-    "rivate" => Kind::Private,
-    "rotected" => Kind::Protected,
-    "ublic" => Kind::Public,
-    _ => Kind::Ident,
-});
+const L_P: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_P(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "ackage" => Kind::Package,
+            "rivate" => Kind::Private,
+            "rotected" => Kind::Protected,
+            "ublic" => Kind::Public,
+            _ => Kind::Ident,
+        }
+    }
+    L_P
+};
 
-ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char {
-    "eturn" => Kind::Return,
-    "equire" => Kind::Require,
-    "eadonly" => Kind::Readonly,
-    _ => Kind::Ident,
-});
+const L_R: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_R(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "eturn" => Kind::Return,
+            "equire" => Kind::Require,
+            "eadonly" => Kind::Readonly,
+            _ => Kind::Ident,
+        }
+    }
+    L_R
+};
 
-ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char {
-    "et" => Kind::Set,
-    "uper" => Kind::Super,
-    "witch" => Kind::Switch,
-    "tatic" => Kind::Static,
-    "ymbol" => Kind::Symbol,
-    "tring" => Kind::String,
-    "atisfies" => Kind::Satisfies,
-    "ource" => Kind::Source,
-    _ => Kind::Ident,
-});
+const L_S: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_S(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "et" => Kind::Set,
+            "uper" => Kind::Super,
+            "witch" => Kind::Switch,
+            "tatic" => Kind::Static,
+            "ymbol" => Kind::Symbol,
+            "tring" => Kind::String,
+            "atisfies" => Kind::Satisfies,
+            "ource" => Kind::Source,
+            _ => Kind::Ident,
+        }
+    }
+    L_S
+};
 
-ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char {
-    "his" => Kind::This,
-    "rue" => Kind::True,
-    "hrow" => Kind::Throw,
-    "ry" => Kind::Try,
-    "ypeof" => Kind::Typeof,
-    "arget" => Kind::Target,
-    "ype" => Kind::Type,
-    _ => Kind::Ident,
-});
+const L_T: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_T(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "his" => Kind::This,
+            "rue" => Kind::True,
+            "hrow" => Kind::Throw,
+            "ry" => Kind::Try,
+            "ypeof" => Kind::Typeof,
+            "arget" => Kind::Target,
+            "ype" => Kind::Type,
+            _ => Kind::Ident,
+        }
+    }
+    L_T
+};
 
-ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char {
-    "ndefined" => Kind::Undefined,
-    "sing" => Kind::Using,
-    "nique" => Kind::Unique,
-    "nknown" => Kind::Unknown,
-    _ => Kind::Ident,
-});
+const L_U: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_U(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "ndefined" => Kind::Undefined,
+            "sing" => Kind::Using,
+            "nique" => Kind::Unique,
+            "nknown" => Kind::Unknown,
+            _ => Kind::Ident,
+        }
+    }
+    L_U
+};
 
-ascii_identifier_handler!(L_V(id_without_first_char) match id_without_first_char {
-    "ar" => Kind::Var,
-    "oid" => Kind::Void,
-    _ => Kind::Ident,
-});
+const L_V: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_V(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "ar" => Kind::Var,
+            "oid" => Kind::Void,
+            _ => Kind::Ident,
+        }
+    }
+    L_V
+};
 
-ascii_identifier_handler!(L_W(id_without_first_char) match id_without_first_char {
-    "hile" => Kind::While,
-    "ith" => Kind::With,
-    _ => Kind::Ident,
-});
+const L_W: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_W(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "hile" => Kind::While,
+            "ith" => Kind::With,
+            _ => Kind::Ident,
+        }
+    }
+    L_W
+};
 
-ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char {
-    "ield" => Kind::Yield,
-    _ => Kind::Ident,
-});
+const L_Y: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn L_Y(lexer: &mut Lexer) -> Kind {
+        // SAFETY: This function is only used for ASCII characters
+        let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+        match id_without_first_char {
+            "ield" => Kind::Yield,
+            _ => Kind::Ident,
+        }
+    }
+    L_Y
+};
 
 // Non-ASCII characters.
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
-byte_handler!(UNI(lexer) {
-    lexer.unicode_char_handler()
-});
+const UNI: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn UNI(lexer: &mut Lexer) -> Kind {
+        lexer.unicode_char_handler()
+    }
+    UNI
+};
 
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
 // + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
 // `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
 // so something has gone wrong if we get here.
 // https://datatracker.ietf.org/doc/html/rfc3629
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
-byte_handler!(UER(_lexer) {
-    unreachable!();
-});
+const UER: ByteHandler = {
+    #[expect(non_snake_case)]
+    fn UER(_lexer: &mut Lexer) -> Kind {
+        unreachable!();
+    }
+    UER
+};
