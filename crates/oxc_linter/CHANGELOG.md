@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.11.2] - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- 42de3d1 linter: Update warn_correctness to correctly warn when using vitest plugin (#12991) (camc314)
+- 1b0136e linter/exhaustive-deps: Use codegen in fixer rather than manual string manipulation (#12987) (camc314)
+- 166f5cc linter: Fix no-fallthrough rule, when the default condition is not last (#12927) (Li Wei)
+- d7e1ddb linter/config: Ensure that overrides correctly replace base rules (#12941) (camc314)
+
+### 🚜 Refactor
+
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+
+### 🧪 Testing
+
+- 6b054b6 linter/expect-expect: Add test case for calling expect as return arg (#12983) (camc314)
+
+
 ## [1.11.1] - 2025-08-09
 
 ### 🐛 Bug Fixes
