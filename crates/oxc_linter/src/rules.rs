@@ -293,6 +293,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod display_name;
     pub mod exhaustive_deps;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
@@ -917,6 +918,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
+    react::display_name,
     react::exhaustive_deps,
     react::forbid_elements,
     react::forward_ref_uses_ref,
