@@ -28,7 +28,9 @@ use oxc::{
     syntax::{reference::ReferenceFlags, es_target::ESTarget},
     transformer::{TransformOptions, Transformer},
 };
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{FormatOptions, Formatter, IndentStyle, LineEnding, QuoteStyle, 
+    QuoteProperties, TrailingCommas, Semicolons, ArrowParentheses, BracketSpacing, 
+    BracketSameLine, AttributePosition, Expand, OperatorPosition, IndentWidth, LineWidth};
 use oxc_index::Idx;
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Linter, ModuleRecord,
@@ -168,7 +170,7 @@ impl Oxc {
             &allocator,
         );
 
-        self.run_formatter(&run_options, &source_text, source_type);
+        self.run_formatter(&run_options, &formatter_options, &source_text, source_type);
 
         let scoping = semantic.into_scoping();
 
@@ -208,17 +210,21 @@ impl Oxc {
                 return Ok(());
             }
 
-            let options = transform_options
-                .target
-                .as_ref()
-                .and_then(|target| {
-                    TransformOptions::from_target(target)
-                        .map_err(|err| {
-                            self.diagnostics.push(OxcDiagnostic::error(err));
-                        })
-                        .ok()
-                })
-                .unwrap_or_default();
+            let options = if transform_options.target.is_some() {
+                transform_options
+                    .target
+                    .as_ref()
+                    .and_then(|target| {
+                        TransformOptions::from_target(target)
+                            .map_err(|err| {
+                                self.diagnostics.push(OxcDiagnostic::error(err));
+                            })
+                            .ok()
+                    })
+                    .unwrap_or_default()
+            } else {
+                Self::build_transform_options(&transform_options)
+            };
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {
@@ -349,6 +355,7 @@ impl Oxc {
     fn run_formatter(
         &mut self,
         run_options: &OxcRunOptions,
+        formatter_options: &crate::options::OxcFormatterOptions,
         source_text: &str,
         source_type: SourceType,
     ) {
@@ -361,7 +368,8 @@ impl Oxc {
                 .parse();
 
             if run_options.formatter_format.unwrap_or_default() {
-                let formatter = Formatter::new(&allocator, FormatOptions::default());
+                let format_options = Self::build_format_options(formatter_options);
+                let formatter = Formatter::new(&allocator, format_options);
                 self.formatter_formatted_text = formatter.build(&ret.program);
             }
 
@@ -541,6 +549,85 @@ impl Oxc {
             unused,
             keep_names,
             treeshake,
+        }
+    }
+
+    fn build_transform_options(_transform_options: &crate::options::OxcTransformerOptions) -> TransformOptions {
+        // TODO: For now, return default options. This can be extended in the future
+        // to handle the comprehensive nested options like typescript, jsx, es2015, etc.
+        // The challenge is that the oxc TransformOptions is very complex with many nested structs
+        // and it's better to implement this incrementally as needed.
+        TransformOptions::default()
+    }
+
+    fn build_format_options(formatter_options: &crate::options::OxcFormatterOptions) -> FormatOptions {
+        FormatOptions {
+            indent_style: match formatter_options.indent_style.as_deref() {
+                Some("tab") => IndentStyle::Tab,
+                Some("space") => IndentStyle::Space,
+                _ => IndentStyle::default(),
+            },
+            indent_width: formatter_options.indent_width
+                .and_then(|w| IndentWidth::try_from(w).ok())
+                .unwrap_or_default(),
+            line_ending: match formatter_options.line_ending.as_deref() {
+                Some("lf") => LineEnding::Lf,
+                Some("crlf") => LineEnding::Crlf,
+                Some("cr") => LineEnding::Cr,
+                _ => LineEnding::default(),
+            },
+            line_width: formatter_options.line_width
+                .and_then(|w| LineWidth::try_from(w).ok())
+                .unwrap_or_default(),
+            quote_style: match formatter_options.quote_style.as_deref() {
+                Some("single") => QuoteStyle::Single,
+                Some("double") => QuoteStyle::Double,
+                _ => QuoteStyle::default(),
+            },
+            jsx_quote_style: match formatter_options.jsx_quote_style.as_deref() {
+                Some("single") => QuoteStyle::Single,
+                Some("double") => QuoteStyle::Double,
+                _ => QuoteStyle::default(),
+            },
+            quote_properties: match formatter_options.quote_properties.as_deref() {
+                Some("preserve") => QuoteProperties::Preserve,
+                Some("as-needed") => QuoteProperties::AsNeeded,
+                _ => QuoteProperties::default(),
+            },
+            trailing_commas: match formatter_options.trailing_commas.as_deref() {
+                Some("all") => TrailingCommas::All,
+                Some("es5") => TrailingCommas::Es5,
+                Some("none") => TrailingCommas::None,
+                _ => TrailingCommas::default(),
+            },
+            semicolons: match formatter_options.semicolons.as_deref() {
+                Some("always") => Semicolons::Always,
+                Some("as-needed") => Semicolons::AsNeeded,
+                _ => Semicolons::default(),
+            },
+            arrow_parentheses: match formatter_options.arrow_parentheses.as_deref() {
+                Some("always") => ArrowParentheses::Always,
+                Some("as-needed") => ArrowParentheses::AsNeeded,
+                _ => ArrowParentheses::default(),
+            },
+            bracket_spacing: BracketSpacing::from(formatter_options.bracket_spacing.unwrap_or(true)),
+            bracket_same_line: BracketSameLine::from(formatter_options.bracket_same_line.unwrap_or(false)),
+            attribute_position: match formatter_options.attribute_position.as_deref() {
+                Some("multiline") => AttributePosition::Multiline,
+                Some("auto") => AttributePosition::Auto,
+                _ => AttributePosition::default(),
+            },
+            expand: match formatter_options.expand.as_deref() {
+                Some("always") => Expand::Always,
+                Some("never") => Expand::Never,
+                Some("auto") => Expand::Auto,
+                _ => Expand::default(),
+            },
+            experimental_operator_position: match formatter_options.experimental_operator_position.as_deref() {
+                Some("start") => OperatorPosition::Start,
+                Some("end") => OperatorPosition::End,
+                _ => OperatorPosition::default(),
+            },
         }
     }
 }
