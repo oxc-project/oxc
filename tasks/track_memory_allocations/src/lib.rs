@@ -11,7 +11,8 @@ use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
-use oxc_tasks_common::{TestFiles, project_root};
+use oxc_semantic::SemanticBuilder;
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
@@ -73,16 +74,116 @@ fn test() {
     run().unwrap();
 }
 
+struct Stats<'a> {
+    file: &'a TestFile,
+    sys_allocs: usize,
+    sys_reallocs: usize,
+    arena_allocs: usize,
+    arena_reallocs: usize,
+    arena_bytes: usize,
+}
+
+fn record_stats<'a>(file: &'a TestFile, allocator: &Allocator) -> Stats<'a> {
+    let sys_allocs = NUM_ALLOC.load(SeqCst);
+    let sys_reallocs = NUM_REALLOC.load(SeqCst);
+    #[cfg(not(feature = "is_all_features"))]
+    let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
+    #[cfg(feature = "is_all_features")]
+    let (arena_allocs, arena_reallocs) = (0, 0);
+    let arena_bytes = allocator.used_bytes();
+
+    Stats { file, sys_allocs, sys_reallocs, arena_allocs, arena_reallocs, arena_bytes }
+}
+
+/// Computes the difference between two `Stats` instances, by subtracting the before values from the after values.
+/// This is useful for computing the allocations that occurred without needing to reset all the stats in between.
+fn diff_stats<'a>(before: &Stats<'a>, mut after: Stats<'a>) -> Stats<'a> {
+    after.sys_allocs -= before.sys_allocs;
+    after.sys_reallocs -= before.sys_reallocs;
+    after.arena_allocs -= before.arena_allocs;
+    after.arena_reallocs -= before.arena_reallocs;
+    after.arena_bytes -= before.arena_bytes;
+    after
+}
+
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    let snap_path = project_root().join("tasks/track_memory_allocations/allocs_parser.snap");
 
+    let mut allocator = Allocator::default();
+
+    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+
+    let mut parser_stats = Vec::new();
+    let mut semantic_stats = Vec::new();
+
+    // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
+    // in the number of allocations, because we ensure that the bump allocator has already requested all
+    // of the space it will need from the system allocator to parse the largest file in the set.
+    for file in files.files() {
+        let ret = Parser::new(&allocator, &file.source_text, file.source_type)
+            .with_options(options)
+            .parse();
+        SemanticBuilder::new()
+            .with_check_syntax_error(false)
+            .with_scope_tree_child_ids(true)
+            .with_cfg(true)
+            .with_build_jsdoc(true)
+            .build(&ret.program);
+    }
+
+    for file in files.files() {
+        allocator.reset();
+        reset_global_allocs();
+
+        let ret = Parser::new(&allocator, &file.source_text, file.source_type)
+            .with_options(options)
+            .parse();
+
+        let parser_stat = record_stats(file, &allocator);
+
+        // TODO: Get the stats out of the `Scoping` internal allocator somehow. For now, we just
+        // record the system allocations and leave the arena allocations as zero.
+        SemanticBuilder::new()
+            .with_check_syntax_error(false)
+            .with_scope_tree_child_ids(true)
+            .with_cfg(true)
+            .with_build_jsdoc(true)
+            .build(&ret.program);
+
+        let semantic_stat = diff_stats(&parser_stat, record_stats(file, &allocator));
+
+        parser_stats.push(parser_stat);
+        semantic_stats.push(semantic_stat);
+    }
+
+    // Print parser stats
+    let parser_out = print_stats_table(&parser_stats);
+    println!("{parser_out}");
+
+    let semantic_out = print_stats_table(&semantic_stats);
+    println!("{semantic_out}");
+
+    let parser_snap_path = project_root().join("tasks/track_memory_allocations/allocs_parser.snap");
+    let mut snapshot = File::create(parser_snap_path)?;
+    snapshot.write_all(parser_out.as_bytes())?;
+    snapshot.flush()?;
+
+    let semantic_snap_path =
+        project_root().join("tasks/track_memory_allocations/allocs_semantic.snap");
+    let mut snapshot = File::create(semantic_snap_path)?;
+    snapshot.write_all(semantic_out.as_bytes())?;
+    snapshot.flush()?;
+
+    Ok(())
+}
+
+fn print_stats_table(stats: &[Stats]) -> String {
     let mut out = String::new();
 
     let width = 14;
-    let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
+    let fixture_width = stats.iter().map(|s| s.file.file_name.len()).max().unwrap();
     writeln!(
         out,
         "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} ",
@@ -94,56 +195,25 @@ pub fn run() -> Result<(), io::Error> {
         "Arena reallocs",
         "Arena bytes",
         width = width,
-    )
-    .unwrap();
+    ).unwrap();
     out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
     out.push('\n');
 
-    let mut allocator = Allocator::default();
-
-    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
-
-    // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
-    // in the number of allocations, because we ensure that the bump allocator has already requested all
-    // of the space it will need from the system allocator to parse the largest file in the set.
-    for file in files.files() {
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
-    }
-
-    for file in files.files() {
-        allocator.reset();
-        reset_global_allocs();
-
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
-
-        let sys_allocs = NUM_ALLOC.load(SeqCst);
-        let sys_reallocs = NUM_REALLOC.load(SeqCst);
-        #[cfg(not(feature = "is_all_features"))]
-        let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
-        #[cfg(feature = "is_all_features")]
-        let (arena_allocs, arena_reallocs) = (0, 0);
-        let arena_bytes = allocator.used_bytes();
-
+    for stats in stats {
         let s = format!(
             // Using two newlines at the end makes it easier to diff
             "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$}\n\n",
-            file.file_name.as_str(),
-            format_size(file.source_text.len(), DECIMAL),
-            sys_allocs,
-            sys_reallocs,
-            arena_allocs,
-            arena_reallocs,
-            format_size(arena_bytes, DECIMAL.decimal_places(3)),
+            stats.file.file_name,
+            format_size(stats.file.source_text.len(), DECIMAL),
+            stats.sys_allocs,
+            stats.sys_reallocs,
+            stats.arena_allocs,
+            stats.arena_reallocs,
+            format_size(stats.arena_bytes, DECIMAL.decimal_places(3)),
             width = width
         );
         out.push_str(&s);
     }
 
-    println!("{out}");
-
-    let mut snapshot = File::create(snap_path)?;
-    snapshot.write_all(out.as_bytes())?;
-    snapshot.flush()?;
-
-    Ok(())
+    out
 }
