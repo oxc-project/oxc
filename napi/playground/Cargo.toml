@@ -23,7 +23,6 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["ast_visit", "codegen", "minifier", "semantic", "serialize", "transformer", "isolated_declarations", "regular_expression"] }
-oxc_formatter = { workspace = true }
 oxc_index = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }

@@ -167,39 +167,6 @@ export interface OxcEs2022Options {
   classProperties?: OxcClassPropertiesOptions
 }
 
-export interface OxcFormatterOptions {
-  /** The indent style ('tab' or 'space') */
-  indentStyle?: string
-  /** The indent width */
-  indentWidth?: number
-  /** The type of line ending ('lf', 'crlf', 'cr') */
-  lineEnding?: string
-  /** What's the max width of a line */
-  lineWidth?: number
-  /** The style for quotes ('double' or 'single') */
-  quoteStyle?: string
-  /** The style for JSX quotes ('double' or 'single') */
-  jsxQuoteStyle?: string
-  /** When properties in objects are quoted ('as-needed' or 'preserve') */
-  quoteProperties?: string
-  /** Print trailing commas wherever possible ('all', 'es5', 'none') */
-  trailingCommas?: string
-  /** Whether the formatter prints semicolons ('always' or 'as-needed') */
-  semicolons?: string
-  /** Whether to add non-necessary parentheses to arrow functions ('always' or 'as-needed') */
-  arrowParentheses?: string
-  /** Whether to insert spaces around brackets in object literals */
-  bracketSpacing?: boolean
-  /** Whether to hug the closing bracket of multiline HTML/JSX tags to the end of the last line */
-  bracketSameLine?: boolean
-  /** Attribute position style ('auto' or 'multiline') */
-  attributePosition?: string
-  /** Whether to expand object and array literals to multiple lines ('auto', 'always', 'never') */
-  expand?: string
-  /** Controls the position of operators in binary expressions ('start' or 'end') */
-  experimentalOperatorPosition?: string
-}
-
 export interface OxcJsxOptions {
   /** The JSX runtime to use ('automatic' or 'classic') */
   runtime?: string
@@ -244,7 +211,6 @@ export interface OxcOptions {
   transformer?: OxcTransformerOptions
   codegen?: OxcCodegenOptions
   minifier?: OxcMinifierOptions
-  formatter?: OxcFormatterOptions
   controlFlow?: OxcControlFlowOptions
 }
 
