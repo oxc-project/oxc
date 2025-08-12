@@ -1,5 +1,3 @@
-#![allow(clippy::unused_self)]
-
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod inline;
@@ -175,10 +173,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         let ctx = &mut Ctx::new(ctx);
         match expr {
             Expression::TemplateLiteral(t) => {
-                self.inline_template_literal(t, ctx);
+                Self::inline_template_literal(t, ctx);
                 Self::try_fold_template_literal(expr, ctx);
             }
-            Expression::ObjectExpression(e) => self.fold_object_exp(e, ctx),
+            Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
             Expression::BinaryExpression(e) => {
                 Self::swap_binary_expressions(e);
                 Self::fold_binary_expr(expr, ctx);
@@ -430,8 +428,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_expression(&mut self, e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
         match e {
-            Expression::TemplateLiteral(t) => self.inner.inline_template_literal(t, ctx),
-            Expression::ObjectExpression(e) => self.inner.fold_object_exp(e, ctx),
+            Expression::TemplateLiteral(t) => PeepholeOptimizations::inline_template_literal(t, ctx),
+            Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_exp(e, ctx),
             Expression::BinaryExpression(_) => {
                 PeepholeOptimizations::fold_binary_expr(e, ctx);
                 PeepholeOptimizations::fold_binary_typeof_comparison(e, ctx);
