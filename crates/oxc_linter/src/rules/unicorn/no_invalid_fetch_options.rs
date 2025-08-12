@@ -86,9 +86,6 @@ impl Rule for NoInvalidFetchOptions {
     }
 }
 
-// set to method_name to "UNKNOWN" if we can't infer the method name
-const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
-
 fn is_invalid_fetch_options<'a>(
     obj_expr: &'a Box<'_, ObjectExpression<'_>>,
     ctx: &'a LintContext<'_>,
@@ -159,15 +156,19 @@ fn is_invalid_fetch_options<'a>(
                     method_name = value_ident.value.cow_to_ascii_uppercase();
                 }
                 Expression::TemplateLiteral(template_lit) => {
-                    method_name = extract_method_name_from_template_literal(template_lit);
+                    if let Some(extracted_method) =
+                        extract_method_name_from_template_literal(template_lit)
+                    {
+                        method_name = extracted_method;
+                    } else {
+                        return None;
+                    }
                 }
                 Expression::Identifier(value_ident) => {
                     let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
-                    let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
-                        continue;
-                    };
+                    let symbol_id = symbols.get_reference(reference_id).symbol_id()?;
 
                     let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
 
@@ -177,11 +178,16 @@ fn is_invalid_fetch_options<'a>(
                                 method_name = str_lit.value.cow_to_ascii_uppercase();
                             }
                             Some(Expression::TemplateLiteral(template_lit)) => {
-                                method_name =
-                                    extract_method_name_from_template_literal(template_lit);
+                                if let Some(extracted_method) =
+                                    extract_method_name_from_template_literal(template_lit)
+                                {
+                                    method_name = extracted_method;
+                                } else {
+                                    return None;
+                                }
                             }
                             _ => {
-                                method_name = UNKNOWN_METHOD_NAME;
+                                return None;
                             }
                         },
                         AstKind::FormalParameter(FormalParameter {
@@ -203,7 +209,7 @@ fn is_invalid_fetch_options<'a>(
                                         }
                                         false
                                     }) {
-                                        method_name = UNKNOWN_METHOD_NAME;
+                                        return None;
                                     }
                                 }
                                 TSType::TSLiteralType(literal_type) => {
@@ -213,7 +219,7 @@ fn is_invalid_fetch_options<'a>(
                                     }
                                 }
                                 _ => {
-                                    method_name = UNKNOWN_METHOD_NAME;
+                                    return None;
                                 }
                             }
                         }
@@ -234,14 +240,14 @@ fn is_invalid_fetch_options<'a>(
 
 fn extract_method_name_from_template_literal<'a>(
     template_lit: &'a TemplateLiteral<'a>,
-) -> Cow<'a, str> {
+) -> Option<Cow<'a, str>> {
     if let Some(template_element_value) = template_lit.quasis.first() {
         // only one template element
         if template_element_value.tail {
-            return template_element_value.value.raw.cow_to_ascii_uppercase();
+            return Some(template_element_value.value.raw.cow_to_ascii_uppercase());
         }
     }
-    UNKNOWN_METHOD_NAME
+    None
 }
 
 #[test]
@@ -293,6 +299,9 @@ fn test() {
          method: Method.Post,
          body: "",
         });"#,
+        // Non-static method identifier should be ignored
+        r"const response = await fetch('', { method, body });",
+        r"const response = await fetch('', { method, headers, body });",
     ];
 
     let fail = vec![
