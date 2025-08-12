@@ -37,6 +37,22 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::float_cmp)]
+    /// Attempts to fold unary expressions by evaluating them at compile time.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// -5
+    /// +3.14
+    /// !"hello"
+    /// !0
+    ///
+    /// // After:
+    /// -5    // (unchanged, already literal)
+    /// 3.14  // (unchanged, already literal)
+    /// false // (string is truthy)
+    /// true  // (0 is falsy)
+    /// ```
     fn try_fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };
         match e.operator {
@@ -57,6 +73,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold static member expressions when accessing properties of literals.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// "hello".length
+    /// [1, 2, 3].length
+    ///
+    /// // After:
+    /// 5
+    /// 3
+    /// ```
     fn try_fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -69,6 +97,20 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold computed member expressions when both object and property are known.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// "hello"[0]
+    /// [1, 2, 3][1]
+    /// {a: 5}["a"]
+    ///
+    /// // After:
+    /// "h"
+    /// 2
+    /// 5
+    /// ```
     fn try_fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -81,6 +123,20 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold logical expressions (&&, ||, ??) when operands are known.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// true && "value"
+    /// false || "default"
+    /// null ?? "fallback"
+    ///
+    /// // After:
+    /// "value"
+    /// "default"
+    /// "fallback"
+    /// ```
     fn try_fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::LogicalExpression(e) = expr else { return };
         if let Some(changed) = match e.operator {
@@ -92,6 +148,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold optional chaining expressions when the left operand is known to be null or undefined.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// null?.property
+    /// undefined?.method()
+    ///
+    /// // After:
+    /// undefined
+    /// undefined
+    /// ```
     fn try_fold_optional_chain(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::ChainExpression(e) = expr else { return };
         let left_expr = match &e.expression {
@@ -119,6 +187,23 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Attempts to fold logical AND/OR expressions when the left operand can be evaluated.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// true && someExpression
+    /// false || defaultValue
+    /// 0 && sideEffect()
+    /// 1 || backup
+    ///
+    /// // After:
+    /// someExpression
+    /// defaultValue
+    /// 0
+    /// 1
+    /// ```
+    ///
     /// Try to fold a AND / OR node.
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
@@ -195,6 +280,23 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    /// Attempts to fold nullish coalescing expressions when the left operand is known.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// null ?? "default"
+    /// undefined ?? "fallback"
+    /// 0 ?? "zero is falsy but not nullish"
+    /// "" ?? "empty string is falsy but not nullish"
+    ///
+    /// // After:
+    /// "default"
+    /// "fallback"
+    /// 0
+    /// ""
+    /// ```
+    ///
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,

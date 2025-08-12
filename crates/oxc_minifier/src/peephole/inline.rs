@@ -7,6 +7,18 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Initializes the constant value for a symbol when a variable is declared.
+    /// This is used to track constant values that can later be inlined.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before: Symbol value tracked for inlining
+    /// const x = 5;
+    /// let y = "hello";
+    ///
+    /// // After: Values will be available for inlining
+    /// // (no visible change at this stage, used for tracking)
+    /// ```
     pub fn init_symbol_value(&self, decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
@@ -19,6 +31,21 @@ impl<'a> PeepholeOptimizations {
         ctx.init_value(symbol_id, value);
     }
 
+    /// Inlines constant identifier references with their literal values.
+    /// This optimization replaces variable references with their constant values
+    /// when it's beneficial for code size reduction.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// const x = 5;
+    /// const name = "test";
+    /// const flag = true;
+    /// console.log(x, name, flag);
+    ///
+    /// // After:
+    /// console.log(5, "test", true);
+    /// ```
     pub fn inline_identifier_reference(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = expr else { return };
         let Some(reference_id) = ident.reference_id.get() else { return };

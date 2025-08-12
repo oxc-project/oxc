@@ -43,6 +43,20 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Reorders logical expressions to take advantage of left-associative properties.
+    /// This optimization helps reduce parentheses and can enable further optimizations.
+    ///
+    /// JavaScript example:
+    /// ```javascript
+    /// // Before:
+    /// a || (b || c)
+    /// (x, y) && z
+    ///
+    /// // After:
+    /// (a || b) || c    // Left-associative reordering
+    /// x, (y && z)      // Sequence expression optimization
+    /// ```
+    ///
     // The goal of this function is to "rotate" the AST if it's possible to use the
     // left-associative property of the operator to avoid unnecessary parentheses.
     //
