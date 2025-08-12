@@ -9,7 +9,7 @@ pub struct OxcOptions {
     pub transformer: Option<OxcTransformerOptions>,
     pub codegen: Option<OxcCodegenOptions>,
     pub minifier: Option<OxcMinifierOptions>,
-
+    pub formatter: Option<OxcFormatterOptions>,
     pub control_flow: Option<OxcControlFlowOptions>,
 }
 
@@ -184,6 +184,41 @@ pub struct OxcCodegenCommentOptions {
     pub annotation: Option<bool>,
     /// Print legal comments ('inline', 'eof', 'none', 'external')
     pub legal: Option<String>,
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct OxcFormatterOptions {
+    /// The indent style ('tab' or 'space')
+    pub indent_style: Option<String>,
+    /// The indent width
+    pub indent_width: Option<u8>,
+    /// The type of line ending ('lf', 'crlf', 'cr')
+    pub line_ending: Option<String>,
+    /// What's the max width of a line
+    pub line_width: Option<u16>,
+    /// The style for quotes ('double' or 'single')
+    pub quote_style: Option<String>,
+    /// The style for JSX quotes ('double' or 'single')
+    pub jsx_quote_style: Option<String>,
+    /// When properties in objects are quoted ('as-needed' or 'preserve')
+    pub quote_properties: Option<String>,
+    /// Print trailing commas wherever possible ('all', 'es5', 'none')
+    pub trailing_commas: Option<String>,
+    /// Whether the formatter prints semicolons ('always' or 'as-needed')
+    pub semicolons: Option<String>,
+    /// Whether to add non-necessary parentheses to arrow functions ('always' or 'as-needed')
+    pub arrow_parentheses: Option<String>,
+    /// Whether to insert spaces around brackets in object literals
+    pub bracket_spacing: Option<bool>,
+    /// Whether to hug the closing bracket of multiline HTML/JSX tags to the end of the last line
+    pub bracket_same_line: Option<bool>,
+    /// Attribute position style ('auto' or 'multiline')
+    pub attribute_position: Option<String>,
+    /// Whether to expand object and array literals to multiple lines ('auto', 'always', 'never')
+    pub expand: Option<String>,
+    /// Controls the position of operators in binary expressions ('start' or 'end')
+    pub experimental_operator_position: Option<String>,
 }
 
 #[napi(object)]
