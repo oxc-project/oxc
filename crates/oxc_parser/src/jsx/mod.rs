@@ -225,7 +225,7 @@ impl<'a> ParserImpl<'a> {
         let mut children = self.ast.vec();
         while self.fatal_error.is_none() {
             if let Some(child) = self.parse_jsx_child() {
-                children.push(child);
+                children.push(child, self.ast.allocator.bump());
             } else {
                 break;
             }
@@ -342,7 +342,7 @@ impl<'a> ParserImpl<'a> {
                 }
                 _ => JSXAttributeItem::Attribute(self.parse_jsx_attribute()),
             };
-            attributes.push(attribute);
+            attributes.push(attribute, self.ast.allocator.bump());
         }
         attributes
     }

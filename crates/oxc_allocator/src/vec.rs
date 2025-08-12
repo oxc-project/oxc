@@ -101,13 +101,13 @@ impl<'alloc, T> Vec<'alloc, T> {
     ///
     /// // These are all done without reallocating...
     /// for i in 0..10 {
-    ///     vec.push(i);
+    ///     vec.push(i, arena.bump());
     /// }
     /// assert_eq!(vec.len(), 10);
     /// assert_eq!(vec.capacity(), 10);
     ///
     /// // ...but this may make the vector reallocate
-    /// vec.push(11);
+    /// vec.push(11, arena.bump());
     /// assert_eq!(vec.len(), 11);
     /// assert!(vec.capacity() >= 11);
     ///
@@ -135,7 +135,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
         let mut vec = InnerVec::with_capacity_in(capacity, allocator.bump());
-        vec.extend(iter);
+        vec.extend_desugared(iter, allocator.bump());
         Self(vec)
     }
 
@@ -289,7 +289,7 @@ mod test {
     fn vec_debug() {
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
-        v.push("x");
+        v.push("x", &allocator.bump());
         let v = format!("{v:?}");
         assert_eq!(v, "Vec([\"x\"])");
     }
@@ -298,7 +298,7 @@ mod test {
     fn vec_serialize() {
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
-        v.push("x");
+        v.push("x", &allocator.bump());
         let s = serde_json::to_string(&v).unwrap();
         assert_eq!(s, r#"["x"]"#);
     }
@@ -309,7 +309,7 @@ mod test {
 
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
-        v.push("x");
+        v.push("x", &allocator.bump());
 
         let mut serializer = CompactTSSerializer::new(false);
         v.serialize(&mut serializer);

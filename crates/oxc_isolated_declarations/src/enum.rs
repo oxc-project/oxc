@@ -77,7 +77,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }),
             );
 
-            members.push(member);
+            members.push(member, self.ast.allocator.bump());
         }
 
         self.ast.declaration_ts_enum(

@@ -325,7 +325,7 @@ impl<'a> ParserImpl<'a> {
             }
             match f(self) {
                 Some(e) => {
-                    list.push(e);
+                    list.push(e, self.ast.allocator.bump());
                 }
                 None => {
                     break;
@@ -349,7 +349,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(close) || self.has_fatal_error() {
             return (list, None);
         }
-        list.push(f(self));
+        list.push(f(self), self.ast.allocator.bump());
         loop {
             if self.at(close) || self.has_fatal_error() {
                 return (list, None);
@@ -359,7 +359,7 @@ impl<'a> ParserImpl<'a> {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));
             }
-            list.push(f(self));
+            list.push(f(self), self.ast.allocator.bump());
         }
     }
 
@@ -416,7 +416,7 @@ impl<'a> ParserImpl<'a> {
                 let r = self.parse_rest_element();
                 rest.replace(r);
             } else {
-                list.push(parse_element(self));
+                list.push(parse_element(self), self.ast.allocator.bump());
             }
         }
 

@@ -300,7 +300,7 @@ impl<'a> ParserImpl<'a> {
             let modifier = self.modifier(kind, self.end_span(span));
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
-            modifiers.push(modifier);
+            modifiers.push(modifier, self.ast.allocator.bump());
         }
         Modifiers::new(Some(modifiers), flags)
     }
@@ -359,7 +359,9 @@ impl<'a> ParserImpl<'a> {
             }
             self.check_for_duplicate_modifiers(modifier_flags, &modifier);
             modifier_flags.set(modifier.kind.into(), true);
-            modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
+            modifiers
+                .get_or_insert_with(|| self.ast.vec())
+                .push(modifier, self.ast.allocator.bump());
         }
 
         Modifiers::new(modifiers, modifier_flags)

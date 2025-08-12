@@ -591,7 +591,7 @@ impl Allocator {
     /// allocator.alloc(123u64);
     ///
     /// // `vec` has to grow beyond it's initial capacity
-    /// vec.extend([1, 2, 3, 4]);
+    /// vec.extend_desugared(([1, 2, 3, 4]).into_iter(), allocator.bump());
     ///
     /// // `vec` takes up 32 bytes, and `123u64` takes up 8 bytes = 40 total.
     /// // But there's an additional 16 bytes consumed for `vec`'s original capacity of 2,
@@ -621,7 +621,7 @@ impl Allocator {
     // `#[inline(always)]` because it's a no-op
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn bump(&self) -> &Bump {
+    pub fn bump(&self) -> &Bump {
         &self.bump
     }
 

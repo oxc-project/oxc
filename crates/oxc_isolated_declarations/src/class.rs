@@ -443,7 +443,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     let params = match method.kind {
                         MethodDefinitionKind::Set => {
                             if method.accessibility.is_some_and(TSAccessibility::is_private) {
-                                elements.push(self.transform_private_modifier_method(method));
+                                elements.push(
+                                    self.transform_private_modifier_method(method),
+                                    self.ast.allocator.bump(),
+                                );
                                 continue;
                             }
                             let params = &method.value.params;
@@ -481,6 +484,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             elements.splice(
                                 0..0,
                                 self.transform_constructor_parameter_properties(function, &params),
+                                self.ast.allocator.bump(),
                             );
 
                             if is_function_overloads && function.body.is_some() {
@@ -489,7 +493,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
 
                             if is_private {
-                                elements.push(self.transform_private_modifier_method(method));
+                                elements.push(
+                                    self.transform_private_modifier_method(method),
+                                    self.ast.allocator.bump(),
+                                );
                                 continue;
                             }
 
@@ -499,7 +506,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             let is_private =
                                 method.accessibility.is_some_and(TSAccessibility::is_private);
                             if is_private {
-                                elements.push(self.transform_private_modifier_method(method));
+                                elements.push(
+                                    self.transform_private_modifier_method(method),
+                                    self.ast.allocator.bump(),
+                                );
                                 continue;
                             }
                             self.transform_formal_parameters(&function.params, is_private)
@@ -541,7 +551,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     };
                     let new_element =
                         self.transform_class_method_definition(method, params, return_type);
-                    elements.push(new_element);
+                    elements.push(new_element, self.ast.allocator.bump());
                 }
                 ClassElement::PropertyDefinition(property) => {
                     if self.has_internal_annotation(property.span) {
@@ -555,7 +565,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     if property.key.is_private_identifier() {
                         has_private_key = true;
                     } else {
-                        elements.push(self.transform_class_property_definition(property));
+                        elements.push(
+                            self.transform_class_property_definition(property),
+                            self.ast.allocator.bump(),
+                        );
                     }
                 }
                 ClassElement::AccessorProperty(property) => {
@@ -591,15 +604,18 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.definite,
                         property.accessibility,
                     );
-                    elements.push(new_element);
+                    elements.push(new_element, self.ast.allocator.bump());
                 }
-                ClassElement::TSIndexSignature(signature) => elements.push({
-                    if self.has_internal_annotation(signature.span) {
-                        continue;
-                    }
+                ClassElement::TSIndexSignature(signature) => elements.push(
+                    {
+                        if self.has_internal_annotation(signature.span) {
+                            continue;
+                        }
 
-                    element.clone_in(self.ast.allocator)
-                }),
+                        element.clone_in(self.ast.allocator)
+                    },
+                    self.ast.allocator.bump(),
+                ),
             }
         }
 
@@ -615,7 +631,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 false, false, None,
             );
 
-            elements.insert(0, element);
+            elements.insert(0, element, self.ast.allocator.bump());
         }
 
         let body = self.ast.class_body(decl.body.span, elements);

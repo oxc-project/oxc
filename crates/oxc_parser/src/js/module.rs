@@ -224,18 +224,22 @@ impl<'a> ParserImpl<'a> {
         };
 
         if let Some(default_specifier) = default_specifier {
-            specifiers.push(self.ast.import_declaration_specifier_import_default_specifier(
-                default_specifier.span,
-                default_specifier,
-            ));
+            specifiers.push(
+                self.ast.import_declaration_specifier_import_default_specifier(
+                    default_specifier.span,
+                    default_specifier,
+                ),
+                self.ast.allocator.bump(),
+            );
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
-                    Kind::Star => specifiers.push(self.parse_import_namespace_specifier()),
+                    Kind::Star => specifiers
+                        .push(self.parse_import_namespace_specifier(), self.ast.allocator.bump()),
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
                         let mut import_specifiers = self.parse_import_specifiers(import_kind);
-                        specifiers.append(&mut import_specifiers);
+                        specifiers.append(&mut import_specifiers, self.ast.allocator.bump());
                     }
                     _ => return self.unexpected(),
                 }
@@ -253,11 +257,11 @@ impl<'a> ParserImpl<'a> {
             }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
-            specifiers.push(self.parse_import_namespace_specifier());
+            specifiers.push(self.parse_import_namespace_specifier(), self.ast.allocator.bump());
         } else if self.at(Kind::LCurly) {
             // import { export1 , export2 as alias2 , [...] } from "module-name";
             let mut import_specifiers = self.parse_import_specifiers(import_kind);
-            specifiers.append(&mut import_specifiers);
+            specifiers.append(&mut import_specifiers, self.ast.allocator.bump());
         }
 
         self.expect(Kind::From);
@@ -400,7 +404,10 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::decorators_in_export_and_class(decorator.span));
                     }
                 }
-                decorators.extend(after_export_decorators);
+                decorators.extend_desugared(
+                    after_export_decorators.into_iter(),
+                    self.ast.allocator.bump(),
+                );
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
@@ -618,7 +625,8 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::decorators_in_export_and_class(decorator.span));
                 }
             }
-            decorators.extend(after_export_decorators);
+            decorators
+                .extend_desugared(after_export_decorators.into_iter(), self.ast.allocator.bump());
         }
 
         let function_span = self.start_span();

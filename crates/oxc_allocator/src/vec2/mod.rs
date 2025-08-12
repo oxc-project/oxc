@@ -515,7 +515,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// ```
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, alloc: &'a A) -> Vec<'a, T, A> {
         let mut v = Vec::new_in(alloc);
-        v.extend(iter);
+        v.extend_desugared(iter.into_iter(), alloc);
         v
     }
 
@@ -720,26 +720,6 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         self.buf.set_len(new_len);
     }
 
-    /// Returns a shared reference to the allocator backing this `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// // uses the same allocator as the provided `Vec`
-    /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
-    ///     for string in ["foo", "bar", "baz"] {
-    ///         vec.push(vec.bump().alloc_str(string));
-    ///     }
-    /// }
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn bump(&self) -> &'a A {
-        self.buf.bump()
-    }
-
     /// Reserves capacity for at least `additional` more elements to be inserted
     /// in the given `Vec<'a, T>`. The collection may reserve more space to avoid
     /// frequent reallocations. After calling `reserve`, capacity will be
@@ -760,8 +740,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.reserve(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn reserve(&mut self, additional: usize) {
-        self.buf.reserve(self.len_u32(), additional);
+    pub fn reserve(&mut self, additional: usize, alloc: &'a A) {
+        self.buf.reserve(self.len_u32(), additional, alloc);
     }
 
     /// Reserves the minimum capacity for exactly `additional` more elements to
@@ -787,8 +767,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.reserve_exact(10);
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn reserve_exact(&mut self, additional: usize) {
-        self.buf.reserve_exact(self.len_u32(), additional);
+    pub fn reserve_exact(&mut self, additional: usize, alloc: &'a A) {
+        self.buf.reserve_exact(self.len_u32(), additional, alloc);
     }
 
     /// Attempts to reserve capacity for at least `additional` more elements to be inserted
@@ -811,8 +791,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.try_reserve(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve(&mut self, additional: usize) -> Result<(), AllocError> {
-        self.buf.try_reserve(self.len_u32(), additional)
+    pub fn try_reserve(&mut self, additional: usize, alloc: &'a A) -> Result<(), AllocError> {
+        self.buf.try_reserve(self.len_u32(), additional, alloc)
     }
 
     /// Attempts to reserve the minimum capacity for exactly `additional` more elements to
@@ -838,8 +818,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.try_reserve_exact(10).unwrap();
     /// assert!(vec.capacity() >= 11);
     /// ```
-    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), AllocError> {
-        self.buf.try_reserve_exact(self.len_u32(), additional)
+    pub fn try_reserve_exact(&mut self, additional: usize, alloc: &'a A) -> Result<(), AllocError> {
+        self.buf.try_reserve_exact(self.len_u32(), additional, alloc)
     }
 
     /// Shrinks the capacity of the vector as much as possible.
@@ -860,9 +840,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.shrink_to_fit();
     /// assert!(vec.capacity() >= 3);
     /// ```
-    pub fn shrink_to_fit(&mut self) {
+    pub fn shrink_to_fit(&mut self, alloc: &'a A) {
         if self.len_u32() != self.capacity_u32() {
-            self.buf.shrink_to_fit(self.len_u32());
+            self.buf.shrink_to_fit(self.len_u32(), alloc);
         }
     }
 
@@ -1159,13 +1139,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// vec.insert(4, 5);
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
     /// ```
-    pub fn insert(&mut self, index: usize, element: T) {
+    pub fn insert(&mut self, index: usize, element: T, alloc: &'a A) {
         let len = self.len_usize();
         assert!(index <= len);
 
         // space for the new element
         if self.len_u32() == self.capacity_u32() {
-            self.buf.grow_one();
+            self.buf.grow_one(alloc);
         }
 
         unsafe {
@@ -1493,11 +1473,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec, [1, 2, 3]);
     /// ```
     #[inline]
-    pub fn push(&mut self, value: T) {
+    pub fn push(&mut self, value: T, alloc: &'a A) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
         if self.len_u32() == self.capacity_u32() {
-            self.buf.grow_one();
+            self.buf.grow_one(alloc);
         }
         unsafe {
             let end = self.buf.ptr().add(self.len_usize());
@@ -1555,10 +1535,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec2, []);
     /// ```
     #[inline]
-    pub fn append(&mut self, other: &mut Self) {
+    pub fn append(&mut self, other: &mut Self, alloc: &'a A) {
         unsafe {
             // SAFETY: The elements in `other` are made inaccessible by `other.set_len(0)` straight after
-            self.append_elements(other.as_slice() as _);
+            self.append_elements(other.as_slice() as _, alloc);
             other.set_len(0);
         }
     }
@@ -1571,12 +1551,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Caller must ensure either that `T` is `Copy`, or the elements of `other` are not accessible
     /// except by the pointer `other`, and that they are not read after this call.
     #[inline]
-    unsafe fn append_elements(&mut self, other: *const [T]) {
+    unsafe fn append_elements(&mut self, other: *const [T], alloc: &'a A) {
         // See https://github.com/oxc-project/oxc/pull/11092 for why this `#[allow]` attribute.
         // TODO: Remove this once we bump MSRV and it's no longer required.
         #[allow(clippy::needless_borrow, clippy::allow_attributes)]
         let count = (&*other).len();
-        self.reserve(count);
+        self.reserve(count, alloc);
         let len = self.len_usize();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
         // `count` cannot be `> u32::MAX`, so `count as u32` cannot truncate `count`.
@@ -1621,7 +1601,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// v.drain(..);
     /// assert_eq!(v, &[]);
     /// ```
-    pub fn drain<R>(&mut self, range: R) -> Drain<'_, '_, T, A>
+    pub fn drain<R>(&mut self, range: R, alloc: &'a A) -> Drain<'_, '_, T, A>
     where
         R: RangeBounds<usize>,
     {
@@ -1660,6 +1640,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
                 tail_len: len - end,
                 iter: range_slice.iter(),
                 vec: NonNull::from(self),
+                alloc,
             }
         }
     }
@@ -1731,11 +1712,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// ```
     #[inline]
     #[must_use]
-    pub fn split_off(&mut self, at: usize) -> Self {
+    pub fn split_off(&mut self, at: usize, alloc: &'a A) -> Self {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
         let other_len = self.len_usize() - at;
-        let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
+        let mut other = Vec::with_capacity_in(other_len, alloc);
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -1812,11 +1793,11 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     /// [`Clone`]: https://doc.rust-lang.org/std/clone/trait.Clone.html
     /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
     /// [`resize_with`]: #method.resize_with
-    pub fn resize(&mut self, new_len: usize, value: T) {
+    pub fn resize(&mut self, new_len: usize, value: T, alloc: &'a A) {
         let len = self.len_usize();
 
         if new_len > len {
-            self.extend_with(new_len - len, ExtendElement(value))
+            self.extend_with(new_len - len, ExtendElement(value), alloc)
         } else {
             self.truncate(new_len);
         }
@@ -1845,8 +1826,8 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     /// ```
     ///
     /// [`extend`]: #method.extend
-    pub fn extend_from_slice(&mut self, other: &[T]) {
-        self.extend(other.iter().cloned())
+    pub fn extend_from_slice(&mut self, other: &[T], alloc: &'a A) {
+        self.extend_desugared(other.iter().cloned().into_iter(), alloc)
     }
 }
 
@@ -1911,9 +1892,9 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// [`extend_from_slice`]: #method.extend_from_slice
     /// [`extend_from_slices_copy`]: #method.extend_from_slices_copy
-    pub fn extend_from_slice_copy(&mut self, other: &[T]) {
+    pub fn extend_from_slice_copy(&mut self, other: &[T], alloc: &'a A) {
         // Reserve space in the Vec for the values to be added
-        self.reserve(other.len());
+        self.reserve(other.len(), alloc);
 
         // Copy values into the space that was just reserved
         // SAFETY:
@@ -1959,7 +1940,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// ```
     ///
     /// [`extend_from_slice_copy`]: #method.extend_from_slice_copy
-    pub fn extend_from_slices_copy(&mut self, slices: &[&[T]]) {
+    pub fn extend_from_slices_copy(&mut self, slices: &[&[T]], alloc: &'a A) {
         // Reserve the total amount we need to append the aggregated contents of all slices in `slices`.
         // We have to use checked addition here to guard against overflow if the total length would
         // exceed `usize::MAX`. Otherwise, we could reserve too little, and write out of bounds.
@@ -1973,7 +1954,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
             total_len.checked_add(len).unwrap()
         });
 
-        self.reserve(total_len);
+        self.reserve(total_len, alloc);
 
         // SAFETY:
         // * `dst` is valid for writes of `total_len` items as `self.reserve(total_len)` above
@@ -2007,8 +1988,8 @@ impl<T: Clone> ExtendWith<T> for ExtendElement<T> {
 
 impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Extend the vector by `n` values, using the given generator.
-    fn extend_with<E: ExtendWith<T>>(&mut self, n: usize, mut value: E) {
-        self.reserve(n);
+    fn extend_with<E: ExtendWith<T>>(&mut self, n: usize, mut value: E, alloc: &'a A) {
+        self.reserve(n, alloc);
 
         // std library version of this method updates `len` after writing each element,
         // because `value.next()` or `value.last()` could panic.
@@ -2066,26 +2047,6 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
 ////////////////////////////////////////////////////////////////////////////////
 // Common trait implementations for Vec
 ////////////////////////////////////////////////////////////////////////////////
-
-impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
-    #[cfg(not(test))]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-
-    // HACK(japaric): with cfg(test) the inherent `[T]::to_vec` method, which is
-    // required for this method definition, is not available. Instead use the
-    // `slice::to_vec`  function which is only available with cfg(test)
-    // NB see the slice::hack module in slice.rs for more information
-    #[cfg(test)]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::new_in(self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-}
 
 impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     #[inline]
@@ -2192,19 +2153,19 @@ impl<'a, T, A: Alloc> IntoIterator for &'a mut Vec<'_, T, A> {
     }
 }
 
-impl<'a, T: 'a, A: Alloc> Extend<T> for Vec<'a, T, A> {
-    #[inline]
-    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        let iterator = iter.into_iter();
-        self.extend_desugared(iterator);
-    }
-}
+// impl<'a, T: 'a, A: Alloc> Extend<T> for Vec<'a, T, A> {
+//     #[inline]
+//     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+//         let iterator = iter.into_iter();
+//         self.extend_desugared(iterator);
+//     }
+// }
 
 impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     // leaf method to which various SpecFrom/SpecExtend implementations delegate when
     // they have no further optimizations to apply
     #[track_caller]
-    fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
+    pub fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I, alloc: &'a A) {
         // This is the case for a general iterator.
         //
         // This function should be the moral equivalent of:
@@ -2221,12 +2182,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
                 // which increases the execution instructions and hits the performance.
                 #[cold]
                 #[inline(never)]
-                fn reserve_slow<T, A: Alloc>(v: &mut Vec<T, A>, iterator: &impl Iterator) {
+                fn reserve_slow<'a, T, A: Alloc>(
+                    v: &mut Vec<'a, T, A>,
+                    iterator: &impl Iterator,
+                    alloc: &'a A,
+                ) {
                     let (lower, _) = iterator.size_hint();
-                    v.reserve(lower.saturating_add(1));
+                    v.reserve(lower.saturating_add(1), alloc);
                 }
 
-                reserve_slow(self, &iterator);
+                reserve_slow(self, &iterator, alloc);
             }
             unsafe {
                 ptr::write(self.as_mut_ptr().add(len), element);
@@ -2280,12 +2245,17 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(u, &[1, 2]);
     /// ```
     #[inline]
-    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, '_, I::IntoIter, A>
+    pub fn splice<R, I>(
+        &mut self,
+        range: R,
+        replace_with: I,
+        alloc: &'a A,
+    ) -> Splice<'_, '_, I::IntoIter, A>
     where
         R: RangeBounds<usize>,
         I: IntoIterator<Item = T>,
     {
-        Splice { drain: self.drain(range), replace_with: replace_with.into_iter() }
+        Splice { drain: self.drain(range, alloc), replace_with: replace_with.into_iter() }
     }
 }
 
@@ -2295,11 +2265,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 /// append the entire slice at once.
 ///
 /// [`copy_from_slice`]: https://doc.rust-lang.org/std/primitive.slice.html#method.copy_from_slice
-impl<'a, T: 'a + Copy, A: Alloc> Extend<&'a T> for Vec<'_, T, A> {
-    fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
-        self.extend(iter.into_iter().cloned())
-    }
-}
+// impl<'a, T: 'a + Copy, A: Alloc> Extend<&'a T> for Vec<'_, T, A> {
+//     fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+//         self.extend_(iter.into_iter().cloned())
+//     }
+// }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Comparison
@@ -2588,6 +2558,7 @@ pub struct Drain<'a, 's, T: 'a + 's, A: Alloc> {
     /// Current remaining range to remove
     iter: slice::Iter<'s, T>,
     vec: NonNull<Vec<'a, T, A>>,
+    alloc: &'a A,
 }
 
 impl<'a, 's, T: 'a + 's + fmt::Debug, A: Alloc> fmt::Debug for Drain<'a, 's, T, A> {
@@ -2682,7 +2653,10 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
         unsafe {
             if self.drain.tail_len == 0 {
-                self.drain.vec.as_mut().extend(self.replace_with.by_ref());
+                self.drain
+                    .vec
+                    .as_mut()
+                    .extend_desugared(self.replace_with.by_ref().into_iter(), self.drain.alloc);
                 return;
             }
 
@@ -2703,8 +2677,8 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.bump());
-            collected.extend(self.replace_with.by_ref());
+            let mut collected = Vec::new_in(self.drain.alloc);
+            collected.extend_desugared(self.replace_with.by_ref().into_iter(), self.drain.alloc);
             let mut collected = collected.into_iter();
             // Now we have an exact count.
             if collected.len() > 0 {
@@ -2751,7 +2725,7 @@ impl<T, A: Alloc> Drain<'_, '_, T, A> {
         // from `self.len() - self.tail_start`, and `self.len()` is `u32`.
         #[expect(clippy::cast_possible_truncation)]
         let used_capacity = used_capacity as u32;
-        vec.buf.reserve(used_capacity, extra_capacity);
+        vec.buf.reserve(used_capacity, extra_capacity, self.alloc);
 
         let new_tail_start = self.tail_start + extra_capacity;
         let src = vec.as_ptr().add(self.tail_start);

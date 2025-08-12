@@ -151,7 +151,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             };
             if is_referenced {
-                new_specifiers.push(specifier.clone_in(self.ast.allocator));
+                new_specifiers
+                    .push(specifier.clone_in(self.ast.allocator), self.ast.allocator.bump());
             }
         });
 

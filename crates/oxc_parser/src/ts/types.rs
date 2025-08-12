@@ -180,7 +180,7 @@ impl<'a> ParserImpl<'a> {
         let first = self.parse_ts_implement_name();
         let mut implements = self.ast.vec1(first);
         while self.eat(Kind::Comma) {
-            implements.push(self.parse_ts_implement_name());
+            implements.push(self.parse_ts_implement_name(), self.ast.allocator.bump());
         }
         implements
     }
@@ -239,6 +239,7 @@ impl<'a> ParserImpl<'a> {
                 types.push(
                     /*parseFunctionOrConstructorTypeToError(isUnionType) || */
                     parse_constituent_type(self),
+                    self.ast.allocator.bump(),
                 );
             }
             let span = self.end_span(span);
@@ -718,27 +719,33 @@ impl<'a> ParserImpl<'a> {
         let mut quasis = self.ast.vec();
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                quasis.push(self.parse_template_element(tagged));
+                quasis.push(self.parse_template_element(tagged), self.ast.allocator.bump());
             }
             Kind::TemplateHead => {
-                quasis.push(self.parse_template_element(tagged));
-                types.push(self.parse_ts_type());
+                quasis.push(self.parse_template_element(tagged), self.ast.allocator.bump());
+                types.push(self.parse_ts_type(), self.ast.allocator.bump());
                 self.re_lex_template_substitution_tail();
                 while self.fatal_error.is_none() {
                     match self.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
+                            quasis.push(
+                                self.parse_template_element(tagged),
+                                self.ast.allocator.bump(),
+                            );
                             break;
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            quasis.push(
+                                self.parse_template_element(tagged),
+                                self.ast.allocator.bump(),
+                            );
                         }
                         Kind::Eof => {
                             self.expect(Kind::TemplateTail);
                             break;
                         }
                         _ => {
-                            types.push(self.parse_ts_type());
+                            types.push(self.parse_ts_type(), self.ast.allocator.bump());
                             self.re_lex_template_substitution_tail();
                         }
                     }
@@ -1293,7 +1300,9 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::accessibility_modifier_already_seen(&modifier));
                 } else {
                     flags.insert(new_flag);
-                    modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
+                    modifiers
+                        .get_or_insert_with(|| self.ast.vec())
+                        .push(modifier, self.ast.allocator.bump());
                 }
             } else {
                 break;

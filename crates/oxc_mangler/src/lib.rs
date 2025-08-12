@@ -319,8 +319,13 @@ impl<'t> Mangler<'t> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
+            tmp_bindings.extend_desugared(
+                bindings
+                    .values()
+                    .copied()
+                    .filter(|binding| !keep_name_symbols.contains(binding))
+                    .into_iter(),
+                temp_allocator.bump(),
             );
             tmp_bindings.sort_unstable();
             if tmp_bindings.is_empty() {
@@ -330,19 +335,21 @@ impl<'t> Mangler<'t> {
             let mut slot = slot_liveness.len();
 
             reusable_slots.clear();
-            reusable_slots.extend(
+            reusable_slots.extend_desugared(
                 // Slots that are already assigned to other symbols, but does not live in the current scope.
                 slot_liveness
                     .iter()
                     .enumerate()
                     .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
                     .map(|(slot, _)| slot)
-                    .take(tmp_bindings.len()),
+                    .take(tmp_bindings.len())
+                    .into_iter(),
+                temp_allocator.bump(),
             );
 
             // The number of new slots that needs to be allocated.
             let remaining_count = tmp_bindings.len() - reusable_slots.len();
-            reusable_slots.extend(slot..slot + remaining_count);
+            reusable_slots.extend_desugared(slot..slot + remaining_count, temp_allocator.bump());
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
@@ -416,7 +423,7 @@ impl<'t> Mangler<'t> {
                     break name;
                 }
             };
-            reserved_names.push(name);
+            reserved_names.push(name, temp_allocator.bump());
         }
 
         // Group similar symbols for smaller gzipped file
@@ -444,10 +451,15 @@ impl<'t> Mangler<'t> {
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
             slice_of_same_len_strings.clear();
-            slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
+            slice_of_same_len_strings.extend_desugared(
+                slice_of_same_len_strings_group.into_iter(),
+                temp_allocator.bump(),
+            );
             symbols_renamed_in_this_batch.clear();
-            symbols_renamed_in_this_batch
-                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
+            symbols_renamed_in_this_batch.extend_desugared(
+                freq_iter.by_ref().take(slice_of_same_len_strings.len()).into_iter(),
+                temp_allocator.bump(),
+            );
 
             debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
 
@@ -501,7 +513,7 @@ impl<'t> Mangler<'t> {
             let index = slot;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
-            frequencies[index].symbol_ids.push(symbol_id);
+            frequencies[index].symbol_ids.push(symbol_id, temp_allocator.bump());
         }
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies

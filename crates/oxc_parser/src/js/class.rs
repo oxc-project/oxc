@@ -142,7 +142,10 @@ impl<'a> ParserImpl<'a> {
                     }
                     let implements_kw_span = self.cur_token().span();
                     if let Some((_, implements)) = implements.as_mut() {
-                        implements.extend(self.parse_ts_implements_clause());
+                        implements.extend_desugared(
+                            self.parse_ts_implements_clause().into_iter(),
+                            self.ast.allocator.bump(),
+                        );
                     } else {
                         implements = Some((
                             implements_kw_span,
@@ -175,7 +178,7 @@ impl<'a> ParserImpl<'a> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push((extend, type_argument, self.end_span(span)));
+            extends.push((extend, type_argument, self.end_span(span)), self.ast.allocator.bump());
 
             if !self.eat(Kind::Comma) {
                 break;

@@ -378,19 +378,23 @@ impl<'a> IsolatedDeclarations<'a> {
                     Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
                 ) {
                     if let Some(export_external_var_statement) = extra_export_var_statement.take() {
-                        new_stmts.push(export_external_var_statement);
+                        new_stmts.push(export_external_var_statement, self.ast.allocator.bump());
                     }
                 }
-                new_stmts.push(new_stmt);
+                new_stmts.push(new_stmt, self.ast.allocator.bump());
                 continue;
             }
             match stmt {
                 Statement::ImportDeclaration(decl) => {
                     // We must transform this in the end, because we need to know all references
                     if decl.specifiers.is_none() {
-                        new_stmts.push(stmt.clone_in(self.ast.allocator));
+                        new_stmts
+                            .push(stmt.clone_in(self.ast.allocator), self.ast.allocator.bump());
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
-                        new_stmts.push(Statement::ImportDeclaration(new_decl));
+                        new_stmts.push(
+                            Statement::ImportDeclaration(new_decl),
+                            self.ast.allocator.bump(),
+                        );
                     }
                 }
                 Statement::VariableDeclaration(decl) => {
@@ -404,14 +408,15 @@ impl<'a> IsolatedDeclarations<'a> {
                         if declarations.is_empty() {
                             continue;
                         }
-                        new_stmts.push(Statement::VariableDeclaration(
-                            self.ast.alloc_variable_declaration(
+                        new_stmts.push(
+                            Statement::VariableDeclaration(self.ast.alloc_variable_declaration(
                                 decl.span,
                                 decl.kind,
                                 declarations,
                                 self.is_declare(),
-                            ),
-                        ));
+                            )),
+                            self.ast.allocator.bump(),
+                        );
                     }
                 }
                 _ => {}
@@ -423,8 +428,10 @@ impl<'a> IsolatedDeclarations<'a> {
             let kind = ImportOrExportKind::Value;
             let empty_export =
                 self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
-            new_stmts
-                .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
+            new_stmts.push(
+                Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)),
+                self.ast.allocator.bump(),
+            );
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
             // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>

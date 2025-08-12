@@ -83,7 +83,7 @@ impl<'a> ParserImpl<'a> {
         let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
+            declarations.push(declaration, self.ast.allocator.bump());
             if !self.eat(Kind::Comma) {
                 break;
             }
@@ -212,7 +212,7 @@ impl<'a> ParserImpl<'a> {
                 ));
             }
 
-            declarations.push(declaration);
+            declarations.push(declaration, self.ast.allocator.bump());
             if !self.eat(Kind::Comma) {
                 break;
             }

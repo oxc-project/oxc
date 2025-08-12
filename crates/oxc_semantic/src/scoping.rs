@@ -250,8 +250,8 @@ impl Scoping {
         node_id: NodeId,
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.symbol_names.push(Atom::from_in(name, allocator));
-            cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.symbol_names.push(Atom::from_in(name, allocator), allocator.bump());
+            cell.resolved_references.push(ArenaVec::new_in(allocator), allocator.bump());
         });
         self.symbol_spans.push(span);
         self.symbol_flags.push(flags);
@@ -280,7 +280,7 @@ impl Scoping {
             let redeclaration = Redeclaration { span, declaration, flags };
             match cell.symbol_redeclarations.entry(symbol_id) {
                 Entry::Occupied(occupied) => {
-                    occupied.into_mut().push(redeclaration);
+                    occupied.into_mut().push(redeclaration, allocator.bump());
                 }
                 Entry::Vacant(vacant) => {
                     let first_declaration = first_declaration.unwrap_or_else(|| {
@@ -365,8 +365,8 @@ impl Scoping {
 
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.resolved_references[symbol_id.index()].push(reference_id);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.resolved_references[symbol_id.index()].push(reference_id, allocator.bump());
         });
     }
 
@@ -398,9 +398,9 @@ impl Scoping {
         self.symbol_flags.reserve(additional_symbols);
         self.symbol_scope_ids.reserve(additional_symbols);
         self.symbol_declarations.reserve(additional_symbols);
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.symbol_names.reserve_exact(additional_symbols);
-            cell.resolved_references.reserve_exact(additional_symbols);
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.symbol_names.reserve_exact(additional_symbols, allocator.bump());
+            cell.resolved_references.reserve_exact(additional_symbols, allocator.bump());
         });
         self.references.reserve(additional_references);
 
@@ -411,8 +411,8 @@ impl Scoping {
         });
         self.scope_node_ids.reserve(additional_scopes);
         if self.scope_build_child_ids {
-            self.cell.with_dependent_mut(|_allocator, cell| {
-                cell.scope_child_ids.reserve_exact(additional_scopes);
+            self.cell.with_dependent_mut(|allocator, cell| {
+                cell.scope_child_ids.reserve_exact(additional_scopes, allocator.bump());
             });
         }
     }
@@ -546,8 +546,8 @@ impl Scoping {
         if self.scope_build_child_ids {
             // Set this scope as child of parent scope
             if let Some(parent_id) = parent_id {
-                self.cell.with_dependent_mut(|_allocator, cell| {
-                    cell.scope_child_ids[parent_id.index()].push(scope_id);
+                self.cell.with_dependent_mut(|allocator, cell| {
+                    cell.scope_child_ids[parent_id.index()].push(scope_id, allocator.bump());
                 });
             }
         }
@@ -559,7 +559,7 @@ impl Scoping {
     pub fn change_scope_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
         let old_parent_id = mem::replace(&mut self.scope_parent_ids[scope_id], new_parent_id);
         if self.scope_build_child_ids {
-            self.cell.with_dependent_mut(|_allocator, cell| {
+            self.cell.with_dependent_mut(|allocator, cell| {
                 // Remove this scope from old parent scope
                 if let Some(old_parent_id) = old_parent_id {
                     cell.scope_child_ids[old_parent_id.index()]
@@ -567,7 +567,7 @@ impl Scoping {
                 }
                 // And add it to new parent scope
                 if let Some(parent_id) = new_parent_id {
-                    cell.scope_child_ids[parent_id.index()].push(scope_id);
+                    cell.scope_child_ids[parent_id.index()].push(scope_id, allocator.bump());
                 }
             });
         }
@@ -599,7 +599,7 @@ impl Scoping {
             cell.root_unresolved_references
                 .entry(name)
                 .or_insert_with(|| ArenaVec::new_in(allocator))
-                .push(reference_id);
+                .push(reference_id, allocator.bump());
         });
     }
 
@@ -737,9 +737,9 @@ impl Scoping {
         self.scope_node_ids.push(node_id);
         if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|allocator, cell| {
-                cell.scope_child_ids.push(ArenaVec::new_in(allocator));
+                cell.scope_child_ids.push(ArenaVec::new_in(allocator), allocator.bump());
                 if let Some(parent_id) = parent_id {
-                    cell.scope_child_ids[parent_id.index()].push(scope_id);
+                    cell.scope_child_ids[parent_id.index()].push(scope_id, allocator.bump());
                 }
             });
         }

@@ -10,19 +10,19 @@ use crate::ast::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<Pattern>() == 40);
+    assert!(size_of::<Pattern>() == 32);
     assert!(align_of::<Pattern>() == 8);
     assert!(offset_of!(Pattern, span) == 0);
     assert!(offset_of!(Pattern, body) == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<Disjunction>() == 32);
+    assert!(size_of::<Disjunction>() == 24);
     assert!(align_of::<Disjunction>() == 8);
     assert!(offset_of!(Disjunction, span) == 0);
     assert!(offset_of!(Disjunction, body) == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<Alternative>() == 32);
+    assert!(size_of::<Alternative>() == 24);
     assert!(align_of::<Alternative>() == 8);
     assert!(offset_of!(Alternative, span) == 0);
     assert!(offset_of!(Alternative, body) == 8);
@@ -40,10 +40,10 @@ const _: () = {
     assert!(align_of::<BoundaryAssertionKind>() == 1);
 
     // Padding: 7 bytes
-    assert!(size_of::<LookAroundAssertion>() == 48);
+    assert!(size_of::<LookAroundAssertion>() == 40);
     assert!(align_of::<LookAroundAssertion>() == 8);
     assert!(offset_of!(LookAroundAssertion, span) == 0);
-    assert!(offset_of!(LookAroundAssertion, kind) == 40);
+    assert!(offset_of!(LookAroundAssertion, kind) == 32);
     assert!(offset_of!(LookAroundAssertion, body) == 8);
 
     assert!(size_of::<LookAroundAssertionKind>() == 1);
@@ -92,12 +92,12 @@ const _: () = {
     assert!(offset_of!(Dot, span) == 0);
 
     // Padding: 5 bytes
-    assert!(size_of::<CharacterClass>() == 40);
+    assert!(size_of::<CharacterClass>() == 32);
     assert!(align_of::<CharacterClass>() == 8);
     assert!(offset_of!(CharacterClass, span) == 0);
-    assert!(offset_of!(CharacterClass, negative) == 32);
-    assert!(offset_of!(CharacterClass, strings) == 33);
-    assert!(offset_of!(CharacterClass, kind) == 34);
+    assert!(offset_of!(CharacterClass, negative) == 24);
+    assert!(offset_of!(CharacterClass, strings) == 25);
+    assert!(offset_of!(CharacterClass, kind) == 26);
     assert!(offset_of!(CharacterClass, body) == 8);
 
     assert!(size_of::<CharacterClassContentsKind>() == 1);
@@ -114,28 +114,28 @@ const _: () = {
     assert!(offset_of!(CharacterClassRange, max) == 24);
 
     // Padding: 7 bytes
-    assert!(size_of::<ClassStringDisjunction>() == 40);
+    assert!(size_of::<ClassStringDisjunction>() == 32);
     assert!(align_of::<ClassStringDisjunction>() == 8);
     assert!(offset_of!(ClassStringDisjunction, span) == 0);
-    assert!(offset_of!(ClassStringDisjunction, strings) == 32);
+    assert!(offset_of!(ClassStringDisjunction, strings) == 24);
     assert!(offset_of!(ClassStringDisjunction, body) == 8);
 
     // Padding: 7 bytes
-    assert!(size_of::<ClassString>() == 40);
+    assert!(size_of::<ClassString>() == 32);
     assert!(align_of::<ClassString>() == 8);
     assert!(offset_of!(ClassString, span) == 0);
-    assert!(offset_of!(ClassString, strings) == 32);
+    assert!(offset_of!(ClassString, strings) == 24);
     assert!(offset_of!(ClassString, body) == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<CapturingGroup>() == 56);
+    assert!(size_of::<CapturingGroup>() == 48);
     assert!(align_of::<CapturingGroup>() == 8);
     assert!(offset_of!(CapturingGroup, span) == 0);
     assert!(offset_of!(CapturingGroup, name) == 8);
     assert!(offset_of!(CapturingGroup, body) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<IgnoreGroup>() == 64);
+    assert!(size_of::<IgnoreGroup>() == 56);
     assert!(align_of::<IgnoreGroup>() == 8);
     assert!(offset_of!(IgnoreGroup, span) == 0);
     assert!(offset_of!(IgnoreGroup, modifiers) == 8);
