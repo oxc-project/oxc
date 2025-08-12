@@ -69,7 +69,7 @@ pub fn minify(
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
+    let scoping = Minifier::new(minifier_options).minify(&allocator, &mut program).scoping;
 
     let mut codegen_options = match &options.codegen {
         // Need to remove all comments.

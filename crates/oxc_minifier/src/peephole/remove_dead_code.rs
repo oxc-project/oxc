@@ -80,16 +80,13 @@ impl<'a> PeepholeOptimizations {
                     } else {
                         if_stmt.alternate = Some(new_stmt);
                     }
-                    ctx.state.changed = true;
                 }
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
-                ctx.state.changed = true;
             }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
-                ctx.state.changed = true;
             }
             _ => {}
         }
@@ -132,12 +129,7 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
-                return Some(ctx.ast.statement_if(
-                    if_stmt.span,
-                    if_stmt.test.take_in(ctx.ast),
-                    if_stmt.consequent.take_in(ctx.ast),
-                    if_stmt.alternate.as_mut().map(|alternate| alternate.take_in(ctx.ast)),
-                ));
+                return None;
             }
             return Some(if boolean {
                 if_stmt.consequent.take_in(ctx.ast)

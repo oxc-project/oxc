@@ -45,12 +45,25 @@ pub struct Minifier {
     options: MinifierOptions,
 }
 
-impl Minifier {
+impl<'a> Minifier {
     pub fn new(options: MinifierOptions) -> Self {
         Self { options }
     }
 
-    pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+    pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+        self.build(false, allocator, program)
+    }
+
+    pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+        self.build(true, allocator, program)
+    }
+
+    fn build(
+        self,
+        dce: bool,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) -> MinifierReturn {
         let (stats, iterations) = self
             .options
             .compress
@@ -58,8 +71,17 @@ impl Minifier {
                 let semantic = SemanticBuilder::new().build(program).semantic;
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
-                let iterations =
-                    Compressor::new(allocator).build_with_scoping(program, scoping, options);
+                let compressor = Compressor::new(allocator);
+                let iterations = if dce {
+                    let options = CompressOptions {
+                        target: options.target,
+                        treeshake: options.treeshake,
+                        ..CompressOptions::dce()
+                    };
+                    compressor.dead_code_elimination_with_scoping(program, scoping, options)
+                } else {
+                    compressor.build_with_scoping(program, scoping, options)
+                };
                 (stats, iterations)
             })
             .unwrap_or_default();

@@ -169,7 +169,7 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
         mangle: (!options.compress_only).then(MangleOptions::default),
         compress: Some(CompressOptions::default()),
     })
-    .build(&allocator, &mut program);
+    .minify(&allocator, &mut program);
     let code = Codegen::new()
         .with_options(CodegenOptions { minify: !options.compress_only, ..CodegenOptions::minify() })
         .with_scoping(ret.scoping)

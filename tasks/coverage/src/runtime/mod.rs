@@ -194,7 +194,7 @@ impl Test262RuntimeCase {
 
         let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
-                .build(&allocator, &mut program)
+                .minify(&allocator, &mut program)
                 .scoping
         } else {
             None

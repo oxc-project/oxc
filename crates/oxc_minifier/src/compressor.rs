@@ -38,9 +38,9 @@ impl<'a> Compressor<'a> {
         PeepholeOptimizations::new().run_in_loop(program, &mut ctx)
     }
 
-    pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) {
+    pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
-        self.dead_code_elimination_with_scoping(program, scoping, options);
+        self.dead_code_elimination_with_scoping(program, scoping, options)
     }
 
     pub fn dead_code_elimination_with_scoping(
@@ -48,12 +48,13 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
         scoping: Scoping,
         options: CompressOptions,
-    ) {
+    ) -> u8 {
         let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        DeadCodeElimination::new().build(program, &mut ctx);
+        DeadCodeElimination::new().run_in_loop(program, &mut ctx);
+        1
     }
 }

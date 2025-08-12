@@ -237,7 +237,7 @@ impl Oxc {
                     CompressOptions::default()
                 }),
             };
-            Minifier::new(options).build(&allocator, &mut program).scoping
+            Minifier::new(options).minify(&allocator, &mut program).scoping
         } else {
             None
         };

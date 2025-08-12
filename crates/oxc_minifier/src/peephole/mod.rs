@@ -47,7 +47,7 @@ impl<'a> PeepholeOptimizations {
         Self { iteration: 0, changed: false }
     }
 
-    pub fn build(
+    fn run_once(
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
     ) -> u8 {
         loop {
             self.changed = false;
-            self.build(program, ctx);
+            self.run_once(program, ctx);
             if !self.changed {
                 break;
             }
@@ -352,23 +352,62 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
 pub struct DeadCodeElimination {
     inner: PeepholeOptimizations,
+    iteration: u8,
+    changed: bool,
 }
 
 impl<'a> DeadCodeElimination {
     pub fn new() -> Self {
-        Self { inner: PeepholeOptimizations::new() }
+        Self { inner: PeepholeOptimizations::new(), iteration: 0, changed: false }
     }
 
-    pub fn build(
+    fn run_once(
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
     ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
+
+    pub fn run_in_loop(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) -> u8 {
+        loop {
+            self.changed = false;
+            self.run_once(program, ctx);
+            if !self.changed {
+                break;
+            }
+            if self.iteration > 10 {
+                debug_assert!(false, "Ran loop more than 10 times.");
+                break;
+            }
+            self.iteration += 1;
+        }
+        self.iteration
+    }
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
+    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.symbol_values.clear();
+        ctx.state.changed = false;
+    }
+
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Remove unused references by visiting the AST again and diff the collected references.
+        let refs_before =
+            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+        let mut counter = ReferencesCounter::default();
+        counter.visit_program(program);
+        for reference_id_to_remove in refs_before.difference(&counter.refs) {
+            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+        }
+        self.changed = ctx.state.changed;
+    }
+
     fn exit_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
@@ -385,15 +424,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut ctx = Ctx::new(ctx);
-        let changed = ctx.state.changed;
-        ctx.state.changed = false;
         self.inner.minimize_statements(stmts, &mut ctx);
-        if ctx.state.changed {
-            self.inner.minimize_statements(stmts, &mut ctx);
-        } else {
-            ctx.state.changed = changed;
-        }
-        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_expression(&mut self, e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
