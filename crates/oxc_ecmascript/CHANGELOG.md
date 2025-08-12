@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 54d1750 ecmascript: Handle `typeof` guarded global access as side effect free (#12981) (Copilot)
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+- 208e6f7 ecmascript: Add URI encoding/decoding support to constant evaluation (#12934) (Copilot)
+- 53f7a9f minifier: `new Date()` has `ValueType::Object` (#12951) (Boshen)
+- 784796d minifier: Fold `(!0).toString()` to `true` (#12938) (Boshen)
+- bc1d716 ecmascript: Add ARM64 FJCVTZS instruction optimization for ToInt32 with function-specific target features and runtime detection (#12823) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- c72f49e ecmascript: Fix merge error (Boshen)
+
+### 🚜 Refactor
+
+- 8a5c9b9 minifier,ecmascript: Clean up `is_global_reference` (#12953) (Boshen)
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ce27e9 ecmascript, minifier: Revert changes to changelogs (#12962) (overlookmotel)
+
+
 ## [0.81.0] - 2025-08-06
 
 ### 🚜 Refactor
