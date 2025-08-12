@@ -90,10 +90,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -104,10 +106,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -118,10 +122,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
-        if let PropertyKey::StringLiteral(str) = &prop.key {
-            if property_key_parent.should_keep_as_computed_property(&str.value) {
-                return;
-            }
+        // Only check for computed property restrictions if this is actually a computed property
+        if prop.computed
+            && let PropertyKey::StringLiteral(str) = &prop.key
+            && property_key_parent.should_keep_as_computed_property(&str.value)
+        {
+            return;
         }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -1698,19 +1704,23 @@ mod test {
         test_same("class C { static ['prototype'] = 0 }"); // class C { prototype = 0 } is an early error
         test_same("class C { static accessor ['prototype'] = 0 }"); // class C { accessor prototype = 0 } is an early error
         test("class C { ['prototype']() {} }", "class C { prototype() {} }");
+        test("class C { 'prototype'() {} }", "class C { prototype() {} }");
         test("class C { ['prototype'] = 0 }", "class C { prototype = 0 }");
+        test("class C { 'prototype' = 0 }", "class C { prototype = 0 }");
         test("class C { accessor ['prototype'] = 0 }", "class C { accessor prototype = 0 }");
         test_same("class C { ['constructor'] = 0 }"); // class C { constructor = 0 } is an early error
         test_same("class C { accessor ['constructor'] = 0 }"); // class C { accessor constructor = 0 } is an early error
         test_same("class C { static ['constructor'] = 0 }"); // class C { static constructor = 0 } is an early error
         test_same("class C { static accessor ['constructor'] = 0 }"); // class C { static accessor constructor = 0 } is an early error
         test_same("class C { ['constructor']() {} }"); // computed `constructor` is not treated as a constructor
+        test("class C { 'constructor'() {} }", "class C { constructor() {} }");
         test_same("class C { *['constructor']() {} }"); // class C { *constructor() {} } is an early error
         test_same("class C { async ['constructor']() {} }"); // class C { async constructor() {} } is an early error
         test_same("class C { async *['constructor']() {} }"); // class C { async *constructor() {} } is an early error
         test_same("class C { get ['constructor']() {} }"); // class C { get constructor() {} } is an early error
         test_same("class C { set ['constructor'](v) {} }"); // class C { set constructor(v) {} } is an early error
         test("class C { static ['constructor']() {} }", "class C { static constructor() {} }");
+        test("class C { static 'constructor'() {} }", "class C { static constructor() {} }");
         test_same("class C { ['#constructor'] = 0 }"); // class C { #constructor = 0 } is an early error
         test_same("class C { accessor ['#constructor'] = 0 }"); // class C { accessor #constructor = 0 } is an early error
         test_same("class C { ['#constructor']() {} }"); // class C { #constructor() {} } is an early error
