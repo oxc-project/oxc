@@ -72,10 +72,7 @@ impl<'a> TsGoLintState<'a> {
             files: self
                 .paths
                 .iter()
-                .filter(|path| {
-                    let path_buf = PathBuf::from(path);
-                    SourceType::from_path(&path_buf).is_ok()
-                })
+                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
                 .map(|path| TsGoLintInputFile {
                     file_path: path.to_string_lossy().to_string(),
                     rules: {
