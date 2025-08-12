@@ -30,13 +30,13 @@ use crate::{
 /// to top of a statement block if another transform has requested that.
 ///
 /// Must run after all other transforms except `TopLevelStatements`.
-pub struct VarDeclarations<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct VarDeclarations<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> VarDeclarations<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

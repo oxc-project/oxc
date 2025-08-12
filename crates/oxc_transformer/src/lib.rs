@@ -137,32 +137,31 @@ impl<'a> Transformer<'a> {
         }
 
         let mut transformer = TransformerImpl {
-            common: Common::new(&self.env, &self.state),
-            decorator: Decorator::new(self.decorator, &self.state),
-            plugins: Plugins::new(self.plugins, &self.state),
+            common: Common::new(&self.env),
+            decorator: Decorator::new(self.decorator),
+            plugins: Plugins::new(self.plugins),
             explicit_resource_management: self
                 .proposals
                 .explicit_resource_management
-                .then(|| ExplicitResourceManagement::new(&self.state)),
+                .then(|| ExplicitResourceManagement::new()),
             x0_typescript: program
                 .source_type
                 .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.state)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.state),
+                .then(|| TypeScript::new(&self.typescript)),
+            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder),
             x2_es2022: ES2022::new(
                 self.env.es2022,
                 !self.typescript.allow_declare_fields
                     || self.typescript.remove_class_fields_without_initializer,
-                &self.state,
             ),
-            x2_es2021: ES2021::new(self.env.es2021, &self.state),
-            x2_es2020: ES2020::new(self.env.es2020, &self.state),
+            x2_es2021: ES2021::new(self.env.es2021),
+            x2_es2020: ES2020::new(self.env.es2020),
             x2_es2019: ES2019::new(self.env.es2019),
-            x2_es2018: ES2018::new(self.env.es2018, &self.state),
-            x2_es2016: ES2016::new(self.env.es2016, &self.state),
-            x2_es2017: ES2017::new(self.env.es2017, &self.state),
-            x3_es2015: ES2015::new(self.env.es2015, &self.state),
-            x4_regexp: RegExp::new(self.env.regexp, &self.state),
+            x2_es2018: ES2018::new(self.env.es2018),
+            x2_es2016: ES2016::new(self.env.es2016),
+            x2_es2017: ES2017::new(self.env.es2017),
+            x3_es2015: ES2015::new(self.env.es2015),
+            x4_regexp: RegExp::new(self.env.regexp),
         };
 
         let mut ctx = oxc_traverse::ReusableTraverseCtx::new(self.state, scoping, allocator);
@@ -195,7 +194,7 @@ struct TransformerImpl<'a, 'ctx> {
     #[expect(unused)]
     x3_es2015: ES2015<'a, 'ctx>,
     x4_regexp: RegExp<'a, 'ctx>,
-    common: Common<'a, 'ctx>,
+    common: Common<'a>,
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {

@@ -24,27 +24,27 @@ use statement_injector::StatementInjector;
 use top_level_statements::TopLevelStatements;
 use var_declarations::VarDeclarations;
 
-pub struct Common<'a, 'ctx> {
-    module_imports: ModuleImports<'a, 'ctx>,
-    var_declarations: VarDeclarations<'a, 'ctx>,
-    statement_injector: StatementInjector<'a, 'ctx>,
-    top_level_statements: TopLevelStatements<'a, 'ctx>,
+pub struct Common<'a> {
+    module_imports: ModuleImports<'a>,
+    var_declarations: VarDeclarations<'a>,
+    statement_injector: StatementInjector<'a>,
+    top_level_statements: TopLevelStatements<'a>,
     arrow_function_converter: ArrowFunctionConverter<'a>,
 }
 
-impl<'a, 'ctx> Common<'a, 'ctx> {
-    pub fn new(options: &EnvOptions, ctx: &'ctx TransformState<'a>) -> Self {
+impl<'a> Common<'a> {
+    pub fn new(options: &EnvOptions) -> Self {
         Self {
-            module_imports: ModuleImports::new(ctx),
-            var_declarations: VarDeclarations::new(ctx),
-            statement_injector: StatementInjector::new(ctx),
-            top_level_statements: TopLevelStatements::new(ctx),
+            module_imports: ModuleImports::new(),
+            var_declarations: VarDeclarations::new(),
+            statement_injector: StatementInjector::new(),
+            top_level_statements: TopLevelStatements::new(),
             arrow_function_converter: ArrowFunctionConverter::new(options),
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Common<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module_imports.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);

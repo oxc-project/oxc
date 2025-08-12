@@ -25,13 +25,13 @@ use crate::{
 };
 
 /// Transform that inserts any statements which have been requested insertion via `StatementInjectorStore`
-pub struct StatementInjector<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct StatementInjector<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> StatementInjector<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

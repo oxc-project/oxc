@@ -25,13 +25,13 @@ use crate::{
 /// Insertions are made after any existing `import` statements.
 ///
 /// Must run after all other transforms.
-pub struct TopLevelStatements<'a, 'ctx> {
-    ctx: &'ctx TransformState<'a>,
+pub struct TopLevelStatements<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
-        Self { ctx }
+impl<'a> TopLevelStatements<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 

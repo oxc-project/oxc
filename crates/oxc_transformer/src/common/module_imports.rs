@@ -56,9 +56,9 @@ impl<'a> ModuleImports<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.ctx.module_imports.insert_into_program(self.ctx, ctx);
+        ctx.state.module_imports.insert_into_program(ctx);
     }
 }
 
@@ -157,23 +157,22 @@ impl<'a> ModuleImportsStore<'a> {
     }
 
     /// Insert `import` / `require` statements at top of program.
-    fn insert_into_program(&self, transform_ctx: &TransformState<'a>, ctx: &mut TraverseCtx<'a>) {
-        if transform_ctx.source_type.is_script() {
-            self.insert_require_statements(transform_ctx, ctx);
+    fn insert_into_program(&self, ctx: &mut TraverseCtx<'a>) {
+        if ctx.state.source_type.is_script() {
+            self.insert_require_statements(ctx);
         } else {
-            self.insert_import_statements(transform_ctx, ctx);
+            self.insert_import_statements(ctx);
         }
     }
 
-    fn insert_import_statements(&self, transform_ctx: &TransformState<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_import_statements(&self, ctx: &TraverseCtx<'a>) {
         let mut imports = self.imports.borrow_mut();
         let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
-        transform_ctx.top_level_statements.insert_statements(stmts);
+        ctx.state.top_level_statements.insert_statements(stmts);
     }
 
     fn insert_require_statements(
         &self,
-        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut imports = self.imports.borrow_mut();
@@ -185,7 +184,7 @@ impl<'a> ModuleImportsStore<'a> {
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
-        transform_ctx.top_level_statements.insert_statements(stmts);
+        ctx.state.top_level_statements.insert_statements(stmts);
     }
 
     fn get_import(
