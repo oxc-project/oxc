@@ -1,6 +1,6 @@
 {
   "name": "@oxc-project/runtime",
-  "version": "0.82.0",
+  "version": "0.82.1",
   "description": "Oxc's modular runtime helpers",
   "license": "MIT",
   "repository": {

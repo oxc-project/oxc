@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.1] - 2025-08-13
+
+### 📚 Documentation
+
+- 9c05e2f ecmascript: Correct docs for `GlobalContext::is_global_reference` (#13022) (overlookmotel)
+
+
 ## [0.82.0] - 2025-08-12
 
 ### 🚀 Features

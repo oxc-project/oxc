@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+### 🚜 Refactor
+
+- 73a6f25 minifier: Inline statement methods (#13044) (Boshen)
+- 53c51f9 minifier: Remove clippy allow directives and fix needless_pass_by_ref_mut warnings in oxc_minifier (#13030) (Copilot)
+- 3a8a3ce minifier: Remove clippy::unused_self allow directive by converting methods to associated functions (#13029) (Copilot)
+- 7223686 minifier: Use the original vec in-place in `minimize_statements` (#13028) (Boshen)
+
+
 ## [0.82.0] - 2025-08-12
 
 ### 🚀 Features

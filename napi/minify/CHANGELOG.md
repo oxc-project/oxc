@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+
 
 
 
