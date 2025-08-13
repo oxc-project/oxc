@@ -236,7 +236,7 @@ fn is_compound_assignment_read(parent_id: NodeId, semantic: &Semantic) -> bool {
         .ancestors(parent_id)
         .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
         .next()
-        .is_some_and(|(_, grandparent)| is_value_context(grandparent, semantic))
+        .is_some_and(|(grandparent, _)| is_value_context(grandparent, semantic))
 }
 
 #[test]
@@ -244,6 +244,33 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r"
+            class Test {
+                #prop = undefined
+
+                getProp() {
+                    return this.#prop ??= 0
+                }
+            }
+        ",
+        r"
+            class Test {
+                #prop = undefined
+
+                getProp() {
+                    return this.#prop ||= 0
+                }
+            }
+        ",
+        r"
+            class Test {
+                #prop = undefined
+
+                getProp() {
+                    return this.#prop += 0
+                }
+            }
+        ",
         r"class Foo {}",
         r"class Foo {
         	    publicMember = 42;
