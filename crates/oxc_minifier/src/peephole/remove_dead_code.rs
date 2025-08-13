@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
     /// `{ block } -> block`
     fn try_optimize_block(
         stmt: &mut BlockStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         match stmt.body.len() {
             0 => {
@@ -213,10 +213,7 @@ impl<'a> PeepholeOptimizations {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(
-        s: &mut LabeledStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: &Ctx<'a, '_>) -> Option<Statement<'a>> {
         let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
@@ -251,7 +248,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Statement<'a>> {
+    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &Ctx<'a, '_>) -> Option<Statement<'a>> {
         if let Some(handler) = &mut s.handler {
             if s.block.body.is_empty() {
                 let mut var = KeepVar::new(ctx.ast);
@@ -467,10 +464,7 @@ impl<'a> PeepholeOptimizations {
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
-    pub fn should_keep_indirect_access(
-        access_value: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {

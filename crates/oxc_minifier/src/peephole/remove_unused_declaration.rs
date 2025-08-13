@@ -7,7 +7,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return false;
@@ -29,7 +29,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_function_declaration(
         f: &Function<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
             return None;

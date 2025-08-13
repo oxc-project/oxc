@@ -356,7 +356,7 @@ impl<'a> PeepholeOptimizations {
         left: &Expression<'a>,
         right: &Expression<'a>,
         span: Span,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
         inversed: bool,
     ) -> Option<Expression<'a>> {
         let pair = Self::commutative_pair(
@@ -599,10 +599,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Fold `Object` or `Array` constructor
-    fn get_fold_constructor_name(
-        callee: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<&'a str> {
+    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: &Ctx<'a, '_>) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
                 if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
@@ -921,7 +918,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    pub fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
@@ -1018,7 +1015,7 @@ impl<'a> PeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
         if ctx.options().target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {

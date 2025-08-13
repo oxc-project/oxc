@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -77,7 +77,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -162,7 +162,7 @@ impl<'a> PeepholeOptimizations {
     pub fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget<'a>,
         expr: &Expression,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),

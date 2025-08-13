@@ -13,7 +13,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if Ctx::is_identifier_name_patched(&s.value) {
@@ -129,6 +129,7 @@ mod test {
         test("a?.['default']", "a?.default");
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_convert_to_dotted_properties_computed_property_or_field() {
         test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");

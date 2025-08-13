@@ -398,7 +398,7 @@ impl<'a> Normalize {
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))
     }
 
-    fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {
         if !body.directives.is_empty()
             && ctx
                 .scoping()

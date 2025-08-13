@@ -330,8 +330,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut ctx = Ctx::new(ctx);
-        Self::convert_to_dotted_properties(expr, &mut ctx);
+        let ctx = Ctx::new(ctx);
+        Self::convert_to_dotted_properties(expr, &ctx);
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -340,8 +340,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        Self::substitute_catch_clause(catch, &mut ctx);
+        let ctx = Ctx::new(ctx);
+        Self::substitute_catch_clause(catch, &ctx);
     }
 }
 

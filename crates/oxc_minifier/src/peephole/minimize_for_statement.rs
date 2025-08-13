@@ -106,7 +106,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         body: Option<Statement<'a>>,
         replace: Option<Statement<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Statement<'a> {
         match body {
             Some(Statement::BlockStatement(mut block_stmt)) if !block_stmt.body.is_empty() => {

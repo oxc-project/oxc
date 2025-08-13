@@ -63,7 +63,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         arguments: &mut Arguments<'a>,
         object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if ctx.options().target < ESTarget::ES2016 {
             return None;
@@ -101,7 +101,7 @@ impl<'a> PeepholeOptimizations {
         arguments: &mut Arguments<'a>,
         name: &str,
         object: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !Self::validate_global_reference(object, "Array", ctx) {
             return None;
@@ -202,7 +202,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent() {
@@ -423,7 +423,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_number_constants(
         name: &str,
         span: Span,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let num = |span: Span, n: f64| {
             ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
@@ -489,7 +489,7 @@ impl<'a> PeepholeOptimizations {
         object: &mut Expression<'a>,
         property: u32,
         span: Span,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if object.may_have_side_effects(ctx) {
             return None;
@@ -528,11 +528,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn validate_global_reference(
-        expr: &Expression<'a>,
-        target: &str,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: &Ctx<'a, '_>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }
@@ -565,6 +561,7 @@ mod test {
         test_same(format!("x = {code}").as_str());
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_string_index_of() {
         test("x = 'abcdef'.indexOf('g')", "x = -1");
