@@ -729,7 +729,8 @@ fn build_missing_curly_fix_context_for_part(
         let first_char_index = mat.start();
         let text = part.split_at(first_char_index).1;
         let new_start = span.start + part_start + u32::try_from(first_char_index).unwrap();
-        let span_from_first_char = Span::new(new_start, new_start + u32::try_from(text.len()).unwrap());
+        let span_from_first_char =
+            Span::new(new_start, new_start + u32::try_from(text.len()).unwrap());
         (span_from_first_char, text)
     })
 }
@@ -738,7 +739,10 @@ fn calculate_line_start(line_matches: &[usize], index: usize) -> u32 {
     if index == 0 {
         0u32
     } else {
-        u32::try_from(line_matches.get(index - 1).map_or(1usize, |new_line_index| *new_line_index + 1)).unwrap()
+        u32::try_from(
+            line_matches.get(index - 1).map_or(1usize, |new_line_index| *new_line_index + 1),
+        )
+        .unwrap()
     }
 }
 
@@ -746,7 +750,10 @@ fn calculate_part_start(line_matches: &[usize], index: usize) -> u32 {
     if index == 0 {
         0u32
     } else {
-        u32::try_from(line_matches.get(index - 1).copied().map_or(0usize, |new_line_index| new_line_index)).unwrap()
+        u32::try_from(
+            line_matches.get(index - 1).copied().map_or(0usize, |new_line_index| new_line_index),
+        )
+        .unwrap()
     }
 }
 
