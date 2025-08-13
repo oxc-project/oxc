@@ -16,31 +16,11 @@ use super::PeepholeOptimizations;
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statement(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
-        if let Some(new_stmt) = match stmt {
-            Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
-            Statement::IfStatement(s) => Self::try_fold_if(s, ctx),
-            Statement::ForStatement(s) => Self::try_fold_for(s, ctx),
-            Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
-            Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
-            Statement::FunctionDeclaration(f) => Self::remove_unused_function_declaration(f, ctx),
-            Statement::ClassDeclaration(c) => Self::remove_unused_class_declaration(c, ctx),
-            _ => None,
-        } {
-            *stmt = new_stmt;
-            ctx.state.changed = true;
-        }
-
-        Self::try_fold_expression_stmt(stmt, ctx);
-    }
-
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    fn try_optimize_block(
-        stmt: &mut BlockStatement<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
-        match stmt.body.len() {
+    pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::BlockStatement(s) = stmt else { return };
+        match s.body.len() {
             0 => {
                 let parent = ctx.parent();
                 if parent.is_while_statement()
@@ -52,35 +32,31 @@ impl<'a> PeepholeOptimizations {
                     || parent.is_program()
                 {
                     // Remove the block if it is empty and the parent is a block statement.
-                    return Some(ctx.ast.statement_empty(stmt.span));
+                    *stmt = ctx.ast.statement_empty(s.span);
+                    ctx.state.changed = true;
                 }
-                None
             }
             1 => {
-                let s = &stmt.body[0];
-                if matches!(s, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
-                    || matches!(s, Statement::ClassDeclaration(_))
-                    || matches!(s, Statement::FunctionDeclaration(_))
+                let first = &s.body[0];
+                if matches!(first, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+                    || matches!(first, Statement::ClassDeclaration(_))
+                    || matches!(first, Statement::FunctionDeclaration(_))
                 {
-                    return None;
+                    return;
                 }
-                Some(stmt.body.remove(0))
+                *stmt = s.body.remove(0);
+                ctx.state.changed = true;
             }
-            _ => None,
+            _ => {}
         }
     }
 
-    fn try_fold_if(if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Statement<'a>> {
+    pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
-            Some(Statement::IfStatement(alternate)) => {
-                if let Some(new_stmt) = Self::try_fold_if(alternate, ctx) {
-                    if matches!(new_stmt, Statement::EmptyStatement(_)) {
-                        if_stmt.alternate = None;
-                    } else {
-                        if_stmt.alternate = Some(new_stmt);
-                    }
-                }
+            Some(Statement::IfStatement(_)) => {
+                Self::try_fold_if(if_stmt.alternate.as_mut().unwrap(), ctx);
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
@@ -119,7 +95,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     if_stmt.consequent = var_stmt;
                 }
-                return None;
+                return;
             }
             if test_has_side_effects {
                 if !has_var_stmt {
@@ -129,25 +105,21 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
-                return None;
+                return;
             }
-            return Some(if boolean {
+            *stmt = if boolean {
                 if_stmt.consequent.take_in(ctx.ast)
+            } else if let Some(alternate) = if_stmt.alternate.take() {
+                alternate
             } else {
-                if_stmt.alternate.as_mut().map_or_else(
-                    || ctx.ast.statement_empty(if_stmt.span),
-                    |alternate| alternate.take_in(ctx.ast),
-                )
-            });
+                ctx.ast.statement_empty(if_stmt.span)
+            };
+            ctx.state.changed = true;
         }
-        None
     }
 
-    fn try_fold_for(
-        for_stmt: &mut ForStatement<'a>,
-
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::ForStatement(for_stmt) = stmt else { return };
         if let Some(init) = &mut for_stmt.init {
             if let Some(init) = init.as_expression_mut() {
                 if Self::remove_unused_expression(init, ctx) {
@@ -166,14 +138,18 @@ impl<'a> PeepholeOptimizations {
         let test_boolean =
             for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(ctx));
         if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
-            return None;
+            return;
         }
         match test_boolean {
-            Some(false) => match &mut for_stmt.init {
-                Some(ForStatementInit::VariableDeclaration(var_init)) => {
+            Some(false) => match &for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(_)) => {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration();
+                    let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
+                    else {
+                        return;
+                    };
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
@@ -183,28 +159,29 @@ impl<'a> PeepholeOptimizations {
                             var_decl = Some(var_init.take_in_box(ctx.ast));
                         }
                     }
-                    Some(var_decl.map_or_else(
+                    *stmt = var_decl.map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
-                    ))
+                    );
+                    ctx.state.changed = true;
                 }
                 None => {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
-                    Some(keep_var.get_variable_declaration().map_or_else(
+                    *stmt = keep_var.get_variable_declaration().map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
-                    ))
+                    );
+                    ctx.state.changed = true;
                 }
-                _ => None,
+                _ => {}
             },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
                 ctx.state.changed = true;
-                None
             }
-            None => None,
+            None => {}
         }
     }
 
@@ -213,7 +190,8 @@ impl<'a> PeepholeOptimizations {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: &Ctx<'a, '_>) -> Option<Statement<'a>> {
+    pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::LabeledStatement(s) = stmt else { return };
         let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
@@ -222,17 +200,20 @@ impl<'a> PeepholeOptimizations {
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
-                return Some(ctx.ast.statement_empty(s.span))
+                *stmt = ctx.ast.statement_empty(s.span);
+                ctx.state.changed = true;
+                return;
             }
-            _ => return None,
+            _ => return
         }
         let mut var = KeepVar::new(ctx.ast);
         var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
-        var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
+        *stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
+        ctx.state.changed = true;
     }
 
-    fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
@@ -248,11 +229,13 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &Ctx<'a, '_>) -> Option<Statement<'a>> {
-        if let Some(handler) = &mut s.handler {
+    pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::TryStatement(s) = stmt else { return };
+        if let Some(handler) = &s.handler {
             if s.block.body.is_empty() {
                 let mut var = KeepVar::new(ctx.ast);
                 var.visit_block_statement(&handler.body);
+                let Some(handler) = &mut s.handler else { return };
                 handler.body.body.clear();
                 if let Some(var_decl) = var.get_variable_declaration_statement() {
                     handler.body.body.push(var_decl);
@@ -269,15 +252,14 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            if let Some(finalizer) = &mut s.finalizer {
+            *stmt = if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
-                Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+                Statement::BlockStatement(ctx.ast.alloc(block))
             } else {
-                Some(ctx.ast.statement_empty(s.span))
-            }
-        } else {
-            None
+                ctx.ast.statement_empty(s.span)
+            };
+            ctx.state.changed = true;
         }
     }
 

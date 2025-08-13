@@ -129,15 +129,40 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        Self::try_fold_stmt_in_boolean_context(stmt, &mut ctx);
-        Self::remove_dead_code_exit_statement(stmt, &mut ctx);
-        if let Statement::IfStatement(if_stmt) = stmt {
-            if let Some(folded_stmt) = Self::try_minimize_if(if_stmt, &mut ctx) {
-                *stmt = folded_stmt;
-                ctx.state.changed = true;
+        let ctx = &mut Ctx::new(ctx);
+        match stmt {
+            Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
+            Statement::IfStatement(s) => {
+                Self::try_fold_expr_in_boolean_context(&mut s.test, ctx);
+                Self::try_fold_if(stmt, ctx);
+                if let Statement::IfStatement(if_stmt) = stmt {
+                    if let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx) {
+                        *stmt = folded_stmt;
+                        ctx.state.changed = true;
+                    }
+                }
             }
+            Statement::WhileStatement(s) => {
+                Self::try_fold_expr_in_boolean_context(&mut s.test, ctx);
+            }
+            Statement::ForStatement(s) => {
+                if let Some(test) = &mut s.test {
+                    Self::try_fold_expr_in_boolean_context(test, ctx);
+                }
+                Self::try_fold_for(stmt, ctx);
+            }
+            Statement::DoWhileStatement(s) => {
+                Self::try_fold_expr_in_boolean_context(&mut s.test, ctx);
+            }
+            Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
+            Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+            Statement::FunctionDeclaration(_) => {
+                Self::remove_unused_function_declaration(stmt, ctx);
+            }
+            Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
+            _ => {}
         }
+        Self::try_fold_expression_stmt(stmt, ctx);
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -412,8 +437,24 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut ctx = Ctx::new(ctx);
-        PeepholeOptimizations::remove_dead_code_exit_statement(stmt, &mut ctx);
+        let ctx = &mut Ctx::new(ctx);
+        match stmt {
+            Statement::BlockStatement(_) => PeepholeOptimizations::try_optimize_block(stmt, ctx),
+            Statement::IfStatement(_) => PeepholeOptimizations::try_fold_if(stmt, ctx),
+            Statement::ForStatement(_) => PeepholeOptimizations::try_fold_for(stmt, ctx),
+            Statement::TryStatement(_) => PeepholeOptimizations::try_fold_try(stmt, ctx),
+            Statement::LabeledStatement(_) => PeepholeOptimizations::try_fold_labeled(stmt, ctx),
+            Statement::FunctionDeclaration(_) => {
+                PeepholeOptimizations::remove_unused_function_declaration(stmt, ctx);
+            }
+            Statement::ClassDeclaration(_) => {
+                PeepholeOptimizations::remove_unused_class_declaration(stmt, ctx);
+            }
+            Statement::ExpressionStatement(_) => {
+                PeepholeOptimizations::try_fold_expression_stmt(stmt, ctx);
+            }
+            _ => {}
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
