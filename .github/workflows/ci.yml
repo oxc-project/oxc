@@ -30,6 +30,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
+    if: ${{ github.ref_name == 'main' }}
     name: Test Linux ARM64
     runs-on: ubuntu-24.04-arm
     steps:
@@ -43,11 +44,10 @@ jobs:
       - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
-  # Separate job to save a job on PRs
-  test-mac:
+  test-mac: # Separate job to save a job on PRs
+    if: ${{ github.ref_name == 'main' }}
     name: Test Mac
     runs-on: macos-latest
-    if: ${{ github.ref_name == 'main' }}
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
@@ -60,8 +60,8 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    name: Test Windows
     if: ${{ github.ref_name == 'main' }}
+    name: Test Windows
     runs-on: windows-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -103,8 +103,8 @@ jobs:
         shell: bash
 
   test-big-endian:
-    name: Test big-endian # s390x-unknown-linux-gnu is a big-endian
     if: ${{ github.ref_name == 'main' }}
+    name: Test big-endian # s390x-unknown-linux-gnu is a big-endian
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
