@@ -885,6 +885,7 @@ mod test {
         test("void (x == null && y)", "x ?? y");
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_object_literal() {
         test("({})", "");

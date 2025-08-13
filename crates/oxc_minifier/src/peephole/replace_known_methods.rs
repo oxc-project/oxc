@@ -561,6 +561,7 @@ mod test {
         test_same(format!("x = {code}").as_str());
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_string_index_of() {
         test("x = 'abcdef'.indexOf('g')", "x = -1");

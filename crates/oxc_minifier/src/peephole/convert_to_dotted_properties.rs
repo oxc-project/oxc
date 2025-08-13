@@ -129,6 +129,7 @@ mod test {
         test("a?.['default']", "a?.default");
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_convert_to_dotted_properties_computed_property_or_field() {
         test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");
