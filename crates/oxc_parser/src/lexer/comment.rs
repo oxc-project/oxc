@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_with_advanced_continue, SearchContinuation},
+    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
     source::SourcePosition,
 };
 
@@ -24,71 +24,72 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
-        let _byte = match byte_search_with_advanced_continue(
-            self,
-            &LINE_BREAK_TABLE,
-            self.source.position(),
-            |byte, pos| {
+        // Use raw search function and handle continue logic directly
+        let mut pos = self.source.position();
+        loop {
+            if let Some((byte, found_pos)) = byte_search_raw(self, &LINE_BREAK_TABLE, pos) {
                 let next_byte = byte;
                 // Match found. Decide whether to continue searching.
                 // If this is end of comment, create trivia, and advance `pos` to after line break.
-                // Do that here rather than in `handle_match`, to avoid branching twice on value of
-                // the matched byte.
                 #[expect(clippy::if_not_else)]
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder.add_line_comment(
                         self.token.start(),
-                        self.source.offset_of(pos),
+                        self.source.offset_of(found_pos),
                         self.source.whole(),
                     );
                     // SAFETY: Safe to consume `\r` or `\n` as both are ASCII
-                    let new_pos = unsafe { pos.add(1) };
-                    // We've found the end. Do not continue searching.
-                    SearchContinuation::Stop(new_pos)
+                    let new_pos = unsafe { found_pos.add(1) };
+                    // We've found the end. Stop searching.
+                    self.source.set_position(new_pos);
+                    break;
                 } else {
                     // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
                     // Either way, Unicode is uncommon, so make this a cold branch.
-                    cold_branch(|| {
+                    let should_continue = cold_branch(|| {
                         // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
                         // So safe to advance `pos` by 1 and read 2 bytes.
-                        let next2 = unsafe { pos.add(1).read2() };
+                        let next2 = unsafe { found_pos.add(1).read2() };
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
                             self.trivia_builder.add_line_comment(
                                 self.token.start(),
-                                self.source.offset_of(pos),
+                                self.source.offset_of(found_pos),
                                 self.source.whole(),
                             );
                             // Advance `pos` to after this char.
                             // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                             // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                            let new_pos = unsafe { pos.add(3) };
-                            // We've found the end. Do not continue searching.
-                            SearchContinuation::Stop(new_pos)
+                            let new_pos = unsafe { found_pos.add(3) };
+                            // We've found the end. Stop searching.
+                            self.source.set_position(new_pos);
+                            false
                         } else {
                             // Some other Unicode char beginning with `0xE2`.
                             // Skip 3 bytes and continue searching.
                             // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                             // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                            let new_pos = unsafe { pos.add(3) };
-                            SearchContinuation::Continue(new_pos)
+                            pos = unsafe { found_pos.add(3) };
+                            true
                         }
-                    })
+                    });
+                    
+                    if !should_continue {
+                        break;
+                    }
                 }
-            },
-            || {
+            } else {
+                // EOF
+                self.source.advance_to_end();
                 self.trivia_builder.add_line_comment(
                     self.token.start(),
                     self.offset(),
                     self.source.whole(),
                 );
                 return Kind::Skip;
-            },
-        ) {
-            Ok(_) => {},
-            Err(kind) => return kind,
-        };
+            }
+        }
 
         self.token.set_is_on_new_line(true);
         Kind::Skip
@@ -101,37 +102,37 @@ impl<'a> Lexer<'a> {
             return self.skip_multi_line_comment_after_line_break(self.source.position());
         }
 
-        let result = byte_search_with_advanced_continue(
-            self,
-            &MULTILINE_COMMENT_START_TABLE,
-            self.source.position(),
-            |byte, pos| {
+        // Use raw search function and handle continue logic directly
+        let mut pos = self.source.position();
+        loop {
+            if let Some((byte, found_pos)) = byte_search_raw(self, &MULTILINE_COMMENT_START_TABLE, pos) {
                 let next_byte = byte;
                 // Match found. Decide whether to continue searching.
                 if next_byte == b'*' {
                     // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
-                    let after_star = unsafe { pos.add(1) };
+                    let after_star = unsafe { found_pos.add(1) };
                     if after_star.is_not_end_of(&self.source) {
                         // If next byte isn't `/`, continue
                         // SAFETY: Have checked there's at least 1 further byte to read
                         if unsafe { after_star.read() } == b'/' {
                             // Consume `*/`
                             // SAFETY: Consuming `*/` leaves `pos` on a UTF-8 char boundary
-                            let new_pos = unsafe { pos.add(2) };
-                            SearchContinuation::Stop(new_pos)
+                            let new_pos = unsafe { found_pos.add(2) };
+                            self.source.set_position(new_pos);
+                            break;
                         } else {
                             // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                            let new_pos = unsafe { pos.add(1) };
-                            SearchContinuation::Continue(new_pos)
+                            pos = unsafe { found_pos.add(1) };
+                            continue;
                         }
                     } else {
                         // This is last byte in file. Continue to `handle_eof`.
                         // This is illegal in valid JS, so mark this branch cold.
                         cold_branch(|| {
                             // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                            let new_pos = unsafe { pos.add(1) };
-                            SearchContinuation::Continue(new_pos)
-                        })
+                            pos = unsafe { found_pos.add(1) };
+                        });
+                        continue;
                     }
                 } else if next_byte == LS_OR_PS_FIRST {
                     // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
@@ -139,7 +140,7 @@ impl<'a> Lexer<'a> {
                     cold_branch(|| {
                         // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
                         // So safe to advance `pos` by 1 and read 2 bytes.
-                        let next2 = unsafe { pos.add(1).read2() };
+                        let next2 = unsafe { found_pos.add(1).read2() };
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
                             self.token.set_is_on_new_line(true);
@@ -151,40 +152,26 @@ impl<'a> Lexer<'a> {
                         // Skip 3 bytes and continue searching.
                         // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                         // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                        let new_pos = unsafe { pos.add(3) };
-                        SearchContinuation::Continue(new_pos)
-                    })
+                        pos = unsafe { found_pos.add(3) };
+                    });
+                    continue;
                 } else {
                     // Regular line break.
                     // No need to look for more line breaks, so switch to faster search just for `*/`.
                     self.token.set_is_on_new_line(true);
                     // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
-                    let after_line_break = unsafe { pos.add(1) };
-                    // We need to call the specialized function and return early
-                    // This is a bit awkward with the current function design
-                    // For now, we'll just continue and handle this case after the search
-                    SearchContinuation::Stop(after_line_break)
+                    let after_line_break = unsafe { found_pos.add(1) };
+                    return self.skip_multi_line_comment_after_line_break(after_line_break);
                 }
-            },
-            || {
+            } else {
+                // EOF
+                self.source.advance_to_end();
                 self.error(diagnostics::unterminated_multi_line_comment(
                     self.unterminated_range(),
                 ));
                 return Kind::Eof;
-            },
-        );
-
-        match result {
-            Ok(_) => {
-                // Check if this was a regular line break that requires special handling
-                if self.token.is_on_new_line() {
-                    // This might have been set in the continue_if closure due to a line break
-                    // In that case, we should delegate to the specialized function
-                    // But we've already advanced the position, so we can just continue with the normal flow
-                }
             }
-            Err(kind) => return kind,
-        };
+        }
 
         self.trivia_builder.add_block_comment(
             self.token.start(),

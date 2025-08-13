@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_with_advanced_continue, SearchContinuation},
+    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw, SEARCH_BATCH_SIZE},
 };
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
@@ -42,92 +42,72 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
 
-        let _byte = match byte_search_with_advanced_continue(
-            self,
-            &TEMPLATE_LITERAL_TABLE,
-            self.source.position(),
-            |byte, pos| {
+        // Use raw search function and handle continue logic directly
+        let mut pos = self.source.position();
+        loop {
+            if let Some((byte, found_pos)) = byte_search_raw(self, &TEMPLATE_LITERAL_TABLE, pos) {
                 let next_byte = byte;
                 match next_byte {
                     b'$' => {
                         // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
-                        let after_dollar = unsafe { pos.add(1) };
+                        let after_dollar = unsafe { found_pos.add(1) };
                         if after_dollar.is_not_end_of(&self.source) {
                             // If `${`, exit.
                             // SAFETY: Have checked there's at least 1 further byte to read.
                             if unsafe { after_dollar.read() } == b'{' {
                                 // Skip `${` and stop searching.
                                 // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                                let new_pos = unsafe { pos.add(2) };
-                                SearchContinuation::Stop(new_pos)
+                                let new_pos = unsafe { found_pos.add(2) };
+                                self.source.set_position(new_pos);
+                                break;
                             } else {
                                 // Not `${`. Continue searching.
                                 // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                                let new_pos = unsafe { pos.add(1) };
-                                SearchContinuation::Continue(new_pos)
+                                pos = unsafe { found_pos.add(1) };
+                                continue;
                             }
                         } else {
                             // This is last byte in file. Continue to `handle_eof`.
                             // This is illegal in valid JS, so mark this branch cold.
                             cold_branch(|| {
                                 // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                                let new_pos = unsafe { pos.add(1) };
-                                SearchContinuation::Continue(new_pos)
-                            })
+                                pos = unsafe { found_pos.add(1) };
+                            });
+                            continue;
                         }
                     }
                     b'`' => {
                         // Skip '`' and stop searching.
                         // SAFETY: Char at `pos` is '`', so `pos + 1` is a UTF-8 char boundary.
-                        let new_pos = unsafe { pos.add(1) };
+                        let new_pos = unsafe { found_pos.add(1) };
                         ret = tail;
-                        SearchContinuation::Stop(new_pos)
+                        self.source.set_position(new_pos);
+                        break;
                     }
                     b'\r' => {
-                        // SAFETY: Byte at `pos` is `\r`.
-                        // `pos` has only been advanced relative to `self.source.position()`.
-                        // We can't return from the closure, so we'll use a special sentinel value
-                        // This is a limitation of the current design - we need to handle this case
-                        // differently. For now, let's stop here and handle the \r case after the search.
-                        SearchContinuation::Stop(pos)
+                        // SAFETY: Byte at `found_pos` is `\r`.
+                        return unsafe {
+                            self.template_literal_carriage_return(found_pos, substitute, tail)
+                        };
                     }
                     _ => {
                         // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
                         debug_assert!(next_byte == b'\\');
-                        // SAFETY: Byte at `pos` is `\`.
-                        // `pos` has only been advanced relative to `self.source.position()`.
-                        // Similar to \r case, we need to handle this after the search
-                        SearchContinuation::Stop(pos)
+                        // SAFETY: Byte at `found_pos` is `\`.
+                        return unsafe {
+                            self.template_literal_backslash(found_pos, substitute, tail)
+                        };
                     }
                 }
-            },
-            || {
+            } else {
+                // EOF
+                self.source.advance_to_end();
                 self.error(diagnostics::unterminated_string(
                     self.unterminated_range(),
                 ));
                 return Kind::Undetermined;
-            },
-        ) {
-            Ok(matched_byte) => {
-                // Handle special cases that need early returns
-                match matched_byte {
-                    b'\r' => {
-                        // SAFETY: Byte at current position is `\r`.
-                        return unsafe {
-                            self.template_literal_carriage_return(self.source.position(), substitute, tail)
-                        };
-                    }
-                    b'\\' => {
-                        // SAFETY: Byte at current position is `\`.
-                        return unsafe {
-                            self.template_literal_backslash(self.source.position(), substitute, tail)
-                        };
-                    }
-                    _ => {} // Normal cases handled above
-                }
             }
-            Err(kind) => return kind,
-        };
+        }
 
         ret
     }

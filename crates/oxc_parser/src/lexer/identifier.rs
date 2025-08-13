@@ -10,7 +10,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_from_pos_simple},
+    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -53,19 +53,15 @@ impl<'a> Lexer<'a> {
         let after_first = unsafe { self.source.position().add(1) };
 
         // Consume bytes which are part of identifier
-        let next_byte = match byte_search_from_pos_simple(
-            self,
-            &NOT_ASCII_ID_CONTINUE_TABLE,
-            after_first,
-            || {
-                // Return identifier minus its first char.
-                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
-                // of `after_first` which could be after current position.
-                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
-            },
-        ) {
-            Ok(byte) => byte,
-            Err(result) => return result,
+        let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first) {
+            self.source.set_position(pos);
+            byte
+        } else {
+            // EOF - Return identifier minus its first char.
+            // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
+            // of `after_first` which could be after current position.
+            self.source.advance_to_end();
+            return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
         };
 
         // Found a matching byte.
@@ -241,14 +237,13 @@ impl<'a> Lexer<'a> {
         let after_first = unsafe { start_pos.add(1) };
 
         // Consume bytes which are part of identifier
-        let next_byte = match byte_search_from_pos_simple(
-            self,
-            &NOT_ASCII_ID_CONTINUE_TABLE,
-            after_first,
-            || return Kind::PrivateIdentifier,
-        ) {
-            Ok(byte) => byte,
-            Err(kind) => return kind,
+        let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first) {
+            self.source.set_position(pos);
+            byte
+        } else {
+            // EOF
+            self.source.advance_to_end();
+            return Kind::PrivateIdentifier;
         };
 
         // Found a matching byte.

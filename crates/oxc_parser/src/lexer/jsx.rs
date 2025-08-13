@@ -7,7 +7,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, Token, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_simple},
+    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
 };
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
@@ -76,13 +76,13 @@ impl Lexer<'_> {
                 Kind::LCurly
             }
             Some(_) => {
-                let next_byte = match byte_search_simple(
-                    self,
-                    &JSX_CHILD_END_TABLE,
-                    || return Kind::Eof,
-                ) {
-                    Ok(byte) => byte,
-                    Err(kind) => return kind,
+                let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &JSX_CHILD_END_TABLE, self.source.position()) {
+                    self.source.set_position(pos);
+                    byte
+                } else {
+                    // EOF
+                    self.source.advance_to_end();
+                    return Kind::Eof;
                 };
 
                 if matches!(next_byte, b'<' | b'{') {
@@ -118,13 +118,13 @@ impl Lexer<'_> {
         self.consume_char();
 
         // Consume bytes which are part of identifier tail
-        let next_byte = match byte_search_simple(
-            self,
-            &NOT_ASCII_JSX_ID_CONTINUE_TABLE,
-            || return Some(self.finish_next(Kind::Ident)),
-        ) {
-            Ok(byte) => byte,
-            Err(token) => return token,
+        let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &NOT_ASCII_JSX_ID_CONTINUE_TABLE, self.source.position()) {
+            self.source.set_position(pos);
+            byte
+        } else {
+            // EOF
+            self.source.advance_to_end();
+            return Some(self.finish_next(Kind::Ident));
         };
 
         // Found a matching byte.
