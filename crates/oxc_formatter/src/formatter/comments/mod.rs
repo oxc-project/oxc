@@ -353,16 +353,6 @@ impl<'a> Comments<'a> {
             return &[];
         }
 
-        // No need to print trailing comments for the most right side for `BinaryExpression` and `LogicalExpression`,
-        // instead, print trailing comments for expression itself.
-        if matches!(
-            enclosing_node,
-            SiblingNode::BinaryExpression(_) | SiblingNode::LogicalExpression(_)
-        ) && matches!(following_node, Some(SiblingNode::ExpressionStatement(_)))
-        {
-            return &[];
-        }
-
         let comments = self.unprinted_comments();
         if comments.is_empty() {
             return &[];

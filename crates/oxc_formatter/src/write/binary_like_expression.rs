@@ -9,6 +9,7 @@ use crate::{
     Format,
     formatter::{FormatResult, Formatter},
     generated::ast_nodes::{AstNode, AstNodes},
+    utils::expression::FormatExpressionWithoutTrailingComments,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -293,6 +294,8 @@ enum BinaryLeftOrRightSide<'a, 'b> {
         parent: BinaryLikeExpression<'a, 'b>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
+        /// It is the root of the expression.
+        root: bool,
     },
 }
 
@@ -303,6 +306,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
+                root,
             } => {
                 // // It's only possible to suppress the formatting of the whole binary expression formatting OR
                 // // the formatting of the right hand side value but not of a nested binary expression.
@@ -319,27 +323,28 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         write!(f, [soft_line_break_or_space()])?;
                     }
 
-                    write!(f, right)
+                    if *root {
+                        write!(f, FormatExpressionWithoutTrailingComments(right))
+                    } else {
+                        write!(f, right)
+                    }
                 });
 
-                let parent = binary_like_expression.parent();
-
                 // Doesn't match prettier that only distinguishes between logical and binary
-                let should_group =
-                    !(is_same_binary_expression_kind(binary_like_expression, parent)
-                        || is_same_binary_expression_kind(
-                            binary_like_expression,
-                            binary_like_expression.left().as_ast_nodes(),
-                        )
-                        || is_same_binary_expression_kind(
-                            binary_like_expression,
-                            right.as_ast_nodes(),
-                        )
-                        || (*inside_parenthesis
-                            && matches!(
-                                binary_like_expression,
-                                BinaryLikeExpression::LogicalExpression(_)
-                            )));
+                let should_group = !(is_same_binary_expression_kind(
+                    binary_like_expression,
+                    binary_like_expression.parent(),
+                ) || is_same_binary_expression_kind(
+                    binary_like_expression,
+                    binary_like_expression.left().as_ast_nodes(),
+                ) || is_same_binary_expression_kind(
+                    binary_like_expression,
+                    right.as_ast_nodes(),
+                ) || (*inside_parenthesis
+                    && matches!(
+                        binary_like_expression,
+                        BinaryLikeExpression::LogicalExpression(_)
+                    )));
 
                 if should_group {
                     // `left` side has printed before `right` side, so that trailing comments of `left` side has been printed,
@@ -400,21 +405,22 @@ impl BinaryLeftOrRightSide<'_, '_> {
 /// It then traverses upwards from the left most node and creates [BinaryLeftOrRightSide::Right]s for
 /// every [BinaryLikeExpression] until it reaches the root again.
 fn split_into_left_and_right_sides<'a, 'b>(
-    root: BinaryLikeExpression<'a, 'b>,
+    binary: BinaryLikeExpression<'a, 'b>,
     inside_condition: bool,
 ) -> Vec<BinaryLeftOrRightSide<'a, 'b>> {
     fn split_into_left_and_right_sides_inner<'a, 'b>(
+        is_root: bool,
         binary: BinaryLikeExpression<'a, 'b>,
         inside_condition: bool,
         items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
     ) {
         let left = binary.left();
-        let right = binary.right();
 
         if binary.can_flatten() {
             // We can flatten the left hand side, so we need to check if we have a nested binary expression
             // that we can flatten.
             split_into_left_and_right_sides_inner(
+                false,
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
@@ -424,14 +430,19 @@ fn split_into_left_and_right_sides<'a, 'b>(
             items.push(BinaryLeftOrRightSide::Left { parent: binary });
         }
 
-        items.push(BinaryLeftOrRightSide::Right { parent: binary, inside_condition });
+        items.push(BinaryLeftOrRightSide::Right {
+            parent: binary,
+            inside_condition,
+            root: is_root,
+        });
     }
 
     // Stores the left and right parts of the binary expression in sequence (rather than nested as they
     // appear in the tree).
-    let mut items = Vec::new();
+    // `with_capacity(2)` because we expect at most 2 items (left and right).
+    let mut items = Vec::with_capacity(2);
 
-    split_into_left_and_right_sides_inner(root, inside_condition, &mut items);
+    split_into_left_and_right_sides_inner(true, binary, inside_condition, &mut items);
 
     items
 }
