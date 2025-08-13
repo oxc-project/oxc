@@ -13,6 +13,10 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
+            // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
+            if decl.kind.is_using() {
+                return false;
+            }
             if Self::keep_top_level_var_in_script_mode(ctx) {
                 return false;
             }
@@ -97,6 +101,8 @@ mod test {
         test_options("var x = foo", "foo", &options);
         test_same_options("var x; foo(x)", &options);
         test_same_options("export var x", &options);
+        test_same_options("using x = foo", &options);
+        test_same_options("await using x = foo", &options);
     }
 
     #[test]
