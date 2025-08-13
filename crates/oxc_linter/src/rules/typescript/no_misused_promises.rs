@@ -53,7 +53,7 @@ declare_oxc_lint!(
     /// ```
     NoMisusedPromises(tsgolint),
     typescript,
-    suspicious,
+    pedantic,
     pending,
 );
 
