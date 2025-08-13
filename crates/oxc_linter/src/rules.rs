@@ -617,6 +617,10 @@ mod node {
     pub mod no_new_require;
 }
 
+mod vue {
+    pub mod valid_define_emits;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,
@@ -1186,4 +1190,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vue::valid_define_emits,
 }
