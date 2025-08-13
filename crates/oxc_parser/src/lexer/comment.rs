@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
+    search::{SafeByteMatchTable, byte_search_raw, safe_byte_match_table},
     source::SourcePosition,
 };
 
@@ -74,7 +74,7 @@ impl<'a> Lexer<'a> {
                             true
                         }
                     });
-                    
+
                     if !should_continue {
                         break;
                     }
@@ -105,7 +105,9 @@ impl<'a> Lexer<'a> {
         // Use raw search function and handle continue logic directly
         let mut pos = self.source.position();
         loop {
-            if let Some((byte, found_pos)) = byte_search_raw(self, &MULTILINE_COMMENT_START_TABLE, pos) {
+            if let Some((byte, found_pos)) =
+                byte_search_raw(self, &MULTILINE_COMMENT_START_TABLE, pos)
+            {
                 let next_byte = byte;
                 // Match found. Decide whether to continue searching.
                 if next_byte == b'*' {
@@ -166,9 +168,7 @@ impl<'a> Lexer<'a> {
             } else {
                 // EOF
                 self.source.advance_to_end();
-                self.error(diagnostics::unterminated_multi_line_comment(
-                    self.unterminated_range(),
-                ));
+                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
                 return Kind::Eof;
             }
         }

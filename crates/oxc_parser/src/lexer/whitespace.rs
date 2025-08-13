@@ -1,6 +1,6 @@
 use super::{
     Kind, Lexer,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
+    search::{SafeByteMatchTable, byte_search_raw, safe_byte_match_table},
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
@@ -16,7 +16,11 @@ impl Lexer<'_> {
         // Irregular line breaks and whitespace are not consumed.
         // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
         // Use raw search function to avoid borrowing issues
-        if let Some((_byte, pos)) = byte_search_raw(self, &NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE, self.source.position()) {
+        if let Some((_byte, pos)) = byte_search_raw(
+            self,
+            &NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
+            self.source.position(),
+        ) {
             self.source.set_position(pos);
         } else {
             // EOF

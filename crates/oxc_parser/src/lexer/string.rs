@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, LexerContext, Span, Token, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
+    search::{SafeByteMatchTable, byte_search_raw, safe_byte_match_table},
 };
 
 /// Convert `char` to UTF-8 bytes array.
@@ -60,15 +60,16 @@ macro_rules! handle_string_literal {
         let after_opening_quote = $lexer.source.position().add(1);
 
         // Consume bytes which are part of string
-        let next_byte = if let Some((byte, pos)) = byte_search_raw($lexer, &$table, after_opening_quote) {
-            $lexer.source.set_position(pos);
-            byte
-        } else {
-            // EOF
-            $lexer.source.advance_to_end();
-            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
-            return Kind::Undetermined;
-        };
+        let next_byte =
+            if let Some((byte, pos)) = byte_search_raw($lexer, &$table, after_opening_quote) {
+                $lexer.source.set_position(pos);
+                byte
+            } else {
+                // EOF
+                $lexer.source.advance_to_end();
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
+                return Kind::Undetermined;
+            };
 
         // Found a matching byte.
         // Either end of string found, or a line break, or `\` escape.

@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw, SEARCH_BATCH_SIZE},
+    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, byte_search_raw, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
@@ -102,9 +102,7 @@ impl<'a> Lexer<'a> {
             } else {
                 // EOF
                 self.source.advance_to_end();
-                self.error(diagnostics::unterminated_string(
-                    self.unterminated_range(),
-                ));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 return Kind::Undetermined;
             }
         }

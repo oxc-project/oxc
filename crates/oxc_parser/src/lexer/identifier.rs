@@ -10,7 +10,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
-    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_raw},
+    search::{SafeByteMatchTable, byte_search_raw, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -53,7 +53,9 @@ impl<'a> Lexer<'a> {
         let after_first = unsafe { self.source.position().add(1) };
 
         // Consume bytes which are part of identifier
-        let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first) {
+        let next_byte = if let Some((byte, pos)) =
+            byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first)
+        {
             self.source.set_position(pos);
             byte
         } else {
@@ -237,7 +239,9 @@ impl<'a> Lexer<'a> {
         let after_first = unsafe { start_pos.add(1) };
 
         // Consume bytes which are part of identifier
-        let next_byte = if let Some((byte, pos)) = byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first) {
+        let next_byte = if let Some((byte, pos)) =
+            byte_search_raw(self, &NOT_ASCII_ID_CONTINUE_TABLE, after_first)
+        {
             self.source.set_position(pos);
             byte
         } else {
