@@ -92,9 +92,9 @@ impl IsolatedLintHandler {
             return None;
         }
 
-        let allocator = Allocator::default();
+        let mut allocator = Allocator::default();
 
-        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
+        Some(self.lint_path(&mut allocator, &path, content).map_or(vec![], |errors| {
             let mut diagnostics: Vec<DiagnosticReport> = errors
                 .iter()
                 .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
@@ -143,7 +143,7 @@ impl IsolatedLintHandler {
 
     fn lint_path<'a>(
         &mut self,
-        allocator: &'a Allocator,
+        allocator: &'a mut Allocator,
         path: &Path,
         source_text: Option<String>,
     ) -> Option<Vec<MessageWithPosition<'a>>> {
