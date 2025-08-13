@@ -167,11 +167,6 @@ jobs:
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!editors/**'
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-        with:
-          babel: false
-          prettier: false
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
@@ -179,6 +174,11 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+        with:
+          babel: false
+          prettier: false
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
         env:
