@@ -7,7 +7,7 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn init_symbol_value(&self, decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
         // Skip for `var` declarations, due to TDZ problems.
@@ -19,7 +19,7 @@ impl<'a> PeepholeOptimizations {
         ctx.init_value(symbol_id, value);
     }
 
-    pub fn inline_identifier_reference(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = expr else { return };
         let Some(reference_id) = ident.reference_id.get() else { return };
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };

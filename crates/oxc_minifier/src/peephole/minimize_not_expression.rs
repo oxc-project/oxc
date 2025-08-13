@@ -8,24 +8,19 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_not(
-        &self,
-        span: Span,
-        expr: Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Expression<'a> {
+    pub fn minimize_not(span: Span, expr: Expression<'a>, ctx: &mut Ctx<'a, '_>) -> Expression<'a> {
         let mut unary = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, expr);
-        self.try_minimize_not(&mut unary, ctx);
+        Self::try_minimize_not(&mut unary, ctx);
         unary
     }
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    pub fn try_minimize_not(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_minimize_not(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };
         if !e.operator.is_not() {
             return;
         }
-        self.try_fold_expr_in_boolean_context(&mut e.argument, ctx);
+        Self::try_fold_expr_in_boolean_context(&mut e.argument, ctx);
         match &mut e.argument {
             // `!!true` -> `true`
             // `!!false` -> `false`
@@ -48,7 +43,7 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
                     *last_expr =
-                        self.minimize_not(last_expr.span(), last_expr.take_in(ctx.ast), ctx);
+                        Self::minimize_not(last_expr.span(), last_expr.take_in(ctx.ast), ctx);
                     *expr = e.argument.take_in(ctx.ast);
                     ctx.state.changed = true;
                 }

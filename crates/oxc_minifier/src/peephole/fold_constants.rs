@@ -624,7 +624,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn fold_object_exp(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
             match e {
                 Expression::ArrayExpression(o) if o.elements.is_empty() => true,
@@ -719,7 +719,7 @@ impl<'a> PeepholeOptimizations {
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    pub fn inline_template_literal(&self, t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
         let has_expr_to_inline = t
             .expressions
             .iter()

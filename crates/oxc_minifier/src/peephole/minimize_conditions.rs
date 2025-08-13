@@ -22,7 +22,6 @@ impl<'a> PeepholeOptimizations {
     // associative. For example, the "+" operator is not associative for
     // floating-point numbers.
     pub fn join_with_left_associative_op(
-        &self,
         span: Span,
         op: LogicalOperator,
         a: Expression<'a>,
@@ -34,7 +33,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
-                    .push(self.join_with_left_associative_op(span, op, right, b, ctx));
+                    .push(Self::join_with_left_associative_op(span, op, right, b, ctx));
             }
             return Expression::SequenceExpression(sequence_expr);
         }
@@ -46,7 +45,7 @@ impl<'a> PeepholeOptimizations {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
                     let right = logical_expr.left.take_in(ctx.ast);
-                    a = self.join_with_left_associative_op(span, op, a, right, ctx);
+                    a = Self::join_with_left_associative_op(span, op, a, right, ctx);
                     b = logical_expr.right.take_in(ctx.ast);
                     continue;
                 }
@@ -56,7 +55,7 @@ impl<'a> PeepholeOptimizations {
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         let mut logic_expr = ctx.ast.expression_logical(span, a, op, b);
-        self.minimize_logical_expression(&mut logic_expr, ctx);
+        Self::minimize_logical_expression(&mut logic_expr, ctx);
         logic_expr
     }
 
@@ -172,7 +171,6 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
     pub fn try_compress_normal_assignment_to_combined_logical_assignment(
-        &self,
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
