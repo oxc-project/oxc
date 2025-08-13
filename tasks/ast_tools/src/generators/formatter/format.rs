@@ -14,8 +14,18 @@ use crate::{
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
 /// Based on the prettier printing comments algorithm, these nodes don't need to print comments.
-const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] =
-    &["FormalParameters", "FunctionBody", "CatchParameter", "CatchClause"];
+const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
+    "FormalParameters",
+    "FunctionBody",
+    "ClassBody",
+    "CatchParameter",
+    "CatchClause",
+    "Decorator",
+    // Manually prints it, because class's decorators can be appears before `export class Cls {}`.
+    "ExportNamedDeclaration",
+    "ExportDefaultDeclaration",
+    "TSClassImplements",
+];
 
 const NEEDS_PARENTHESES: &[&str] = &[
     "Class",

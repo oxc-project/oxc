@@ -20,6 +20,16 @@ fn format_export_keyword_with_class_decorators<'a>(
     declaration: &AstNodes<'a>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
+    // `@decorator export class Cls {}`
+    //            ^ print leading comments here
+    let format_leading_comments = |f: &mut Formatter<'_, 'a>| -> FormatResult<()> {
+        let comments = f.context().comments().comments_before(span.start);
+        if !comments.is_empty() {
+            FormatLeadingComments::Comments(comments).fmt(f)?;
+        }
+        Ok(())
+    };
+
     if let AstNodes::Class(class) = declaration
         && !class.decorators.is_empty()
     {
@@ -27,14 +37,17 @@ fn format_export_keyword_with_class_decorators<'a>(
         // decorators are placed before the export keyword
         if class.decorators[0].span.end < span.start {
             write!(f, [class.decorators(), hard_line_break()])?;
+            format_leading_comments(f)?;
             write!(f, [keyword, space()])
         } else {
             // `export @decorator class Cls {}`
             // decorators are placed after the export keyword
+            format_leading_comments(f)?;
             write!(f, [keyword, hard_line_break()])?;
             write!(f, [class.decorators(), hard_line_break()])
         }
     } else {
+        format_leading_comments(f)?;
         write!(f, [keyword, space()])
     }
 }
@@ -52,7 +65,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
         if self.declaration().is_expression() {
             write!(f, OptionalSemicolon)?;
         }
-        Ok(())
+
+        self.format_trailing_comments(f)
     }
 }
 
@@ -83,6 +97,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             )?;
             write!(f, decl)?;
         } else {
+            self.format_leading_comments(f)?;
             write!(f, ["export", space()])?;
 
             let comments = f.context().comments().comments_before_character(self.span.start, b'{');
@@ -116,7 +131,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
         if declaration.is_none_or(|d| matches!(d.as_ref(), Declaration::VariableDeclaration(_))) {
             write!(f, OptionalSemicolon)?;
         }
-        Ok(())
+
+        self.format_trailing_comments(f)
     }
 }
 

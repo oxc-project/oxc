@@ -113,7 +113,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrayExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let parent = self.parent;
-        is_class_extends(parent, self.span())
+        is_class_extends(self.span, parent)
             || is_first_in_statement(
                 self.span,
                 parent,
@@ -136,7 +136,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        matches!(self.parent, AstNodes::Decorator(_))
     }
 }
 
@@ -152,10 +152,27 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
     }
 }
 
+fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
+    let mut expr = callee;
+    loop {
+        match expr {
+            Expression::Identifier(_) => return true,
+            Expression::StaticMemberExpression(static_member) => {
+                expr = &static_member.object;
+            }
+            _ => break,
+        }
+    }
+
+    false
+}
+
 impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::NewExpression(_))
-            || matches!(self.parent, AstNodes::ExportDefaultDeclaration(_)) && {
+        match self.parent {
+            AstNodes::NewExpression(_) => true,
+            AstNodes::Decorator(_) => !is_identifier_or_static_member_only(&self.callee),
+            AstNodes::ExportDefaultDeclaration(_) => {
                 let callee = &self.callee;
                 let callee_span = callee.span();
                 let leftmost = ExpressionLeftSide::leftmost(callee);
@@ -169,12 +186,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
                         )
                     )
             }
+            _ => false,
+        }
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, NewExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        is_class_extends(self.parent, self.span())
+        is_class_extends(self.span, self.parent)
     }
 }
 
@@ -373,9 +392,10 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AwaitExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
-            AstNodes::CallExpression(call) => true,
-            AstNodes::NewExpression(new) => true,
-            AstNodes::StaticMemberExpression(member) => true,
+            AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::StaticMemberExpression(_)
+            | AstNodes::Decorator(_) => true,
             AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
             _ => false,
         }
@@ -392,11 +412,15 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Class<'a>> {
             AstNodes::CallExpression(_)
             | AstNodes::NewExpression(_)
             | AstNodes::ExportDefaultDeclaration(_) => true,
-            _ => is_first_in_statement(
-                self.span,
-                parent,
-                FirstInStatementMode::ExpressionOrExportDefault,
-            ),
+
+            _ => {
+                (is_class_extends(self.span, self.parent) && !self.decorators.is_empty())
+                    || is_first_in_statement(
+                        self.span,
+                        parent,
+                        FirstInStatementMode::ExpressionOrExportDefault,
+                    )
+            }
         }
     }
 }
@@ -497,7 +521,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSNonNullExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let parent = self.parent;
-        is_class_extends(parent, self.span())
+        is_class_extends(self.span, parent)
             || (matches!(parent, AstNodes::NewExpression(_))
                 && member_chain_callee_needs_parens(self.expression()))
     }
@@ -626,7 +650,7 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
             | AstNodes::StaticMemberExpression(_)
             | AstNodes::TemplateLiteral(_)
             | AstNodes::TaggedTemplateExpression(_)
-    ) || is_class_extends(parent, span)
+    ) || is_class_extends(span, parent)
     {
         return true;
     }
@@ -763,7 +787,7 @@ fn ts_as_or_satisfies_needs_parens(parent: &AstNodes<'_>) -> bool {
     )
 }
 
-fn is_class_extends(parent: &AstNodes<'_>, span: Span) -> bool {
+fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
     if let AstNodes::Class(c) = parent {
         return c.super_class.as_ref().is_some_and(|c| c.without_parentheses().span() == span);
     }

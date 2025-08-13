@@ -98,7 +98,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(start);
         while index < comments.len() {
             let comment = &comments[index];
-            if self.source_text[start as usize..comment.span.end as usize]
+            if self.source_text[start as usize..comment.span.start as usize]
                 .contains(character as char)
             {
                 return &comments[..index];

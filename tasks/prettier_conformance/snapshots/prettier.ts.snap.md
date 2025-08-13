@@ -1,4 +1,4 @@
-ts compatibility: 252/573 (43.98%)
+ts compatibility: 277/573 (48.34%)
 
 # Failed
 
@@ -82,18 +82,12 @@ ts compatibility: 252/573 (43.98%)
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
-| typescript/class/extends_implements.ts | 💥 | 44.44% |
-| typescript/class/generics.ts | 💥 | 60.00% |
-| typescript/class/issue-16723.ts | 💥 | 75.00% |
-| typescript/class/parameter-properties.ts | 💥 | 96.15% |
+| typescript/class/extends_implements.ts | 💥 | 86.30% |
+| typescript/class/generics.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/class-comment/class-implements.ts | 💥 | 52.56% |
-| typescript/class-comment/declare.ts | 💥 | 48.00% |
-| typescript/class-comment/generic.ts | 💥 | 89.36% |
-| typescript/classes/break-heritage.ts | 💥 | 51.06% |
-| typescript/classes/break.ts | 💥 | 39.39% |
-| typescript/comments/16065-2.ts | 💥 | 55.56% |
-| typescript/comments/16889.ts | 💥 | 90.60% |
+| typescript/comments/16065.ts | 💥 | 63.64% |
+| typescript/comments/16207.ts | 💥 | 71.43% |
+| typescript/comments/16889.ts | 💥 | 62.61% |
 | typescript/comments/after_jsx_generic.tsx | 💥 | 5.00% |
 | typescript/comments/declare_function.ts | 💥 | 50.00% |
 | typescript/comments/interface.ts | 💥 | 92.86% |
@@ -105,11 +99,9 @@ ts compatibility: 252/573 (43.98%)
 | typescript/comments/type-parameters.ts | 💥 | 36.36% |
 | typescript/comments/type_literals.ts | 💥 | 55.17% |
 | typescript/comments/union.ts | 💥 | 5.26% |
-| typescript/comments-2/dangling.ts | 💥💥 | 75.00% |
-| typescript/compiler/ClassDeclaration22.ts | 💥 | 50.00% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 50.00% |
 | typescript/compiler/castOfAwait.ts | 💥 | 87.50% |
-| typescript/compiler/castTest.ts | 💥 | 93.33% |
+| typescript/compiler/castTest.ts | 💥 | 96.67% |
 | typescript/compiler/checkInfiniteExpansionTermination.ts | 💥 | 80.00% |
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
@@ -122,14 +114,12 @@ ts compatibility: 252/573 (43.98%)
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 52.63% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 19.38% |
-| typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 50.00% |
+| typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 53.85% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
 | typescript/conformance/classes/mixinClassesAnnotated.ts | 💥 | 98.57% |
-| typescript/conformance/classes/mixinClassesMembers.ts | 💥 | 92.08% |
+| typescript/conformance/classes/mixinClassesMembers.ts | 💥 | 95.05% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
-| typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 93.55% |
-| typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts | 💥 | 86.96% |
-| typescript/conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts | 💥 | 85.71% |
+| typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 96.77% |
 | typescript/conformance/comments/comments.ts | 💥 | 0.00% |
 | typescript/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts | 💥 | 90.00% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 66.67% |
@@ -139,7 +129,7 @@ ts compatibility: 252/573 (43.98%)
 | typescript/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts | 💥 | 86.00% |
 | typescript/conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts | 💥 | 87.50% |
 | typescript/conformance/internalModules/importDeclarations/shadowedInternalModule.ts | 💥 | 87.88% |
-| typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 50.00% |
+| typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 60.00% |
 | typescript/conformance/types/constKeyword/constKeyword.ts | 💥 | 40.00% |
 | typescript/conformance/types/enumDeclaration/enumDeclaration.ts | 💥 | 40.00% |
 | typescript/conformance/types/firstTypeNode/firstTypeNode.ts | 💥 | 51.61% |
@@ -150,7 +140,6 @@ ts compatibility: 252/573 (43.98%)
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/interfaceDeclaration/interfaceDeclaration.ts | 💥 | 90.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
-| typescript/conformance/types/thisType/thisType.ts | 💥 | 66.67% |
 | typescript/conformance/types/tuple/wideningTuples1.ts | 💥 | 80.00% |
 | typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameter/typeParameter.ts | 💥 | 66.67% |
@@ -165,7 +154,7 @@ ts compatibility: 252/573 (43.98%)
 | typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/custom/computedProperties/symbol.ts | 💥 | 71.43% |
-| typescript/custom/declare/declareModifier.d.ts | 💥 | 44.44% |
+| typescript/custom/declare/declareModifier.d.ts | 💥 | 55.56% |
 | typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
 | typescript/custom/modifiers/question.ts | 💥 | 0.00% |
 | typescript/custom/modifiers/readonly.ts | 💥 | 0.00% |
@@ -173,22 +162,15 @@ ts compatibility: 252/573 (43.98%)
 | typescript/custom/typeParameters/callAndConstructSignatureLong.ts | 💥 | 18.18% |
 | typescript/custom/typeParameters/functionTypeLong.ts | 💥 | 50.00% |
 | typescript/custom/typeParameters/typeParametersLong.ts | 💥 | 0.00% |
-| typescript/declare/declare_class_fields.ts | 💥 | 91.67% |
 | typescript/declare/declare_enum.ts | 💥 | 0.00% |
 | typescript/declare/declare_function.ts | 💥 | 44.44% |
 | typescript/declare/declare_var.ts | 💥 | 80.00% |
 | typescript/declare/object-type-in-declare-function.ts | 💥 | 23.08% |
 | typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 25.00% |
+| typescript/decorators/comments.ts | 💥 | 60.00% |
 | typescript/decorators/decorator-type-assertion.ts | 💥 | 60.00% |
-| typescript/decorators/decorators.ts | 💥 | 74.29% |
-| typescript/decorators/inline-decorators.ts | 💥 | 67.31% |
-| typescript/decorators/legacy.ts | 💥 | 80.00% |
-| typescript/decorators/mobx.ts | 💥 | 70.33% |
-| typescript/decorators-ts/angular.ts | 💥 | 55.56% |
-| typescript/decorators-ts/mobx.ts | 💥 | 66.67% |
-| typescript/decorators-ts/multiple.ts | 💥 | 66.67% |
-| typescript/decorators-ts/parameter-decorator.ts | 💥 | 75.00% |
-| typescript/decorators-ts/property-decorator.ts | 💥 | 86.96% |
+| typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
+| typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
@@ -208,10 +190,8 @@ ts compatibility: 252/573 (43.98%)
 | typescript/generic/ungrouped-parameters.ts | 💥 | 74.07% |
 | typescript/import-export/type-modifier.ts | 💥 | 66.67% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
-| typescript/index-signature/index-signature.ts | 💥 | 75.00% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 66.67% |
-| typescript/instantiation-expression/property-access.ts | 💥 | 78.57% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/generic.ts | 💥💥 | 75.00% |
 | typescript/interface/ignore.ts | 💥💥 | 83.57% |
@@ -235,7 +215,7 @@ ts compatibility: 252/573 (43.98%)
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 60.00% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
-| typescript/method/issue-10352-consistency.ts | 💥 | 90.91% |
+| typescript/method/issue-10352-consistency.ts | 💥 | 95.45% |
 | typescript/method/method-signature.ts | 💥 | 93.75% |
 | typescript/method/semi.ts | 💥 | 42.86% |
 | typescript/method/type_literal_optional_method.ts | 💥 | 0.00% |
@@ -247,12 +227,11 @@ ts compatibility: 252/573 (43.98%)
 | typescript/no-semi/non-null.ts | 💥💥 | 66.67% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/non-null/parens.ts | 💥 | 80.00% |
-| typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/nosemi/type.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥💥 | 58.83% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |
-| typescript/optional-variance/basic.ts | 💥 | 57.38% |
-| typescript/optional-variance/with-jsx.tsx | 💥 | 57.38% |
+| typescript/optional-variance/basic.ts | 💥 | 59.02% |
+| typescript/optional-variance/with-jsx.tsx | 💥 | 59.02% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/predicate-types/predicate-types.ts | 💥 | 50.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 58.49% |
@@ -277,9 +256,6 @@ ts compatibility: 252/573 (43.98%)
 | typescript/satisfies-operators/ternary.ts | 💥💥 | 80.00% |
 | typescript/satisfies-operators/types-comments.ts | 💥✨ | 33.33% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
-| typescript/static-blocks/multiple.ts | 💥 | 33.33% |
-| typescript/static-blocks/nested.ts | 💥 | 43.48% |
-| typescript/static-blocks/static-blocks.ts | 💥 | 61.54% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
 | typescript/ternaries/indent.ts | 💥 | 96.67% |
@@ -303,10 +279,9 @@ ts compatibility: 252/573 (43.98%)
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/1.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
-| typescript/type-arguments-bit-shift-left-like/4.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 84.18% |
+| typescript/typeparams/class-method.ts | 💥 | 96.61% |
 | typescript/typeparams/const.ts | 💥 | 86.15% |
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 21.74% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |
