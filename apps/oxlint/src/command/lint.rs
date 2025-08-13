@@ -69,6 +69,7 @@ impl LintCommand {
         }
     }
 }
+
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
