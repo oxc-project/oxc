@@ -370,7 +370,8 @@ impl<'a> OptionalChaining<'a> {
                     .create_read_expression(ctx)
             } else {
                 // `foo.bar` -> `_foo$bar = foo.bar`
-                let binding = ctx.state.var_declarations.create_uid_var_based_on_node(object, ctx);
+                let var_declarations = &ctx.state.var_declarations;
+                let binding = var_declarations.create_uid_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
                     object.take_in(ctx.ast),
@@ -553,7 +554,8 @@ impl<'a> OptionalChaining<'a> {
         }
 
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.
-        let temp_binding = ctx.state.var_declarations.create_uid_var_based_on_node(expr, ctx);
+        let var_declarations = &ctx.state.var_declarations;
+        let temp_binding = var_declarations.create_uid_var_based_on_node(expr, ctx);
         if is_call && !ctx.state.assumptions.pure_getters {
             self.set_chain_call_context(expr, ctx);
         }
@@ -605,7 +607,8 @@ impl<'a> OptionalChaining<'a> {
 
         let temp_binding = {
             if self.temp_binding.is_none() {
-                let binding = ctx.state.var_declarations.create_uid_var_based_on_node(expr, ctx);
+                let var_declarations = &ctx.state.var_declarations;
+                let binding = var_declarations.create_uid_var_based_on_node(expr, ctx);
                 self.set_temp_binding(binding);
             }
             self.temp_binding.as_ref().unwrap()
@@ -645,8 +648,8 @@ impl<'a> OptionalChaining<'a> {
                     .get_identifier_reference()
                     .and_then(|ident| self.get_existing_binding_for_identifier(ident, ctx))
                     .unwrap_or_else(|| {
-                        let binding =
-                            ctx.state.var_declarations.create_uid_var_based_on_node(object, ctx);
+                        let var_declarations = &ctx.state.var_declarations;
+                        let binding = var_declarations.create_uid_var_based_on_node(object, ctx);
                         // `(_foo = foo)`
                         *object = Self::create_assignment_expression(
                             binding.create_write_target(ctx),

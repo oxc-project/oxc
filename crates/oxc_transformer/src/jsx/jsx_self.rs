@@ -39,16 +39,15 @@ use crate::{
 
 const SELF: &str = "__self";
 
-pub struct JsxSelf<'a> {
-}
+pub struct JsxSelf;
 
-impl<'a> JsxSelf<'a> {
+impl JsxSelf {
     pub fn new() -> Self {
-        Self { _marker: std::marker::PhantomData }
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -58,10 +57,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a> {
     }
 }
 
-impl<'a> JsxSelf<'a> {
+impl<'a> JsxSelf {
     pub fn report_error(&self, span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        ctx.state.errors.borrow_mut().push(error);
+        ctx.state.error(error);
     }
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {

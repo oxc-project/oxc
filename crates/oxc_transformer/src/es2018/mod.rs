@@ -18,7 +18,7 @@ pub struct ES2018<'a> {
 
     // Plugins
     object_rest_spread: ObjectRestSpread<'a>,
-    async_generator_functions: AsyncGeneratorFunctions<'a>,
+    async_generator_functions: AsyncGeneratorFunctions,
 }
 
 impl<'a> ES2018<'a> {

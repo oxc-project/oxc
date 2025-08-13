@@ -47,7 +47,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
-                        ctx.state.errors.borrow_mut().push(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
@@ -66,7 +66,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a> {
                     };
 
                     if !self.allow_namespaces {
-                        ctx.state.errors.borrow_mut().push(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
@@ -99,7 +99,7 @@ impl<'a> TypeScriptNamespace<'a> {
         let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
 
         let TSModuleDeclarationName::Identifier(ident) = id else {
-            ctx.state.errors.borrow_mut().push(ambient_module_nested(span));
+            ctx.state.error(ambient_module_nested(span));
             return;
         };
 
@@ -237,7 +237,7 @@ impl<'a> TypeScriptNamespace<'a> {
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
                                     if !decl.kind.is_const() {
-                                        ctx.state.errors.borrow_mut().push(namespace_exporting_non_const(decl.span));
+                                        ctx.state.error(namespace_exporting_non_const(decl.span));
                                     }
                                 });
                                 let stmts =

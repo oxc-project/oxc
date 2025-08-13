@@ -49,18 +49,17 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct ExplicitResourceManagement<'a> {
-
+pub struct ExplicitResourceManagement {
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 }
 
-impl<'a> ExplicitResourceManagement<'a> {
+impl ExplicitResourceManagement {
     pub fn new() -> Self {
         Self { top_level_using: FxHashMap::default() }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement {
     /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`

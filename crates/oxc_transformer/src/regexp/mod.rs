@@ -61,7 +61,7 @@ mod options;
 
 pub use options::RegExpOptions;
 
-pub struct RegExp<'a> {
+pub struct RegExp {
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
@@ -69,7 +69,7 @@ pub struct RegExp<'a> {
     unicode_property_escapes: bool,
 }
 
-impl<'a> RegExp<'a> {
+impl RegExp {
     pub fn new(options: RegExpOptions, ) -> Self {
         // Get unsupported flags
         let mut unsupported_flags = RegExpFlags::empty();
@@ -110,7 +110,7 @@ impl<'a> RegExp<'a> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for RegExp {
     // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -120,7 +120,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a> {
     }
 }
 
-impl<'a> RegExp<'a> {
+impl<'a> RegExp {
     /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::RegExpLiteral(regexp) = expr else {
@@ -162,7 +162,7 @@ impl<'a> RegExp<'a> {
                         owned_pattern.as_ref().unwrap()
                     }
                     Err(error) => {
-                        ctx.state.errors.borrow_mut().push(error);
+                        ctx.state.error(error);
                         return;
                     }
                 }

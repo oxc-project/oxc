@@ -64,16 +64,15 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct LogicalAssignmentOperators<'a> {
-}
+pub struct LogicalAssignmentOperators;
 
-impl<'a> LogicalAssignmentOperators<'a> {
+impl LogicalAssignmentOperators {
     pub fn new() -> Self {
-        Self { _marker: std::marker::PhantomData }
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators {
     // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
     // with a logical operator. So we want to bail out as fast as possible for everything else,
     // without the cost of a function call.

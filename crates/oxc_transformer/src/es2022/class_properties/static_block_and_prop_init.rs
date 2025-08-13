@@ -192,7 +192,7 @@ impl<'a> ClassProperties<'a> {
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
 // but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
 // code runs in strict mode, as it was before within class body.
-struct StaticVisitor<'a, 'ctx, 'v> {
+struct StaticVisitor<'a, 'v> {
     /// `true` if class has name, or `ScopeFlags` need updating.
     /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
     /// as far as functions and other constructs which define a `this`.
@@ -214,12 +214,12 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Converter for `super` expressions.
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> StaticVisitor<'a, 'v> {
     fn new(
         make_sloppy_mode: bool,
         reparent_scopes: bool,

@@ -100,13 +100,13 @@ impl<'a> ClassProperties<'a> {
 ///
 /// 1. Reference to class name to class temp var.
 /// 2. Transform `super` expressions.
-struct PrivateMethodVisitor<'a, 'ctx, 'v> {
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+struct PrivateMethodVisitor<'a, 'v> {
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> PrivateMethodVisitor<'a, 'v> {
     fn new(
         is_static: bool,
         class_properties: &'v mut ClassProperties<'a>,

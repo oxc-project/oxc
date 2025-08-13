@@ -17,7 +17,7 @@ pub struct ES2020<'a> {
     options: ES2020Options,
 
     // Plugins
-    nullish_coalescing_operator: NullishCoalescingOperator<'a>,
+    nullish_coalescing_operator: NullishCoalescingOperator,
     optional_chaining: OptionalChaining<'a>,
 }
 
@@ -68,7 +68,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a> {
                 "Big integer literals are not available in the configured target environment.",
             )
             .with_label(node.span);
-            ctx.state.errors.borrow_mut().push(warning);
+            ctx.state.error(warning);
         }
     }
 }

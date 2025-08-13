@@ -276,7 +276,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                 }
                 _ => {
                     // This should be never hit until more syntax is added to the JavaScript/TypeScrips
-                    ctx.state.errors.borrow_mut().push(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
+                    ctx.state.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
                 }
             }
         }

@@ -39,16 +39,15 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct NullishCoalescingOperator<'a> {
-}
+pub struct NullishCoalescingOperator;
 
-impl<'a> NullishCoalescingOperator<'a> {
+impl NullishCoalescingOperator {
     pub fn new() -> Self {
-        Self { _marker: std::marker::PhantomData }
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -65,7 +64,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a> {
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a> {
+impl NullishCoalescingOperator {
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -173,7 +172,8 @@ impl<'a> NullishCoalescingOperator<'a> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            ctx.state.var_declarations.insert_var(&binding, ctx);
+            let var_declarations = &ctx.state.var_declarations;
+            var_declarations.insert_var(&binding, ctx);
         }
 
         new_expr

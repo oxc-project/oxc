@@ -25,12 +25,12 @@ pub(super) enum ClassPropertiesSuperConverterMode {
 }
 
 /// Convert `super` expressions.
-pub(super) struct ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+pub(super) struct ClassPropertiesSuperConverter<'a, 'v> {
     mode: ClassPropertiesSuperConverterMode,
     pub(super) class_properties: &'v mut ClassProperties<'a>,
 }
 
-impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+impl<'a, 'v> ClassPropertiesSuperConverter<'a, 'v> {
     pub(super) fn new(
         mode: ClassPropertiesSuperConverterMode,
         class_properties: &'v mut ClassProperties<'a>,

@@ -59,7 +59,7 @@ impl<'a> TypeScriptModule<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         if ctx.state.module.is_esm() {
-            ctx.state.errors.borrow_mut().push(diagnostics::export_assignment_cannot_bed_used_in_esm(
+            ctx.state.error(diagnostics::export_assignment_cannot_bed_used_in_esm(
                 export_assignment.span,
             ));
         }
@@ -145,7 +145,7 @@ impl<'a> TypeScriptModule<'a> {
                 flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
 
                 if ctx.state.module.is_esm() {
-                    ctx.state.errors.borrow_mut().push(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
+                    ctx.state.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
                 let require_symbol_id =

@@ -53,16 +53,15 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct ReactDisplayName<'a> {
-}
+pub struct ReactDisplayName;
 
-impl<'a> ReactDisplayName<'a> {
+impl ReactDisplayName {
     pub fn new() -> Self {
-        Self { _marker: std::marker::PhantomData }
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -129,7 +128,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a> {
     }
 }
 
-impl<'a> ReactDisplayName<'a> {
+impl ReactDisplayName {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,

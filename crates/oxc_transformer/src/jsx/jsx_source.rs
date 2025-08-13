@@ -103,7 +103,7 @@ impl<'a> JsxSource<'a> {
 
     pub fn report_error(&self, span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __source prop found.").with_label(span);
-        ctx.state.errors.borrow_mut().push(error);
+        ctx.state.error(error);
     }
 
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`

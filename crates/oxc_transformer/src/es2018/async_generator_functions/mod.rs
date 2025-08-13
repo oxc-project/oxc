@@ -77,17 +77,17 @@ use crate::{
     es2017::AsyncGeneratorExecutor,
 };
 
-pub struct AsyncGeneratorFunctions<'a> {
-    executor: AsyncGeneratorExecutor<'a>,
+pub struct AsyncGeneratorFunctions {
+    executor: AsyncGeneratorExecutor,
 }
 
-impl<'a> AsyncGeneratorFunctions<'a> {
+impl AsyncGeneratorFunctions {
     pub fn new() -> Self {
         Self { executor: AsyncGeneratorExecutor::new(Helper::WrapAsyncGenerator) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -156,7 +156,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
     }
 }
 
-impl<'a> AsyncGeneratorFunctions<'a> {
+impl AsyncGeneratorFunctions {
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
     fn transform_yield_expression(
         &self,

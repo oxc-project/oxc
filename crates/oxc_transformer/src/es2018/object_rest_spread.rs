@@ -509,7 +509,12 @@ impl<'a> ObjectRestSpread<'a> {
         } else {
             ctx.ast.vec1(Argument::from(obj))
         };
-        let new_expr = ctx.state.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
+        let new_expr = {
+            let helper_loader = &ctx.state.helper_loader;
+            let callee = helper_loader.call_expr(Helper::ObjectSpread2, ctx);
+            let pure = Helper::ObjectSpread2.pure();
+            ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
+        };
         expr.replace(ctx.ast.alloc(new_expr));
     }
 }
@@ -1071,17 +1076,22 @@ impl<'a> SpreadPair<'a> {
                 SPAN,
                 {
                     let mut sequence = ctx.ast.vec();
-                    sequence.push(ctx.state.helper_call_expr(
-                        Helper::ObjectDestructuringEmpty,
-                        SPAN,
-                        ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx))),
-                        ctx,
-                    ));
+                    let helper_expr = {
+                        let helper_loader = &ctx.state.helper_loader;
+                        let callee = helper_loader.call_expr(Helper::ObjectDestructuringEmpty, ctx);
+                        let args = ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx)));
+                        let pure = Helper::ObjectDestructuringEmpty.pure();
+                        ctx.ast.call_expression_with_pure(SPAN, callee, NONE, args, false, pure)
+                    };
+                    sequence.push(Expression::CallExpression(ctx.ast.alloc(helper_expr)));
                     sequence.push(reference_builder.create_read_expression(ctx));
                     sequence
                 },
             )));
-            ctx.state.helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
+            let helper_loader = &ctx.state.helper_loader;
+            let callee = helper_loader.call_expr(Helper::Extends, ctx);
+            let pure = Helper::Extends.pure();
+            ctx.ast.call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`

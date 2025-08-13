@@ -1129,7 +1129,7 @@ impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     }
 }
 
-impl<'a> ClassReferenceChanger<'a> {
+impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     // Check if the identifier reference is a reference to the class
     fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         self.ctx

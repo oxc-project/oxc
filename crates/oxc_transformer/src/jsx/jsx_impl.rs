@@ -119,7 +119,7 @@ pub struct JsxImpl<'a> {
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
-    pub(super) jsx_self: JsxSelf<'a>,
+    pub(super) jsx_self: JsxSelf,
     pub(super) jsx_source: JsxSource<'a>,
 
     // States
@@ -521,7 +521,8 @@ impl<'a> JsxImpl<'a> {
             ctx.state.top_level_statements.insert_statement(stmt);
         } else {
             // Insert after imports - add to `var_declarations`, which are inserted after `require` statements
-            ctx.state.var_declarations.insert_var_declarator(declarator, ctx);
+            let var_declarations = &ctx.state.var_declarations;
+            var_declarations.insert_var_declarator(declarator, ctx);
         }
     }
 
@@ -589,7 +590,7 @@ impl<'a> JsxImpl<'a> {
                             }
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {
                                 if value.is_none() {
-                                    ctx.state.errors.borrow_mut().push(diagnostics::valueless_key(ident.span));
+                                    ctx.state.error(diagnostics::valueless_key(ident.span));
                                 } else if is_automatic {
                                     // In automatic mode, extract the key before spread prop,
                                     // and add it to the third argument later.
@@ -780,7 +781,7 @@ impl<'a> JsxImpl<'a> {
             }
             JSXElementName::NamespacedName(namespaced) => {
                 if self.options.throw_if_namespace {
-                    ctx.state.errors.borrow_mut().push(diagnostics::namespace_does_not_support(namespaced.span));
+                    ctx.state.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
                 let namespace_name = ctx.ast.atom_from_strs_array([
                     &namespaced.namespace.name,
@@ -1226,7 +1227,7 @@ mod test {
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Pragma;
-    use crate::{TransformState, TransformOptions, state::TransformState};
+    use crate::{TransformOptions, state::TransformState};
 
     macro_rules! setup {
         ($traverse_ctx:ident, $transform_ctx:ident) => {

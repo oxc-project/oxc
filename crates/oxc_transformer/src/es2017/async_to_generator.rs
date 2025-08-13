@@ -69,17 +69,17 @@ use crate::{
     state::TransformState, context::TraverseCtx,
 };
 
-pub struct AsyncToGenerator<'a> {
-    executor: AsyncGeneratorExecutor<'a>,
+pub struct AsyncToGenerator {
+    executor: AsyncGeneratorExecutor,
 }
 
-impl<'a> AsyncToGenerator<'a> {
+impl AsyncToGenerator {
     pub fn new() -> Self {
         Self { executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -147,9 +147,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
     }
 }
 
-impl<'a> AsyncToGenerator<'a> {
+impl AsyncToGenerator {
     /// Check whether the current node is inside an async function.
-    fn is_inside_async_function(ctx: &TraverseCtx<'a>) -> bool {
+    fn is_inside_async_function<'a>(ctx: &TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
         if ctx.current_scope_flags().is_top() {
             return false;
@@ -169,7 +169,7 @@ impl<'a> AsyncToGenerator<'a> {
 
     /// Transforms `await` expressions to `yield` expressions.
     /// Ignores top-level await expressions.
-    fn transform_await_expression(
+    fn transform_await_expression<'a>(
         expr: &mut AwaitExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -182,14 +182,17 @@ impl<'a> AsyncToGenerator<'a> {
     }
 }
 
-pub struct AsyncGeneratorExecutor<'a> {
+pub struct AsyncGeneratorExecutor {
     helper: Helper,
 }
 
-impl<'a> AsyncGeneratorExecutor<'a> {
+impl AsyncGeneratorExecutor {
     pub fn new(helper: Helper) -> Self {
         Self { helper }
     }
+}
+
+impl<'a> AsyncGeneratorExecutor {
 
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
     ///
