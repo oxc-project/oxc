@@ -72,7 +72,7 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     fn new(
         instance_inits_scope_id: ScopeId,
         constructor_scope_id: ScopeId,
-        class_properties: &'v mut ClassProperties<'a, '_>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         Self {
@@ -114,7 +114,7 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
     }
 }
 
-impl<'a> InstanceInitializerVisitor<'a> {
+impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
         self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));

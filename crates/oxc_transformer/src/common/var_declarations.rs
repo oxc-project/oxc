@@ -16,7 +16,7 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -166,7 +166,7 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
-        self.insert_var_declarator(declarator, ctx);
+        self.insert_var_declarator(declarator, ctx.ast.allocator);
     }
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block,
@@ -179,20 +179,26 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let declarator =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Let, ident, init, false);
-        self.insert_let_declarator(declarator, ctx);
+        self.insert_let_declarator(declarator, ctx.ast.allocator);
     }
 
     /// Add a `var` declaration to be inserted at top of current enclosing statement block.
-    pub fn insert_var_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn insert_var_declarator(&self, declarator: VariableDeclarator<'a>, allocator: &'a Allocator) {
         let mut stack = self.stack.borrow_mut();
-        let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
+        let declarators = stack.last_mut_or_init(|| Declarators {
+            var_declarators: ArenaVec::new_in(allocator),
+            let_declarators: ArenaVec::new_in(allocator),
+        });
         declarators.var_declarators.push(declarator);
     }
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block.
-    pub fn insert_let_declarator(&self, declarator: VariableDeclarator<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn insert_let_declarator(&self, declarator: VariableDeclarator<'a>, allocator: &'a Allocator) {
         let mut stack = self.stack.borrow_mut();
-        let declarators = stack.last_mut_or_init(|| Declarators::new(ctx));
+        let declarators = stack.last_mut_or_init(|| Declarators {
+            var_declarators: ArenaVec::new_in(allocator),
+            let_declarators: ArenaVec::new_in(allocator),
+        });
         declarators.let_declarators.push(declarator);
     }
 }

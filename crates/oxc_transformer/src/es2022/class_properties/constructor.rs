@@ -558,7 +558,7 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     }
 }
 
-impl<'a> ConstructorParamsSuperReplacer<'a> {
+impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
     /// Wrap `super()` -> `_super.call(super())`
     fn wrap_super(&mut self, expr: &mut Expression<'a>, span: Span) {
         let super_binding = self.super_binding.get_or_insert_with(|| {
@@ -742,7 +742,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     }
 }
 
-impl<'a> ConstructorBodySuperReplacer<'a> {
+impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
     /// Replace `super(arg1, arg2)` with `_super(arg1, arg2)`
     fn replace_super(&mut self, call_expr: &mut CallExpression<'a>, span: Span) {
         if self.super_binding.is_none() {

@@ -555,8 +555,9 @@ impl<'a> ExponentiationOperator<'a> {
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        // var _name;
-        let binding = ctx.state.var_declarations.create_uid_var_based_on_node(&expr, ctx);
+        // Create binding and insert var declaration separately to avoid borrowing conflicts
+        let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(&expr);
+        ctx.state.var_declarations.insert_var(&binding, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

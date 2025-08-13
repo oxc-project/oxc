@@ -343,7 +343,14 @@ impl<'a> LegacyDecoratorMetadata<'a> {
             // Reach here means the referent is a type symbol, so use `Object` as fallback.
             return Self::global_object(ctx);
         };
-        let binding = ctx.state.var_declarations.create_uid_var_based_on_node(&serialized_type, ctx);
+        // Workaround for borrowing issues: use allocator directly
+        let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(&serialized_type);
+        
+        let pattern = binding.create_binding_pattern(ctx);
+        let declarator = ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, pattern, None, false);
+        
+        // Use the modified method that takes allocator instead of full ctx
+        ctx.state.var_declarations.insert_var_declarator(declarator, ctx.ast.allocator);
         let target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,

@@ -614,7 +614,7 @@ impl<'a> StyledComponents<'a> {
                 String::with_capacity(PREFIX_LEN)
             };
 
-            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
+            prefix.extend(["sc-", self.get_file_hash(ctx).as_str(), "-"]);
 
             self.component_id_prefix = Some(prefix);
             self.component_id_prefix.as_deref().unwrap()
@@ -628,7 +628,7 @@ impl<'a> StyledComponents<'a> {
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&self) -> InlineString<7, u8> {
+    fn get_file_hash(&self, ctx: &TraverseCtx<'a>) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
             const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -647,8 +647,8 @@ impl<'a> StyledComponents<'a> {
         }
 
         let mut hasher = FxHasher::default();
-        if self.ctx.source_path.is_absolute() {
-            self.ctx.source_path.hash(&mut hasher);
+        if ctx.state.source_path.is_absolute() {
+            ctx.state.source_path.hash(&mut hasher);
         } else {
             ctx.state.source_text.hash(&mut hasher);
         }
@@ -662,14 +662,14 @@ impl<'a> StyledComponents<'a> {
             return None;
         }
 
-        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+        let file_stem = ctx.state.source_path.file_stem().and_then(|stem| stem.to_str())?;
 
         Some(*self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
             let block_name =
                 if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
-                    self.ctx
+                    ctx.state
                         .source_path
                         .parent()
                         .and_then(|parent| parent.file_name())

@@ -1312,7 +1312,7 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     }
 }
 
-impl<'a> ConstructorBodyThisAfterSuperInserter<'a> {
+impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
     /// `super()` -> `(super(), _this = this)`
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();

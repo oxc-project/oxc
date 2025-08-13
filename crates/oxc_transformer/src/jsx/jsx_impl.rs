@@ -133,7 +133,7 @@ enum Bindings<'a> {
     AutomaticModule(AutomaticModuleBindings<'a>),
 }
 
-impl Bindings<'_, '_> {
+impl Bindings<'_> {
     #[inline]
     fn is_classic(&self) -> bool {
         matches!(self, Self::Classic(_))

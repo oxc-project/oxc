@@ -12,7 +12,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, traverse_mut};
+use oxc_traverse::Traverse;
 
 // Core
 mod common;

@@ -287,9 +287,13 @@ impl<'a> TypeScript<'a> {
                 // Note: Key can also be static `StringLiteral` or `NumericLiteral`.
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
-                let new_key = if ctx.state.key_needs_temp_var(key, ctx) {
-                    let (assignment, ident) =
-                        ctx.state.create_computed_key_temp_var(key.take_in(ctx.ast), ctx);
+                let new_key = if {
+                    // Check if temp var is needed
+                    let needs_temp = ctx.state.key_needs_temp_var(key, ctx);
+                    needs_temp
+                } {
+                    let key_expr = key.take_in(ctx.ast);
+                    let (assignment, ident) = ctx.state.create_computed_key_temp_var(key_expr, ctx);
                     computed_key_assignments.push(assignment);
                     ident
                 } else {

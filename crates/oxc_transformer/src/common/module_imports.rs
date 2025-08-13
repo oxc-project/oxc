@@ -58,7 +58,17 @@ impl<'a> ModuleImports<'a> {
 
 impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.module_imports.insert_into_program(ctx);
+        // TODO: This is a temporary workaround for borrowing issues.
+        // The real solution is to refactor these helper methods to work with the new architecture.
+        let module_imports_ptr = &ctx.state.module_imports as *const _;
+        let is_script = ctx.state.source_type.is_script();
+        unsafe {
+            if is_script {
+                (*module_imports_ptr).insert_require_statements(ctx);
+            } else {
+                (*module_imports_ptr).insert_import_statements(ctx);
+            }
+        }
     }
 }
 

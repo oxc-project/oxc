@@ -689,7 +689,11 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        ctx.state.helper_call_expr(self.helper, SPAN, arguments, ctx)
+        // TODO: Temporary workaround for borrowing issue
+        let helper_loader_ptr = &ctx.state.helper_loader as *const _;
+        unsafe {
+            (*helper_loader_ptr).helper_call_expr(self.helper, SPAN, arguments, ctx)
+        }
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.
