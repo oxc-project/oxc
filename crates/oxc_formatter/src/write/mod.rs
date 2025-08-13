@@ -51,8 +51,13 @@ use crate::{
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::{
-        assignment_like::AssignmentLike, call_expression::is_test_call_expression,
-        conditional::ConditionalLike, member_chain::MemberChain, write_arguments_multi_line,
+        assignment_like::AssignmentLike,
+        call_expression::is_test_call_expression,
+        conditional::ConditionalLike,
+        member_chain::MemberChain,
+        object::format_property_key,
+        string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+        write_arguments_multi_line,
     },
     write,
     write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
@@ -68,7 +73,6 @@ use self::{
     utils::{
         array::{TrailingSeparatorMode, write_array_node},
         statement_body::FormatStatementBody,
-        string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
     },
 };
 
@@ -210,70 +214,52 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_key = format_with(|f| {
-            if let PropertyKey::StringLiteral(s) = &self.key().as_ref() {
-                FormatLiteralStringToken::new(
-                    s.span.source_text(f.source_text()),
-                    s.span,
-                    /* jsx */
-                    false,
-                    StringLiteralParentKind::Member,
+        let is_accessor = match &self.kind() {
+            PropertyKind::Init => false,
+            PropertyKind::Get => {
+                write!(f, ["get", space()])?;
+                true
+            }
+            PropertyKind::Set => {
+                write!(f, ["set", space()])?;
+                true
+            }
+        };
+
+        if self.method || is_accessor {
+            let AstNodes::Function(func) = self.value().as_ast_nodes() else {
+                unreachable!(
+                    "The `value` always be a function node if `method` or `accessor` is true"
                 )
-                .fmt(f)
-            } else {
-                write!(f, self.key())
-            }
-        });
-        if let AstNodes::Function(func) = self.value().as_ast_nodes() {
-            let is_accessor = match &self.kind() {
-                PropertyKind::Init => false,
-                PropertyKind::Get => {
-                    write!(f, ["get", space()])?;
-                    true
-                }
-                PropertyKind::Set => {
-                    write!(f, ["set", space()])?;
-                    true
-                }
             };
-            if self.method() || is_accessor {
-                if func.r#async() {
-                    write!(f, ["async", space()])?;
-                }
-                if func.generator() {
-                    write!(f, "*")?;
-                }
-                if self.computed() {
-                    write!(f, "[")?;
-                }
-                write!(f, format_key)?;
-                if self.computed() {
-                    write!(f, "]")?;
-                }
-                if let Some(type_parameters) = &func.type_parameters() {
-                    write!(f, type_parameters)?;
-                }
-                write!(f, group(&func.params()))?;
-                if let Some(return_type) = &func.return_type() {
-                    write!(f, return_type)?;
-                }
-                if let Some(body) = &func.body() {
-                    write!(f, [space(), body])?;
-                }
-                return Ok(());
+
+            if func.r#async() {
+                write!(f, ["async", space()])?;
             }
+            if func.generator() {
+                write!(f, "*")?;
+            }
+            if self.computed {
+                write!(f, ["[", self.key(), "]"])?;
+            } else {
+                format_property_key(self.key(), f)?;
+            }
+
+            if let Some(type_parameters) = &func.type_parameters() {
+                write!(f, type_parameters)?;
+            }
+            write!(f, group(&func.params()))?;
+            if let Some(return_type) = &func.return_type() {
+                write!(f, return_type)?;
+            }
+            if let Some(body) = &func.body() {
+                write!(f, [space(), body])?;
+            }
+
+            Ok(())
+        } else {
+            write!(f, AssignmentLike::ObjectProperty(self))
         }
-        if self.computed() {
-            write!(f, "[")?;
-        }
-        write!(f, format_key)?;
-        if self.computed() {
-            write!(f, "]")?;
-        }
-        if !self.shorthand() {
-            write!(f, [":", space(), self.value()])?;
-        }
-        Ok(())
     }
 }
 
@@ -1210,47 +1196,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.decorators())?;
-        if self.declare() {
-            write!(f, ["declare", space()])?;
-        }
-        if let Some(accessibility) = self.accessibility() {
-            write!(f, [accessibility.as_str(), space()])?;
-        }
-        if self.r#type() == PropertyDefinitionType::TSAbstractPropertyDefinition {
-            write!(f, ["abstract", space()])?;
-        }
-        if self.r#static() {
-            write!(f, ["static", space()])?;
-        }
-        if self.readonly() {
-            write!(f, ["readonly", space()])?;
-        }
-        if self.computed() {
-            write!(f, ["[", self.key(), "]"])?;
-        } else if let PropertyKey::StringLiteral(s) = self.key().as_ref() {
-            FormatLiteralStringToken::new(
-                s.span.source_text(f.source_text()),
-                s.span,
-                /* jsx */
-                false,
-                StringLiteralParentKind::Member,
-            )
-            .fmt(f)?;
-        } else {
-            write!(f, self.key())?;
-        }
-
-        if self.optional() {
-            write!(f, "?")?;
-        }
-        if let Some(type_annotation) = &self.type_annotation() {
-            write!(f, type_annotation)?;
-        }
-        if let Some(value) = &self.value() {
-            write!(f, [space(), "=", space(), value])?;
-        }
-        Ok(())
+        AssignmentLike::PropertyDefinition(self).fmt(f)
     }
 }
 

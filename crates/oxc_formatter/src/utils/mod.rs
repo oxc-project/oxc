@@ -3,6 +3,8 @@ pub mod call_expression;
 pub mod conditional;
 pub mod expression;
 pub mod member_chain;
+pub mod object;
+pub mod string_utils;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};

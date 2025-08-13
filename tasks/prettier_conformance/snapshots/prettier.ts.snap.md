@@ -1,4 +1,4 @@
-ts compatibility: 250/573 (43.63%)
+ts compatibility: 252/573 (43.98%)
 
 # Failed
 
@@ -27,7 +27,7 @@ ts compatibility: 250/573 (43.63%)
 | jsx/jsx/html_escape.js | 💥💥✨✨ | 16.67% |
 | jsx/jsx/hug.js | 💥💥💥💥 | 33.33% |
 | jsx/jsx/logical-expression.js | 💥💥💥💥 | 36.92% |
-| jsx/jsx/object-property.js | 💥💥💥💥 | 52.63% |
+| jsx/jsx/object-property.js | 💥💥💥💥 | 50.00% |
 | jsx/jsx/open-break.js | 💥💥💥💥 | 21.43% |
 | jsx/jsx/parens.js | 💥💥💥💥 | 50.00% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 42.55% |
@@ -64,16 +64,15 @@ ts compatibility: 250/573 (43.63%)
 | typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
-| typescript/as/long-identifiers.ts | 💥 | 81.48% |
+| typescript/as/long-identifiers.ts | 💥 | 92.86% |
 | typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
 | typescript/as/ternary.ts | 💥 | 80.00% |
 | typescript/assert/comment.ts | 💥 | 0.00% |
 | typescript/assert/index.ts | 💥 | 75.00% |
-| typescript/assignment/issue-10846.ts | 💥 | 23.73% |
+| typescript/assignment/issue-10846.ts | 💥 | 38.60% |
 | typescript/assignment/issue-10848.tsx | 💥 | 41.38% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
-| typescript/assignment/issue-12413.ts | 💥 | 3.03% |
-| typescript/assignment/issue-2485.ts | 💥 | 44.44% |
+| typescript/assignment/issue-12413.ts | 💥 | 21.88% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 60.00% |
 | typescript/cast/generic-cast.ts | 💥 | 39.60% |
@@ -283,7 +282,6 @@ ts compatibility: 250/573 (43.63%)
 | typescript/static-blocks/static-blocks.ts | 💥 | 61.54% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
-| typescript/template-literals/expressions.ts | 💥 | 0.00% |
 | typescript/ternaries/indent.ts | 💥 | 96.67% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
