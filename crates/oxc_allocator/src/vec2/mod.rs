@@ -720,26 +720,6 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         self.buf.set_len(new_len);
     }
 
-    /// Returns a shared reference to the allocator backing this `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// // uses the same allocator as the provided `Vec`
-    /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
-    ///     for string in ["foo", "bar", "baz"] {
-    ///         vec.push(vec.bump().alloc_str(string));
-    ///     }
-    /// }
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn bump(&self) -> &'a A {
-        self.buf.bump()
-    }
-
     /// Reserves capacity for at least `additional` more elements to be inserted
     /// in the given `Vec<'a, T>`. The collection may reserve more space to avoid
     /// frequent reallocations. After calling `reserve`, capacity will be
