@@ -1,6 +1,23 @@
 use crate::tester::{test, test_same};
 
 #[test]
+fn test_comment_at_top_of_file() {
+    use oxc_allocator::Allocator;
+    use oxc_ast::CommentPosition;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    let source_type = SourceType::mjs();
+    let allocator = Allocator::default();
+    let mut ret = Parser::new(&allocator, "export{} /** comment */", source_type).parse();
+    // Move comment to top of the file.
+    ret.program.comments[0].attached_to = 0;
+    ret.program.comments[0].position = CommentPosition::Leading;
+    let code = Codegen::new().build(&ret.program).code;
+    assert_eq!(code, "/** comment */ export {};\n");
+}
+
+#[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // https://lingui.dev/ref/macro#definemessage

@@ -46,6 +46,8 @@ impl Gen for Program<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
 
+        // Allow for inserting comments to the top of the file.
+        p.print_comments_at(0);
         if let Some(hashbang) = &self.hashbang {
             hashbang.print(p, ctx);
         }
