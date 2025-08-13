@@ -12,7 +12,7 @@ use super::AsyncGeneratorFunctions;
 
 impl<'a> AsyncGeneratorFunctions {
     /// Check the parent node to see if multiple statements are allowed.
-    fn is_multiple_statements_allowed<'a>(ctx: &TraverseCtx<'a>) -> bool {
+    fn is_multiple_statements_allowed(ctx: &TraverseCtx<'a>) -> bool {
         matches!(
             ctx.parent(),
             Ancestor::ProgramBody(_)

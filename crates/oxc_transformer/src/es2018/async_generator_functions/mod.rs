@@ -156,7 +156,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions {
     }
 }
 
-impl AsyncGeneratorFunctions {
+impl<'a> AsyncGeneratorFunctions {
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
     fn transform_yield_expression(
         &self,

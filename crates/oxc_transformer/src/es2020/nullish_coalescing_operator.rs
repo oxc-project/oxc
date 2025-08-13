@@ -64,7 +64,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     }
 }
 
-impl NullishCoalescingOperator {
+impl<'a> NullishCoalescingOperator {
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
