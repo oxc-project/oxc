@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.1] - 2025-08-13
+
+### 🐛 Bug Fixes
+
+- 6fe0bb5 transformer/react: Spread props optimization breaks __self and __source injection (#13009) (#13020) (Dunqing)
+
+
 ## [0.82.0] - 2025-08-12
 
 ### 🚜 Refactor

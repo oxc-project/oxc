@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 2c5fa58 codegen: Allow attaching comment to the top of the file. (#13048) (Boshen)
+
+
 ## [0.82.0] - 2025-08-12
 
 ### 💥 BREAKING CHANGES
