@@ -6,7 +6,7 @@ use crate::diagnostics;
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
-    search::{SEARCH_BATCH_SIZE, SafeByteMatchTable, safe_byte_match_table},
+    search::{SafeByteMatchTable, safe_byte_match_table, byte_search_with_advanced_continue, SearchContinuation},
 };
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
@@ -42,151 +42,91 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
 
-        {
-            // Inlined byte_search! macro with continue_if
-            #[allow(clippy::unnecessary_safety_comment, clippy::allow_attributes)]
-            TEMPLATE_LITERAL_TABLE.use_table();
-
-            let mut pos = self.source.position();
-            // Silence warnings if macro called in unsafe code
-            #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
-            'outer: loop {
-                let byte = if pos.can_read_batch_from(&self.source) {
-                    // Search a batch of `SEARCH_BATCH_SIZE` bytes.
-                    //
-                    // `'inner: loop {}` is not a real loop - it always exits on first turn.
-                    // Only using `loop {}` so that can use `break 'inner` to get out of it.
-                    // This allows complex logic of `$should_continue` and `$match_handler` to be
-                    // outside the `for` loop, keeping it as minimal as possible, to encourage
-                    // compiler to unroll it.
-                    //
-                    // SAFETY:
-                    // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
-                    // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
-                    // So `$pos.add()` in this loop cannot go out of bounds.
-                    let batch = unsafe { pos.slice(SEARCH_BATCH_SIZE) };
-                    'inner: loop {
-                        for (i, &byte) in batch.iter().enumerate() {
-                            if TEMPLATE_LITERAL_TABLE.matches(byte) {
-                                // SAFETY: Cannot go out of bounds (see above).
-                                // Also see above about UTF-8 character boundaries invariant.
-                                pos = unsafe { pos.add(i) };
-                                break 'inner byte;
-                            }
-                        }
-                        // No match in batch - search next batch.
-                        // SAFETY: Cannot go out of bounds (see above).
-                        // Also see above about UTF-8 character boundaries invariant.
-                        pos = unsafe { pos.add(SEARCH_BATCH_SIZE) };
-                        continue 'outer;
-                    }
-                } else {
-                    // Not enough bytes remaining for a batch. Process byte-by-byte.
-                    // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
-                    'inner: loop {
-                        // SAFETY: `$pos` is before or equal to end of source
-                        let remaining = unsafe {
-                            let remaining_len = self.source.end().offset_from(pos);
-                            pos.slice(remaining_len)
-                        };
-                        for (i, &byte) in remaining.iter().enumerate() {
-                            if TEMPLATE_LITERAL_TABLE.matches(byte) {
-                                // SAFETY: `i` is less than number of bytes remaining after `$pos`,
-                                // so `$pos + i` cannot be out of bounds
-                                pos = unsafe { pos.add(i) };
-                                break 'inner byte;
-                            }
-                        }
-
-                        // EOF.
-                        // Advance `lexer.source`'s position to end of file.
-                        self.source.advance_to_end();
-
-                        // Avoid lint errors if `$eof_handler` contains `return` statement
-                        #[allow(
-                            unused_variables,
-                            unreachable_code,
-                            clippy::diverging_sub_expression,
-                            clippy::allow_attributes
-                        )]
-                        {
-                            let eof_ret = {
-                                self.error(diagnostics::unterminated_string(
-                                    self.unterminated_range(),
-                                ));
-                                return Kind::Undetermined;
-                            };
-                            break 'outer eof_ret;
-                        }
-                    }
-                };
-
-                // Found match. Check if should continue.
-                let should_continue = {
-                    let next_byte = byte;
-                    match next_byte {
-                        b'$' => {
-                            // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
-                            let after_dollar = unsafe { pos.add(1) };
-                            if after_dollar.is_not_end_of(&self.source) {
-                                // If `${`, exit.
-                                // SAFETY: Have checked there's at least 1 further byte to read.
-                                if unsafe { after_dollar.read() } == b'{' {
-                                    // Skip `${` and stop searching.
-                                    // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
-                                    pos = unsafe { pos.add(2) };
-                                    false
-                                } else {
-                                    // Not `${`. Continue searching.
-                                    true
-                                }
+        let _byte = match byte_search_with_advanced_continue(
+            self,
+            &TEMPLATE_LITERAL_TABLE,
+            self.source.position(),
+            |byte, pos| {
+                let next_byte = byte;
+                match next_byte {
+                    b'$' => {
+                        // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
+                        let after_dollar = unsafe { pos.add(1) };
+                        if after_dollar.is_not_end_of(&self.source) {
+                            // If `${`, exit.
+                            // SAFETY: Have checked there's at least 1 further byte to read.
+                            if unsafe { after_dollar.read() } == b'{' {
+                                // Skip `${` and stop searching.
+                                // SAFETY: Consuming `${` leaves `pos` on a UTF-8 char boundary.
+                                let new_pos = unsafe { pos.add(2) };
+                                SearchContinuation::Stop(new_pos)
                             } else {
-                                // This is last byte in file. Continue to `handle_eof`.
-                                // This is illegal in valid JS, so mark this branch cold.
-                                cold_branch(|| true)
+                                // Not `${`. Continue searching.
+                                // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                                let new_pos = unsafe { pos.add(1) };
+                                SearchContinuation::Continue(new_pos)
                             }
-                        }
-                        b'`' => {
-                            // Skip '`' and stop searching.
-                            // SAFETY: Char at `pos` is '`', so `pos + 1` is a UTF-8 char boundary.
-                            pos = unsafe { pos.add(1) };
-                            ret = tail;
-                            false
-                        }
-                        b'\r' => {
-                            // SAFETY: Byte at `pos` is `\r`.
-                            // `pos` has only been advanced relative to `self.source.position()`.
-                            return unsafe {
-                                self.template_literal_carriage_return(pos, substitute, tail)
-                            };
-                        }
-                        _ => {
-                            // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
-                            debug_assert!(next_byte == b'\\');
-                            // SAFETY: Byte at `pos` is `\`.
-                            // `pos` has only been advanced relative to `self.source.position()`.
-                            return unsafe {
-                                self.template_literal_backslash(pos, substitute, tail)
-                            };
+                        } else {
+                            // This is last byte in file. Continue to `handle_eof`.
+                            // This is illegal in valid JS, so mark this branch cold.
+                            cold_branch(|| {
+                                // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                                let new_pos = unsafe { pos.add(1) };
+                                SearchContinuation::Continue(new_pos)
+                            })
                         }
                     }
-                };
-
-                if should_continue {
-                    // Not a match after all - continue searching.
-                    // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                    // See above about UTF-8 character boundaries invariant.
-                    pos = unsafe { pos.add(1) };
-                    continue;
+                    b'`' => {
+                        // Skip '`' and stop searching.
+                        // SAFETY: Char at `pos` is '`', so `pos + 1` is a UTF-8 char boundary.
+                        let new_pos = unsafe { pos.add(1) };
+                        ret = tail;
+                        SearchContinuation::Stop(new_pos)
+                    }
+                    b'\r' => {
+                        // SAFETY: Byte at `pos` is `\r`.
+                        // `pos` has only been advanced relative to `self.source.position()`.
+                        // We can't return from the closure, so we'll use a special sentinel value
+                        // This is a limitation of the current design - we need to handle this case
+                        // differently. For now, let's stop here and handle the \r case after the search.
+                        SearchContinuation::Stop(pos)
+                    }
+                    _ => {
+                        // `TEMPLATE_LITERAL_TABLE` only matches `$`, '`', `\r` and `\`
+                        debug_assert!(next_byte == b'\\');
+                        // SAFETY: Byte at `pos` is `\`.
+                        // `pos` has only been advanced relative to `self.source.position()`.
+                        // Similar to \r case, we need to handle this after the search
+                        SearchContinuation::Stop(pos)
+                    }
                 }
-
-                // Match confirmed.
-                // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
-                // SAFETY: See above about UTF-8 character boundaries invariant.
-                self.source.set_position(pos);
-
-                break byte;
+            },
+            || {
+                self.error(diagnostics::unterminated_string(
+                    self.unterminated_range(),
+                ));
+                return Kind::Undetermined;
+            },
+        ) {
+            Ok(matched_byte) => {
+                // Handle special cases that need early returns
+                match matched_byte {
+                    b'\r' => {
+                        // SAFETY: Byte at current position is `\r`.
+                        return unsafe {
+                            self.template_literal_carriage_return(self.source.position(), substitute, tail)
+                        };
+                    }
+                    b'\\' => {
+                        // SAFETY: Byte at current position is `\`.
+                        return unsafe {
+                            self.template_literal_backslash(self.source.position(), substitute, tail)
+                        };
+                    }
+                    _ => {} // Normal cases handled above
+                }
             }
+            Err(kind) => return kind,
         };
 
         ret
