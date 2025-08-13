@@ -298,7 +298,7 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    pub fn try_fold_sequence_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::SequenceExpression(e) = expr else { return };
         let should_keep_as_sequence_expr = e
             .expressions

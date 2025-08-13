@@ -22,7 +22,7 @@ type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
-    pub fn try_fold_known_global_methods(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
 
         // Use constant evaluation for known method calls
@@ -117,7 +117,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    pub fn try_fold_concat_chain(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
@@ -356,7 +356,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn try_fold_known_property_access(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object, member.span)

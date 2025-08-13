@@ -20,12 +20,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        Self::try_minimize_conditional(&mut cond_expr, ctx)
+        Self::minimize_conditional_expression(&mut cond_expr, ctx)
             .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
     }
 
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
-    pub fn try_minimize_conditional(
+    pub fn minimize_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
