@@ -27,47 +27,47 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    pub fn remove_unused_function_declaration(
-        f: &Function<'a>,
-        ctx: &Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::FunctionDeclaration(f) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
-            return None;
+            return;
         }
+        let Some(id) = &f.id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
         if Self::keep_top_level_var_in_script_mode(ctx) {
-            return None;
+            return;
         }
-        let id = f.id.as_ref()?;
-        let symbol_id = id.symbol_id.get()?;
         if !ctx.scoping().symbol_is_unused(symbol_id) {
-            return None;
+            return;
         }
-        Some(ctx.ast.statement_empty(f.span))
+        *stmt = ctx.ast.statement_empty(f.span);
+        ctx.state.changed = true;
     }
 
-    pub fn remove_unused_class_declaration(
-        c: &mut Class<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    pub fn remove_unused_class_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::ClassDeclaration(c) = stmt else { return };
         if ctx.state.options.unused == CompressOptionsUnused::Keep {
-            return None;
+            return;
         }
+        let Some(id) = &c.id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
         if Self::keep_top_level_var_in_script_mode(ctx) {
-            return None;
+            return;
         }
-        let id = c.id.as_ref()?;
-        let symbol_id = id.symbol_id.get()?;
         if !ctx.scoping().symbol_is_unused(symbol_id) {
-            return None;
+            return;
         }
-        Self::remove_unused_class(c, ctx).map(|exprs| {
+        if let Some(changed) = Self::remove_unused_class(c, ctx).map(|exprs| {
             if exprs.is_empty() {
                 ctx.ast.statement_empty(c.span)
             } else {
                 let expr = ctx.ast.expression_sequence(c.span, exprs);
                 ctx.ast.statement_expression(c.span, expr)
             }
-        })
+        }) {
+            *stmt = changed;
+            ctx.state.changed = true;
+        }
     }
 
     /// Do remove top level vars in script mode.

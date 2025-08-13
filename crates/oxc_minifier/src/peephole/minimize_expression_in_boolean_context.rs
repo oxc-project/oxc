@@ -8,20 +8,6 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn try_fold_stmt_in_boolean_context(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
-        let expr = match stmt {
-            Statement::IfStatement(s) => Some(&mut s.test),
-            Statement::WhileStatement(s) => Some(&mut s.test),
-            Statement::ForStatement(s) => s.test.as_mut(),
-            Statement::DoWhileStatement(s) => Some(&mut s.test),
-            _ => None,
-        };
-
-        if let Some(expr) = expr {
-            Self::try_fold_expr_in_boolean_context(expr, ctx);
-        }
-    }
-
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
