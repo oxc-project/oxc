@@ -469,10 +469,10 @@ impl Runtime {
                         let dep_path = &request.resolved_requested_path;
                         if encountered_paths.insert(Arc::clone(dep_path)) {
                             scope.spawn({
-                                let tx_resolve_output = tx_process_output.clone();
+                                let tx_process_output = tx_process_output.clone();
                                 let dep_path = Arc::clone(dep_path);
                                 move |_| {
-                                    tx_resolve_output
+                                    tx_process_output
                                         .send(me.process_path(
                                             &dep_path,
                                             check_syntax_errors,
