@@ -293,8 +293,17 @@ impl ConfigStore {
         }
     }
 
-    pub fn number_of_rules(&self) -> Option<usize> {
-        self.nested_configs.is_empty().then_some(self.base.base.rules.len())
+    /// Returns the number of rules, optionally filtering out tsgolint rules if type_aware_enabled is false.
+    pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
+        if !self.nested_configs.is_empty() {
+            return None;
+        }
+        let count = if type_aware_enabled {
+            self.base.base.rules.len()
+        } else {
+            self.base.base.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()).count()
+        };
+        Some(count)
     }
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
@@ -343,7 +352,7 @@ impl ConfigStore {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    use std::{path::PathBuf, str::FromStr};
 
     use rustc_hash::{FxHashMap, FxHashSet};
     use serde_json::Value;
@@ -359,7 +368,10 @@ mod test {
             overrides::GlobSet,
         },
         rule::Rule,
-        rules::{EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny},
+        rules::{
+            EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension, TypescriptNoExplicitAny,
+            TypescriptNoMisusedPromises,
+        },
     };
 
     macro_rules! from_json {
@@ -470,7 +482,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.number_of_rules(false), Some(1));
 
         let rules_for_source_file = store.resolve("App.tsx".as_ref());
         assert_eq!(rules_for_source_file.rules.len(), 1);
@@ -507,7 +519,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.number_of_rules(false), Some(1));
 
         assert_eq!(store.resolve("App.tsx".as_ref()).rules.len(), 1);
         assert_eq!(store.resolve("src/App.tsx".as_ref()).rules.len(), 2);
@@ -544,7 +556,7 @@ mod test {
             FxHashMap::default(),
             ExternalPluginStore::default(),
         );
-        assert_eq!(store.number_of_rules(), Some(1));
+        assert_eq!(store.number_of_rules(false), Some(1));
 
         let app = store.resolve("App.tsx".as_ref()).rules;
         assert_eq!(app.len(), 1);
@@ -989,5 +1001,65 @@ mod test {
             jsx_filename_rule.is_none(),
             "jsx-filename-extension should remain disabled (not re-enabled by categories)"
         );
+    }
+
+    #[test]
+    fn test_number_of_rules() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::new(BuiltinLintPlugins::empty(), FxHashSet::default()),
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        let base_rules = vec![
+            (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
+            (
+                RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises),
+                AllowWarnDeny::Deny,
+            ),
+        ];
+
+        let store = ConfigStore::new(
+            Config::new(
+                base_rules.clone(),
+                vec![],
+                OxlintCategories::default(),
+                base_config.clone(),
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let mut nested_configs = FxHashMap::default();
+        nested_configs.insert(
+            PathBuf::new(),
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                base_config.clone(),
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+        );
+
+        let store_with_nested_configs = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                base_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            nested_configs,
+            ExternalPluginStore::default(),
+        );
+
+        assert_eq!(store.number_of_rules(false), Some(1));
+        assert_eq!(store.number_of_rules(true), Some(2));
+        assert_eq!(store_with_nested_configs.number_of_rules(false), None);
+        assert_eq!(store_with_nested_configs.number_of_rules(true), None);
     }
 }

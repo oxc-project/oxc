@@ -336,7 +336,7 @@ impl LintRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules();
+        let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
         let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
 

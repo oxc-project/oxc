@@ -118,8 +118,8 @@ impl Linter {
     /// Returns the number of rules that will are being used, unless there
     /// nested configurations in use, in which case it returns `None` since the
     /// number of rules depends on which file is being linted.
-    pub fn number_of_rules(&self) -> Option<usize> {
-        self.config.number_of_rules()
+    pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
+        self.config.number_of_rules(type_aware)
     }
 
     pub fn run<'a>(
