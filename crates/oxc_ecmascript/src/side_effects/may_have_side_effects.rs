@@ -540,6 +540,32 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
+        if let Expression::Identifier(ident) = &self.callee
+            && ctx.is_global_reference(ident)
+            && matches!(
+                ident.name.as_str(),
+                "Set"
+                    | "Map"
+                    | "WeakSet"
+                    | "WeakMap"
+                    | "ArrayBuffer"
+                    | "Date"
+                    | "Boolean"
+                    | "Error"
+                    | "EvalError"
+                    | "RangeError"
+                    | "ReferenceError"
+                    | "RegExp"
+                    | "SyntaxError"
+                    | "TypeError"
+                    | "URIError"
+                    | "Number"
+                    | "Object"
+                    | "String"
+            )
+        {
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
         true
     }
 }

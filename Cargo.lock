@@ -2091,6 +2091,7 @@ dependencies = [
  "base64",
  "cow-utils",
  "insta",
+ "javascript-globals",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
