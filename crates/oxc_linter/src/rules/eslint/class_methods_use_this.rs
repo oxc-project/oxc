@@ -20,12 +20,23 @@ fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ClassMethodsUseThis {
     except_methods: Vec<MethodException>,
     enforce_for_class_fields: bool,
     ignore_override_methods: bool,
     ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
+}
+
+impl Default for ClassMethodsUseThis {
+    fn default() -> Self {
+        Self {
+            except_methods: Vec::new(),
+            enforce_for_class_fields: true,
+            ignore_override_methods: false,
+            ignore_classes_with_implements: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
