@@ -118,8 +118,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 ///
 /// So only create a `Uint8Array` if it's not already sent to JS.
 ///
-/// Whether the buffer has already been sent to JS is tracked by a flag in `FixedSizeAllocatorMetadata`,
-/// which is stored in memory backing the `Allocator`.
+/// Whether the buffer has already been sent to JS is tracked by a reference counter
+/// in `FixedSizeAllocatorMetadata`, which is stored in memory backing the `Allocator`.
 ///
 /// # SAFETY
 /// `allocator` must have been created via `FixedSizeAllocator`
@@ -140,7 +140,8 @@ unsafe fn get_buffer(
 
     // Get whether this buffer has already been sent to JS
     // TODO: Is `SeqCst` excessive here?
-    let already_sent_to_js = metadata.is_double_owned.swap(true, Ordering::SeqCst);
+    let old_ref_count = metadata.ref_count.swap(2, Ordering::SeqCst);
+    let already_sent_to_js = old_ref_count > 1;
 
     // If buffer has already been sent to JS, don't send it again
     if already_sent_to_js {
