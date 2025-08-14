@@ -14,8 +14,8 @@ enum AssignmentTargetPropertyListNode<'a, 'b> {
     Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
 }
 
-impl AssignmentTargetPropertyListNode<'_, '_> {
-    pub fn span(&self) -> Span {
+impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
+    fn span(&self) -> Span {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.span(),
             AssignmentTargetPropertyListNode::Rest(rest) => rest.span(),
@@ -71,21 +71,15 @@ impl<'a> Format<'a> for AssignmentTargetPropertyList<'a, '_> {
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
-        let source_text = f.source_text();
-        let entries = FormatSeparatedIter::new(
-            AssignmentTargetPropertyListIter {
-                properties: self.properties.iter(),
-                rest: self.rest,
-            },
-            ",",
-        )
-        .with_trailing_separator(trailing_separator);
-
-        let mut join = f.join_nodes_with_soft_line();
-        for entry in entries {
-            join.entry(entry.element.span(), &entry);
-        }
-
-        join.finish()
+        f.join_nodes_with_soft_line()
+            .entries_with_trailing_separator(
+                AssignmentTargetPropertyListIter {
+                    properties: self.properties.iter(),
+                    rest: self.rest,
+                },
+                ",",
+                trailing_separator,
+            )
+            .finish()
     }
 }

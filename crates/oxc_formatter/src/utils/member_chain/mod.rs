@@ -193,12 +193,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         let has_comments = self.has_comments(f);
 
         let format_one_line = format_with(|f| {
-            let mut joiner = f.join();
-
-            joiner.entry(&self.head);
-            joiner.entries(self.tail.iter());
-
-            joiner.finish()
+            f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
         });
 
         if self.tail.len() <= 1 && !has_comments {

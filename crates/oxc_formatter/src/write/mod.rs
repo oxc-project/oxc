@@ -100,11 +100,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
             return Ok(());
         }
         let source_text = f.context().source_text();
-        let mut join = f.join_nodes_with_hardline();
-        for directive in self {
-            join.entry(directive.span(), &directive);
-        }
-        join.finish()?;
+        f.join_nodes_with_hardline().entries(self).finish()?;
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
         // JsDirectiveList, for example:
         //```js
@@ -203,13 +199,9 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.context().source_text();
-        let mut join = f.join_nodes_with_soft_line();
-        for formatted in
-            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator)
-        {
-            join.entry(formatted.element.span(), &formatted);
-        }
-        join.finish()
+        f.join_nodes_with_soft_line()
+            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
+            .finish()
     }
 }
 
@@ -1328,14 +1320,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        let mut join = f.join_nodes_with_soft_line();
-        for formatted in FormatSeparatedIter::new(self.iter(), ",")
-            .with_trailing_separator(trailing_separator)
-            .nodes_grouped()
-        {
-            join.entry(formatted.element.span(), &formatted);
-        }
-        join.finish()
+        f.join_nodes_with_soft_line()
+            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
+            .finish()
     }
 }
 
@@ -1709,13 +1696,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // let last_index = self.body.len().saturating_sub(1);
         let source_text = f.context().source_text();
-        let mut joiner = f.join_nodes_with_soft_line();
-        for (index, sig) in self.body().iter().enumerate() {
-            joiner.entry(sig.span(), sig);
-        }
-        joiner.finish()
+        f.join_nodes_with_soft_line().entries(self.body()).finish()
     }
 }
 
@@ -1741,13 +1723,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        let source_text = f.source_text();
-        let mut join = f.join_nodes_with_soft_line();
-        for element in self {
-            join.entry(element.span(), element);
-        }
-        join.finish()
+        f.join_nodes_with_soft_line().entries(self).finish()
     }
 }
 
@@ -1856,10 +1832,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.join_with(soft_line_break_or_space())
-            .entries(
-                FormatSeparatedIter::new(self.iter(), ",")
-                    .with_trailing_separator(TrailingSeparator::Disallowed),
-            )
+            .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
             .finish()
     }
 }
