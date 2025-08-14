@@ -359,9 +359,9 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     }
                     continue;
                 }
-                // Remaining text should start with a space, else it's probably a typo of the correct syntax.
+                // Remaining text should start with a whitespace character, else it's probably a typo of the correct syntax.
                 // Like `eslint-disable-lext-nine` where `text` is `-lext-nine`, or directive is `eslint-disablefoo`
-                else if text.starts_with(' ') {
+                else if text.starts_with(char::is_whitespace) {
                     // `eslint-disable rule-name1, rule-name2`
                     let mut rules = vec![];
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
@@ -638,6 +638,14 @@ fn test() {
             debugger; /*     \t   {prefix}-disable-line no-debugger*/
 
             /*    \t   {prefix}-disable-next-line no-debugger       */
+            debugger;
+        "
+            ),
+            // Handles whitespace character before rule name in comment
+            format!(
+                "/*{prefix}-disable
+no-debugger
+*/
             debugger;
         "
             ),
