@@ -75,9 +75,13 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
         let (tx, rx) = channel();
 
+        // At present, JS plugins all run on main thread, so `thread_id` is always 0
+        let thread_id = 0;
+
         // SAFETY: This crate enables the `fixed_size` feature on `oxc_allocator`,
-        // so all AST `Allocator`s are created via `FixedSizeAllocator`
-        let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
+        // so all AST `Allocator`s are created via `FixedSizeAllocator`.
+        // `thread_id` is valid. There there's always at least 1 thread, so 0 cannot be too high.
+        let (buffer_id, buffer) = unsafe { get_buffer(allocator, thread_id) };
 
         // Send data to JS
         let status = cb.call_with_return_value(
@@ -108,26 +112,29 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     })
 }
 
-/// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,
+/// Get buffer ID of the `Allocator` and, if it hasn't already been sent to this JS thread,
 /// create a `Uint8Array` referencing the `Allocator`'s memory.
 ///
-/// Each buffer is sent over to JS only once.
+/// Each buffer is sent over to each JS thread only once.
 /// JS side stores them in an array (indexed by buffer ID), and holds them until process ends.
-/// This means there's only ever 1 instance of a buffer on Rust side, and 1 on JS side,
+/// This means there's only ever 1 instance of a buffer on Rust side, and 1 on each JS thread,
 /// which makes it simpler to avoid use-after-free or double-free problems.
 ///
-/// So only create a `Uint8Array` if it's not already sent to JS.
+/// So only create a `Uint8Array` if it's not already sent to this JS thread.
 ///
-/// Whether the buffer has already been sent to JS is tracked by a reference counter
-/// in `FixedSizeAllocatorMetadata`, which is stored in memory backing the `Allocator`.
+/// Whether the buffer has already been send to this JS thread is tracked by a series of `bool` flags
+/// stored in the `Allocator`'s memory, just before the `ChunkFooter`.
+/// There's a `bool` for each thread in the Rayon global thread.
 ///
 /// # SAFETY
-/// `allocator` must have been created via `FixedSizeAllocator`
+/// * `allocator` must have been created via `FixedSizeAllocator`.
+/// * `thread_id` must be less than number of threads in Rayon global thread pool.
 unsafe fn get_buffer(
     allocator: &Allocator,
+    thread_id: usize,
 ) -> (
     u32,                // Buffer ID
-    Option<Uint8Array>, // Buffer, if not already sent to JS
+    Option<Uint8Array>, // Buffer, if not already sent to this JS thread
 ) {
     // SAFETY: Caller guarantees `Allocator` was created by a `FixedSizeAllocator`.
     // We only create an immutable ref from this pointer.
@@ -138,17 +145,37 @@ unsafe fn get_buffer(
 
     let buffer_id = metadata.id;
 
-    // Get whether this buffer has already been sent to JS
-    // TODO: Is `SeqCst` excessive here?
-    let old_ref_count = metadata.ref_count.swap(2, Ordering::SeqCst);
-    let already_sent_to_js = old_ref_count > 1;
+    // Get whether this buffer has already been sent to this JS thread.
+    //
+    // This is tracked by a series of `bool` flags stored in the `Allocator`'s memory,
+    // just before the `ChunkFooter`.
+    // `FixedSizeAllocator` initialized N x `bool` flags, where N is the number of threads in Rayon's
+    // global thread pool.
+    // These flags reside in the slice of memory ranging from `data_end_ptr() - N` to `data_end_ptr() - 1`.
+    //
+    // We don't know how many threads there are here, so work backwards from the end.
+    // * Flag for thread 0 is at `data_end_ptr() - 1`
+    // * Flag for thread 1 is at `data_end_ptr() - 2`, etc.
+    //
+    // SAFETY: Caller guarantees `thread_id` is less than number of threads in Rayon global thread pool.
+    // Therefore `data_end_ptr() - (thread_id + 1)` points to the flag for this thread,
+    // and it must be a valid initialized `bool`.
+    let sent_to_js_thread =
+        unsafe { allocator.data_end_ptr().cast::<bool>().sub(thread_id + 1).as_mut() };
 
-    // If buffer has already been sent to JS, don't send it again
-    if already_sent_to_js {
+    // If buffer has already been sent to this JS thread, don't send it again
+    if *sent_to_js_thread {
         return (buffer_id, None);
     }
 
     // Buffer has not already been sent to JS. Send it.
+
+    // Record that this buffer has now been sent to this JS thread
+    *sent_to_js_thread = true;
+
+    // Increment reference count for this allocator
+    // TODO: Is `SeqCst` excessive here?
+    metadata.ref_count.fetch_add(1, Ordering::SeqCst);
 
     // Get pointer to start of allocator chunk.
     // Note: `Allocator::data_ptr` would not provide the right pointer, because source text
