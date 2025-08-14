@@ -1,4 +1,4 @@
-js compatibility: 525/699 (75.11%)
+js compatibility: 527/699 (75.39%)
 
 # Failed
 
@@ -10,8 +10,6 @@ js compatibility: 525/699 (75.11%)
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
 | js/assignment/issue-10218.js | 💥 | 52.63% |
 | js/assignment/sequence.js | 💥 | 71.43% |
-| js/async/inline-await.js | 💥 | 25.00% |
-| js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/inline-jsx.js | 💥 | 40.00% |
 | js/binary-expressions/jsx_parent.js | 💥 | 33.85% |
 | js/binary-expressions/return.js | 💥 | 90.00% |

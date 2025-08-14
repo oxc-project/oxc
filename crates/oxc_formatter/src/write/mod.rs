@@ -520,7 +520,45 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Super> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["await", space(), self.argument()])
+        let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
+
+        let is_callee_or_object = match self.parent {
+            AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::StaticMemberExpression(_) => true,
+            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            _ => false,
+        };
+
+        if is_callee_or_object {
+            let mut parent = self.parent.parent();
+            let mut ancestor_is_await = false;
+            loop {
+                match parent {
+                    AstNodes::AwaitExpression(_)
+                    | AstNodes::BlockStatement(_)
+                    | AstNodes::FunctionBody(_)
+                    | AstNodes::SwitchCase(_)
+                    | AstNodes::Program(_)
+                    | AstNodes::TSModuleBlock(_) => break,
+                    _ => parent = parent.parent(),
+                }
+            }
+
+            let indented = format_with(|f| write!(f, [soft_block_indent(&format_inner)]));
+
+            return if let AstNodes::AwaitExpression(expr) = parent {
+                if !expr.needs_parentheses(f) {
+                    return write!(f, [group(&indented)]);
+                }
+
+                write!(f, [indented])
+            } else {
+                write!(f, [group(&indented)])
+            };
+        }
+
+        write!(f, [format_inner])
     }
 }
 
