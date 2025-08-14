@@ -48,7 +48,10 @@ thread_local! {
 
 // Global aggregation of allocation sites: "path:line" -> count
 #[derive(Default, Clone, Copy)]
-struct SiteCounts { allocs: usize, reallocs: usize }
+struct SiteCounts {
+    allocs: usize,
+    reallocs: usize,
+}
 
 static ALLOC_SITES: OnceLock<Mutex<HashMap<String, SiteCounts>>> = OnceLock::new();
 fn alloc_sites() -> &'static Mutex<HashMap<String, SiteCounts>> {
@@ -84,7 +87,10 @@ fn reset_site_counts() {
     }
 }
 
-enum AllocKind { Alloc, Realloc }
+enum AllocKind {
+    Alloc,
+    Realloc,
+}
 
 fn record_allocation_site(kind: AllocKind) {
     // Note: this function must be called with IN_TRACKING already set to true
@@ -190,11 +196,11 @@ unsafe impl GlobalAlloc for TrackedAllocator {
                 } else {
                     f.set(true);
                     NUM_ALLOC.fetch_add(1, SeqCst);
-            if should_track_sites() {
+                    if should_track_sites() {
                         let n = sample_interval();
                         let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
                         if seq % n == 0 {
-                record_allocation_site(AllocKind::Alloc);
+                            record_allocation_site(AllocKind::Alloc);
                         }
                     }
                     f.set(false);
@@ -217,11 +223,11 @@ unsafe impl GlobalAlloc for TrackedAllocator {
                 } else {
                     f.set(true);
                     NUM_ALLOC.fetch_add(1, SeqCst);
-            if should_track_sites() {
+                    if should_track_sites() {
                         let n = sample_interval();
                         let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
                         if seq % n == 0 {
-                record_allocation_site(AllocKind::Alloc);
+                            record_allocation_site(AllocKind::Alloc);
                         }
                     }
                     f.set(false);
@@ -240,11 +246,11 @@ unsafe impl GlobalAlloc for TrackedAllocator {
                 } else {
                     f.set(true);
                     NUM_REALLOC.fetch_add(1, SeqCst);
-            if should_track_sites() {
+                    if should_track_sites() {
                         let n = sample_interval();
                         let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
                         if seq % n == 0 {
-                record_allocation_site(AllocKind::Realloc);
+                            record_allocation_site(AllocKind::Realloc);
                         }
                     }
                     f.set(false);
@@ -418,7 +424,12 @@ fn print_stats_table(stats: &[Stats]) -> String {
 fn print_top_sites(limit: usize) -> String {
     // Build a top-k selection using a min-heap to avoid sorting the full map.
     #[derive(Eq, PartialEq)]
-    struct KeyRef<'a> { total: usize, allocs: usize, reallocs: usize, key: &'a str }
+    struct KeyRef<'a> {
+        total: usize,
+        allocs: usize,
+        reallocs: usize,
+        key: &'a str,
+    }
     impl<'a> Ord for KeyRef<'a> {
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             // Min-heap via Reverse: smaller total first; for ties, larger key first
@@ -439,8 +450,15 @@ fn print_top_sites(limit: usize) -> String {
             let mut heap: BinaryHeap<Reverse<KeyRef<'_>>> = BinaryHeap::with_capacity(limit);
             for (ks, counts) in m.iter() {
                 let total = counts.allocs.saturating_add(counts.reallocs);
-                if total == 0 { continue; }
-                let entry = KeyRef { total, allocs: counts.allocs, reallocs: counts.reallocs, key: ks.as_str() };
+                if total == 0 {
+                    continue;
+                }
+                let entry = KeyRef {
+                    total,
+                    allocs: counts.allocs,
+                    reallocs: counts.reallocs,
+                    key: ks.as_str(),
+                };
                 if heap.len() < limit {
                     heap.push(Reverse(entry));
                 } else if let Some(Reverse(worst)) = heap.peek() {
@@ -481,20 +499,23 @@ fn print_top_sites(limit: usize) -> String {
         "Total",
         width_loc = width_loc,
         width_cnt = width_cnt
-    ).unwrap();
+    )
+    .unwrap();
     let dash_len = width_loc + 3 + (width_cnt + 3) * 3 - 3;
     out.push_str(&"-".repeat(dash_len));
     out.push('\n');
     for (loc, counts) in top {
         let total = counts.allocs + counts.reallocs;
-        let _ = writeln!(out,
+        let _ = writeln!(
+            out,
             "{:width_loc$} | {:width_cnt$} | {:width_cnt$} | {:width_cnt$}",
             loc,
             counts.allocs,
             counts.reallocs,
             total,
             width_loc = width_loc,
-            width_cnt = width_cnt);
+            width_cnt = width_cnt
+        );
     }
     out
 }
