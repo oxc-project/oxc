@@ -193,27 +193,25 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
         return program.span.end;
     };
 
+    let start = first_stmt.span().start;
     match first_stmt {
         Statement::ExportNamedDeclaration(decl) => {
-            let start = decl.span.start;
-            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration {
-                if let Some(decorator) = class.decorators.first() {
-                    return cmp::min(start, decorator.span.start);
-                }
+            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
+                && let Some(decorator) = class.decorators.first()
+            {
+                return cmp::min(start, decorator.span.start);
             }
-            start
         }
         Statement::ExportDefaultDeclaration(decl) => {
-            let start = decl.span.start;
-            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration {
-                if let Some(decorator) = class.decorators.first() {
-                    return cmp::min(start, decorator.span.start);
-                }
+            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
+                && let Some(decorator) = class.decorators.first()
+            {
+                return cmp::min(start, decorator.span.start);
             }
-            start
         }
-        _ => first_stmt.span().start,
+        _ => {}
     }
+    start
 }
 
 /// Serialize `value` field of `Comment`.
