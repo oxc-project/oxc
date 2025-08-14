@@ -2384,6 +2384,7 @@ dependencies = [
  "mimalloc-safe",
  "oxc_allocator",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_tasks_common",
 ]
 
