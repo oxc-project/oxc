@@ -1,14 +1,14 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: doSomethingOnChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.doSomethingOnChange} />
    ·                         ──────────────────────────
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handlerChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.handlerChange} />
    ·                         ────────────────────
@@ -22,35 +22,35 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle2
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.handle2} />
    ·                         ──────────────
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handl3Change
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.handl3Change} />
    ·                         ───────────────────
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle4change
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.handle4change} />
    ·                         ────────────────────
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: takeCareOfChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={takeCareOfChange} />
    ·                         ──────────────────
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: takeCareOfChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={() => this.takeCareOfChange()} />
    ·                         ───────────────────────────────
@@ -62,51 +62,51 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <TestComponent only={this.handleChange} />
    ·                     ───────────────────
    ╰────
-  help: Prop key for on must begin with 'only'
+  help: Prop key for handleChange must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: only
    ╭─[jsx_handler_names.tsx:1:22]
  1 │ <TestComponent2 only={this.handleChange} />
    ·                      ───────────────────
    ╰────
-  help: Prop key for on must begin with 'only'
+  help: Prop key for handleChange must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: handleChange
    ╭─[jsx_handler_names.tsx:1:29]
  1 │ <TestComponent handleChange={this.handleChange} />
    ·                             ───────────────────
    ╰────
-  help: Prop key for on must begin with 'handleChange'
+  help: Prop key for handleChange must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: whenChange
    ╭─[jsx_handler_names.tsx:1:27]
  1 │ <TestComponent whenChange={handleChange} />
    ·                           ──────────────
    ╰────
-  help: Prop key for on must begin with 'whenChange'
+  help: Prop key for handleChange must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: whenChange
    ╭─[jsx_handler_names.tsx:1:27]
  1 │ <TestComponent whenChange={() => handleChange()} />
    ·                           ──────────────────────
    ╰────
-  help: Prop key for on must begin with 'whenChange'
+  help: Prop key for handleChange must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: onChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={handleChange} />
    ·                         ──────────────
    ╰────
-  help: Prop key for when must begin with 'onChange'
+  help: Prop key for handleChange must begin with 'when'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: onChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={() => handleChange()} />
    ·                         ──────────────────────
    ╰────
-  help: Prop key for when must begin with 'onChange'
+  help: Prop key for handleChange must begin with 'when'
 
-  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handle
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: onChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.onChange} />
    ·                         ───────────────
@@ -134,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                 ─────────────
  6 │                   <MyLibCheckbox customPropNameBar={handleCheckbox} />;
    ╰────
-  help: Prop key for on must begin with 'customPropNameBar'
+  help: Prop key for handleInput must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: customPropNameBar
    ╭─[jsx_handler_names.tsx:6:52]
@@ -143,7 +143,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                    ────────────────
  7 │                   <MyLibButton customPropNameBar={handleButton} />;
    ╰────
-  help: Prop key for on must begin with 'customPropNameBar'
+  help: Prop key for handleCheckbox must begin with 'on'
 
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: customPropNameBar
    ╭─[jsx_handler_names.tsx:7:50]
@@ -152,4 +152,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                  ──────────────
  8 │                 </div>
    ╰────
-  help: Prop key for on must begin with 'customPropNameBar'
+  help: Prop key for handleButton must begin with 'on'
