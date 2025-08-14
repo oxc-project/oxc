@@ -46,6 +46,49 @@ impl<'a> TsGoLintState<'a> {
         }
     }
 
+    /// Create rules in object format with configurations.
+    /// This enables passing rule configurations to tsgolint.
+    fn create_rules_object(&self, resolved_config: &ResolvedLinterState) -> TsGoLintRules {
+        let mut rules_object = serde_json::Map::new();
+        for (rule, status) in resolved_config.rules.iter() {
+            if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                // For now, use empty configuration object
+                // TODO: Extract actual rule configuration from the RuleEnum
+                // This can be done by implementing a `to_configuration` method
+                // that serializes the rule's current state back to JSON
+                rules_object.insert(
+                    rule.name().to_string(),
+                    serde_json::Value::Object(serde_json::Map::new()),
+                );
+            }
+        }
+        TsGoLintRules::Object(rules_object)
+    }
+
+    /// Create rules in array format (legacy)
+    fn create_rules_array(&self, resolved_config: &ResolvedLinterState) -> TsGoLintRules {
+        let rule_names: Vec<String> = resolved_config
+            .rules
+            .iter()
+            .filter_map(|(rule, status)| {
+                if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                    Some(rule.name().to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        TsGoLintRules::Array(rule_names)
+    }
+
+    /// Determine whether to use object format for rules.
+    /// For now, this is controlled by an environment variable for testing.
+    /// TODO: Make this configurable or automatic based on rule configurations
+    fn should_use_object_format(&self) -> bool {
+        // Enable object format if OXLINT_TSGOLINT_OBJECT_FORMAT=1
+        std::env::var("OXLINT_TSGOLINT_OBJECT_FORMAT").as_deref() == Ok("1")
+    }
+
     pub fn lint(
         self,
         error_sender: DiagnosticSender,
@@ -58,12 +101,29 @@ impl<'a> TsGoLintState<'a> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         // Feed JSON into STDIN of tsgolint in this format:
-        // ```
+        //
+        // Array format (legacy):
+        // ```json
         // {
         //   "files": [
         //     {
         //       "file_path": "/absolute/path/to/file.ts",
         //       "rules": ["rule-1", "another-rule"]
+        //     }
+        //   ]
+        // }
+        // ```
+        //
+        // Object format (new):
+        // ```json
+        // {
+        //   "files": [
+        //     {
+        //       "file_path": "/absolute/path/to/file.ts",
+        //       "rules": {
+        //         "rule-1": {},
+        //         "another-rule": {"option": "value"}
+        //       }
         //     }
         //   ]
         // }
@@ -81,18 +141,12 @@ impl<'a> TsGoLintState<'a> {
                             .entry(path_buf.clone())
                             .or_insert_with(|| self.config_store.resolve(&path_buf));
 
-                        // Collect the rules that are enabled for this file
-                        resolved_config
-                            .rules
-                            .iter()
-                            .filter_map(|(rule, status)| {
-                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                                    Some(rule.name().to_string())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect()
+                        // Choose format based on configuration
+                        if self.should_use_object_format() {
+                            self.create_rules_object(resolved_config)
+                        } else {
+                            self.create_rules_array(resolved_config)
+                        }
                     },
                 })
                 .collect(),
@@ -208,12 +262,28 @@ impl<'a> TsGoLintState<'a> {
 
 /// Represents the input JSON to `tsgolint`, like:
 ///
+/// Array format (legacy):
 /// ```json
 /// {
 ///   "files": [
 ///     {
 ///       "file_path": "/absolute/path/to/file.ts",
 ///       "rules": ["rule-1", "another-rule"]
+///     }
+///   ]
+/// }
+/// ```
+///
+/// Object format (new):
+/// ```json
+/// {
+///   "files": [
+///     {
+///       "file_path": "/absolute/path/to/file.ts",
+///       "rules": {
+///         "rule-1": {},
+///         "another-rule": {"option": "value"}
+///       }
 ///     }
 ///   ]
 /// }
@@ -227,9 +297,58 @@ pub struct TsGoLintInput {
 pub struct TsGoLintInputFile {
     /// Absolute path to the file to lint
     pub file_path: String,
-    /// List of rules to apply to this file
-    /// Example: `["no-floating-promises"]`
-    pub rules: Vec<String>,
+    /// Rules to apply to this file. Can be either:
+    /// - Array format (legacy): `["no-floating-promises"]`  
+    /// - Object format (new): `{"no-floating-promises": {}}`
+    #[serde(with = "rules_format")]
+    pub rules: TsGoLintRules,
+}
+
+/// Represents the rules configuration for a file.
+/// Supports both legacy array format and new object format.
+#[derive(Debug, Clone)]
+pub enum TsGoLintRules {
+    /// Legacy array format: `["rule1", "rule2"]`
+    Array(Vec<String>),
+    /// New object format: `{"rule1": {}, "rule2": {"option": "value"}}`
+    Object(serde_json::Map<String, serde_json::Value>),
+}
+
+mod rules_format {
+    use super::TsGoLintRules;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_json::Value;
+
+    pub fn serialize<S>(rules: &TsGoLintRules, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match rules {
+            TsGoLintRules::Array(arr) => arr.serialize(serializer),
+            TsGoLintRules::Object(obj) => obj.serialize(serializer),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<TsGoLintRules, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        match value {
+            Value::Array(arr) => {
+                let strings: Result<Vec<String>, _> = arr
+                    .into_iter()
+                    .map(|v| match v {
+                        Value::String(s) => Ok(s),
+                        _ => Err(serde::de::Error::custom("Expected string in array")),
+                    })
+                    .collect();
+                Ok(TsGoLintRules::Array(strings?))
+            }
+            Value::Object(obj) => Ok(TsGoLintRules::Object(obj)),
+            _ => Err(serde::de::Error::custom("Expected array or object for rules")),
+        }
+    }
 }
 
 /// Represents the raw output binary data from `tsgolint`.
