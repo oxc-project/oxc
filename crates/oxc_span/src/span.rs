@@ -9,8 +9,6 @@ use miette::{LabeledSpan, SourceOffset, SourceSpan};
 use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
-use oxc_ast_macros::ast;
-use oxc_estree::ESTree;
 
 #[cfg(feature = "serialize")]
 use oxc_estree::ESTreeSpan;
@@ -76,29 +74,31 @@ pub const SPAN: Span = Span::new(0, 0);
 /// [`expand`]: Span::expand
 /// [`shrink`]: Span::shrink
 /// [`ContentEq`]: crate::ContentEq
-#[ast(visit)]
-#[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Eq, PartialOrd, Ord, ::oxc_ast_macros::Ast)]
 #[generate_derive(ESTree)]
 #[builder(skip)]
 #[content_eq(skip)]
+#[visit]
 #[estree(
     no_type,
     flatten,
     no_ts_def,
     add_ts_def = "interface Span { start: number; end: number; range?: [number, number]; }"
 )]
-pub struct Span {
-    /// The zero-based start offset of the span
-    pub start: u32,
-    /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
-    /// the span is empty, but should not be less than it.
-    pub end: u32,
-    /// Align `Span` on 8 on 64-bit platforms
-    #[estree(skip)]
-    _align: PointerAlign,
-}
+#[repr(transparent)]
+pub struct Span(u64);
 
 impl Span {
+    /// Get the start offset of the span
+    pub const fn start(self) -> u32 {
+        self.0 as u32
+    }
+
+    /// Get the end offset of the span
+    pub const fn end(self) -> u32 {
+        (self.0 >> 32) as u32
+    }
+
     /// Create a new [`Span`] from a start and end position.
     ///
     /// # Invariants
@@ -108,7 +108,7 @@ impl Span {
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end, _align: PointerAlign::new() }
+        Self(((end as u64) << 32) | (start as u64))
     }
 
     /// Create a new empty [`Span`] that starts and ends at an offset position.
@@ -151,8 +151,10 @@ impl Span {
     /// assert_eq!(Span::new(5, 10).size(), 5);
     /// ```
     pub const fn size(self) -> u32 {
-        debug_assert!(self.start <= self.end);
-        self.end - self.start
+        let start = self.start();
+        let end = self.end();
+        debug_assert!(start <= end);
+        end - start
     }
 
     /// Returns `true` if `self` covers a range of zero length.
@@ -166,8 +168,10 @@ impl Span {
     /// assert!(!Span::new(0, 5).is_empty());
     /// ```
     pub const fn is_empty(self) -> bool {
-        debug_assert!(self.start <= self.end);
-        self.start == self.end
+        let start = self.start();
+        let end = self.end();
+        debug_assert!(start <= end);
+        start == end
     }
 
     /// Returns `true` if `self` is not a real span.
@@ -207,7 +211,7 @@ impl Span {
     /// ```
     #[inline]
     pub const fn contains_inclusive(self, span: Span) -> bool {
-        self.start <= span.start && span.end <= self.end
+        self.start() <= span.start() && span.end() <= self.end()
     }
 
     /// Create a [`Span`] covering the maximum range of two [`Span`]s.
@@ -223,7 +227,7 @@ impl Span {
     /// ```
     #[must_use]
     pub fn merge(self, other: Self) -> Self {
-        Self::new(self.start.min(other.start), self.end.max(other.end))
+        Self::new(self.start().min(other.start()), self.end().max(other.end()))
     }
 
     /// Create a [`Span`] that is grown by `offset` on either side.
@@ -245,7 +249,7 @@ impl Span {
     /// [`expand_right`]: Span::expand_right
     #[must_use]
     pub fn expand(self, offset: u32) -> Self {
-        Self::new(self.start.saturating_sub(offset), self.end.saturating_add(offset))
+        Self::new(self.start().saturating_sub(offset), self.end().saturating_add(offset))
     }
 
     /// Create a [`Span`] that has its start and end positions shrunk by
@@ -268,8 +272,8 @@ impl Span {
     /// [`shrink_right`]: Span::shrink_right
     #[must_use]
     pub fn shrink(self, offset: u32) -> Self {
-        let start = self.start.saturating_add(offset);
-        let end = self.end.saturating_sub(offset);
+        let start = self.start().saturating_add(offset);
+        let end = self.end().saturating_sub(offset);
         debug_assert!(start <= end, "Cannot shrink span past zero length");
         Self::new(start, end)
     }
@@ -299,7 +303,7 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn expand_left(self, offset: u32) -> Self {
-        Self::new(self.start.saturating_sub(offset), self.end)
+        Self::new(self.start().saturating_sub(offset), self.end())
     }
 
     /// Create a [`Span`] that has its start position moved to the right by
@@ -326,9 +330,9 @@ impl Span {
     ///
     #[must_use]
     pub const fn shrink_left(self, offset: u32) -> Self {
-        let start = self.start.saturating_add(offset);
-        debug_assert!(start <= self.end);
-        Self::new(self.start.saturating_add(offset), self.end)
+        let start = self.start().saturating_add(offset);
+        debug_assert!(start <= self.end());
+        Self::new(start, self.end())
     }
 
     /// Create a [`Span`] that has its end position moved to the right by
@@ -356,7 +360,7 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn expand_right(self, offset: u32) -> Self {
-        Self::new(self.start, self.end.saturating_add(offset))
+        Self::new(self.start(), self.end().saturating_add(offset))
     }
 
     /// Create a [`Span`] that has its end position moved to the left by
@@ -382,9 +386,9 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn shrink_right(self, offset: u32) -> Self {
-        let end = self.end.saturating_sub(offset);
-        debug_assert!(self.start <= end);
-        Self::new(self.start, end)
+        let end = self.end().saturating_sub(offset);
+        debug_assert!(self.start() <= end);
+        Self::new(self.start(), end)
     }
 
     /// Create a [`Span`] that has its start and end position moved to the left by
@@ -406,12 +410,12 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn move_left(self, offset: u32) -> Self {
-        let start = self.start.saturating_sub(offset);
+        let start = self.start().saturating_sub(offset);
         #[cfg(debug_assertions)]
         if start == 0 {
-            debug_assert!(self.start == offset, "Cannot move span past zero length");
+            debug_assert!(self.start() == offset, "Cannot move span past zero length");
         }
-        Self::new(start, self.end.saturating_sub(offset))
+        Self::new(start, self.end().saturating_sub(offset))
     }
 
     /// Create a [`Span`] that has its start and end position moved to the right by
@@ -433,15 +437,15 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn move_right(self, offset: u32) -> Self {
-        let end = self.end.saturating_add(offset);
+        let end = self.end().saturating_add(offset);
         #[cfg(debug_assertions)]
         if end == u32::MAX {
             debug_assert!(
-                u32::MAX.saturating_sub(offset) == self.end,
+                u32::MAX.saturating_sub(offset) == self.end(),
                 "Cannot move span past `u32::MAX` length"
             );
         }
-        Self::new(self.start.saturating_add(offset), end)
+        Self::new(self.start().saturating_add(offset), end)
     }
 
     /// Get a snippet of text from a source string that the [`Span`] covers.
@@ -456,7 +460,7 @@ impl Span {
     /// assert_eq!(name_span.size(), name.len() as u32);
     /// ```
     pub fn source_text(self, source_text: &str) -> &str {
-        &source_text[self.start as usize..self.end as usize]
+        &source_text[self.start() as usize..self.end() as usize]
     }
 
     /// Create a [`LabeledSpan`] covering this [`Span`] with the given label.
@@ -481,21 +485,14 @@ impl Span {
 
     /// Convert [`Span`] to a single `u64`.
     ///
-    /// On 64-bit platforms, `Span` is aligned on 8, so equivalent to a `u64`.
+    /// On 64-bit platforms, `Span` is already a `u64`.
     /// Compiler boils this conversion down to a no-op on 64-bit platforms.
-    /// <https://godbolt.org/z/9rcMoT1fc>
     ///
-    /// Do not use this on 32-bit platforms as it's likely to be less efficient.
-    ///
-    /// Note: `#[ast]` macro adds `#[repr(C)]` to the struct, so field order is guaranteed.
+    /// Note: `#[repr(transparent)]` ensures this is a no-op.
     #[expect(clippy::inline_always)] // Because this is a no-op on 64-bit platforms.
     #[inline(always)]
     const fn as_u64(self) -> u64 {
-        if cfg!(target_endian = "little") {
-            ((self.end as u64) << 32) | (self.start as u64)
-        } else {
-            ((self.start as u64) << 32) | (self.end as u64)
-        }
+        self.0
     }
 
     /// Compare two [`Span`]s.
@@ -506,11 +503,7 @@ impl Span {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     const fn const_eq(self, other: Self) -> bool {
-        if cfg!(target_pointer_width = "64") {
-            self.as_u64() == other.as_u64()
-        } else {
-            self.start == other.start && self.end == other.end
-        }
+        self.0 == other.0
     }
 }
 
@@ -519,14 +512,14 @@ impl Index<Span> for str {
 
     #[inline]
     fn index(&self, index: Span) -> &Self::Output {
-        &self[index.start as usize..index.end as usize]
+        &self[index.start() as usize..index.end() as usize]
     }
 }
 
 impl IndexMut<Span> for str {
     #[inline]
     fn index_mut(&mut self, index: Span) -> &mut Self::Output {
-        &mut self[index.start as usize..index.end as usize]
+        &mut self[index.start() as usize..index.end() as usize]
     }
 }
 
@@ -539,7 +532,7 @@ impl From<Range<u32>> for Span {
 
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
-        Self::new(SourceOffset::from(val.start as usize), val.size() as usize)
+        Self::new(SourceOffset::from(val.start() as usize), val.size() as usize)
     }
 }
 
@@ -558,26 +551,18 @@ impl PartialEq for Span {
     }
 }
 
-// Skip hashing `_align` field.
 // On 64-bit platforms, hash `Span` as a single `u64`, which is faster with `FxHash`.
 // https://godbolt.org/z/4fbvcsTxM
 impl Hash for Span {
     #[inline] // We exclusively use `FxHasher`, which produces small output hashing `u64`s and `u32`s
     fn hash<H: Hasher>(&self, hasher: &mut H) {
-        if cfg!(target_pointer_width = "64") {
-            self.as_u64().hash(hasher);
-        } else {
-            self.start.hash(hasher);
-            self.end.hash(hasher);
-        }
+        self.0.hash(hasher);
     }
 }
 
-// Skip `_align` field in `Debug` output
-#[expect(clippy::missing_fields_in_debug)]
 impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Span").field("start", &self.start).field("end", &self.end).finish()
+        f.debug_struct("Span").field("start", &self.start()).field("end", &self.end()).finish()
     }
 }
 
@@ -629,8 +614,8 @@ impl<'a> Dummy<'a> for Span {
 impl Serialize for Span {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.start)?;
-        map.serialize_entry("end", &self.end)?;
+        map.serialize_entry("start", &self.start())?;
+        map.serialize_entry("end", &self.end())?;
         map.end()
     }
 }
@@ -640,19 +625,13 @@ impl ESTreeSpan for Span {
     #[expect(clippy::inline_always)] // `#[inline(always)]` because it's a no-op
     #[inline(always)]
     fn range(self) -> [u32; 2] {
-        [self.start, self.end]
+        [self.start(), self.end()]
     }
 }
 
-/// Zero-sized type which has pointer alignment (8 on 64-bit, 4 on 32-bit).
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[repr(transparent)]
-struct PointerAlign([usize; 0]);
-
-impl PointerAlign {
-    #[inline]
-    const fn new() -> Self {
-        Self([])
+impl Default for Span {
+    fn default() -> Self {
+        SPAN
     }
 }
 
@@ -684,27 +663,12 @@ mod test {
         let second_hash = hash(Span::new(1, 5));
         assert_eq!(first_hash, second_hash);
 
-        // On 64-bit platforms, check hash is equivalent to `u64`
-        #[cfg(target_pointer_width = "64")]
+        // Check hash is equivalent to the internal `u64` representation
         {
-            let u64_equivalent: u64 =
-                if cfg!(target_endian = "little") { 1 + (5 << 32) } else { (1 << 32) + 5 };
+            // For Span::new(1, 5), the internal u64 is: ((5 << 32) | 1)
+            let u64_equivalent: u64 = ((5u64) << 32) | 1u64;
             let u64_hash = hash(u64_equivalent);
             assert_eq!(first_hash, u64_hash);
-        }
-
-        // On 32-bit platforms, check `_align` field does not alter hash
-        #[cfg(not(target_pointer_width = "64"))]
-        {
-            #[derive(Hash)]
-            #[repr(C)]
-            struct PlainSpan {
-                start: u32,
-                end: u32,
-            }
-
-            let plain_hash = hash(PlainSpan { start: 1, end: 5 });
-            assert_eq!(first_hash, plain_hash);
         }
     }
 
