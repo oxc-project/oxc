@@ -887,13 +887,13 @@ impl Runtime {
             return None;
         }
 
-        let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
-        let mut module_content: Option<ModuleContent> = None;
+        let allocator_guard = self.allocator_pool.get();
 
         if self.paths.contains(path) {
-            let allocator_guard = self.allocator_pool.get();
+            let mut records =
+                SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
 
-            let mc = ModuleContent::try_new(allocator_guard, |allocator| {
+            let module_content = ModuleContent::try_new(allocator_guard, |allocator| {
                 let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
                 else {
                     return Err(());
@@ -920,11 +920,10 @@ impl Runtime {
 
                 Ok(ModuleContentDependent { source_text, section_contents })
             });
-            let mc = mc.ok()?;
+            let module_content = module_content.ok()?;
 
-            module_content = Some(mc);
+            Some(ProcessedModule { section_module_records: records, content: Some(module_content) })
         } else {
-            let allocator_guard = self.allocator_pool.get();
             let allocator = &*allocator_guard;
 
             let stt = self.get_source_type_and_text(Path::new(path), ext, allocator)?;
@@ -937,7 +936,7 @@ impl Runtime {
                 }
             };
 
-            records = self.process_source(
+            let records = self.process_source(
                 Path::new(path),
                 ext,
                 check_syntax_errors,
@@ -946,9 +945,9 @@ impl Runtime {
                 allocator,
                 None,
             );
-        }
 
-        Some(ProcessedModule { section_module_records: records, content: module_content })
+            Some(ProcessedModule { section_module_records: records, content: None })
+        }
     }
 
     #[expect(clippy::too_many_arguments)]
