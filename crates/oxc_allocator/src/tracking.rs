@@ -34,12 +34,16 @@ pub struct AllocationStats {
 impl AllocationStats {
     /// Record that an allocation was made.
     pub(crate) fn record_allocation(&self) {
-        self.num_alloc.set(self.num_alloc.get() + 1);
+        // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+        // the exact number is not important
+        self.num_alloc.set(self.num_alloc.get().saturating_add(1));
     }
 
     /// Record that a reallocation was made.
     pub(crate) fn record_reallocation(&self) {
-        self.num_realloc.set(self.num_realloc.get() + 1);
+        // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+        // the exact number is not important
+        self.num_realloc.set(self.num_realloc.get().saturating_add(1));
     }
 
     /// Reset allocation counters.
