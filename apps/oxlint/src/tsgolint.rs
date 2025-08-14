@@ -126,6 +126,10 @@ impl<'a> TsGoLintState<'a> {
             // TODO: Stream diagnostics as they are emitted, rather than waiting
             let output = child.wait_with_output().expect("Failed to wait for tsgolint process");
 
+            if !output.status.success() {
+                return Err(format!("tsgolint process exited with status: {}", output.status));
+            }
+
             match parse_tsgolint_output(&output.stdout) {
                 Ok(parsed) => {
                     let mut oxc_diagnostics: FxHashMap<PathBuf, Vec<OxcDiagnostic>> =
