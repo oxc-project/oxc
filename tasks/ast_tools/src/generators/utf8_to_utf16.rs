@@ -112,7 +112,9 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-                self.convert_offset(&mut prop.span.start);
+                let mut start = prop.span.start();
+                self.convert_offset(&mut start);
+                prop.span.set_start(start);
 
                 // If shorthand, span of `key` and `value` are the same
                 match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -126,41 +128,73 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut prop.span.end);
+                let mut end = prop.span.end();
+                self.convert_offset(&mut end);
+                prop.span.set_end(end);
             }
 
             ///@@line_break
             fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
                 // Span of `type_annotation` is within the span of `kind`,
                 // so visit `type_annotation` before exiting span of `kind`
-                let span_end = match &mut pattern.kind {
+                match &mut pattern.kind {
                     BindingPatternKind::BindingIdentifier(ident) => {
-                        self.convert_offset(&mut ident.span.start);
+                        let mut start = ident.span.start();
+                        self.convert_offset(&mut start);
+                        ident.span.set_start(start);
                         walk_mut::walk_binding_identifier(self, ident);
-                        &mut ident.span.end
+                        
+                        if let Some(type_annotation) = &mut pattern.type_annotation {
+                            self.visit_ts_type_annotation(type_annotation);
+                        }
+                        
+                        let mut end = ident.span.end();
+                        self.convert_offset(&mut end);
+                        ident.span.set_end(end);
                     }
                     BindingPatternKind::ObjectPattern(obj_pattern) => {
-                        self.convert_offset(&mut obj_pattern.span.start);
+                        let mut start = obj_pattern.span.start();
+                        self.convert_offset(&mut start);
+                        obj_pattern.span.set_start(start);
                         walk_mut::walk_object_pattern(self, obj_pattern);
-                        &mut obj_pattern.span.end
+                        
+                        if let Some(type_annotation) = &mut pattern.type_annotation {
+                            self.visit_ts_type_annotation(type_annotation);
+                        }
+                        
+                        let mut end = obj_pattern.span.end();
+                        self.convert_offset(&mut end);
+                        obj_pattern.span.set_end(end);
                     }
                     BindingPatternKind::ArrayPattern(arr_pattern) => {
-                        self.convert_offset(&mut arr_pattern.span.start);
+                        let mut start = arr_pattern.span.start();
+                        self.convert_offset(&mut start);
+                        arr_pattern.span.set_start(start);
                         walk_mut::walk_array_pattern(self, arr_pattern);
-                        &mut arr_pattern.span.end
+                        
+                        if let Some(type_annotation) = &mut pattern.type_annotation {
+                            self.visit_ts_type_annotation(type_annotation);
+                        }
+                        
+                        let mut end = arr_pattern.span.end();
+                        self.convert_offset(&mut end);
+                        arr_pattern.span.set_end(end);
                     }
                     BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                        self.convert_offset(&mut assign_pattern.span.start);
+                        let mut start = assign_pattern.span.start();
+                        self.convert_offset(&mut start);
+                        assign_pattern.span.set_start(start);
                         walk_mut::walk_assignment_pattern(self, assign_pattern);
-                        &mut assign_pattern.span.end
+                        
+                        if let Some(type_annotation) = &mut pattern.type_annotation {
+                            self.visit_ts_type_annotation(type_annotation);
+                        }
+                        
+                        let mut end = assign_pattern.span.end();
+                        self.convert_offset(&mut end);
+                        assign_pattern.span.set_end(end);
                     }
                 };
-
-                if let Some(type_annotation) = &mut pattern.type_annotation {
-                    self.visit_ts_type_annotation(type_annotation);
-                }
-
-                self.convert_offset(span_end);
             }
 
             ///@@line_break
@@ -168,19 +202,25 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 // `BindingRestElement` contains a `BindingPattern`, but in this case span of
                 // `type_annotation` is after span of `kind`.
                 // So avoid calling `visit_binding_pattern` above.
-                self.convert_offset(&mut rest_element.span.start);
+                let mut start = rest_element.span.start();
+                self.convert_offset(&mut start);
+                rest_element.span.set_start(start);
 
                 self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
                 if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
                     self.visit_ts_type_annotation(type_annotation);
                 }
 
-                self.convert_offset(&mut rest_element.span.end);
+                let mut end = rest_element.span.end();
+                self.convert_offset(&mut end);
+                rest_element.span.set_end(end);
             }
 
             ///@@line_break
             fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
-                self.convert_offset(&mut prop.span.start);
+                let mut start = prop.span.start();
+                self.convert_offset(&mut start);
+                prop.span.set_start(start);
 
                 // If shorthand, span of `key` and `value` are the same
                 match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -206,7 +246,9 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut prop.span.end);
+                let mut end = prop.span.end();
+                self.convert_offset(&mut end);
+                prop.span.set_end(end);
             }
 
             ///@@line_break
@@ -215,9 +257,13 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
                     self.visit_export_class(class, &mut decl.span);
                 } else {
-                    self.convert_offset(&mut decl.span.start);
+                    let mut start = decl.span.start();
+                    self.convert_offset(&mut start);
+                    decl.span.set_start(start);
                     walk_mut::walk_export_named_declaration(self, decl);
-                    self.convert_offset(&mut decl.span.end);
+                    let mut end = decl.span.end();
+                    self.convert_offset(&mut end);
+                    decl.span.set_end(end);
                 }
             }
 
@@ -227,15 +273,21 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
                     self.visit_export_class(class, &mut decl.span);
                 } else {
-                    self.convert_offset(&mut decl.span.start);
+                    let mut start = decl.span.start();
+                    self.convert_offset(&mut start);
+                    decl.span.set_start(start);
                     walk_mut::walk_export_default_declaration(self, decl);
-                    self.convert_offset(&mut decl.span.end);
+                    let mut end = decl.span.end();
+                    self.convert_offset(&mut end);
+                    decl.span.set_end(end);
                 }
             }
 
             ///@@line_break
             fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
-                self.convert_offset(&mut specifier.span.start);
+                let mut start = specifier.span.start();
+                self.convert_offset(&mut start);
+                specifier.span.set_start(start);
 
                 // `local` and `exported` have same span if e.g.:
                 // * `export {x}`
@@ -269,12 +321,16 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut specifier.span.end);
+                let mut end = specifier.span.end();
+                self.convert_offset(&mut end);
+                specifier.span.set_end(end);
             }
 
             ///@@line_break
             fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
-                self.convert_offset(&mut specifier.span.start);
+                let mut start = specifier.span.start();
+                self.convert_offset(&mut start);
+                specifier.span.set_start(start);
 
                 // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
                 match &mut specifier.imported {
@@ -288,7 +344,9 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                     }
                 }
 
-                self.convert_offset(&mut specifier.span.end);
+                let mut end = specifier.span.end();
+                self.convert_offset(&mut end);
+                specifier.span.set_end(end);
             }
 
             ///@@line_break
@@ -301,7 +359,9 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
-                self.convert_offset(&mut lit.span.start);
+                let mut start = lit.span.start();
+                self.convert_offset(&mut start);
+                lit.span.set_start(start);
 
                 // Visit `quasis` and `expressions` in source order. The two `Vec`s are interleaved.
                 for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
@@ -310,12 +370,16 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 }
                 self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-                self.convert_offset(&mut lit.span.end);
+                let mut end = lit.span.end();
+                self.convert_offset(&mut end);
+                lit.span.set_end(end);
             }
 
             ///@@line_break
             fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
-                self.convert_offset(&mut lit.span.start);
+                let mut start = lit.span.start();
+                self.convert_offset(&mut start);
+                lit.span.set_start(start);
 
                 // Visit `quasis` and `types` in source order. The two `Vec`s are interleaved.
                 for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
@@ -324,7 +388,9 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 }
                 self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-                self.convert_offset(&mut lit.span.end);
+                let mut end = lit.span.end();
+                self.convert_offset(&mut end);
+                lit.span.set_end(end);
             }
         }
 
@@ -343,22 +409,34 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 ///@ These have spans which are before the export statement span start.
                 ///@ Then process export statement and `Class` start, then remaining decorators,
                 ///@ which have spans within the span of `Class`.
-                let mut decl_start = export_decl_span.start;
+                let mut decl_start = export_decl_span.start();
+                let mut export_decl_span_processed = false;
                 for decorator in &mut class.decorators {
-                    if decorator.span.start > decl_start {
+                    if decorator.span.start() > decl_start && !export_decl_span_processed {
                         ///@ Process span start of export statement and `Class`
-                        self.convert_offset(&mut export_decl_span.start);
-                        self.convert_offset(&mut class.span.start);
+                        let mut export_start = export_decl_span.start();
+                        self.convert_offset(&mut export_start);
+                        export_decl_span.set_start(export_start);
+                        
+                        let mut class_start = class.span.start();
+                        self.convert_offset(&mut class_start);
+                        class.span.set_start(class_start);
+                        
                         ///@ Prevent this branch being taken again
-                        decl_start = u32::MAX;
+                        export_decl_span_processed = true;
                     }
                     self.visit_decorator(decorator);
                 }
 
                 ///@ If didn't already, process span start of export statement and `Class`
-                if decl_start < u32::MAX {
-                    self.convert_offset(&mut export_decl_span.start);
-                    self.convert_offset(&mut class.span.start);
+                if !export_decl_span_processed {
+                    let mut export_start = export_decl_span.start();
+                    self.convert_offset(&mut export_start);
+                    export_decl_span.set_start(export_start);
+                    
+                    let mut class_start = class.span.start();
+                    self.convert_offset(&mut class_start);
+                    class.span.set_start(class_start);
                 }
 
                 ///@ Process rest of the class
@@ -378,8 +456,13 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 self.visit_class_body(&mut class.body);
 
                 ///@ Process span end of `Class` and export statement
-                self.convert_offset(&mut class.span.end);
-                self.convert_offset(&mut export_decl_span.end);
+                let mut class_end = class.span.end();
+                self.convert_offset(&mut class_end);
+                class.span.set_end(class_end);
+                
+                let mut export_end = export_decl_span.end();
+                self.convert_offset(&mut export_end);
+                export_decl_span.set_end(export_end);
             }
         }
     }
@@ -434,9 +517,13 @@ fn generate_visitor(
     let visitor = quote! {
         ///@@line_break
         fn #visit_method_ident(&mut self, it: &mut #ty #extra_params) {
-            self.convert_offset(&mut it.span.start);
+            let mut start = it.span.start();
+            self.convert_offset(&mut start);
+            it.span.set_start(start);
             walk_mut::#walk_fn_ident(self, it #extra_args);
-            self.convert_offset(&mut it.span.end);
+            let mut end = it.span.end();
+            self.convert_offset(&mut end);
+            it.span.set_end(end);
         }
     };
 

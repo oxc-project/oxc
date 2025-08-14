@@ -99,6 +99,18 @@ impl Span {
         (self.0 >> 32) as u32
     }
 
+    /// Set the start offset of the span
+    pub fn set_start(&mut self, start: u32) {
+        let end = self.end();
+        self.0 = ((end as u64) << 32) | (start as u64);
+    }
+
+    /// Set the end offset of the span
+    pub fn set_end(&mut self, end: u32) {
+        let start = self.start();
+        self.0 = ((end as u64) << 32) | (start as u64);
+    }
+
     /// Create a new [`Span`] from a start and end position.
     ///
     /// # Invariants

@@ -517,6 +517,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
         },
+        "Span" => Layout::from_type::<u64>(),
         name => panic!("Unknown primitive type: {name}"),
     }
 }

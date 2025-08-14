@@ -39,7 +39,7 @@ use super::define_generator;
 /// These 2 should continue to be blacklisted for now.
 ///
 /// See also: <https://github.com/oxc-project/oxc/issues/11490>
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
+const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern"];
 
 /// Enums to create an `AstKind` for.
 ///

@@ -260,6 +260,7 @@ impl<'c> Parser<'c> {
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
+            "Span" => primitive("Span"),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
