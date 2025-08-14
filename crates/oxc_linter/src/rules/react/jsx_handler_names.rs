@@ -437,22 +437,6 @@ fn test() {
                 serde_json::json!([{ "eventHandlerPrefix": "on", "eventHandlerPropPrefix": "on" }]),
             ),
         ),
-        // These test cases are commented out because "::" is not understood by the parser.
-        // ("<TestComponent onChange={props::handleChange} />", None),
-        // ("<TestComponent onChange={::props.onChange} />", None),
-        // ("<TestComponent onChange={props.foo::handleChange} />", None),
-        // (
-        //     "<TestComponent onChange={() => props::handleChange()} />",
-        //     Some(serde_json::json!([{ "checkInlineFunction": true }])),
-        // ),
-        // (
-        //     "<TestComponent onChange={() => ::props.onChange()} />",
-        //     Some(serde_json::json!([{ "checkInlineFunction": true }])),
-        // ),
-        // (
-        //     "<TestComponent onChange={() => props.foo::handleChange()} />",
-        //     Some(serde_json::json!([{ "checkInlineFunction": true }])),
-        // ),
         ("<TestComponent only={this.only} />", None),
         (
             "<TestComponent onChange={this.someChange} />",
