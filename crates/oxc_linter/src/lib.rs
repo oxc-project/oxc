@@ -32,8 +32,10 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
+pub mod generated;
+
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-mod generated {
+mod generated_oxlint2 {
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
 }

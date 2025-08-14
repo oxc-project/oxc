@@ -183,6 +183,27 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => #struct_names::IS_TSGOLINT_RULE),*
                 }
             }
+
+            /// Get the AST node types this rule operates on, if any
+            pub fn node_types(&self) -> &'static [oxc_ast::AstType] {
+                match self {
+                    #(Self::#struct_names(_) => {
+                        const CONST_NAME: &str = stringify!(#struct_names);
+                        // We need to get the constant by name since we can't directly reference generated constants
+                        crate::generated::rule_node_types::get_node_types(CONST_NAME)
+                    }),*
+                }
+            }
+
+            /// Returns true if this rule should run on any node type (fallback for complex rules)
+            pub fn any_node_type(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(_) => {
+                        const CONST_NAME: &str = stringify!(#struct_names);
+                        crate::generated::rule_node_types::get_any_node_type(CONST_NAME)
+                    }),*
+                }
+            }
         }
 
         impl std::hash::Hash for RuleEnum {

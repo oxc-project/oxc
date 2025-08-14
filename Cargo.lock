@@ -2046,6 +2046,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_linter_codegen"
+version = "0.0.0"
+dependencies = [
+ "oxc_tasks_common",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "oxc_linter_napi"
 version = "0.1.0"
 dependencies = [

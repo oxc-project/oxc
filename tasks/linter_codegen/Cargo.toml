@@ -1,0 +1,18 @@
+[package]
+name = "oxc_linter_codegen"
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Codegen for optimizing linter rule AST node type matching"
+
+[dependencies]
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true, features = ["full", "visit", "parsing"] }
+oxc_tasks_common = { workspace = true }
+
+[lints]
+workspace = true
