@@ -1,13 +1,10 @@
-use oxc_ast::{
-    AstKind,
-    ast::{JSXElementName, JSXMemberExpressionObject, JSXOpeningElement},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_jsx_fragment};
 
 fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
     let msg = if mode == FragmentMode::Element {
@@ -175,22 +172,6 @@ impl Rule for JsxFragments {
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.source_type().is_jsx()
-    }
-}
-
-fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
-    match &elem.name {
-        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
-        JSXElementName::MemberExpression(mem_expr) => {
-            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
-                ident.name == "React" && mem_expr.property.name == "Fragment"
-            } else {
-                false
-            }
-        }
-        JSXElementName::NamespacedName(_)
-        | JSXElementName::Identifier(_)
-        | JSXElementName::ThisExpression(_) => false,
     }
 }
 
