@@ -121,7 +121,7 @@ pub use pool::{AllocatorGuard, AllocatorPool};
 )))]
 #[allow(missing_docs, clippy::missing_safety_doc, clippy::unused_self, clippy::allow_attributes)]
 mod dummies {
-    use std::{ptr::NonNull, sync::atomic::AtomicBool};
+    use std::{ptr::NonNull, sync::atomic::AtomicU32};
 
     use super::Allocator;
 
@@ -129,7 +129,7 @@ mod dummies {
     pub struct FixedSizeAllocatorMetadata {
         pub id: u32,
         pub alloc_ptr: NonNull<u8>,
-        pub is_double_owned: AtomicBool,
+        pub ref_count: AtomicU32,
     }
 
     #[doc(hidden)]
