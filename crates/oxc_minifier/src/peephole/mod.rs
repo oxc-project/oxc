@@ -255,7 +255,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
                 Self::try_compress_normal_assignment_to_combined_assignment(e, ctx);
                 Self::try_compress_assignment_to_update_expression(expr, ctx);
-                Self::remove_unused_assignment_expression(expr, ctx);
+                Self::remove_unused_assignment_expr(expr, ctx);
             }
             Expression::SequenceExpression(_) => Self::try_fold_sequence_expression(expr, ctx),
             Expression::ArrowFunctionExpression(e) => Self::try_compress_arrow_expression(e, ctx),
@@ -497,7 +497,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
                 PeepholeOptimizations::try_fold_sequence_expression(e, ctx);
             }
             Expression::AssignmentExpression(_) => {
-                PeepholeOptimizations::remove_unused_assignment_expression(e, ctx);
+                PeepholeOptimizations::remove_unused_assignment_expr(e, ctx);
             }
             _ => {}
         }
