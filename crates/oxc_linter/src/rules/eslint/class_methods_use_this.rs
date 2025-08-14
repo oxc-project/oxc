@@ -21,14 +21,14 @@ fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> 
 }
 
 #[derive(Debug, Clone)]
-pub struct ClassMethodsUseThis {
+pub struct ClassMethodsUseThisConfig {
     except_methods: Vec<MethodException>,
     enforce_for_class_fields: bool,
     ignore_override_methods: bool,
     ignore_classes_with_implements: Option<IgnoreClassWithImplements>,
 }
 
-impl Default for ClassMethodsUseThis {
+impl Default for ClassMethodsUseThisConfig {
     fn default() -> Self {
         Self {
             except_methods: Vec::new(),
@@ -38,6 +38,9 @@ impl Default for ClassMethodsUseThis {
         }
     }
 }
+
+#[derive(Debug, Clone, Default)]
+pub struct ClassMethodsUseThis(Box<ClassMethodsUseThisConfig>);
 
 #[derive(Debug, Clone)]
 struct MethodException {
@@ -95,7 +98,7 @@ declare_oxc_lint!(
 impl Rule for ClassMethodsUseThis {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
-        Self {
+        Self(Box::new(ClassMethodsUseThisConfig {
             except_methods: obj
                 .and_then(|o| o.get("exceptMethods"))
                 .and_then(|v| v.as_array())
@@ -129,15 +132,16 @@ impl Rule for ClassMethodsUseThis {
                     "public-fields" => IgnoreClassWithImplements::PublicFields,
                     _ => IgnoreClassWithImplements::All,
                 }),
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let config = &self.0;
         let function_pair = match node.kind() {
             AstKind::AccessorProperty(accessor) => {
                 if accessor.r#static
-                    || !self.enforce_for_class_fields
-                    || (self.ignore_override_methods && accessor.r#override)
+                    || !config.enforce_for_class_fields
+                    || (config.ignore_override_methods && accessor.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -160,7 +164,7 @@ impl Rule for ClassMethodsUseThis {
             AstKind::MethodDefinition(method_definition) => {
                 if method_definition.r#static
                     || method_definition.kind.is_constructor()
-                    || (self.ignore_override_methods && method_definition.r#override)
+                    || (config.ignore_override_methods && method_definition.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -175,8 +179,8 @@ impl Rule for ClassMethodsUseThis {
             }
             AstKind::PropertyDefinition(property_definition) => {
                 if property_definition.r#static
-                    || !self.enforce_for_class_fields
-                    || (self.ignore_override_methods && property_definition.r#override)
+                    || !config.enforce_for_class_fields
+                    || (config.ignore_override_methods && property_definition.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -200,7 +204,7 @@ impl Rule for ClassMethodsUseThis {
         };
         let Some((function_body, name)) = function_pair else { return };
         if let Some(name_str) = name.name() {
-            if self.except_methods.iter().any(|method| {
+            if config.except_methods.iter().any(|method| {
                 method.name == name_str && method.private == name.is_private_identifier()
             }) {
                 return;
@@ -222,7 +226,8 @@ impl ClassMethodsUseThis {
         accessibility: Option<TSAccessibility>,
         is_private: bool,
     ) -> bool {
-        let Some(ignore_classes_with_implements) = &self.ignore_classes_with_implements else {
+        let config = &self.0;
+        let Some(ignore_classes_with_implements) = &config.ignore_classes_with_implements else {
             return false;
         };
         let mut current_node = node;
