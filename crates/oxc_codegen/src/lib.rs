@@ -197,6 +197,7 @@ impl<'a> Codegen<'a> {
     pub fn build(mut self, program: &Program<'a>) -> CodegenReturn {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
+        self.indent = self.options.initial_indent;
         self.code.reserve(program.source_text.len());
         self.build_comments(&program.comments);
         if let Some(path) = &self.options.source_map_path {

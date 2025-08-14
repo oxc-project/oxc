@@ -647,4 +647,11 @@ fn indentation() {
             ..CodegenOptions::default()
         },
     );
+
+    // Test initial indent with 1
+    test_options(
+        "let foo = 1;",
+        "\tlet foo = 1;\n",
+        CodegenOptions { initial_indent: 1, ..CodegenOptions::default() },
+    );
 }

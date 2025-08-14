@@ -38,6 +38,11 @@ pub struct CodegenOptions {
     ///
     /// Default is `1`.
     pub indent_width: usize,
+
+    /// Initial indentation level for generated code.
+    ///
+    /// Default is `0`.
+    pub initial_indent: u32,
 }
 
 impl Default for CodegenOptions {
@@ -49,6 +54,7 @@ impl Default for CodegenOptions {
             source_map_path: None,
             indent_char: IndentChar::default(),
             indent_width: DEFAULT_INDENT_WIDTH,
+            initial_indent: 0,
         }
     }
 }
@@ -63,6 +69,7 @@ impl CodegenOptions {
             source_map_path: None,
             indent_char: IndentChar::default(),
             indent_width: DEFAULT_INDENT_WIDTH,
+            initial_indent: 0,
         }
     }
 
