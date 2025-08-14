@@ -165,50 +165,9 @@ impl Linter {
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
         if semantic.nodes().len() > 200_000 {
-            // Collect rules into a Vec so that we can iterate over the rules multiple times
-            let rules = rules.collect::<Vec<_>>();
-
-            for (rule, ctx) in &rules {
-                rule.run_once(ctx);
-            }
-
-            for symbol in semantic.scoping().symbol_ids() {
-                for (rule, ctx) in &rules {
-                    rule.run_on_symbol(symbol, ctx);
-                }
-            }
-
-            for node in semantic.nodes() {
-                for (rule, ctx) in &rules {
-                    rule.run(node, ctx);
-                }
-            }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    for (rule, ctx) in &rules {
-                        rule.run_on_jest_node(&jest_node, ctx);
-                    }
-                }
-            }
+            self.run_rules_large_file(rules.collect(), semantic, should_run_on_jest_node);
         } else {
-            for (rule, ref ctx) in rules {
-                rule.run_once(ctx);
-
-                for symbol in semantic.scoping().symbol_ids() {
-                    rule.run_on_symbol(symbol, ctx);
-                }
-
-                for node in semantic.nodes() {
-                    rule.run(node, ctx);
-                }
-
-                if should_run_on_jest_node {
-                    for jest_node in iter_possible_jest_call_node(semantic) {
-                        rule.run_on_jest_node(&jest_node, ctx);
-                    }
-                }
-            }
+            self.run_rules_small_file(rules, semantic, should_run_on_jest_node);
         }
 
         #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
@@ -285,6 +244,95 @@ impl Linter {
             }
             Err(_err) => {
                 // TODO: report diagnostic
+            }
+        }
+    }
+
+    /// Run rules on a large file using rule categorization for optimal performance
+    fn run_rules_large_file<'a>(&self, 
+        rules: Vec<(&'a RuleEnum, LintContext<'a>)>,
+        semantic: &Semantic<'a>,
+        should_run_on_jest_node: bool,
+    ) {
+        // Step 1: Run once methods
+        for (rule, ctx) in &rules {
+            rule.run_once(ctx);
+        }
+
+        // Step 2: Run symbol methods
+        for symbol in semantic.scoping().symbol_ids() {
+            for (rule, ctx) in &rules {
+                rule.run_on_symbol(symbol, ctx);
+            }
+        }
+
+        // Step 3: Categorize rules by AST node types for optimal performance
+        const AST_TYPES_COUNT: usize = 187; // JSDocUnknownType = 186 is the last variant
+        let mut rules_by_ast_type: Vec<Vec<(&'a RuleEnum, &LintContext<'a>)>> = vec![Vec::new(); AST_TYPES_COUNT];
+        let mut rules_any_ast_type: Vec<(&'a RuleEnum, &LintContext<'a>)> = Vec::new();
+
+        for (rule, ctx) in &rules {
+            if rule.any_node_type() {
+                rules_any_ast_type.push((rule, ctx));
+            } else {
+                for &ast_type in rule.node_types() {
+                    let type_index = ast_type as usize;
+                    if type_index < AST_TYPES_COUNT {
+                        rules_by_ast_type[type_index].push((rule, ctx));
+                    }
+                }
+            }
+        }
+
+        // Step 4: Run node methods with optimized rule selection
+        for node in semantic.nodes() {
+            let node_type = node.kind().ty();
+            let type_index = node_type as usize;
+
+            // Run rules specific to this AST node type
+            if type_index < AST_TYPES_COUNT {
+                for &(rule, ctx) in &rules_by_ast_type[type_index] {
+                    rule.run(node, ctx);
+                }
+            }
+
+            // Run rules that apply to any node type
+            for &(rule, ctx) in &rules_any_ast_type {
+                rule.run(node, ctx);
+            }
+        }
+
+        // Step 5: Run jest node methods
+        if should_run_on_jest_node {
+            for jest_node in iter_possible_jest_call_node(semantic) {
+                for (rule, ctx) in &rules {
+                    rule.run_on_jest_node(&jest_node, ctx);
+                }
+            }
+        }
+    }
+
+    /// Run rules on a small file using the original approach
+    fn run_rules_small_file<'a>(&self,
+        rules: impl Iterator<Item = (&'a RuleEnum, LintContext<'a>)>,
+        semantic: &Semantic<'a>,
+        should_run_on_jest_node: bool,
+    ) {
+        for (rule, ref ctx) in rules {
+            rule.run_once(ctx);
+
+            for symbol in semantic.scoping().symbol_ids() {
+                rule.run_on_symbol(symbol, ctx);
+            }
+
+            for node in semantic.nodes() {
+                rule.run(node, ctx);
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    rule.run_on_jest_node(&jest_node, ctx);
+                }
             }
         }
     }
