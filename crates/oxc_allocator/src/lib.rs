@@ -24,8 +24,15 @@
 //!   Only supported on 64-bit little-endian platforms at present.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
+//! * `track_allocations` - Count allocations and reallocations.
+//!   For internal use only. The APIs provided by this feature are sketchy at best, and possibly
+//!   undefined behavior. Do not enable this feature under any circumstances in production code.
+//!
 //! * `disable_fixed_size` - Disables `fixed_size` feature.
 //!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
+//!
+//! * `disable_track_allocations` - Disables `track_allocations` feature.
+//!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
 #![warn(missing_docs)]
 
