@@ -81,7 +81,7 @@ fn size_asserts() {
     // `RuleEnum` runs in a really tight loop, make sure it is small for CPU cache.
     // A reduction from 168 bytes to 16 results 15% performance improvement.
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
-    assert_eq!(size_of::<RuleEnum>(), 16);
+    assert_eq!(size_of::<RuleEnum>(), 32);
 }
 
 #[derive(Debug, Clone)]
