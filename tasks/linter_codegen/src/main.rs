@@ -131,7 +131,8 @@ pub fn analyze_rule_file(rule_path: &Path) -> Option<RuleInfo> {
         .to_str()?
         .to_string();
 
-    let ast_types: Vec<String> = visitor.ast_kinds.into_iter().collect();
+    let mut ast_types: Vec<String> = visitor.ast_kinds.into_iter().collect();
+    ast_types.sort(); // Make output deterministic
     
     // If no AST kinds found, assume it processes all node types
     let any_node_type = ast_types.is_empty();

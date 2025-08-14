@@ -118,6 +118,12 @@ ast:
   cargo run -p oxc_ast_tools
   just check
 
+# Generate linter rule node type optimizations
+# Run this when lint rules are added or modified for better performance
+linter-codegen:
+  cargo run -p oxc_linter_codegen
+  just check
+
 # Get code coverage
 codecov:
   cargo codecov --html

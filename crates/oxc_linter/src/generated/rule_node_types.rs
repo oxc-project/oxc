@@ -24,10 +24,10 @@ pub const TYPESCRIPTNONONNULLASSERTEDOPTIONALCHAIN_ANY_NODE_TYPE: bool = false;
 pub const TYPESCRIPTNOUNSAFECALL_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTNOUNSAFECALL_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTPREFERFUNCTIONTYPE_NODE_TYPES: &[AstType] = &[AstType::TSTypeAnnotation, AstType::ExportDefaultDeclaration, AstType::TSInterfaceDeclaration, AstType::TSTypeAliasDeclaration];
+pub const TYPESCRIPTPREFERFUNCTIONTYPE_NODE_TYPES: &[AstType] = &[AstType::ExportDefaultDeclaration, AstType::TSInterfaceDeclaration, AstType::TSTypeAliasDeclaration, AstType::TSTypeAnnotation];
 pub const TYPESCRIPTPREFERFUNCTIONTYPE_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTEXPLICITFUNCTIONRETURNTYPE_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::ArrowFunctionExpression];
+pub const TYPESCRIPTEXPLICITFUNCTIONRETURNTYPE_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function];
 pub const TYPESCRIPTEXPLICITFUNCTIONRETURNTYPE_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTSWITCHEXHAUSTIVENESSCHECK_NODE_TYPES: &[AstType] = &[];
@@ -63,7 +63,7 @@ pub const TYPESCRIPTNOMISUSEDSPREAD_ANY_NODE_TYPE: bool = true;
 pub const TYPESCRIPTRELATEDGETTERSETTERPAIRS_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTRELATEDGETTERSETTERPAIRS_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTARRAYTYPE_NODE_TYPES: &[AstType] = &[AstType::TSConditionalType, AstType::TSTypeAnnotation, AstType::TSTypeReference, AstType::TSMappedType, AstType::TSArrayType, AstType::TSTypeAliasDeclaration, AstType::TSIndexedAccessType, AstType::TSTypeParameterInstantiation, AstType::TSAsExpression];
+pub const TYPESCRIPTARRAYTYPE_NODE_TYPES: &[AstType] = &[AstType::TSArrayType, AstType::TSAsExpression, AstType::TSConditionalType, AstType::TSIndexedAccessType, AstType::TSMappedType, AstType::TSTypeAliasDeclaration, AstType::TSTypeAnnotation, AstType::TSTypeParameterInstantiation, AstType::TSTypeReference];
 pub const TYPESCRIPTARRAYTYPE_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTPREFERREDUCETYPEPARAMETER_NODE_TYPES: &[AstType] = &[];
@@ -90,7 +90,7 @@ pub const TYPESCRIPTCONSISTENTINDEXEDOBJECTSTYLE_ANY_NODE_TYPE: bool = true;
 pub const TYPESCRIPTNOUNSAFEASSIGNMENT_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTNOUNSAFEASSIGNMENT_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTNOREQUIREIMPORTS_NODE_TYPES: &[AstType] = &[AstType::TSImportEqualsDeclaration, AstType::CallExpression];
+pub const TYPESCRIPTNOREQUIREIMPORTS_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::TSImportEqualsDeclaration];
 pub const TYPESCRIPTNOREQUIREIMPORTS_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNOREDUNDANTTYPECONSTITUENTS_NODE_TYPES: &[AstType] = &[];
@@ -111,7 +111,7 @@ pub const TYPESCRIPTNOUNSAFEENUMCOMPARISON_ANY_NODE_TYPE: bool = true;
 pub const TYPESCRIPTNOVARREQUIRES_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const TYPESCRIPTNOVARREQUIRES_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTADJACENTOVERLOADSIGNATURES_NODE_TYPES: &[AstType] = &[AstType::BlockStatement, AstType::TSModuleBlock, AstType::TSInterfaceDeclaration, AstType::Program, AstType::FunctionBody, AstType::TSTypeLiteral, AstType::Class];
+pub const TYPESCRIPTADJACENTOVERLOADSIGNATURES_NODE_TYPES: &[AstType] = &[AstType::BlockStatement, AstType::Class, AstType::FunctionBody, AstType::Program, AstType::TSInterfaceDeclaration, AstType::TSModuleBlock, AstType::TSTypeLiteral];
 pub const TYPESCRIPTADJACENTOVERLOADSIGNATURES_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTUNBOUNDMETHOD_NODE_TYPES: &[AstType] = &[];
@@ -126,13 +126,13 @@ pub const TYPESCRIPTNOEXPLICITANY_ANY_NODE_TYPE: bool = false;
 pub const TYPESCRIPTNOIMPORTTYPESIDEEFFECTS_NODE_TYPES: &[AstType] = &[AstType::ImportDeclaration];
 pub const TYPESCRIPTNOIMPORTTYPESIDEEFFECTS_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTNOUNSAFEFUNCTIONTYPE_NODE_TYPES: &[AstType] = &[AstType::TSInterfaceHeritage, AstType::TSTypeReference, AstType::TSClassImplements];
+pub const TYPESCRIPTNOUNSAFEFUNCTIONTYPE_NODE_TYPES: &[AstType] = &[AstType::TSClassImplements, AstType::TSInterfaceHeritage, AstType::TSTypeReference];
 pub const TYPESCRIPTNOUNSAFEFUNCTIONTYPE_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNOCONFUSINGVOIDEXPRESSION_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTNOCONFUSINGVOIDEXPRESSION_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTNOUNSAFEDECLARATIONMERGING_NODE_TYPES: &[AstType] = &[AstType::TSInterfaceDeclaration, AstType::Class];
+pub const TYPESCRIPTNOUNSAFEDECLARATIONMERGING_NODE_TYPES: &[AstType] = &[AstType::Class, AstType::TSInterfaceDeclaration];
 pub const TYPESCRIPTNOUNSAFEDECLARATIONMERGING_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNOMIXEDENUMS_NODE_TYPES: &[AstType] = &[];
@@ -165,19 +165,19 @@ pub const TYPESCRIPTAWAITTHENABLE_ANY_NODE_TYPE: bool = true;
 pub const TYPESCRIPTPREFERRETURNTHISTYPE_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTPREFERRETURNTHISTYPE_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTPREFERASCONST_NODE_TYPES: &[AstType] = &[AstType::VariableDeclarator, AstType::PropertyDefinition, AstType::TSAsExpression];
+pub const TYPESCRIPTPREFERASCONST_NODE_TYPES: &[AstType] = &[AstType::PropertyDefinition, AstType::TSAsExpression, AstType::VariableDeclarator];
 pub const TYPESCRIPTPREFERASCONST_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTPREFERPROMISEREJECTERRORS_NODE_TYPES: &[AstType] = &[];
 pub const TYPESCRIPTPREFERPROMISEREJECTERRORS_ANY_NODE_TYPE: bool = true;
 
-pub const TYPESCRIPTNOINFERRABLETYPES_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::ArrowFunctionExpression, AstType::VariableDeclarator, AstType::PropertyDefinition];
+pub const TYPESCRIPTNOINFERRABLETYPES_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function, AstType::PropertyDefinition, AstType::VariableDeclarator];
 pub const TYPESCRIPTNOINFERRABLETYPES_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTEXPLICITMODULEBOUNDARYTYPES_NODE_TYPES: &[AstType] = &[AstType::ExportDefaultDeclaration, AstType::TSExportAssignment, AstType::ExportNamedDeclaration];
+pub const TYPESCRIPTEXPLICITMODULEBOUNDARYTYPES_NODE_TYPES: &[AstType] = &[AstType::ExportDefaultDeclaration, AstType::ExportNamedDeclaration, AstType::TSExportAssignment];
 pub const TYPESCRIPTEXPLICITMODULEBOUNDARYTYPES_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTNOMISUSEDNEW_NODE_TYPES: &[AstType] = &[AstType::TSMethodSignature, AstType::TSInterfaceDeclaration, AstType::Class];
+pub const TYPESCRIPTNOMISUSEDNEW_NODE_TYPES: &[AstType] = &[AstType::Class, AstType::TSInterfaceDeclaration, AstType::TSMethodSignature];
 pub const TYPESCRIPTNOMISUSEDNEW_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNODYNAMICDELETE_NODE_TYPES: &[AstType] = &[AstType::UnaryExpression];
@@ -186,7 +186,7 @@ pub const TYPESCRIPTNODYNAMICDELETE_ANY_NODE_TYPE: bool = false;
 pub const TYPESCRIPTNONONNULLASSERTEDNULLISHCOALESCING_NODE_TYPES: &[AstType] = &[AstType::LogicalExpression];
 pub const TYPESCRIPTNONONNULLASSERTEDNULLISHCOALESCING_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTBANTYPES_NODE_TYPES: &[AstType] = &[AstType::TSTypeReference, AstType::TSTypeLiteral];
+pub const TYPESCRIPTBANTYPES_NODE_TYPES: &[AstType] = &[AstType::TSTypeLiteral, AstType::TSTypeReference];
 pub const TYPESCRIPTBANTYPES_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNOUNSAFERETURN_NODE_TYPES: &[AstType] = &[];
@@ -210,7 +210,7 @@ pub const TYPESCRIPTCONSISTENTTYPEDEFINITIONS_ANY_NODE_TYPE: bool = false;
 pub const TYPESCRIPTNOEXTRANEOUSCLASS_NODE_TYPES: &[AstType] = &[AstType::Class];
 pub const TYPESCRIPTNOEXTRANEOUSCLASS_ANY_NODE_TYPE: bool = false;
 
-pub const TYPESCRIPTCONSISTENTGENERICCONSTRUCTORS_NODE_TYPES: &[AstType] = &[AstType::PropertyDefinition, AstType::VariableDeclarator, AstType::AssignmentPattern];
+pub const TYPESCRIPTCONSISTENTGENERICCONSTRUCTORS_NODE_TYPES: &[AstType] = &[AstType::AssignmentPattern, AstType::PropertyDefinition, AstType::VariableDeclarator];
 pub const TYPESCRIPTCONSISTENTGENERICCONSTRUCTORS_ANY_NODE_TYPE: bool = false;
 
 pub const TYPESCRIPTNONAMESPACE_NODE_TYPES: &[AstType] = &[AstType::TSModuleDeclaration];
@@ -300,7 +300,7 @@ pub const PROMISENOPROMISEINCALLBACK_ANY_NODE_TYPE: bool = false;
 pub const PROMISEVALIDPARAMS_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const PROMISEVALIDPARAMS_ANY_NODE_TYPE: bool = false;
 
-pub const PROMISEPREFERAWAITTOCALLBACKS_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::Function, AstType::ArrowFunctionExpression];
+pub const PROMISEPREFERAWAITTOCALLBACKS_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::CallExpression, AstType::Function];
 pub const PROMISEPREFERAWAITTOCALLBACKS_ANY_NODE_TYPE: bool = false;
 
 pub const PROMISEPARAMNAMES_NODE_TYPES: &[AstType] = &[AstType::NewExpression];
@@ -663,7 +663,7 @@ pub const IMPORTEXTENSIONS_ANY_NODE_TYPE: bool = true;
 pub const IMPORTPREFERDEFAULTEXPORT_NODE_TYPES: &[AstType] = &[];
 pub const IMPORTPREFERDEFAULTEXPORT_ANY_NODE_TYPE: bool = true;
 
-pub const IMPORTNOMUTABLEEXPORTS_NODE_TYPES: &[AstType] = &[AstType::ExportNamedDeclaration, AstType::ExportDefaultDeclaration];
+pub const IMPORTNOMUTABLEEXPORTS_NODE_TYPES: &[AstType] = &[AstType::ExportDefaultDeclaration, AstType::ExportNamedDeclaration];
 pub const IMPORTNOMUTABLEEXPORTS_ANY_NODE_TYPE: bool = false;
 
 pub const IMPORTNOCYCLE_NODE_TYPES: &[AstType] = &[];
@@ -693,7 +693,7 @@ pub const IMPORTNONAMEDASDEFAULT_ANY_NODE_TYPE: bool = true;
 pub const IMPORTUNAMBIGUOUS_NODE_TYPES: &[AstType] = &[];
 pub const IMPORTUNAMBIGUOUS_ANY_NODE_TYPE: bool = true;
 
-pub const IMPORTNOUNASSIGNEDIMPORT_NODE_TYPES: &[AstType] = &[AstType::ImportDeclaration, AstType::ExpressionStatement];
+pub const IMPORTNOUNASSIGNEDIMPORT_NODE_TYPES: &[AstType] = &[AstType::ExpressionStatement, AstType::ImportDeclaration];
 pub const IMPORTNOUNASSIGNEDIMPORT_ANY_NODE_TYPE: bool = false;
 
 pub const IMPORTMAXDEPENDENCIES_NODE_TYPES: &[AstType] = &[];
@@ -729,7 +729,7 @@ pub const JSDOCCHECKPROPERTYNAMES_ANY_NODE_TYPE: bool = true;
 pub const JSDOCREQUIRERETURNSTYPE_NODE_TYPES: &[AstType] = &[];
 pub const JSDOCREQUIRERETURNSTYPE_ANY_NODE_TYPE: bool = true;
 
-pub const JSDOCREQUIREYIELDS_NODE_TYPES: &[AstType] = &[AstType::YieldExpression, AstType::Function];
+pub const JSDOCREQUIREYIELDS_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::YieldExpression];
 pub const JSDOCREQUIREYIELDS_ANY_NODE_TYPE: bool = false;
 
 pub const JSDOCREQUIREPARAMDESCRIPTION_NODE_TYPES: &[AstType] = &[];
@@ -759,7 +759,7 @@ pub const JSDOCREQUIREPARAMTYPE_ANY_NODE_TYPE: bool = true;
 pub const ESLINTNORESTRICTEDGLOBALS_NODE_TYPES: &[AstType] = &[AstType::IdentifierReference];
 pub const ESLINTNORESTRICTEDGLOBALS_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNONEWFUNC_NODE_TYPES: &[AstType] = &[AstType::NewExpression, AstType::CallExpression];
+pub const ESLINTNONEWFUNC_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::NewExpression];
 pub const ESLINTNONEWFUNC_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTREQUIREYIELD_NODE_TYPES: &[AstType] = &[AstType::Function];
@@ -768,7 +768,7 @@ pub const ESLINTREQUIREYIELD_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNOUNDEF_NODE_TYPES: &[AstType] = &[];
 pub const ESLINTNOUNDEF_ANY_NODE_TYPE: bool = true;
 
-pub const ESLINTGETTERRETURN_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::ArrowFunctionExpression];
+pub const ESLINTGETTERRETURN_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function];
 pub const ESLINTGETTERRETURN_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTRADIX_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -780,13 +780,13 @@ pub const ESLINTNOGLOBALASSIGN_ANY_NODE_TYPE: bool = true;
 pub const ESLINTNOUNUSEDEXPRESSIONS_NODE_TYPES: &[AstType] = &[AstType::ExpressionStatement];
 pub const ESLINTNOUNUSEDEXPRESSIONS_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTIDLENGTH_NODE_TYPES: &[AstType] = &[AstType::IdentifierName, AstType::PrivateIdentifier, AstType::BindingIdentifier];
+pub const ESLINTIDLENGTH_NODE_TYPES: &[AstType] = &[AstType::BindingIdentifier, AstType::IdentifierName, AstType::PrivateIdentifier];
 pub const ESLINTIDLENGTH_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOSETTERRETURN_NODE_TYPES: &[AstType] = &[AstType::ReturnStatement];
 pub const ESLINTNOSETTERRETURN_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOCONSTANTCONDITION_NODE_TYPES: &[AstType] = &[AstType::DoWhileStatement, AstType::ForStatement, AstType::ConditionalExpression, AstType::IfStatement, AstType::WhileStatement];
+pub const ESLINTNOCONSTANTCONDITION_NODE_TYPES: &[AstType] = &[AstType::ConditionalExpression, AstType::DoWhileStatement, AstType::ForStatement, AstType::IfStatement, AstType::WhileStatement];
 pub const ESLINTNOCONSTANTCONDITION_ANY_NODE_TYPE: bool = false;
 
 pub const NOUNUSEDVARSUSAGE_NODE_TYPES: &[AstType] = &[];
@@ -852,7 +852,7 @@ pub const ESLINTMAXLINESPERFUNCTION_ANY_NODE_TYPE: bool = true;
 pub const ESLINTDEFAULTPARAMLAST_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function];
 pub const ESLINTDEFAULTPARAMLAST_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTUSEISNAN_NODE_TYPES: &[AstType] = &[AstType::SwitchStatement, AstType::BinaryExpression, AstType::CallExpression, AstType::SwitchCase];
+pub const ESLINTUSEISNAN_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::CallExpression, AstType::SwitchCase, AstType::SwitchStatement];
 pub const ESLINTUSEISNAN_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOOBJECTCONSTRUCTOR_NODE_TYPES: &[AstType] = &[];
@@ -900,10 +900,10 @@ pub const ESLINTNOEMPTYSTATICBLOCK_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNOVAR_NODE_TYPES: &[AstType] = &[AstType::VariableDeclaration];
 pub const ESLINTNOVAR_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTCURLY_NODE_TYPES: &[AstType] = &[AstType::ForInStatement, AstType::ForStatement, AstType::ForOfStatement, AstType::WhileStatement, AstType::DoWhileStatement, AstType::IfStatement];
+pub const ESLINTCURLY_NODE_TYPES: &[AstType] = &[AstType::DoWhileStatement, AstType::ForInStatement, AstType::ForOfStatement, AstType::ForStatement, AstType::IfStatement, AstType::WhileStatement];
 pub const ESLINTCURLY_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOSCRIPTURL_NODE_TYPES: &[AstType] = &[AstType::TemplateLiteral, AstType::StringLiteral];
+pub const ESLINTNOSCRIPTURL_NODE_TYPES: &[AstType] = &[AstType::StringLiteral, AstType::TemplateLiteral];
 pub const ESLINTNOSCRIPTURL_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTSYMBOLDESCRIPTION_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -942,7 +942,7 @@ pub const ESLINTNOEXTRABIND_ANY_NODE_TYPE: bool = false;
 pub const ESLINTSORTKEYS_NODE_TYPES: &[AstType] = &[AstType::ObjectExpression];
 pub const ESLINTSORTKEYS_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOREGEXSPACES_NODE_TYPES: &[AstType] = &[AstType::NewExpression, AstType::RegExpLiteral, AstType::CallExpression];
+pub const ESLINTNOREGEXSPACES_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::NewExpression, AstType::RegExpLiteral];
 pub const ESLINTNOREGEXSPACES_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOCLASSASSIGN_NODE_TYPES: &[AstType] = &[];
@@ -969,7 +969,7 @@ pub const ESLINTNOUSELESSCONSTRUCTOR_ANY_NODE_TYPE: bool = false;
 pub const ESLINTBLOCKSCOPEDVAR_NODE_TYPES: &[AstType] = &[AstType::VariableDeclaration];
 pub const ESLINTBLOCKSCOPEDVAR_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOBITWISE_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::UnaryExpression, AstType::AssignmentExpression];
+pub const ESLINTNOBITWISE_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::BinaryExpression, AstType::UnaryExpression];
 pub const ESLINTNOBITWISE_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOEQNULL_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression];
@@ -981,7 +981,7 @@ pub const ESLINTNOCASEDECLARATIONS_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNONONOCTALDECIMALESCAPE_NODE_TYPES: &[AstType] = &[AstType::StringLiteral];
 pub const ESLINTNONONOCTALDECIMALESCAPE_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNEWCAP_NODE_TYPES: &[AstType] = &[AstType::NewExpression, AstType::CallExpression];
+pub const ESLINTNEWCAP_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::NewExpression];
 pub const ESLINTNEWCAP_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOAWAITINLOOP_NODE_TYPES: &[AstType] = &[];
@@ -1014,7 +1014,7 @@ pub const ESLINTOPERATORASSIGNMENT_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNOMAGICNUMBERS_NODE_TYPES: &[AstType] = &[];
 pub const ESLINTNOMAGICNUMBERS_ANY_NODE_TYPE: bool = true;
 
-pub const ESLINTNOUSELESSRENAME_NODE_TYPES: &[AstType] = &[AstType::ImportSpecifier, AstType::ExportNamedDeclaration, AstType::ObjectPattern, AstType::ObjectAssignmentTarget];
+pub const ESLINTNOUSELESSRENAME_NODE_TYPES: &[AstType] = &[AstType::ExportNamedDeclaration, AstType::ImportSpecifier, AstType::ObjectAssignmentTarget, AstType::ObjectPattern];
 pub const ESLINTNOUSELESSRENAME_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOEXTENDNATIVE_NODE_TYPES: &[AstType] = &[];
@@ -1023,7 +1023,7 @@ pub const ESLINTNOEXTENDNATIVE_ANY_NODE_TYPE: bool = true;
 pub const ESLINTFORDIRECTION_NODE_TYPES: &[AstType] = &[AstType::ForStatement];
 pub const ESLINTFORDIRECTION_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOINNERDECLARATIONS_NODE_TYPES: &[AstType] = &[AstType::VariableDeclaration, AstType::Function];
+pub const ESLINTNOINNERDECLARATIONS_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::VariableDeclaration];
 pub const ESLINTNOINNERDECLARATIONS_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOMULTIASSIGN_NODE_TYPES: &[AstType] = &[AstType::VariableDeclarator];
@@ -1068,7 +1068,7 @@ pub const ESLINTNOEXTRALABEL_ANY_NODE_TYPE: bool = false;
 pub const ESLINTPREFEREXPONENTIATIONOPERATOR_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const ESLINTPREFEREXPONENTIATIONOPERATOR_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOCONDASSIGN_NODE_TYPES: &[AstType] = &[AstType::ForStatement, AstType::IfStatement, AstType::DoWhileStatement, AstType::ConditionalExpression, AstType::WhileStatement, AstType::AssignmentExpression];
+pub const ESLINTNOCONDASSIGN_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::ConditionalExpression, AstType::DoWhileStatement, AstType::ForStatement, AstType::IfStatement, AstType::WhileStatement];
 pub const ESLINTNOCONDASSIGN_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOUSELESSCALL_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1080,7 +1080,7 @@ pub const ESLINTNOALERT_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNODUPEKEYS_NODE_TYPES: &[AstType] = &[AstType::ObjectExpression];
 pub const ESLINTNODUPEKEYS_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOUNEXPECTEDMULTILINE_NODE_TYPES: &[AstType] = &[AstType::ComputedMemberExpression, AstType::TaggedTemplateExpression, AstType::CallExpression, AstType::BinaryExpression];
+pub const ESLINTNOUNEXPECTEDMULTILINE_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::CallExpression, AstType::ComputedMemberExpression, AstType::TaggedTemplateExpression];
 pub const ESLINTNOUNEXPECTEDMULTILINE_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOUSELESSBACKREFERENCE_NODE_TYPES: &[AstType] = &[];
@@ -1116,7 +1116,7 @@ pub const ESLINTNONEWNATIVENONCONSTRUCTOR_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNOUNSAFENEGATION_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression];
 pub const ESLINTNOUNSAFENEGATION_ANY_NODE_TYPE: bool = false;
 
-pub const ESLINTNOUSELESSESCAPE_NODE_TYPES: &[AstType] = &[AstType::RegExpLiteral, AstType::TemplateLiteral, AstType::StringLiteral];
+pub const ESLINTNOUSELESSESCAPE_NODE_TYPES: &[AstType] = &[AstType::RegExpLiteral, AstType::StringLiteral, AstType::TemplateLiteral];
 pub const ESLINTNOUSELESSESCAPE_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTNOLONEBLOCKS_NODE_TYPES: &[AstType] = &[AstType::BlockStatement];
@@ -1128,7 +1128,7 @@ pub const ARRAYCALLBACKRETURNRETURNCHECKER_ANY_NODE_TYPE: bool = true;
 pub const ARRAYCALLBACKRETURNMOD_NODE_TYPES: &[AstType] = &[];
 pub const ARRAYCALLBACKRETURNMOD_ANY_NODE_TYPE: bool = true;
 
-pub const ESLINTNOCONSTANTBINARYEXPRESSION_NODE_TYPES: &[AstType] = &[AstType::LogicalExpression, AstType::BinaryExpression];
+pub const ESLINTNOCONSTANTBINARYEXPRESSION_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::LogicalExpression];
 pub const ESLINTNOCONSTANTBINARYEXPRESSION_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTVARSONTOP_NODE_TYPES: &[AstType] = &[AstType::VariableDeclaration];
@@ -1194,7 +1194,7 @@ pub const ESLINTNOLABELVAR_ANY_NODE_TYPE: bool = false;
 pub const ESLINTNOPROTO_NODE_TYPES: &[AstType] = &[];
 pub const ESLINTNOPROTO_ANY_NODE_TYPE: bool = true;
 
-pub const ESLINTNOUNSAFEOPTIONALCHAINING_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::Class, AstType::AssignmentTargetWithDefault, AstType::ArrayExpression, AstType::StaticMemberExpression, AstType::PrivateFieldExpression, AstType::AssignmentExpression, AstType::ForOfStatement, AstType::TaggedTemplateExpression, AstType::ComputedMemberExpression, AstType::UnaryExpression, AstType::NewExpression, AstType::VariableDeclarator, AstType::Argument, AstType::AssignmentPattern, AstType::WithStatement, AstType::BinaryExpression];
+pub const ESLINTNOUNSAFEOPTIONALCHAINING_NODE_TYPES: &[AstType] = &[AstType::Argument, AstType::ArrayExpression, AstType::AssignmentExpression, AstType::AssignmentPattern, AstType::AssignmentTargetWithDefault, AstType::BinaryExpression, AstType::CallExpression, AstType::Class, AstType::ComputedMemberExpression, AstType::ForOfStatement, AstType::NewExpression, AstType::PrivateFieldExpression, AstType::StaticMemberExpression, AstType::TaggedTemplateExpression, AstType::UnaryExpression, AstType::VariableDeclarator, AstType::WithStatement];
 pub const ESLINTNOUNSAFEOPTIONALCHAINING_ANY_NODE_TYPE: bool = false;
 
 pub const ESLINTGUARDFORIN_NODE_TYPES: &[AstType] = &[AstType::ForInStatement];
@@ -1263,7 +1263,7 @@ pub const OXCBADCHARATCOMPARISON_ANY_NODE_TYPE: bool = false;
 pub const OXCNOBARRELFILE_NODE_TYPES: &[AstType] = &[];
 pub const OXCNOBARRELFILE_ANY_NODE_TYPE: bool = true;
 
-pub const OXCNORESTSPREADPROPERTIES_NODE_TYPES: &[AstType] = &[AstType::ObjectAssignmentTarget, AstType::SpreadElement, AstType::BindingRestElement];
+pub const OXCNORESTSPREADPROPERTIES_NODE_TYPES: &[AstType] = &[AstType::BindingRestElement, AstType::ObjectAssignmentTarget, AstType::SpreadElement];
 pub const OXCNORESTSPREADPROPERTIES_ANY_NODE_TYPE: bool = false;
 
 pub const OXCDOUBLECOMPARISONS_NODE_TYPES: &[AstType] = &[AstType::LogicalExpression];
@@ -1302,7 +1302,7 @@ pub const OXCNOASYNCENDPOINTHANDLERS_ANY_NODE_TYPE: bool = true;
 pub const OXCBADOBJECTLITERALCOMPARISON_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression];
 pub const OXCBADOBJECTLITERALCOMPARISON_ANY_NODE_TYPE: bool = false;
 
-pub const OXCNOASYNCAWAIT_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::ArrowFunctionExpression];
+pub const OXCNOASYNCAWAIT_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function];
 pub const OXCNOASYNCAWAIT_ANY_NODE_TYPE: bool = false;
 
 pub const OXCNOMAPSPREAD_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1335,16 +1335,16 @@ pub const REACTNOSTRINGREFS_ANY_NODE_TYPE: bool = false;
 pub const REACTJSXNODUPLICATEPROPS_NODE_TYPES: &[AstType] = &[AstType::JSXOpeningElement];
 pub const REACTJSXNODUPLICATEPROPS_ANY_NODE_TYPE: bool = false;
 
-pub const REACTSTYLEPROPOBJECT_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::CallExpression];
+pub const REACTSTYLEPROPOBJECT_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXElement];
 pub const REACTSTYLEPROPOBJECT_ANY_NODE_TYPE: bool = false;
 
-pub const REACTNOCHILDRENPROP_NODE_TYPES: &[AstType] = &[AstType::JSXAttribute, AstType::CallExpression];
+pub const REACTNOCHILDRENPROP_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXAttribute];
 pub const REACTNOCHILDRENPROP_ANY_NODE_TYPE: bool = false;
 
 pub const REACTEXHAUSTIVEDEPS_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const REACTEXHAUSTIVEDEPS_ANY_NODE_TYPE: bool = false;
 
-pub const REACTNODIRECTMUTATIONSTATE_NODE_TYPES: &[AstType] = &[AstType::UpdateExpression, AstType::AssignmentExpression];
+pub const REACTNODIRECTMUTATIONSTATE_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::UpdateExpression];
 pub const REACTNODIRECTMUTATIONSTATE_ANY_NODE_TYPE: bool = false;
 
 pub const REACTJSXPROPSNOSPREADMULTI_NODE_TYPES: &[AstType] = &[AstType::JSXOpeningElement];
@@ -1368,13 +1368,13 @@ pub const REACTNOISMOUNTED_ANY_NODE_TYPE: bool = false;
 pub const REACTPREFERES6CLASS_NODE_TYPES: &[AstType] = &[];
 pub const REACTPREFERES6CLASS_ANY_NODE_TYPE: bool = true;
 
-pub const REACTFORBIDELEMENTS_NODE_TYPES: &[AstType] = &[AstType::JSXOpeningElement, AstType::CallExpression];
+pub const REACTFORBIDELEMENTS_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXOpeningElement];
 pub const REACTFORBIDELEMENTS_ANY_NODE_TYPE: bool = false;
 
 pub const REACTJSXFILENAMEEXTENSION_NODE_TYPES: &[AstType] = &[];
 pub const REACTJSXFILENAMEEXTENSION_ANY_NODE_TYPE: bool = true;
 
-pub const REACTVOIDDOMELEMENTSNOCHILDREN_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::CallExpression];
+pub const REACTVOIDDOMELEMENTSNOCHILDREN_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXElement];
 pub const REACTVOIDDOMELEMENTSNOCHILDREN_ANY_NODE_TYPE: bool = false;
 
 pub const REACTNOSETSTATE_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1395,7 +1395,7 @@ pub const REACTREACTINJSXSCOPE_ANY_NODE_TYPE: bool = true;
 pub const REACTSELFCLOSINGCOMP_NODE_TYPES: &[AstType] = &[AstType::JSXElement];
 pub const REACTSELFCLOSINGCOMP_ANY_NODE_TYPE: bool = false;
 
-pub const REACTJSXNOUSELESSFRAGMENT_NODE_TYPES: &[AstType] = &[AstType::JSXFragment, AstType::JSXElement];
+pub const REACTJSXNOUSELESSFRAGMENT_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::JSXFragment];
 pub const REACTJSXNOUSELESSFRAGMENT_ANY_NODE_TYPE: bool = false;
 
 pub const REACTFORWARDREFUSESREF_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1404,7 +1404,7 @@ pub const REACTFORWARDREFUSESREF_ANY_NODE_TYPE: bool = false;
 pub const REACTJSXKEY_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::JSXFragment];
 pub const REACTJSXKEY_ANY_NODE_TYPE: bool = false;
 
-pub const REACTNONAMESPACE_NODE_TYPES: &[AstType] = &[AstType::JSXOpeningElement, AstType::CallExpression];
+pub const REACTNONAMESPACE_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXOpeningElement];
 pub const REACTNONAMESPACE_ANY_NODE_TYPE: bool = false;
 
 pub const REACTJSXNOCOMMENTTEXTNODES_NODE_TYPES: &[AstType] = &[AstType::JSXText];
@@ -1413,10 +1413,10 @@ pub const REACTJSXNOCOMMENTTEXTNODES_ANY_NODE_TYPE: bool = false;
 pub const REACTNORENDERRETURNVALUE_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const REACTNORENDERRETURNVALUE_ANY_NODE_TYPE: bool = false;
 
-pub const REACTNODANGER_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::CallExpression];
+pub const REACTNODANGER_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXElement];
 pub const REACTNODANGER_ANY_NODE_TYPE: bool = false;
 
-pub const REACTNOARRAYINDEXKEY_NODE_TYPES: &[AstType] = &[AstType::JSXElement, AstType::CallExpression];
+pub const REACTNOARRAYINDEXKEY_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::JSXElement];
 pub const REACTNOARRAYINDEXKEY_ANY_NODE_TYPE: bool = false;
 
 pub const REACTNOUNKNOWNPROPERTY_NODE_TYPES: &[AstType] = &[AstType::JSXOpeningElement];
@@ -1434,7 +1434,7 @@ pub const UNICORNPREFEREVENTTARGET_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNUMBERLITERALCASE_NODE_TYPES: &[AstType] = &[];
 pub const UNICORNNUMBERLITERALCASE_ANY_NODE_TYPE: bool = true;
 
-pub const UNICORNNOTHISASSIGNMENT_NODE_TYPES: &[AstType] = &[AstType::VariableDeclarator, AstType::AssignmentExpression];
+pub const UNICORNNOTHISASSIGNMENT_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::VariableDeclarator];
 pub const UNICORNNOTHISASSIGNMENT_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNPREFERSETHAS_NODE_TYPES: &[AstType] = &[AstType::VariableDeclarator];
@@ -1482,7 +1482,7 @@ pub const UNICORNNOACCESSORRECURSION_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNONEWARRAY_NODE_TYPES: &[AstType] = &[AstType::NewExpression];
 pub const UNICORNNONEWARRAY_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNPREFERMODERNMATHAPIS_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::BinaryExpression];
+pub const UNICORNPREFERMODERNMATHAPIS_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::CallExpression];
 pub const UNICORNPREFERMODERNMATHAPIS_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOUSELESSFALLBACKINSPREAD_NODE_TYPES: &[AstType] = &[AstType::LogicalExpression];
@@ -1533,7 +1533,7 @@ pub const UNICORNPREFERARRAYSOME_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNONEWBUFFER_NODE_TYPES: &[AstType] = &[AstType::NewExpression];
 pub const UNICORNNONEWBUFFER_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNPREFERNATIVECOERCIONFUNCTIONS_NODE_TYPES: &[AstType] = &[AstType::Function, AstType::ArrowFunctionExpression];
+pub const UNICORNPREFERNATIVECOERCIONFUNCTIONS_NODE_TYPES: &[AstType] = &[AstType::ArrowFunctionExpression, AstType::Function];
 pub const UNICORNPREFERNATIVECOERCIONFUNCTIONS_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNODOCUMENTCOOKIE_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression];
@@ -1599,13 +1599,13 @@ pub const UNICORNPREFERARRAYFLATMAP_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNOINVALIDREMOVEEVENTLISTENER_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const UNICORNNOINVALIDREMOVEEVENTLISTENER_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNNUMERICSEPARATORSSTYLE_NODE_TYPES: &[AstType] = &[AstType::NumericLiteral, AstType::BigIntLiteral];
+pub const UNICORNNUMERICSEPARATORSSTYLE_NODE_TYPES: &[AstType] = &[AstType::BigIntLiteral, AstType::NumericLiteral];
 pub const UNICORNNUMERICSEPARATORSSTYLE_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOINSTANCEOFBUILTINS_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression];
 pub const UNICORNNOINSTANCEOFBUILTINS_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNNOTHENABLE_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::CallExpression, AstType::PropertyDefinition, AstType::ExportNamedDeclaration, AstType::ObjectExpression, AstType::MethodDefinition];
+pub const UNICORNNOTHENABLE_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::CallExpression, AstType::ExportNamedDeclaration, AstType::MethodDefinition, AstType::ObjectExpression, AstType::PropertyDefinition];
 pub const UNICORNNOTHENABLE_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOPROCESSEXIT_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1620,16 +1620,16 @@ pub const UNICORNPREFERREFLECTAPPLY_ANY_NODE_TYPE: bool = false;
 pub const UNICORNPREFERSTRUCTUREDCLONE_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const UNICORNPREFERSTRUCTUREDCLONE_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNPREFERDOMNODETEXTCONTENT_NODE_TYPES: &[AstType] = &[AstType::StaticMemberExpression, AstType::IdentifierName, AstType::IdentifierReference];
+pub const UNICORNPREFERDOMNODETEXTCONTENT_NODE_TYPES: &[AstType] = &[AstType::IdentifierName, AstType::IdentifierReference, AstType::StaticMemberExpression];
 pub const UNICORNPREFERDOMNODETEXTCONTENT_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNNEWFORBUILTINS_NODE_TYPES: &[AstType] = &[AstType::NewExpression, AstType::CallExpression];
+pub const UNICORNNEWFORBUILTINS_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::NewExpression];
 pub const UNICORNNEWFORBUILTINS_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOLENGTHASSLICEEND_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const UNICORNNOLENGTHASSLICEEND_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNNOHEXESCAPE_NODE_TYPES: &[AstType] = &[AstType::RegExpLiteral, AstType::TemplateLiteral, AstType::StringLiteral];
+pub const UNICORNNOHEXESCAPE_NODE_TYPES: &[AstType] = &[AstType::RegExpLiteral, AstType::StringLiteral, AstType::TemplateLiteral];
 pub const UNICORNNOHEXESCAPE_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNPREFERQUERYSELECTOR_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
@@ -1668,7 +1668,7 @@ pub const UNICORNPREFERSTRINGSTARTSENDSWITH_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNOSINGLEPROMISEINPROMISEMETHODS_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const UNICORNNOSINGLEPROMISEINPROMISEMETHODS_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNPREFERNUMBERPROPERTIES_NODE_TYPES: &[AstType] = &[AstType::IdentifierReference, AstType::CallExpression];
+pub const UNICORNPREFERNUMBERPROPERTIES_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::IdentifierReference];
 pub const UNICORNPREFERNUMBERPROPERTIES_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOAWAITEXPRESSIONMEMBER_NODE_TYPES: &[AstType] = &[];
@@ -1686,7 +1686,7 @@ pub const UNICORNPREFERDOMNODEREMOVE_ANY_NODE_TYPE: bool = false;
 pub const UNICORNPREFERADDEVENTLISTENER_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression];
 pub const UNICORNPREFERADDEVENTLISTENER_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNPREFERDATENOW_NODE_TYPES: &[AstType] = &[AstType::BinaryExpression, AstType::CallExpression, AstType::AssignmentExpression, AstType::UnaryExpression];
+pub const UNICORNPREFERDATENOW_NODE_TYPES: &[AstType] = &[AstType::AssignmentExpression, AstType::BinaryExpression, AstType::CallExpression, AstType::UnaryExpression];
 pub const UNICORNPREFERDATENOW_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNNOUSELESSUNDEFINED_NODE_TYPES: &[AstType] = &[AstType::CallExpression, AstType::IdentifierReference];
@@ -1698,7 +1698,7 @@ pub const UNICORNNOSTATICONLYCLASS_ANY_NODE_TYPE: bool = false;
 pub const UNICORNNOUSELESSPROMISERESOLVEREJECT_NODE_TYPES: &[AstType] = &[AstType::CallExpression];
 pub const UNICORNNOUSELESSPROMISERESOLVEREJECT_ANY_NODE_TYPE: bool = false;
 
-pub const UNICORNESCAPECASE_NODE_TYPES: &[AstType] = &[AstType::StringLiteral, AstType::TemplateLiteral, AstType::RegExpLiteral];
+pub const UNICORNESCAPECASE_NODE_TYPES: &[AstType] = &[AstType::RegExpLiteral, AstType::StringLiteral, AstType::TemplateLiteral];
 pub const UNICORNESCAPECASE_ANY_NODE_TYPE: bool = false;
 
 pub const UNICORNPREFERLOGICALOPERATOROVERTERNARY_NODE_TYPES: &[AstType] = &[AstType::ConditionalExpression];
