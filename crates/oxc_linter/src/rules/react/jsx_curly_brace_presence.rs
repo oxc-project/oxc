@@ -725,8 +725,7 @@ fn build_missing_curly_fix_context_for_part(
     part: &str,
     part_start: u32,
 ) -> Option<(Span, &str)> {
-    lazy_regex!(r#"[\S]"#).find(part).map(|mat| {
-        let first_char_index = mat.start();
+    part.char_indices().find(|(_, ch)| !ch.is_whitespace()).map(|(first_char_index, _)| {
         let text = part.split_at(first_char_index).1;
         let new_start = span.start + part_start + u32::try_from(first_char_index).unwrap();
         let span_from_first_char =
