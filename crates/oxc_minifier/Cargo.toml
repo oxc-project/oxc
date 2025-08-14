@@ -41,4 +41,5 @@ oxc_parser = { workspace = true }
 
 base64 = { workspace = true }
 insta = { workspace = true }
+javascript-globals = { workspace = true }
 pico-args = { workspace = true }

@@ -1,3 +1,7 @@
+use javascript_globals::GLOBALS;
+
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
@@ -8,16 +12,17 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 struct Ctx {
-    global_variable_names: Vec<String>,
+    global_variable_names: FxHashSet<&'static str>,
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
     unknown_global_side_effects: bool,
 }
+
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: vec![],
+            global_variable_names: GLOBALS["builtin"].keys().copied().collect::<FxHashSet<_>>(),
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
@@ -25,11 +30,13 @@ impl Default for Ctx {
         }
     }
 }
+
 impl<'a> GlobalContext<'a> for Ctx {
     fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        self.global_variable_names.iter().any(|name| name == ident.name.as_str())
+        self.global_variable_names.contains(ident.name.as_str())
     }
 }
+
 impl MayHaveSideEffectsContext<'_> for Ctx {
     fn annotations(&self) -> bool {
         self.annotation
@@ -52,20 +59,26 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
     }
 }
 
+#[track_caller]
 fn test(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     test_with_ctx(source_text, &ctx, expected);
 }
 
+#[track_caller]
 fn test_with_global_variables(
     source_text: &str,
-    global_variable_names: Vec<String>,
+    global_variable_names: &[&'static str],
     expected: bool,
 ) {
-    let ctx = Ctx { global_variable_names, ..Default::default() };
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
     test_with_ctx(source_text, &ctx, expected);
 }
 
+#[track_caller]
 fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
@@ -159,9 +172,9 @@ fn closure_compiler_tests() {
     test("undefined", false);
     test("void 0", false);
     test("void foo()", true);
-    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
+    test("-Infinity", false);
+    test("Infinity", false);
+    test("NaN", false);
     // test("({}||[]).foo = 2;", false);
     // test("(true ? {} : []).foo = 2;", false);
     // test("({},[]).foo = 2;", false);
@@ -367,9 +380,9 @@ fn closure_compiler_tests() {
 #[test]
 fn test_identifier_reference() {
     // accessing global variables may have a side effect
-    test_with_global_variables("a", vec!["a".to_string()], true);
+    test_with_global_variables("a", &["a"], true);
     // accessing known globals are side-effect free
-    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
+    test("NaN", false);
 }
 
 #[test]
@@ -407,8 +420,8 @@ fn test_unary_expressions() {
     test("!foo()", true);
 
     test("typeof 'foo'", false);
-    test_with_global_variables("typeof a", vec!["a".to_string()], false);
-    test_with_global_variables("typeof (0, a)", vec!["a".to_string()], true);
+    test_with_global_variables("typeof a", &["a"], false);
+    test_with_global_variables("typeof (0, a)", &["a"], true);
     test("typeof foo()", true);
 
     test("+0", false);
@@ -418,9 +431,9 @@ fn test_unary_expressions() {
     test("+'foo'", false); // NaN
     test("+`foo`", false); // NaN
     test("+/foo/", false); // NaN
-    test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
+    test("+Infinity", false);
+    test("+NaN", false);
+    test("+undefined", false); // NaN
     test("+[]", false); // 0
     test("+[foo()]", true);
     test("+foo()", true);
@@ -436,9 +449,9 @@ fn test_unary_expressions() {
     test("-'foo'", false); // -NaN
     test("-`foo`", false); // NaN
     test("-/foo/", false); // NaN
-    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
+    test("-Infinity", false);
+    test("-NaN", false);
+    test("-undefined", false); // NaN
     test("-[]", false); // -0
     test("-[foo()]", true);
     test("-foo()", true);
@@ -516,9 +529,9 @@ fn test_binary_expressions() {
     test("'' + []", false);
     test("'' + [foo()]", true);
     test("'' + Symbol()", true);
-    test_with_global_variables("'' + Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("'' + NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("'' + undefined", vec!["undefined".to_string()], false);
+    test("'' + Infinity", false);
+    test("'' + NaN", false);
+    test("'' + undefined", false);
     test("'' + s", true); // assuming s is Symbol
     test("Symbol() + ''", true);
     test("'' + {}", false);
@@ -549,10 +562,10 @@ fn test_binary_expressions() {
     test("0 - /a/", false); // NaN
     test("0 - []", false); // 0
     test("0 - [foo()]", true);
-    test_with_global_variables("0 - Infinity", vec!["Infinity".to_string()], false); // -Infinity
-    test_with_global_variables("0 - NaN", vec!["NaN".to_string()], false); // NaN
-    test_with_global_variables("0 - undefined", vec!["undefined".to_string()], false); // NaN
-    test_with_global_variables("null - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test("0 - Infinity", false); // -Infinity
+    test("0 - NaN", false); // NaN
+    test("0 - undefined", false); // NaN
+    test("null - Infinity", false); // -Infinity
     test("0 - {}", false); // NaN
     test("'' - { toString() { return Symbol() } }", true);
     test("'' - { valueOf() { return Symbol() } }", true);
@@ -583,8 +596,8 @@ fn test_binary_expressions() {
 
     test("[] instanceof 1", true); // throws an error
     test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
-    test_with_global_variables("[] instanceof Object", vec!["Object".to_string()], false);
-    test_with_global_variables("a instanceof Object", vec!["Object".to_string()], true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
+    test("[] instanceof Object", false);
+    test("a instanceof Object", true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
@@ -711,6 +724,30 @@ fn test_property_access() {
 }
 
 #[test]
+fn test_new_expressions() {
+    test("new AggregateError", true);
+    test("new DataView", true);
+    test("new Set", false);
+    test("new Map", false);
+    test("new WeakSet", false);
+    test("new WeakMap", false);
+    test("new ArrayBuffer", false);
+    test("new Date", false);
+    test("new Boolean", false);
+    test("new Error", false);
+    test("new EvalError", false);
+    test("new RangeError", false);
+    test("new ReferenceError", false);
+    test("new RegExp", false);
+    test("new SyntaxError", false);
+    test("new TypeError", false);
+    test("new URIError", false);
+    test("new Number", false);
+    test("new Object", false);
+    test("new String", false);
+}
+
+#[test]
 fn test_call_like_expressions() {
     test("foo()", true);
     test("/* #__PURE__ */ foo()", false);
@@ -796,12 +833,12 @@ fn test_property_read_side_effects_support() {
 fn test_unknown_global_side_effects_support() {
     let true_ctx = Ctx {
         unknown_global_side_effects: true,
-        global_variable_names: vec!["foo".to_string()],
+        global_variable_names: FxHashSet::from_iter(["foo"]),
         ..Default::default()
     };
     let false_ctx = Ctx {
         unknown_global_side_effects: false,
-        global_variable_names: vec!["foo".to_string()],
+        global_variable_names: FxHashSet::from_iter(["foo"]),
         ..Default::default()
     };
     test_with_ctx("foo", &true_ctx, true);
@@ -835,62 +872,42 @@ fn test_object_with_to_primitive_related_properties_overridden() {
 
 #[test]
 fn test_typeof_guard_patterns() {
-    test_with_global_variables("typeof x !== 'undefined' && x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x != 'undefined' && x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' !== typeof x && x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' != typeof x && x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x === 'undefined' || x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x == 'undefined' || x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' === typeof x || x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' == typeof x || x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x < 'u' && x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x <= 'u' && x", vec!["x".to_string()], false);
-    test_with_global_variables("'u' > typeof x && x", vec!["x".to_string()], false);
-    test_with_global_variables("'u' >= typeof x && x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x > 'u' || x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x >= 'u' || x", vec!["x".to_string()], false);
-    test_with_global_variables("'u' < typeof x || x", vec!["x".to_string()], false);
-    test_with_global_variables("'u' <= typeof x || x", vec!["x".to_string()], false);
+    test_with_global_variables("typeof x !== 'undefined' && x", &["x"], false);
+    test_with_global_variables("typeof x != 'undefined' && x", &["x"], false);
+    test_with_global_variables("'undefined' !== typeof x && x", &["x"], false);
+    test_with_global_variables("'undefined' != typeof x && x", &["x"], false);
+    test_with_global_variables("typeof x === 'undefined' || x", &["x"], false);
+    test_with_global_variables("typeof x == 'undefined' || x", &["x"], false);
+    test_with_global_variables("'undefined' === typeof x || x", &["x"], false);
+    test_with_global_variables("'undefined' == typeof x || x", &["x"], false);
+    test_with_global_variables("typeof x < 'u' && x", &["x"], false);
+    test_with_global_variables("typeof x <= 'u' && x", &["x"], false);
+    test_with_global_variables("'u' > typeof x && x", &["x"], false);
+    test_with_global_variables("'u' >= typeof x && x", &["x"], false);
+    test_with_global_variables("typeof x > 'u' || x", &["x"], false);
+    test_with_global_variables("typeof x >= 'u' || x", &["x"], false);
+    test_with_global_variables("'u' < typeof x || x", &["x"], false);
+    test_with_global_variables("'u' <= typeof x || x", &["x"], false);
 
-    test_with_global_variables("typeof x === 'undefined' ? 0 : x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x == 'undefined' ? 0 : x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' === typeof x ? 0 : x", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' == typeof x ? 0 : x", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x !== 'undefined' ? x : 0", vec!["x".to_string()], false);
-    test_with_global_variables("typeof x != 'undefined' ? x : 0", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' !== typeof x ? x : 0", vec!["x".to_string()], false);
-    test_with_global_variables("'undefined' != typeof x ? x : 0", vec!["x".to_string()], false);
+    test_with_global_variables("typeof x === 'undefined' ? 0 : x", &["x"], false);
+    test_with_global_variables("typeof x == 'undefined' ? 0 : x", &["x"], false);
+    test_with_global_variables("'undefined' === typeof x ? 0 : x", &["x"], false);
+    test_with_global_variables("'undefined' == typeof x ? 0 : x", &["x"], false);
+    test_with_global_variables("typeof x !== 'undefined' ? x : 0", &["x"], false);
+    test_with_global_variables("typeof x != 'undefined' ? x : 0", &["x"], false);
+    test_with_global_variables("'undefined' !== typeof x ? x : 0", &["x"], false);
+    test_with_global_variables("'undefined' != typeof x ? x : 0", &["x"], false);
 
-    test_with_global_variables(
-        "typeof x !== 'undefined' && (x + foo())",
-        vec!["x".to_string()],
-        true,
-    );
-    test_with_global_variables(
-        "typeof x === 'undefined' || (x + foo())",
-        vec!["x".to_string()],
-        true,
-    );
-    test_with_global_variables("typeof x === 'undefined' ? foo() : x", vec!["x".to_string()], true);
-    test_with_global_variables("typeof x !== 'undefined' ? x : foo()", vec!["x".to_string()], true);
-    test_with_global_variables("typeof foo() !== 'undefined' && x", vec!["x".to_string()], true);
-    test_with_global_variables("typeof foo() === 'undefined' || x", vec!["x".to_string()], true);
-    test_with_global_variables("typeof foo() === 'undefined' ? 0 : x", vec!["x".to_string()], true);
-    test_with_global_variables(
-        "typeof y !== 'undefined' && x",
-        vec!["x".to_string(), "y".to_string()],
-        true,
-    );
-    test_with_global_variables(
-        "typeof y === 'undefined' || x",
-        vec!["x".to_string(), "y".to_string()],
-        true,
-    );
-    test_with_global_variables(
-        "typeof y === 'undefined' ? 0 : x",
-        vec!["x".to_string(), "y".to_string()],
-        true,
-    );
+    test_with_global_variables("typeof x !== 'undefined' && (x + foo())", &["x"], true);
+    test_with_global_variables("typeof x === 'undefined' || (x + foo())", &["x"], true);
+    test_with_global_variables("typeof x === 'undefined' ? foo() : x", &["x"], true);
+    test_with_global_variables("typeof x !== 'undefined' ? x : foo()", &["x"], true);
+    test_with_global_variables("typeof foo() !== 'undefined' && x", &["x"], true);
+    test_with_global_variables("typeof foo() === 'undefined' || x", &["x"], true);
+    test_with_global_variables("typeof foo() === 'undefined' ? 0 : x", &["x"], true);
+    test_with_global_variables("typeof y !== 'undefined' && x", &["x", "y"], true);
+    test_with_global_variables("typeof y === 'undefined' || x", &["x", "y"], true);
+    test_with_global_variables("typeof y === 'undefined' ? 0 : x", &["x", "y"], true);
 
     test("typeof localVar !== 'undefined' && localVar", false);
     test("typeof localVar === 'undefined' || localVar", false);
@@ -898,7 +915,7 @@ fn test_typeof_guard_patterns() {
 
     test_with_global_variables(
         "typeof x !== 'undefined' && typeof y !== 'undefined' && x && y",
-        vec!["x".to_string(), "y".to_string()],
+        &["x", "y"],
         true, // This can be improved
     );
 }
