@@ -867,20 +867,24 @@ impl Runtime {
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> ModuleProcessOutput<'_> {
-        let default_output = || ModuleProcessOutput {
-            path: Arc::clone(path),
-            processed_module: ProcessedModule::default(),
-        };
+        let processed_module =
+            self.process_path_to_module(path, check_syntax_errors, tx_error).unwrap_or_default();
+        ModuleProcessOutput { path: Arc::clone(path), processed_module }
+    }
 
-        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
-            return default_output();
-        };
+    fn process_path_to_module(
+        &self,
+        path: &Arc<OsStr>,
+        check_syntax_errors: bool,
+        tx_error: &DiagnosticSender,
+    ) -> Option<ProcessedModule<'_>> {
+        let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
         if SourceType::from_path(Path::new(path))
             .as_ref()
             .is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
         {
-            return default_output();
+            return None;
         }
 
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
@@ -889,7 +893,7 @@ impl Runtime {
         if self.paths.contains(path) {
             let allocator_guard = self.allocator_pool.get();
 
-            let build = ModuleContent::try_new(allocator_guard, |allocator| {
+            let mc = ModuleContent::try_new(allocator_guard, |allocator| {
                 let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
                 else {
                     return Err(());
@@ -916,24 +920,20 @@ impl Runtime {
 
                 Ok(ModuleContentDependent { source_text, section_contents })
             });
+            let mc = mc.ok()?;
 
-            module_content = match build {
-                Ok(mc) => Some(mc),
-                Err(()) => return default_output(),
-            };
+            module_content = Some(mc);
         } else {
             let allocator_guard = self.allocator_pool.get();
             let allocator = &*allocator_guard;
 
-            let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator) else {
-                return default_output();
-            };
+            let stt = self.get_source_type_and_text(Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
                 Err(e) => {
                     tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
-                    return default_output();
+                    return None;
                 }
             };
 
@@ -948,13 +948,7 @@ impl Runtime {
             );
         }
 
-        ModuleProcessOutput {
-            path: Arc::clone(path),
-            processed_module: ProcessedModule {
-                section_module_records: records,
-                content: module_content,
-            },
-        }
+        Some(ProcessedModule { section_module_records: records, content: module_content })
     }
 
     #[expect(clippy::too_many_arguments)]
