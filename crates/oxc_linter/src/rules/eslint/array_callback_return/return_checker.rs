@@ -156,17 +156,25 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
         // 2. There is a default case that returns
         Statement::SwitchStatement(stmt) => {
             let mut case_statuses = vec![];
+            // The default case maybe is not the last case and fallthrough
+            let mut default_case_fallthrough_continue = false;
             let mut default_case_status = StatementReturnStatus::NotReturn;
 
             let mut current_case_status = StatementReturnStatus::NotReturn;
             for case in &stmt.cases {
                 let branch_terminated = check_switch_case(case, &mut current_case_status);
-
                 if case.is_default_case() {
-                    default_case_status = current_case_status;
-                    // Cases below the default case are not considered.
-                    break;
+                    if branch_terminated {
+                        default_case_status = current_case_status;
+                        // Cases below the default case are not considered.
+                        break;
+                    }
+                    default_case_fallthrough_continue = true;
                 } else if branch_terminated {
+                    if default_case_fallthrough_continue {
+                        default_case_status = current_case_status;
+                        break;
+                    }
                     case_statuses.push(current_case_status);
                     current_case_status = StatementReturnStatus::NotReturn;
                 } // Falls through to next case, accumulating lattice

@@ -311,6 +311,7 @@ fn test() {
             None,
         ),
         ("foo.every(function() { try { bar(); } finally { return true; } })", None),
+        ("foo.every(function() { switch (a) { default: case0: return true; } })", None),
         (
             "Array.from(x, function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true}])),
