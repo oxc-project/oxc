@@ -107,15 +107,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Remove unused references by visiting the AST again and diff the collected references.
-        let refs_before =
-            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-        let mut counter = ReferencesCounter::default();
-        counter.visit_program(program);
-        for reference_id_to_remove in refs_before.difference(&counter.refs) {
-            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-        }
         self.changed = ctx.state.changed;
+        if self.changed {
+            // Remove unused references by visiting the AST again and diff the collected references.
+            let refs_before =
+                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            let mut counter = ReferencesCounter::default();
+            counter.visit_program(program);
+            for reference_id_to_remove in refs_before.difference(&counter.refs) {
+                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+            }
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -416,15 +418,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Remove unused references by visiting the AST again and diff the collected references.
-        let refs_before =
-            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-        let mut counter = ReferencesCounter::default();
-        counter.visit_program(program);
-        for reference_id_to_remove in refs_before.difference(&counter.refs) {
-            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-        }
         self.changed = ctx.state.changed;
+        if self.changed {
+            // Remove unused references by visiting the AST again and diff the collected references.
+            let refs_before =
+                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            let mut counter = ReferencesCounter::default();
+            counter.visit_program(program);
+            for reference_id_to_remove in refs_before.difference(&counter.refs) {
+                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+            }
+        }
     }
 
     fn exit_variable_declarator(
