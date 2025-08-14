@@ -893,7 +893,9 @@ impl Runtime {
             let mut records =
                 SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
 
-            let module_content = ModuleContent::try_new(allocator_guard, |allocator| {
+            let module_content = ModuleContent::try_new(allocator_guard, |allocator_guard| {
+                let allocator = &**allocator_guard;
+
                 let Some(stt) = self.get_source_type_and_text(Path::new(path), ext, allocator)
                 else {
                     return Err(());
