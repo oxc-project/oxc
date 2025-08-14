@@ -2379,6 +2379,7 @@ dependencies = [
 name = "oxc_track_memory_allocations"
 version = "0.0.0"
 dependencies = [
+ "backtrace",
  "humansize",
  "mimalloc-safe",
  "oxc_allocator",
