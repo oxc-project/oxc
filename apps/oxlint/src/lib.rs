@@ -6,6 +6,7 @@ pub use oxc_linter::{
 };
 
 mod command;
+#[cfg(test)]
 mod json_test;
 mod lint;
 mod output_formatter;
