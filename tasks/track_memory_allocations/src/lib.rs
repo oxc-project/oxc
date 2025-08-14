@@ -15,7 +15,16 @@ use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
 
 use std::alloc::{GlobalAlloc, Layout};
+use std::cell::Cell;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+use std::sync::{Mutex, OnceLock};
+
+use backtrace::Backtrace;
+use std::env;
 
 #[global_allocator]
 static GLOBAL: TrackedAllocator = TrackedAllocator;
@@ -29,10 +38,142 @@ struct TrackedAllocator;
 // allocations, so just tracking the number of allocations is sufficient for our purposes.
 static NUM_ALLOC: AtomicUsize = AtomicUsize::new(0);
 static NUM_REALLOC: AtomicUsize = AtomicUsize::new(0);
+static ALLOC_SEQ: AtomicUsize = AtomicUsize::new(0);
+
+// Re-entrancy guard to avoid tracking allocations that occur while we're
+// doing the tracking work itself (e.g., backtrace symbolization, map updates).
+thread_local! {
+    static IN_TRACKING: Cell<bool> = Cell::new(false);
+}
+
+// Global aggregation of allocation sites: "path:line" -> count
+#[derive(Default, Clone, Copy)]
+struct SiteCounts { allocs: usize, reallocs: usize }
+
+static ALLOC_SITES: OnceLock<Mutex<HashMap<String, SiteCounts>>> = OnceLock::new();
+fn alloc_sites() -> &'static Mutex<HashMap<String, SiteCounts>> {
+    ALLOC_SITES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+static PROJECT_ROOT: OnceLock<PathBuf> = OnceLock::new();
+fn get_project_root() -> &'static Path {
+    PROJECT_ROOT.get_or_init(|| project_root()).as_path()
+}
+
+// Whether we should collect callsite info; off by default to avoid massive slowdowns.
+static TRACK_SITES: OnceLock<bool> = OnceLock::new();
+fn should_track_sites() -> bool {
+    *TRACK_SITES.get_or_init(|| match env::var("OXC_ALLOC_SITES") {
+        Ok(v) => matches!(v.as_str(), "1" | "true" | "yes" | "on"),
+        Err(_) => false,
+    })
+}
+
+// Sampling interval: record 1 in N allocations to reduce overhead. Default 1000.
+static SAMPLE_N: OnceLock<usize> = OnceLock::new();
+fn sample_interval() -> usize {
+    *SAMPLE_N.get_or_init(|| match env::var("OXC_ALLOC_SAMPLE") {
+        Ok(v) => v.parse().ok().filter(|n: &usize| *n > 0).unwrap_or(1000),
+        Err(_) => 1000,
+    })
+}
+
+fn reset_site_counts() {
+    if let Ok(mut m) = alloc_sites().lock() {
+        m.clear();
+    }
+}
+
+enum AllocKind { Alloc, Realloc }
+
+fn record_allocation_site(kind: AllocKind) {
+    // Note: this function must be called with IN_TRACKING already set to true
+    // to ensure any allocations here don't get double-counted. We also keep
+    // the work minimal.
+    let mut bt = Backtrace::new_unresolved();
+    bt.resolve();
+    let mut key: Option<String> = None;
+    let root = get_project_root();
+
+    // Resolve just enough frames to find the first oxc-repo file with a line.
+    'outer: for frame in bt.frames() {
+        for symbol in frame.symbols() {
+            if let (Some(path), Some(lineno)) = (symbol.filename(), symbol.lineno()) {
+                // Prefer frames within the repository, and skip this task's own files.
+                if path.starts_with(root)
+                    && !path.components().any(|c| c.as_os_str() == "track_memory_allocations")
+                {
+                    // Make path relative to project root for readability.
+                    let rel = path.strip_prefix(root).unwrap_or(path);
+                    key = Some(format!("{}:{}", rel.display(), lineno));
+                    break 'outer;
+                }
+            }
+        }
+    }
+
+    // Fallback: if we didn't find a repo frame, try any frame with file:line.
+    if key.is_none() {
+        'outer2: for frame in bt.frames() {
+            for symbol in frame.symbols() {
+                if let (Some(path), Some(lineno)) = (symbol.filename(), symbol.lineno()) {
+                    key = Some(format!("{}:{}", path.display(), lineno));
+                    break 'outer2;
+                }
+            }
+        }
+    }
+
+    // Fallback: use function names when file:line isn't available (e.g., debug info stripped).
+    if key.is_none() {
+        // Prefer frames whose demangled name mentions oxc crates/modules.
+        let mut best_oxc: Option<String> = None;
+        let mut best_nonstd: Option<String> = None;
+        let is_skip = |s: &str| {
+            s.contains("track_memory_allocations")
+                || s.contains("record_allocation_site")
+                || s.contains("TrackedAllocator")
+                || s.contains("backtrace::")
+                || s.contains("::resolve")
+                || s.starts_with("std::")
+                || s.starts_with("core::")
+                || s.starts_with("alloc::")
+                || s.contains("mimalloc")
+        };
+
+        for frame in bt.frames() {
+            for symbol in frame.symbols() {
+                if let Some(name) = symbol.name() {
+                    let s = format!("{:#}", name);
+                    if is_skip(&s) {
+                        continue;
+                    }
+                    if s.contains("oxc_") || s.contains("oxlint") || s.contains("oxc::") {
+                        best_oxc.get_or_insert_with(|| s.clone());
+                        // Keep searching in case there is a better, deeper frame, but first match is fine.
+                    } else {
+                        best_nonstd.get_or_insert(s);
+                    }
+                }
+            }
+        }
+        key = best_oxc.or(best_nonstd);
+    }
+
+    let k = key.unwrap_or_else(|| "<unknown>".to_string());
+    if let Ok(mut m) = alloc_sites().lock() {
+        let entry = m.entry(k).or_default();
+        match kind {
+            AllocKind::Alloc => entry.allocs = entry.allocs.saturating_add(1),
+            AllocKind::Realloc => entry.reallocs = entry.reallocs.saturating_add(1),
+        }
+    }
+}
 
 fn reset_global_allocs() {
     NUM_ALLOC.store(0, SeqCst);
     NUM_REALLOC.store(0, SeqCst);
+    ALLOC_SEQ.store(0, SeqCst);
 }
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
@@ -42,7 +183,23 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc(layout) };
         if !ret.is_null() {
-            NUM_ALLOC.fetch_add(1, SeqCst);
+            IN_TRACKING.with(|f| {
+                if f.get() {
+                    // Skip counting and callsite attribution for re-entrant allocations
+                    // triggered by tracking itself.
+                } else {
+                    f.set(true);
+                    NUM_ALLOC.fetch_add(1, SeqCst);
+            if should_track_sites() {
+                        let n = sample_interval();
+                        let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
+                        if seq % n == 0 {
+                record_allocation_site(AllocKind::Alloc);
+                        }
+                    }
+                    f.set(false);
+                }
+            });
         }
         ret
     }
@@ -54,7 +211,22 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         let ret = unsafe { MiMalloc.alloc_zeroed(layout) };
         if !ret.is_null() {
-            NUM_ALLOC.fetch_add(1, SeqCst);
+            IN_TRACKING.with(|f| {
+                if f.get() {
+                    // see alloc()
+                } else {
+                    f.set(true);
+                    NUM_ALLOC.fetch_add(1, SeqCst);
+            if should_track_sites() {
+                        let n = sample_interval();
+                        let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
+                        if seq % n == 0 {
+                record_allocation_site(AllocKind::Alloc);
+                        }
+                    }
+                    f.set(false);
+                }
+            });
         }
         ret
     }
@@ -62,7 +234,22 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let ret = unsafe { MiMalloc.realloc(ptr, layout, new_size) };
         if !ret.is_null() {
-            NUM_REALLOC.fetch_add(1, SeqCst);
+            IN_TRACKING.with(|f| {
+                if f.get() {
+                    // see alloc()
+                } else {
+                    f.set(true);
+                    NUM_REALLOC.fetch_add(1, SeqCst);
+            if should_track_sites() {
+                        let n = sample_interval();
+                        let seq = ALLOC_SEQ.fetch_add(1, SeqCst);
+                        if seq % n == 0 {
+                record_allocation_site(AllocKind::Realloc);
+                        }
+                    }
+                    f.set(false);
+                }
+            });
         }
         ret
     }
@@ -133,6 +320,10 @@ pub fn run() -> Result<(), io::Error> {
             .build(&ret.program);
     }
 
+    // Reset counts post warm-up so only measured work below is captured.
+    reset_global_allocs();
+    reset_site_counts();
+
     for file in files.files() {
         allocator.reset();
         reset_global_allocs();
@@ -176,6 +367,12 @@ pub fn run() -> Result<(), io::Error> {
     snapshot.write_all(semantic_out.as_bytes())?;
     snapshot.flush()?;
 
+    if should_track_sites() {
+        // Print and snapshot top allocation sites
+        let sites_out = print_top_sites(1000);
+        println!("{sites_out}");
+    }
+
     Ok(())
 }
 
@@ -215,5 +412,89 @@ fn print_stats_table(stats: &[Stats]) -> String {
         out.push_str(&s);
     }
 
+    out
+}
+
+fn print_top_sites(limit: usize) -> String {
+    // Build a top-k selection using a min-heap to avoid sorting the full map.
+    #[derive(Eq, PartialEq)]
+    struct KeyRef<'a> { total: usize, allocs: usize, reallocs: usize, key: &'a str }
+    impl<'a> Ord for KeyRef<'a> {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            // Min-heap via Reverse: smaller total first; for ties, larger key first
+            self.total.cmp(&other.total).then_with(|| other.key.cmp(self.key))
+        }
+    }
+    impl<'a> PartialOrd for KeyRef<'a> {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    let mut top: Vec<(String, SiteCounts)> = Vec::new();
+
+    IN_TRACKING.with(|flag| {
+        let prev = flag.replace(true);
+        if let Ok(m) = alloc_sites().lock() {
+            let mut heap: BinaryHeap<Reverse<KeyRef<'_>>> = BinaryHeap::with_capacity(limit);
+            for (ks, counts) in m.iter() {
+                let total = counts.allocs.saturating_add(counts.reallocs);
+                if total == 0 { continue; }
+                let entry = KeyRef { total, allocs: counts.allocs, reallocs: counts.reallocs, key: ks.as_str() };
+                if heap.len() < limit {
+                    heap.push(Reverse(entry));
+                } else if let Some(Reverse(worst)) = heap.peek() {
+                    if entry.total > worst.total
+                        || (entry.total == worst.total && entry.key < worst.key)
+                    {
+                        let _ = heap.pop();
+                        heap.push(Reverse(entry));
+                    }
+                }
+            }
+            top.reserve(heap.len());
+            while let Some(Reverse(e)) = heap.pop() {
+                top.push((e.key.to_owned(), SiteCounts { allocs: e.allocs, reallocs: e.reallocs }));
+            }
+        }
+        flag.set(prev);
+    });
+
+    // Sort selection for display: total desc, key asc.
+    top.sort_unstable_by(|a, b| {
+        let at = a.1.allocs + a.1.reallocs;
+        let bt = b.1.allocs + b.1.reallocs;
+        bt.cmp(&at).then_with(|| a.0.cmp(&b.0))
+    });
+
+    let mut out = String::new();
+    let width_loc = top.iter().map(|(k, _)| k.len()).max().unwrap_or(10).max("Location".len());
+    let width_cnt = 14;
+    let n = sample_interval();
+    let _ = writeln!(out, "Top allocation sites (sampled 1 in {n})");
+    writeln!(
+        out,
+        "{:width_loc$} | {:width_cnt$} | {:width_cnt$} | {:width_cnt$}",
+        "Location",
+        "Allocations",
+        "Reallocations",
+        "Total",
+        width_loc = width_loc,
+        width_cnt = width_cnt
+    ).unwrap();
+    let dash_len = width_loc + 3 + (width_cnt + 3) * 3 - 3;
+    out.push_str(&"-".repeat(dash_len));
+    out.push('\n');
+    for (loc, counts) in top {
+        let total = counts.allocs + counts.reallocs;
+        let _ = writeln!(out,
+            "{:width_loc$} | {:width_cnt$} | {:width_cnt$} | {:width_cnt$}",
+            loc,
+            counts.allocs,
+            counts.reallocs,
+            total,
+            width_loc = width_loc,
+            width_cnt = width_cnt);
+    }
     out
 }

@@ -284,6 +284,12 @@ lto = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
 overflow-checks = true # Catch arithmetic overflow errors
 
+# Same as `coverage`, but with debug symbols included for backtraces.
+[profile.coverage-with-debug]
+inherits = "coverage"
+strip = false # Keep debug information in binary
+debug = true # Include maximum amount of debug information
+
 # Profile for linting with release mode-like settings.
 # Catches lint errors which only appear in release mode.
 # `cargo lint --profile dev-no-debug-assertions` is about 35% faster than `cargo lint --release`.

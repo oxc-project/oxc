@@ -25,6 +25,7 @@ oxc_tasks_common = { workspace = true }
 
 humansize = { workspace = true }
 mimalloc-safe = { workspace = true }
+backtrace = "0.3"
 
 [features]
 # Sentinel flag that should only get enabled if we're running under `--all-features`
