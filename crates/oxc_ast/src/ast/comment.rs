@@ -171,8 +171,8 @@ impl Comment {
     /// Gets the span of the comment content.
     pub fn content_span(&self) -> Span {
         match self.kind {
-            CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
+            CommentKind::Line => Span::new(self.span.start() + 2, self.span.end()),
+            CommentKind::Block => Span::new(self.span.start() + 2, self.span.end() - 2),
         }
     }
 

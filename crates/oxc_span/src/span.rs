@@ -483,18 +483,6 @@ impl Span {
         LabeledSpan::new_primary_with_span(None, self)
     }
 
-    /// Convert [`Span`] to a single `u64`.
-    ///
-    /// On 64-bit platforms, `Span` is already a `u64`.
-    /// Compiler boils this conversion down to a no-op on 64-bit platforms.
-    ///
-    /// Note: `#[repr(transparent)]` ensures this is a no-op.
-    #[expect(clippy::inline_always)] // Because this is a no-op on 64-bit platforms.
-    #[inline(always)]
-    const fn as_u64(self) -> u64 {
-        self.0
-    }
-
     /// Compare two [`Span`]s.
     ///
     /// Same as `PartialEq::eq`, but a const function, and takes owned `Span`s.
@@ -638,6 +626,33 @@ impl Default for Span {
 #[cfg(test)]
 mod test {
     use super::Span;
+
+    #[test]
+    fn test_problem_statement_implementation() {
+        // Test that the implementation matches the problem statement exactly
+        let span = Span::new(10, 20);
+        
+        // Verify start() and end() methods work as specified
+        assert_eq!(span.start(), 10);
+        assert_eq!(span.end(), 20);
+        
+        // Verify the internal representation
+        // For Span::new(10, 20), internal should be ((20 << 32) | 10)
+        let expected_bits = ((20u64) << 32) | 10u64;
+        assert_eq!(span.0, expected_bits);
+        
+        // Verify repr(transparent) - should be exactly 8 bytes
+        assert_eq!(std::mem::size_of::<Span>(), 8);
+        
+        // Test edge cases
+        let span_max = Span::new(u32::MAX, u32::MAX);
+        assert_eq!(span_max.start(), u32::MAX);
+        assert_eq!(span_max.end(), u32::MAX);
+        
+        let span_zero = Span::new(0, 0);
+        assert_eq!(span_zero.start(), 0);
+        assert_eq!(span_zero.end(), 0);
+    }
 
     #[test]
     fn test_size() {
