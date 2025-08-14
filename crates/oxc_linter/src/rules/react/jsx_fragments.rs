@@ -1,6 +1,4 @@
-use oxc_ast::{
-    AstKind,
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
