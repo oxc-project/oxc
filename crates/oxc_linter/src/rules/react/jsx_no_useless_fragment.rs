@@ -3,7 +3,7 @@ use crate::{
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils,
+    utils::is_jsx_fragment,
 };
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
@@ -74,7 +74,7 @@ impl Rule for JsxNoUselessFragment {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
-                if !utils::is_jsx_fragment(&jsx_elem.opening_element) {
+                if !is_jsx_fragment(&jsx_elem.opening_element) {
                     return;
                 }
                 self.check_element(node, jsx_elem, ctx);
@@ -260,7 +260,7 @@ fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext)
             .name
             .get_identifier_name()
             .is_some_and(|ident| ident.chars().all(char::is_lowercase))
-            && !utils::is_jsx_fragment(&el.opening_element)
+            && !is_jsx_fragment(&el.opening_element)
         {
             return false;
         }

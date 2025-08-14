@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_jsx_fragment};
 
 fn jsx_fragments_diagnostic(span: Span, mode: FragmentMode) -> OxcDiagnostic {
     let msg = if mode == FragmentMode::Element {
@@ -110,7 +110,7 @@ impl Rule for JsxFragments {
                 let Some(closing_element) = &jsx_elem.closing_element else {
                     return;
                 };
-                if !utils::is_jsx_fragment(&jsx_elem.opening_element)
+                if !is_jsx_fragment(&jsx_elem.opening_element)
                     || !jsx_elem.opening_element.attributes.is_empty()
                 {
                     return;
