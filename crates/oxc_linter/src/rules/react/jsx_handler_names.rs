@@ -286,9 +286,11 @@ impl Rule for JsxHandlerNames {
             return;
         }
 
-        let prop_key = match &jsx_attribute.name {
-            JSXAttributeName::Identifier(ident) => ident.name.as_str(),
-            JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.name.name.as_str(),
+        let (prop_key, prop_span) = match &jsx_attribute.name {
+            JSXAttributeName::Identifier(ident) => (ident.name.as_str(), ident.span),
+            JSXAttributeName::NamespacedName(namespaced_name) => {
+                (namespaced_name.name.name.as_str(), namespaced_name.span)
+            }
         };
 
         let prop_value = if self.check_inline_functions && is_inline_handler {
@@ -324,7 +326,7 @@ impl Rule for JsxHandlerNames {
             }
             (Some(value), Some(false), Some(true)) => {
                 ctx.diagnostic(bad_handler_prop_name_diagnostic(
-                    expression_container.span,
+                    prop_span,
                     prop_key,
                     &value,
                     &self.event_handler_prop_prefixes,
