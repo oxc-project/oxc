@@ -116,6 +116,10 @@ impl<'a> PeepholeOptimizations {
         Self::try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
+    pub fn substitute_for_statement(stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+        Self::try_rewrite_arguments_copy_loop(stmt, ctx);
+    }
+
     pub fn substitute_return_statement(stmt: &mut ReturnStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         Self::compress_return_statement(stmt, ctx);
     }
@@ -473,6 +477,339 @@ impl<'a> PeepholeOptimizations {
             *expr = ctx.ast.expression_binary(e.span, left, e.operator, right);
             ctx.state.changed = true;
         }
+    }
+
+    #[expect(clippy::float_cmp)]
+    /// Rewrite classic `arguments` copy loop to spread form
+    ///
+    /// Transforms the common Babel/TS output:
+    /// ```js
+    ///   for (var e = arguments.length, r = Array(e), a = 0; a < e; a++)
+    ///     r[a] = arguments[a];
+    /// ```
+    /// into:
+    /// ```js
+    ///   for (var r = [...arguments]; 0; ) ;
+    /// ```
+    /// which gets folded later into:
+    /// ```js
+    ///   var r = [...arguments]
+    /// ```
+    ///
+    /// Other supported inputs:
+    /// ```js
+    ///   for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++)
+    ///     r[a - 1] = arguments[a];
+    ///   for (var r = [], a = 0; a < arguments.length; a++)
+    ///     r[a] = arguments[a];
+    ///   for (var r = [], a = 1; a < arguments.length; a++)
+    ///     r[a - 1] = arguments[a];
+    /// ```
+    fn try_rewrite_arguments_copy_loop(for_stmt: &mut ForStatement<'a>, ctx: &mut Ctx<'a, '_>) {
+        /// Verify whether `arg_expr` is `e > offset ? e - offset : 0` or `e`
+        fn verify_array_arg(arg_expr: &Expression, name_e: &str, offset: f64) -> bool {
+            match arg_expr {
+                Expression::Identifier(id) => offset == 0.0 && id.name == name_e,
+                Expression::ConditionalExpression(cond_expr) => {
+                    let Expression::BinaryExpression(test_expr) = &cond_expr.test else {
+                        return false;
+                    };
+                    let Expression::BinaryExpression(cons_expr) = &cond_expr.consequent else {
+                        return false;
+                    };
+                    test_expr.operator == BinaryOperator::GreaterThan
+                        && test_expr.left.is_specific_id(name_e)
+                        && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
+                        && cons_expr.operator == BinaryOperator::Subtraction
+                        && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
+                        && matches!(&cons_expr.right, Expression::NumericLiteral(n) if n.value == offset)
+                        && matches!(&cond_expr.alternate, Expression::NumericLiteral(n) if n.value == 0.0)
+                }
+                _ => false,
+            }
+        }
+
+        // FIXME: this function treats `arguments` not inside a function scope as if they are inside it
+        //        we should check in a different way than `ctx.is_global_reference`
+
+        // Parse statement: `r[a - offset] = arguments[a];`
+        let body_assign_expr = {
+            let assign = match &for_stmt.body {
+                Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+                Statement::BlockStatement(block) if block.body.len() == 1 => match &block.body[0] {
+                    Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+                    _ => return,
+                },
+                _ => return,
+            };
+            let Expression::AssignmentExpression(assign_expr) = &assign.expression else { return };
+            if !assign_expr.operator.is_assign() {
+                return;
+            }
+            assign_expr
+        };
+
+        let (r_id_name, a_id_name, lhs_offset) = {
+            let AssignmentTarget::ComputedMemberExpression(lhs_member_expr) =
+                &body_assign_expr.left
+            else {
+                return;
+            };
+            let Expression::Identifier(lhs_member_expr_obj) = &lhs_member_expr.object else {
+                return;
+            };
+            let (base_name, offset) = match &lhs_member_expr.expression {
+                Expression::Identifier(id) => (id.name, 0.0),
+                Expression::BinaryExpression(b) => {
+                    if b.operator != BinaryOperator::Subtraction {
+                        return;
+                    }
+                    let Expression::Identifier(id) = &b.left else { return };
+                    let Expression::NumericLiteral(n) = &b.right else { return };
+                    if n.value.fract() != 0.0 || n.value < 0.0 {
+                        return;
+                    }
+                    (id.name, n.value)
+                }
+                _ => return,
+            };
+            (lhs_member_expr_obj.name, base_name, offset)
+        };
+
+        let rhs_offset = {
+            let Expression::ComputedMemberExpression(rhs_member_expr) = &body_assign_expr.right
+            else {
+                return;
+            };
+            let Expression::Identifier(rhs_member_expr_obj) = &rhs_member_expr.object else {
+                return;
+            };
+            if rhs_member_expr_obj.name != "arguments"
+                || !ctx.is_global_reference(rhs_member_expr_obj)
+            {
+                return;
+            }
+            match &rhs_member_expr.expression {
+                Expression::Identifier(id) => {
+                    if id.name != a_id_name {
+                        return;
+                    }
+                    0.0
+                }
+                Expression::BinaryExpression(b) => {
+                    if b.operator != BinaryOperator::Addition {
+                        return;
+                    }
+                    let Some(((), offset)) = Self::commutative_pair(
+                        (&b.left, &b.right),
+                        |a| {
+                            if let Expression::Identifier(id) = a {
+                                if id.name != a_id_name {
+                                    return None;
+                                }
+                                Some(())
+                            } else {
+                                None
+                            }
+                        },
+                        |b| {
+                            if let Expression::NumericLiteral(n) = b {
+                                if n.value.fract() == 0.0 && n.value >= 0.0 {
+                                    Some(n.value)
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        },
+                    ) else {
+                        return;
+                    };
+                    offset
+                }
+                _ => return,
+            }
+        };
+
+        let offset = if lhs_offset == 0.0 {
+            rhs_offset
+        } else {
+            if rhs_offset != 0.0 {
+                return;
+            }
+            lhs_offset
+        };
+
+        // Parse update: `a++`
+        {
+            let Some(Expression::UpdateExpression(u)) = &for_stmt.update else {
+                return;
+            };
+            let SimpleAssignmentTarget::AssignmentTargetIdentifier(id) = &u.argument else {
+                return;
+            };
+            if a_id_name != id.name {
+                return;
+            }
+        };
+
+        // Parse test: `a < e` or `a < arguments.length`
+        let e_id_name = {
+            let Some(Expression::BinaryExpression(b)) = &for_stmt.test else {
+                return;
+            };
+            if b.operator != BinaryOperator::LessThan {
+                return;
+            }
+            let Expression::Identifier(left) = &b.left else { return };
+            if left.name != a_id_name {
+                return;
+            }
+            match &b.right {
+                Expression::Identifier(right) => Some(&right.name),
+                Expression::StaticMemberExpression(sm) => {
+                    let Expression::Identifier(id) = &sm.object else {
+                        return;
+                    };
+                    if id.name != "arguments"
+                        || !ctx.is_global_reference(id)
+                        || sm.property.name != "length"
+                    {
+                        return;
+                    }
+                    None
+                }
+                _ => return,
+            }
+        };
+
+        let init_decl_len = if e_id_name.is_some() { 3 } else { 2 };
+
+        let Some(init) = &mut for_stmt.init else { return };
+        let ForStatementInit::VariableDeclaration(var_init) = init else { return };
+        // Need at least two declarators: r, a (optional `e` may precede them)
+        if var_init.declarations.len() < init_decl_len {
+            return;
+        }
+
+        let mut idx = 0usize;
+
+        // Check `e = arguments.length`
+        if let Some(e_id_name) = e_id_name {
+            let de = var_init
+                .declarations
+                .get(idx)
+                .expect("var_init.declarations.len() check above ensures this");
+            let BindingPatternKind::BindingIdentifier(de_id) = &de.id.kind else { return };
+            if de_id.name != e_id_name {
+                return;
+            }
+            let Some(Expression::StaticMemberExpression(sm)) = &de.init else { return };
+            let Expression::Identifier(id) = &sm.object else { return };
+            if id.name != "arguments"
+                || !ctx.is_global_reference(id)
+                || sm.property.name != "length"
+            {
+                return;
+            }
+
+            idx += 1;
+        }
+
+        // Check `a = 0` or `a = k`
+        {
+            let de_a = var_init
+                .declarations
+                .get(idx + 1)
+                .expect("var_init.declarations.len() check above ensures this");
+            let BindingPatternKind::BindingIdentifier(de_id) = &de_a.id.kind else { return };
+            if de_id.name != a_id_name {
+                return;
+            }
+            if !matches!(&de_a.init, Some(Expression::NumericLiteral(n)) if n.value == offset) {
+                return;
+            }
+        }
+
+        // Check `r = Array(e > 1 ? e - 1 : 0)`, or `r = []`
+        let r_id_pat = {
+            let de_r = var_init
+                .declarations
+                .get_mut(idx)
+                .expect("var_init.declarations.len() check above ensures this");
+            match &de_r.init {
+                // Array(e > 1 ? e - 1 : 0) or Array(e)
+                Some(Expression::CallExpression(call)) => {
+                    let Expression::Identifier(id) = &call.callee else { return };
+                    if id.name != "Array" || !ctx.is_global_reference(id) {
+                        return;
+                    }
+                    if call.arguments.len() != 1 {
+                        return;
+                    }
+                    let Some(e_id_name) = e_id_name else { return };
+                    let Some(arg_expr) = call.arguments[0].as_expression() else { return };
+                    if !verify_array_arg(arg_expr, e_id_name, offset) {
+                        return;
+                    }
+                }
+                Some(Expression::ArrayExpression(arr)) => {
+                    if !arr.elements.is_empty() {
+                        return;
+                    }
+                }
+                _ => return,
+            }
+            let BindingPatternKind::BindingIdentifier(de_id) = &de_r.id.kind else { return };
+            if de_id.name != r_id_name {
+                return;
+            }
+            de_r.id.take_in(ctx.ast)
+        };
+
+        // Build `var r = [...arguments]` (with optional `.slice(offset)`) as the only declarator and drop test/update/body.
+
+        let base_arr = ctx.ast.expression_array(
+            SPAN,
+            ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
+                SPAN,
+                ctx.ast.expression_identifier(SPAN, "arguments"),
+            )),
+        );
+        // wrap with `.slice(offset)`
+        let arr = if offset > 0.0 {
+            let obj = base_arr;
+            let callee =
+                Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                    SPAN,
+                    obj,
+                    ctx.ast.identifier_name(SPAN, "slice"),
+                    false,
+                ));
+            ctx.ast.expression_call(
+                SPAN,
+                callee,
+                Option::<TSTypeParameterInstantiation>::None,
+                ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
+                    SPAN,
+                    offset,
+                    None,
+                    NumberBase::Decimal,
+                ))),
+                false,
+            )
+        } else {
+            base_arr
+        };
+
+        let new_decl = ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, Some(arr), false);
+        var_init.declarations = ctx.ast.vec1(new_decl);
+        for_stmt.test =
+            Some(ctx.ast.expression_numeric_literal(for_stmt.span, 0.0, None, NumberBase::Decimal));
+        for_stmt.update = None;
+        for_stmt.body = ctx.ast.statement_empty(SPAN);
+        ctx.state.changed = true;
     }
 
     /// Removes redundant argument of `ReturnStatement`
@@ -1894,5 +2231,45 @@ mod test {
         test_same("Object?.(f)(1)");
         test_same("function Object(x){return x} Object(f)(1)");
         test_same("Object(...a)(1)");
+    }
+
+    #[test]
+    fn test_rewrite_arguments_copy_loop() {
+        test(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
+            "var r = [...arguments]",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] }",
+            "var r = [...arguments]",
+        );
+        test(
+            "for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
+            "var r = [...arguments]",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a];",
+            "var r = [...arguments].slice(1)",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e > 2 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
+            "var r = [...arguments].slice(2)",
+        );
+        test(
+            "for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a];",
+            "var r = [...arguments]",
+        );
+        test(
+            "for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
+            "var r = [...arguments]",
+        );
+        test(
+            "for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a];",
+            "var r = [...arguments].slice(1)",
+        );
+        test(
+            "for (var r = [], a = 2; a < arguments.length; a++) r[a - 2] = arguments[a];",
+            "var r = [...arguments].slice(2)",
+        );
     }
 }

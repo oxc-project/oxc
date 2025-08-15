@@ -1,7 +1,7 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Iterations | File      
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.47 kB   | 23.70 kB   | 8.47 kB    | 8.54 kB    |          2 | react.development.js 
+72.14 kB   | 23.38 kB   | 23.70 kB   | 8.45 kB    | 8.54 kB    |          2 | react.development.js 
 
 173.90 kB  | 59.48 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   |          2 | moment.js  
 
@@ -17,11 +17,11 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 1.25 MB    | 646.98 kB  | 646.76 kB  | 160.27 kB  | 163.73 kB  |          2 | three.js   
 
-2.14 MB    | 715.66 kB  | 724.14 kB  | 161.78 kB  | 181.07 kB  |          2 | victory.js 
+2.14 MB    | 715.37 kB  | 724.14 kB  | 161.66 kB  | 181.07 kB  |          2 | victory.js 
 
-3.20 MB    | 1.01 MB    | 1.01 MB    | 324.08 kB  | 331.56 kB  |          2 | echarts.js 
+3.20 MB    | 1.01 MB    | 1.01 MB    | 323.99 kB  | 331.56 kB  |          3 | echarts.js 
 
-6.69 MB    | 2.23 MB    | 2.31 MB    | 462.26 kB  | 488.28 kB  |          3 | antd.js    
+6.69 MB    | 2.23 MB    | 2.31 MB    | 461.69 kB  | 488.28 kB  |          3 | antd.js    
 
-10.95 MB   | 3.35 MB    | 3.49 MB    | 860.97 kB  | 915.50 kB  |          2 | typescript.js 
+10.95 MB   | 3.35 MB    | 3.49 MB    | 860.60 kB  | 915.50 kB  |          3 | typescript.js 
 
