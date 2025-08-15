@@ -341,7 +341,7 @@ fn get_member_expression_name(member_expr: &JSXMemberExpression) -> CompactStr {
 
 fn normalize_handler_name(s: &str) -> CompactStr {
     let s1 = regex!(r"\s*").replace_all(s, "");
-    regex!(r"^this\.|.*::").replace(s1.as_ref(), "").into()
+    regex!(r"^this\.|\S*::").replace(s1.as_ref(), "").into()
 }
 
 // Tests for the normalize_handler_name function to ensure it correctly strips prefixes and whitespace.
