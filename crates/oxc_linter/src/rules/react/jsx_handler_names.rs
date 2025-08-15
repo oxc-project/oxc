@@ -1,3 +1,5 @@
+use std::sync::{LazyLock, Mutex};
+
 use crate::{AstNode, context::LintContext, rule::Rule};
 use lazy_regex::{Regex, RegexBuilder, regex};
 use oxc_ast::{
@@ -10,6 +12,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 fn bad_handler_name_diagnostic(
@@ -119,39 +122,57 @@ declare_oxc_lint!(
     style,
 );
 
-fn build_event_handler_regex(
-    prefixes: &[CompactStr],
-    prop_prefixes: &[CompactStr],
-) -> Option<Regex> {
-    if prefixes.is_empty() {
+type RegexCache = LazyLock<Mutex<FxHashMap<CompactStr, Regex>>>;
+
+fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {
+    static REGEX_CACHE: RegexCache = LazyLock::new(|| Mutex::new(FxHashMap::default()));
+    if handler_prefix.is_empty() || handler_prop_prefix.is_empty() {
         return None;
     }
+    let cache_key = CompactStr::from(format!("{handler_prefix},{handler_prop_prefix}"));
+    if let Some(regex) = REGEX_CACHE.lock().unwrap().get(&cache_key) {
+        return Some(regex.clone());
+    }
+
+    let prefixes = split_prefixes_string(handler_prefix);
+    let prop_prefixes = split_prefixes_string(handler_prop_prefix);
+
     let prefix_pattern = prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
     let prop_prefix_pattern =
         prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
-    Some(
-        RegexBuilder::new(
-            format!(
-                r"^((props\.({prop_prefix_pattern}))|((.*\.)?({prefix_pattern})))[0-9]*[A-Z].*$"
-            )
-            .as_str(),
-        )
-        .build()
-        .expect("Failed to compile regex for event handler prefixes"),
-    )
-}
-
-fn build_event_handler_prop_regex(prop_prefixes: &[CompactStr]) -> Option<Regex> {
-    if prop_prefixes.is_empty() {
+    if prefix_pattern.is_empty() || prop_prefix_pattern.is_empty() {
         return None;
     }
+
+    let regex = RegexBuilder::new(
+        format!(r"^((props\.({prop_prefix_pattern}))|((.*\.)?({prefix_pattern})))[0-9]*[A-Z].*$")
+            .as_str(),
+    )
+    .build()
+    .expect("Failed to compile regex for event handler prefixes");
+    REGEX_CACHE.lock().unwrap().insert(cache_key, regex.clone());
+    Some(regex)
+}
+
+fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
+    static REGEX_CACHE: RegexCache = LazyLock::new(|| Mutex::new(FxHashMap::default()));
+    if handler_prop_prefix.is_empty() {
+        return None;
+    }
+    if let Some(regex) = REGEX_CACHE.lock().unwrap().get(handler_prop_prefix) {
+        return Some(regex.clone());
+    }
+    let prop_prefixes = split_prefixes_string(handler_prop_prefix);
     let prop_prefix_pattern =
         prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
-    Some(
-        RegexBuilder::new(format!(r"^(({prop_prefix_pattern})[A-Z].*|ref)$").as_str())
-            .build()
-            .expect("Failed to compile regex for event handler prop prefixes"),
-    )
+    if prop_prefix_pattern.is_empty() {
+        return None;
+    }
+    let regex = RegexBuilder::new(format!(r"^(({prop_prefix_pattern})[A-Z].*|ref)$").as_str())
+        .build()
+        .expect("Failed to compile regex for event handler prop prefixes");
+    REGEX_CACHE.lock().unwrap().insert(handler_prop_prefix.into(), regex.clone());
+    Some(regex)
 }
 
 /// Split the prefixes by `|` and return an array of CompactStr.
@@ -161,24 +182,22 @@ fn split_prefixes_string(prefixes: &str) -> Vec<CompactStr> {
     prefixes.split('|').map(str::trim).filter(|s| !s.is_empty()).map(CompactStr::from).collect()
 }
 
-static DEFAULT_HANDLER_PROP_PREFIXES: &str = "on";
-static DEFAULT_HANDLER_PREFIXES: &str = "handle";
+static DEFAULT_HANDLER_PROP_PREFIX: &str = "on";
+static DEFAULT_HANDLER_PREFIX: &str = "handle";
 
 impl Default for JsxHandlerNamesConfig {
     fn default() -> Self {
-        let handler_prop_prefixes = vec![CompactStr::from(DEFAULT_HANDLER_PROP_PREFIXES)];
-        let handler_prefixes = vec![CompactStr::from(DEFAULT_HANDLER_PREFIXES)];
         JsxHandlerNamesConfig {
             check_inline_functions: false,
             check_local_variables: false,
-            event_handler_prop_prefixes: CompactStr::from(DEFAULT_HANDLER_PROP_PREFIXES),
-            event_handler_prefixes: CompactStr::from(DEFAULT_HANDLER_PREFIXES),
+            event_handler_prop_prefixes: CompactStr::from(DEFAULT_HANDLER_PROP_PREFIX),
+            event_handler_prefixes: CompactStr::from(DEFAULT_HANDLER_PREFIX),
             ignore_component_names: vec![],
             event_handler_regex: build_event_handler_regex(
-                &handler_prefixes,
-                &handler_prop_prefixes,
+                DEFAULT_HANDLER_PREFIX,
+                DEFAULT_HANDLER_PROP_PREFIX,
             ),
-            event_handler_prop_regex: build_event_handler_prop_regex(&handler_prop_prefixes),
+            event_handler_prop_regex: build_event_handler_prop_regex(DEFAULT_HANDLER_PROP_PREFIX),
         }
     }
 }
@@ -187,8 +206,8 @@ impl Rule for JsxHandlerNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut check_inline_functions = false;
         let mut check_local_variables = false;
-        let mut event_handler_prop_prefixes = DEFAULT_HANDLER_PROP_PREFIXES;
-        let mut event_handler_prefixes = DEFAULT_HANDLER_PREFIXES;
+        let mut event_handler_prop_prefixes = DEFAULT_HANDLER_PROP_PREFIX;
+        let mut event_handler_prefixes = DEFAULT_HANDLER_PREFIX;
         let mut ignore_component_names = vec![];
         if let Some(options) = value.get(0).and_then(Value::as_object) {
             if let Some(prefixes) = options.get("eventHandlerPrefix") {
@@ -226,11 +245,9 @@ impl Rule for JsxHandlerNames {
             }
         }
 
-        let handler_prefixes = split_prefixes_string(event_handler_prefixes);
-        let handler_prop_prefixes = split_prefixes_string(event_handler_prop_prefixes);
         let event_handler_regex =
-            build_event_handler_regex(&handler_prefixes, &handler_prop_prefixes);
-        let event_handler_prop_regex = build_event_handler_prop_regex(&handler_prop_prefixes);
+            build_event_handler_regex(event_handler_prefixes, event_handler_prop_prefixes);
+        let event_handler_prop_regex = build_event_handler_prop_regex(event_handler_prop_prefixes);
 
         Self(Box::new(JsxHandlerNamesConfig {
             check_inline_functions,
@@ -368,8 +385,8 @@ fn get_member_expression_name(member_expr: &JSXMemberExpression) -> CompactStr {
 }
 
 fn normalize_handler_name(s: &str) -> CompactStr {
-    let s1 = regex!(r"\s*").replace_all(s, "");
-    regex!(r"^this\.|\S*::").replace(s1.as_ref(), "").into()
+    // Remove whitespace and leading "this." or "props::" or "this.props::"
+    regex!(r"\s+|^this\.|\S*::").replace_all(s, "").into()
 }
 
 // Tests for the normalize_handler_name function to ensure it correctly strips prefixes and whitespace.
