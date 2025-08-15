@@ -17,11 +17,11 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 1.25 MB    | 646.98 kB  | 646.76 kB  | 160.27 kB  | 163.73 kB  |          2 | three.js   
 
-2.14 MB    | 717.51 kB  | 724.14 kB  | 161.88 kB  | 181.07 kB  |          2 | victory.js 
+2.14 MB    | 715.66 kB  | 724.14 kB  | 161.78 kB  | 181.07 kB  |          2 | victory.js 
 
 3.20 MB    | 1.01 MB    | 1.01 MB    | 324.08 kB  | 331.56 kB  |          2 | echarts.js 
 
-6.69 MB    | 2.25 MB    | 2.31 MB    | 463.12 kB  | 488.28 kB  |          3 | antd.js    
+6.69 MB    | 2.23 MB    | 2.31 MB    | 462.26 kB  | 488.28 kB  |          3 | antd.js    
 
 10.95 MB   | 3.35 MB    | 3.49 MB    | 860.97 kB  | 915.50 kB  |          2 | typescript.js 
 

@@ -131,6 +131,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_call_expression(expr: &mut CallExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         Self::try_flatten_arguments(&mut expr.arguments, ctx);
+        Self::try_rewrite_object_callee_indirect_call(expr, ctx);
     }
 
     pub fn substitute_new_expression(expr: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
@@ -882,6 +883,49 @@ impl<'a> PeepholeOptimizations {
                 new_args.push(arg);
             }
         }
+        ctx.state.changed = true;
+    }
+
+    /// `Object(expr)(args)` -> `(0, expr)(args)`
+    ///
+    /// If `expr` is `null` or `undefined`, both before and after throws an TypeError ("something is not a function").
+    /// It is because `Object(expr)` returns `{}`.
+    ///
+    /// If `expr` is other primitive values, both before and after throws an TypeError ("something is not a function").
+    /// It is because `Object(expr)` returns the Object wrapped values (e.g. `new Boolean()`).
+    ///
+    /// If `expr` is an object / function, `Object(expr)` returns `expr` as-is.
+    /// Note that we need to wrap `expr` as `(0, expr)` so that the `this` value is preserved.
+    ///
+    /// <https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object-value>
+    fn try_rewrite_object_callee_indirect_call(
+        expr: &mut CallExpression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
+        let Expression::CallExpression(inner_call) = &mut expr.callee else { return };
+        if inner_call.optional || inner_call.arguments.len() != 1 {
+            return;
+        }
+        let Expression::Identifier(callee) = &inner_call.callee else {
+            return;
+        };
+        if callee.name != "Object" || !ctx.is_global_reference(callee) {
+            return;
+        }
+
+        let span = inner_call.span;
+        let Some(arg_expr) = inner_call.arguments[0].as_expression_mut() else {
+            return;
+        };
+
+        let new_callee = ctx.ast.expression_sequence(
+            span,
+            ctx.ast.vec_from_array([
+                ctx.ast.expression_numeric_literal(span, 0.0, None, NumberBase::Decimal),
+                arg_expr.take_in(ctx.ast),
+            ]),
+        );
+        expr.callee = new_callee;
         ctx.state.changed = true;
     }
 
@@ -1831,5 +1875,15 @@ mod test {
         test("var {y: y} = x", "var {y} = x");
         test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
         test("var {y: y, 'z': z} = x", "var {y, z} = x");
+    }
+
+    #[test]
+    fn test_object_callee_indirect_call() {
+        test("Object(f)(1,2)", "f(1, 2)");
+        test("(Object(g))(a)", "g(a)");
+        test("Object(a.b)(x)", "(0, a.b)(x)");
+        test_same("Object?.(f)(1)");
+        test_same("function Object(x){return x} Object(f)(1)");
+        test_same("Object(...a)(1)");
     }
 }
