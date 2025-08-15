@@ -14,10 +14,6 @@ use oxc_linter::{
 };
 use oxc_span::{SourceType, Span};
 
-use crate::cli::CliRunResult;
-
-use super::lint::print_and_flush_stdout;
-
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
 pub struct TsGoLintState<'a> {
@@ -46,13 +42,9 @@ impl<'a> TsGoLintState<'a> {
         }
     }
 
-    pub fn lint(
-        self,
-        error_sender: DiagnosticSender,
-        stdout: &mut dyn Write,
-    ) -> Option<CliRunResult> {
+    pub fn lint(self, error_sender: DiagnosticSender) -> Result<(), String> {
         if self.paths.is_empty() {
-            return None;
+            return Ok(());
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
@@ -211,16 +203,10 @@ impl<'a> TsGoLintState<'a> {
         match handler.join() {
             Ok(Ok(())) => {
                 // Successfully ran tsgolint
-                None
+                Ok(())
             }
-            Ok(Err(err)) => {
-                print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
-                Some(CliRunResult::TsGoLintError)
-            }
-            Err(err) => {
-                print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
-                Some(CliRunResult::TsGoLintError)
-            }
+            Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
+            Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }
     }
 
