@@ -549,7 +549,7 @@ impl<'a> PeepholeOptimizations {
             assign_expr
         };
 
-        let (r_id_name, a_id_name, lhs_offset) = {
+        let (r_id_name, a_id_name, offset) = {
             let AssignmentTarget::ComputedMemberExpression(lhs_member_expr) =
                 &body_assign_expr.left
             else {
@@ -576,7 +576,7 @@ impl<'a> PeepholeOptimizations {
             (lhs_member_expr_obj.name, base_name, offset)
         };
 
-        let rhs_offset = {
+        {
             let Expression::ComputedMemberExpression(rhs_member_expr) = &body_assign_expr.right
             else {
                 return;
@@ -589,56 +589,13 @@ impl<'a> PeepholeOptimizations {
             {
                 return;
             }
-            match &rhs_member_expr.expression {
-                Expression::Identifier(id) => {
-                    if id.name != a_id_name {
-                        return;
-                    }
-                    0.0
-                }
-                Expression::BinaryExpression(b) => {
-                    if b.operator != BinaryOperator::Addition {
-                        return;
-                    }
-                    let Some(((), offset)) = Self::commutative_pair(
-                        (&b.left, &b.right),
-                        |a| {
-                            if let Expression::Identifier(id) = a {
-                                if id.name != a_id_name {
-                                    return None;
-                                }
-                                Some(())
-                            } else {
-                                None
-                            }
-                        },
-                        |b| {
-                            if let Expression::NumericLiteral(n) = b {
-                                if n.value.fract() == 0.0 && n.value >= 0.0 {
-                                    Some(n.value)
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        },
-                    ) else {
-                        return;
-                    };
-                    offset
-                }
-                _ => return,
-            }
-        };
-
-        let offset = if lhs_offset == 0.0 {
-            rhs_offset
-        } else {
-            if rhs_offset != 0.0 {
+            let Expression::Identifier(rhs_member_expr_expr_id) = &rhs_member_expr.expression
+            else {
+                return;
+            };
+            if rhs_member_expr_expr_id.name != a_id_name {
                 return;
             }
-            lhs_offset
         };
 
         // Parse update: `a++`
@@ -765,7 +722,11 @@ impl<'a> PeepholeOptimizations {
             if de_id.name != r_id_name {
                 return;
             }
-            de_r.id.take_in(ctx.ast)
+            // `var r = [...arguments]` / `var r = [...arguments].slice(n)` is not needed
+            // if r is not used by other places because `[...arguments]` does not have a sideeffect
+            // `r` is used once in the for-loop (assignment for each index)
+            (ctx.scoping().get_resolved_references(de_id.symbol_id()).count() > 1)
+                .then(|| de_r.id.take_in(ctx.ast))
         };
 
         // Build `var r = [...arguments]` (with optional `.slice(offset)`) as the only declarator and drop test/update/body.
@@ -803,8 +764,13 @@ impl<'a> PeepholeOptimizations {
             base_arr
         };
 
-        let new_decl = ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, Some(arr), false);
-        var_init.declarations = ctx.ast.vec1(new_decl);
+        var_init.declarations = if let Some(r_id_pat) = r_id_pat {
+            let new_decl =
+                ctx.ast.variable_declarator(SPAN, var_init.kind, r_id_pat, Some(arr), false);
+            ctx.ast.vec1(new_decl)
+        } else {
+            ctx.ast.vec()
+        };
         for_stmt.test =
             Some(ctx.ast.expression_numeric_literal(for_stmt.span, 0.0, None, NumberBase::Decimal));
         for_stmt.update = None;
@@ -2236,40 +2202,89 @@ mod test {
     #[test]
     fn test_rewrite_arguments_copy_loop() {
         test(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r)",
+            "var r = [...arguments].slice(1); console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = Array(e > 2 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a]; console.log(r)",
+            "var r = [...arguments].slice(2); console.log(r)",
+        );
+        test(
+            "for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r)",
+            "var r = [...arguments]; console.log(r)",
+        );
+        test(
+            "for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r)",
+            "var r = [...arguments].slice(1); console.log(r)",
+        );
+        test(
+            "for (var r = [], a = 2; a < arguments.length; a++) r[a - 2] = arguments[a]; console.log(r)",
+            "var r = [...arguments].slice(2); console.log(r)",
+        );
+        test(
             "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
-            "var r = [...arguments]",
+            "",
         );
         test(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] }",
-            "var r = [...arguments]",
+            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]",
+            "",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) console.log(r[a]);",
         );
         test(
-            "for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
-            "var r = [...arguments]",
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; console.log(r); }",
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) (r[a] = arguments[a], console.log(r))",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] += arguments[a];",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a + 1] = arguments[a];",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a - 0.5] = arguments[a];",
         );
         test(
-            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a];",
-            "var r = [...arguments].slice(1)",
+            "var arguments; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
+            "for (var arguments, e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
+        );
+        test_same("for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = foo[a];");
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; e--) r[a] = arguments[a];",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; r++) r[a] = arguments[a];",
+        );
+        test_same(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < r; r++) r[a] = arguments[a];",
         );
         test(
-            "for (var e = arguments.length, r = Array(e > 2 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
-            "var r = [...arguments].slice(2)",
+            "var arguments; for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
+            "for (var arguments, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
         );
-        test(
-            "for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a];",
-            "var r = [...arguments]",
-        );
-        test(
-            "for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
-            "var r = [...arguments]",
-        );
-        test(
-            "for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a];",
-            "var r = [...arguments].slice(1)",
-        );
-        test(
-            "for (var r = [], a = 2; a < arguments.length; a++) r[a - 2] = arguments[a];",
-            "var r = [...arguments].slice(2)",
+        test_same(
+            "for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
         );
     }
 }
