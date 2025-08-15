@@ -203,8 +203,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
- 1 │ foo + 'does not autofix octal escape sequence' + ' 33'
-   · ─────────────────────────────────────────────────────
+ 1 │ foo + 'does not autofix octal escape sequence' + ''
+   · ──────────────────────────────────────────────────
    ╰────
   help: Unexpected string concatenation.
 
@@ -219,7 +219,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_template.tsx:1:7]
  1 │ foo + '
    ·       ──
- 2 │  other text  33'
+ 2 │  other text '
    ╰────
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
