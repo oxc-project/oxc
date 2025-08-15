@@ -256,25 +256,8 @@ impl Rule for JsxHandlerNames {
         if !self.check_inline_functions && is_inline_handler {
             return;
         }
-        if !self.check_local_variables {
-            if let JSXExpression::ArrowFunctionExpression(arrow_function) = value_expr {
-                if let Some(Statement::ExpressionStatement(stmt)) =
-                    arrow_function.body.statements.first()
-                {
-                    if let Expression::CallExpression(callee_expr) = &stmt.expression {
-                        if !callee_expr.callee.is_member_expression() {
-                            // the inline-handler's body is not a method call
-                            return;
-                        }
-                    } else {
-                        // the inline-handler's body is not a function call
-                        return;
-                    }
-                }
-            } else if !value_expr.is_member_expression() {
-                // the inline-handler's body is not an object's property access
-                return;
-            }
+        if !self.check_local_variables && !is_member_expression_event_handler(value_expr) {
+            return;
         }
 
         let prop_key = match &jsx_attribute.name {
@@ -326,6 +309,21 @@ impl Rule for JsxHandlerNames {
             }
         }
     }
+}
+
+/// true if the expression is in the form of "foo.bar" or "() => foo.bar()"
+/// like event handler methods in class components.
+fn is_member_expression_event_handler(value_expr: &JSXExpression<'_>) -> bool {
+    let JSXExpression::ArrowFunctionExpression(arrow_function) = value_expr else {
+        return value_expr.is_member_expression();
+    };
+    let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
+        return false;
+    };
+    let Expression::CallExpression(callee_expr) = &stmt.expression else {
+        return false;
+    };
+    callee_expr.callee.is_member_expression()
 }
 
 fn get_member_expression_name(member_expr: &JSXMemberExpression) -> CompactStr {
