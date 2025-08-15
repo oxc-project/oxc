@@ -72,8 +72,8 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
         return false;
     }
 
-    let left = expr.left.without_parentheses();
-    let right = expr.right.without_parentheses();
+    let left = expr.left.get_inner_expression();
+    let right = expr.right.get_inner_expression();
 
     let left_is_string =
         matches!(left, Expression::StringLiteral(_) | Expression::TemplateLiteral(_));
@@ -95,8 +95,8 @@ fn check_should_report(expr: &BinaryExpression) -> bool {
 fn all_none_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            all_none_string_literal(binary.left.without_parentheses())
-                && all_none_string_literal(binary.right.without_parentheses())
+            all_none_string_literal(binary.left.get_inner_expression())
+                && all_none_string_literal(binary.right.get_inner_expression())
         }
         Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
         _ => true,
@@ -106,8 +106,8 @@ fn all_none_string_literal(expr: &Expression) -> bool {
 fn any_none_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
-            any_none_string_literal(binary.left.without_parentheses())
-                || any_none_string_literal(binary.right.without_parentheses())
+            any_none_string_literal(binary.left.get_inner_expression())
+                || any_none_string_literal(binary.right.get_inner_expression())
         }
         Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => false,
         _ => true,
