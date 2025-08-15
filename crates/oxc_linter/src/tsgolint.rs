@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use super::{AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string};
+use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -27,16 +27,11 @@ pub struct TsGoLintState<'a> {
 }
 
 impl<'a> TsGoLintState<'a> {
-    pub fn new(
-        config_store: ConfigStore,
-        paths: &'a Vec<Arc<OsStr>>,
-        options: &LintServiceOptions,
-    ) -> Self {
+    pub fn new(cwd: &Path, config_store: ConfigStore, paths: &'a Vec<Arc<OsStr>>) -> Self {
         TsGoLintState {
             config_store,
-            executable_path: try_find_tsgolint_executable(options.cwd())
-                .unwrap_or(PathBuf::from("tsgolint")),
-            cwd: options.cwd().to_path_buf(),
+            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
+            cwd: cwd.to_path_buf(),
             paths,
         }
     }

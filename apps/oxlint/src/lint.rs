@@ -304,8 +304,8 @@ impl LintRunner {
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            if let Err(err) =
-                TsGoLintState::new(config_store.clone(), &paths, &options).lint(tx_error.clone())
+            if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone(), &paths)
+                .lint(tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
