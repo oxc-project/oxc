@@ -56,7 +56,7 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                                 write!(f, empty_line())
                             } else if f
                                 .comments()
-                                .has_leading_own_line_comments(formatted.element.span().start)
+                                .has_leading_own_line_comments(formatted.element.span().start())
                             {
                                 write!(f, hard_line_break())
                             } else {
@@ -167,7 +167,7 @@ fn has_comment_inside_unary<'a>(
 ) -> bool {
     // `comments_iter` is avoid repeatedly iterating over the same comments from the start
     for comment in comments_iter.by_ref() {
-        if comment.span.start > unary_expr_span.start {
+        if comment.span.start() > unary_expr_span.start() {
             return unary_expr_span.contains_inclusive(comment.span);
         }
     }

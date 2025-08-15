@@ -329,9 +329,9 @@ fn get_loop_span(ast_kind: AstKind) -> Option<Span> {
     match ast_kind {
         AstKind::ForStatement(ForStatement { span, .. })
         | AstKind::ForOfStatement(ForOfStatement { span, .. })
-        | AstKind::ForInStatement(ForInStatement { span, .. }) => Some(Span::sized(span.start, 3)),
-        AstKind::WhileStatement(while_stmt) => Some(Span::sized(while_stmt.span.start, 5)),
-        AstKind::DoWhileStatement(do_stmt) => Some(Span::sized(do_stmt.span.start, 2)),
+        | AstKind::ForInStatement(ForInStatement { span, .. }) => Some(Span::sized(span.start(), 3)),
+        AstKind::WhileStatement(while_stmt) => Some(Span::sized(while_stmt.span.start(), 5)),
+        AstKind::DoWhileStatement(do_stmt) => Some(Span::sized(do_stmt.span.start(), 2)),
         _ => None,
     }
 }

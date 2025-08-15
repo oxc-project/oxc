@@ -1072,7 +1072,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        self.convert_offset(&mut prop.span.start);
+        self.convert_offset(&mut prop.span.start());
         match (prop.shorthand, &mut prop.key, &mut prop.value) {
             (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
                 self.visit_identifier_name(key);
@@ -1089,22 +1089,22 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
         let span_end = match &mut pattern.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
-                self.convert_offset(&mut ident.span.start);
+                self.convert_offset(&mut ident.span.start());
                 walk_mut::walk_binding_identifier(self, ident);
                 &mut ident.span.end
             }
             BindingPatternKind::ObjectPattern(obj_pattern) => {
-                self.convert_offset(&mut obj_pattern.span.start);
+                self.convert_offset(&mut obj_pattern.span.start());
                 walk_mut::walk_object_pattern(self, obj_pattern);
                 &mut obj_pattern.span.end
             }
             BindingPatternKind::ArrayPattern(arr_pattern) => {
-                self.convert_offset(&mut arr_pattern.span.start);
+                self.convert_offset(&mut arr_pattern.span.start());
                 walk_mut::walk_array_pattern(self, arr_pattern);
                 &mut arr_pattern.span.end
             }
             BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                self.convert_offset(&mut assign_pattern.span.start);
+                self.convert_offset(&mut assign_pattern.span.start());
                 walk_mut::walk_assignment_pattern(self, assign_pattern);
                 &mut assign_pattern.span.end
             }
@@ -1116,7 +1116,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_binding_rest_element(&mut self, rest_element: &mut BindingRestElement<'a>) {
-        self.convert_offset(&mut rest_element.span.start);
+        self.convert_offset(&mut rest_element.span.start());
         self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
         if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -1125,7 +1125,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
-        self.convert_offset(&mut prop.span.start);
+        self.convert_offset(&mut prop.span.start());
         match (prop.shorthand, &mut prop.key, &mut prop.value) {
             (
                 true,
@@ -1156,7 +1156,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
             self.visit_export_class(class, &mut decl.span);
         } else {
-            self.convert_offset(&mut decl.span.start);
+            self.convert_offset(&mut decl.span.start());
             walk_mut::walk_export_named_declaration(self, decl);
             self.convert_offset(&mut decl.span.end);
         }
@@ -1167,14 +1167,14 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
             self.visit_export_class(class, &mut decl.span);
         } else {
-            self.convert_offset(&mut decl.span.start);
+            self.convert_offset(&mut decl.span.start());
             walk_mut::walk_export_default_declaration(self, decl);
             self.convert_offset(&mut decl.span.end);
         }
     }
 
     fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
-        self.convert_offset(&mut specifier.span.start);
+        self.convert_offset(&mut specifier.span.start());
         match (&mut specifier.local, &mut specifier.exported) {
             (
                 ModuleExportName::IdentifierReference(local),
@@ -1205,7 +1205,7 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
-        self.convert_offset(&mut specifier.span.start);
+        self.convert_offset(&mut specifier.span.start());
         match &mut specifier.imported {
             ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
                 self.visit_identifier_name(imported);
@@ -1258,12 +1258,12 @@ impl Utf8ToUtf16Converter<'_> {
         // These have spans which are before the export statement span start.
         // Then process export statement and `Class` start, then remaining decorators,
         // which have spans within the span of `Class`.
-        let mut decl_start = export_decl_span.start;
+        let mut decl_start = export_decl_span.start();
         for decorator in &mut class.decorators {
-            if decorator.span.start > decl_start {
+            if decorator.span.start() > decl_start {
                 // Process span start of export statement and `Class`
-                self.convert_offset(&mut export_decl_span.start);
-                self.convert_offset(&mut class.span.start);
+                self.convert_offset(&mut export_decl_span.start());
+                self.convert_offset(&mut class.span.start());
                 // Prevent this branch being taken again
                 decl_start = u32::MAX;
             }
@@ -1271,8 +1271,8 @@ impl Utf8ToUtf16Converter<'_> {
         }
         // If didn't already, process span start of export statement and `Class`
         if decl_start < u32::MAX {
-            self.convert_offset(&mut export_decl_span.start);
-            self.convert_offset(&mut class.span.start);
+            self.convert_offset(&mut export_decl_span.start());
+            self.convert_offset(&mut class.span.start());
         }
         // Process rest of the class
         if let Some(id) = &mut class.id {

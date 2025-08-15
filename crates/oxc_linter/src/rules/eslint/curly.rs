@@ -261,8 +261,8 @@ fn should_have_braces<'a>(
                 Statement::BlockStatement(block) => block.body.first(),
                 _ => None,
             };
-            let body_start = body.span().start;
-            let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start);
+            let body_start = body.span().start();
+            let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start());
             let comments = ctx.comments_range(body_start..stmt_start - 1);
 
             stmt.is_none_or(|stmt| !is_one_liner(stmt, ctx) || comments.count() > 0)
@@ -331,8 +331,8 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         || {
             let parent = ctx.nodes().parent_node(node.id());
 
-            if parent.span().start < span.start {
-                Span::empty(parent.span().start)
+            if parent.span().start() < span.start() {
+                Span::empty(parent.span().start())
             } else {
                 Span::empty(0)
             }
@@ -363,7 +363,7 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 }
 
 fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
-    let span_start = node.span().start;
+    let span_start = node.span().start();
     ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
 }
 

@@ -64,7 +64,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
 
         let span = self.pattern.span();
 
-        let leading_comments = f.context().comments().comments_before(span.start);
+        let leading_comments = f.context().comments().comments_before(span.start());
         let leading_comment_with_break = leading_comments.iter().any(|comment| {
             comment.is_line() || get_lines_after(comment.span.end, f.source_text()) > 0
         });

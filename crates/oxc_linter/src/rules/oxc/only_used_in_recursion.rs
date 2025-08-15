@@ -225,8 +225,8 @@ fn create_diagnostic_jsx(
             let mut fix = fixer.new_fix_with_capacity(references.count() + 1);
 
             let source = ctx.source_text();
-            let span_start = skip_to_next_char(source, property.span.start, &Direction::Backward)
-                .unwrap_or(property.span.start);
+            let span_start = skip_to_next_char(source, property.span.start(), &Direction::Backward)
+                .unwrap_or(property.span.start());
             let span_end =
                 skip_to_next_char(ctx.source_text(), property.span.end, &Direction::Forward)
                     .unwrap_or(property.span.end);

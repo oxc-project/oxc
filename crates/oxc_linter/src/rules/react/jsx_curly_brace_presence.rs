@@ -586,7 +586,7 @@ fn report_unnecessary_curly<'a>(
             _ => {
                 let mut fix = fixer.new_fix_with_capacity(2);
 
-                fix.push(fixer.delete_range(Span::sized(container.span.start, 1)));
+                fix.push(fixer.delete_range(Span::sized(container.span.start(), 1)));
                 fix.push(fixer.delete_range(Span::sized(container.span.end - 1, 1)));
 
                 fix.with_message("remove the curly braces")
@@ -727,7 +727,7 @@ fn build_missing_curly_fix_context_for_part(
 ) -> Option<(Span, &str)> {
     part.char_indices().find(|(_, ch)| !ch.is_whitespace()).map(|(first_char_index, _)| {
         let text = part.split_at(first_char_index).1;
-        let new_start = span.start + part_start + u32::try_from(first_char_index).unwrap();
+        let new_start = span.start() + part_start + u32::try_from(first_char_index).unwrap();
         let span_from_first_char =
             Span::new(new_start, new_start + u32::try_from(text.len()).unwrap());
         (span_from_first_char, text)

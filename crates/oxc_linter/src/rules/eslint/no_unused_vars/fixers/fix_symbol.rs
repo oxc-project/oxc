@@ -28,7 +28,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         // `let x = 1, y = 2, z = 3;` -> `let x = 1, y = 2, z = 3;`
         //             ^^^^^                         ^^^^^^^
         if let Some(right_neighbor) = list.get(own_position + 1) {
-            delete_range.end = right_neighbor.span().start;
+            delete_range.end = right_neighbor.span().start();
             has_right = true;
         }
 

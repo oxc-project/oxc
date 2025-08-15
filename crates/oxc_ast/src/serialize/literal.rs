@@ -195,7 +195,7 @@ impl ESTree for RegExpFlagsConverter<'_> {
 #[ast_meta]
 #[estree(raw_deser = r#"
     const tail = DESER[bool](POS_OFFSET.tail),
-        start = DESER[u32](POS_OFFSET.span.start) /* IF_TS */ - 1 /* END_IF_TS */,
+        start = DESER[u32](POS_OFFSET.span.start()) /* IF_TS */ - 1 /* END_IF_TS */,
         end = DESER[u32](POS_OFFSET.span.end) /* IF_TS */ + 2 - tail /* END_IF_TS */,
         value = DESER[TemplateElementValue](POS_OFFSET.value);
     if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {

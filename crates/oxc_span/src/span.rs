@@ -140,6 +140,20 @@ impl Span {
         Self::new(start, start + size)
     }
 
+    /// Get the start offset of the [`Span`].
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let span = Span::new(5, 10);
+    /// assert_eq!(span.start(), 5);
+    /// ```
+    #[inline]
+    pub const fn start(self) -> u32 {
+        self.start
+    }
+
     /// Get the number of bytes covered by the [`Span`].
     ///
     /// # Example
@@ -151,8 +165,8 @@ impl Span {
     /// assert_eq!(Span::new(5, 10).size(), 5);
     /// ```
     pub const fn size(self) -> u32 {
-        debug_assert!(self.start <= self.end);
-        self.end - self.start
+        debug_assert!(self.start() <= self.end);
+        self.end - self.start()
     }
 
     /// Returns `true` if `self` covers a range of zero length.
@@ -166,8 +180,8 @@ impl Span {
     /// assert!(!Span::new(0, 5).is_empty());
     /// ```
     pub const fn is_empty(self) -> bool {
-        debug_assert!(self.start <= self.end);
-        self.start == self.end
+        debug_assert!(self.start() <= self.end);
+        self.start() == self.end
     }
 
     /// Returns `true` if `self` is not a real span.
@@ -207,7 +221,7 @@ impl Span {
     /// ```
     #[inline]
     pub const fn contains_inclusive(self, span: Span) -> bool {
-        self.start <= span.start && span.end <= self.end
+        self.start() <= span.start() && span.end <= self.end
     }
 
     /// Create a [`Span`] covering the maximum range of two [`Span`]s.
@@ -223,7 +237,7 @@ impl Span {
     /// ```
     #[must_use]
     pub fn merge(self, other: Self) -> Self {
-        Self::new(self.start.min(other.start), self.end.max(other.end))
+        Self::new(self.start().min(other.start), self.end.max(other.end))
     }
 
     /// Create a [`Span`] that is grown by `offset` on either side.
@@ -245,7 +259,7 @@ impl Span {
     /// [`expand_right`]: Span::expand_right
     #[must_use]
     pub fn expand(self, offset: u32) -> Self {
-        Self::new(self.start.saturating_sub(offset), self.end.saturating_add(offset))
+        Self::new(self.start().saturating_sub(offset), self.end.saturating_add(offset))
     }
 
     /// Create a [`Span`] that has its start and end positions shrunk by
@@ -268,7 +282,7 @@ impl Span {
     /// [`shrink_right`]: Span::shrink_right
     #[must_use]
     pub fn shrink(self, offset: u32) -> Self {
-        let start = self.start.saturating_add(offset);
+        let start = self.start().saturating_add(offset);
         let end = self.end.saturating_sub(offset);
         debug_assert!(start <= end, "Cannot shrink span past zero length");
         Self::new(start, end)
@@ -299,7 +313,7 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn expand_left(self, offset: u32) -> Self {
-        Self::new(self.start.saturating_sub(offset), self.end)
+        Self::new(self.start().saturating_sub(offset), self.end)
     }
 
     /// Create a [`Span`] that has its start position moved to the right by
@@ -326,9 +340,9 @@ impl Span {
     ///
     #[must_use]
     pub const fn shrink_left(self, offset: u32) -> Self {
-        let start = self.start.saturating_add(offset);
+        let start = self.start().saturating_add(offset);
         debug_assert!(start <= self.end);
-        Self::new(self.start.saturating_add(offset), self.end)
+        Self::new(self.start().saturating_add(offset), self.end)
     }
 
     /// Create a [`Span`] that has its end position moved to the right by
@@ -356,7 +370,7 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn expand_right(self, offset: u32) -> Self {
-        Self::new(self.start, self.end.saturating_add(offset))
+        Self::new(self.start(), self.end.saturating_add(offset))
     }
 
     /// Create a [`Span`] that has its end position moved to the left by
@@ -383,8 +397,8 @@ impl Span {
     #[must_use]
     pub const fn shrink_right(self, offset: u32) -> Self {
         let end = self.end.saturating_sub(offset);
-        debug_assert!(self.start <= end);
-        Self::new(self.start, end)
+        debug_assert!(self.start() <= end);
+        Self::new(self.start(), end)
     }
 
     /// Create a [`Span`] that has its start and end position moved to the left by
@@ -406,10 +420,10 @@ impl Span {
     /// ```
     #[must_use]
     pub const fn move_left(self, offset: u32) -> Self {
-        let start = self.start.saturating_sub(offset);
+        let start = self.start().saturating_sub(offset);
         #[cfg(debug_assertions)]
         if start == 0 {
-            debug_assert!(self.start == offset, "Cannot move span past zero length");
+            debug_assert!(self.start() == offset, "Cannot move span past zero length");
         }
         Self::new(start, self.end.saturating_sub(offset))
     }
@@ -441,7 +455,7 @@ impl Span {
                 "Cannot move span past `u32::MAX` length"
             );
         }
-        Self::new(self.start.saturating_add(offset), end)
+        Self::new(self.start().saturating_add(offset), end)
     }
 
     /// Get a snippet of text from a source string that the [`Span`] covers.
@@ -456,7 +470,7 @@ impl Span {
     /// assert_eq!(name_span.size(), name.len() as u32);
     /// ```
     pub fn source_text(self, source_text: &str) -> &str {
-        &source_text[self.start as usize..self.end as usize]
+        &source_text[self.start() as usize..self.end as usize]
     }
 
     /// Create a [`LabeledSpan`] covering this [`Span`] with the given label.
@@ -492,9 +506,9 @@ impl Span {
     #[inline(always)]
     const fn as_u64(self) -> u64 {
         if cfg!(target_endian = "little") {
-            ((self.end as u64) << 32) | (self.start as u64)
+            ((self.end as u64) << 32) | (self.start() as u64)
         } else {
-            ((self.start as u64) << 32) | (self.end as u64)
+            ((self.start() as u64) << 32) | (self.end as u64)
         }
     }
 
@@ -509,7 +523,7 @@ impl Span {
         if cfg!(target_pointer_width = "64") {
             self.as_u64() == other.as_u64()
         } else {
-            self.start == other.start && self.end == other.end
+            self.start() == other.start && self.end == other.end
         }
     }
 }
@@ -567,7 +581,7 @@ impl Hash for Span {
         if cfg!(target_pointer_width = "64") {
             self.as_u64().hash(hasher);
         } else {
-            self.start.hash(hasher);
+            self.start().hash(hasher);
             self.end.hash(hasher);
         }
     }
@@ -577,7 +591,7 @@ impl Hash for Span {
 #[expect(clippy::missing_fields_in_debug)]
 impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Span").field("start", &self.start).field("end", &self.end).finish()
+        f.debug_struct("Span").field("start", &self.start()).field("end", &self.end).finish()
     }
 }
 
@@ -629,7 +643,7 @@ impl<'a> Dummy<'a> for Span {
 impl Serialize for Span {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("start", &self.start)?;
+        map.serialize_entry("start", &self.start())?;
         map.serialize_entry("end", &self.end)?;
         map.end()
     }
@@ -640,7 +654,7 @@ impl ESTreeSpan for Span {
     #[expect(clippy::inline_always)] // `#[inline(always)]` because it's a no-op
     #[inline(always)]
     fn range(self) -> [u32; 2] {
-        [self.start, self.end]
+        [self.start(), self.end]
     }
 }
 

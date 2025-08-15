@@ -291,7 +291,7 @@ impl NoLargeSnapshots {
     }
 
     fn get_line_count(span: Span, ctx: &LintContext) -> usize {
-        let start = span.start as usize;
+        let start = span.start() as usize;
         let end = span.end as usize;
         ctx.source_text()[start..=end].lines().count() - 1
     }

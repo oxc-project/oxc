@@ -60,7 +60,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
         let mut decl = self.parse_using_declaration(StatementContext::StatementList);
         self.asi();
-        decl.span = self.end_span(decl.span.start);
+        decl.span = self.end_span(decl.span.start());
         Statement::VariableDeclaration(self.alloc(decl))
     }
 

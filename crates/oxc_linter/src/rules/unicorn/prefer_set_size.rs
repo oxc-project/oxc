@@ -81,7 +81,7 @@ impl Rule for PreferSetSize {
                 .new_fix_with_capacity(3)
                 .with_message("Remove spread and replace with `Set.size`");
             // remove [...
-            fix.push(Fix::delete(Span::new(array_expr.span.start, spread_element.span.start + 3)));
+            fix.push(Fix::delete(Span::new(array_expr.span.start(), spread_element.span.start() + 3)));
             // remove everything after the end of the spread element (including the `]` )
             fix.push(Fix::delete(Span::new(spread_element.span.end, array_expr.span.end)));
             // replace .length with .size

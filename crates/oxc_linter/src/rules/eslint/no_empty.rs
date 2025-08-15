@@ -102,7 +102,7 @@ impl Rule for NoEmpty {
 
 fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Option<u32> {
     let src = ctx.source_text();
-    let finally_start = finally_clause.span.start as usize - 1;
+    let finally_start = finally_clause.span.start() as usize - 1;
     let mut start = finally_start;
 
     let src_chars: Vec<char> = src.chars().collect();

@@ -125,7 +125,7 @@ impl Program<'_> {
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
 
     /* IF_JS */
-    const start = DESER[u32](POS_OFFSET.span.start);
+    const start = DESER[u32](POS_OFFSET.span.start());
     /* END_IF_JS */
 
     const end = DESER[u32](POS_OFFSET.span.end);
@@ -185,7 +185,7 @@ impl ESTree for ProgramConverter<'_, '_> {
 
 fn get_ts_start_span(program: &Program<'_>) -> u32 {
     if let Some(first_directive) = program.directives.first() {
-        return first_directive.span.start;
+        return first_directive.span.start();
     }
 
     let Some(first_stmt) = program.body.first() else {
@@ -193,20 +193,20 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
         return program.span.end;
     };
 
-    let start = first_stmt.span().start;
+    let start = first_stmt.span().start();
     match first_stmt {
         Statement::ExportNamedDeclaration(decl) => {
             if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
-                return cmp::min(start, decorator.span.start);
+                return cmp::min(start, decorator.span.start());
             }
         }
         Statement::ExportDefaultDeclaration(decl) => {
             if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
-                return cmp::min(start, decorator.span.start);
+                return cmp::min(start, decorator.span.start());
             }
         }
         _ => {}

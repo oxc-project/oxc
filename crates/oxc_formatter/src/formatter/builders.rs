@@ -327,7 +327,7 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match &self.text {
             Cow::Borrowed(text) => {
-                // let range = TextRange::at(self.start, text.text_len());
+                // let range = TextRange::at(self.start(), text.text_len());
                 // debug_assert_eq!(
                 // *text,
                 // &self.token.text()[range - self.token.text_range().start()],
@@ -339,7 +339,7 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
 
                 f.write_element(FormatElement::LocatedTokenText {
                     slice: TokenText::new((*text).to_string(), self.span),
-                    source_position: self.span.start,
+                    source_position: self.span.start(),
                 })
             }
             Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
@@ -360,7 +360,7 @@ impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
 pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
     let slice = span.source_text(source_text);
     debug_assert_no_newlines(slice);
-    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start }
+    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start() }
 }
 
 pub struct LocatedTokenText {
@@ -2463,13 +2463,13 @@ where
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
 pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
-    let mut start = span.start;
+    let mut start = span.start();
 
     // Should skip the leading comments of the node.
     let comments = f.comments().unprinted_comments();
     if let Some(comment) = comments.first() {
         if comment.span.end < start {
-            start = comment.span.start;
+            start = comment.span.start();
         }
     }
 

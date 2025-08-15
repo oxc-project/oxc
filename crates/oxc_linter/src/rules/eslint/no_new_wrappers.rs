@@ -80,7 +80,7 @@ impl Rule for NoNewWrappers {
         }
         let name = ident.name.as_str();
         let span = if expr.span.size() > 24 {
-            Span::new(expr.span.start, ident.span.end)
+            Span::new(expr.span.start(), ident.span.end)
         } else {
             expr.span
         };
@@ -106,7 +106,7 @@ fn remove_new_operator<'a>(
     name: &'a str,
 ) -> RuleFix<'a> {
     debug_assert!(expr.callee.is_identifier_reference());
-    let remove_new_fix = fixer.delete_range(Span::new(expr.span.start, expr.callee.span().start));
+    let remove_new_fix = fixer.delete_range(Span::new(expr.span.start(), expr.callee.span().start()));
 
     let Some(arg) = expr.arguments.first().and_then(Argument::as_expression) else {
         return remove_new_fix;

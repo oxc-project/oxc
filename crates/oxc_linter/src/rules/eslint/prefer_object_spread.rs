@@ -161,7 +161,7 @@ impl Rule for PreferObjectSpread {
 
                 rule_fixes.push(
                     fixer
-                        .replace(Span::new(call_expr.span.start, callee_left_paren_span.end), left),
+                        .replace(Span::new(call_expr.span.start(), callee_left_paren_span.end), left),
                 );
                 rule_fixes.push(
                     fixer.replace(Span::new(call_expr.span.end - 1, call_expr.span.end), right),
@@ -238,7 +238,7 @@ fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Opt
     for idx in memchr::memchr_iter(target_char, ctx.source_range(span).as_bytes()) {
         let idx = u32::try_from(idx).unwrap();
 
-        let current_span = Span::sized(span.start + idx, 1);
+        let current_span = Span::sized(span.start() + idx, 1);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
@@ -255,7 +255,7 @@ fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Opt
  * (Includes character in the comment)
  */
 fn get_char_span_before(start_char_span: Span, ctx: &LintContext) -> Option<Span> {
-    let skip_count = start_char_span.start;
+    let skip_count = start_char_span.start();
     let mut span_start = skip_count;
     for c in ctx.source_text()[..skip_count as usize].chars().rev() {
         let c_size = u32::try_from(c.len_utf8()).unwrap();
@@ -328,7 +328,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
 }
 
 fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
-    let mut span_end = obj_expr.span.start;
+    let mut span_end = obj_expr.span.start();
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
             break;
@@ -338,7 +338,7 @@ fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintC
         span_end += c_size;
     }
 
-    Span::new(obj_expr.span.start, span_end)
+    Span::new(obj_expr.span.start(), span_end)
 }
 
 fn get_delete_span_start_of_right(
@@ -347,7 +347,7 @@ fn get_delete_span_start_of_right(
 ) -> u32 {
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);
     let Some(prev_token_span) = get_char_span_before(obj_expr_last_char_span, ctx) else {
-        return obj_expr_last_char_span.start;
+        return obj_expr_last_char_span.start();
     };
 
     let has_line_comment = if let Some(comment) =
@@ -359,7 +359,7 @@ fn get_delete_span_start_of_right(
     };
 
     if has_line_comment {
-        return obj_expr_last_char_span.start;
+        return obj_expr_last_char_span.start();
     }
 
     let mut span_start: u32 = obj_expr.span.end;

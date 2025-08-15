@@ -274,7 +274,7 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
 
         let operator_str = expr.operator.as_str();
         let str_between_left_and_right = ctx.source_range(
-            Span::new(left_span.end, right_span.start)
+            Span::new(left_span.end, right_span.start())
         );
 
         let (operator_start, operator_end) = str_between_left_and_right
@@ -285,7 +285,7 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
                 if chunk == operator_str.as_bytes() {
                     let pos_start = index as u32 + left_span.end;
                     let pos_end = pos_start + operator_str.len() as u32;
-                    if !ctx.comments().iter().any(|comment| comment.span.start <= pos_start && pos_end <= comment.span.end) {
+                    if !ctx.comments().iter().any(|comment| comment.span.start() <= pos_start && pos_end <= comment.span.end) {
                         return Some((pos_start, pos_end));
                     }
                 }
@@ -294,10 +294,10 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
             .unwrap();
 
         let str_between_left_and_operator = ctx.source_range(Span::new(left_span.end, operator_start));
-        let str_between_operator_and_right = ctx.source_range(Span::new(operator_end, right_span.start));
+        let str_between_operator_and_right = ctx.source_range(Span::new(operator_end, right_span.start()));
 
-        let left_prev_token = if left_span.start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
-            let tokens = ctx.source_range(Span::new(0, left_span.start));
+        let left_prev_token = if left_span.start() > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
+            let tokens = ctx.source_range(Span::new(0, left_span.start()));
             let token = tokens.chars().last();
             match_token(token)
         } else {

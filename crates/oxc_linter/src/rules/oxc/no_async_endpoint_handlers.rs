@@ -37,7 +37,7 @@ pub fn no_async_handlers(
     const ASYNC_LEN: u32 = "async".len() as u32;
 
     // Only cover "async" in "async function (req, res) {}" or "async (req, res) => {}"
-    let async_span = Span::sized(function_span.start, ASYNC_LEN);
+    let async_span = Span::sized(function_span.start(), ASYNC_LEN);
 
     let labels: &[LabeledSpan] = match (registered_span, name) {
         // handler is declared separately from registration

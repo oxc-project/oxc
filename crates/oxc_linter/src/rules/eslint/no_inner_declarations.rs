@@ -154,11 +154,11 @@ impl Rule for NoInnerDeclarations {
 
         let (decl_type, span) = match node.kind() {
             AstKind::VariableDeclaration(decl) => {
-                let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
+                let span = Span::sized(decl.span.start(), 3); // 3 for "var".len()
                 ("variable", span)
             }
             AstKind::Function(func) => {
-                let span = Span::sized(func.span.start, 8); // 8 for "function".len()
+                let span = Span::sized(func.span.start(), 8); // 8 for "function".len()
                 ("function", span)
             }
             _ => unreachable!(),

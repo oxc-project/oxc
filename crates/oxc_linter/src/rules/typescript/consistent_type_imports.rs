@@ -512,7 +512,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                 &new_options,
                 &fixes_named_specifiers.type_named_specifiers_text,
             )?;
-            if type_only_named_import.span.end <= import_decl.span.start {
+            if type_only_named_import.span.end <= import_decl.span.start() {
                 rule_fixes.push(fix);
             } else {
                 after_fixes.push(fix);
@@ -557,7 +557,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
             // import Def, * as Ns from 'foo'
             //           ^^^^^^^^^ remove
             fixes_remove_type_namespace_specifier.push(fixer.delete(&Span::new(
-                import_decl.span.start + comma,
+                import_decl.span.start() + comma,
                 namespace_specifier.span().end,
             )));
 
@@ -580,7 +580,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                 // import type Type from 'foo'
                 //        ^^^^^ insert
                 rule_fixes.push(
-                    fixer.insert_text_after(&Span::sized(import_decl.span().start, 6), " type"),
+                    fixer.insert_text_after(&Span::sized(import_decl.span().start(), 6), " type"),
                 );
             } else {
                 let import_text = ctx.source_range(import_decl.span);
@@ -590,8 +590,8 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                 // import Type , { ... } from 'foo'
                 //        ^^^^^ pick
                 let default_text = ctx.source_range(Span::new(
-                    default_specifier.span.start,
-                    import_decl.span().start + comma,
+                    default_specifier.span.start(),
+                    import_decl.span().start() + comma,
                 ));
                 rule_fixes.push(fixer.insert_text_before(
                     *import_decl,
@@ -606,8 +606,8 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                 {
                     let after_token = comma as usize + 1 + after_token.0;
                     rule_fixes.push(fixer.delete_range(Span::new(
-                        default_specifier.span.start,
-                        import_decl.span().start + after_token as u32,
+                        default_specifier.span.start(),
+                        import_decl.span().start() + after_token as u32,
                     )));
                 }
             }
@@ -632,7 +632,7 @@ fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
     let first_non_whitespace_before_close_brace =
         import_text[..close_brace as usize].chars().rev().find(|c| !c.is_whitespace());
 
-    let span = Span::empty(import_decl.span().start + close_brace);
+    let span = Span::empty(import_decl.span().start() + close_brace);
     if first_non_whitespace_before_close_brace.is_some_and(|ch| !matches!(ch, ',' | '{')) {
         Ok(fixer.insert_text_before(&span, format!(",{insert_text}")))
     } else {
@@ -704,8 +704,8 @@ fn get_fixes_named_specifiers<'a>(
         // import DefType, {...} from 'foo'
         //                ^^^^^^ remove
         remove_type_named_specifiers.push(fixer.delete(&Span::new(
-            import_decl.span.start + u32::try_from(comma_token).unwrap_or_default(),
-            import_decl.span.start + u32::try_from(close_brace_token_end).unwrap_or_default(),
+            import_decl.span.start() + u32::try_from(comma_token).unwrap_or_default(),
+            import_decl.span.start() + u32::try_from(close_brace_token_end).unwrap_or_default(),
         )));
 
         type_named_specifiers_text.push(&import_text[open_brace_token_end..close_brace_token]);
@@ -757,20 +757,20 @@ fn get_named_specifier_ranges(
     let first = named_specifier_group[0];
     let last = named_specifier_group[named_specifier_group.len() - 1];
 
-    let mut remove_range = Span::new(first.span().start, last.span().end);
-    let mut text_range = Span::new(first.span().start, last.span().end);
+    let mut remove_range = Span::new(first.span().start(), last.span().end);
+    let mut text_range = Span::new(first.span().start(), last.span().end);
 
     let import_text = ctx.source_range(import_decl.span);
     let open_brace_token_start = try_find_char(import_text, '{')?;
     let open_brace_token_start = open_brace_token_start as usize;
     if let Some(comma) = import_text
-        [open_brace_token_start..(first.span().start - import_decl.span().start) as usize]
+        [open_brace_token_start..(first.span().start() - import_decl.span().start()) as usize]
         .rfind(',')
     {
         // It's not the first specifier.
         // import { Foo, Bar, Baz } from 'foo'
         //             ^ start
-        remove_range.start = import_decl.span().start
+        remove_range.start = import_decl.span().start()
             + u32::try_from(comma + open_brace_token_start).unwrap_or_default();
 
         // Skip the comma
@@ -779,7 +779,7 @@ fn get_named_specifier_ranges(
         // It's the first specifier.
         // import { Foo, Bar, Baz } from 'foo'
         //         ^ start
-        remove_range.start = import_decl.span().start
+        remove_range.start = import_decl.span().start()
             + u32::try_from(open_brace_token_start + 1).unwrap_or_default();
         // skip `{`
         text_range.start = remove_range.start;
@@ -794,7 +794,7 @@ fn get_named_specifier_ranges(
         .is_some_and(|last_specifier| last_specifier.span() == last.span());
 
     let after = find_first_non_white_space(
-        &import_text[(last.span().end - import_decl.span().start) as usize..],
+        &import_text[(last.span().end - import_decl.span().start()) as usize..],
     );
 
     if let Some((index, ch)) = after {
@@ -869,13 +869,13 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let fixer = fixer.for_multifix();
-    let import_specifiers_span = Span::new(import_decl.span.start, import_decl.source.span.start);
+    let import_specifiers_span = Span::new(import_decl.span.start(), import_decl.source.span.start());
     let import_source = ctx.source_range(import_specifiers_span);
     let mut rule_fixes = fixer.new_fix_with_capacity(1);
 
     // "import { Foo, Bar } from 'foo'" => "import type { Foo, Bar } from 'foo'"
     //                                             ^^^^ add
-    rule_fixes.push(fixer.replace(Span::sized(import_decl.span.start, 6), "import type"));
+    rule_fixes.push(fixer.replace(Span::sized(import_decl.span.start(), 6), "import type"));
 
     if is_default_import {
         if let Ok(_opening_brace_token) = try_find_char(import_source, '{') {
@@ -883,7 +883,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
             // `import foo, { bar } from 'foo'`
             let comma_token = try_find_char(import_source, ',')?;
             let closing_brace_token = try_find_char(import_source, '}')?;
-            let base = import_decl.span.start;
+            let base = import_decl.span.start();
             // import foo, {} from 'foo'
             //           ^^^^ delete
             rule_fixes.push(
@@ -922,8 +922,8 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
                     //          ^^^^^^^^ delete
                     rule_fixes.push(
                         fixer.delete(&Span::new(
-                            specifier.span.start,
-                            specifier.imported.span().start,
+                            specifier.span.start(),
+                            specifier.imported.span().start(),
                         )),
                     );
                 }

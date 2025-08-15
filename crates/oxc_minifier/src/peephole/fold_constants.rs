@@ -376,7 +376,7 @@ impl<'a> PeepholeOptimizations {
                     left_binary_expr.right.get_side_free_string_value(ctx),
                     e.right.get_side_free_string_value(ctx),
                 ) {
-                    let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
+                    let span = Span::new(left_binary_expr.right.span().start(), e.right.span().end);
                     let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
                     let left = left_binary_expr.left.take_in(ctx.ast);
@@ -403,7 +403,7 @@ impl<'a> PeepholeOptimizations {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
             if let Expression::TemplateLiteral(right) = right_expr {
-                left.span = Span::new(left.span.start, right.span.end);
+                left.span = Span::new(left.span.start(), right.span.end);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let right_first_quasi = right
@@ -430,7 +430,7 @@ impl<'a> PeepholeOptimizations {
 
             // "`${x}y` + 'z'" => "`${x}yz`"
             if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
-                left.span = Span::new(left.span.start, right_expr.span().end);
+                left.span = Span::new(left.span.start(), right_expr.span().end);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
@@ -446,7 +446,7 @@ impl<'a> PeepholeOptimizations {
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
             if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
-                right.span = Span::new(left_expr.span().start, right.span.end);
+                right.span = Span::new(left_expr.span().start(), right.span.end);
                 let first_quasi = right
                     .quasis
                     .first_mut()
@@ -513,7 +513,7 @@ impl<'a> PeepholeOptimizations {
             e.span,
             expr_to_move.take_in(ctx.ast),
             op,
-            ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
+            ctx.value_to_expr(Span::new(left.right.span().start(), e.right.span().end), v),
         ))
     }
 

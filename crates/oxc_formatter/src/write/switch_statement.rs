@@ -116,9 +116,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         if is_default {
             let comments = f.context().comments();
             let comments = if is_single_block_statement {
-                comments.block_comments_before(first_statement.span().start)
+                comments.block_comments_before(first_statement.span().start())
             } else {
-                comments.comments_before_character(self.span.start, b'\n')
+                comments.comments_before_character(self.span.start(), b'\n')
             };
 
             if !comments.is_empty() {

@@ -7,7 +7,7 @@ pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
-    /// Keyed by `ObjectProperty`'s span.start.
+    /// Keyed by `ObjectProperty`'s span.start().
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
 
     /// Trailing comma spans for `ArrayExpression`.

@@ -556,7 +556,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
                 Statement::ExportNamedDeclaration(export) => {
                     if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
                         && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
+                        && decorator.span().start() < export.span.start()
                     {
                         decorator.span()
                     } else {
@@ -569,7 +569,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
                     if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
                         &export.declaration
                         && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
+                        && decorator.span().start() < export.span.start()
                     {
                         decorator.span()
                     } else {
@@ -668,7 +668,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
-            let comments = f.context().comments().comments_before(body.span().start);
+            let comments = f.context().comments().comments_before(body.span().start());
             if !comments.is_empty() {
                 write!(
                     f,
@@ -711,7 +711,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start());
         write!(
             f,
             [
@@ -735,7 +735,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start());
 
         let r#await = self.r#await();
         let left = self.left();
@@ -782,7 +782,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            let comments = f.context().comments().comments_before(alternate.span().start);
+            let comments = f.context().comments().comments_before(alternate.span().start());
             let has_dangling_comments = !comments.is_empty();
             let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
 
@@ -894,7 +894,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.right.span().start());
         write!(
             f,
             [
@@ -983,7 +983,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.start);
+        let comments = f.context().comments().comments_before(self.span.start());
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
         }

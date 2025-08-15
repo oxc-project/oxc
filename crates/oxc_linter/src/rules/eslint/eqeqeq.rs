@@ -156,7 +156,7 @@ impl Rule for Eqeqeq {
         #[expect(clippy::cast_possible_truncation)]
         let operator_span = {
             let left_end = binary_expr.left.span().end;
-            let right_start = binary_expr.right.span().start;
+            let right_start = binary_expr.right.span().start();
             let offset = Span::new(left_end, right_start)
                 .source_text(ctx.source_text())
                 .find(operator)
@@ -178,7 +178,7 @@ impl Rule for Eqeqeq {
             fix_kind,
             |fixer| {
                 let start = binary_expr.left.span().end;
-                let end = binary_expr.right.span().start;
+                let end = binary_expr.right.span().start();
                 let span = Span::new(start, end);
 
                 fixer.replace(span, preferred_operator_with_padding)

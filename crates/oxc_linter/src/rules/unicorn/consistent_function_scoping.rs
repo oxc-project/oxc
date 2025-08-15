@@ -218,7 +218,7 @@ impl Rule for ConsistentFunctionScoping {
                             Some(binding_ident.name),
                             function_body,
                             function.id.as_ref().map_or(
-                                Span::sized(function.span.start, 8),
+                                Span::sized(function.span.start(), 8),
                                 |func_binding_ident| func_binding_ident.span,
                             ),
                             func_scope_id,
@@ -410,25 +410,25 @@ fn get_short_span_for_fn_scope(
         AstKind::ForInStatement(ForInStatement { span, .. })
         | AstKind::ForOfStatement(ForOfStatement { span, .. })
         | AstKind::ForStatement(ForStatement { span, .. }) => {
-            Some((Span::sized(span.start, 3), "for loop"))
+            Some((Span::sized(span.start(), 3), "for loop"))
         }
         AstKind::TryStatement(TryStatement { span, .. }) => {
-            Some((Span::sized(span.start, 3), "try statement"))
+            Some((Span::sized(span.start(), 3), "try statement"))
         }
         AstKind::IfStatement(IfStatement { span, .. }) => {
-            Some((Span::sized(span.start, 2), "if statement"))
+            Some((Span::sized(span.start(), 2), "if statement"))
         }
         AstKind::DoWhileStatement(DoWhileStatement { span, .. }) => {
-            Some((Span::sized(span.start, 2), "do while statement"))
+            Some((Span::sized(span.start(), 2), "do while statement"))
         }
         AstKind::SwitchStatement(SwitchStatement { span, .. }) => {
-            Some((Span::sized(span.start, 6), "switch statement"))
+            Some((Span::sized(span.start(), 6), "switch statement"))
         }
         AstKind::WhileStatement(WhileStatement { span, .. }) => {
-            Some((Span::sized(span.start, 5), "while statement"))
+            Some((Span::sized(span.start(), 5), "while statement"))
         }
         AstKind::CatchClause(CatchClause { span, .. }) => {
-            Some((Span::sized(span.start, 5), "catch block"))
+            Some((Span::sized(span.start(), 5), "catch block"))
         }
         _ => None,
     }

@@ -78,23 +78,23 @@ impl Rule for NoCaseDeclarations {
             for stmt in consequent {
                 match stmt {
                     Statement::FunctionDeclaration(d) => {
-                        let start = d.span.start;
+                        let start = d.span.start();
                         let end = start + 8;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     Statement::ClassDeclaration(d) => {
-                        let start = d.span.start;
+                        let start = d.span.start();
                         let end = start + 5;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
-                        let start = var.span.start;
+                        let start = var.span.start();
                         let len = match var.kind {
                             VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
                             VariableDeclarationKind::Let => 3,
                             #[expect(clippy::cast_possible_truncation)]
                             VariableDeclarationKind::AwaitUsing => {
-                                ctx.source_range(Span::new(start, var.declarations[0].span.start))
+                                ctx.source_range(Span::new(start, var.declarations[0].span.start()))
                                     .trim_end()
                                     .len() as u32
                             }

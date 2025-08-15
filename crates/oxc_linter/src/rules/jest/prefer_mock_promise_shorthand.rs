@@ -162,7 +162,7 @@ impl PreferMockPromiseShorthand {
                 use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span),
                 |fixer| {
                     let content = Self::fix(fixer, prefer_name, call_expr);
-                    let span = Span::new(property_span.start, fix_span.end);
+                    let span = Span::new(property_span.start(), fix_span.end);
                     fixer.replace(span, content)
                 },
             );

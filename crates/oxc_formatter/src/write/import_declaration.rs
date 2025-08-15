@@ -78,7 +78,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
         } else if self.len() == 1
             && let Some(ImportDeclarationSpecifier::ImportSpecifier(specifier)) =
                 specifiers_iter.peek().map(AsRef::as_ref)
-            && !f.comments().has_comments_before(specifier.local.span.start)
+            && !f.comments().has_comments_before(specifier.local.span.start())
         {
             write!(
                 f,
@@ -109,7 +109,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                                     let comments = f
                                         .context()
                                         .comments()
-                                        .comments_before(specifier.element.span().start);
+                                        .comments_before(specifier.element.span().start());
                                     if !comments.is_empty() {
                                         if get_lines_before(comments[0].span, f) > 1 {
                                             write!(f, [empty_line()])?;

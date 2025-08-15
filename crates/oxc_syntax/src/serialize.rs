@@ -25,7 +25,7 @@ macro_rules! dummy_estree_impl {
     ts_type = "Dummy",
     raw_deser = "
         var nameSpan = DESER[NameSpan](POS);
-        {kind: 'Name', name: nameSpan.value, start: nameSpan.start, end: nameSpan.end}
+        {kind: 'Name', name: nameSpan.value, start: nameSpan.start(), end: nameSpan.end}
     "
 )]
 pub struct ImportOrExportNameName<'a, 'b>(#[expect(dead_code)] pub &'b NameSpan<'a>);
@@ -38,7 +38,7 @@ dummy_estree_impl!(ImportOrExportNameName<'_, '_>);
     ts_type = "Dummy",
     raw_deser = "
         var nameSpan = DESER[NameSpan](POS);
-        {kind: 'Default', name: nameSpan.value, start: nameSpan.start, end: nameSpan.end}
+        {kind: 'Default', name: nameSpan.value, start: nameSpan.start(), end: nameSpan.end}
     "
 )]
 pub struct ExportLocalNameDefault<'a, 'b>(#[expect(dead_code)] pub &'b NameSpan<'a>);
@@ -58,7 +58,7 @@ dummy_estree_impl!(ExportNameNull);
     ts_type = "Dummy",
     raw_deser = "
         var span = DESER[Span](POS);
-        {kind: 'Default', name: null, start: span.start, end: span.end}
+        {kind: 'Default', name: null, start: span.start(), end: span.end}
     "
 )]
 pub struct ImportOrExportNameDefault<'b>(#[expect(dead_code)] pub &'b Span);

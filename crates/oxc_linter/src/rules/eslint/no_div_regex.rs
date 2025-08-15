@@ -54,7 +54,7 @@ impl Rule for NoDivRegex {
                 .is_some_and(|it| matches!(it, Term::Character(ch) if ch.kind == CharacterKind::Symbol && ch.value == '=' as u32))
             {
                 ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
-                    let span = Span::sized(lit.span.start + 1, 1);
+                    let span = Span::sized(lit.span.start() + 1, 1);
                     fixer.replace(span, "[=]")
                 });
             }

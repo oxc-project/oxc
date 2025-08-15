@@ -122,7 +122,7 @@ fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintCont
             _ => unreachable!(),
         };
 
-        let keyword_end = node.span().start + keyword_len;
+        let keyword_end = node.span().start() + keyword_len;
         let delete_span = Span::new(keyword_end, label.span.end);
 
         let diagnostic = no_extra_label_diagnostic(label);

@@ -50,7 +50,7 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 #[estree(raw_deser = "
     const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
         global = kind === 'global',
-        start = DESER[u32](POS_OFFSET.span.start),
+        start = DESER[u32](POS_OFFSET.span.start()),
         end = DESER[u32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
     let id = DESER[TSModuleDeclarationName](POS_OFFSET.id),
@@ -184,7 +184,7 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
         state.serialize_field("right", last);
 
-        let span = Span::new(parts[0].span.start, last.span.end);
+        let span = Span::new(parts[0].span.start(), last.span.end);
         state.serialize_span(span);
 
         state.end();

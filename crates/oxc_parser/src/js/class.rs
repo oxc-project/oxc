@@ -27,8 +27,8 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_class_declaration(start_span, modifiers, decorators);
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
-                decl.span.start,
-                decl.body.span.start,
+                decl.span.start(),
+                decl.body.span.start(),
             )));
         }
         Statement::ClassDeclaration(decl)
@@ -70,7 +70,7 @@ impl<'a> ParserImpl<'a> {
         let mut start_span = start_span;
         if r#type == ClassType::ClassExpression {
             if let Some(d) = decorators.first() {
-                start_span = d.span.start;
+                start_span = d.span.start();
             }
         }
 

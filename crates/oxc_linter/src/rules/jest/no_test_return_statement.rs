@@ -130,8 +130,8 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     }
 
     ctx.diagnostic(no_test_return_statement_diagnostic(Span::new(
-        return_stmt.span().start,
-        call_expr.span.start - 1,
+        return_stmt.span().start(),
+        call_expr.span.start() - 1,
     )));
 }
 

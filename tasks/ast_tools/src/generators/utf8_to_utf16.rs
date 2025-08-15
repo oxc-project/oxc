@@ -29,7 +29,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 
 /// Generate `VisitMut` impl for `Utf8ToUtf16Converter`.
 ///
-/// For each AST node, update `span.start` first, then visit child nodes, then update `span.end`.
+/// For each AST node, update `span.start()` first, then visit child nodes, then update `span.end`.
 /// This ensures offsets are updated in ascending order
 /// (assuming AST has not been modified since it was parsed, so nodes are in original order).
 ///
@@ -112,7 +112,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-                self.convert_offset(&mut prop.span.start);
+                self.convert_offset(&mut prop.span.start());
 
                 // If shorthand, span of `key` and `value` are the same
                 match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -135,22 +135,22 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 // so visit `type_annotation` before exiting span of `kind`
                 let span_end = match &mut pattern.kind {
                     BindingPatternKind::BindingIdentifier(ident) => {
-                        self.convert_offset(&mut ident.span.start);
+                        self.convert_offset(&mut ident.span.start());
                         walk_mut::walk_binding_identifier(self, ident);
                         &mut ident.span.end
                     }
                     BindingPatternKind::ObjectPattern(obj_pattern) => {
-                        self.convert_offset(&mut obj_pattern.span.start);
+                        self.convert_offset(&mut obj_pattern.span.start());
                         walk_mut::walk_object_pattern(self, obj_pattern);
                         &mut obj_pattern.span.end
                     }
                     BindingPatternKind::ArrayPattern(arr_pattern) => {
-                        self.convert_offset(&mut arr_pattern.span.start);
+                        self.convert_offset(&mut arr_pattern.span.start());
                         walk_mut::walk_array_pattern(self, arr_pattern);
                         &mut arr_pattern.span.end
                     }
                     BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                        self.convert_offset(&mut assign_pattern.span.start);
+                        self.convert_offset(&mut assign_pattern.span.start());
                         walk_mut::walk_assignment_pattern(self, assign_pattern);
                         &mut assign_pattern.span.end
                     }
@@ -168,7 +168,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 // `BindingRestElement` contains a `BindingPattern`, but in this case span of
                 // `type_annotation` is after span of `kind`.
                 // So avoid calling `visit_binding_pattern` above.
-                self.convert_offset(&mut rest_element.span.start);
+                self.convert_offset(&mut rest_element.span.start());
 
                 self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
                 if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
@@ -180,7 +180,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
-                self.convert_offset(&mut prop.span.start);
+                self.convert_offset(&mut prop.span.start());
 
                 // If shorthand, span of `key` and `value` are the same
                 match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -215,7 +215,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
                     self.visit_export_class(class, &mut decl.span);
                 } else {
-                    self.convert_offset(&mut decl.span.start);
+                    self.convert_offset(&mut decl.span.start());
                     walk_mut::walk_export_named_declaration(self, decl);
                     self.convert_offset(&mut decl.span.end);
                 }
@@ -227,7 +227,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
                     self.visit_export_class(class, &mut decl.span);
                 } else {
-                    self.convert_offset(&mut decl.span.start);
+                    self.convert_offset(&mut decl.span.start());
                     walk_mut::walk_export_default_declaration(self, decl);
                     self.convert_offset(&mut decl.span.end);
                 }
@@ -235,7 +235,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
-                self.convert_offset(&mut specifier.span.start);
+                self.convert_offset(&mut specifier.span.start());
 
                 // `local` and `exported` have same span if e.g.:
                 // * `export {x}`
@@ -274,7 +274,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
-                self.convert_offset(&mut specifier.span.start);
+                self.convert_offset(&mut specifier.span.start());
 
                 // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
                 match &mut specifier.imported {
@@ -301,7 +301,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
-                self.convert_offset(&mut lit.span.start);
+                self.convert_offset(&mut lit.span.start());
 
                 // Visit `quasis` and `expressions` in source order. The two `Vec`s are interleaved.
                 for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
@@ -315,7 +315,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
             ///@@line_break
             fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
-                self.convert_offset(&mut lit.span.start);
+                self.convert_offset(&mut lit.span.start());
 
                 // Visit `quasis` and `types` in source order. The two `Vec`s are interleaved.
                 for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
@@ -343,12 +343,12 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
                 ///@ These have spans which are before the export statement span start.
                 ///@ Then process export statement and `Class` start, then remaining decorators,
                 ///@ which have spans within the span of `Class`.
-                let mut decl_start = export_decl_span.start;
+                let mut decl_start = export_decl_span.start();
                 for decorator in &mut class.decorators {
-                    if decorator.span.start > decl_start {
+                    if decorator.span.start() > decl_start {
                         ///@ Process span start of export statement and `Class`
-                        self.convert_offset(&mut export_decl_span.start);
-                        self.convert_offset(&mut class.span.start);
+                        self.convert_offset(&mut export_decl_span.start());
+                        self.convert_offset(&mut class.span.start());
                         ///@ Prevent this branch being taken again
                         decl_start = u32::MAX;
                     }
@@ -357,8 +357,8 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
 
                 ///@ If didn't already, process span start of export statement and `Class`
                 if decl_start < u32::MAX {
-                    self.convert_offset(&mut export_decl_span.start);
-                    self.convert_offset(&mut class.span.start);
+                    self.convert_offset(&mut export_decl_span.start());
+                    self.convert_offset(&mut class.span.start());
                 }
 
                 ///@ Process rest of the class
@@ -434,7 +434,7 @@ fn generate_visitor(
     let visitor = quote! {
         ///@@line_break
         fn #visit_method_ident(&mut self, it: &mut #ty #extra_params) {
-            self.convert_offset(&mut it.span.start);
+            self.convert_offset(&mut it.span.start()());
             walk_mut::#walk_fn_ident(self, it #extra_args);
             self.convert_offset(&mut it.span.end);
         }

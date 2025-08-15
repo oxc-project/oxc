@@ -176,12 +176,12 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
-                                    .comments_range(ret_stmt.span.start..ret_stmt.span.end)
+                                    .comments_range(ret_stmt.span.start()..ret_stmt.span.end)
                                     .next_back()
                                 {
                                     Span::new(comment.span.end, undefined_literal.span.end)
                                 } else {
-                                    Span::new(ret_stmt.span().start + 6, undefined_literal.span.end)
+                                    Span::new(ret_stmt.span().start() + 6, undefined_literal.span.end)
                                 };
                                 fixer.delete_range(delete_span)
                             },
@@ -293,7 +293,7 @@ impl Rule for NoUselessUndefined {
                 }
                 let first_undefined_span = undefined_args_spans[0];
                 let last_undefined_span = undefined_args_spans[undefined_args_spans.len() - 1];
-                let mut start = first_undefined_span.start;
+                let mut start = first_undefined_span.start();
                 let mut end = last_undefined_span.end;
 
                 let remaining_count = arguments.len() - undefined_args_spans.len();

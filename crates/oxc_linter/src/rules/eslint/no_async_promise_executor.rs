@@ -99,7 +99,7 @@ impl Rule for NoAsyncPromiseExecutor {
             _ => return,
         };
 
-        span.end = span.start + 5;
+        span.end = span.start() + 5;
 
         ctx.diagnostic(no_async_promise_executor_diagnostic(span));
     }

@@ -34,7 +34,7 @@ impl RuleCommentRule<'_> {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn create_fix<'a>(&self, source_text: &'a str, comment_span: Span) -> Fix<'a> {
         let before_source =
-            &source_text[comment_span.start as usize..self.name_span.start as usize];
+            &source_text[comment_span.start() as usize..self.name_span.start() as usize];
 
         // check if there is a comma before the rule name
         // if there is, remove the comma, whitespace and the rule name
@@ -51,7 +51,7 @@ impl RuleCommentRule<'_> {
 
         if let Some(comma_before_offset) = comma_before_offset {
             return Fix::delete(Span::new(
-                self.name_span.start - comma_before_offset,
+                self.name_span.start() - comma_before_offset,
                 self.name_span.end,
             ));
         }
@@ -73,7 +73,7 @@ impl RuleCommentRule<'_> {
 
         if let Some(comma_after_offset) = comma_after_offset {
             return Fix::delete(Span::new(
-                self.name_span.start,
+                self.name_span.start(),
                 self.name_span.end + comma_after_offset,
             ));
         }
@@ -120,7 +120,7 @@ impl<'a> DisableDirectives<'a> {
     pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
         let matched_intervals = self
             .intervals
-            .find(span.start, span.end)
+            .find(span.start(), span.end)
             .filter(|interval| {
                 match interval.val {
                     DisabledRule::All { .. } => true,
@@ -261,7 +261,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
             let comment_span = comment.content_span();
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
-            let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
+            let mut rule_name_start = comment_span.start() + (text_source.len() - text.len()) as u32;
 
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
@@ -328,11 +328,11 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     rule_name_start += 5; // -line is 5 bytes
 
                     // Get the span between the preceding newline to this comment
-                    let start = source_text[..comment_span.start as usize]
+                    let start = source_text[..comment_span.start() as usize]
                         .lines()
                         .next_back()
-                        .map_or(0, |line| comment_span.start - line.len() as u32);
-                    let stop = comment_span.start;
+                        .map_or(0, |line| comment_span.start() - line.len() as u32);
+                    let stop = comment_span.start();
 
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
@@ -389,7 +389,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     if let Some((start, _)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
-                            comment_span.start,
+                            comment_span.start(),
                             DisabledRule::All { comment_span },
                         );
                     } else {
@@ -402,7 +402,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
                             self.add_interval(
                                 start,
-                                comment_span.start,
+                                comment_span.start(),
                                 DisabledRule::Single { rule_name, name_span, comment_span },
                             );
                         } else {

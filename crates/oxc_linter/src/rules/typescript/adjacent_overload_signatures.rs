@@ -139,7 +139,7 @@ impl GetMethod for ClassElement<'_> {
                 r#static: def.r#static,
                 call_signature: false,
                 kind: get_kind_from_key(&def.key),
-                span: Span::new(def.span.start, def.key.span().end),
+                span: Span::new(def.span.start(), def.key.span().end),
             }),
             _ => None,
         }
@@ -168,7 +168,7 @@ impl GetMethod for TSSignature<'_> {
                 r#static: false,
                 call_signature: false,
                 kind: MethodKind::Normal,
-                span: Span::sized(decl.span.start, 3),
+                span: Span::sized(decl.span.start(), 3),
             }),
             _ => None,
         }

@@ -95,7 +95,7 @@ impl PreferToBeObject {
 
         if is_parsed_instance_of_matcher_call(&parsed_expect_call, matcher) {
             ctx.diagnostic_with_fix(prefer_to_be_object(matcher.span), |fixer| {
-                fixer.replace(Span::new(matcher.span.start, call_expr.span.end), "toBeObject()")
+                fixer.replace(Span::new(matcher.span.start(), call_expr.span.end), "toBeObject()")
             });
             return;
         }
@@ -138,7 +138,7 @@ impl PreferToBeObject {
                             (matcher.name().as_deref() == Some("toBeFalsy")) != not_modifier;
 
                         let left = fixer.source_range(Span::new(
-                            call_expr.span.start,
+                            call_expr.span.start(),
                             binary_expr.left.span().end,
                         ));
                         let right = fixer.source_range(Span::new(

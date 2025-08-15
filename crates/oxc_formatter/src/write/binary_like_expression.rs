@@ -365,7 +365,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         .iter()
                         .rev()
                         .take_while(|comment| {
-                            binary_like_expression.left().span().end < comment.span.start
+                            binary_like_expression.left().span().end < comment.span.start()
                         })
                         .any(|comment| comment.is_line());
 

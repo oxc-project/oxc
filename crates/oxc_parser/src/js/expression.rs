@@ -358,7 +358,7 @@ impl<'a> ParserImpl<'a> {
             return self.unexpected();
         }
         let span = self.cur_token().span();
-        let pattern_start = span.start + 1; // +1 to exclude left `/`
+        let pattern_start = span.start() + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
         let flags_text = &self.source_text[flags_start as usize..span.end as usize];
@@ -544,7 +544,7 @@ impl<'a> ParserImpl<'a> {
         // Get `raw`
         let raw_span = self.cur_token().span();
         let mut raw = Atom::from(
-            &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],
+            &self.source_text[raw_span.start() as usize + 1..(raw_span.end - end_offset) as usize],
         );
 
         // Get `cooked`.

@@ -138,7 +138,7 @@ fn format_trailing_comments<'a>(
             //   |        |        |
             //   |        |        |
             //  these are the gaps between comments
-            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start as usize];
+            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start() as usize];
 
             // If this comment is in a new line, we stop here and return the comments before this comment
             if gap_str.contains(&b'\n') {
@@ -362,7 +362,7 @@ impl<'a> ConditionalLike<'a, '_> {
                 write!(f, FormatExpressionWithoutTrailingComments(conditional.test()))?;
                 format_trailing_comments(
                     conditional.test.span().end,
-                    conditional.consequent.span().start,
+                    conditional.consequent.span().start(),
                     b'?',
                     f,
                 )
@@ -412,7 +412,7 @@ impl<'a> ConditionalLike<'a, '_> {
                     write!(f, FormatExpressionWithoutTrailingComments(conditional.consequent()))?;
                     format_trailing_comments(
                         conditional.consequent.span().end,
-                        conditional.alternate.span().start,
+                        conditional.alternate.span().start(),
                         b':',
                         f,
                     )

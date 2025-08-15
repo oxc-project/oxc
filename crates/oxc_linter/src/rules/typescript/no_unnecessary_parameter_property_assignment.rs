@@ -173,7 +173,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
                 no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span),
                 |fixer| {
                     fixer.delete_range(Span::new(
-                        assignment_expr.span.start,
+                        assignment_expr.span.start(),
                         assignment_expr.span.end + 1,
                     ))
                 },

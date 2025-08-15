@@ -18,7 +18,7 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             self.bump_any();
             let span = self.end_span(span);
-            let src = &self.source_text[span.start as usize + 2..span.end as usize];
+            let src = &self.source_text[span.start() as usize + 2..span.end as usize];
             Some(self.ast.hashbang(span, Atom::from(src)))
         } else {
             None
@@ -56,9 +56,9 @@ impl<'a> ParserImpl<'a> {
                 if let Statement::ExpressionStatement(expr) = &stmt {
                     if let Expression::StringLiteral(string) = &expr.expression {
                         // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                        if expr.span.start == string.span.start {
+                        if expr.span.start() == string.span.start() {
                             let src = &self.source_text
-                                [string.span.start as usize + 1..string.span.end as usize - 1];
+                                [string.span.start() as usize + 1..string.span.end as usize - 1];
                             let directive =
                                 self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
                             directives.push(directive);
@@ -735,12 +735,12 @@ impl<'a> ParserImpl<'a> {
         let decorators = self.parse_decorators();
         let kind = self.cur_kind();
         if kind == Kind::Export {
-            // Export span.start starts after decorators.
+            // Export span.start() starts after decorators.
             return self.parse_export_declaration(self.start_span(), decorators, stmt_ctx);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {
-            // Class span.start starts before decorators.
+            // Class span.start() starts before decorators.
             return self.parse_class_statement(span, stmt_ctx, &modifiers, decorators);
         }
         self.unexpected()

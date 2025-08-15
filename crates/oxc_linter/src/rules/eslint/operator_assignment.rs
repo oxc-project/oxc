@@ -145,25 +145,25 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
                         return fixer.noop();
                     }
                     let operator_span = get_operator_span(
-                        Span::new(left.span().end, binary_expr.left.span().start),
+                        Span::new(left.span().end, binary_expr.left.span().start()),
                         "=",
                         ctx,
                     );
                     let binary_operator_span = get_operator_span(
-                        Span::new(binary_expr.left.span().end, binary_expr.right.span().start),
+                        Span::new(binary_expr.left.span().end, binary_expr.right.span().start()),
                         binary_operator.as_str(),
                         ctx,
                     );
                     if ctx.has_comments_between(Span::new(
                         operator_span.end,
-                        binary_operator_span.start,
+                        binary_operator_span.start(),
                     )) {
                         return fixer.noop();
                     }
                     // e.g. x = x + y => x += y
                     // binary_operator = "+" and replace_operator = "+="
                     // left_text = "x " right_text = " y"
-                    let left_text = Span::new(expr.span.start, operator_span.start)
+                    let left_text = Span::new(expr.span.start(), operator_span.start())
                         .source_text(ctx.source_text());
                     let right_text = Span::new(binary_operator_span.end, binary_expr.span.end)
                         .source_text(ctx.source_text());
@@ -188,20 +188,20 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
                 let right_expr = &expr.right;
 
                 let operator_span = get_operator_span(
-                    Span::new(expr.left.span().end, right_expr.span().start),
+                    Span::new(expr.left.span().end, right_expr.span().start()),
                     expr.operator.as_str(),
                     ctx
                 );
-                if ctx.has_comments_between(Span::new(expr.span.start, operator_span.start)) {
+                if ctx.has_comments_between(Span::new(expr.span.start(), operator_span.start())) {
                     return fixer.noop();
                 }
                 let Some(new_operator) = expr.operator.to_binary_operator() else {
                     return fixer.noop()
                 };
-                let left_text = Span::new(expr.span.start, operator_span.start).source_text(ctx.source_text());
+                let left_text = Span::new(expr.span.start(), operator_span.start()).source_text(ctx.source_text());
                 let right_text = {
                     let right_expr_text = right_expr.span().source_text(ctx.source_text());
-                    let former = Span::new(operator_span.end, right_expr.span().start).source_text(ctx.source_text());
+                    let former = Span::new(operator_span.end, right_expr.span().start()).source_text(ctx.source_text());
                     match right_expr {
                         // For some special cases, we need to wrap the expression in a pair of ()
                         // e.g. "x += y + 1" => "x = x + (y + 1)"
@@ -221,7 +221,7 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
                         // For the rest
                         _ => {
                             let temp_right_text = Span::new(operator_span.end, right_expr.span().end).source_text(ctx.source_text());
-                            let no_gap = right_expr.span().start == operator_span.end;
+                            let no_gap = right_expr.span().start() == operator_span.end;
                             // we match the binary operator to determine whether right_text_prefix needs to be preceded by a space
                             let need_fill_space = match new_operator {
                                 BinaryOperator::Division => {
@@ -229,10 +229,10 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
                                         Span::new(operator_span.end, right_expr.span().end).contains_inclusive(comment.span)
                                     }) {
                                         // e.g. x /=/** comments */ y
-                                        first_comment.span.start == operator_span.end
+                                        first_comment.span.start() == operator_span.end
                                     } else {
                                         // e.g. x /=/^abc/
-                                        matches!(right_expr, Expression::RegExpLiteral(regex_literal) if regex_literal.span.start == operator_span.end)
+                                        matches!(right_expr, Expression::RegExpLiteral(regex_literal) if regex_literal.span.start() == operator_span.end)
                                     }
                                 }
                                 // x+=+y => x=x+ +y;
@@ -284,7 +284,7 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
 #[expect(clippy::cast_possible_truncation)]
 fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span {
     let offset = init_span.source_text(ctx.source_text()).find(operator).unwrap_or(0) as u32;
-    let start = init_span.start + offset;
+    let start = init_span.start() + offset;
     Span::new(start, start + operator.len() as u32)
 }
 

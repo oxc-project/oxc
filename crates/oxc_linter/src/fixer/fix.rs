@@ -547,7 +547,7 @@ impl<'a> CompositeFix<'a> {
     ///
     /// 1. `fixes` is empty
     /// 2. contains overlapped ranges
-    /// 3. contains negative ranges (span.start > span.end)
+    /// 3. contains negative ranges (span.start() > span.end)
     ///
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
     fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
@@ -562,7 +562,7 @@ impl<'a> CompositeFix<'a> {
         fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
 
         // safe, as fixes.len() > 1
-        let start = fixes[0].span.start;
+        let start = fixes[0].span.start();
         let end = fixes[fixes.len() - 1].span.end;
         let mut last_pos = start;
         let mut output = String::new();
@@ -570,21 +570,21 @@ impl<'a> CompositeFix<'a> {
         for fix in fixes {
             let Fix { content, span, .. } = fix;
             // negative range or overlapping ranges is invalid
-            if span.start > span.end {
+            if span.start() > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");
                 return Fix::empty();
             }
-            if last_pos > span.start {
+            if last_pos > span.start() {
                 debug_assert!(
                     false,
-                    "Fix must not be overlapped, last_pos: {}, span.start: {}",
-                    last_pos, span.start
+                    "Fix must not be overlapped, last_pos: {}, span.start(): {}",
+                    last_pos, span.start()
                 );
                 return Fix::empty();
             }
 
-            let Some(before) = source_text.get((last_pos) as usize..span.start as usize) else {
-                debug_assert!(false, "Invalid range: {}, {}", last_pos, span.start);
+            let Some(before) = source_text.get((last_pos) as usize..span.start() as usize) else {
+                debug_assert!(false, "Invalid range: {}, {}", last_pos, span.start());
                 return Fix::empty();
             };
 

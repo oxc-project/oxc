@@ -150,8 +150,8 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
                             let span = call_expr.span;
                             let mut code = String::with_capacity(prefix.len() + argument.len() + 2);
 
-                            if span.start > 1 {
-                                let start = ctx.source_text().as_bytes()[span.start as usize - 1];
+                            if span.start() > 1 {
+                                let start = ctx.source_text().as_bytes()[span.start() as usize - 1];
                                 if start.is_ascii_alphabetic() || !start.is_ascii() {
                                     code.push(' ');
                                 }

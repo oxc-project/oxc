@@ -91,7 +91,7 @@ impl Rule for NoArrayConstructor {
                 let replacement = if arg_len == 0 {
                     ""
                 } else {
-                    ctx.source_range(Span::new(arguments[0].span().start, span.end - 1))
+                    ctx.source_range(Span::new(arguments[0].span().start(), span.end - 1))
                 };
                 fixer.replace(span, format!("[{replacement}]"))
             });

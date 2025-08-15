@@ -62,7 +62,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                     f,
                     [
                         FormatLeadingComments::Comments(
-                            f.context().comments().comments_before(e.property().span().start)
+                            f.context().comments().comments_before(e.property().span().start())
                         ),
                         e.optional().then_some("?"),
                         ".",

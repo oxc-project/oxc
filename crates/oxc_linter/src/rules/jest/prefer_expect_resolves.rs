@@ -107,12 +107,12 @@ impl Rule for PreferExpectResolves {
         };
         ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
             let offset = match &await_expr.argument {
-                Expression::CallExpression(call_expr) => call_expr.span.start - ident.span.end,
-                Expression::Identifier(promise_ident) => promise_ident.span.start - ident.span.end,
+                Expression::CallExpression(call_expr) => call_expr.span.start() - ident.span.end,
+                Expression::Identifier(promise_ident) => promise_ident.span.start() - ident.span.end,
                 _ => 0,
             };
             let arg_span = Span::new(
-                call_expr.span.start + (ident.span.end - ident.span.start) + offset,
+                call_expr.span.start() + (ident.span.end - ident.span.start()) + offset,
                 await_expr.span.end,
             );
             let local = jest_expect_fn_call.local.as_ref();

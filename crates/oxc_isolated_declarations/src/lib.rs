@@ -128,7 +128,7 @@ impl<'a> IsolatedDeclarations<'a> {
         if !self.strip_internal {
             return false;
         }
-        self.internal_annotations.contains(&span.start)
+        self.internal_annotations.contains(&span.start())
     }
 }
 

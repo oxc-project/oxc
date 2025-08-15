@@ -132,7 +132,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                 ),
                 value: null,
                 /* END_IF_TS */
-                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start() ),
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
             });
         }
@@ -206,7 +206,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
                 parameter: DESER[BindingPattern](POS_OFFSET.pattern),
                 readonly,
                 static: false,
-                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start() ),
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
             };
         }

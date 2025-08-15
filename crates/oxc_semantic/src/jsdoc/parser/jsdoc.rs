@@ -30,7 +30,7 @@ impl<'a> JSDoc<'a> {
     }
 
     fn parse(&self) -> &ParsedJSDoc<'a> {
-        self.cached.get_or_init(|| parse_jsdoc(self.raw, self.span.start))
+        self.cached.get_or_init(|| parse_jsdoc(self.raw, self.span.start()))
     }
 }
 

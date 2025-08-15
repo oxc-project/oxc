@@ -219,7 +219,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
                 })
             });
         let mut static_imports = Vec::from_iter_in(static_imports, allocator);
-        static_imports.sort_unstable_by_key(|e| e.span.start);
+        static_imports.sort_unstable_by_key(|e| e.span.start());
 
         let static_exports = record
             .local_export_entries
@@ -235,7 +235,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
             .into_iter()
             .map(|(span, entries)| StaticExport { span, entries });
         let mut static_exports = Vec::from_iter_in(static_exports, allocator);
-        static_exports.sort_unstable_by_key(|e| e.span.start);
+        static_exports.sort_unstable_by_key(|e| e.span.start());
 
         Self {
             has_module_syntax: record.has_module_syntax,

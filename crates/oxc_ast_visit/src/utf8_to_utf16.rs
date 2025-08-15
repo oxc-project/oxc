@@ -404,7 +404,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
 
     /// Convert [`Span`] from UTF-8 offsets to UTF-16 offsets.
     pub fn convert_span(&mut self, span: &mut Span) {
-        self.convert_offset(&mut span.start);
+        self.convert_offset(&mut span.start());
         self.convert_offset(&mut span.end);
     }
 }

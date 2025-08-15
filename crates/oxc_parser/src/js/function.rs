@@ -149,7 +149,7 @@ impl<'a> ParserImpl<'a> {
 
         if ctx.has_ambient() && modifiers.contains_declare() {
             if let Some(body) = &body {
-                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
+                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start())));
             }
         }
         self.verify_modifiers(
@@ -185,12 +185,12 @@ impl<'a> ParserImpl<'a> {
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
                 self.error(diagnostics::async_function_declaration(Span::new(
-                    decl.span.start,
+                    decl.span.start(),
                     decl.params.span.end,
                 )));
             } else if decl.generator {
                 self.error(diagnostics::generator_function_declaration(Span::new(
-                    decl.span.start,
+                    decl.span.start(),
                     decl.params.span.end,
                 )));
             }

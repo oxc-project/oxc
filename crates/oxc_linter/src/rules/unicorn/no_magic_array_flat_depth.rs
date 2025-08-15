@@ -74,7 +74,7 @@ impl Rule for NoMagicArrayFlatDepth {
         };
 
         let has_explaining_comment =
-            ctx.comments_range(arguments_span.start..arguments_span.end).count() != 0;
+            ctx.comments_range(arguments_span.start()..arguments_span.end).count() != 0;
 
         if has_explaining_comment {
             return;

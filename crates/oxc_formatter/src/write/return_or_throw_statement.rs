@@ -125,7 +125,7 @@ fn has_argument_leading_comments(argument: &Expression, f: &Formatter<'_, '_>) -
     let mut current = Some(ExpressionLeftSide::from(argument));
 
     while let Some(left_side) = current {
-        let comments = f.comments().comments_before(left_side.span().start);
+        let comments = f.comments().comments_before(left_side.span().start());
 
         let is_line_comment_or_multi_line_comment = |comments: &[Comment]| {
             comments.iter().any(|comment| {

@@ -84,7 +84,7 @@ impl Rule for RequireArrayJoinSeparator {
                         fixer.insert_text_after_range(
                             Span::new(
                                 0,
-                                call_expr.span.start
+                                call_expr.span.start()
                                     + member_expr.span().size()
                                     + open_bracket as u32
                                     + 1,

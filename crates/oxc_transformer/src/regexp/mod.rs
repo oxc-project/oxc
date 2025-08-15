@@ -148,7 +148,7 @@ impl<'a> RegExp<'a, '_> {
                 #[expect(clippy::cast_possible_truncation)]
                 let pattern_len = pattern_text.len() as u32;
                 let literal_span = regexp.span;
-                let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
+                let pattern_span_start = literal_span.start() + 1; // +1 to skip the opening `/`
                 let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
                 let flags_text =
                     Span::new(flags_span_start, literal_span.end).source_text(self.ctx.source_text);

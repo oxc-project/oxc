@@ -116,15 +116,15 @@ impl Rule for ConsistentTypeDefinitions {
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
                     let start = if decl.declare {
-                        let base_start = decl.span.start + 7;
+                        let base_start = decl.span.start() + 7;
                         ctx.source_range(Span::new(base_start, decl.span.end))
                             .find("type")
                             .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
                     } else {
-                        decl.span.start
+                        decl.span.start()
                     };
 
-                    let name_span_start = &decl.id.span.start;
+                    let name_span_start = &decl.id.span.start();
                     let mut name_span_end = &decl.id.span.end;
 
                     if let Some(params) = &decl.type_parameters {
@@ -137,7 +137,7 @@ impl Rule for ConsistentTypeDefinitions {
                     if let TSType::TSTypeLiteral(type_ann) = &decl.type_annotation {
                         let body_span = type_ann.span;
                         let body =
-                            &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+                            &ctx.source_text()[body_span.start() as usize..body_span.end as usize];
 
                         ctx.diagnostic_with_fix(
                             consistent_type_definitions_diagnostic(
@@ -161,7 +161,7 @@ impl Rule for ConsistentTypeDefinitions {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
                     if self.config == ConsistentTypeDefinitionsConfig::Type =>
                 {
-                    let name_span_start = &decl.id.span.start;
+                    let name_span_start = &decl.id.span.start();
                     let mut name_span_end = &decl.id.span.end;
 
                     if let Some(params) = &decl.type_parameters {
@@ -172,7 +172,7 @@ impl Rule for ConsistentTypeDefinitions {
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
 
                     let body_span = &decl.body.span;
-                    let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+                    let body = &ctx.source_text()[body_span.start() as usize..body_span.end as usize];
 
                     let mut extends = String::new();
                     for exp in &decl.extends {
@@ -183,7 +183,7 @@ impl Rule for ConsistentTypeDefinitions {
                         consistent_type_definitions_diagnostic(
                             "type",
                             "interface",
-                            Span::sized(decl.span.start, 9),
+                            Span::sized(decl.span.start(), 9),
                         ),
                         |fixer| {
                             fixer.replace(
@@ -200,15 +200,15 @@ impl Rule for ConsistentTypeDefinitions {
                 if self.config == ConsistentTypeDefinitionsConfig::Type =>
             {
                 let start = if decl.declare {
-                    let base_start = decl.span.start + 7;
+                    let base_start = decl.span.start() + 7;
                     ctx.source_range(Span::new(base_start, decl.span.end))
                         .find("interface")
                         .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
                 } else {
-                    decl.span.start
+                    decl.span.start()
                 };
 
-                let name_span_start = &decl.id.span.start;
+                let name_span_start = &decl.id.span.start();
                 let mut name_span_end = &decl.id.span.end;
 
                 if let Some(params) = &decl.type_parameters {
@@ -218,7 +218,7 @@ impl Rule for ConsistentTypeDefinitions {
                 let name = &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
 
                 let body_span = &decl.body.span;
-                let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+                let body = &ctx.source_text()[body_span.start() as usize..body_span.end as usize];
 
                 let mut extends = String::new();
                 for exp in &decl.extends {

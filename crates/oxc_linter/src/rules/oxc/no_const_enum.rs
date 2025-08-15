@@ -49,12 +49,12 @@ impl Rule for NoConstEnum {
                 return;
             }
 
-            let span = Span::sized(enum_decl.span.start, 5);
+            let span = Span::sized(enum_decl.span.start(), 5);
 
             ctx.diagnostic_with_fix(no_const_enum_diagnostic(span), |fixer| {
                 // const enum Color { Red, Green, Blue }
                 // ^
-                let start = span.start;
+                let start = span.start();
 
                 // const enum Color { Red, Green, Blue }
                 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

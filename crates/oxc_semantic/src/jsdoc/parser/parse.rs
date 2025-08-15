@@ -127,8 +127,8 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     let kind = JSDocTagKindPart::new(
         &tag_content[k_start..k_end],
         Span::new(
-            jsdoc_tag_span.start + u32::try_from(k_start).unwrap_or_default(),
-            jsdoc_tag_span.start + u32::try_from(k_end).unwrap_or_default(),
+            jsdoc_tag_span.start() + u32::try_from(k_start).unwrap_or_default(),
+            jsdoc_tag_span.start() + u32::try_from(k_end).unwrap_or_default(),
         ),
     );
 
@@ -147,7 +147,7 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     // This is only for comment parser, it will be ignored for type and type name parser.
     let body_content = &tag_content[k_end..];
     let body_span = Span::new(
-        jsdoc_tag_span.start + u32::try_from(k_end).unwrap_or_default(),
+        jsdoc_tag_span.start() + u32::try_from(k_end).unwrap_or_default(),
         jsdoc_tag_span.end,
     );
 

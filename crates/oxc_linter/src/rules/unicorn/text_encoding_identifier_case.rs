@@ -78,7 +78,7 @@ impl Rule for TextEncodingIdentifierCase {
         if replacement != s {
             ctx.diagnostic_with_fix(
                 text_encoding_identifier_case_diagnostic(span, replacement, s),
-                |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
+                |fixer| fixer.replace(Span::new(span.start() + 1, span.end - 1), replacement),
             );
         }
     }

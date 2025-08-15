@@ -147,7 +147,7 @@ impl Rule for NoStaticOnlyClass {
                         // }
                         // ```
                         let next_start = if not_last {
-                            ele_arr[idx + 1].span().start
+                            ele_arr[idx + 1].span().start()
                         } else {
                             class.body.span.end
                         };
@@ -162,7 +162,7 @@ impl Rule for NoStaticOnlyClass {
                                 let comments = ctx.comments_range(item.span().end..next_start);
                                 let mut is_in_comment = false;
                                 for comment in comments {
-                                    if comment.span.start < pos && comment.span.end > pos {
+                                    if comment.span.start() < pos && comment.span.end > pos {
                                         is_in_comment = true;
                                         break;
                                     }
@@ -205,7 +205,7 @@ impl Rule for NoStaticOnlyClass {
                 }
             }
 
-            let start = class.span.start;
+            let start = class.span.start();
             if class.id.is_none() {
                 // just remove the class keyword
                 rule_fixes.push(fixer.delete_range(Span::sized(start, 5)));

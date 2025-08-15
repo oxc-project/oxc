@@ -179,7 +179,7 @@ pub fn should_hug_function_parameters<'a>(
 
     // `(/* comment before */ only_parameter /* comment after */)`
     // Checker whether there are comments around the only parameter.
-    if f.comments().has_comments_between(parameters.span.start, only_parameter.span.start)
+    if f.comments().has_comments_between(parameters.span.start(), only_parameter.span.start())
         || f.comments().has_comments_between(only_parameter.span.end, parameters.span.end)
     {
         return false;

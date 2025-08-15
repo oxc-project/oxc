@@ -189,7 +189,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
         return false;
     };
 
-    let span = Span::sized(spread_elem.span.start, 3);
+    let span = Span::sized(spread_elem.span.start(), 3);
 
     match node.kind() {
         AstKind::ObjectExpression(_) => {
@@ -217,7 +217,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                         let mut span = first.span();
                         if array_expr.elements.len() != 1 {
                             let last = array_expr.elements.last().unwrap();
-                            span = Span::new(first.span().start, last.span().end);
+                            span = Span::new(first.span().start(), last.span().end);
                         }
                         ctx.source_range(span)
                     } else {
@@ -307,7 +307,7 @@ fn check_useless_iterable_to_array<'a>(
         return false;
     };
 
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::new(spread_elem.span.start(), spread_elem.span.start() + 3);
 
     let parent = if let AstKind::Argument(_) = parent.kind() {
         let Some(parent) = outermost_paren_parent(parent, ctx) else {
@@ -392,7 +392,7 @@ fn check_useless_clone<'a>(
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::new(spread_elem.span.start(), spread_elem.span.start() + 3);
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check

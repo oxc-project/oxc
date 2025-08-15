@@ -114,7 +114,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
         return;
     };
     let Span { start, end, .. } = span;
-    let colon_pos = type_annotation.span.start - start;
+    let colon_pos = type_annotation.span.start() - start;
     let source_code = &ctx.source_text();
     let text: &str = &source_code[start as usize..end as usize];
     let mut suggestion = format!(
@@ -147,13 +147,13 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
             } else {
                 ctx.diagnostic_with_fix(prefer_function_type_diagnostic(&suggestion, span), |_| {
                     let mut is_parent_exported = false;
-                    let mut node_start = interface_decl.span.start;
+                    let mut node_start = interface_decl.span.start();
                     let mut node_end = interface_decl.span.end;
                     if let AstKind::ExportNamedDeclaration(export_name_decl) =
                         ctx.nodes().parent_kind(node.id())
                     {
                         is_parent_exported = true;
-                        node_start = export_name_decl.span.start;
+                        node_start = export_name_decl.span.start();
                         node_end = export_name_decl.span.end;
                     }
 

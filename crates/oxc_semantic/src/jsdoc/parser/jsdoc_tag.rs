@@ -67,8 +67,8 @@ impl<'a> JSDocTag<'a> {
             JSDocTagTypePart::new(
                 &self.body_raw[t_start..t_end],
                 Span::new(
-                    self.body_span.start + u32::try_from(t_start).unwrap_or_default(),
-                    self.body_span.start + u32::try_from(t_end).unwrap_or_default(),
+                    self.body_span.start() + u32::try_from(t_start).unwrap_or_default(),
+                    self.body_span.start() + u32::try_from(t_end).unwrap_or_default(),
                 ),
             )
         })
@@ -93,14 +93,14 @@ impl<'a> JSDocTag<'a> {
                     Some(JSDocTagTypePart::new(
                         &self.body_raw[t_start..t_end],
                         Span::new(
-                            self.body_span.start + u32::try_from(t_start).unwrap_or_default(),
-                            self.body_span.start + u32::try_from(t_end).unwrap_or_default(),
+                            self.body_span.start() + u32::try_from(t_start).unwrap_or_default(),
+                            self.body_span.start() + u32::try_from(t_end).unwrap_or_default(),
                         ),
                     )),
                     JSDocCommentPart::new(
                         &self.body_raw[c_start..],
                         Span::new(
-                            self.body_span.start + u32::try_from(c_start).unwrap_or_default(),
+                            self.body_span.start() + u32::try_from(c_start).unwrap_or_default(),
                             self.body_span.end,
                         ),
                     ),
@@ -138,15 +138,15 @@ impl<'a> JSDocTag<'a> {
                         Some(JSDocTagTypePart::new(
                             &self.body_raw[t_start..t_end],
                             Span::new(
-                                self.body_span.start + u32::try_from(t_start).unwrap_or_default(),
-                                self.body_span.start + u32::try_from(t_end).unwrap_or_default(),
+                                self.body_span.start() + u32::try_from(t_start).unwrap_or_default(),
+                                self.body_span.start() + u32::try_from(t_end).unwrap_or_default(),
                             ),
                         )),
                         &self.body_raw[c_start..],
-                        self.body_span.start + u32::try_from(c_start).unwrap_or_default(),
+                        self.body_span.start() + u32::try_from(c_start).unwrap_or_default(),
                     )
                 }
-                None => (None, self.body_raw, self.body_span.start),
+                None => (None, self.body_raw, self.body_span.start()),
             };
 
         let (name_part, comment_part) = match utils::find_type_name_range(name_comment_content) {

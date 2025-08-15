@@ -125,7 +125,7 @@ impl Rule for NoUnexpectedMultiline {
 
                 let span = Span::new(start, call_expr.span.end);
                 if let Some(open_paren_pos) = has_newline_before(ctx, span, b'(') {
-                    let paren_span = Span::sized(span.start + open_paren_pos, 1);
+                    let paren_span = Span::sized(span.start() + open_paren_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::FunctionCall {
@@ -142,7 +142,7 @@ impl Rule for NoUnexpectedMultiline {
 
                 let span = Span::new(member_expr.object.span().end, member_expr.span().end);
                 if let Some(open_bracket_pos) = has_newline_before(ctx, span, b'[') {
-                    let bracket_span = Span::sized(span.start + open_bracket_pos, 1);
+                    let bracket_span = Span::sized(span.start() + open_bracket_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::PropertyAccess {
@@ -161,7 +161,7 @@ impl Rule for NoUnexpectedMultiline {
 
                 let span = Span::new(start, tagged_template_expr.span.end);
                 if let Some(backtick_pos) = has_newline_before(ctx, span, b'`') {
-                    let backtick_span = Span::sized(span.start + backtick_pos, 1);
+                    let backtick_span = Span::sized(span.start() + backtick_pos, 1);
 
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::TaggedTemplate {
@@ -210,14 +210,14 @@ impl Rule for NoUnexpectedMultiline {
                     })
                     .collect::<String>();
 
-                if newline < parent_binary_expr.left.span().start as usize
+                if newline < parent_binary_expr.left.span().start() as usize
 					// The identifier name should look like it was an attempt to use a regex
 					&& is_regex_flag(ident_name.as_str())
 					// if it was a regex attempt, the second slash should be before the identifier
-                    && second_slash + (span.start as usize) + 1 == parent_binary_expr.right.span().start as usize
+                    && second_slash + (span.start() as usize) + 1 == parent_binary_expr.right.span().start() as usize
                 {
                     let slash_span =
-                        Span::sized(span.start + u32::try_from(first_slash).unwrap(), 1);
+                        Span::sized(span.start() + u32::try_from(first_slash).unwrap(), 1);
 
                     ctx.diagnostic_with_dangerous_fix(
                         no_unexpected_multiline_diagnostic(&DiagnosticKind::Division {

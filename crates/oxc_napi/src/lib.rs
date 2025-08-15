@@ -36,7 +36,7 @@ pub fn convert_utf8_to_utf16(
                     CommentKind::Block => String::from("Block"),
                 },
                 value,
-                start: span.start,
+                start: span.start(),
                 end: span.end,
             }
         })

@@ -120,7 +120,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                     Comment {
                         r#type: "Line".to_string(),
                         value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
+                        start: hashbang.span.start(),
                         end: hashbang.span.end,
                     },
                 );

@@ -98,7 +98,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(start);
         while index < comments.len() {
             let comment = &comments[index];
-            if self.source_text[start as usize..comment.span.start as usize]
+            if self.source_text[start as usize..comment.span.start() as usize]
                 .contains(character as char)
             {
                 return &comments[..index];
@@ -154,13 +154,13 @@ impl<'a> Comments<'a> {
     pub fn filter_comments_in_span(&self, span: Span) -> impl Iterator<Item = &Comment> {
         self.comments
             .iter()
-            .skip_while(move |comment| comment.span.end < span.start)
-            .take_while(move |comment| comment.span.start <= span.end)
+            .skip_while(move |comment| comment.span.end < span.start())
+            .take_while(move |comment| comment.span.start() <= span.end)
     }
 
     #[inline]
     pub fn has_comments_in_span(&self, span: Span) -> bool {
-        self.has_comments_between(span.start, span.end)
+        self.has_comments_between(span.start(), span.end)
     }
 
     pub fn has_comments_between(&self, start: u32, end: u32) -> bool {
@@ -171,7 +171,7 @@ impl<'a> Comments<'a> {
             }
 
             // Check if the comment after the span
-            if comment.span.start > end {
+            if comment.span.start() > end {
                 return false;
             }
 
@@ -201,7 +201,7 @@ impl<'a> Comments<'a> {
         let mut comment_index = 0;
         while let Some(comment) = comments.get(comment_index) {
             // Check if the comment is after the previous node's span
-            if comment.span.start < previous_end {
+            if comment.span.start() < previous_end {
                 comment_index += 1;
                 continue;
             }
@@ -276,7 +276,7 @@ impl<'a> Comments<'a> {
             let comment = &comments[cur_index];
             let gap_str = Span::new(comment.span.end, gap_end).source_text(self.source_text);
             if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
-                gap_end = comment.span.start;
+                gap_end = comment.span.start();
             } else {
                 return true;
             }
@@ -287,7 +287,7 @@ impl<'a> Comments<'a> {
 
     pub fn has_trailing_line_comments(&self, current_end: u32, following_start: u32) -> bool {
         for comment in self.comments_after(current_end) {
-            if comment.span.start > following_start {
+            if comment.span.start() > following_start {
                 return false;
             }
 
@@ -310,7 +310,7 @@ impl<'a> Comments<'a> {
         current_span: Span,
         following_start: u32,
     ) -> bool {
-        self.has_leading_comments(previous_end, current_span.start)
+        self.has_leading_comments(previous_end, current_span.start())
             || self.has_trailing_comments(current_span.end, following_start)
     }
 
@@ -363,14 +363,14 @@ impl<'a> Comments<'a> {
 
         // All of the comments before this node are printed already.
         debug_assert!(
-            comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
+            comments.first().is_none_or(|comment| comment.span.end > preceding_span.start())
         );
 
         let Some(following_node) = following_node else {
             if let SiblingNode::ImportDeclaration(import) = enclosing_node
-                && import.source.span.start > preceding_span.end
+                && import.source.span.start() > preceding_span.end
             {
-                return self.comments_before(import.source.span.start);
+                return self.comments_before(import.source.span.start());
             }
 
             let enclosing_span = enclosing_node.span();
@@ -382,7 +382,7 @@ impl<'a> Comments<'a> {
         let mut comment_index = 0;
         while let Some(comment) = comments.get(comment_index) {
             // Check if the comment is before the following node's span
-            if comment.span.end > following_span.start {
+            if comment.span.end > following_span.start() {
                 break;
             }
 
@@ -394,7 +394,7 @@ impl<'a> Comments<'a> {
                     || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
                 {
                     return handle_if_and_while_statement_comments(
-                        following_span.start,
+                        following_span.start(),
                         comment_index,
                         comments,
                         source_text,
@@ -406,7 +406,7 @@ impl<'a> Comments<'a> {
                 if let SiblingNode::IfStatement(if_stmt) = enclosing_node {
                     if if_stmt.consequent.span() == preceding_span {
                         // If comment is after the `else` keyword, it is not a trailing comment of consequent.
-                        if source_text[preceding_span.end as usize..comment.span.start as usize]
+                        if source_text[preceding_span.end as usize..comment.span.start() as usize]
                             .contains("else")
                         {
                             return &[];
@@ -418,7 +418,7 @@ impl<'a> Comments<'a> {
                     || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
                 {
                     return handle_if_and_while_statement_comments(
-                        following_span.start,
+                        following_span.start(),
                         comment_index,
                         comments,
                         source_text,
@@ -462,12 +462,12 @@ impl<'a> Comments<'a> {
             return &comments[..comment_index];
         }
 
-        let mut gap_end = following_span.start;
+        let mut gap_end = following_span.start();
         for cur_index in (0..comment_index).rev() {
             let comment = &comments[cur_index];
             let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
             if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
-                gap_end = comment.span.start;
+                gap_end = comment.span.start();
             } else {
                 // If there is a non-whitespace character, we stop here
                 return &comments[..=cur_index];
@@ -491,7 +491,7 @@ fn handle_if_and_while_statement_comments<'a>(
             return &comments[..=comment_index];
         }
 
-        end = cur_comment_span.start;
+        end = cur_comment_span.start();
 
         if comment_index == 0 {
             return &[];
@@ -543,12 +543,12 @@ pub fn has_new_line_forward(text: &str) -> bool {
 }
 
 pub fn is_own_line_comment(comment: &Comment, source_text: &str) -> bool {
-    let start = comment.span.start;
+    let start = comment.span.start();
     if start == 0 {
         return false;
     }
 
-    has_new_line_backward(Span::sized(0, comment.span.start).source_text(source_text))
+    has_new_line_backward(Span::sized(0, comment.span.start()).source_text(source_text))
 }
 
 pub fn is_end_of_line_comment(comment: &Comment, source_text: &str) -> bool {

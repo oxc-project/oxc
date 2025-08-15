@@ -397,7 +397,7 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
         | ModuleDeclarationKind::TSExportAssignment(_)
         | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
     };
-    let start = decl.span().start;
+    let start = decl.span().start();
     let span = Span::sized(start, 6);
     match ctx.source_type.module_kind() {
         ModuleKind::Unambiguous => {
@@ -630,7 +630,7 @@ fn with_statement(span: Span) -> OxcDiagnostic {
 
 pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
-        ctx.error(with_statement(Span::sized(stmt.span.start, 4)));
+        ctx.error(with_statement(Span::sized(stmt.span.start(), 4)));
     }
 }
 
@@ -845,7 +845,7 @@ pub fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
             AstKind::ExportDefaultDeclaration(_)
         )
     {
-        let start = class.span.start;
+        let start = class.span.start();
         ctx.error(require_class_name(Span::sized(start, 5)));
     }
 
@@ -1089,7 +1089,7 @@ pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>)
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
     if ctx.scoping.scope_flags(ctx.current_scope_id).is_class_static_block() {
-        let start = expr.span.start;
+        let start = expr.span.start();
         ctx.error(class_static_block_await(Span::sized(start, 5)));
     }
 }

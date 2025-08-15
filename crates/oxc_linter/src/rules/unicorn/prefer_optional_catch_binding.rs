@@ -61,8 +61,8 @@ impl Rule for PreferOptionalCatchBinding {
         ctx.diagnostic_with_fix(
             prefer_optional_catch_binding_diagnostic(catch_param.pattern.span()),
             |fixer| {
-                let mut start = catch_clause.span().start + 5;
-                let total_param = Span::new(start, catch_param.span().start);
+                let mut start = catch_clause.span().start() + 5;
+                let total_param = Span::new(start, catch_param.span().start());
                 let total_param_value = ctx.source_range(total_param);
                 let plus_space: u32 = total_param_value
                     .as_bytes()
@@ -72,7 +72,7 @@ impl Rule for PreferOptionalCatchBinding {
                     .try_into()
                     .unwrap();
                 start += plus_space;
-                let end = catch_clause.body.span().start;
+                let end = catch_clause.body.span().start();
                 let span = Span::new(start, end);
                 fixer.delete(&span)
             },

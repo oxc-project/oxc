@@ -267,7 +267,7 @@ impl Oxc {
                     Comment {
                         r#type: "Line".to_string(),
                         value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
+                        start: hashbang.span.start(),
                         end: hashbang.span.end,
                     },
                 );

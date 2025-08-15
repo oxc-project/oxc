@@ -123,7 +123,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 consistent_existence_index_check_diagnostic(replacement, binary_expression.span),
                 |fixer| {
                     let operator_start = binary_expression.left.span().end;
-                    let operator_end = binary_expression.right.span().start;
+                    let operator_end = binary_expression.right.span().start();
                     let operator_span = Span::new(operator_start, operator_end);
                     let operator_source = ctx.source_range(operator_span);
 

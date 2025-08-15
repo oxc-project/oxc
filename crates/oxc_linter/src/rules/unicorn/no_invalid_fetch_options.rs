@@ -113,7 +113,7 @@ fn is_invalid_fetch_options<'a>(
 
         if key_ident_name == "body" {
             if obj_prop.value.is_null_or_undefined() {
-                body_span.end = body_span.start;
+                body_span.end = body_span.start();
             } else {
                 body_span = key_ident.span;
             }

@@ -88,7 +88,7 @@ impl Rule for NoZeroFractions {
 
                 // Handle special cases where a space is needed after certain keywords
                 // to prevent the number from being interpreted as a property access
-                let end = number_literal.span.start;
+                let end = number_literal.span.start();
                 let token = ctx.source_range(oxc_span::Span::new(0, end));
                 if token.ends_with("return")
                     || token.ends_with("throw")

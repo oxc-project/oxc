@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
         if left.operator != op {
             return None;
         }
-        let new_span = Span::new(left.right.span().start, expr.span.end);
+        let new_span = Span::new(left.right.span().start(), expr.span.end);
         Self::try_compress_is_null_or_undefined_for_left_and_right(
             &mut left.right,
             &mut expr.right,

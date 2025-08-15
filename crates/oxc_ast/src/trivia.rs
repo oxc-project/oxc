@@ -18,7 +18,7 @@ where
 }
 
 pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
-    comments_range(comments, span.start..span.end).count() > 0
+    comments_range(comments, span.start()..span.end).count() > 0
 }
 
 /// Double-ended iterator over a range of comments, by starting position.
@@ -39,7 +39,7 @@ impl<'c> CommentsRange<'c> {
                 Bound::Included(x) => x,
                 Bound::Excluded(x) => x.saturating_add(1),
             };
-            comments.partition_point(|comment| comment.span.start < range_start)
+            comments.partition_point(|comment| comment.span.start() < range_start)
         };
         let partition_end = {
             let range_end = match end {
@@ -47,7 +47,7 @@ impl<'c> CommentsRange<'c> {
                 Bound::Included(x) => x,
                 Bound::Excluded(x) => x.saturating_sub(1),
             };
-            comments.partition_point(|comment| comment.span.start <= range_end)
+            comments.partition_point(|comment| comment.span.start() <= range_end)
         };
         Self {
             comments,
@@ -65,7 +65,7 @@ impl<'c> Iterator for CommentsRange<'c> {
         if self.current_start < self.current_end {
             for comment in &self.comments[self.current_start..self.current_end] {
                 self.current_start = self.current_start.saturating_add(1);
-                if self.range.contains(&comment.span.start) {
+                if self.range.contains(&comment.span.start()) {
                     return Some(comment);
                 }
             }
@@ -84,7 +84,7 @@ impl DoubleEndedIterator for CommentsRange<'_> {
         if self.current_start < self.current_end {
             for comment in self.comments[self.current_start..self.current_end].iter().rev() {
                 self.current_end = self.current_end.saturating_sub(1);
-                if self.range.contains(&comment.span.start) {
+                if self.range.contains(&comment.span.start()) {
                     return Some(comment);
                 }
             }

@@ -61,7 +61,7 @@ impl Rule for NoLoneBlocks {
 
         if stmt.body.is_empty() {
             let is_comment_in_stmt =
-                ctx.comments_range(stmt.span.start..stmt.span.end).next_back().is_some();
+                ctx.comments_range(stmt.span.start()..stmt.span.end).next_back().is_some();
 
             if !is_comment_in_stmt
                 && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_))
@@ -136,7 +136,7 @@ fn is_lone_block(node: &AstNode, parent_node: &AstNode) -> bool {
             }
             let node_span = node.span();
             let consequent_span = consequent[0].span();
-            node_span.start != consequent_span.start || node_span.end != consequent_span.end
+            node_span.start() != consequent_span.start() || node_span.end != consequent_span.end
         }
         _ => false,
     }

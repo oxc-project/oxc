@@ -97,7 +97,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let leading_comments = f.context().comments().comments_before(span.start);
+                let leading_comments = f.context().comments().comments_before(span.start());
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -622,7 +622,7 @@ impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = self.span.source_text(f.source_text());
         if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+            let mut source_offset = self.span.start();
 
             let mut lines = source_text.lines();
 

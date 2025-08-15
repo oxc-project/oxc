@@ -48,8 +48,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if return_type.is_none() {
             self.error(function_must_have_explicit_return_type(Span::new(
-                func.params.span.start,
-                func.body.span.start + 1,
+                func.params.span.start(),
+                func.body.span.start() + 1,
             )));
         }
 

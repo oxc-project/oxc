@@ -532,7 +532,7 @@ fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    if f.comments().has_leading_own_line_comments(right.span().start)
+    if f.comments().has_leading_own_line_comments(right.span().start())
         && !matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
     {
         return true;

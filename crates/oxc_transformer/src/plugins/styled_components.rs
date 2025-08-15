@@ -912,7 +912,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // styled.div`color: /* ${c} */ blue`
                 // //         ^^^^^^^^^^^^^^^^^^^^^^
                 // ```
-                quasis[quasi_index].span.start = quasis[quasi_index - 1].span.start;
+                quasis[quasi_index].span.start = quasis[quasi_index - 1].span.start();
                 // Mark previous quasi as to be removed. It will be removed after all quasis are processed.
                 quasis[quasi_index - 1].span = REMOVE_SENTINEL;
 

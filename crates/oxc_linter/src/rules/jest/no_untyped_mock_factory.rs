@@ -145,7 +145,7 @@ impl NoUntypedMockFactory {
                     code.push_str(string_literal.value.as_str());
                     code.push_str("')>(");
 
-                    fixer.replace(Span::sized(string_literal.span.start - 1, 1), code)
+                    fixer.replace(Span::sized(string_literal.span.start() - 1, 1), code)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {

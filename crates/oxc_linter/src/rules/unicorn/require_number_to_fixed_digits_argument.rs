@@ -70,7 +70,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                         |fixer| {
                             let modified_code = {
                                 let span_source_code = fixer.source_range(Span::new(
-                                    parenthesis_span.start,
+                                    parenthesis_span.start(),
                                     parenthesis_span.end - 1,
                                 ));
 

@@ -237,7 +237,7 @@ impl Rule for PreferSetHas {
                 }
                 Expression::CallExpression(call_expr) => {
                     if call_expr.callee.is_identifier_reference() {
-                        let start = call_expr.span.start;
+                        let start = call_expr.span.start();
                         let end = start + 6;
                         let span = Span::new(start, end);
                         declaration_fix.push(fixer.replace(span, net_set_array_string));
@@ -253,7 +253,7 @@ impl Rule for PreferSetHas {
                     }
                 }
                 Expression::NewExpression(new_expr) => {
-                    let start = new_expr.span.start + new_space_len;
+                    let start = new_expr.span.start() + new_space_len;
                     let end = start + array_parenthesis_len;
                     let span = Span::new(start, end);
                     declaration_fix.push(fixer.replace(span, set_array_string));

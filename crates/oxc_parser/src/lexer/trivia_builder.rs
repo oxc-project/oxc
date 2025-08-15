@@ -125,7 +125,7 @@ impl TriviaBuilder {
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last() {
-            if comment.span.start <= last_comment.span.start {
+            if comment.span.start() <= last_comment.span.start() {
                 return;
             }
         }

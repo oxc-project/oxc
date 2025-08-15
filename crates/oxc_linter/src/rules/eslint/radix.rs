@@ -124,7 +124,7 @@ impl Radix {
                 if matches!(&self.radix_type, RadixType::Always) {
                     let first_arg = &call_expr.arguments[0];
                     let end = call_expr.span.end;
-                    let check_span = Span::new(first_arg.span().start, end);
+                    let check_span = Span::new(first_arg.span().start(), end);
                     let insert_param = ctx
                         .source_range(check_span)
                         .chars()

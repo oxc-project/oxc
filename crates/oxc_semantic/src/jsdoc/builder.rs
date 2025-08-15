@@ -109,7 +109,7 @@ impl<'a> JSDocBuilder<'a> {
     // we might as well give up pre-flagging architecture itself?
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
         if should_attach_jsdoc(kind) {
-            let start = kind.span().start;
+            let start = kind.span().start();
             if let Some(docs) = self.not_attached_docs.remove(&start) {
                 self.attached_docs.insert(start, docs);
                 return true;
@@ -121,7 +121,7 @@ impl<'a> JSDocBuilder<'a> {
     fn parse_jsdoc_comment(comment: &Comment, source_text: &'a str) -> JSDoc<'a> {
         let span = comment.content_span();
         // Remove the very first `*`
-        let jsdoc_span = Span::new(span.start + 1, span.end);
+        let jsdoc_span = Span::new(span.start() + 1, span.end);
         let comment_content = jsdoc_span.source_text(source_text);
         JSDoc::new(comment_content, jsdoc_span)
     }

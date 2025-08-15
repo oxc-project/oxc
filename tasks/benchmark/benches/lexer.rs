@@ -110,7 +110,7 @@ impl SourceCleaner {
         for replacement in self.replacements.iter().rev() {
             let span = replacement.span;
             self.source_text
-                .replace_range(span.start as usize..span.end as usize, &replacement.text);
+                .replace_range(span.start() as usize..span.end as usize, &replacement.text);
         }
 
         // Check lexer can lex it without any errors
@@ -127,7 +127,7 @@ impl SourceCleaner {
 impl<'a> Visit<'a> for SourceCleaner {
     fn visit_reg_exp_literal(&mut self, regexp: &RegExpLiteral<'a>) {
         let pattern_text = regexp.regex.pattern.text.as_str();
-        let span = Span::sized(regexp.span.start, u32::try_from(pattern_text.len()).unwrap() + 2);
+        let span = Span::sized(regexp.span.start(), u32::try_from(pattern_text.len()).unwrap() + 2);
         let text = convert_to_string(pattern_text);
         self.replace(span, text);
     }

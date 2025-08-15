@@ -89,12 +89,12 @@ impl NoUnusedVars {
                     // `const [a, b] = [1, 2];` -> `const [a, b] = [1, 2];`
                     //            ^                         ^^^
                     if !is_object && is_last {
-                        debug_assert!(span.start > 0);
-                        let source_before = &fixer.source_text()[..(span.start as usize)];
+                        debug_assert!(span.start() > 0);
+                        let source_before = &fixer.source_text()[..(span.start() as usize)];
                         let chars = source_before.chars().rev();
                         let start_offset = count_whitespace_or_commas(chars);
                         // do not walk past the beginning of the file
-                        debug_assert!(start_offset < span.start);
+                        debug_assert!(start_offset < span.start());
                         span = span.expand_left(start_offset);
                     }
 

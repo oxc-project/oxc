@@ -310,7 +310,7 @@ fn problems_for_backref<'a>(
     // Since regex engines evaluate patterns from left to right,
     // the capture group has not matched anything by the time `\1` is evaluated.
     // So the backreference resolves to the empty string and is effectively useless.
-    if !is_matching_backwards && bref.span.end <= cap_group.span.start {
+    if !is_matching_backwards && bref.span.end <= cap_group.span.start() {
         return Some((Problem::Backward, cap_group.span, bref.span));
     }
 
@@ -322,7 +322,7 @@ fn problems_for_backref<'a>(
     // Lookbehinds are evaluated from right to left.
     // In this direction, the group appears *after* the backreference, so it has not matched yet
     // when `\1` is evaluated. As a result, the backreference resolves to the empty string.
-    if is_matching_backwards && cap_group.span.end <= bref.span.start {
+    if is_matching_backwards && cap_group.span.end <= bref.span.start() {
         return Some((Problem::Forward, cap_group.span, bref.span));
     }
 
