@@ -80,7 +80,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
         // A flag in `FixedSizeAllocatorMetadata` records whether the buffer has already been transferred
         // to JS or not. If it hasn't, send it. Otherwise, just send the ID of the buffer which is the
         // index of that buffer in the array on JS side, and JS side will get the buffer from the array.
-        // This means there's only even 1 instance of a buffer on Rust side, and 1 on JS side,
+        // This means there's only ever 1 instance of a buffer on Rust side, and 1 on JS side,
         // which makes it simpler to avoid use-after-free or double-free problems.
 
         // SAFETY: This crate enables the `fixed_size` feature on `oxc_allocator`, so all AST `Allocator`s
