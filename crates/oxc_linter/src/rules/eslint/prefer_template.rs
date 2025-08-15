@@ -10,7 +10,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_template_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected string concatenation.")
-        .with_help("Unexpected string concatenation.")
+        .with_help("Use template literals instead of string concatenation.")
         .with_label(span)
 }
 
@@ -153,7 +153,7 @@ fn test() {
         "var foo = bar + baz + 'qux';",
         "var foo = /* a */ 'bar' /* b */ + /* c */ baz /* d */ + 'qux' /* e */ ;",
         "var foo = bar + ('baz') + 'qux' + (boop);",
-        "foo + 'unescapes an escaped single quote in a single-quoted string: \''",
+        r#"foo + 'unescapes an escaped single quote in a single-quoted string: \''"#,
         r#"foo + "unescapes an escaped double quote in a double-quoted string: """#,
         r#"foo + 'does not unescape an escaped double quote in a single-quoted string: "'"#,
         r#"foo + "does not unescape an escaped single quote in a double-quoted string: \'""#,
