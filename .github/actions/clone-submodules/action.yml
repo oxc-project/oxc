@@ -38,10 +38,17 @@ runs:
   steps:
     - name: Clone submodules in parallel
       shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        TEST_262: ${{ inputs.test262 }}
+        BABEL: ${{ inputs.babel }}
+        TYPESCRIPT: ${{ inputs.typescript }}
+        PRETTIER: ${{ inputs.prettier }}
+        ACORN_TEST262: ${{ inputs.acorn-test262 }}
       run: |
-        ${{ github.action_path }}/clone-parallel.sh \
-          "${{ inputs.test262 }}" \
-          "${{ inputs.babel }}" \
-          "${{ inputs.typescript }}" \
-          "${{ inputs.prettier }}" \
-          "${{ inputs.acorn-test262 }}"
+        ${ACTION_PATH}/clone-parallel.sh \
+          "${TEST_262}" \
+          "${BABEL}" \
+          "${TYPESCRIPT}" \
+          "${PRETTIER}" \
+          "${ACORN_TEST262}"
