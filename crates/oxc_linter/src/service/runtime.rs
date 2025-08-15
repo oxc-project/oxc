@@ -241,6 +241,26 @@ use message_cloner::MessageCloner;
 
 impl Runtime {
     pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        // If global thread pool wasn't already initialized, do it now.
+        // This "locks" config for the thread pool, which ensures `rayon::current_num_threads()`
+        // cannot change from now on.
+        //
+        // Initializing the thread pool without specifying `num_threads` produces a threadpool size
+        // based on `std::thread::available_parallelism`. However, Rayon's docs state that:
+        // > In the future, the default behavior may change to dynamically add or remove threads as needed.
+        // https://docs.rs/rayon/1.11.0/rayon/struct.ThreadPoolBuilder.html#method.num_threads
+        //
+        // However, I (@overlookmotel) assume that would be considered a breaking change,
+        // so we don't have to worry about it until Rayon v2.
+        // When Rayon v2 is released and we upgrade to it, we'll need to revisit this and make sure
+        // we still guarantee that thread count is locked.
+        //
+        // If thread pool was already initialized, this won't do anything.
+        // `build_global` will return `Err` in that case, but we can ignore it.
+        // That just means the config (and so number of threads) is already locked.
+        // https://docs.rs/rayon/1.11.0/rayon/struct.ThreadPoolBuilder.html#method.build_global
+        let _ = rayon::ThreadPoolBuilder::new().build_global();
+
         let thread_count = rayon::current_num_threads();
         let allocator_pool = AllocatorPool::new(thread_count);
 
