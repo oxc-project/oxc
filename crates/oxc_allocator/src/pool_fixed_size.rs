@@ -22,7 +22,6 @@ const FOUR_GIB: usize = 1 << 32;
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
-#[derive(Default)]
 pub struct AllocatorPool {
     /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,

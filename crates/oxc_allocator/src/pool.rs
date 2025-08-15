@@ -5,7 +5,6 @@ use crate::Allocator;
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
-#[derive(Default)]
 pub struct AllocatorPool {
     allocators: Mutex<Vec<Allocator>>,
 }
