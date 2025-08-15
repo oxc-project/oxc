@@ -68,7 +68,7 @@ rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }
 self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
 tokio = { workspace = true, optional = true }
