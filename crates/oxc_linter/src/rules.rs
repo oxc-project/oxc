@@ -175,6 +175,7 @@ mod eslint {
     pub mod prefer_promise_reject_errors;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
+    pub mod prefer_template;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -747,6 +748,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_void,
     eslint::no_with,
     eslint::operator_assignment,
+    eslint::prefer_template,
     eslint::prefer_destructuring,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
