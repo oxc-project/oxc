@@ -119,42 +119,66 @@ declare_oxc_lint!(
     style,
 );
 
-fn build_event_handler_regex(prefixes: &str, prop_prefixes: &str) -> Option<Regex> {
+fn build_event_handler_regex(
+    prefixes: &[CompactStr],
+    prop_prefixes: &[CompactStr],
+) -> Option<Regex> {
     if prefixes.is_empty() {
         return None;
     }
+    let prefix_pattern = prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
+    let prop_prefix_pattern =
+        prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
     Some(
         RegexBuilder::new(
-            format!(r"^((props\.{prop_prefixes})|((.*\.)?{prefixes}))[0-9]*[A-Z].*$").as_str(),
+            format!(
+                r"^((props\.({prop_prefix_pattern}))|((.*\.)?({prefix_pattern})))[0-9]*[A-Z].*$"
+            )
+            .as_str(),
         )
         .build()
         .expect("Failed to compile regex for event handler prefixes"),
     )
 }
 
-fn build_event_handler_prop_regex(prop_prefix: &str) -> Option<Regex> {
-    if prop_prefix.is_empty() {
+fn build_event_handler_prop_regex(prop_prefixes: &[CompactStr]) -> Option<Regex> {
+    if prop_prefixes.is_empty() {
         return None;
     }
+    let prop_prefix_pattern =
+        prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
     Some(
-        RegexBuilder::new(format!(r"^({prop_prefix}[A-Z].*|ref)$").as_str())
+        RegexBuilder::new(format!(r"^(({prop_prefix_pattern})[A-Z].*|ref)$").as_str())
             .build()
             .expect("Failed to compile regex for event handler prop prefixes"),
     )
 }
 
+/// Split the prefixes by `|` and return an array of CompactStr.
+/// Empty prefixes will be removed.
+/// This is used to parse the `eventHandlerPrefix` and `eventHandlerPropPrefix` options.
+fn split_prefixes_string(prefixes: &str) -> Vec<CompactStr> {
+    prefixes.split('|').map(str::trim).filter(|s| !s.is_empty()).map(CompactStr::from).collect()
+}
+
+static DEFAULT_HANDLER_PROP_PREFIXES: &str = "on";
+static DEFAULT_HANDLER_PREFIXES: &str = "handle";
+
 impl Default for JsxHandlerNamesConfig {
     fn default() -> Self {
-        let prefix = "handle";
-        let prop_prefix = "on";
+        let handler_prop_prefixes = vec![CompactStr::from(DEFAULT_HANDLER_PROP_PREFIXES)];
+        let handler_prefixes = vec![CompactStr::from(DEFAULT_HANDLER_PREFIXES)];
         JsxHandlerNamesConfig {
             check_inline_functions: false,
             check_local_variables: false,
-            event_handler_prop_prefixes: CompactStr::from(prop_prefix),
-            event_handler_prefixes: CompactStr::from(prefix),
+            event_handler_prop_prefixes: CompactStr::from(DEFAULT_HANDLER_PROP_PREFIXES),
+            event_handler_prefixes: CompactStr::from(DEFAULT_HANDLER_PREFIXES),
             ignore_component_names: vec![],
-            event_handler_regex: build_event_handler_regex(prefix, prop_prefix),
-            event_handler_prop_regex: build_event_handler_prop_regex(prop_prefix),
+            event_handler_regex: build_event_handler_regex(
+                &handler_prefixes,
+                &handler_prop_prefixes,
+            ),
+            event_handler_prop_regex: build_event_handler_prop_regex(&handler_prop_prefixes),
         }
     }
 }
@@ -163,8 +187,8 @@ impl Rule for JsxHandlerNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut check_inline_functions = false;
         let mut check_local_variables = false;
-        let mut event_handler_prop_prefixes = "on";
-        let mut event_handler_prefixes = "handle";
+        let mut event_handler_prop_prefixes = DEFAULT_HANDLER_PROP_PREFIXES;
+        let mut event_handler_prefixes = DEFAULT_HANDLER_PREFIXES;
         let mut ignore_component_names = vec![];
         if let Some(options) = value.get(0).and_then(Value::as_object) {
             if let Some(prefixes) = options.get("eventHandlerPrefix") {
@@ -202,9 +226,11 @@ impl Rule for JsxHandlerNames {
             }
         }
 
+        let handler_prefixes = split_prefixes_string(event_handler_prefixes);
+        let handler_prop_prefixes = split_prefixes_string(event_handler_prop_prefixes);
         let event_handler_regex =
-            build_event_handler_regex(event_handler_prefixes, event_handler_prop_prefixes);
-        let event_handler_prop_regex = build_event_handler_prop_regex(event_handler_prop_prefixes);
+            build_event_handler_regex(&handler_prefixes, &handler_prop_prefixes);
+        let event_handler_prop_regex = build_event_handler_prop_regex(&handler_prop_prefixes);
 
         Self(Box::new(JsxHandlerNamesConfig {
             check_inline_functions,
@@ -471,6 +497,22 @@ fn test() {
             Some(serde_json::json!([{ "eventHandlerPropPrefix": false }])),
         ),
         (
+            "<TestComponent onChange={handleChange} />",
+            Some(serde_json::json!([{ "eventHandlerPrefix": "handle|on" }])),
+        ),
+        (
+            "<TestComponent onChange={onChange} />",
+            Some(serde_json::json!([{ "eventHandlerPrefix": "handle|on" }])),
+        ),
+        (
+            "<TestComponent somePrefixChange={handleChange} />",
+            Some(serde_json::json!([{ "eventHandlerPropPrefix": "somePrefix|on" }])),
+        ),
+        (
+            "<TestComponent onChange={handleChange} />",
+            Some(serde_json::json!([{ "eventHandlerPropPrefix": "somePrefix|on" }])),
+        ),
+        (
             "<ComponentFromOtherLibraryBar customPropNameBar={handleSomething} />;",
             Some(
                 serde_json::json!([{ "checkLocalVariables": true, "ignoreComponentNames": ["ComponentFromOtherLibraryBar"] }]),
@@ -530,6 +572,18 @@ fn test() {
             "<TestComponent onChange={() => handleChange()} />",
             Some(
                 serde_json::json!([{ "checkInlineFunction": true, "checkLocalVariables": true, "eventHandlerPrefix": "handle", "eventHandlerPropPrefix": "when" }]),
+            ),
+        ),
+        (
+            "<TestComponent onChange={handleChange} />",
+            Some(
+                serde_json::json!([{ "checkLocalVariables": true, "eventHandlerPrefix": "when|on", "eventHandlerPropPrefix": "on" }]),
+            ),
+        ),
+        (
+            "<TestComponent somePrefixChange={handleChange} />",
+            Some(
+                serde_json::json!([{"checkLocalVariables": true,  "eventHandlerPrefix": "handle", "eventHandlerPropPrefix": "when|on" }]),
             ),
         ),
         ("<TestComponent onChange={this.onChange} />", None),

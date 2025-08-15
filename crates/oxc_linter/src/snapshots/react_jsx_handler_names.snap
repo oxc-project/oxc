@@ -106,6 +106,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prop key for handleChange must begin with 'when'
 
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: handleChange
+   ╭─[jsx_handler_names.tsx:1:25]
+ 1 │ <TestComponent onChange={handleChange} />
+   ·                         ──────────────
+   ╰────
+  help: Handler function for onChange prop key must be a camelCase name beginning with 'when|on' only
+
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: somePrefixChange
+   ╭─[jsx_handler_names.tsx:1:33]
+ 1 │ <TestComponent somePrefixChange={handleChange} />
+   ·                                 ──────────────
+   ╰────
+  help: Prop key for handleChange must begin with 'when|on'
+
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: onChange
    ╭─[jsx_handler_names.tsx:1:25]
  1 │ <TestComponent onChange={this.onChange} />
