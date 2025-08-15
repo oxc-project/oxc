@@ -105,7 +105,7 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
             },
             Self::ComputedMember(e) => {
                 e.format_leading_comments(f)?;
-                write!(f, [e.optional().then_some("?"), "[", e.expression(), "]"])?;
+                write!(f, [e.optional().then_some("?."), "[", e.expression(), "]"])?;
                 e.format_trailing_comments(f)
             }
             Self::Node(node) => write!(f, node),
