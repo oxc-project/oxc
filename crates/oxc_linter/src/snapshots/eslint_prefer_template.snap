@@ -155,18 +155,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use template literals instead of string concatenation.
 
-  × Unterminated string
-   ╭─[prefer_template.tsx:1:70]
- 1 │ foo + "unescapes an escaped double quote in a double-quoted string: ""
-   ·                                                                      ─
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + "unescapes an escaped double quote in a double-quoted string: "
+   · ─────────────────────────────────────────────────────────────────────
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[prefer_template.tsx:1:70]
- 1 │ foo + "unescapes an escaped double quote in a double-quoted string: ""
-   ·                                                                      ▲
-   ╰────
-  help: Try insert a semicolon here
+  help: Use template literals instead of string concatenation.
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
@@ -182,23 +176,17 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use template literals instead of string concatenation.
 
-  × Unterminated string
-   ╭─[prefer_template.tsx:1:44]
- 1 │ foo + 'handles unicode escapes correctly: ''
-   ·                                            ─
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + 'handles unicode escapes correctly: \x27'
+   · ───────────────────────────────────────────────
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[prefer_template.tsx:1:44]
- 1 │ foo + 'handles unicode escapes correctly: ''
-   ·                                            ▲
-   ╰────
-  help: Try insert a semicolon here
+  help: Use template literals instead of string concatenation.
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
- 1 │ foo + 'does not autofix octal escape sequence' + ''
-   · ──────────────────────────────────────────────────
+ 1 │ foo + 'does not autofix octal escape sequence' + '\x1b'
+   · ───────────────────────────────────────────────────────
    ╰────
   help: Use template literals instead of string concatenation.
 
@@ -209,12 +197,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use template literals instead of string concatenation.
 
-  × Unterminated string
-   ╭─[prefer_template.tsx:1:7]
- 1 │ foo + '
-   ·       ──
- 2 │  other text '
+  ⚠ eslint(prefer-template): Unexpected string concatenation.
+   ╭─[prefer_template.tsx:1:1]
+ 1 │ foo + '\n other text \x1b'
+   · ──────────────────────────
    ╰────
+  help: Use template literals instead of string concatenation.
 
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
