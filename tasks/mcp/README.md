@@ -48,6 +48,20 @@ cd tasks/mcp
 pnpm test
 ```
 
+To specifically test echoing "hello":
+
+```bash
+cd tasks/mcp
+pnpm test-hello
+```
+
+To see a demonstration of echoing "hello":
+
+```bash
+cd tasks/mcp
+pnpm demo-hello
+```
+
 ## Available Tools
 
 ### echo
