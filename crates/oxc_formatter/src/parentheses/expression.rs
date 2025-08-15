@@ -51,8 +51,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::UpdateExpression(it) => it.needs_parentheses(f),
             AstNodes::YieldExpression(it) => it.needs_parentheses(f),
             AstNodes::PrivateInExpression(it) => it.needs_parentheses(f),
-            // AstNodes::JSXElement(it) => it.needs_parentheses(f),
-            // AstNodes::JSXFragment(it) => it.needs_parentheses(f),
+            AstNodes::JSXElement(it) => it.needs_parentheses(f),
+            AstNodes::JSXFragment(it) => it.needs_parentheses(f),
             AstNodes::TSAsExpression(it) => it.needs_parentheses(f),
             AstNodes::TSSatisfiesExpression(it) => it.needs_parentheses(f),
             AstNodes::TSTypeAssertion(it) => it.needs_parentheses(f),
@@ -792,4 +792,46 @@ fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
         return c.super_class.as_ref().is_some_and(|c| c.without_parentheses().span() == span);
     }
     false
+}
+
+fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_>) -> bool {
+    if is_class_extends(span, parent) {
+        return true;
+    }
+
+    match parent {
+        AstNodes::BinaryExpression(binary) => {
+            let is_left = binary.left.span() == span;
+            binary.operator == BinaryOperator::LessThan && is_left
+        }
+        AstNodes::TSAsExpression(_)
+        | AstNodes::TSSatisfiesExpression(_)
+        | AstNodes::AwaitExpression(_)
+        | AstNodes::StaticMemberExpression(_)
+        | AstNodes::ComputedMemberExpression(_)
+        | AstNodes::SequenceExpression(_)
+        | AstNodes::UnaryExpression(_)
+        | AstNodes::TSNonNullExpression(_)
+        | AstNodes::SpreadElement(_)
+        | AstNodes::JSXSpreadAttribute(_)
+        | AstNodes::JSXSpreadChild(_) => true,
+        _ => matches!(
+            parent.parent(),
+            AstNodes::CallExpression(_)
+                | AstNodes::NewExpression(_)
+                | AstNodes::TaggedTemplateExpression(_)
+        ),
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, JSXElement<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        jsx_element_or_fragment_needs_paren(self.span, self.parent)
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, JSXFragment<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
+        jsx_element_or_fragment_needs_paren(self.span, self.parent)
+    }
 }

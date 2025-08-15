@@ -131,6 +131,12 @@ impl VisitMut<'_> for SpecParser {
                                 } else {
                                     QuoteStyle::Double
                                 };
+                            } else if name == "jsxSingleQuote" {
+                                options.jsx_quote_style = if literal.value {
+                                    QuoteStyle::Single
+                                } else {
+                                    QuoteStyle::Double
+                                };
                             }
                         }
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
