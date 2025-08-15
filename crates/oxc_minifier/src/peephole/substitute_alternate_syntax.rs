@@ -631,26 +631,32 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let Some(name) = Self::get_fold_constructor_name(callee, ctx) else { return };
-        let (span, args) = match expr {
-            Expression::NewExpression(e) => (e.span, &mut e.arguments),
-            Expression::CallExpression(e) => (e.span, &mut e.arguments),
+        let (span, callee, args, is_new_expr) = match expr {
+            Expression::NewExpression(e) => {
+                let NewExpression { span, callee, arguments, .. } = e.as_mut();
+                (span, callee, arguments, true)
+            }
+            Expression::CallExpression(e) => {
+                let CallExpression { span, callee, arguments, .. } = e.as_mut();
+                (span, callee, arguments, false)
+            }
             _ => return,
         };
         match name {
             "Object" if args.is_empty() => {
-                *expr = ctx.ast.expression_object(span, ctx.ast.vec());
+                *expr = ctx.ast.expression_object(*span, ctx.ast.vec());
                 ctx.state.changed = true;
             }
             "Array" => {
                 // `new Array` -> `[]`
                 if args.is_empty() {
-                    *expr = ctx.ast.expression_array(span, ctx.ast.vec());
+                    *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
                     ctx.state.changed = true;
                 } else if args.len() == 1 {
                     let Some(arg) = args[0].as_expression_mut() else { return };
                     // `new Array(0)` -> `[]`
                     if arg.is_number_0() {
-                        *expr = ctx.ast.expression_array(span, ctx.ast.vec());
+                        *expr = ctx.ast.expression_array(*span, ctx.ast.vec());
                         ctx.state.changed = true;
                     }
                     // `new Array(8)` -> `Array(8)`
@@ -666,39 +672,42 @@ impl<'a> PeepholeOptimizations {
                                     ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
                                 })
                                 .take(n_int);
-                                *expr =
-                                    ctx.ast.expression_array(span, ctx.ast.vec_from_iter(elisions));
+                                *expr = ctx
+                                    .ast
+                                    .expression_array(*span, ctx.ast.vec_from_iter(elisions));
                                 ctx.state.changed = true;
                                 return;
                             }
                         }
-                        let callee = ctx.ast.expression_identifier(n.span, "Array");
-                        let args = args.take_in(ctx.ast);
-                        *expr = ctx.ast.expression_call(span, callee, NONE, args, false);
-                        ctx.state.changed = true;
+                        if is_new_expr {
+                            let callee = callee.take_in(ctx.ast);
+                            let args = args.take_in(ctx.ast);
+                            *expr = ctx.ast.expression_call(*span, callee, NONE, args, false);
+                            ctx.state.changed = true;
+                        }
                     }
                     // `new Array(literal)` -> `[literal]`
                     else if arg.is_literal() || matches!(arg, Expression::ArrayExpression(_)) {
                         let elements =
                             ctx.ast.vec1(ArrayExpressionElement::from(arg.take_in(ctx.ast)));
-                        *expr = ctx.ast.expression_array(span, elements);
+                        *expr = ctx.ast.expression_array(*span, elements);
                         ctx.state.changed = true;
                     }
                     // `new Array(x)` -> `Array(x)`
-                    else {
-                        let callee = ctx.ast.expression_identifier(span, "Array");
+                    else if is_new_expr {
+                        let callee = callee.take_in(ctx.ast);
                         let args = args.take_in(ctx.ast);
-                        *expr = ctx.ast.expression_call(span, callee, NONE, args, false);
+                        *expr = ctx.ast.expression_call(*span, callee, NONE, args, false);
                         ctx.state.changed = true;
                     }
                 } else {
-                    // // `new Array(1, 2, 3)` -> `[1, 2, 3]`
+                    // `new Array(1, 2, 3)` -> `[1, 2, 3]`
                     let elements = ctx.ast.vec_from_iter(
                         args.iter_mut()
                             .filter_map(|arg| arg.as_expression_mut())
                             .map(|arg| ArrayExpressionElement::from(arg.take_in(ctx.ast))),
                     );
-                    *expr = ctx.ast.expression_array(span, elements);
+                    *expr = ctx.ast.expression_array(*span, elements);
                     ctx.state.changed = true;
                 }
             }
