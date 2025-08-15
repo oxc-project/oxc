@@ -10,9 +10,9 @@ pub struct AllocatorPool {
 }
 
 impl AllocatorPool {
-    /// Creates a new [`AllocatorPool`] pre-filled with the given number of default [`Allocator`] instances.
-    pub fn new(size: usize) -> AllocatorPool {
-        let allocators = iter::repeat_with(Allocator::new).take(size).collect();
+    /// Creates a new [`AllocatorPool`] for use across the specified number of threads.
+    pub fn new(thread_count: usize) -> AllocatorPool {
+        let allocators = iter::repeat_with(Allocator::new).take(thread_count).collect();
         AllocatorPool { allocators: Mutex::new(allocators) }
     }
 

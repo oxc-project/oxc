@@ -30,10 +30,11 @@ pub struct AllocatorPool {
 }
 
 impl AllocatorPool {
-    /// Creates a new [`AllocatorPool`] with capacity for the given number of `FixedSizeAllocator` instances.
-    pub fn new(size: usize) -> AllocatorPool {
-        // Each allocator consumes a large block of memory, so create them on demand instead of upfront
-        let allocators = Vec::with_capacity(size);
+    /// Creates a new [`AllocatorPool`] for use across the specified number of threads.
+    pub fn new(thread_count: usize) -> AllocatorPool {
+        // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
+        // in case not all threads end up being used (e.g. language server without `import` plugin)
+        let allocators = Vec::with_capacity(thread_count);
         AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
     }
 
