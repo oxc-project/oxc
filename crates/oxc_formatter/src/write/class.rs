@@ -355,7 +355,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                     let comments = if type_arguments.is_some() || !implements.is_empty() {
                         &[]
                     } else {
-                        f.context().comments().comments_between(extends.span().end, body.span.start())
+                        f.context()
+                            .comments()
+                            .comments_between(extends.span().end, body.span.start())
                     };
 
                     // Check if there are trailing line comments after the extends clause

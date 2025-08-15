@@ -77,7 +77,8 @@ impl Rule for NoAsyncAwait {
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async {
-                    let async_span = Span::new(arrow_expr.span.start(), arrow_expr.params.span.start());
+                    let async_span =
+                        Span::new(arrow_expr.span.start(), arrow_expr.params.span.start());
                     report_on_async_span(async_span, ctx);
                 }
             }
@@ -95,7 +96,8 @@ fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {
         return;
     };
-    let async_keyword_span = Span::sized(async_span.start() + async_keyword_offset as u32, ASYNC_LEN);
+    let async_keyword_span =
+        Span::sized(async_span.start() + async_keyword_offset as u32, ASYNC_LEN);
     ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 

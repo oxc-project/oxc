@@ -160,8 +160,10 @@ impl Rule for PreferObjectSpread {
                 let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
 
                 rule_fixes.push(
-                    fixer
-                        .replace(Span::new(call_expr.span.start(), callee_left_paren_span.end), left),
+                    fixer.replace(
+                        Span::new(call_expr.span.start(), callee_left_paren_span.end),
+                        left,
+                    ),
                 );
                 rule_fixes.push(
                     fixer.replace(Span::new(call_expr.span.end - 1, call_expr.span.end), right),

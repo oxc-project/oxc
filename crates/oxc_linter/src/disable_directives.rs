@@ -261,7 +261,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
             let comment_span = comment.content_span();
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
-            let mut rule_name_start = comment_span.start() + (text_source.len() - text.len()) as u32;
+            let mut rule_name_start =
+                comment_span.start() + (text_source.len() - text.len()) as u32;
 
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))

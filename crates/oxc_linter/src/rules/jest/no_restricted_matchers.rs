@@ -155,7 +155,8 @@ impl NoRestrictedMatchers {
             .collect::<Vec<_>>()
             .join(".");
 
-        let span = Span::new(members.first().unwrap().span.start(), members.last().unwrap().span.end);
+        let span =
+            Span::new(members.first().unwrap().span.start(), members.last().unwrap().span.end);
 
         for (restriction, message) in &self.restricted_matchers {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {

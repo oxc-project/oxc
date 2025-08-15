@@ -937,9 +937,11 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: &str) ->
     }
 
     match arguments.first().unwrap() {
-        Argument::TemplateLiteral(template) => {
-            is_multiline_template_starting_on_same_line(template.span.start(), template, source_text)
-        }
+        Argument::TemplateLiteral(template) => is_multiline_template_starting_on_same_line(
+            template.span.start(),
+            template,
+            source_text,
+        ),
         Argument::TaggedTemplateExpression(template) => {
             is_multiline_template_starting_on_same_line(
                 template.span.start(),

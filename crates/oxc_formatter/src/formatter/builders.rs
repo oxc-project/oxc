@@ -360,7 +360,10 @@ impl std::fmt::Debug for SyntaxTokenCowSlice<'_> {
 pub fn located_token_text(span: Span, source_text: &str) -> LocatedTokenText {
     let slice = span.source_text(source_text);
     debug_assert_no_newlines(slice);
-    LocatedTokenText { text: TokenText::new(slice.to_string(), span), source_position: span.start() }
+    LocatedTokenText {
+        text: TokenText::new(slice.to_string(), span),
+        source_position: span.start(),
+    }
 }
 
 pub struct LocatedTokenText {

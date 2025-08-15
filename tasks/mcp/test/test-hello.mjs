@@ -49,12 +49,12 @@ function testEchoHello() {
     server.on('close', (code) => {
       if (code === 0) {
         console.log('✓ MCP server echoed "hello" successfully');
-        
+
         // Parse the response to verify it contains "hello"
         try {
           const lines = output.trim().split('\n');
           const response = JSON.parse(lines[0]);
-          
+
           if (response.result?.content?.[0]?.text === 'hello') {
             console.log('✓ Echo response correctly returned "hello"');
             console.log('Response:', JSON.stringify(response, null, 2));

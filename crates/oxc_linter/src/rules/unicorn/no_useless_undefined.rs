@@ -181,7 +181,10 @@ impl Rule for NoUselessUndefined {
                                 {
                                     Span::new(comment.span.end, undefined_literal.span.end)
                                 } else {
-                                    Span::new(ret_stmt.span().start() + 6, undefined_literal.span.end)
+                                    Span::new(
+                                        ret_stmt.span().start() + 6,
+                                        undefined_literal.span.end,
+                                    )
                                 };
                                 fixer.delete_range(delete_span)
                             },

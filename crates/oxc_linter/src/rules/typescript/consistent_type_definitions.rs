@@ -172,7 +172,8 @@ impl Rule for ConsistentTypeDefinitions {
                         &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
 
                     let body_span = &decl.body.span;
-                    let body = &ctx.source_text()[body_span.start() as usize..body_span.end as usize];
+                    let body =
+                        &ctx.source_text()[body_span.start() as usize..body_span.end as usize];
 
                     let mut extends = String::new();
                     for exp in &decl.extends {

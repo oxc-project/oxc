@@ -55,7 +55,7 @@ server.on('close', (code) => {
       const lines = output.trim().split('\n');
       const response = JSON.parse(lines[0]);
       console.log(JSON.stringify(response, null, 2));
-      
+
       const echoedText = response.result?.content?.[0]?.text;
       if (echoedText === 'hello') {
         console.log('\n✅ SUCCESS: Successfully echoed "hello"!');

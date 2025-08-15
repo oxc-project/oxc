@@ -140,7 +140,8 @@ impl PreferToHaveLength {
         mem_expr: &MemberExpression<'a>,
         super_mem_expr: Option<&MemberExpression<'a>>,
     ) -> String {
-        let l = Span::new(mem_expr.span().start(), mem_expr.object().span().end).source_text(source);
+        let l =
+            Span::new(mem_expr.span().start(), mem_expr.object().span().end).source_text(source);
         let r = super_mem_expr.map(|mem_expr| {
             Span::new(mem_expr.object().span().end, mem_expr.span().end).source_text(source)
         });

@@ -8,7 +8,14 @@
   "bin": {
     "mcp-oxc": "dist/index.js"
   },
-  "scripts":{"build":"tsc","start":"node dist/index.js","dev":"tsc && node dist/index.js","test":"node test/test.mjs","test-hello":"node test/test-hello.mjs","demo-hello":"node demo-hello.mjs"},
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "test": "node test/test.mjs",
+    "test-hello": "node test/test-hello.mjs",
+    "demo-hello": "node demo-hello.mjs"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.2"
   },

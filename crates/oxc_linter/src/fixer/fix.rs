@@ -578,7 +578,8 @@ impl<'a> CompositeFix<'a> {
                 debug_assert!(
                     false,
                     "Fix must not be overlapped, last_pos: {}, span.start(): {}",
-                    last_pos, span.start()
+                    last_pos,
+                    span.start()
                 );
                 return Fix::empty();
             }

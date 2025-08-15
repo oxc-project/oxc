@@ -110,7 +110,8 @@ impl Rule for TripleSlashReference {
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
-        let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start());
+        let comments_range_end =
+            program.body.first().map_or(program.span.end, |v| v.span().start());
         let mut refs_for_import = FxHashMap::default();
 
         for comment in ctx.comments_range(0..comments_range_end) {

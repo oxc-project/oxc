@@ -278,7 +278,8 @@ impl<'a> Visit<'a> for TestCase {
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
-                        let option_text = &self.source_text[span.start() as usize..span.end as usize];
+                        let option_text =
+                            &self.source_text[span.start() as usize..span.end as usize];
                         self.config = Some(json::convert_config_to_json_literal(option_text));
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "settings" => {

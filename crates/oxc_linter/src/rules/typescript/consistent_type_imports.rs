@@ -869,7 +869,8 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let fixer = fixer.for_multifix();
-    let import_specifiers_span = Span::new(import_decl.span.start(), import_decl.source.span.start());
+    let import_specifiers_span =
+        Span::new(import_decl.span.start(), import_decl.source.span.start());
     let import_source = ctx.source_range(import_specifiers_span);
     let mut rule_fixes = fixer.new_fix_with_capacity(1);
 
@@ -920,12 +921,10 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
                 if specifier.import_kind.is_type() {
                     // import { type    A } from 'foo.js'
                     //          ^^^^^^^^ delete
-                    rule_fixes.push(
-                        fixer.delete(&Span::new(
-                            specifier.span.start(),
-                            specifier.imported.span().start(),
-                        )),
-                    );
+                    rule_fixes.push(fixer.delete(&Span::new(
+                        specifier.span.start(),
+                        specifier.imported.span().start(),
+                    )));
                 }
             }
         }

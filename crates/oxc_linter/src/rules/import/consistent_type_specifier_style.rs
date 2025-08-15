@@ -145,7 +145,10 @@ impl Rule for ConsistentTypeSpecifierStyle {
                     }
                     // find the 'type' keyword and remove it
                     if let Some(type_token_span) = ctx
-                        .source_range(Span::new(import_decl.span.start(), specifiers[0].span().start()))
+                        .source_range(Span::new(
+                            import_decl.span.start(),
+                            specifiers[0].span().start(),
+                        ))
                         .find("type")
                         .map(|pos| {
                             let start = import_decl.span.start() + pos as u32;
