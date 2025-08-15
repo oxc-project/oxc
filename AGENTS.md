@@ -46,10 +46,12 @@ Key commands (tools already installed):
 just ready     # Run all checks (use after commits)
 just fmt       # Format code (run after modifications)
 just check     # Check code
-just test      # Run tests  
+just test      # Run tests
 just lint      # Run linting
 just ast       # Update generated files (when oxc_ast changes)
 just conformance # Conformance tests (when Rust code changes)
+just minsize   # Update minification size snapshots (run when oxc_minifier changes)
+just allocs    # Update allocation snapshots (run when oxc_parser changes)
 
 pnpm build-dev # Build Node.js bindings
 pnpm test      # Node.js tests

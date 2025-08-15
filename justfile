@@ -230,6 +230,9 @@ website path:
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 
+minsize:
+    cargo minsize
+
 minifier-diff:
   #!/usr/bin/env bash
   cargo minsize --compress-only pr
