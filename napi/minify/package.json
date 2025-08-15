@@ -1,6 +1,7 @@
 {
   "name": "oxc-minify",
   "version": "0.82.1",
+  "type": "commonjs",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
@@ -24,7 +25,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/minify"
   },
   "funding": {

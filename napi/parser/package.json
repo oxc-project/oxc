@@ -1,6 +1,7 @@
 {
   "name": "oxc-parser",
   "version": "0.82.1",
+  "type": "commonjs",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
@@ -30,7 +31,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/parser"
   },
   "funding": {
