@@ -57,46 +57,7 @@ impl<'a> TsGoLintState<'a> {
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        // Feed JSON into STDIN of tsgolint in this format:
-        // ```
-        // {
-        //   "files": [
-        //     {
-        //       "file_path": "/absolute/path/to/file.ts",
-        //       "rules": ["rule-1", "another-rule"]
-        //     }
-        //   ]
-        // }
-        // ```
-        let json_input = TsGoLintInput {
-            files: self
-                .paths
-                .iter()
-                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
-                .map(|path| TsGoLintInputFile {
-                    file_path: path.to_string_lossy().to_string(),
-                    rules: {
-                        let path_buf = PathBuf::from(path);
-                        let resolved_config = resolved_configs
-                            .entry(path_buf.clone())
-                            .or_insert_with(|| self.config_store.resolve(&path_buf));
-
-                        // Collect the rules that are enabled for this file
-                        resolved_config
-                            .rules
-                            .iter()
-                            .filter_map(|(rule, status)| {
-                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                                    Some(rule.name().to_string())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect()
-                    },
-                })
-                .collect(),
-        };
+        let json_input = self.json_input(&mut resolved_configs);
 
         let handler = std::thread::spawn(move || {
             let child = std::process::Command::new(&self.executable_path)
@@ -260,6 +221,54 @@ impl<'a> TsGoLintState<'a> {
                 print_and_flush_stdout(stdout, &format!("Error running tsgolint: {err:?}"));
                 Some(CliRunResult::TsGoLintError)
             }
+        }
+    }
+
+    /// Create a JSON input for STDIN of tsgolint in this format:
+    ///
+    /// ```json
+    /// {
+    ///   "files": [
+    ///     {
+    ///       "file_path": "/absolute/path/to/file.ts",
+    ///       "rules": ["rule-1", "another-rule"]
+    ///     }
+    ///   ]
+    /// }
+    /// ```
+    #[inline]
+    fn json_input(
+        &self,
+        resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
+    ) -> TsGoLintInput {
+        TsGoLintInput {
+            files: self
+                .paths
+                .iter()
+                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
+                .map(|path| TsGoLintInputFile {
+                    file_path: path.to_string_lossy().to_string(),
+                    rules: {
+                        let path_buf = PathBuf::from(path);
+                        let resolved_config = resolved_configs
+                            .entry(path_buf.clone())
+                            .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                        // Collect the rules that are enabled for this file
+                        resolved_config
+                            .rules
+                            .iter()
+                            .filter_map(|(rule, status)| {
+                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                                    Some(rule.name().to_string())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    },
+                })
+                .collect(),
         }
     }
 }
