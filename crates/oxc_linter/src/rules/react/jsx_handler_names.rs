@@ -346,7 +346,7 @@ fn normalize_handler_name(s: &str) -> CompactStr {
     regex!(r"^this\.|.*::").replace(s1.as_ref(), "").into()
 }
 
-// test of aaa
+// Tests for the normalize_handler_name function to ensure it correctly strips prefixes and whitespace.
 #[test]
 fn test_normalize_handler_name() {
     assert_eq!(normalize_handler_name("this.handleChange"), "handleChange");
