@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 
 use crate::{
@@ -545,7 +545,7 @@ impl Tester {
         let cwd = self.current_working_directory.clone();
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
-        let mut lint_service = LintService::new(linter, AllocatorPool::default(), options);
+        let mut lint_service = LintService::new(linter, options);
         lint_service
             .with_file_system(Box::new(TesterFileSystem::new(
                 path_to_lint,

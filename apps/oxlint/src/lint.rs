@@ -13,7 +13,6 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
@@ -338,11 +337,9 @@ impl LintRunner {
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
-        let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
-
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(linter, allocator_pool, options);
+            let mut lint_service = LintService::new(linter, options);
             lint_service.with_paths(paths);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.

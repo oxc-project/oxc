@@ -10,7 +10,7 @@ use tower_lsp_server::{
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
-use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_allocator::Allocator;
 use oxc_linter::{
     ConfigStore, LINTABLE_EXTENSIONS, LintOptions, LintService, LintServiceOptions, Linter,
     MessageWithPosition, loader::Loader, read_to_arena_str,
@@ -76,7 +76,7 @@ impl IsolatedLintHandler {
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 
-        let service = LintService::new(linter, AllocatorPool::default(), lint_service_options);
+        let service = LintService::new(linter, lint_service_options);
 
         Self { service }
     }
