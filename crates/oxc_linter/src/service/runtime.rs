@@ -184,6 +184,7 @@ impl RuntimeFileSystem for OsFileSystem {
 ///
 /// This type is wrapped in a module so that other code cannot access the inner `UnsafeAllocatorRef`
 /// directly, and must go via the [`MessageCloner::clone_message`] method.
+#[cfg(any(feature = "language_server", test))]
 mod message_cloner {
     use std::sync::Mutex;
 
@@ -237,6 +238,7 @@ mod message_cloner {
         }
     }
 }
+#[cfg(any(feature = "language_server", test))]
 use message_cloner::MessageCloner;
 
 impl Runtime {
