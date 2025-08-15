@@ -3,7 +3,7 @@
 #  * For JavaScript, use typescript
 # Special requirements:
 #  * csharp: Requires the presence of a .sln file in the project folder.
-language: typescript
+language: rust
 
 # whether to use the project's gitignore file to ignore files
 # Added on 2025-04-07
@@ -22,7 +22,7 @@ read_only: false
 
 # list of tool names to exclude. We recommend not excluding any tools, see the readme for more details.
 # Below is the complete list of tools for convenience.
-# To make sure you have the latest list of tools, and to view their descriptions, 
+# To make sure you have the latest list of tools, and to view their descriptions,
 # execute `uv run scripts/print_tool_overview.py`.
 #
 #  * `activate_project`: Activates a project by name.
