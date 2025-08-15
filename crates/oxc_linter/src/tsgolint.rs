@@ -9,10 +9,9 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
-use oxc_linter::{
-    AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string,
-};
 use oxc_span::{SourceType, Span};
+
+use super::{AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -42,6 +41,13 @@ impl<'a> TsGoLintState<'a> {
         }
     }
 
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    /// - when `tsgolint` process cannot be awaited
+    ///
+    /// # Errors
+    /// A human-readable error message indicating why the linting failed.
     pub fn lint(self, error_sender: DiagnosticSender) -> Result<(), String> {
         if self.paths.is_empty() {
             return Ok(());
