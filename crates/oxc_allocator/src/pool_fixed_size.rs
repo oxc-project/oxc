@@ -207,12 +207,25 @@ impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
     pub fn new(id: u32) -> Self {
+        // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
+        // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
+        // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
+        // `Allocator::from_raw_parts` cannot panic, as that'd result in a large memory leak.
+        // Compiler will optimize this out.
+        #[expect(clippy::manual_assert)]
+        if cfg!(target_endian = "big") {
+            panic!("`FixedSizeAllocator` is not supported on big-endian systems.");
+        }
+
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
         let Some(alloc_ptr) = NonNull::new(alloc_ptr) else {
             alloc::handle_alloc_error(ALLOC_LAYOUT);
         };
+
+        // All code in the rest of this function is infallible, so the allocation will always end up
+        // owned by a `FixedSizeAllocator`, which takes care of freeing the memory correctly on drop
 
         // Get pointer to use for allocator chunk, aligned to 4 GiB.
         // `alloc_ptr` is aligned on 2 GiB, so `alloc_ptr % FOUR_GIB` is either 0 or `TWO_GIB`.
@@ -243,6 +256,7 @@ impl FixedSizeAllocator {
         // the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
         let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        let allocator = ManuallyDrop::new(allocator);
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
@@ -257,7 +271,7 @@ impl FixedSizeAllocator {
             metadata_ptr.write(metadata);
         }
 
-        Self { allocator: ManuallyDrop::new(allocator) }
+        Self { allocator }
     }
 
     /// Reset this [`FixedSizeAllocator`].
