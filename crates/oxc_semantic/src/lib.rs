@@ -22,6 +22,7 @@ pub use oxc_syntax::{
 
 pub mod dot;
 
+mod ast_types_bitset;
 mod binder;
 mod builder;
 mod checker;

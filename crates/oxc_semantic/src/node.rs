@@ -1,7 +1,7 @@
 use std::iter::FusedIterator;
 
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
+use oxc_ast::{AstKind, AstType, ast::Program};
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -9,6 +9,8 @@ use oxc_syntax::{
     node::{NodeFlags, NodeId},
     scope::ScopeId,
 };
+
+use crate::ast_types_bitset::AstTypesBitset;
 
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
@@ -101,6 +103,10 @@ pub struct AstNodes<'a> {
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
+    /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
+    /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
+    /// any nodes of that kind.
+    pub node_kinds_set: AstTypesBitset,
 }
 
 impl<'a> AstNodes<'a> {
@@ -212,6 +218,7 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(parent_node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_kinds_set.set(kind.ty());
         node_id
     }
 
@@ -234,6 +241,7 @@ impl<'a> AstNodes<'a> {
         );
         self.parent_ids.push(NodeId::ROOT);
         self.nodes.push(AstNode::new(kind, scope_id, cfg_id, flags, NodeId::ROOT));
+        self.node_kinds_set.set(kind.ty());
         NodeId::ROOT
     }
 
@@ -241,6 +249,33 @@ impl<'a> AstNodes<'a> {
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+    }
+
+    /// Checks if the AST contains any nodes of the given types.
+    ///
+    /// Example:
+    /// - `.contains_any(&[AstType::ForStatement])` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains_any(&[AstType::ImportDeclaration, AstType::ExportDeclaration])` returns `true` if there are any imports OR exports in the AST.
+    pub fn contains_any(&self, bitset: &AstTypesBitset) -> bool {
+        self.node_kinds_set.intersects(bitset)
+    }
+
+    /// Checks if the AST contains all of the given types.
+    ///
+    /// Example:
+    /// - `.contains_all(&[AstType::ForStatement])` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains_all(&[AstType::ImportDeclaration, AstType::ExportDeclaration])` returns `true` only if there is at least one import AND one export in the AST.
+    pub fn contains_all(&self, bitset: &AstTypesBitset) -> bool {
+        self.node_kinds_set.contains(bitset)
+    }
+
+    /// Checks if the AST contains a node of the given type.
+    ///
+    /// Example:
+    /// - `.contains(AstType::ForStatement)` returns `true` if there is a `for` loop anywhere in the AST.
+    /// - `.contains(AstType::ImportDeclaration)` returns `true` if there is an import in the AST.
+    pub fn contains(&self, ty: AstType) -> bool {
+        self.node_kinds_set.has(ty)
     }
 }
 
