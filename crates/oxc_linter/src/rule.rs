@@ -5,7 +5,7 @@ use std::{fmt, hash::Hash};
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
-use oxc_semantic::SymbolId;
+use oxc_semantic::{AstTypesBitset, SymbolId};
 
 use crate::{
     AstNode, FixKind,
@@ -66,6 +66,16 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 }
 
+pub trait RuleRunner: Rule {
+    /// `AstType`s that rule acts on
+    const NODE_TYPES: &AstTypesBitset;
+    /// `true` if codegen can't figure out what node types rule acts on
+    const ANY_NODE_TYPE: bool;
+
+    fn types_info(&self) -> (&'static AstTypesBitset, bool) {
+        (Self::NODE_TYPES, Self::ANY_NODE_TYPE)
+    }
+}
 pub trait RuleMeta {
     const NAME: &'static str;
 

@@ -77,6 +77,7 @@ impl TsGoLintState {
                     return Err(format!("Failed to write to tsgolint stdin: {e}"));
                 }
             }
+            dbg!(&json_input);
             // Explicitly drop stdin to send EOF to the child.
             drop(stdin);
 
