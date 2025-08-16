@@ -14,20 +14,27 @@ use oxc::{
     allocator::Allocator,
     ast::ast::Program,
     ast_visit::Visit,
-    codegen::{Codegen, CodegenOptions, CommentOptions},
+    codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar, LegalComment},
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
-    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
+    minifier::{
+        CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, MangleOptions, Minifier,
+        MinifierOptions, PropertyReadSideEffects, TreeShakeOptions,
+    },
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
-    syntax::reference::ReferenceFlags,
+    syntax::{es_target::ESTarget, reference::ReferenceFlags},
     transformer::{TransformOptions, Transformer},
 };
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
+    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
+};
 use oxc_index::Idx;
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Linter, ModuleRecord,
@@ -93,6 +100,7 @@ impl Oxc {
             transformer: transform_options,
             codegen: codegen_options,
             minifier: minifier_options,
+            formatter: formatter_options,
             control_flow: control_flow_options,
         } = options;
         let run_options = run_options.unwrap_or_default();
@@ -101,6 +109,7 @@ impl Oxc {
         let minifier_options = minifier_options.unwrap_or_default();
         let codegen_options = codegen_options.unwrap_or_default();
         let transform_options = transform_options.unwrap_or_default();
+        let formatter_options = formatter_options.unwrap_or_default();
         let control_flow_options = control_flow_options.unwrap_or_default();
 
         let allocator = Allocator::default();
@@ -117,7 +126,7 @@ impl Oxc {
 
         let default_parser_options = ParseOptions::default();
         let oxc_parser_options = ParseOptions {
-            parse_regular_expression: true,
+            parse_regular_expression: parser_options.parse_regular_expression.unwrap_or(true),
             allow_return_outside_function: parser_options
                 .allow_return_outside_function
                 .unwrap_or(default_parser_options.allow_return_outside_function),
@@ -163,7 +172,7 @@ impl Oxc {
             &allocator,
         );
 
-        self.run_formatter(&run_options, &source_text, source_type);
+        self.run_formatter(&run_options, &formatter_options, &source_text, source_type);
 
         let scoping = semantic.into_scoping();
 
@@ -203,17 +212,21 @@ impl Oxc {
                 return Ok(());
             }
 
-            let options = transform_options
-                .target
-                .as_ref()
-                .and_then(|target| {
-                    TransformOptions::from_target(target)
-                        .map_err(|err| {
-                            self.diagnostics.push(OxcDiagnostic::error(err));
-                        })
-                        .ok()
-                })
-                .unwrap_or_default();
+            let options = if transform_options.target.is_some() {
+                transform_options
+                    .target
+                    .as_ref()
+                    .and_then(|target| {
+                        TransformOptions::from_target(target)
+                            .map_err(|err| {
+                                self.diagnostics.push(OxcDiagnostic::error(err));
+                            })
+                            .ok()
+                    })
+                    .unwrap_or_default()
+            } else {
+                Self::build_transform_options(&transform_options)
+            };
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {
@@ -228,11 +241,7 @@ impl Oxc {
             let options = MinifierOptions {
                 mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
                 compress: Some(if minifier_options.compress.unwrap_or_default() {
-                    CompressOptions {
-                        drop_console: compress_options.drop_console,
-                        drop_debugger: compress_options.drop_debugger,
-                        ..CompressOptions::default()
-                    }
+                    Self::build_compress_options(&compress_options)
                 } else {
                     CompressOptions::default()
                 }),
@@ -245,12 +254,38 @@ impl Oxc {
         let codegen_result = Codegen::new()
             .with_scoping(symbol_table)
             .with_options(CodegenOptions {
-                minify: minifier_options.whitespace.unwrap_or_default(),
+                single_quote: codegen_options.single_quote.unwrap_or_default(),
+                minify: codegen_options
+                    .minify
+                    .unwrap_or(minifier_options.whitespace.unwrap_or_default()),
+                comments: if let Some(ref comment_opts) = codegen_options.comments {
+                    CommentOptions {
+                        normal: comment_opts.normal.unwrap_or(true),
+                        jsdoc: comment_opts.jsdoc.unwrap_or(true),
+                        annotation: comment_opts.annotation.unwrap_or(true),
+                        legal: match comment_opts.legal.as_deref() {
+                            Some("none") => LegalComment::None,
+                            Some("eof") => LegalComment::Eof,
+                            Some("external") => LegalComment::External,
+                            _ => LegalComment::Inline,
+                        },
+                    }
+                } else {
+                    CommentOptions::default()
+                },
                 source_map_path: codegen_options
                     .enable_sourcemap
                     .unwrap_or_default()
                     .then(|| path.clone()),
-                ..CodegenOptions::default()
+                indent_char: match codegen_options.indent_char.as_deref() {
+                    Some("space") => IndentChar::Space,
+                    Some("tab") => IndentChar::Tab,
+                    _ => IndentChar::default(),
+                },
+                indent_width: codegen_options
+                    .indent_width
+                    .unwrap_or(codegen_options.indentation.unwrap_or(1))
+                    as usize,
             })
             .build(&program);
         self.codegen_text = codegen_result.code;
@@ -325,6 +360,7 @@ impl Oxc {
     fn run_formatter(
         &mut self,
         run_options: &OxcRunOptions,
+        formatter_options: &crate::options::OxcFormatterOptions,
         source_text: &str,
         source_type: SourceType,
     ) {
@@ -337,7 +373,8 @@ impl Oxc {
                 .parse();
 
             if run_options.formatter_format.unwrap_or_default() {
-                let formatter = Formatter::new(&allocator, FormatOptions::default());
+                let format_options = Self::build_format_options(formatter_options);
+                let formatter = Formatter::new(&allocator, format_options);
                 self.formatter_formatted_text = formatter.build(&ret.program);
             }
 
@@ -452,5 +489,169 @@ impl Oxc {
             .collect::<Vec<_>>();
 
         serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
+    }
+
+    fn build_compress_options(
+        compress_options: &crate::options::OxcCompressOptions,
+    ) -> CompressOptions {
+        let target = if let Some(ref target_str) = compress_options.target {
+            match target_str.as_str() {
+                "es2015" | "es6" => ESTarget::ES2015,
+                "es2016" => ESTarget::ES2016,
+                "es2017" => ESTarget::ES2017,
+                "es2018" => ESTarget::ES2018,
+                "es2019" => ESTarget::ES2019,
+                "es2020" => ESTarget::ES2020,
+                "es2021" => ESTarget::ES2021,
+                "es2022" => ESTarget::ES2022,
+                "es2023" => ESTarget::ES2023,
+                "es2024" => ESTarget::ES2024,
+                "es2025" => ESTarget::ES2025,
+                _ => ESTarget::ESNext,
+            }
+        } else {
+            ESTarget::ESNext
+        };
+
+        let unused = match compress_options.unused.as_deref() {
+            Some("keep") => CompressOptionsUnused::Keep,
+            Some("keep_assign") => CompressOptionsUnused::KeepAssign,
+            _ => CompressOptionsUnused::Remove,
+        };
+
+        let keep_names = if let Some(ref keep_names_opts) = compress_options.keep_names {
+            CompressOptionsKeepNames {
+                function: keep_names_opts.function.unwrap_or(false),
+                class: keep_names_opts.class.unwrap_or(false),
+            }
+        } else {
+            CompressOptionsKeepNames::all_false()
+        };
+
+        let treeshake = if let Some(ref treeshake_opts) = compress_options.treeshake {
+            TreeShakeOptions {
+                annotations: treeshake_opts.annotations.unwrap_or(true),
+                manual_pure_functions: treeshake_opts
+                    .manual_pure_functions
+                    .clone()
+                    .unwrap_or_default(),
+                property_read_side_effects: match treeshake_opts
+                    .property_read_side_effects
+                    .as_deref()
+                {
+                    Some("none") => PropertyReadSideEffects::None,
+                    Some("only_member") => PropertyReadSideEffects::OnlyMemberPropertyAccess,
+                    _ => PropertyReadSideEffects::All,
+                },
+                unknown_global_side_effects: treeshake_opts
+                    .unknown_global_side_effects
+                    .unwrap_or(true),
+            }
+        } else {
+            TreeShakeOptions::default()
+        };
+
+        CompressOptions {
+            target,
+            drop_debugger: compress_options.drop_debugger.unwrap_or(true),
+            drop_console: compress_options.drop_console.unwrap_or(false),
+            join_vars: compress_options.join_vars.unwrap_or(true),
+            sequences: compress_options.sequences.unwrap_or(true),
+            unused,
+            keep_names,
+            treeshake,
+        }
+    }
+
+    fn build_transform_options(
+        _transform_options: &crate::options::OxcTransformerOptions,
+    ) -> TransformOptions {
+        // TODO: For now, return default options. This can be extended in the future
+        // to handle the comprehensive nested options like typescript, jsx, es2015, etc.
+        // The challenge is that the oxc TransformOptions is very complex with many nested structs
+        // and it's better to implement this incrementally as needed.
+        TransformOptions::default()
+    }
+
+    fn build_format_options(
+        formatter_options: &crate::options::OxcFormatterOptions,
+    ) -> FormatOptions {
+        FormatOptions {
+            indent_style: match formatter_options.indent_style.as_deref() {
+                Some("tab") => IndentStyle::Tab,
+                Some("space") => IndentStyle::Space,
+                _ => IndentStyle::default(),
+            },
+            indent_width: formatter_options
+                .indent_width
+                .and_then(|w| IndentWidth::try_from(w).ok())
+                .unwrap_or_default(),
+            line_ending: match formatter_options.line_ending.as_deref() {
+                Some("lf") => LineEnding::Lf,
+                Some("crlf") => LineEnding::Crlf,
+                Some("cr") => LineEnding::Cr,
+                _ => LineEnding::default(),
+            },
+            line_width: formatter_options
+                .line_width
+                .and_then(|w| LineWidth::try_from(w).ok())
+                .unwrap_or_default(),
+            quote_style: match formatter_options.quote_style.as_deref() {
+                Some("single") => QuoteStyle::Single,
+                Some("double") => QuoteStyle::Double,
+                _ => QuoteStyle::default(),
+            },
+            jsx_quote_style: match formatter_options.jsx_quote_style.as_deref() {
+                Some("single") => QuoteStyle::Single,
+                Some("double") => QuoteStyle::Double,
+                _ => QuoteStyle::default(),
+            },
+            quote_properties: match formatter_options.quote_properties.as_deref() {
+                Some("preserve") => QuoteProperties::Preserve,
+                Some("as-needed") => QuoteProperties::AsNeeded,
+                _ => QuoteProperties::default(),
+            },
+            trailing_commas: match formatter_options.trailing_commas.as_deref() {
+                Some("all") => TrailingCommas::All,
+                Some("es5") => TrailingCommas::Es5,
+                Some("none") => TrailingCommas::None,
+                _ => TrailingCommas::default(),
+            },
+            semicolons: match formatter_options.semicolons.as_deref() {
+                Some("always") => Semicolons::Always,
+                Some("as-needed") => Semicolons::AsNeeded,
+                _ => Semicolons::default(),
+            },
+            arrow_parentheses: match formatter_options.arrow_parentheses.as_deref() {
+                Some("always") => ArrowParentheses::Always,
+                Some("as-needed") => ArrowParentheses::AsNeeded,
+                _ => ArrowParentheses::default(),
+            },
+            bracket_spacing: BracketSpacing::from(
+                formatter_options.bracket_spacing.unwrap_or(true),
+            ),
+            bracket_same_line: BracketSameLine::from(
+                formatter_options.bracket_same_line.unwrap_or(false),
+            ),
+            attribute_position: match formatter_options.attribute_position.as_deref() {
+                Some("multiline") => AttributePosition::Multiline,
+                Some("auto") => AttributePosition::Auto,
+                _ => AttributePosition::default(),
+            },
+            expand: match formatter_options.expand.as_deref() {
+                Some("always") => Expand::Always,
+                Some("never") => Expand::Never,
+                Some("auto") => Expand::Auto,
+                _ => Expand::default(),
+            },
+            experimental_operator_position: match formatter_options
+                .experimental_operator_position
+                .as_deref()
+            {
+                Some("start") => OperatorPosition::Start,
+                Some("end") => OperatorPosition::End,
+                _ => OperatorPosition::default(),
+            },
+        }
     }
 }
