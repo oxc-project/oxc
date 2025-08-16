@@ -16,6 +16,16 @@ impl AstTypesBitset {
         Self([0; NUM_USIZES])
     }
 
+    pub const fn from_types(types: &[AstType]) -> Self {
+        let mut bitset = Self::new();
+        let mut i = 0;
+        while i < types.len() {
+            bitset.set(types[i]);
+            i += 1;
+        }
+        bitset
+    }
+
     /// Returns `true` if bit is set for provided [`AstType`].
     pub const fn has(&self, ty: AstType) -> bool {
         let (index, mask) = Self::index_and_mask(ty);

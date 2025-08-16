@@ -173,7 +173,10 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let import_statement = if used_in_test {
         None
     } else {
-        Some(quote! { use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta}, fixer::FixKind}; })
+        Some(quote! {
+            use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use oxc_semantic::AstTypesBitset;
+        })
     };
 
     #[cfg(not(feature = "ruledocs"))]
@@ -222,6 +225,16 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #docs
 
             #config_schema
+        }
+
+        impl RuleRunner for #name {
+            const NODE_TYPES: &'static AstTypesBitset = &AstTypesBitset::new();
+
+            const ANY_NODE_TYPE: bool = true;
+
+            fn types_info(&self) -> (&'static AstTypesBitset, bool) {
+                (Self::NODE_TYPES, Self::ANY_NODE_TYPE)
+            }
         }
     };
 

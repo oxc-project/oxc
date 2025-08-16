@@ -82,7 +82,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             utils::PossibleJestNode,
             AstNode
         };
-        use oxc_semantic::SymbolId;
+        use oxc_semantic::{AstTypesBitset, SymbolId};
 
         #[derive(Debug, Clone)]
         #[expect(clippy::enum_variant_names)]
@@ -181,6 +181,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub fn is_tsgolint_rule(&self) -> bool {
                 match self {
                     #(Self::#struct_names(rule) => #struct_names::IS_TSGOLINT_RULE),*
+                }
+            }
+
+            fn types_info(&self) -> (&'static AstTypesBitset, bool) {
+                match self {
+                    #(Self::#struct_names(rule) => #struct_names.types_info()),*
                 }
             }
         }
