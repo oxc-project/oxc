@@ -28,7 +28,8 @@ impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
-            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
+            executable_path:try_find_tsgolint_executable(cwd)
+                .unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
         }
     }
@@ -130,7 +131,7 @@ impl TsGoLintState {
                                         );
 
                                         let oxc_diagnostic: OxcDiagnostic =
-                                            tsgolint_diagnostic.into();
+                                            OxcDiagnostic::from(tsgolint_diagnostic);
                                         let Some(severity) = severity else {
                                             // If the severity is not found, we should not report the diagnostic
                                             continue;
@@ -308,9 +309,13 @@ pub struct TsGoLintDiagnostic {
 
 impl From<TsGoLintDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintDiagnostic) -> Self {
-        OxcDiagnostic::warn(val.message.description)
+        let mut d = OxcDiagnostic::warn(val.message.description)
             .with_label(Span::new(val.range.pos, val.range.end))
-            .with_error_code("typescript-eslint", val.rule)
+            .with_error_code("typescript-eslint", val.rule);
+        if let Some(help) = val.message.help {
+            d = d.with_help(help);
+        }
+        d
     }
 }
 
@@ -325,6 +330,7 @@ pub struct Range {
 pub struct RuleMessage {
     pub id: String,
     pub description: String,
+    pub help: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
