@@ -667,12 +667,9 @@ impl Runtime {
         });
     }
 
-    // clippy: the source field is checked and assumed to be less than 4GB, and
-    // we assume that the fix offset will not exceed 2GB in either direction
     // language_server: the language server needs line and character position
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
-    #[expect(clippy::cast_possible_truncation)]
     #[cfg(feature = "language_server")]
     pub(super) fn run_source<'a>(
         &mut self,
@@ -682,25 +679,7 @@ impl Runtime {
 
         use oxc_data_structures::rope::Rope;
 
-        use crate::{
-            FixWithPosition,
-            fixer::{Fix, PossibleFixesWithPosition},
-            service::offset_to_position::{SpanPositionMessage, offset_to_position},
-        };
-
-        fn fix_to_fix_with_position<'a>(
-            fix: &Fix<'a>,
-            rope: &Rope,
-            source_text: &str,
-        ) -> FixWithPosition<'a> {
-            let start_position = offset_to_position(rope, fix.span.start, source_text);
-            let end_position = offset_to_position(rope, fix.span.end, source_text);
-            FixWithPosition {
-                content: fix.content.clone(),
-                span: SpanPositionMessage::new(start_position, end_position)
-                    .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
-            }
-        }
+        use crate::fixer::message_to_message_with_position;
 
         // Wrap allocator in `MessageCloner` so can clone `Message`s into it
         let message_cloner = MessageCloner::new(allocator);
@@ -748,65 +727,7 @@ impl Runtime {
                                 |message| {
                                     let message = message_cloner.clone_message(message);
 
-                                    let labels = &message.error.labels.clone().map(|labels| {
-                                        labels
-                                            .into_iter()
-                                            .map(|labeled_span| {
-                                                let offset = labeled_span.offset() as u32;
-                                                let start_position =
-                                                    offset_to_position(rope, offset, source_text);
-                                                let end_position = offset_to_position(
-                                                    rope,
-                                                    offset + labeled_span.len() as u32,
-                                                    source_text,
-                                                );
-                                                let message = labeled_span
-                                                    .label()
-                                                    .map(|label| Cow::Owned(label.to_string()));
-
-                                                SpanPositionMessage::new(
-                                                    start_position,
-                                                    end_position,
-                                                )
-                                                .with_message(message)
-                                            })
-                                            .collect::<Vec<_>>()
-                                    });
-
-                                    MessageWithPosition {
-                                        message: message.error.message.clone(),
-                                        severity: message.error.severity,
-                                        help: message.error.help.clone(),
-                                        url: message.error.url.clone(),
-                                        code: message.error.code.clone(),
-                                        labels: labels.clone(),
-                                        fixes: match &message.fixes {
-                                            PossibleFixes::None => PossibleFixesWithPosition::None,
-                                            PossibleFixes::Single(fix) => {
-                                                PossibleFixesWithPosition::Single(
-                                                    fix_to_fix_with_position(
-                                                        fix,
-                                                        rope,
-                                                        source_text,
-                                                    ),
-                                                )
-                                            }
-                                            PossibleFixes::Multiple(fixes) => {
-                                                PossibleFixesWithPosition::Multiple(
-                                                    fixes
-                                                        .iter()
-                                                        .map(|fix| {
-                                                            fix_to_fix_with_position(
-                                                                fix,
-                                                                rope,
-                                                                source_text,
-                                                            )
-                                                        })
-                                                        .collect(),
-                                                )
-                                            }
-                                        },
-                                    }
+                                    message_to_message_with_position(&message, source_text, rope)
                                 },
                             ));
                         }
