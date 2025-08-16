@@ -8,6 +8,7 @@ benchmark = "bench -p oxc_benchmark"
 minsize = "run -p oxc_minsize --profile coverage --"
 allocs = "run -p oxc_track_memory_allocations --profile coverage --"
 rule = "run -p rulegen"
+lintgen = "run -p oxc_linter_codegen"
 
 # Build oxlint in release mode
 oxlint = "build --release -p oxlint --bin oxlint --features allocator"

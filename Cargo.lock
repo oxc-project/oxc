@@ -2046,6 +2046,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_linter_codegen"
+version = "0.0.0"
+dependencies = [
+ "convert_case",
+ "oxc_ast",
+ "oxc_semantic",
+ "project-root",
+ "syn",
+]
+
+[[package]]
 name = "oxc_linter_napi"
 version = "0.1.0"
 dependencies = [
