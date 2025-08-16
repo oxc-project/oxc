@@ -121,19 +121,20 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                for formatted in
-                    FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
-                        .with_trailing_separator(trailing_separator)
-                {
-                    joiner.entry(formatted.element.span(), &formatted);
-                }
-                joiner.finish()
+                joiner
+                    .entries_with_trailing_separator(
+                        FormalParametersIter::from(self.list),
+                        ",",
+                        trailing_separator,
+                    )
+                    .finish()
             }
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
-                join.entries(
-                    FormatSeparatedIter::new(self.list.items().iter(), ",")
-                        .with_trailing_separator(TrailingSeparator::Omit),
+                join.entries_with_trailing_separator(
+                    self.list.items().iter(),
+                    ",",
+                    TrailingSeparator::Omit,
                 );
                 join.finish()
             }

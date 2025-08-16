@@ -1,3 +1,5 @@
+use oxc_span::{GetSpan, Span};
+
 use crate::{
     formatter::{
         Format, FormatResult, Formatter,
@@ -10,16 +12,22 @@ use super::GroupId;
 
 /// Formats a single element inside a separated list.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct FormatSeparatedElement<E> {
+pub struct FormatSeparatedElement<E: GetSpan> {
     // Public this field to make it easier to get the element span from `FormatSeparatedElement`.
-    pub element: E,
+    element: E,
     is_last: bool,
     /// The separator to write if the element has no separator yet.
     separator: &'static str,
     options: FormatSeparatedOptions,
 }
 
-impl<'a, E: Format<'a>> Format<'a> for FormatSeparatedElement<E> {
+impl<T: GetSpan> GetSpan for FormatSeparatedElement<T> {
+    fn span(&self) -> Span {
+        self.element.span()
+    }
+}
+
+impl<'a, E: Format<'a> + GetSpan> Format<'a> for FormatSeparatedElement<E> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.options.nodes_grouped {
             group(&self.element).fmt(f)?;
@@ -42,14 +50,14 @@ impl<'a, E: Format<'a>> Format<'a> for FormatSeparatedElement<E> {
 
 /// Iterator for formatting separated elements. Prints the separator between each element and
 /// inserts a trailing separator if necessary
-pub struct FormatSeparatedIter<I, E> {
+pub struct FormatSeparatedIter<I, E: GetSpan> {
     next: Option<E>,
     inner: I,
     separator: &'static str,
     options: FormatSeparatedOptions,
 }
 
-impl<I, E> FormatSeparatedIter<I, E>
+impl<I, E: GetSpan> FormatSeparatedIter<I, E>
 where
     I: Iterator<Item = E>,
 {
@@ -74,7 +82,7 @@ where
     }
 }
 
-impl<I, E> Iterator for FormatSeparatedIter<I, E>
+impl<I, E: GetSpan> Iterator for FormatSeparatedIter<I, E>
 where
     I: Iterator<Item = E>,
 {

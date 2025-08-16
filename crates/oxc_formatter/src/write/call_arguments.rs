@@ -86,9 +86,10 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                     l_paren_token,
                     format_with(|f| {
                         f.join_with(space())
-                            .entries(
-                                FormatSeparatedIter::new(self.iter(), ",")
-                                    .with_trailing_separator(TrailingSeparator::Omit),
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Omit,
                             )
                             .finish()
                     }),

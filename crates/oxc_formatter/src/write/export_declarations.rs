@@ -139,26 +139,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-        let mut joiner = f.join_with(soft_line_break_or_space());
-        for specifier in
-            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator)
-        {
-            joiner.entry(&format_once(|f| {
-                // Should add empty line before the specifier if there are comments before it.
-                let comments =
-                    f.context().comments().comments_before(specifier.element.span().start);
-                if !comments.is_empty() {
-                    if get_lines_before(comments[0].span, f) > 1 {
-                        write!(f, [empty_line()])?;
-                    }
-                    write!(f, [FormatLeadingComments::Comments(comments)])?;
-                }
+        f.join_with(soft_line_break_or_space())
+            .entries(
+                FormatSeparatedIter::new(self.iter(), ",")
+                    .with_trailing_separator(trailing_separator)
+                    .map(|specifier| {
+                        format_once(move |f| {
+                            // Should add empty line before the specifier if there are comments before it.
+                            let comments =
+                                f.context().comments().comments_before(specifier.span().start);
+                            if !comments.is_empty() {
+                                if get_lines_before(comments[0].span, f) > 1 {
+                                    write!(f, [empty_line()])?;
+                                }
+                                write!(f, [FormatLeadingComments::Comments(comments)])?;
+                            }
 
-                write!(f, specifier)
-            }));
-        }
-
-        joiner.finish()
+                            write!(f, specifier)
+                        })
+                    }),
+            )
+            .finish()
     }
 }
 

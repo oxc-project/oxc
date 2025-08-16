@@ -99,28 +99,26 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                         &format_once(|f| {
                             let trailing_separator =
                                 FormatTrailingCommas::ES5.trailing_separator(f.options());
-
-                            let mut joiner = f.join_with(soft_line_break_or_space());
-                            for specifier in FormatSeparatedIter::new(specifiers_iter, ",")
+                            let iter = FormatSeparatedIter::new(specifiers_iter, ",")
                                 .with_trailing_separator(trailing_separator)
-                            {
-                                joiner.entry(&format_once(|f| {
-                                    // Should add empty line before the specifier if there are comments before it.
-                                    let comments = f
-                                        .context()
-                                        .comments()
-                                        .comments_before(specifier.element.span().start);
-                                    if !comments.is_empty() {
-                                        if get_lines_before(comments[0].span, f) > 1 {
-                                            write!(f, [empty_line()])?;
+                                .map(|specifier| {
+                                    format_once(move |f| {
+                                        // Should add empty line before the specifier if there are comments before it.
+                                        let comments = f
+                                            .context()
+                                            .comments()
+                                            .comments_before(specifier.span().start);
+                                        if !comments.is_empty() {
+                                            if get_lines_before(comments[0].span, f) > 1 {
+                                                write!(f, [empty_line()])?;
+                                            }
+                                            write!(f, [FormatLeadingComments::Comments(comments)])?;
                                         }
-                                        write!(f, [FormatLeadingComments::Comments(comments)])?;
-                                    }
 
-                                    write!(f, specifier)
-                                }));
-                            }
-                            joiner.finish()
+                                        write!(f, specifier)
+                                    })
+                                });
+                            f.join_with(soft_line_break_or_space()).entries(iter).finish()
                         }),
                         should_insert_space_around_brackets
                     )),
@@ -199,10 +197,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
             write!(f, [maybe_space])?;
 
             f.join_with(space())
-                .entries(
-                    FormatSeparatedIter::new(self.iter(), ",")
-                        .with_trailing_separator(TrailingSeparator::Disallowed),
-                )
+                .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
                 .finish()?;
 
             write!(f, [maybe_space])?;

@@ -3110,6 +3110,11 @@ pub struct AstNode<'a, T> {
     pub(super) allocator: &'a Allocator,
     pub(super) following_node: Option<SiblingNode<'a>>,
 }
+impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
+    fn span(&self) -> Span {
+        self.inner.span()
+    }
+}
 
 impl<'a, T: fmt::Debug> fmt::Debug for AstNode<'a, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
