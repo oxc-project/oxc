@@ -1,5 +1,3 @@
-use std::mem;
-
 use proc_macro2::{TokenStream, TokenTree};
 use quote::quote;
 use syn::{
@@ -49,7 +47,7 @@ pub struct StructDetails {
 fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
     let assertions = assert_generated_derives(&item.attrs);
 
-    let item = reorder_struct_fields(item, args).unwrap_or_else(|| quote!(#item));
+    reorder_struct_fields(item, args);
 
     quote! {
         #[repr(C)]
@@ -60,22 +58,25 @@ fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
 }
 
 /// Re-order struct fields, depending on instructions in `STRUCTS` (which is codegen-ed).
-fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Option<TokenStream> {
+///
+/// Mutates `item` in place, re-ordering its fields.
+fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) {
     // Skip foreign types
     if let Some(TokenTree::Ident(ident)) = args.into_iter().next() {
         if ident == "foreign" {
-            return None;
+            return;
         }
     }
 
     // Get struct data. Exit if no fields need re-ordering.
     let struct_name = item.ident.to_string();
-    let field_order = STRUCTS[&struct_name].field_order?;
+    let Some(field_order) = STRUCTS[&struct_name].field_order else {
+        return;
+    };
 
     // Re-order fields.
     // `field_order` contains indexes of fields in the order they should be.
-    let fields = mem::replace(&mut item.fields, Fields::Unit);
-    let Fields::Named(FieldsNamed { brace_token, mut named }) = fields else { unreachable!() };
+    let Fields::Named(FieldsNamed { named, .. }) = &mut item.fields else { unreachable!() };
 
     assert!(
         named.len() == field_order.len(),
@@ -89,7 +90,7 @@ fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Option<Tok
     let mut fields = named.clone().into_pairs().zip(field_order).collect::<Vec<_>>();
     fields.sort_unstable_by_key(|(_, index)| **index);
 
-    for field in &mut named {
+    for field in named.iter_mut() {
         field.attrs.insert(0, parse_quote!( #[cfg(doc)]));
     }
 
@@ -97,10 +98,6 @@ fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Option<Tok
         pair.value_mut().attrs.insert(0, parse_quote!( #[cfg(not(doc))]));
         pair
     }));
-
-    item.fields = Fields::Named(FieldsNamed { brace_token, named });
-
-    Some(quote!( #item ))
 }
 
 /// Generate assertions that traits used in `#[generate_derive]` are in scope.
