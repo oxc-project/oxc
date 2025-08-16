@@ -28,8 +28,7 @@ impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
-            executable_path:try_find_tsgolint_executable(cwd)
-                .unwrap_or(PathBuf::from("tsgolint")),
+            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
         }
     }
