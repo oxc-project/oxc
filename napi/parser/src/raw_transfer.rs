@@ -189,7 +189,7 @@ unsafe fn parse_raw_impl(
     };
     let source_len = source_len as usize;
     let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
-    let data_size = BUFFER_SIZE.saturating_sub(data_offset + RAW_METADATA_SIZE);
+    let data_size = (BUFFER_SIZE - RAW_METADATA_SIZE).saturating_sub(data_offset);
     assert!(data_size >= Allocator::RAW_MIN_SIZE, "Source text is too long");
 
     // Create `Allocator`.
