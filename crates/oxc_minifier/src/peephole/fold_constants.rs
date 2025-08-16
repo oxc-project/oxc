@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    ToJsString,
+    GlobalContext, ToJsString,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
@@ -12,105 +12,91 @@ use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
+/// Constant Folding
+///
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 impl<'a> PeepholeOptimizations {
-    /// Constant Folding
-    ///
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(&self, expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        match expr {
-            Expression::TemplateLiteral(t) => {
-                self.try_inline_values_in_template_literal(t, ctx);
-            }
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
-            _ => {}
-        }
-
-        if let Some(folded_expr) = match expr {
-            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
-                .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
-            Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
-            Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
-            Expression::ComputedMemberExpression(e) => Self::try_fold_computed_member_expr(e, ctx),
-            Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
-            Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
-            Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-            ctx.state.changed = true;
-        }
-    }
-
     #[expect(clippy::float_cmp)]
-    fn try_fold_unary_expr(
-        e: &UnaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_unary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::UnaryExpression(e) = expr else { return };
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
-            UnaryOperator::Void if e.argument.is_number_0() => None,
+            UnaryOperator::Void if e.argument.is_number_0() => {}
             // Do not fold `true` and `false` back to `!0` and `!1`
-            UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) => {
-                None
-            }
+            UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) =>
+                {}
             // Do not fold big int.
-            UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => None,
+            UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
+            _ if e.may_have_side_effects(ctx) => {}
             _ => {
-                if e.may_have_side_effects(ctx) {
-                    None
-                } else {
-                    e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v))
+                if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
+                    *expr = changed;
+                    ctx.state.changed = true;
                 }
             }
         }
     }
 
-    fn try_fold_static_member_expr(
-        e: &StaticMemberExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::StaticMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) {
-            None
-        } else {
-            e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value))
+            return;
+        }
+        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
+            *expr = changed;
+            ctx.state.changed = true;
         }
     }
 
-    fn try_fold_computed_member_expr(
-        e: &ComputedMemberExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ComputedMemberExpression(e) = expr else { return };
         // TODO: tryFoldObjectPropAccess(n, left, name)
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
-            None
-        } else {
-            e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value))
+            return;
+        }
+        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
+            *expr = changed;
+            ctx.state.changed = true;
         }
     }
 
-    fn try_fold_logical_expr(
-        logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        match logical_expr.operator {
-            LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
-            LogicalOperator::Coalesce => Self::try_fold_coalesce(logical_expr, ctx),
+    pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::LogicalExpression(e) = expr else { return };
+        if let Some(changed) = match e.operator {
+            LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
+            LogicalOperator::Coalesce => Self::try_fold_coalesce(e, ctx),
+        } {
+            *expr = changed;
+            ctx.state.changed = true;
         }
     }
 
-    fn try_fold_optional_chain(
-        chain_expr: &ChainExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let member_expr = chain_expr.expression.as_member_expression()?;
-        if !member_expr.optional() {
-            return None;
+    pub fn fold_chain_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ChainExpression(e) = expr else { return };
+        let left_expr = match &e.expression {
+            match_member_expression!(ChainElement) => {
+                let member_expr = e.expression.to_member_expression();
+                if !member_expr.optional() {
+                    return;
+                }
+                member_expr.object()
+            }
+            ChainElement::CallExpression(call_expr) => {
+                if !call_expr.optional {
+                    return;
+                }
+                &call_expr.callee
+            }
+            ChainElement::TSNonNullExpression(_) => return,
+        };
+        let ty = left_expr.value_type(ctx);
+        if let Some(changed) = (ty.is_null() || ty.is_undefined())
+            .then(|| ctx.value_to_expr(e.span, ConstantValue::Undefined))
+        {
+            *expr = changed;
+            ctx.state.changed = true;
         }
-        let object = member_expr.object();
-        let ty = object.value_type(ctx);
-        (ty.is_null() || ty.is_undefined())
-            .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
 
     /// Try to fold a AND / OR node.
@@ -118,7 +104,7 @@ impl<'a> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -192,7 +178,7 @@ impl<'a> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -267,16 +253,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    fn try_fold_binary_expr(
-        e: &mut BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = expr else { return };
         // TODO: tryReduceOperandsForOp
 
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1136
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1222
         let span = e.span;
-        match e.operator {
+        let changed = match e.operator {
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
@@ -328,30 +312,30 @@ impl<'a> PeepholeOptimizations {
                 .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                 .and_then(|_| ctx.eval_binary(e)),
             BinaryOperator::ShiftLeft => {
-                if let Some((left, right)) = Self::extract_numeric_values(e) {
+                Self::extract_numeric_values(e).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
                     let result_len = Self::approximate_printed_int_char_count(result);
-                    if result_len <= left_len + 2 + right_len {
-                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
-                    }
-                }
-                None
+                    (result_len <= left_len + 2 + right_len)
+                        .then(|| ctx.value_to_expr(span, ConstantValue::Number(result)))
+                })
             }
             BinaryOperator::ShiftRightZeroFill => {
-                if let Some((left, right)) = Self::extract_numeric_values(e) {
+                Self::extract_numeric_values(e).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
                     let result_len = Self::approximate_printed_int_char_count(result);
-                    if result_len <= left_len + 3 + right_len {
-                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
-                    }
-                }
-                None
+                    (result_len <= left_len + 3 + right_len)
+                        .then(|| ctx.value_to_expr(span, ConstantValue::Number(result)))
+                })
             }
             BinaryOperator::In => None,
+        };
+        if let Some(changed) = changed {
+            *expr = changed;
+            ctx.state.changed = true;
         }
     }
 
@@ -373,7 +357,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx) {
             if let Some(v) = e.evaluate_value(ctx) {
                 return Some(ctx.value_to_expr(e.span, v));
@@ -414,7 +398,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_add_op(
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
@@ -501,7 +485,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_left_child_op(
         e: &mut BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = e.operator;
         debug_assert!(matches!(
@@ -533,21 +517,15 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    fn try_fold_number_constructor(
-        e: &CallExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let Expression::Identifier(ident) = &e.callee else { return None };
-        if ident.name != "Number" {
-            return None;
-        }
-        if !ctx.is_global_reference(ident) {
-            return None;
+    pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::CallExpression(e) = expr else { return };
+        if !ctx.is_global_expr("Number", &e.callee) {
+            return;
         }
         if e.arguments.len() != 1 {
-            return None;
+            return;
         }
-        let arg = e.arguments[0].as_expression()?;
+        let Some(arg) = e.arguments[0].as_expression() else { return };
         let value = ConstantValue::Number(match arg {
             // `Number(undefined)` -> `NaN`
             Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
@@ -563,27 +541,28 @@ impl<'a> PeepholeOptimizations {
                 if let Some(n) = arg.evaluate_value_to_number(ctx) {
                     n
                 } else {
-                    return Some(ctx.ast.expression_unary(
+                    *expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
                         ctx.ast.expression_string_literal(n.span, n.value, n.raw),
-                    ));
+                    );
+                    ctx.state.changed = true;
+                    return;
                 }
             }
             e if e.is_void_0() => f64::NAN,
-            _ => return None,
+            _ => return,
         });
-        Some(ctx.value_to_expr(e.span, value))
+        *expr = ctx.value_to_expr(e.span, value);
+        ctx.state.changed = true;
     }
 
-    fn try_fold_binary_typeof_comparison(
-        bin_expr: &BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = expr else { return };
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
-        if bin_expr.operator.is_equality() {
+        if e.operator.is_equality() {
             if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
-                (&bin_expr.left, &bin_expr.right)
+                (&e.left, &e.right)
             {
                 if left.operator.is_typeof() && right.operator.is_typeof() {
                     if let (
@@ -592,13 +571,13 @@ impl<'a> PeepholeOptimizations {
                     ) = (&left.argument, &right.argument)
                     {
                         if left_ident.name == right_ident.name {
-                            return Some(ctx.ast.expression_boolean_literal(
-                                bin_expr.span,
-                                matches!(
-                                    bin_expr.operator,
-                                    BinaryOperator::StrictEquality | BinaryOperator::Equality
-                                ),
-                            ));
+                            let b = matches!(
+                                e.operator,
+                                BinaryOperator::StrictEquality | BinaryOperator::Equality
+                            );
+                            *expr = ctx.ast.expression_boolean_literal(e.span, b);
+                            ctx.state.changed = true;
+                            return;
                         }
                     }
                 }
@@ -607,18 +586,20 @@ impl<'a> PeepholeOptimizations {
 
         // `typeof a === 'asd` -> `false``
         // `typeof a !== 'b'` -> `true``
-        if let Expression::UnaryExpression(left) = &bin_expr.left {
-            if left.operator.is_typeof() && bin_expr.operator.is_equality() {
-                let right_ty = bin_expr.right.value_type(ctx);
+        if let Expression::UnaryExpression(left) = &e.left {
+            if left.operator.is_typeof() && e.operator.is_equality() {
+                let right_ty = e.right.value_type(ctx);
 
                 if !right_ty.is_undetermined() && right_ty != ValueType::String {
-                    return Some(ctx.ast.expression_boolean_literal(
-                        bin_expr.span,
-                        bin_expr.operator == BinaryOperator::Inequality
-                            || bin_expr.operator == BinaryOperator::StrictInequality,
-                    ));
+                    *expr = ctx.ast.expression_boolean_literal(
+                        e.span,
+                        e.operator == BinaryOperator::Inequality
+                            || e.operator == BinaryOperator::StrictInequality,
+                    );
+                    ctx.state.changed = true;
+                    return;
                 }
-                if let Expression::StringLiteral(string_lit) = &bin_expr.right {
+                if let Expression::StringLiteral(string_lit) = &e.right {
                     if !matches!(
                         string_lit.value.as_str(),
                         "string"
@@ -631,43 +612,44 @@ impl<'a> PeepholeOptimizations {
                             | "function"
                             | "unknown" // IE
                     ) {
-                        return Some(ctx.ast.expression_boolean_literal(
-                            bin_expr.span,
-                            bin_expr.operator == BinaryOperator::Inequality
-                                || bin_expr.operator == BinaryOperator::StrictInequality,
-                        ));
+                        *expr = ctx.ast.expression_boolean_literal(
+                            e.span,
+                            e.operator == BinaryOperator::Inequality
+                                || e.operator == BinaryOperator::StrictInequality,
+                        );
+                        ctx.state.changed = true;
                     }
                 }
             }
         }
-
-        None
     }
 
-    fn fold_object_spread(&self, e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn fold_object_exp(e: &mut ObjectExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        fn should_fold_spread_element<'a>(e: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+            match e {
+                Expression::ArrayExpression(o) if o.elements.is_empty() => true,
+                Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => true,
+                e if e.is_literal() && !e.is_string_literal() => true,
+                e if e.evaluate_value(ctx).is_some_and(|v| !v.is_string())
+                    && !e.may_have_side_effects(ctx) =>
+                {
+                    true
+                }
+                _ => false,
+            }
+        }
         let (new_size, should_fold) =
             e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
                 let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
                     return (new_size + 1, should_fold);
                 };
-                let e = &spread_element.argument;
-                if ctx.is_expression_undefined(e) {
-                    return (new_size, true);
-                }
-                match e {
-                    Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::FunctionExpression(_) => (new_size, true),
+                match &spread_element.argument {
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
                         (new_size + o.properties.len(), true)
                     }
-                    Expression::ArrayExpression(o) if o.elements.is_empty() => (new_size, true),
+                    e if should_fold_spread_element(e, ctx) => (new_size, true),
                     _ => (new_size + 1, should_fold),
                 }
             });
@@ -683,15 +665,6 @@ impl<'a> PeepholeOptimizations {
                     continue;
                 }
                 match e {
-                    Expression::BooleanLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::BigIntLiteral(_)
-                    | Expression::RegExpLiteral(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::FunctionExpression(_) => {
-                        // skip
-                    }
                     Expression::ObjectExpression(o)
                         if Self::is_spread_inlineable_object_literal(o, ctx) =>
                     {
@@ -707,8 +680,8 @@ impl<'a> PeepholeOptimizations {
                             }
                         }));
                     }
-                    Expression::ArrayExpression(o) if o.elements.is_empty() => {
-                        // skip empty array
+                    e if should_fold_spread_element(e, ctx) => {
+                        // skip
                     }
                     _ => {
                         new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
@@ -723,10 +696,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    fn is_spread_inlineable_object_literal(
-        e: &ObjectExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: &Ctx<'a, '_>) -> bool {
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
@@ -746,12 +716,7 @@ impl<'a> PeepholeOptimizations {
     /// Inline constant values in template literals
     ///
     /// - `foo${1}bar${i}` => `foo1bar${i}`
-    fn try_inline_values_in_template_literal(
-        &self,
-        t: &mut TemplateLiteral<'a>,
-
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn inline_template_literal(t: &mut TemplateLiteral<'a>, ctx: &mut Ctx<'a, '_>) {
         let has_expr_to_inline = t
             .expressions
             .iter()
@@ -1216,19 +1181,20 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_object_comparison1() {
-        fold("!new Date()", "false");
-        fold("!!new Date()", "true");
+        fold("!new Date()", "!1");
+        fold("!!new Date()", "!0");
+        fold_same("!new Date(foo)");
 
-        fold("new Date() == null", "false");
-        fold("new Date() == undefined", "false");
-        fold("new Date() != null", "true");
-        fold("new Date() != undefined", "true");
-        fold("null == new Date()", "false");
-        fold("undefined == new Date()", "false");
-        fold("null != new Date()", "true");
-        fold("undefined != new Date()", "true");
+        fold("new Date() == null", "!1");
+        fold("new Date() == undefined", "!1");
+        fold("new Date() != null", "!0");
+        fold("new Date() != undefined", "!0");
+        fold("null == new Date()", "!1");
+        fold("undefined == new Date()", "!1");
+        fold("null != new Date()", "!0");
+        fold("undefined != new Date()", "!0");
+        fold("new Date(foo) != undefined", "new Date(foo) != null");
     }
 
     #[test]
@@ -1284,6 +1250,8 @@ mod test {
         fold_same("a=+foo()");
         fold_same("a=+f");
         fold("a=+(f?true:false)", "a=+!!f");
+        fold("a=+(f?!0:!1)", "a=+!!f");
+        fold_same("a=+(f?(foo, !0):(bar, !1))");
         fold("a=+0", "a=0");
         fold("a=+Infinity", "a=Infinity");
         fold("a=+NaN", "a=NaN");
@@ -1482,6 +1450,8 @@ mod test {
         fold("x = null?.y", "x = void 0");
         fold("x = undefined?.[foo]", "x = void 0");
         fold("x = null?.[foo]", "x = void 0");
+        fold("x = undefined?.()", "x = void 0");
+        fold("x = null?.()", "x = void 0");
     }
 
     #[test]
@@ -2123,6 +2093,8 @@ mod test {
             fold("({ z, ...void 0 })", result);
             fold("({ z, ...null })", result);
             fold("({ z, ...true })", result);
+            fold("({ z, ...!0 })", result);
+            fold("({ z, ...!1 })", result);
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);

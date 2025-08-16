@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
 use std::cell::Cell;
+
+use rustc_hash::FxHashMap;
 
 use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};

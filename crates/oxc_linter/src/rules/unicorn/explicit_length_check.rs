@@ -4,11 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node},
@@ -214,8 +214,6 @@ impl ExplicitLengthCheck {
                     kind.span()
                 }
             }
-            // For negated expressions like !Boolean(...), replace the entire expression
-            AstKind::UnaryExpression(_) => kind.span(),
             // For other cases, use the node's span
             _ => kind.span(),
         };
@@ -236,15 +234,15 @@ impl ExplicitLengthCheck {
         }
 
         let fixed = format!(
-            "{}{}{}{}{}{}",
+            "{}{}{}{}{}{}{}",
             if need_pad_start { " " } else { "" },
             if need_paren { "(" } else { "" },
             static_member_expr.span.source_text(ctx.source_text()),
+            " ",
             check_code,
             if need_paren { ")" } else { "" },
             if need_pad_end { " " } else { "" },
         );
-
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
@@ -285,11 +283,7 @@ impl Rule for ExplicitLengthCheck {
             } else {
                 let (ancestor, is_negative) = get_boolean_ancestor(node, ctx);
                 if is_boolean_node(ancestor, ctx) {
-                    // For simple length checks like Boolean(foo.length) or !foo.length
-                    // is_negative indicates if the check is negated
-                    // A negated check means we're checking for non-zero (not empty)
-                    let is_zero_length_check = is_negative;
-                    self.report(ctx, ancestor, is_zero_length_check, static_member_expr, true);
+                    self.report(ctx, ancestor, is_negative, static_member_expr, true);
                     return;
                 }
                 match ctx.nodes().parent_kind(node.id()) {

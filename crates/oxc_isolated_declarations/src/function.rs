@@ -62,7 +62,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
         FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
 
-        if is_assignment_pattern || pattern.type_annotation.is_none() {
+        if is_assignment_pattern
+            || pattern.type_annotation.is_none()
+            || (param.pattern.optional && param.has_modifier())
+        {
             let type_annotation = pattern
                 .type_annotation
                 .as_ref()
@@ -78,7 +81,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // jf next param is not optional and current param is assignment pattern
                     // we need to add undefined to it's type
-                    if is_remaining_params_have_required {
+                    if is_remaining_params_have_required
+                        || (param.pattern.optional && param.has_modifier())
+                    {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {

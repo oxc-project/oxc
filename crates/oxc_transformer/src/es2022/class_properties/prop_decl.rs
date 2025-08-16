@@ -119,7 +119,7 @@ impl<'a> ClassProperties<'a, '_> {
                 None if self.set_public_class_fields
                     && self.remove_class_fields_without_initializer =>
                 {
-                    return;
+                    return self.extract_computed_key(prop, ctx);
                 }
                 None => ctx.ast.void_0(SPAN),
             };

@@ -1,4 +1,23 @@
 #![expect(clippy::print_stdout)]
+//! # Minifier Example
+//!
+//! This example demonstrates the Oxc minifier with options for compression,
+//! mangling, and source map generation.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_minifier --example minifier [filename] [options]
+//! ```
+//!
+//! ## Options
+//!
+//! - `--mangle`: Enable variable name mangling
+//! - `--nospace`: Remove extra whitespace
+//! - `--twice`: Test idempotency by running twice
+//! - `--sourcemap`: Generate source maps
+
 use std::path::{Path, PathBuf};
 
 use base64::{Engine, prelude::BASE64_STANDARD};
@@ -70,7 +89,7 @@ fn minify(
         mangle: mangle.then(MangleOptions::default),
         compress: Some(CompressOptions::smallest()),
     };
-    let ret = Minifier::new(options).build(allocator, &mut program);
+    let ret = Minifier::new(options).minify(allocator, &mut program);
     Codegen::new()
         .with_options(CodegenOptions {
             source_map_path,

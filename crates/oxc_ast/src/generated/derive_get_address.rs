@@ -770,6 +770,17 @@ impl GetAddress for TSTypeQueryExprName<'_> {
     }
 }
 
+impl GetAddress for TSImportTypeQualifier<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::Identifier(it) => GetAddress::address(it),
+            Self::QualifiedName(it) => GetAddress::address(it),
+        }
+    }
+}
+
 impl GetAddress for TSModuleReference<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]

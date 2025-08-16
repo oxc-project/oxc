@@ -114,11 +114,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// Converts `styled.div\`width: 100%;\`` to `styled.div(['width: 100%;'])`, which is
+    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`, which is
     /// more compact than the standard Babel template literal transformation.
     ///
     /// Default: `true`
-    #[expect(clippy::doc_link_with_quotes)]
     #[serde(default = "default_as_true")]
     pub transpile_template_literals: bool,
 
@@ -1067,8 +1066,16 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     // but preserve whitespace preceding colon, to avoid joining selectors.
                     if output.last().is_some_and(|&last| {
                         !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';')
-                    }) && (i < bytes.len() && !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
+                    }) && (i == bytes.len() || !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
                     {
+                        // `i == bytes.len()` means we're at the end of the quasi that has an
+                        // interpolation after it. Preserve trailing whitespace to avoid joining
+                        // with the interpolation.
+                        //
+                        // For example:
+                        // `padding: 0 ${PADDING}px`
+                        //            ^ this space should be preserved to avoid it becomes
+                        //              `padding:0${PADDING}px`
                         output.push(b' ');
                     }
                     continue;

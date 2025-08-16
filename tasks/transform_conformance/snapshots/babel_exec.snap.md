@@ -1,14 +1,10 @@
-commit: 1d4546bc
+commit: 98d18aa4
 
 node: v22.14.0
 
-Passed: 322 of 412 (78.16%)
+Passed: 324 of 414 (78.26%)
 
 Failures:
-
-./fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
-Parse failure: 'import', and 'export' cannot be used outside of module code
-At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
 Parse failure: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
@@ -80,6 +76,10 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js
 AssertionError: expected [Function Base] to be undefined // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js:10:29
+
+./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
+Parse failure: 'import', and 'export' cannot be used outside of module code
+At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization

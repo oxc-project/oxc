@@ -1,3 +1,5 @@
+use oxc_data_structures::assert_unchecked;
+
 use crate::diagnostics;
 
 use super::{Kind, Lexer};
@@ -41,50 +43,14 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
 ];
 
-/// Macro for defining a byte handler.
-///
-/// Use `ascii_byte_handler!` macro for ASCII characters, which adds optimizations for ASCII.
-///
-/// Handlers are defined as functions instead of closures, so they have names in flame graphs.
-///
-/// ```
-/// byte_handler!(UNI(lexer) {
-///   lexer.unicode_char_handler()
-/// });
-/// ```
-///
-/// expands to:
-///
-/// ```
-/// const UNI: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn UNI(lexer: &mut Lexer) -> Kind {
-///     lexer.unicode_char_handler()
-///   }
-///   UNI
-/// };
-/// ```
-macro_rules! byte_handler {
-    ($id:ident($lex:ident) $body:expr) => {
-        const $id: ByteHandler = {
-            #[expect(non_snake_case)]
-            fn $id($lex: &mut Lexer) -> Kind {
-                $body
-            }
-            $id
-        };
-    };
-}
-
 /// Macro for defining byte handler for an ASCII character.
 ///
-/// In addition to defining a `const` for the handler, it also asserts that lexer
-/// is not at end of file, and that next char is ASCII.
+/// Asserts that lexer is not at end of file, and that next char is ASCII.
 /// Where the handler is for an ASCII character, these assertions are self-evidently true.
 ///
 /// These assertions produce no runtime code, but hint to the compiler that it can assume that
 /// next char is ASCII, and it uses that information to optimize the rest of the handler.
-/// e.g. `lexer.consume_char()` becomes just a single assembler instruction.
+/// e.g. `lexer.consume_char()` becomes just a single assembly instruction.
 /// Without the assertions, the compiler is unable to deduce the next char is ASCII, due to
 /// the indirection of the `BYTE_HANDLERS` jump table.
 ///
@@ -95,42 +61,38 @@ macro_rules! byte_handler {
 ///
 /// ```
 /// ascii_byte_handler!(SPS(lexer) {
-///   lexer.consume_char();
-///   Kind::WhiteSpace
+///     lexer.consume_char();
+///     Kind::WhiteSpace
 /// });
 /// ```
 ///
 /// expands to:
 ///
 /// ```
-/// const SPS: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn SPS(lexer: &mut Lexer) {
+/// #[expect(non_snake_case)]
+/// fn SPS(lexer: &mut Lexer) {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
-///       use oxc_data_structures::assert_unchecked;
-///       assert_unchecked!(!lexer.source.is_eof());
-///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
+///         assert_unchecked!(!lexer.source.is_eof());
+///         assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
 ///     {
-///       lexer.consume_char();
-///       Kind::WhiteSpace
+///         lexer.consume_char();
+///         Kind::WhiteSpace
 ///     }
-///   }
-///   SPS
-/// };
+/// }
 /// ```
 macro_rules! ascii_byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
-        byte_handler!($id($lex) {
+        #[expect(non_snake_case)]
+        fn $id($lex: &mut Lexer) -> Kind {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
-                use oxc_data_structures::assert_unchecked;
                 assert_unchecked!(!$lex.source.is_eof());
                 assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }
             $body
-        });
+        }
     };
 }
 
@@ -148,36 +110,34 @@ macro_rules! ascii_byte_handler {
 ///
 /// ```
 /// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
-///   "et" => Kind::Get,
-///   "lobal" => Kind::Global,
-///   _ => Kind::Ident,
+///     "et" => Kind::Get,
+///     "lobal" => Kind::Global,
+///     _ => Kind::Ident,
 /// });
 /// ```
 ///
 /// expands to:
 ///
 /// ```
-/// const L_G: ByteHandler = {
-///   #[expect(non_snake_case)]
-///   fn L_G(lexer: &mut Lexer) -> Kind {
+/// #[expect(non_snake_case)]
+/// fn L_G(lexer: &mut Lexer) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
 ///     match id_without_first_char {
-///       "et" => Kind::Get,
-///       "lobal" => Kind::Global,
-///       _ => Kind::Ident,
+///         "et" => Kind::Get,
+///         "lobal" => Kind::Global,
+///         _ => Kind::Ident,
 ///     }
-///   }
-///   L_G
-/// };
+/// }
 /// ```
 macro_rules! ascii_identifier_handler {
     ($id:ident($str:ident) $body:expr) => {
-        byte_handler!($id(lexer) {
+        #[expect(non_snake_case)]
+        fn $id(lexer: &mut Lexer) -> Kind {
             // SAFETY: This macro is only used for ASCII characters
             let $str = unsafe { lexer.identifier_name_handler() };
             $body
-        });
+        }
     };
 }
 
@@ -210,28 +170,19 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
-        match next_2_bytes[0] {
-            b'=' => {
-                if next_2_bytes[1] == b'=' {
-                    lexer.consume_2_chars();
-                    Kind::Neq2
-                } else {
-                    lexer.consume_char();
-                    Kind::Neq
-                }
-            }
-            _ => Kind::Bang
-        }
-    } else {
-        // At EOF, or only 1 byte left
-        match lexer.peek_byte() {
-            Some(b'=') => {
+    // Try to peek at next byte for common case first
+    match lexer.peek_byte() {
+        Some(b'=') => {
+            lexer.consume_char();
+            // Check for !== (triple equals)
+            if lexer.peek_byte() == Some(b'=') {
                 lexer.consume_char();
+                Kind::Neq2
+            } else {
                 Kind::Neq
             }
-            _ => Kind::Bang
         }
+        _ => Kind::Bang
     }
 });
 
@@ -250,13 +201,7 @@ ascii_byte_handler!(QOS(lexer) {
 // #
 ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
-    // HashbangComment ::
-    //     `#!` SingleLineCommentChars?
-    if lexer.token.start() == 0 && lexer.next_ascii_byte_eq(b'!') {
-        lexer.read_hashbang_comment()
-    } else {
-        lexer.private_identifier()
-    }
+    lexer.private_identifier()
 });
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
@@ -428,37 +373,27 @@ ascii_byte_handler!(GTR(lexer) {
 ascii_byte_handler!(QST(lexer) {
     lexer.consume_char();
 
-    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
-        match next_2_bytes[0] {
-            b'?' => {
-                if next_2_bytes[1] == b'=' {
-                    lexer.consume_2_chars();
-                    Kind::Question2Eq
-                } else {
-                    lexer.consume_char();
-                    Kind::Question2
-                }
-            }
-            // parse `?.1` as `?` `.1`
-            b'.' if !next_2_bytes[1].is_ascii_digit() => {
+    match lexer.peek_byte() {
+        Some(b'?') => {
+            lexer.consume_char();
+            // Check for ??= (nullish coalescing assignment)
+            if lexer.peek_byte() == Some(b'=') {
                 lexer.consume_char();
-                Kind::QuestionDot
-            }
-            _ => Kind::Question,
-        }
-    } else {
-        // At EOF, or only 1 byte left
-        match lexer.peek_byte() {
-            Some(b'?') => {
-                lexer.consume_char();
+                Kind::Question2Eq
+            } else {
                 Kind::Question2
             }
-            Some(b'.') => {
+        }
+        Some(b'.') => {
+            // Only consume if not followed by digit (to parse `?.1` as `?` `.1`)
+            if lexer.peek_2_bytes().is_none_or(|bytes| !bytes[1].is_ascii_digit()) {
                 lexer.consume_char();
                 Kind::QuestionDot
+            } else {
+                Kind::Question
             }
-            _ => Kind::Question,
         }
+        _ => Kind::Question,
     }
 });
 
@@ -712,17 +647,21 @@ ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char
 });
 
 // Non-ASCII characters.
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
-byte_handler!(UNI(lexer) {
+//
+// Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
+#[expect(non_snake_case)]
+fn UNI(lexer: &mut Lexer) -> Kind {
     lexer.unicode_char_handler()
-});
+}
 
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
 // + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
 // `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
 // so something has gone wrong if we get here.
 // https://datatracker.ietf.org/doc/html/rfc3629
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
-byte_handler!(UER(_lexer) {
+//
+// Note: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
+#[expect(non_snake_case)]
+fn UER(_lexer: &mut Lexer) -> Kind {
     unreachable!();
-});
+}

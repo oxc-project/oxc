@@ -15,8 +15,6 @@ use std::{
 
 use bumpalo::Bump;
 
-use oxc_data_structures::pointer_ext::PointerExt;
-
 use crate::Allocator;
 
 /// Minimum alignment for allocator chunks. This is hard-coded on `bumpalo`.
@@ -166,7 +164,7 @@ impl Allocator {
         let cursor_ptr = self.cursor_ptr();
         // SAFETY: Cursor pointer is always `>=` data pointer.
         // Both pointers are within same allocation, and derived from the same original pointer.
-        let free_capacity = unsafe { cursor_ptr.offset_from_usize(data_ptr) };
+        let free_capacity = unsafe { cursor_ptr.offset_from_unsigned(data_ptr) };
 
         // Check sufficient capacity to write `alloc_bytes` bytes, without overwriting data already
         // stored in allocator.

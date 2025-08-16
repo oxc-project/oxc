@@ -23,7 +23,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
-    source_text: &'a str,
+    pub source_text: &'a str,
     comments: &'a Vec<'a, Comment>,
     printed_count: usize,
 }
@@ -43,6 +43,72 @@ impl<'a> Comments<'a> {
     #[inline]
     pub fn printed_comments(&self) -> &'a [Comment] {
         &self.comments[..self.printed_count]
+    }
+
+    /// Returns comments that are before the given `pos`.
+    pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if comment.span.end > pos {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
+    pub fn block_comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if comment.span.end > pos || !comment.is_block() {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
+    /// Returns own line comments that are before the given `pos`.
+    pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
+        let mut index = 0;
+
+        let comments = self.unprinted_comments();
+        for comment in comments {
+            if !is_own_line_comment(comment, self.source_text) {
+                break;
+            }
+
+            if comment.span.end > pos {
+                break;
+            }
+            index += 1;
+        }
+
+        &comments[..index]
+    }
+
+    pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
+        let mut index = 0;
+        let comments = self.comments_after(start);
+        while index < comments.len() {
+            let comment = &comments[index];
+            if self.source_text[start as usize..comment.span.start as usize]
+                .contains(character as char)
+            {
+                return &comments[..index];
+            }
+
+            start = comment.span.end;
+            index += 1;
+        }
+
+        comments
     }
 
     /// Returns the comments that after the given `start` position, even if they were already printed.
@@ -67,6 +133,21 @@ impl<'a> Comments<'a> {
         } else {
             &self.comments[index..]
         }
+    }
+
+    pub fn comments_between(&self, start: u32, end: u32) -> &'a [Comment] {
+        let comments = self.comments_after(start);
+
+        if comments.is_empty() {
+            return &[];
+        }
+
+        let mut index = 0;
+        while index < comments.len() - 1 && comments[index].span.end < end {
+            index += 1;
+        }
+
+        if comments[index].span.end < end { &comments[..=index] } else { &comments[..index] }
     }
 
     #[inline]
@@ -249,8 +330,22 @@ impl<'a> Comments<'a> {
         &self,
         enclosing_node: &SiblingNode<'a>,
         preceding_node: &SiblingNode<'a>,
-        following_node: Option<&SiblingNode<'a>>,
+        mut following_node: Option<&SiblingNode<'a>>,
     ) -> &'a [Comment] {
+        if !matches!(
+            enclosing_node,
+            SiblingNode::Program(_)
+                | SiblingNode::BlockStatement(_)
+                | SiblingNode::FunctionBody(_)
+                | SiblingNode::TSModuleBlock(_)
+                | SiblingNode::SwitchStatement(_)
+                | SiblingNode::StaticBlock(_)
+        ) && matches!(following_node, Some(SiblingNode::EmptyStatement(_)))
+        {
+            let enclosing_span = enclosing_node.span();
+            return self.comments_before(enclosing_span.end);
+        }
+
         // The preceding_node is the callee of the call expression or new expression, let following node to print it.
         // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L726-L741
         if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
@@ -272,16 +367,18 @@ impl<'a> Comments<'a> {
         );
 
         let Some(following_node) = following_node else {
+            if let SiblingNode::ImportDeclaration(import) = enclosing_node
+                && import.source.span.start > preceding_span.end
+            {
+                return self.comments_before(import.source.span.start);
+            }
+
             let enclosing_span = enclosing_node.span();
-            return comments
-                .iter()
-                .enumerate()
-                .take_while(|(_, comment)| comment.span.end <= enclosing_span.end)
-                .last()
-                .map_or(&[], |(index, _)| &comments[..=index]);
+            return self.comments_before(enclosing_span.end);
         };
 
         let following_span = following_node.span();
+
         let mut comment_index = 0;
         while let Some(comment) = comments.get(comment_index) {
             // Check if the comment is before the following node's span
@@ -292,8 +389,42 @@ impl<'a> Comments<'a> {
             if is_own_line_comment(comment, source_text) {
                 // TODO: describe the logic here
                 // Reached an own line comment, which means it is the leading comment for the next node.
+
+                if matches!(enclosing_node, SiblingNode::IfStatement(stmt) if stmt.test.span() == preceding_span)
+                    || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
+                {
+                    return handle_if_and_while_statement_comments(
+                        following_span.start,
+                        comment_index,
+                        comments,
+                        source_text,
+                    );
+                }
+
                 break;
             } else if is_end_of_line_comment(comment, source_text) {
+                if let SiblingNode::IfStatement(if_stmt) = enclosing_node {
+                    if if_stmt.consequent.span() == preceding_span {
+                        // If comment is after the `else` keyword, it is not a trailing comment of consequent.
+                        if source_text[preceding_span.end as usize..comment.span.start as usize]
+                            .contains("else")
+                        {
+                            return &[];
+                        }
+                    }
+                }
+
+                if matches!(enclosing_node, SiblingNode::IfStatement(stmt) if stmt.test.span() == preceding_span)
+                    || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
+                {
+                    return handle_if_and_while_statement_comments(
+                        following_span.start,
+                        comment_index,
+                        comments,
+                        source_text,
+                    );
+                }
+
                 // Should be a leading comment of following node.
                 // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
                 if matches!(
@@ -324,6 +455,13 @@ impl<'a> Comments<'a> {
             return &[];
         }
 
+        if matches!(
+            enclosing_node,
+            SiblingNode::ImportDeclaration(_) | SiblingNode::ExportAllDeclaration(_)
+        ) {
+            return &comments[..comment_index];
+        }
+
         let mut gap_end = following_span.start;
         for cur_index in (0..comment_index).rev() {
             let comment = &comments[cur_index];
@@ -338,6 +476,31 @@ impl<'a> Comments<'a> {
 
         &[]
     }
+}
+
+fn handle_if_and_while_statement_comments<'a>(
+    mut end: u32,
+    mut comment_index: usize,
+    comments: &'a [Comment],
+    source_text: &'a str,
+) -> &'a [Comment] {
+    // `if (a /* comment before paren */) // comment after paren`
+    loop {
+        let cur_comment_span = comments[comment_index].span;
+        if source_text.as_bytes()[cur_comment_span.end as usize..end as usize].contains(&b')') {
+            return &comments[..=comment_index];
+        }
+
+        end = cur_comment_span.start;
+
+        if comment_index == 0 {
+            return &[];
+        }
+
+        comment_index -= 1;
+    }
+
+    unreachable!()
 }
 
 #[inline]

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minifier"
-version = "0.78.0"
+version = "0.82.1"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -41,4 +41,5 @@ oxc_parser = { workspace = true }
 
 base64 = { workspace = true }
 insta = { workspace = true }
+javascript-globals = { workspace = true }
 pico-args = { workspace = true }

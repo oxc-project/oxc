@@ -123,7 +123,7 @@ fn is_top_expr(ctx: &LintContext, node: &AstNode) -> bool {
         return false;
     }
 
-    let parent = ast_util::iter_outer_expressions(ctx, node.id()).next();
+    let parent = ast_util::iter_outer_expressions(ctx.nodes(), node.id()).next();
     matches!(parent, Some(AstKind::ExpressionStatement(_)))
 }
 

@@ -85,8 +85,10 @@ impl TryFrom<&str> for Allowed {
             "getters" | "getter" => Ok(Self::Getters),
             "setters" | "setter" => Ok(Self::Setters),
             "constructors" | "constructor" => Ok(Self::Constructors),
-            "private-constructors" | "privateConstructors" => Ok(Self::PrivateConstructor),
-            "protected-constructors" | "protectedConstructors" => Ok(Self::ProtectedConstructor),
+            "asyncFunctions" | "async-functions" => Ok(Self::AsyncFunctions),
+            "asyncMethods" | "async-methods" => Ok(Self::AsyncMethods),
+            "privateConstructors" | "private-constructors" => Ok(Self::PrivateConstructor),
+            "protectedConstructors" | "protected-constructors" => Ok(Self::ProtectedConstructor),
             "decoratedFunctions" | "decorated-functions" => Ok(Self::DecoratedFunction),
             "overrideMethods" | "override-methods" => Ok(Self::OverrideMethod),
             _ => Err(()),
@@ -229,11 +231,37 @@ impl NoEmptyFunction {
             match parent {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {
-                        let kind = if f.generator { "generator function" } else { "function" };
+                        let is_generator = f.generator;
+                        let is_async = f.r#async;
+
+                        if is_generator && self.allow.contains(Allowed::GeneratorFunctions) {
+                            return ViolationInfo::default();
+                        }
+                        if is_async && self.allow.contains(Allowed::AsyncFunctions) {
+                            return ViolationInfo::default();
+                        }
+                        if !is_generator && !is_async && self.allow.contains(Allowed::Function) {
+                            return ViolationInfo::default();
+                        }
+
+                        let kind = if is_async {
+                            "async function"
+                        } else if is_generator {
+                            "generator function"
+                        } else {
+                            "function"
+                        };
                         return (kind, Some(name.into())).into();
                     }
                 }
-                AstKind::ArrowFunctionExpression(_) => {}
+                AstKind::ArrowFunctionExpression(arrow) => {
+                    if self.allow.contains(Allowed::ArrowFunction) {
+                        return ViolationInfo::default();
+                    }
+                    if arrow.r#async && self.allow.contains(Allowed::AsyncFunctions) {
+                        return ViolationInfo::default();
+                    }
+                }
                 AstKind::IdentifierName(IdentifierName { name, .. })
                 | AstKind::IdentifierReference(IdentifierReference { name, .. }) => {
                     return ("function", Some(Cow::Borrowed(name.as_str()))).into();
@@ -301,6 +329,11 @@ impl NoEmptyFunction {
             MethodDefinitionKind::Get => self.allow.contains(Allowed::Getters),
             MethodDefinitionKind::Set => self.allow.contains(Allowed::Setters),
             MethodDefinitionKind::Method => {
+                if method.value.r#async && self.allow.contains(Allowed::AsyncMethods)
+                    || method.value.generator && self.allow.contains(Allowed::GeneratorMethods)
+                {
+                    return true;
+                }
                 self.allow.contains(Allowed::Methods)
                     || (method.r#override && self.allow.contains(Allowed::OverrideMethod))
             }
@@ -434,6 +467,18 @@ fn test() {
             "class Foo extends Base { override foo() {} }",
             Some(serde_json::json!([{ "allow": ["overrideMethods"] }])),
         ),
+        // Test allow option for functions and arrow functions
+        ("function foo() {}", Some(serde_json::json!([{ "allow": ["functions"] }]))),
+        ("const bar = () => {};", Some(serde_json::json!([{ "allow": ["arrowFunctions"] }]))),
+        (
+            "const foo = () => {}; function bar() {}",
+            Some(serde_json::json!([{ "allow": ["arrowFunctions", "functions"] }])),
+        ),
+        ("function* gen() {}", Some(serde_json::json!([{ "allow": ["generatorFunctions"] }]))),
+        ("async function foo() {}", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
+        ("const foo = async () => {};", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
+        ("class Foo { async bar() {} }", Some(serde_json::json!([{ "allow": ["asyncMethods"] }]))),
+        ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generatorMethods"] }]))),
         // extras added by oxc team
         ("declare function foo(x: number): void;", None),
     ];

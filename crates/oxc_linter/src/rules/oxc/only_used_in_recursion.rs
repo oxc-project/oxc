@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingIdentifier, BindingPatternKind, BindingProperty, CallExpression,
-        Expression, FormalParameters, JSXAttributeItem, JSXElementName,
+        Argument, AssignmentTarget, BindingIdentifier, BindingPatternKind, BindingProperty,
+        CallExpression, Expression, FormalParameters, JSXAttributeItem, JSXElementName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -378,7 +378,18 @@ fn is_function_maybe_reassigned<'a>(
     ctx: &'a LintContext<'_>,
 ) -> bool {
     ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
-        matches!(ctx.nodes().parent_kind(reference.node_id()), AstKind::SimpleAssignmentTarget(_))
+        let reference_node = ctx.nodes().get_node(reference.node_id());
+
+        // Check if this reference is on the left side of an assignment
+        let parent_node = ctx.nodes().parent_node(reference.node_id());
+        if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
+            if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left {
+                if ident.span == reference_node.span() {
+                    return true; // Function is being reassigned
+                }
+            }
+        }
+        false
     })
 }
 

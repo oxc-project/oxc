@@ -317,7 +317,7 @@ function updateStatsBar(
     icon = '$(check-all)';
   }
 
-  myStatusBarItem.text = `oxc: ${icon}`;
+  myStatusBarItem.text = `${icon} oxc`;
   myStatusBarItem.backgroundColor = new ThemeColor(bgColor);
 }
 

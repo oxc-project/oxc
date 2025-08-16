@@ -48,9 +48,18 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::LogicalExpression(e) => e.may_have_side_effects(ctx),
             Expression::ParenthesizedExpression(e) => e.expression.may_have_side_effects(ctx),
             Expression::ConditionalExpression(e) => {
-                e.test.may_have_side_effects(ctx)
-                    || e.consequent.may_have_side_effects(ctx)
-                    || e.alternate.may_have_side_effects(ctx)
+                if e.test.may_have_side_effects(ctx) {
+                    return true;
+                }
+                // typeof x === 'undefined' ? fallback : x
+                if is_side_effect_free_unbound_identifier_ref(&e.alternate, &e.test, false, ctx) {
+                    return e.consequent.may_have_side_effects(ctx);
+                }
+                // typeof x !== 'undefined' ? x : fallback
+                if is_side_effect_free_unbound_identifier_ref(&e.consequent, &e.test, true, ctx) {
+                    return e.alternate.may_have_side_effects(ctx);
+                }
+                e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
             Expression::SequenceExpression(e) => {
                 e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
@@ -81,7 +90,7 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
             // Reading global variables may have a side effect.
             // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
             // NOTE: we ignore TDZ errors
-            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self) != Some(false),
+            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self),
         }
     }
 }
@@ -149,7 +158,7 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
                     // Any known global non-constructor functions can be allowed here.
                     // But because non-constructor functions are not likely to be used, we ignore them.
                     if is_known_global_constructor(name)
-                        && ctx.is_global_reference(right_ident) == Some(true)
+                        && ctx.is_global_reference(right_ident)
                         && !self.left.value_type(ctx).is_undetermined()
                     {
                         return false;
@@ -285,7 +294,25 @@ fn is_known_global_constructor(name: &str) -> bool {
 
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        self.left.may_have_side_effects(ctx) || self.right.may_have_side_effects(ctx)
+        if self.left.may_have_side_effects(ctx) {
+            return true;
+        }
+        match self.operator {
+            LogicalOperator::And => {
+                // Pattern: typeof x !== 'undefined' && x
+                if is_side_effect_free_unbound_identifier_ref(&self.right, &self.left, true, ctx) {
+                    return false;
+                }
+            }
+            LogicalOperator::Or => {
+                // Pattern: typeof x === 'undefined' || x
+                if is_side_effect_free_unbound_identifier_ref(&self.right, &self.left, false, ctx) {
+                    return false;
+                }
+            }
+            LogicalOperator::Coalesce => {}
+        }
+        self.right.may_have_side_effects(ctx)
     }
 }
 
@@ -357,7 +384,11 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
         // Example cases: `class A extends 0 {}`, `class A extends (async function() {}) {}`
         // Considering these cases is difficult and requires to de-opt most classes with a super class.
         // To allow classes with a super class to be removed, we ignore this side effect.
-        if self.super_class.as_ref().is_some_and(|sup| sup.may_have_side_effects(ctx)) {
+        if self.super_class.as_ref().is_some_and(|sup| {
+            // `(class C extends (() => {}))` is TypeError.
+            matches!(sup.without_parentheses(), Expression::ArrowFunctionExpression(_))
+                || sup.may_have_side_effects(ctx)
+        }) {
             return true;
         }
 
@@ -498,20 +529,44 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
 impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
-            self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
-        } else {
-            true
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
+        true
     }
 }
 
 impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
-            self.arguments.iter().any(|e| e.may_have_side_effects(ctx))
-        } else {
-            true
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
+        if let Expression::Identifier(ident) = &self.callee
+            && ctx.is_global_reference(ident)
+            && matches!(
+                ident.name.as_str(),
+                "Set"
+                    | "Map"
+                    | "WeakSet"
+                    | "WeakMap"
+                    | "ArrayBuffer"
+                    | "Date"
+                    | "Boolean"
+                    | "Error"
+                    | "EvalError"
+                    | "RangeError"
+                    | "ReferenceError"
+                    | "RegExp"
+                    | "SyntaxError"
+                    | "TypeError"
+                    | "URIError"
+                    | "Number"
+                    | "Object"
+                    | "String"
+            )
+        {
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+        true
     }
 }
 
@@ -537,4 +592,104 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
             match_expression!(Argument) => self.to_expression().may_have_side_effects(ctx),
         }
     }
+}
+
+/// Helper function to check if accessing an unbound identifier reference is side-effect-free based on a guard condition.
+///
+/// This function analyzes patterns like:
+/// - `typeof x === 'undefined' && x` (safe to access x in the right branch)
+/// - `typeof x !== 'undefined' || x` (safe to access x in the right branch)
+/// - `typeof x < 'u' && x` (safe to access x in the right branch)
+///
+/// Ported from: <https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_ast/js_ast_helpers.go#L2594-L2639>
+fn is_side_effect_free_unbound_identifier_ref<'a>(
+    value: &Expression<'a>,
+    guard_condition: &Expression<'a>,
+    mut is_yes_branch: bool,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    let Some(ident) = value.get_identifier_reference() else {
+        return false;
+    };
+    if !ctx.is_global_reference(ident) {
+        return false;
+    }
+
+    let Expression::BinaryExpression(bin_expr) = guard_condition else {
+        return false;
+    };
+    match bin_expr.operator {
+        BinaryOperator::StrictEquality
+        | BinaryOperator::StrictInequality
+        | BinaryOperator::Equality
+        | BinaryOperator::Inequality => {
+            let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
+            if matches!(ty_of, Expression::StringLiteral(_)) {
+                std::mem::swap(&mut string, &mut ty_of);
+            }
+
+            let Expression::UnaryExpression(unary) = ty_of else {
+                return false;
+            };
+            if !(unary.operator == UnaryOperator::Typeof
+                && matches!(unary.argument, Expression::Identifier(_)))
+            {
+                return false;
+            }
+
+            let Expression::StringLiteral(string) = string else {
+                return false;
+            };
+
+            let is_undefined_check = string.value == "undefined";
+            if (is_undefined_check == is_yes_branch)
+                == matches!(
+                    bin_expr.operator,
+                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
+                )
+                && unary.argument.is_specific_id(&ident.name)
+            {
+                return true;
+            }
+        }
+        BinaryOperator::LessThan
+        | BinaryOperator::LessEqualThan
+        | BinaryOperator::GreaterThan
+        | BinaryOperator::GreaterEqualThan => {
+            let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
+            if matches!(ty_of, Expression::StringLiteral(_)) {
+                std::mem::swap(&mut string, &mut ty_of);
+                is_yes_branch = !is_yes_branch;
+            }
+
+            let Expression::UnaryExpression(unary) = ty_of else {
+                return false;
+            };
+            if !(unary.operator == UnaryOperator::Typeof
+                && matches!(unary.argument, Expression::Identifier(_)))
+            {
+                return false;
+            }
+
+            let Expression::StringLiteral(string) = string else {
+                return false;
+            };
+            if string.value != "u" {
+                return false;
+            }
+
+            if is_yes_branch
+                == matches!(
+                    bin_expr.operator,
+                    BinaryOperator::LessThan | BinaryOperator::LessEqualThan
+                )
+                && unary.argument.is_specific_id(&ident.name)
+            {
+                return true;
+            }
+        }
+        _ => {}
+    }
+
+    false
 }

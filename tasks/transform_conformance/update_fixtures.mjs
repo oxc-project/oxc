@@ -21,7 +21,7 @@ const PACKAGES = [
   'babel-plugin-transform-private-methods',
   'babel-plugin-transform-private-property-in-object',
   'babel-plugin-transform-logical-assignment-operators',
-  'babel-plugin-proposal-explicit-resource-management',
+  'babel-plugin-transform-explicit-resource-management',
 ];
 const FILTER_OUT_PRESETS = ['env'];
 const FILTER_OUT_PLUGINS = [

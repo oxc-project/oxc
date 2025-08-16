@@ -2984,6 +2984,26 @@ impl ESTree for TSImportType<'_> {
     }
 }
 
+impl ESTree for TSImportTypeQualifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSImportTypeQualifiedName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
 impl ESTree for TSFunctionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();

@@ -180,15 +180,25 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Section 12.5 Hashbang Comments
-    pub(super) fn read_hashbang_comment(&mut self) -> Kind {
+    /// Section 12.5 Hashbang Comments.
+    ///
+    /// # SAFETY
+    /// Next 2 bytes must be `#!`.
+    pub(super) unsafe fn read_hashbang_comment(&mut self) -> Kind {
+        debug_assert!(self.peek_2_bytes() == Some([b'#', b'!']));
+
+        // SAFETY: Caller guarantees next 2 bytes are `#!`
+        unsafe {
+            self.source.next_byte_unchecked();
+            self.source.next_byte_unchecked();
+        }
+
         while let Some(c) = self.peek_char() {
             if is_line_terminator(c) {
                 break;
             }
             self.consume_char();
         }
-        self.token.set_is_on_new_line(true);
         Kind::HashbangComment
     }
 }

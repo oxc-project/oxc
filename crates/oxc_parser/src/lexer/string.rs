@@ -237,9 +237,13 @@ impl<'a> Lexer<'a> {
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
     pub(super) fn save_string(&mut self, has_escape: bool, s: &'a str) {
-        if !has_escape {
-            return;
+        if has_escape {
+            self.save_escaped_string(s);
         }
+    }
+
+    #[cold]
+    fn save_escaped_string(&mut self, s: &'a str) {
         self.escaped_strings.insert(self.token.start(), s);
         self.token.set_escaped(true);
     }

@@ -5,8 +5,15 @@ use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
-    /// Constant value evaluated from expressions.
-    pub constant: ConstantValue<'a>,
+    /// Initialized constant value evaluated from expressions.
+    /// `None` when the value is not a constant evaluated value.
+    pub initialized_constant: Option<ConstantValue<'a>>,
+
+    /// Symbol is exported.
+    pub exported: bool,
+
+    /// Inside for statement initializer.
+    pub for_statement_init: bool,
 
     pub read_references_count: u32,
     pub write_references_count: u32,
@@ -27,10 +34,6 @@ impl<'a> SymbolValues<'a> {
 
     pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>) {
         self.values.insert(symbol_id, symbol_value);
-    }
-
-    pub fn get_constant_value(&self, symbol_id: SymbolId) -> Option<&ConstantValue<'a>> {
-        self.values.get(&symbol_id).map(|v| &v.constant)
     }
 
     pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {

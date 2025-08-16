@@ -1,8 +1,8 @@
-commit: 1d4546bc
+commit: 98d18aa4
 
 minifier_babel Summary:
-AST Parsed     : 1762/1762 (100.00%)
-Positive Passed: 1760/1762 (99.89%)
+AST Parsed     : 1816/1816 (100.00%)
+Positive Passed: 1814/1816 (99.89%)
 Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/47/input.js
 
 Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/48/input.js

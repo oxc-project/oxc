@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use nonmax::NonMaxU32;
+
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
@@ -311,6 +312,9 @@ impl<'a> SourcemapBuilder<'a> {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
 
+        // Used as a buffer to reduce memory reallocations
+        let mut columns = vec![];
+
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
         // If line is all ASCII, UTF-8 columns and UTF-16 columns are the same,
@@ -348,8 +352,6 @@ impl<'a> SourcemapBuilder<'a> {
                         let line = lines.iter_mut().last().unwrap();
                         line.column_offsets_id =
                             Some(ColumnOffsetsId::from_usize(column_offsets.len()));
-
-                        let mut columns = vec![];
 
                         // Loop through rest of line char-by-char.
                         // `chunk_byte_offset` in this loop is byte offset from start of this 1st
@@ -394,8 +396,9 @@ impl<'a> SourcemapBuilder<'a> {
                             // Record column offsets
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.into_boxed_slice(),
+                                columns: columns.clone().into_boxed_slice(),
                             });
+                            columns.clear();
 
                             // Revert back to outer loop for next line
                             continue 'lines;
@@ -547,7 +550,7 @@ mod test {
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
             sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some("b")
+            Some(&"b".into())
         );
     }
 

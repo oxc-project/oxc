@@ -325,7 +325,7 @@ struct ParsedNumberLiteral<'n> {
     exponent_part: Option<&'n str>,
 }
 
-fn parse_number_literal(num: &str) -> ParsedNumberLiteral {
+fn parse_number_literal(num: &str) -> ParsedNumberLiteral<'_> {
     let mut parsed = ParsedNumberLiteral {
         integer_part: None,
         decimal_part: None,

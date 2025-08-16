@@ -1,13 +1,19 @@
 pub mod assignment_like;
+pub mod call_expression;
+pub mod conditional;
+pub mod expression;
 pub mod member_chain;
+pub mod object;
+pub mod string_utils;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     Format, FormatResult, FormatTrailingCommas, format_args,
     formatter::{Formatter, prelude::soft_line_break_or_space},
-    generated::ast_nodes::AstNodes,
+    generated::ast_nodes::{AstNode, AstNodes},
 };
 
 /// This function is in charge to format the call arguments.
@@ -39,13 +45,25 @@ where
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(parent: &AstNodes<'_>) -> bool {
-    if let AstNodes::CallExpression(call) = parent {
-        if let AstNodes::CallExpression(parent_call) = call.parent {
-            return call.arguments().len() > parent_call.arguments().len()
-                && !parent_call.arguments().is_empty();
-        }
+pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+    if let AstNodes::CallExpression(parent_call) = call.parent {
+        return call.arguments().len() > parent_call.arguments().len()
+            && !parent_call.arguments().is_empty();
     }
 
     false
+}
+
+/// Check if an expression is used as a call argument by examining the parent node.
+/// This replaces the missing AstKind::Argument detection capability.
+pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> bool {
+    match parent {
+        AstNodes::CallExpression(call) => {
+            call.arguments.iter().any(|arg| arg.span().contains_inclusive(span))
+        }
+        AstNodes::NewExpression(new_expr) => {
+            new_expr.arguments.iter().any(|arg| arg.span().contains_inclusive(span))
+        }
+        _ => false,
+    }
 }

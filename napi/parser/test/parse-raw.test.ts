@@ -1,6 +1,6 @@
 // Tests for raw transfer.
 
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
@@ -71,6 +71,8 @@ const benchFixtureUrls = [
   // ES5 (3.9M)
   'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
 ];
+
+await mkdir(TARGET_DIR_PATH, { recursive: true });
 
 const benchFixturePaths = await Promise.all(benchFixtureUrls.map(async (url) => {
   const filename = url.split('/').at(-1),

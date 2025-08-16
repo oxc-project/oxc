@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.82.0] - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- 724837e semantic: Label redeclaration check for crossing boundary on arrow function (#12679) (#12948) (Li Wei)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🚜 Refactor
+
+- 69fd08d semantic: Improve unused label tracking and add debug assertions (#12812) (camc314)
+
+### ⚡ Performance
+
+- 09ae2a9 linter: Eliminate unnecessary Iterator::collect() allocations (#12776) (Copilot)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- 3175aa3 semantic: [**BREAKING**] `Scoping::get_resolved_reference_ids` return slice (#12665) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6a1c7c6 semantic: `ArrowFunctionExpression` leave scope before leaving node (#12659) (overlookmotel)
+- 090cf88 semantic: Fix typo in comment (#12714) (overlookmotel)
+- 79cc41f semantic: Move LabeledStatement enter node handling to visit methods (#12636) (camc314)
+- bbc446f semantic: Move LabeledStatement exit node handling to visit methods (#12635) (camc314)
+- e741634 semantic: Move comments (#12658) (overlookmotel)
+- 109fc3c semantic: Move Function and ArrowFunctionExpression handling to visit methods (#12630) (camc314)
+- 8369bbd semantic: Move AstKind::Class handling from leave_kind to visit_class (#12629) (camc314)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+### ⚡ Performance
+
+- 2ccf725 semantic: Remove function stack (#12676) (overlookmotel)
+- 6564215 semantic: Remove check for `Program` when iterating ancestors (#12682) (overlookmotel)
+
+### 🎨 Styling
+
+- da3a881 semantic: Remove extraneous line breaks (#12681) (overlookmotel)
+- 65847c0 semantic: Reorder imports (#12671) (overlookmotel)
+
+### 🧪 Testing
+
+- 2aa65b9 semantic: Remove unnecessary clone (#12667) (overlookmotel)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚜 Refactor
+
+- f12e3a0 semantic: Remove unnecessary lifetime extension (#12649) (overlookmotel)
+
+
+## [0.79.0] - 2025-07-30
+
+### 💥 BREAKING CHANGES
+
+- 5a7e72a semantic: [**BREAKING**] `AstNodes::program` return `&Program` not `Option<&Program>` (#12515) (overlookmotel)
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+- 8912134 semantic: Remove `AstNodes` `program` field (#12516) (overlookmotel)
+- 89d747a semantic: Correct comment (#12512) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

@@ -1032,7 +1032,6 @@ impl<'a> LegacyDecorator<'a, '_> {
     ) -> Statement<'a> {
         let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
             SPAN,
-            ctx.ast.module_export_name_identifier_name(SPAN, "default"),
             ExportDefaultDeclarationKind::Identifier(
                 ctx.ast.alloc(class_binding.create_read_reference(ctx)),
             ),

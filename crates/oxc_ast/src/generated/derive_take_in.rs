@@ -434,6 +434,10 @@ impl<'a> TakeIn<'a> for TSTypeQueryExprName<'a> {}
 
 impl<'a> TakeIn<'a> for TSImportType<'a> {}
 
+impl<'a> TakeIn<'a> for TSImportTypeQualifier<'a> {}
+
+impl<'a> TakeIn<'a> for TSImportTypeQualifiedName<'a> {}
+
 impl<'a> TakeIn<'a> for TSFunctionType<'a> {}
 
 impl<'a> TakeIn<'a> for TSConstructorType<'a> {}

@@ -3,7 +3,6 @@
 use std::{cmp::min, slice};
 
 use oxc_ast::ast::{Comment, Program};
-use oxc_data_structures::pointer_ext::PointerExt;
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
@@ -59,7 +58,7 @@ impl Utf8ToUtf16 {
     /// It will also correctly handle offsets in any order, but at a performance cost.
     ///
     /// Returns `None` if the source text is entirely ASCII, and so requires no conversion.
-    pub fn converter(&self) -> Option<Utf8ToUtf16Converter> {
+    pub fn converter(&self) -> Option<Utf8ToUtf16Converter<'_>> {
         if self.translations.is_empty() {
             None
         } else {
@@ -552,7 +551,7 @@ fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
         if chunk.contains_unicode() {
             // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
             // `ptr` is derived from `start_ptr`.
-            let offset = unsafe { ptr.offset_from_usize(start_ptr) };
+            let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
             process_slice(chunk.as_slice(), offset);
         }
 
@@ -573,7 +572,7 @@ fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
         let last_chunk = unsafe { slice::from_raw_parts(ptr, remaining_len) };
         // SAFETY: `ptr` is after `start_ptr`. Both are within bounds of `bytes`.
         // `ptr` is derived from `start_ptr`.
-        let offset = unsafe { ptr.offset_from_usize(start_ptr) };
+        let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
         process_slice(last_chunk, offset);
     }
 }

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+
+
+
+
+
+
 ## [0.77.2] - 2025-07-17
 
 ### 🚜 Refactor

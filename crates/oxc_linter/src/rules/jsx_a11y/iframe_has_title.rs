@@ -29,12 +29,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Screen reader users rely on a iframe title to describe the contents of the iframe.
-    /// Navigating through iframe and iframe elements quickly becomes difficult and confusing for users of this technology if the markup does not contain a title attribute.
-    ///
-    /// ### What it checks
-    ///
-    /// This rule checks for title property on iframe element.
+    /// Screen reader users rely on a iframe title to describe the contents of
+    /// the iframe. Navigating through iframe and iframe elements quickly
+    /// becomes difficult and confusing for users of this technology if the
+    /// markup does not contain a title attribute.
     ///
     /// ### Examples
     ///

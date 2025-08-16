@@ -19,7 +19,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/o
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "obj",
-            "node_id": 22
+            "node_id": 20
           }
         ]
       }

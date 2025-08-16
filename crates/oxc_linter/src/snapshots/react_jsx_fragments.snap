@@ -1,0 +1,23 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-fragments): Shorthand form for React fragments is preferred
+   ╭─[jsx_fragments.tsx:1:2]
+ 1 │ <Fragment><Foo /></Fragment>
+   ·  ────────
+   ╰────
+  help: Use <></> instead of <React.Fragment></React.Fragment>
+
+  ⚠ eslint-plugin-react(jsx-fragments): Shorthand form for React fragments is preferred
+   ╭─[jsx_fragments.tsx:1:2]
+ 1 │ <React.Fragment><Foo /></React.Fragment>
+   ·  ──────────────
+   ╰────
+  help: Use <></> instead of <React.Fragment></React.Fragment>
+
+  ⚠ eslint-plugin-react(jsx-fragments): Standard form for React fragments is preferred
+   ╭─[jsx_fragments.tsx:1:1]
+ 1 │ <><Foo /></>
+   · ──
+   ╰────
+  help: Use <React.Fragment></React.Fragment> instead of <></>

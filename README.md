@@ -18,11 +18,18 @@
 
 ## ⚓ Oxc
 
-The Oxidation Compiler is a collection of high-performance tools for JavaScript and TypeScript.
+The Oxidation Compiler is a collection of high-performance tools for JavaScript and TypeScript written in Rust.
+
+Our goal is to enable a new generation of faster, more reliable development tools by providing:
+
+- **Performance**: 2-100x faster than existing JavaScript tools
+- **Reliability**: 100% compatibility with JavaScript and TypeScript standards
+- **Modularity**: Use individual tools or compose them into complete toolchains
+- **Developer Experience**: Clear error messages and seamless editor integration
 
 We are building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
 
-For more information, please check out the documentation at [oxc.rs](https://oxc.rs).
+For more information, check out our documentation at [oxc.rs](https://oxc.rs) and architecture guide in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## VoidZero Inc.
 
@@ -87,13 +94,8 @@ Individual crates are published, you may use them to build your own JavaScript t
 - The resolver crate [oxc_resolver][docs-resolver-url] for module resolution is also production ready.
 - Example usages of these crates can be found in their respective `crates/*/examples` directory.
 
-While Rust has gained a reputation for its comparatively slower compilation speed,
-we have dedicated significant effort to fine-tune the Rust compilation speed.
-Our aim is to minimize any impact on your development workflow,
-ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
-
-This is demonstrated by our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain),
-where warm runs complete in 3 minutes.
+We have optimized Rust compilation speed to ensure developing your own Oxc-based tools remains efficient.
+Our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain) complete in approximately 3 minutes.
 
 ### Node.js
 
@@ -118,32 +120,11 @@ where warm runs complete in 3 minutes.
 
 Oxc maintains its own AST and parser, which is by far the fastest and most conformant JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
 
-As the parser often represents a key performance bottleneck in JavaScript tooling,
-any minor improvements can have a cascading effect on our downstream tools.
-By developing our parser, we have the opportunity to explore and implement well-researched performance techniques.
-
-While many existing JavaScript tools rely on [estree] as their AST specification,
-a notable drawback is its abundance of ambiguous nodes.
-This ambiguity often leads to confusion during development with [estree].
-
-The Oxc AST differs slightly from the [estree] AST by removing ambiguous nodes and introducing distinct types.
-For example, instead of using a generic [estree] `Identifier`,
-the Oxc AST provides specific types such as `BindingIdentifier`, `IdentifierReference`, and `IdentifierName`.
-This clear distinction greatly enhances the development experience by aligning more closely with the ECMAScript specification.
+As the parser often represents a key performance bottleneck in JavaScript tooling, any minor improvements can have a cascading effect on our downstream tools.
 
 #### 🏆 Parser Performance
 
 Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 3 times and the [Biome][biome] parser by 5 times.
-
-<details>
-  <summary>How is it so fast?</summary>
-  <ul>
-    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation.</li>
-    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a>.</li>
-    <li>No other heap allocations are done except the above two.</li>
-    <li>Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer.</li>
-  </ul>
-</details>
 
 ### 🔸 Linter
 
@@ -165,16 +146,6 @@ As an upside, the binary is approximately 5MB, whereas [ESLint] and its associat
 
 You may also download the linter binary from the [latest release tag](https://github.com/oxc-project/oxc/releases/latest) as a standalone binary,
 this lets you run the linter without a Node.js installation in your CI.
-
-<details>
-  <summary>How is it so fast?</summary>
-  <ul>
-    <li>Oxc parser is used.</li>
-    <li>AST visit is a fast operation due to linear memory scan from the memory arena.</li>
-    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores.</li>
-    <li>Every single lint rule is tuned for performance.</li>
-  </ul>
-</details>
 
 ### 🔸 Resolver
 

@@ -66,16 +66,11 @@ pub struct LintService {
 }
 
 impl LintService {
-    pub fn new(
-        linter: Linter,
-        allocator_pool: oxc_allocator::AllocatorPool,
-        options: LintServiceOptions,
-    ) -> Self {
-        let runtime = Runtime::new(linter, allocator_pool, options);
+    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
 
-    #[must_use]
     pub fn with_file_system(
         &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
@@ -84,7 +79,6 @@ impl LintService {
         self
     }
 
-    #[must_use]
     pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
         self.runtime.with_paths(paths);
         self
@@ -98,7 +92,7 @@ impl LintService {
     #[cfg(feature = "language_server")]
     pub fn run_source<'a>(
         &mut self,
-        allocator: &'a oxc_allocator::Allocator,
+        allocator: &'a mut oxc_allocator::Allocator,
     ) -> Vec<crate::MessageWithPosition<'a>> {
         self.runtime.run_source(allocator)
     }
@@ -107,7 +101,7 @@ impl LintService {
     #[cfg(test)]
     pub(crate) fn run_test_source<'a>(
         &mut self,
-        allocator: &'a oxc_allocator::Allocator,
+        allocator: &'a mut oxc_allocator::Allocator,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {

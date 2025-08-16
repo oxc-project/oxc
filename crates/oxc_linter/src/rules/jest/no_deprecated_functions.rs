@@ -13,9 +13,15 @@ fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct JestConfig {
     version: String,
+}
+
+impl Default for JestConfig {
+    fn default() -> Self {
+        Self { version: "29".to_string() }
+    }
 }
 
 #[derive(Debug, Default, Clone)]

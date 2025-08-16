@@ -1,6 +1,6 @@
-commit: 1d4546bc
+commit: 98d18aa4
 
-Passed: 180/300
+Passed: 183/303
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -20,7 +20,26 @@ Passed: 180/300
 * regexp
 
 
-# babel-plugin-transform-class-properties (22/28)
+# babel-plugin-transform-explicit-resource-management (2/4)
+* export-class-name/input.js
+x Output mismatch
+
+* function-with-scopes-in-params/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
+rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(4): ["x", "y"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(4)
+
+
+# babel-plugin-transform-class-properties (23/29)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -502,7 +521,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (44/47)
+# babel-plugin-transform-react-jsx (45/48)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -518,25 +537,6 @@ x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
-
-
-# babel-plugin-proposal-explicit-resource-management (2/4)
-* export-class-name/input.js
-x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
 
 
 # legacy-decorators (6/79)
@@ -1470,7 +1470,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (20/34)
+# plugin-styled-components (21/35)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 

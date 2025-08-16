@@ -8,7 +8,10 @@ use super::{
 
 /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 /// span_start: Global positioned `Span` start for this JSDoc comment
-pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPart, Vec<JSDocTag>) {
+pub fn parse_jsdoc(
+    source_text: &str,
+    jsdoc_span_start: u32,
+) -> (JSDocCommentPart<'_>, Vec<JSDocTag<'_>>) {
     debug_assert!(!source_text.starts_with("/*"));
     debug_assert!(!source_text.ends_with("*/"));
 
@@ -115,7 +118,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
 }
 
 /// tag_content: Starts with `@`, may be multiline
-fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
+fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag<'_> {
     debug_assert!(tag_content.starts_with('@'));
     // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();

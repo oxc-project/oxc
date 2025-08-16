@@ -1,7 +1,7 @@
 use oxc_ast::ast::Expression;
 
 use crate::{
-    is_global_reference::IsGlobalReference,
+    GlobalContext,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
 
@@ -26,17 +26,17 @@ impl ToNumericResult {
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumeric>
 pub trait ToNumeric<'a> {
-    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult;
+    fn to_numeric(&self, ctx: &impl GlobalContext<'a>) -> ToNumericResult;
 }
 
 impl<'a> ToNumeric<'a> for Expression<'a> {
-    fn to_numeric(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult {
-        self.to_primitive(is_global_reference).to_numeric(is_global_reference)
+    fn to_numeric(&self, ctx: &impl GlobalContext<'a>) -> ToNumericResult {
+        self.to_primitive(ctx).to_numeric(ctx)
     }
 }
 
 impl<'a> ToNumeric<'a> for ToPrimitiveResult {
-    fn to_numeric(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> ToNumericResult {
+    fn to_numeric(&self, _ctx: &impl GlobalContext<'a>) -> ToNumericResult {
         match self {
             // Symbol throws an error when passed to ToNumber in step 3
             ToPrimitiveResult::Symbol | ToPrimitiveResult::Undetermined => {

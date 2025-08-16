@@ -10,7 +10,7 @@ use tower_lsp_server::{
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
-use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_allocator::Allocator;
 use oxc_linter::{
     ConfigStore, LINTABLE_EXTENSIONS, LintOptions, LintService, LintServiceOptions, Linter,
     MessageWithPosition, loader::Loader, read_to_arena_str,
@@ -26,6 +26,7 @@ use super::error_with_position::{
 pub struct IsolatedLintHandlerOptions {
     pub use_cross_module: bool,
     pub root_path: PathBuf,
+    pub tsconfig_path: Option<PathBuf>,
 }
 
 pub struct IsolatedLintHandler {
@@ -68,10 +69,14 @@ impl IsolatedLintHandler {
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
         let linter = Linter::new(lint_options, config_store, None);
-        let lint_service_options = LintServiceOptions::new(options.root_path.clone())
+        let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 
-        let service = LintService::new(linter, AllocatorPool::default(), lint_service_options);
+        if let Some(tsconfig_path) = &options.tsconfig_path {
+            lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
+        }
+
+        let service = LintService::new(linter, lint_service_options);
 
         Self { service }
     }
@@ -87,9 +92,9 @@ impl IsolatedLintHandler {
             return None;
         }
 
-        let allocator = Allocator::default();
+        let mut allocator = Allocator::default();
 
-        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
+        Some(self.lint_path(&mut allocator, &path, content).map_or(vec![], |errors| {
             let mut diagnostics: Vec<DiagnosticReport> = errors
                 .iter()
                 .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
@@ -138,7 +143,7 @@ impl IsolatedLintHandler {
 
     fn lint_path<'a>(
         &mut self,
-        allocator: &'a Allocator,
+        allocator: &'a mut Allocator,
         path: &Path,
         source_text: Option<String>,
     ) -> Option<Vec<MessageWithPosition<'a>>> {

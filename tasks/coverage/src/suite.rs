@@ -157,7 +157,7 @@ pub trait Suite<T: Case> {
     fn get_test_cases_mut(&mut self) -> &mut Vec<T>;
     fn get_test_cases(&self) -> &Vec<T>;
 
-    fn coverage_report(&self) -> CoverageReport<T> {
+    fn coverage_report(&self) -> CoverageReport<'_, T> {
         let tests = self.get_test_cases();
 
         let (negatives, positives): (Vec<_>, Vec<_>) =
@@ -318,7 +318,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn run(&mut self);
 
     /// Async version of run
-    #[expect(clippy::unused_async)]
     async fn run_async(&mut self) {}
 
     fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {

@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
@@ -102,6 +102,10 @@ declare_oxc_lint!(
 #[derive(Debug, Clone, Copy)]
 struct InConditional(bool);
 
+// To track if we're inside a Jest test context
+#[derive(Debug, Clone, Copy)]
+struct InJestTest(bool);
+
 impl Rule for NoConditionalExpect {
     fn run_on_jest_node<'a, 'c>(
         &self,
@@ -110,33 +114,164 @@ impl Rule for NoConditionalExpect {
     ) {
         let node = possible_jest_node.node;
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
-            else {
+            // First try to parse as a Jest expect call
+            if let Some(jest_fn_call) =
+                parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+            {
+                // Record visited nodes for avoid infinite loop.
+                let mut visited = FxHashSet::default();
+
+                // When first visiting the node, we assume it's not in a conditional block.
+                let (has_condition_or_catch, in_jest_test) =
+                    check_parents(node, &mut visited, InConditional(false), InJestTest(false), ctx);
+
+                if matches!(has_condition_or_catch, InConditional(true)) {
+                    // Check if we're in a Jest test context
+                    if matches!(in_jest_test, InJestTest(true)) {
+                        ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
+                    }
+                }
                 return;
-            };
+            }
 
-            // Record visited nodes for avoid infinite loop.
-            let mut visited = FxHashSet::default();
+            // If not a Jest expect call, check if it's a regular expect call that might be in a function used by Jest
+            if let Expression::Identifier(ident) = &call_expr.callee {
+                if ident.name == "expect" {
+                    // Check if this expect call is inside a function that's used in Jest tests
+                    if is_expect_in_jest_function_context(node, ctx) {
+                        // Record visited nodes for avoid infinite loop.
+                        let mut visited = FxHashSet::default();
 
-            // When first visiting the node, we assume it's not in a conditional block.
-            let has_condition_or_catch =
-                check_parents(node, &mut visited, InConditional(false), ctx);
-            if matches!(has_condition_or_catch, InConditional(true)) {
-                ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
+                        // When first visiting the node, we assume it's not in a conditional block.
+                        let (has_condition_or_catch, _) = check_parents(
+                            node,
+                            &mut visited,
+                            InConditional(false),
+                            InJestTest(false),
+                            ctx,
+                        );
+
+                        if matches!(has_condition_or_catch, InConditional(true)) {
+                            // Check if this expect call is in a finally block, which should be allowed
+                            if !is_in_finally_block_simple(node, ctx) {
+                                ctx.diagnostic(no_conditional_expect_diagnostic(ident.span));
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+fn is_top_level_function<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // Check if the parent is a Program node (top-level) or a ExportNamedDeclaration/ExportDefaultDeclaration
+    let parent_node = ctx.nodes().parent_node(func_node.id());
+    matches!(
+        parent_node.kind(),
+        AstKind::Program(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDefaultDeclaration(_)
+    )
+}
+
+fn is_expect_in_jest_function_context<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // Walk up the AST to find if this expect call is inside a function that's used in Jest tests
+    let mut current_node = node;
+
+    loop {
+        let parent_node = ctx.nodes().parent_node(current_node.id());
+
+        match parent_node.kind() {
+            AstKind::Function(_func) => {
+                // Check if this is a top-level function
+                if is_top_level_function(parent_node, ctx) {
+                    // Check if this function is used in Jest tests
+                    return function_used_in_jest_tests(parent_node, ctx);
+                }
+                current_node = parent_node;
+            }
+            AstKind::Program(_) => {
+                // Reached the top level, not in a function used by Jest
+                return false;
+            }
+            _ => {
+                current_node = parent_node;
+            }
+        }
+    }
+}
+
+fn is_in_finally_block_simple<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // Simple check: walk up the AST and see if we encounter a TryStatement with a finalizer
+    let mut current_node = node;
+
+    loop {
+        let parent_node = ctx.nodes().parent_node(current_node.id());
+
+        match parent_node.kind() {
+            AstKind::TryStatement(try_stmt) => {
+                // If this try statement has a finalizer, we're in a finally block
+                return try_stmt.finalizer.is_some();
+            }
+            AstKind::Program(_) => {
+                // Reached the top level, not in a finally block
+                return false;
+            }
+            _ => {
+                current_node = parent_node;
+            }
+        }
+    }
+}
+
+fn function_used_in_jest_tests<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    // Get the function name if it's a named function
+    let func_name = match func_node.kind() {
+        AstKind::Function(func) => func.id.as_ref().map(|id| id.name.as_str()),
+        _ => return false,
+    };
+
+    let Some(name) = func_name else {
+        return false;
+    };
+
+    // Walk through all nodes to find Jest test calls
+    for node in ctx.semantic().nodes().iter() {
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            // Check if this is a Jest test function call
+            let jest_node = PossibleJestNode { node, original: None };
+            if is_type_of_jest_fn_call(
+                call_expr,
+                &jest_node,
+                ctx,
+                &[JestFnKind::General(JestGeneralFnKind::Test)],
+            ) {
+                // Check if any argument is an identifier that matches our function name
+                for arg in &call_expr.arguments {
+                    if let Some(Expression::Identifier(ident)) = arg.as_expression() {
+                        if ident.name == name {
+                            return true; // Early return when found
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    false
 }
 
 fn check_parents<'a>(
     node: &AstNode<'a>,
     visited: &mut FxHashSet<NodeId>,
     in_conditional: InConditional,
+    in_jest_test: InJestTest,
     ctx: &LintContext<'a>,
-) -> InConditional {
+) -> (InConditional, InJestTest) {
     // if the node is already visited, we should return `false` to avoid infinite loop.
     if !visited.insert(node.id()) {
-        return InConditional(false);
+        return (InConditional(false), in_jest_test);
     }
 
     let parent_node = ctx.nodes().parent_node(node.id());
@@ -151,49 +286,42 @@ fn check_parents<'a>(
                 ctx,
                 &[JestFnKind::General(JestGeneralFnKind::Test)],
             ) {
-                return in_conditional;
+                return (in_conditional, InJestTest(true));
             }
 
+            // Optimized catch detection
             if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 if member_expr.static_property_name() == Some("catch") {
-                    return check_parents(parent_node, visited, InConditional(true), ctx);
+                    return check_parents(
+                        parent_node,
+                        visited,
+                        InConditional(true),
+                        in_jest_test,
+                        ctx,
+                    );
                 }
             }
+        }
+        AstKind::BlockStatement(_) => {
+            // Continue checking without marking as conditional
+            return check_parents(parent_node, visited, in_conditional, in_jest_test, ctx);
         }
         AstKind::CatchClause(_)
         | AstKind::SwitchStatement(_)
         | AstKind::IfStatement(_)
         | AstKind::ConditionalExpression(_)
-        | AstKind::LogicalExpression(_) => {
-            return InConditional(true);
-            // return check_parents(parent_node, visited, InConditional(true), ctx);
+        | AstKind::LogicalExpression(_)
+        | AstKind::Function(_) => {
+            // Continue checking but mark that we're in a conditional context
+            return check_parents(parent_node, visited, InConditional(true), in_jest_test, ctx);
         }
-        AstKind::Function(function) => {
-            let Some(ident) = &function.id else {
-                return InConditional(false);
-            };
-            let symbol_table = ctx.scoping();
-            let symbol_id = ident.symbol_id();
-
-            // Consider cases like:
-            // ```javascript
-            // function foo() {
-            //   foo()
-            // }
-            // ```
-            // To avoid infinite loop, we need to check if the function is already visited when
-            // call `check_parents`.
-            let boolean = symbol_table.get_resolved_references(symbol_id).any(|reference| {
-                let parent = ctx.nodes().parent_node(reference.node_id());
-                matches!(check_parents(parent, visited, in_conditional, ctx), InConditional(true))
-            });
-            return InConditional(boolean);
+        AstKind::Program(_) => {
+            return (in_conditional, in_jest_test);
         }
-        AstKind::Program(_) => return InConditional(false),
         _ => {}
     }
 
-    check_parents(parent_node, visited, in_conditional, ctx)
+    check_parents(parent_node, visited, in_conditional, in_jest_test, ctx)
 }
 
 #[test]

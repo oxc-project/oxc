@@ -113,7 +113,7 @@ impl TestFile {
 
                     let _drop = std::fs::remove_file(&file);
                     let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
-                    let _drop = std::io::copy(&mut reader, &mut writer);
+                    std::io::copy(&mut reader, &mut writer).map_err(err_to_string)?;
 
                     std::fs::read_to_string(&file)
                         .map_err(err_to_string)

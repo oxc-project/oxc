@@ -47,6 +47,27 @@ mod declare_oxc_lint;
 /// - `dangerous_fix_dangerous_suggestion` (provides dangerous fixes and suggestions in all cases)
 ///
 /// `pending` and `none` are special cases that do not follow this pattern.
+///
+/// ## Integration markers
+/// You can optionally add an integration marker immediately after the rule's struct
+/// name in parentheses. Currently the only supported marker is `tsgolint`:
+///
+/// ```rust,ignore
+/// declare_oxc_lint!(
+///     /// Docs...
+///     MyRule(tsgolint),
+///     eslint,
+///     style,
+///     fix
+/// );
+/// ```
+///
+/// Adding `(tsgolint)` sets an internal `IS_TSGOLINT_RULE` flag to `true`, which
+/// allows the `oxlint` CLI to surface this rule to the external `tsgolint`
+/// executable. Rules without the marker keep the default `false` value and are
+/// ignored by that integration. Only one marker is allowed and any other value
+/// will result in a compile error.
+///
 /// # Example
 ///
 /// ```
