@@ -67,7 +67,7 @@ impl<'a> PeepholeOptimizations {
     fn remove_unused_logical_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::LogicalExpression(logical_expr) = e else { return false };
         if !logical_expr.operator.is_coalesce() {
-            Self::try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
+            Self::minimize_expression_in_boolean_context(&mut logical_expr.left, ctx);
         }
         if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
             Self::remove_unused_expression(&mut logical_expr.left, ctx);
