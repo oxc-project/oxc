@@ -15,24 +15,21 @@ use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
-pub struct TsGoLintState<'a> {
+pub struct TsGoLintState {
     /// The path to the `tsgolint` executable (at least our our best guess at it).
     executable_path: PathBuf,
     /// Current working directory, used for rendering paths in diagnostics.
     cwd: PathBuf,
-    /// The paths of files to lint
-    paths: &'a Vec<Arc<OsStr>>,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
 }
 
-impl<'a> TsGoLintState<'a> {
-    pub fn new(cwd: &Path, config_store: ConfigStore, paths: &'a Vec<Arc<OsStr>>) -> Self {
+impl TsGoLintState {
+    pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
             executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
-            paths,
         }
     }
 
@@ -43,14 +40,14 @@ impl<'a> TsGoLintState<'a> {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    pub fn lint(self, error_sender: DiagnosticSender) -> Result<(), String> {
-        if self.paths.is_empty() {
+    pub fn lint(self, paths: &[Arc<OsStr>], error_sender: DiagnosticSender) -> Result<(), String> {
+        if paths.is_empty() {
             return Ok(());
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        let json_input = self.json_input(&mut resolved_configs);
+        let json_input = self.json_input(paths, &mut resolved_configs);
 
         let handler = std::thread::spawn(move || {
             let child = std::process::Command::new(&self.executable_path)
@@ -226,11 +223,11 @@ impl<'a> TsGoLintState<'a> {
     #[inline]
     fn json_input(
         &self,
+        paths: &[Arc<OsStr>],
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> TsGoLintInput {
         TsGoLintInput {
-            files: self
-                .paths
+            files: paths
                 .iter()
                 .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
                 .map(|path| TsGoLintInputFile {
