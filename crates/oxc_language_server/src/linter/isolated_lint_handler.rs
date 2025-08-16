@@ -92,6 +92,10 @@ impl IsolatedLintHandler {
             return None;
         }
 
+        if self.service.should_ignore(&path) {
+            return None;
+        }
+
         let mut allocator = Allocator::default();
         let source_text = content.or_else(|| read_to_string(&path).ok())?;
         let errors = self.lint_path(&mut allocator, &path, source_text);

@@ -4,5 +4,5 @@
     "rules": {
         "context-plugin/log-context": "error"
     },
-    "ignorePatterns": ["test_plugin"]
+    "ignorePatterns": ["test_plugin/**"]
 }

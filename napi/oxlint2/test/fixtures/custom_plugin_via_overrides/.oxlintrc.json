@@ -8,5 +8,5 @@
       }
     }
   ],
-  "ignorePatterns": ["test_plugin"]
+  "ignorePatterns": ["test_plugin/**"]
 }

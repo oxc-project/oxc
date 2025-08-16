@@ -2004,6 +2004,7 @@ dependencies = [
  "cow-utils",
  "fast-glob",
  "icu_segmenter",
+ "ignore",
  "indexmap",
  "insta",
  "itertools",

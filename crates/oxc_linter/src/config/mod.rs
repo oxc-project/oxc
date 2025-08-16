@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod categories;
 mod config_builder;
@@ -14,11 +14,14 @@ pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
+use ignore::overrides::OverrideBuilder;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::{BuiltinLintPlugins, LintPlugins};
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
+
+pub type ResolvedIgnorePatterns = ignore::overrides::Override;
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
@@ -28,6 +31,8 @@ pub struct LintConfig {
     pub(crate) env: OxlintEnv,
     /// Enabled or disabled specific global variables.
     pub(crate) globals: OxlintGlobals,
+    /// The struct containing all `ignorePatterns` for the runtime
+    pub(crate) ignore_patterns: Option<ResolvedIgnorePatterns>,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
 }
@@ -39,8 +44,32 @@ impl From<Oxlintrc> for LintConfig {
             settings: config.settings,
             env: config.env,
             globals: config.globals,
+            ignore_patterns: None,
             path: Some(config.path),
         }
+    }
+}
+
+impl LintConfig {
+    pub(crate) fn resolve_oxlintrc_ignore_patterns(
+        ignore_patterns: &[String],
+        config_path: &Path,
+    ) -> Option<ResolvedIgnorePatterns> {
+        if ignore_patterns.is_empty() {
+            return None;
+        }
+        // expect that every oxlint config file with "ignorePatterns" provides its config path with parent.
+        // for the default config the path is empty, but there should be no ignore patterns
+        let oxlint_wd = config_path.parent()?.to_path_buf();
+
+        let mut builder = OverrideBuilder::new(&oxlint_wd);
+
+        for pattern in ignore_patterns {
+            let pattern = format!("!{pattern}");
+            builder.add(&pattern).unwrap();
+        }
+
+        builder.build().ok()
     }
 }
 

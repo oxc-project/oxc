@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny, LintPlugins,
+    config::ResolvedIgnorePatterns,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -123,6 +124,10 @@ impl Config {
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
+    }
+
+    pub fn ignore_patterns(&self) -> Option<&ResolvedIgnorePatterns> {
+        self.base.config.ignore_patterns.as_ref()
     }
 
     pub fn number_of_rules(&self) -> usize {
@@ -314,18 +319,26 @@ impl ConfigStore {
         &self.base.base.config.plugins
     }
 
-    // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs
-    // for the `tsgolint` linter.
-    pub fn resolve(&self, path: &Path) -> ResolvedLinterState {
-        let resolved_config = if self.nested_configs.is_empty() {
+    pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
+        if self.nested_configs.is_empty() {
             &self.base
         } else if let Some(config) = self.get_nearest_config(path) {
             config
         } else {
             &self.base
-        };
+        }
+    }
 
-        Config::apply_overrides(resolved_config, path)
+    pub fn should_ignore(&self, path: &Path) -> bool {
+        self.get_related_config(path)
+            .ignore_patterns()
+            .is_some_and(|ignore_patterns| ignore_patterns.matched(path, false).is_ignore())
+    }
+
+    // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs
+    // for the `tsgolint` linter.
+    pub fn resolve(&self, path: &Path) -> ResolvedLinterState {
+        Config::apply_overrides(self.get_related_config(path), path)
     }
 
     fn get_nearest_config(&self, path: &Path) -> Option<&Config> {
@@ -571,10 +584,7 @@ mod test {
     fn test_add_plugins() {
         let base_config = LintConfig {
             plugins: LintPlugins::new(BuiltinLintPlugins::IMPORT, FxHashSet::default()),
-            env: OxlintEnv::default(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
+            ..Default::default()
         };
         let overrides = ResolvedOxlintOverrides::new(vec![
             ResolvedOxlintOverride {
@@ -631,13 +641,8 @@ mod test {
 
     #[test]
     fn test_add_env() {
-        let base_config = LintConfig {
-            env: OxlintEnv::default(),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { plugins: BuiltinLintPlugins::ESLINT.into(), ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             env: Some(OxlintEnv::from_iter(["es2024".to_string()])),
             files: GlobSet::new(vec!["*.tsx"]),
@@ -659,13 +664,8 @@ mod test {
 
     #[test]
     fn test_replace_env() {
-        let base_config = LintConfig {
-            env: OxlintEnv::from_iter(["es2024".into()]),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { env: OxlintEnv::from_iter(["es2024".into()]), ..Default::default() };
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             files: GlobSet::new(vec!["*.tsx"]),
             env: Some(from_json!({ "es2024": false })),
@@ -687,13 +687,8 @@ mod test {
 
     #[test]
     fn test_add_globals() {
-        let base_config = LintConfig {
-            env: OxlintEnv::default(),
-            plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config =
+            LintConfig { plugins: BuiltinLintPlugins::ESLINT.into(), ..Default::default() };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
             files: GlobSet::new(vec!["*.tsx"]),
@@ -719,14 +714,12 @@ mod test {
     #[test]
     fn test_replace_globals() {
         let base_config = LintConfig {
-            env: OxlintEnv::default(),
             plugins: BuiltinLintPlugins::ESLINT.into(),
-            settings: OxlintSettings::default(),
             globals: from_json!({
                 "React": "readonly",
                 "Secret": "writeable"
             }),
-            path: None,
+            ..Default::default()
         };
 
         let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
@@ -768,6 +761,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ignore_patterns: None,
         };
 
         // Set up categories to enable restriction rules
@@ -858,6 +852,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ignore_patterns: None,
         };
 
         // Set up categories
@@ -962,6 +957,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ignore_patterns: None,
         };
 
         // Set up categories
@@ -1005,13 +1001,7 @@ mod test {
 
     #[test]
     fn test_number_of_rules() {
-        let base_config = LintConfig {
-            plugins: LintPlugins::new(BuiltinLintPlugins::empty(), FxHashSet::default()),
-            env: OxlintEnv::default(),
-            settings: OxlintSettings::default(),
-            globals: OxlintGlobals::default(),
-            path: None,
-        };
+        let base_config = LintConfig::default();
 
         let base_rules = vec![
             (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),

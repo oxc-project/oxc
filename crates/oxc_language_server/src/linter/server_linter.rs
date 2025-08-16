@@ -49,10 +49,9 @@ impl ServerLinter {
             Oxlintrc::default()
         };
 
-        // clone because we are returning it for ignore builder
         let config_builder = ConfigStoreBuilder::from_oxlintrc(
             false,
-            oxlintrc.clone(),
+            oxlintrc,
             None,
             &mut ExternalPluginStore::default(),
         )
@@ -111,7 +110,7 @@ impl ServerLinter {
 
         Self {
             isolated_linter: Arc::new(Mutex::new(isolated_linter)),
-            gitignore_glob: Self::create_ignore_glob(&root_path, &oxlintrc),
+            gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
         }
     }
@@ -164,7 +163,7 @@ impl ServerLinter {
     }
 
     #[expect(clippy::filetype_is_file)]
-    fn create_ignore_glob(root_path: &Path, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
+    fn create_ignore_glob(root_path: &Path) -> Vec<Gitignore> {
         let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
             .hidden(false)
@@ -194,20 +193,6 @@ impl ServerLinter {
             }
         }
 
-        if oxlintrc.ignore_patterns.is_empty() {
-            return gitignore_globs;
-        }
-
-        let Some(oxlintrc_dir) = oxlintrc.path.parent() else {
-            warn!("Oxlintrc path has no parent, skipping inline ignore patterns");
-            return gitignore_globs;
-        };
-
-        let mut builder = ignore::gitignore::GitignoreBuilder::new(oxlintrc_dir);
-        for entry in &oxlintrc.ignore_patterns {
-            builder.add_line(None, entry).expect("Failed to add ignore line");
-        }
-        gitignore_globs.push(builder.build().unwrap());
         gitignore_globs
     }
 
@@ -409,8 +394,9 @@ mod test {
 
     #[test]
     fn test_root_ignore_patterns() {
-        Tester::new("fixtures/linter/root_ignore_patterns", None)
-            .test_and_snapshot_single_file("ignored-file.ts");
+        let tester = Tester::new("fixtures/linter/ignore_patterns", None);
+        tester.test_and_snapshot_single_file("ignored-file.ts");
+        tester.test_and_snapshot_single_file("another_config/not-ignored-file.ts");
     }
 
     #[test]
