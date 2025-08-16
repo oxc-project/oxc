@@ -1699,7 +1699,7 @@ mod test {
         test("new RegExp('a')", "");
         test("new RegExp(0)", "");
         test("new RegExp(null)", "");
-        test("new RegExp('a', 'g')", "RegExp('a', 'g')");
+        test("x = new RegExp('a', 'g')", "x = RegExp('a', 'g')");
         test_same("new RegExp(foo)");
         test("new RegExp(/foo/)", "");
     }

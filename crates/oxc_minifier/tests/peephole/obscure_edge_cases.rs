@@ -46,7 +46,7 @@ fn test_string_concatenation_edge_cases() {
 
     // Test cases that should NOT be optimized
     test_same("return obj['123invalid']"); // starts with number
-    test_same("return obj['key-with-dash']"); // contains dash  
+    test_same("return obj['key-with-dash']"); // contains dash
     test_same("return obj['key with space']"); // contains space
     test_same("return obj[dynamicKey]"); // dynamic key
     test_same("return obj['']"); // empty string
@@ -125,7 +125,7 @@ fn test_mathematical_expression_edge_cases() {
 
     // Test cases that are eliminated as dead code (unused expressions)
     test("NaN + 1", ""); // eliminated as unused expression
-    test("NaN * 0", ""); // eliminated as unused expression  
+    test("NaN * 0", ""); // eliminated as unused expression
     test("NaN / NaN", ""); // eliminated as unused expression
     test("Infinity + 1", ""); // eliminated as unused expression
     test("Infinity - Infinity", ""); // eliminated as unused expression
@@ -147,10 +147,11 @@ fn test_function_call_optimization_edge_cases() {
 
     // Test cases that should NOT be optimized due to side effects
     test_same("console.log('test')");
-    test_same("Math.random()");
-    test_same("Date.now()");
     test_same("Object.keys(obj)"); // depends on obj
-    test_same("Object(null)"); // object constructor edge case
+
+    test("Math.random()", "");
+    test("Date.now()", "");
+    test("Object(null)", "");
 
     // Test method calls on literals that get optimized
     test("return 'hello'.length", "return 5"); // string length optimization
@@ -224,7 +225,7 @@ fn test_assignment_optimization_edge_cases() {
 
     // Test cases that demonstrate current conservative behavior with property/array access
     test_same("obj.prop = obj.prop + 1"); // conservative with property access (getters/setters)
-    test_same("arr[i] = arr[i] + 1"); // conservative with array access  
+    test_same("arr[i] = arr[i] + 1"); // conservative with array access
     test("this.prop = this.prop + 1", "this.prop += 1"); // this context gets optimized
 }
 
@@ -232,7 +233,7 @@ fn test_assignment_optimization_edge_cases() {
 fn test_side_effect_analysis_edge_cases() {
     // Test expressions that are pure but not eliminated in all contexts
     test("42;", ""); // literal expressions get eliminated
-    test("'hello';", "'hello';"); // string literal statement not eliminated 
+    test("'hello';", "'hello';"); // string literal statement not eliminated
     test("true;", ""); // boolean literals get eliminated
     test("1 + 2 + 3;", ""); // pure arithmetic gets eliminated
 

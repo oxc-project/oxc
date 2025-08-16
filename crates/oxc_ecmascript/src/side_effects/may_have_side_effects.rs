@@ -242,6 +242,36 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
     }
 }
 
+fn is_pure_regexp(name: &str, args: &[Argument<'_>]) -> bool {
+    name == "RegExp"
+        && match args.len() {
+            0 | 1 => true,
+            2 => args[1].as_expression().is_some_and(|e| {
+                matches!(e, Expression::Identifier(_) | Expression::StringLiteral(_))
+            }),
+            _ => false,
+        }
+}
+
+#[rustfmt::skip]
+fn is_pure_global_function(name: &str) -> bool {
+    matches!(name, "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
+            | "escape" | "isFinite" | "isNaN" | "parseFloat" | "parseInt")
+}
+
+#[rustfmt::skip]
+fn is_pure_call(name: &str) -> bool {
+    matches!(name, "Date" | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
+            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
+}
+
+#[rustfmt::skip]
+fn is_pure_constructor(name: &str) -> bool {
+    matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
+            | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
+            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
+}
+
 /// Whether the name matches any known global constructors.
 ///
 /// <https://tc39.es/ecma262/multipage/global-object.html#sec-constructor-properties-of-the-global-object>
@@ -530,15 +560,68 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .sum()
 }
 
+// `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
+
+        if let Expression::Identifier(ident) = &self.callee
+            && ctx.is_global_reference(ident)
+            && let name = ident.name.as_str()
+            && (is_pure_global_function(name)
+                || is_pure_call(name)
+                || is_pure_regexp(name, &self.arguments))
+        {
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
+        let (ident, name) = match &self.callee {
+            Expression::StaticMemberExpression(member) if !member.optional => {
+                (member.object.get_identifier_reference(), member.property.name.as_str())
+            }
+            Expression::ComputedMemberExpression(member) if !member.optional => {
+                match &member.expression {
+                    Expression::StringLiteral(s) => {
+                        (member.object.get_identifier_reference(), s.value.as_str())
+                    }
+                    _ => return true,
+                }
+            }
+            _ => return true,
+        };
+
+        let Some(object) = ident.map(|ident| ident.name.as_str()) else { return true };
+
+        #[rustfmt::skip]
+        let is_global = match object {
+            "Array" => matches!(name, "isArray" | "of"),
+            "ArrayBuffer" => name == "isView",
+            "Date" => matches!(name, "now" | "parse" | "UTC"),
+            "Math" => matches!(name, "abs" | "acos" | "acosh" | "asin" | "asinh" | "atan" | "atan2" | "atanh"
+                    | "cbrt" | "ceil" | "clz32" | "cos" | "cosh" | "exp" | "expm1" | "floor" | "fround" | "hypot"
+                    | "imul" | "log" | "log10" | "log1p" | "log2" | "max" | "min" | "pow" | "random" | "round"
+                    | "sign" | "sin" | "sinh" | "sqrt" | "tan" | "tanh" | "trunc"),
+            "Number" => matches!(name, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
+            "Object" => matches!(name, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
+                    | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
+            "String" => matches!(name, "fromCharCode" | "fromCodePoint" | "raw"),
+            "Symbol" => matches!(name, "for" | "keyFor"),
+            "URL" => name == "canParse",
+            "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Uint16Array" | "Uint32Array" | "Uint8Array" | "Uint8ClampedArray" => name == "of",
+            _ => false,
+        };
+
+        if is_global {
+            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+        }
+
         true
     }
 }
 
+// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
@@ -546,27 +629,8 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         }
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
-            && matches!(
-                ident.name.as_str(),
-                "Set"
-                    | "Map"
-                    | "WeakSet"
-                    | "WeakMap"
-                    | "ArrayBuffer"
-                    | "Date"
-                    | "Boolean"
-                    | "Error"
-                    | "EvalError"
-                    | "RangeError"
-                    | "ReferenceError"
-                    | "RegExp"
-                    | "SyntaxError"
-                    | "TypeError"
-                    | "URIError"
-                    | "Number"
-                    | "Object"
-                    | "String"
-            )
+            && let name = ident.name.as_str()
+            && (is_pure_constructor(name) || is_pure_regexp(name, &self.arguments))
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }

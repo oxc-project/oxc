@@ -180,7 +180,8 @@ fn closure_compiler_tests() {
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
     test("tempFunc = templateFunction`template`", true);
-    // test("new RegExp('foobar', 'i')", false);
+    test("new RegExp('foobar', 'i')", false);
+    test("new RegExp('foobar', 2)", true);
     test("new RegExp(SomethingWacky(), 'i')", true);
     // test("new Array()", false);
     // test("new Array", false);
@@ -205,8 +206,8 @@ fn closure_compiler_tests() {
     // test("(true ? {} : []).foo = 2;", false);
     // test("({},[]).foo = 2;", false);
     test("delete a.b", true);
-    // test("Math.random();", false);
-    test("Math.random(seed);", true);
+    test("Math.random();", false);
+    test("Math.random(Math);", true);
     // test("[1, 1].foo;", false);
     // test("export var x = 0;", true);
     // test("export let x = 0;", true);
@@ -751,6 +752,7 @@ fn test_property_access() {
     test("[...a, 1][0]", true); // "...a" may have a sideeffect
 }
 
+// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 #[test]
 fn test_new_expressions() {
     test("new AggregateError", true);
@@ -773,6 +775,127 @@ fn test_new_expressions() {
     test("new Number", false);
     test("new Object", false);
     test("new String", false);
+    test("new Symbol", false);
+}
+
+// `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
+#[test]
+fn test_call_expressions() {
+    test("AggregateError()", true);
+    test("DataView()", true);
+    test("Set()", true);
+    test("Map()", true);
+    test("WeakSet()", true);
+    test("WeakMap()", true);
+    test("ArrayBuffer()", true);
+    test("Date()", false);
+    test("Boolean()", false);
+    test("Error()", false);
+    test("EvalError()", false);
+    test("RangeError()", false);
+    test("ReferenceError()", false);
+    test("RegExp()", false);
+    test("SyntaxError()", false);
+    test("TypeError()", false);
+    test("URIError()", false);
+    test("Number()", false);
+    test("Object()", false);
+    test("String()", false);
+    test("Symbol()", false);
+
+    test("decodeURI()", false);
+    test("decodeURIComponent()", false);
+    test("encodeURI()", false);
+    test("encodeURIComponent()", false);
+    test("escape()", false);
+    test("isFinite()", false);
+    test("isNaN()", false);
+    test("parseFloat()", false);
+    test("parseInt()", false);
+
+    test("Array.isArray()", false);
+    test("Array.of()", false);
+
+    test("ArrayBuffer.isView()", false);
+
+    test("Date.now()", false);
+    test("Date.parse()", false);
+    test("Date.UTC()", false);
+
+    test("Math.abs()", false);
+    test("Math.acos()", false);
+    test("Math.acosh()", false);
+    test("Math.asin()", false);
+    test("Math.asinh()", false);
+    test("Math.atan()", false);
+    test("Math.atan2()", false);
+    test("Math.atanh()", false);
+    test("Math.cbrt()", false);
+    test("Math.ceil()", false);
+    test("Math.clz32()", false);
+    test("Math.cos()", false);
+    test("Math.cosh()", false);
+    test("Math.exp()", false);
+    test("Math.expm1()", false);
+    test("Math.floor()", false);
+    test("Math.fround()", false);
+    test("Math.hypot()", false);
+    test("Math.imul()", false);
+    test("Math.log()", false);
+    test("Math.log10()", false);
+    test("Math.log1p()", false);
+    test("Math.log2()", false);
+    test("Math.max()", false);
+    test("Math.min()", false);
+    test("Math.pow()", false);
+    test("Math.random()", false);
+    test("Math.round()", false);
+    test("Math.sign()", false);
+    test("Math.sin()", false);
+    test("Math.sinh()", false);
+    test("Math.sqrt()", false);
+    test("Math.tan()", false);
+    test("Math.tanh()", false);
+    test("Math.trunc()", false);
+
+    test("Number.isFinite()", false);
+    test("Number.isInteger()", false);
+    test("Number.isNaN()", false);
+    test("Number.isSafeInteger()", false);
+    test("Number.parseFloat()", false);
+    test("Number.parseInt()", false);
+
+    test("Object.create()", false);
+    test("Object.getOwnPropertyDescriptor()", false);
+    test("Object.getOwnPropertyDescriptors()", false);
+    test("Object.getOwnPropertyNames()", false);
+    test("Object.getOwnPropertySymbols()", false);
+    test("Object.getPrototypeOf()", false);
+    test("Object.hasOwn()", false);
+    test("Object.is()", false);
+    test("Object.isExtensible()", false);
+    test("Object.isFrozen()", false);
+    test("Object.isSealed()", false);
+    test("Object.keys()", false);
+
+    test("String.fromCharCode()", false);
+    test("String.fromCodePoint()", false);
+    test("String.raw()", false);
+
+    test("Symbol.for()", false);
+    test("Symbol.keyFor()", false);
+
+    test("URL.canParse()", false);
+
+    test("Float32Array.of()", false);
+    test("Float64Array.of()", false);
+    test("Int16Array.of()", false);
+    test("Int32Array.of()", false);
+    test("Int8Array.of()", false);
+    test("Uint16Array.of()", false);
+    test("Uint32Array.of()", false);
+    test("Uint8Array.of()", false);
+    test("Uint8ClampedArray.of()", false);
 }
 
 #[test]

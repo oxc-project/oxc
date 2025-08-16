@@ -577,7 +577,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        false
+        !call_expr.may_have_side_effects(ctx)
     }
 
     fn fold_arguments_into_needed_expressions(

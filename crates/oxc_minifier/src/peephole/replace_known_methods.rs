@@ -1431,7 +1431,7 @@ mod test {
         test("x = String.fromCharCode(0)", "x = '\\0'");
         test("x = String.fromCharCode(120)", "x = 'x'");
         test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-        test_same("String.fromCharCode(55358, 56768)");
+        test_same("x = String.fromCharCode(55358, 56768)");
         test("x = String.fromCharCode(0x10000)", "x = '\\0'");
         test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
         test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
@@ -1635,8 +1635,8 @@ mod test {
         test("x = encodeURI('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
         test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
-        test_same("encodeURI('a', 'b')");
-        test_same("encodeURI(x)");
+        test_same("x = encodeURI('a', 'b')");
+        test_same("x = encodeURI(x)");
     }
 
     #[test]
@@ -1654,8 +1654,8 @@ mod test {
         test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
         test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
 
-        test_same("encodeURIComponent('a', 'b')");
-        test_same("encodeURIComponent(x)");
+        test_same("x = encodeURIComponent('a', 'b')");
+        test_same("x = encodeURIComponent(x)");
     }
 
     #[test]
@@ -1675,11 +1675,11 @@ mod test {
         test("x = decodeURI('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
         test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
-        test_same("decodeURI('%ZZ')"); // URIError
-        test_same("decodeURI('%A')"); // URIError
+        test_same("x = decodeURI('%ZZ')"); // URIError
+        test_same("x = decodeURI('%A')"); // URIError
 
-        test_same("decodeURI('a', 'b')");
-        test_same("decodeURI(x)");
+        test_same("x = decodeURI('a', 'b')");
+        test_same("x = decodeURI(x)");
     }
 
     #[test]
@@ -1698,11 +1698,11 @@ mod test {
         test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
         test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
 
-        test_same("decodeURIComponent('%ZZ')"); // URIError
-        test_same("decodeURIComponent('%A')"); // URIError
+        test_same("x = decodeURIComponent('%ZZ')"); // URIError
+        test_same("x = decodeURIComponent('%A')"); // URIError
 
-        test_same("decodeURIComponent('a', 'b')");
-        test_same("decodeURIComponent(x)");
+        test_same("x = decodeURIComponent('a', 'b')");
+        test_same("x = decodeURIComponent(x)");
     }
 
     #[test]
