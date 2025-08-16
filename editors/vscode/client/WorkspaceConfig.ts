@@ -44,6 +44,16 @@ export interface WorkspaceConfigInterface {
    * @default 'allow'
    */
   unusedDisableDirectives: UnusedDisableDirectives;
+
+  /**
+   * Whether to enable type-aware linting
+   *
+   * `oxc.typeAware`
+   *
+   * @default false
+   */
+  typeAware: boolean;
+
   /**
    * Additional flags to pass to the LSP binary
    * `oxc.flags`
@@ -58,6 +68,7 @@ export class WorkspaceConfig {
   private _tsConfigPath: string | null = null;
   private _runTrigger: Trigger = 'onType';
   private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
+  private _typeAware: boolean = false;
   private _flags: Record<string, string> = {};
 
   constructor(private readonly workspace: WorkspaceFolder) {
@@ -78,6 +89,7 @@ export class WorkspaceConfig {
     this._tsConfigPath = this.configuration.get<string | null>('tsConfigPath') ?? null;
     this._unusedDisableDirectives = this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ??
       'allow';
+    this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
     this._flags = flags;
   }
 
@@ -92,6 +104,9 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.unusedDisableDirectives`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.typeAware`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
@@ -140,6 +155,15 @@ export class WorkspaceConfig {
     return this.configuration.update('unusedDisableDirectives', value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  get typeAware(): boolean {
+    return this._typeAware;
+  }
+
+  updateTypeAware(value: boolean): PromiseLike<void> {
+    this._typeAware = value;
+    return this.configuration.update('typeAware', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
   get flags(): Record<string, string> {
     return this._flags;
   }
@@ -155,6 +179,7 @@ export class WorkspaceConfig {
       configPath: this.configPath ?? null,
       tsConfigPath: this.tsConfigPath ?? null,
       unusedDisableDirectives: this.unusedDisableDirectives,
+      typeAware: this.typeAware,
       flags: this.flags,
     };
   }
