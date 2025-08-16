@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
+use crate::fixer::{CompositeFix, Message, PossibleFixes};
+
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 /// State required to initialize the `tsgolint` linter.
@@ -294,7 +296,7 @@ struct TsGoLintDiagnosticPayload {
     pub file_path: PathBuf,
 }
 
-/// Represents a message from `tsgolint`, ready to be converted into [`OxcDiagnostic`].
+/// Represents a message from `tsgolint`, ready to be converted into [`OxcDiagnostic`] or [`Message`].
 #[derive(Debug, Clone)]
 pub struct TsGoLintDiagnostic {
     pub r#type: MessageType,
@@ -318,6 +320,28 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
     }
 }
 
+impl Message<'_> {
+    /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
+    #[expect(dead_code)]
+    fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
+        let possible_fix = if val.fixes.is_empty() {
+            PossibleFixes::None
+        } else {
+            let fixes = val
+                .fixes
+                .iter()
+                .map(|fix| crate::fixer::Fix {
+                    content: fix.text.clone().into(),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: None,
+                })
+                .collect();
+            PossibleFixes::Single(CompositeFix::merge_fixes(fixes, source_text))
+        };
+
+        Self::new(val.into(), possible_fix)
+    }
+}
 // TODO: Should this be removed and replaced with a `Span`?
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Range {

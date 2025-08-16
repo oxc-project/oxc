@@ -550,7 +550,7 @@ impl<'a> CompositeFix<'a> {
     /// 3. contains negative ranges (span.start > span.end)
     ///
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
-    fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
+    pub fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
         let mut fixes = fixes;
         if fixes.is_empty() {
             // Do nothing
