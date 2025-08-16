@@ -4,6 +4,8 @@
 //! * [`Allocator::alloc_bytes_start`]
 //! * [`Allocator::data_ptr`]
 //! * [`Allocator::set_data_ptr`]
+//! * [`Allocator::set_cursor_ptr`]
+//! * [`Allocator::data_end_ptr`]
 //! * [`Allocator::end_ptr`]
 
 use std::{
@@ -227,6 +229,32 @@ impl Allocator {
         // reference is alive
         let chunk_footer = unsafe { self.chunk_footer() };
         chunk_footer.ptr.get()
+    }
+
+    /// Set cursor pointer for this [`Allocator`]'s current chunk.
+    ///
+    /// This is dangerous, and this method should not ordinarily be used.
+    /// It is only here for manually resetting the allocator.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * `ptr` must point to within the allocation underlying this allocator.
+    /// * `ptr` must be after `data_ptr` for this chunk.
+    pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
+        // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
+        // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
+        // is alive, beyond setting the cursor pointer.
+        let chunk_footer = unsafe { self.chunk_footer_mut() };
+        chunk_footer.ptr.set(ptr);
+    }
+
+    /// Get pointer to end of the data region of this [`Allocator`]'s current chunk
+    /// i.e to the start of the `ChunkFooter`.
+    pub fn data_end_ptr(&self) -> NonNull<u8> {
+        self.chunk_footer_ptr().cast::<u8>()
     }
 
     /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
