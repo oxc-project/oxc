@@ -176,7 +176,7 @@ unsafe fn parse_raw_impl(
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
-    assert!(is_multiple_of(buffer_ptr as usize, BUFFER_ALIGN));
+    assert!((buffer_ptr as usize).is_multiple_of(BUFFER_ALIGN));
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
@@ -185,7 +185,7 @@ unsafe fn parse_raw_impl(
     const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
         assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
-        assert!(is_multiple_of(RAW_METADATA_SIZE, BUMP_ALIGN));
+        assert!(RAW_METADATA_SIZE.is_multiple_of(BUMP_ALIGN));
     };
     let source_len = source_len as usize;
     let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
@@ -197,8 +197,8 @@ unsafe fn parse_raw_impl(
     // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
     // or be out of bounds.
     let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!(is_multiple_of(data_ptr as usize, BUMP_ALIGN));
-    debug_assert!(is_multiple_of(data_size, BUMP_ALIGN));
+    debug_assert!((data_ptr as usize).is_multiple_of(BUMP_ALIGN));
+    debug_assert!(data_size.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
     // `data_ptr` and `data_size` are multiples of 16.
     // `data_size` is greater than `Allocator::MIN_SIZE`.
@@ -275,7 +275,7 @@ unsafe fn parse_raw_impl(
     #[allow(clippy::cast_possible_truncation)]
     let metadata = RawTransferMetadata::new(data_ptr as u32, ast_type == AstType::TypeScript);
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
-    const _: () = assert!(is_multiple_of(RAW_METADATA_OFFSET, BUMP_ALIGN));
+    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
     // `RAW_METADATA_OFFSET` is aligned on 16.
     #[expect(clippy::cast_ptr_alignment)]
@@ -291,9 +291,4 @@ unsafe fn parse_raw_impl(
 #[napi]
 pub fn raw_transfer_supported() -> bool {
     true
-}
-
-/// Returns `true` if `n` is a multiple of `divisor`.
-const fn is_multiple_of(n: usize, divisor: usize) -> bool {
-    n % divisor == 0
 }

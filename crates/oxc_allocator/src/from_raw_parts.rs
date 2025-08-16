@@ -76,8 +76,8 @@ impl Allocator {
         }
 
         // Debug assert that `ptr` and `size` fulfill size and alignment requirements
-        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
-        debug_assert!(is_multiple_of(size, MIN_ALIGN));
+        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
+        debug_assert!(size.is_multiple_of(MIN_ALIGN));
         debug_assert!(size >= CHUNK_FOOTER_SIZE);
 
         let current_chunk_footer_field_offset = get_current_chunk_footer_field_offset();
@@ -214,7 +214,7 @@ impl Allocator {
     ///
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
-        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
+        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
 
         // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
         // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
@@ -401,9 +401,4 @@ fn get_current_chunk_footer_field_offset() -> usize {
             2
         }
     }
-}
-
-/// Returns `true` if `n` is a multiple of `divisor`.
-const fn is_multiple_of(n: usize, divisor: usize) -> bool {
-    n % divisor == 0
 }
