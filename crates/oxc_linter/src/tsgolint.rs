@@ -11,11 +11,12 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use crate::fixer::Message;
-#[cfg(test)]
-use crate::fixer::{CompositeFix, PossibleFixes};
+use crate::fixer::{CompositeFix, Message, PossibleFixes};
 
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
+
+#[cfg(feature = "language_server")]
+use crate::{MessageWithPosition, fixer::message_to_message_with_position};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -162,13 +163,14 @@ impl TsGoLintState {
                                                 }
                                             },
                                         );
-
-                                        let oxc_diagnostic: OxcDiagnostic =
-                                            OxcDiagnostic::from(tsgolint_diagnostic);
                                         let Some(severity) = severity else {
                                             // If the severity is not found, we should not report the diagnostic
                                             continue;
                                         };
+
+                                        let oxc_diagnostic: OxcDiagnostic =
+                                            OxcDiagnostic::from(tsgolint_diagnostic);
+
                                         let oxc_diagnostic = oxc_diagnostic.with_severity(
                                             if severity == AllowWarnDeny::Deny {
                                                 Severity::Error
@@ -252,6 +254,181 @@ impl TsGoLintState {
             Ok(Ok(())) => {
                 // Successfully ran tsgolint
                 Ok(())
+            }
+            Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
+            Err(err) => Err(format!("Error running tsgolint: {err:?}")),
+        }
+    }
+
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    /// - when `tsgolint` process cannot be awaited
+    ///
+    /// # Errors
+    /// A human-readable error message indicating why the linting failed.
+    #[cfg(feature = "language_server")]
+    pub fn lint_source(
+        &self,
+        path: &Arc<OsStr>,
+        source_text: String,
+    ) -> Result<Vec<MessageWithPosition<'_>>, String> {
+        use oxc_data_structures::rope::Rope;
+
+        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+
+        let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
+        let executable_path = self.executable_path.clone();
+
+        let handler = std::thread::spawn(move || {
+            let child = std::process::Command::new(&executable_path)
+                .arg("headless")
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .spawn();
+
+            let mut child = match child {
+                Ok(c) => c,
+                Err(e) => {
+                    return Err(format!(
+                        "Failed to spawn tsgolint from path `{}`, with error: {e}",
+                        executable_path.display()
+                    ));
+                }
+            };
+
+            let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
+
+            // Write the input synchronously and handle BrokenPipe gracefully in case the child
+            // exits early and closes its stdin.
+            let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
+            if let Err(e) = stdin.write_all(json.as_bytes()) {
+                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
+                if e.kind() != ErrorKind::BrokenPipe {
+                    return Err(format!("Failed to write to tsgolint stdin: {e}"));
+                }
+            }
+            // Explicitly drop stdin to send EOF to the child.
+            drop(stdin);
+
+            // Stream diagnostics as they are emitted, rather than waiting for all output
+            let mut stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+
+            let stdout_handler =
+                std::thread::spawn(move || -> Result<Vec<MessageWithPosition<'_>>, String> {
+                    let mut buffer = Vec::with_capacity(8192);
+                    let mut read_buf = [0u8; 8192];
+
+                    let mut result = vec![];
+
+                    loop {
+                        match stdout.read(&mut read_buf) {
+                            Ok(0) => break, // EOF
+                            Ok(n) => {
+                                buffer.extend_from_slice(&read_buf[..n]);
+
+                                // Try to parse complete messages from buffer
+                                let mut cursor = std::io::Cursor::new(buffer.as_slice());
+                                let mut processed_up_to: u64 = 0;
+
+                                while cursor.position() < buffer.len() as u64 {
+                                    let start_pos = cursor.position();
+                                    match parse_single_message(&mut cursor) {
+                                        Ok(Some(tsgolint_diagnostic)) => {
+                                            processed_up_to = cursor.position();
+
+                                            // For now, ignore any `tsgolint` errors.
+                                            if tsgolint_diagnostic.r#type == MessageType::Error {
+                                                continue;
+                                            }
+
+                                            let path = tsgolint_diagnostic.file_path.clone();
+                                            let Some(resolved_config) = resolved_configs.get(&path)
+                                            else {
+                                                // If we don't have a resolved config for this path, skip it. We should always
+                                                // have a resolved config though, since we processed them already above.
+                                                continue;
+                                            };
+
+                                            let severity = resolved_config.rules.iter().find_map(
+                                                |(rule, status)| {
+                                                    if rule.name() == tsgolint_diagnostic.rule {
+                                                        Some(*status)
+                                                    } else {
+                                                        None
+                                                    }
+                                                },
+                                            );
+                                            let Some(severity) = severity else {
+                                                // If the severity is not found, we should not report the diagnostic
+                                                continue;
+                                            };
+
+                                            let mut message_with_position: MessageWithPosition<'_> =
+                                                message_to_message_with_position(
+                                                    &Message::from_tsgo_lint_diagnostic(
+                                                        tsgolint_diagnostic,
+                                                        &source_text,
+                                                    ),
+                                                    &source_text,
+                                                    &Rope::from_str(&source_text),
+                                                );
+
+                                            message_with_position.severity =
+                                                if severity == AllowWarnDeny::Deny {
+                                                    Severity::Error
+                                                } else {
+                                                    Severity::Warning
+                                                };
+
+                                            result.push(message_with_position);
+                                        }
+                                        Ok(None) => {
+                                            // Successfully parsed but no diagnostic to add
+                                            processed_up_to = cursor.position();
+                                        }
+                                        Err(_) => {
+                                            // Could not parse a complete message, break and keep remaining data
+                                            cursor.set_position(start_pos);
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // Keep unprocessed data for next iteration
+                                if processed_up_to > 0 {
+                                    #[expect(clippy::cast_possible_truncation)]
+                                    buffer.drain(..processed_up_to as usize);
+                                }
+                            }
+                            Err(e) => {
+                                return Err(format!("Failed to read from tsgolint stdout: {e}"));
+                            }
+                        }
+                    }
+
+                    Ok(result)
+                });
+
+            // Wait for process to complete and stdout processing to finish
+            let exit_status = child.wait().expect("Failed to wait for tsgolint process");
+            let stdout_result = stdout_handler.join();
+
+            if !exit_status.success() {
+                return Err(format!("tsgolint process exited with status: {exit_status}"));
+            }
+
+            match stdout_result {
+                Ok(Ok(diagnostics)) => Ok(diagnostics),
+                Ok(Err(err)) => Err(err),
+                Err(_) => Err("Failed to join stdout processing thread".to_string()),
+            }
+        });
+
+        match handler.join() {
+            Ok(Ok(diagnostics)) => {
+                // Successfully ran tsgolint
+                Ok(diagnostics)
             }
             Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
@@ -370,7 +547,6 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    #[cfg(test)]
     fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
         let mut fixes =
             Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
