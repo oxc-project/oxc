@@ -329,6 +329,10 @@ impl<'a> MayHaveSideEffects<'a> for ArrayExpressionElement<'a> {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(ctx),
                 Expression::StringLiteral(_) => false,
                 Expression::TemplateLiteral(t) => t.may_have_side_effects(ctx),
+                Expression::Identifier(ident) => {
+                    // FIXME: we should treat `arguments` outside a function scope to have sideeffects
+                    !(ident.name == "arguments" && ctx.is_global_reference(ident))
+                }
                 _ => true,
             },
             match_expression!(ArrayExpressionElement) => {

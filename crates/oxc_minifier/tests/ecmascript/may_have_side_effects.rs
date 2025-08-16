@@ -1,3 +1,5 @@
+use std::iter;
+
 use javascript_globals::GLOBALS;
 
 use rustc_hash::FxHashSet;
@@ -22,7 +24,11 @@ struct Ctx {
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: GLOBALS["builtin"].keys().copied().collect::<FxHashSet<_>>(),
+            global_variable_names: GLOBALS["builtin"]
+                .keys()
+                .copied()
+                .chain(iter::once("arguments"))
+                .collect::<FxHashSet<_>>(),
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
@@ -89,6 +95,26 @@ fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
         panic!("should have a expression statement body: {source_text}");
     };
     assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{source_text}");
+}
+
+#[track_caller]
+fn test_in_function(source_text: &str, expected: bool) {
+    let ctx = Ctx::default();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
+        panic!("should have a function declaration: {source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) =
+        &stmt.body.as_ref().expect("should have a body").statements.first()
+    else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+
+    assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -647,6 +673,8 @@ fn test_array_expression() {
     test("[...`foo${foo}`]", true);
     test("[...`foo${foo()}`]", true);
     test("[...foo()]", true);
+    // test_in_function("[...arguments]", true);
+    test_in_function("function foo() { [...arguments] }", false);
 }
 
 #[test]
