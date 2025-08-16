@@ -46,23 +46,20 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct ExplicitResourceManagement<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct ExplicitResourceManagement {
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 }
 
-impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, top_level_using: FxHashMap::default() }
+impl ExplicitResourceManagement {
+    pub fn new() -> Self {
+        Self { top_level_using: FxHashMap::default() }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement {
     /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
@@ -516,7 +513,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
     }
 }
 
-impl<'a> ExplicitResourceManagement<'a, '_> {
+impl<'a> ExplicitResourceManagement<'a> {
     /// Transform block statement.
     ///
     /// Input:

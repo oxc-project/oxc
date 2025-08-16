@@ -61,21 +61,18 @@ use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct LogicalAssignmentOperators<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct LogicalAssignmentOperators;
 
-impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl LogicalAssignmentOperators {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators {
     // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
     // with a logical operator. So we want to bail out as fast as possible for everything else,
     // without the cost of a function call.
@@ -90,7 +87,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_>
     }
 }
 
-impl<'a> LogicalAssignmentOperators<'a, '_> {
+impl<'a> LogicalAssignmentOperators<'a> {
     fn transform_logical_assignment(
         &self,
         expr: &mut Expression<'a>,

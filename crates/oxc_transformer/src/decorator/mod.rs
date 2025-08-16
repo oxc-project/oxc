@@ -5,30 +5,29 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 use legacy::LegacyDecorator;
 pub use options::DecoratorOptions;
 
-pub struct Decorator<'a, 'ctx> {
+pub struct Decorator<'a> {
     options: DecoratorOptions,
 
     // Plugins
-    legacy_decorator: LegacyDecorator<'a, 'ctx>,
+    legacy_decorator: LegacyDecorator<'a>,
 }
 
-impl<'a, 'ctx> Decorator<'a, 'ctx> {
-    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> Decorator<'a> {
+    pub fn new(options: DecoratorOptions, ) -> Self {
         Self {
-            legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata, ctx),
+            legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_statement(stmt, ctx);
@@ -83,7 +82,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     }
 }
 
-impl<'a> Decorator<'a, '_> {
+impl<'a> Decorator<'a> {
     pub fn exit_class_at_end(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_class_at_end(class, ctx);

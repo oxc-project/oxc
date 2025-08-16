@@ -2,8 +2,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx, CompilerAssumptions,
 };
 
 mod class_properties;
@@ -15,17 +14,17 @@ pub use class_properties::ClassPropertiesOptions;
 use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
-pub struct ES2022<'a, 'ctx> {
+pub struct ES2022<'a> {
     // Plugins
     class_static_block: Option<ClassStaticBlock>,
-    class_properties: Option<ClassProperties<'a, 'ctx>>,
+    class_properties: Option<ClassProperties<'a>>,
 }
 
-impl<'a, 'ctx> ES2022<'a, 'ctx> {
+impl<'a> ES2022<'a> {
     pub fn new(
         options: ES2022Options,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformCtx<'a>,
+        assumptions: &CompilerAssumptions,
     ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.
@@ -35,7 +34,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
                     properties_options,
                     options.class_static_block,
                     remove_class_fields_without_initializer,
-                    ctx,
+                    assumptions,
                 );
                 (None, Some(class_properties))
             } else {
@@ -47,7 +46,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a> {
     #[inline] // Because this is a no-op in release mode
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {

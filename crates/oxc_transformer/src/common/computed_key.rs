@@ -4,11 +4,11 @@ use oxc_ast::ast::Expression;
 use oxc_semantic::SymbolFlags;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::create_assignment,
 };
 
-impl<'a> TransformCtx<'a> {
+impl<'a> TransformState<'a> {
     /// Check if temp var is required for `key`.
     ///
     /// `this` does not have side effects, but in this context, it needs a temp var anyway, because `this`

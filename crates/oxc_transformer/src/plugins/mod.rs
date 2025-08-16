@@ -7,26 +7,25 @@ use oxc_traverse::Traverse;
 pub use styled_components::StyledComponentsOptions;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    state::TransformState, context::TraverseCtx,
     plugins::styled_components::StyledComponents,
-    state::TransformState,
 };
 
-pub struct Plugins<'a, 'ctx> {
-    styled_components: Option<StyledComponents<'a, 'ctx>>,
+pub struct Plugins<'a> {
+    styled_components: Option<StyledComponents<'a>>,
 }
 
-impl<'a, 'ctx> Plugins<'a, 'ctx> {
-    pub fn new(options: PluginsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> Plugins<'a> {
+    pub fn new(options: PluginsOptions, ) -> Self {
         Self {
             styled_components: options
                 .styled_components
-                .map(|options| StyledComponents::new(options, ctx)),
+                .map(|options| StyledComponents::new(options)),
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_program(node, ctx);

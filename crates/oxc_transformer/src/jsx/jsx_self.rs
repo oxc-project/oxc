@@ -34,23 +34,20 @@ use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 const SELF: &str = "__self";
 
-pub struct JsxSelf<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct JsxSelf;
 
-impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl JsxSelf {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -60,10 +57,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
     }
 }
 
-impl<'a> JsxSelf<'a, '_> {
-    pub fn report_error(&self, span: Span) {
+impl<'a> JsxSelf {
+    pub fn report_error(&self, span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        self.ctx.error(error);
+        ctx.state.error(error);
     }
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
@@ -107,7 +104,7 @@ impl<'a> JsxSelf<'a, '_> {
             if let JSXAttributeItem::Attribute(attribute) = item {
                 if let JSXAttributeName::Identifier(ident) = &attribute.name {
                     if ident.name == SELF {
-                        self.report_error(ident.span);
+                        self.report_error(ident.span, ctx);
                         return;
                     }
                 }
