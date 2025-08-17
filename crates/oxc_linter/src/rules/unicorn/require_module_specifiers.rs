@@ -69,7 +69,10 @@ impl Rule for RequireModuleSpecifiers {
                 if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
                     let span =
                         find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
-                    ctx.diagnostic(require_module_specifiers_diagnostic(span, "export"));
+                    ctx.diagnostic_with_fix(
+                        require_module_specifiers_diagnostic(span, "export"),
+                        |fixer| fix_export(fixer, export_decl),
+                    );
                 }
             }
             _ => {}
@@ -139,6 +142,18 @@ fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>)
     fixer.replace(import_decl.span, format!("{default_part} {from_part}"))
 }
 
+fn fix_export<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    export_decl: &ExportNamedDeclaration<'a>,
+) -> RuleFix<'a> {
+    if export_decl.source.is_some() {
+        return fixer.noop();
+    }
+
+    // Remove the entire `export {}` statement
+    fixer.delete(&export_decl.span)
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -194,6 +209,8 @@ fn test() {
     let fix = vec![
         (r#"import foo, {} from "foo";"#, r#"import foo from "foo";"#),
         (r#"import foo,{} from "foo";"#, r#"import foo from "foo";"#),
+        ("export {}", ""),
+        ("export {};", ""),
     ];
 
     Tester::new(RequireModuleSpecifiers::NAME, RequireModuleSpecifiers::PLUGIN, pass, fail)
