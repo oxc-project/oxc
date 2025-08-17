@@ -1,18 +1,16 @@
 use std::ops::Deref;
 
-use itertools::Itertools;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
-    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
-        JestGeneralFnKind, ParsedGeneralJestFnCall, collect_possible_jest_call_node,
-        parse_general_jest_fn_call,
+        JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, parse_general_jest_fn_call,
     },
 };
 
@@ -67,92 +65,86 @@ declare_oxc_lint!(
     fix
 );
 
-enum NodeType {
-    Test(CompactStr),
-    Statement,
-}
-
 impl Rule for PaddingAroundTestBlocks {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut nodes = collect_possible_jest_call_node(ctx)
-            .iter()
-            .filter_map(|possible_jest_node| {
-                let node = possible_jest_node.node;
-                let AstKind::CallExpression(call_expr) = node.kind() else {
-                    return None;
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        let node = jest_node.node;
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) else {
+            return;
+        };
+        let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
+        let Some(kind) = kind.to_general() else {
+            return;
+        };
+        if kind != JestGeneralFnKind::Test {
+            return;
+        }
+        let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
+        let prev_statement_span = match scope_node.kind() {
+            AstKind::Program(program) => {
+                get_statement_span_before_node(*node, program.body.as_slice())
+            }
+            AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+                get_statement_span_before_node(*node, arrow_func_expr.body.statements.as_slice())
+            }
+            AstKind::Function(function) => {
+                let Some(body) = &function.body else {
+                    return;
                 };
-                let jest_fn_call = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
-                let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-                let kind = kind.to_general()?;
-                if kind != JestGeneralFnKind::Test {
-                    return None;
-                }
-                Some((NodeType::Test(name.deref().into()), node))
-            })
-            .collect_vec();
-        for node in ctx.nodes() {
-            if node.kind().is_statement() {
-                nodes.push((NodeType::Statement, node));
+                get_statement_span_before_node(*node, body.statements.as_slice())
+            }
+            _ => None,
+        };
+        let Some(prev_statement_span) = prev_statement_span else {
+            return;
+        };
+        let mut comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
+        let mut span_between_start = prev_statement_span.end;
+        let mut span_between_end = node.span().start;
+        if let Some(last_comment_span) = comments_range.next_back().map(|comment| comment.span) {
+            let space_after_last_comment =
+                ctx.source_range(Span::new(last_comment_span.end, node.span().start));
+            let space_before_last_comment =
+                ctx.source_range(Span::new(prev_statement_span.end, last_comment_span.start));
+            if space_after_last_comment.matches('\n').count() > 1
+                || space_before_last_comment.matches('\n').count() == 0
+            {
+                span_between_start = last_comment_span.end;
+            } else {
+                span_between_end = last_comment_span.start;
             }
         }
-        nodes.sort_by_key(|(_, node)| node.span().end);
-        let mut prev_node: Option<&AstNode<'_>> = None;
-        for (node_type, node) in nodes {
-            match node_type {
-                NodeType::Test(name) => {
-                    if let Some(prev_node) = prev_node {
-                        if prev_node.span().end > node.span().start {
-                            continue;
-                        }
-                        let mut comments_range =
-                            ctx.comments_range(prev_node.span().end..node.span().start);
-                        let mut span_between_start = prev_node.span().end;
-                        let mut span_between_end = node.span().start;
-                        if let Some(last_comment_span) =
-                            comments_range.next_back().map(|comment| comment.span)
-                        {
-                            let space_after_last_comment = ctx
-                                .source_range(Span::new(last_comment_span.end, node.span().start));
-                            let space_before_last_comment = ctx.source_range(Span::new(
-                                prev_node.span().end,
-                                last_comment_span.start,
-                            ));
-                            if space_after_last_comment.matches('\n').count() > 1
-                                || space_before_last_comment.matches('\n').count() == 0
-                            {
-                                span_between_start = last_comment_span.end;
-                            } else {
-                                span_between_end = last_comment_span.start;
-                            }
-                        }
-                        let span_between = Span::new(span_between_start, span_between_end);
-                        let content = ctx.source_range(span_between);
-                        if content.matches('\n').count() < 2 {
-                            ctx.diagnostic_with_fix(
-                                padding_around_test_blocks_diagnostic(
-                                    Span::new(span_between_end, span_between_end),
-                                    &name,
-                                ),
-                                |fixer| {
-                                    let spaces_after_last_line = content
-                                        .rfind('\n')
-                                        .map_or("", |index| content.split_at(index + 1).1);
-                                    fixer.replace(
-                                        span_between,
-                                        format!("\n\n{spaces_after_last_line}"),
-                                    )
-                                },
-                            );
-                        }
-                    }
-                    prev_node = Some(node);
-                }
-                NodeType::Statement => {
-                    prev_node = Some(node);
-                }
-            }
+        let span_between = Span::new(span_between_start, span_between_end);
+        let content = ctx.source_range(span_between);
+        if content.matches('\n').count() < 2 {
+            ctx.diagnostic_with_fix(
+                padding_around_test_blocks_diagnostic(
+                    Span::new(span_between_end, span_between_end),
+                    &name.deref().into(),
+                ),
+                |fixer| {
+                    let whitespace_after_last_line =
+                        content.rfind('\n').map_or("", |index| content.split_at(index + 1).1);
+                    fixer.replace(span_between, format!("\n\n{whitespace_after_last_line}"))
+                },
+            );
         }
     }
+}
+
+fn get_statement_span_before_node(node: AstNode, statements: &[Statement]) -> Option<Span> {
+    statements
+        .iter()
+        .filter_map(|statement| {
+            if statement.span().end <= node.span().start { Some(statement.span()) } else { None }
+        })
+        .next_back()
 }
 
 #[test]
@@ -197,6 +189,14 @@ test('bar bar', () => {});
  test
    .skip('skippy skip', () => {});
  xit('bar foo', () => {});
+            ",
+        r"
+describe('other bar', function() {
+    test('is another bar w/ test', () => {
+    });
+    it('is another bar w/ it', () => {
+    });
+});
             ",
     ];
 
@@ -281,8 +281,28 @@ test
 xit('bar foo', () => {});
         ",
         ),
+        (
+            r"
+describe('other bar', function() {
+    test('is another bar w/ test', () => {
+    });
+    it('is another bar w/ it', () => {
+    });
+});
+            ",
+            r"
+describe('other bar', function() {
+    test('is another bar w/ test', () => {
+    });
+
+    it('is another bar w/ it', () => {
+    });
+});
+            ",
+        ),
     ];
     Tester::new(PaddingAroundTestBlocks::NAME, PaddingAroundTestBlocks::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
