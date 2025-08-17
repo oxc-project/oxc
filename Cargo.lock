@@ -1976,7 +1976,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "1.11.2"
+version = "1.12.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -1996,7 +1996,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.11.2"
+version = "1.12.0"
 dependencies = [
  "bitflags 2.9.1",
  "constcat",
@@ -2492,7 +2492,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.11.2"
+version = "1.12.0"
 dependencies = [
  "bpaf",
  "cow-utils",
