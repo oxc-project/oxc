@@ -128,9 +128,8 @@ fn find_empty_braces_in_export(
 fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>) -> RuleFix<'a> {
     let import_text = fixer.source_range(import_decl.span);
 
-    // Only fix `import foo, {} from 'bar'` - safe removal of empty braces
     let Some(comma_pos) = import_text.find(',') else {
-        return fixer.noop(); // Don't fix `import {} from 'foo'` - changes behavior
+        return fixer.noop();
     };
     let Some(from_pos) = import_text[comma_pos..].find("from") else {
         return fixer.noop();
