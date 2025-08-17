@@ -89,7 +89,7 @@ fn find_empty_braces_in_text(text: &str, base_span: Span) -> Option<Span> {
 
     // Calculate absolute positions
     let start = base_span.start + u32::try_from(open_brace).ok()?;
-    let end = start + u32::try_from(close_brace + 1).ok()? + 1; // +2 for '{' and '}'
+    let end = start + u32::try_from(close_brace + 2).ok()?; // +2 to span from '{' to position after '}'
     Some(Span::new(start, end))
 }
 
