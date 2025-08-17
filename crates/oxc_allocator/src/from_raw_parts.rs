@@ -139,11 +139,10 @@ impl Allocator {
     /// describes the start of the allocation obtained from system allocator.
     ///
     /// The `Allocator` **must not be allowed to be dropped** or it would be UB.
-    /// Only use this method if you prevent that possibililty. e.g.:
+    /// Only use this method if you prevent that possibility. e.g.:
     ///
     /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
-    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and taking care of deallocating it manually
-    ///    with the correct pointer.
+    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
     ///
     /// # Panics
     ///
@@ -182,8 +181,10 @@ impl Allocator {
         // Set new data pointer.
         // SAFETY: `Allocator` must have at least 1 allocated chunk or check for sufficient capacity
         // above would have failed.
+        // `new_data_ptr` cannot be after the cursor pointer, or free capacity check would have failed.
         // Data pointer is always aligned on `MIN_ALIGN`, and we rounded `alloc_bytes` up to a multiple
         // of `MIN_ALIGN`, so that remains the case.
+        // It is caller's responsibility to ensure that the `Allocator` is not dropped after this call.
         unsafe { self.set_data_ptr(new_data_ptr) };
 
         // Return original data pointer
@@ -204,15 +205,28 @@ impl Allocator {
     /// It is only here for manually writing data to start of the allocator chunk,
     /// and then adjusting the start pointer to after it.
     ///
+    /// If calling this method with any pointer which is not the original data pointer for this
+    /// `Allocator` chunk, the `Allocator` must NOT be allowed to be dropped after this call,
+    /// because data pointer no longer correctly describes the start of the allocation obtained
+    /// from system allocator. If the `Allocator` were dropped, it'd be UB.
+    ///
+    /// Only use this method if you prevent that possibility. e.g.:
+    ///
+    /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
+    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
+    ///
     /// # SAFETY
     ///
     /// * Allocator must have at least 1 allocated chunk.
     ///   It is UB to call this method on an `Allocator` which has not allocated
     ///   i.e. fresh from `Allocator::new`.
-    /// * `ptr` must point to within the allocation underlying this allocator.
+    /// * `ptr` must point to within the `Allocator`'s current chunk.
+    /// * `ptr` must be equal to or before cursor pointer for this chunk.
     /// * `ptr` must be aligned on [`RAW_MIN_ALIGN`].
+    /// * `Allocator` must not be dropped if `ptr` is not the original data pointer for this chunk.
     ///
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
+    /// [`set_data_ptr`]: Self::set_data_ptr
     pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
         debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
 
@@ -241,8 +255,8 @@ impl Allocator {
     /// * Allocator must have at least 1 allocated chunk.
     ///   It is UB to call this method on an `Allocator` which has not allocated
     ///   i.e. fresh from `Allocator::new`.
-    /// * `ptr` must point to within the allocation underlying this allocator.
-    /// * `ptr` must be after `data_ptr` for this chunk.
+    /// * `ptr` must point to within the `Allocator`'s current chunk.
+    /// * `ptr` must be equal to or after data pointer for this chunk.
     pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
         // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
         // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference

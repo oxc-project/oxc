@@ -283,6 +283,8 @@ impl FixedSizeAllocator {
         // SAFETY: Fixed-size allocators have data pointer originally aligned on `BLOCK_ALIGN`,
         // and size less than `BLOCK_ALIGN`. So we can restore original data pointer by rounding down
         // to next multiple of `BLOCK_ALIGN`.
+        // We're restoring the original data pointer, so it cannot break invariants about alignment,
+        // being within the chunk's allocation, or being before cursor pointer.
         unsafe {
             let data_ptr = self.allocator.data_ptr();
             let offset = data_ptr.as_ptr() as usize % BLOCK_ALIGN;
