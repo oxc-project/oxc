@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- da3c7fb oxlint: Oxlint v0.0.3 (#13148) (Boshen)
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+- 61112a3 linter: Add 36 new TypeScript ESLint rules with comprehensive test fixtures (#12893) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 66a350e oxlint: Should type linting files after ignore (#13149) (Boshen)
+- 43b1c5a linter: Do not count type-aware rules, when not enabled (#13062) (Sysix)
+- a0ccada tsgolint: Handle non-zero exit status from tsgolint process (#13087) (camc314)
+
+### 🚜 Refactor
+
+- 8459a12 linter: Pass paths to `TsGoLintState.lint` method (#13131) (Sysix)
+- f0a517f linter: Pass cwd instead of `LintServiceOptions` into `TsGoLintState` (#13127) (Sysix)
+- 34ae2f0 linter: Move `tsgolint.rs` to `oxc_linter` crate (#13126) (Sysix)
+- 9f924f6 linter: Always explicitly initialize Rayon thread pool (#13122) (overlookmotel)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+- cc2a85b linter: Remove `CliRunResult` from `TsGoLintState` (#13119) (Sysix)
+- 23e5642 linter: Move `TsGoLintInput` creation into own function (#13118) (Sysix)
+
+### ⚡ Performance
+
+- 3bfb235 linter: Implement streaming diagnostics for tsgolint instead of waiting for output to finish (#13098) (copilot-swe-agent)
+
+### 🎨 Styling
+
+- 4f2cc96 linter: Add line break (#13061) (overlookmotel)
+
+
 ## [1.11.2] - 2025-08-12
 
 ### 🐛 Bug Fixes
