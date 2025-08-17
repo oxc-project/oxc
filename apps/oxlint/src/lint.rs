@@ -291,21 +291,21 @@ impl LintRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        let files_to_lint = paths
+            .into_iter()
+            .filter(|path| !config_store.should_ignore(Path::new(path)))
+            .collect::<Vec<Arc<OsStr>>>();
+
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
-                .lint(&paths, tx_error.clone())
+                .lint(&files_to_lint, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
             }
         }
-
-        let files_to_lint = paths
-            .into_iter()
-            .filter(|path| !config_store.should_ignore(Path::new(path)))
-            .collect::<Vec<Arc<OsStr>>>();
 
         let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
             .with_fix(fix_options.fix_kind())
