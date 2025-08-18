@@ -296,10 +296,16 @@ impl LintRunner {
             .filter(|path| !config_store.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        let lint_options = LintOptions {
+            fix: fix_options.fix_kind(),
+            report_unused_directive: report_unused_directives,
+            ..LintOptions::default()
+        };
+
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
+            if let Err(err) = TsGoLintState::new(options.cwd(), lint_options, config_store.clone())
                 .lint(&files_to_lint, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
@@ -307,9 +313,7 @@ impl LintRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new(lint_options, config_store, self.external_linter);
 
         let number_of_files = files_to_lint.len();
 

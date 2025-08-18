@@ -11,7 +11,10 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::{
+    LintOptions,
+    fixer::{CompositeFix, Message, PossibleFixes},
+};
 
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
@@ -24,14 +27,18 @@ pub struct TsGoLintState {
     cwd: PathBuf,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
+    /// The linting options for `tsgolint`, needed for `--fix`
+    #[expect(dead_code)]
+    lint_options: LintOptions,
 }
 
 impl TsGoLintState {
-    pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
+    pub fn new(cwd: &Path, lint_options: LintOptions, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
             executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
+            lint_options,
         }
     }
 
