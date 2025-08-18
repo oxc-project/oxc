@@ -33,7 +33,7 @@ class NodeArray extends Array {
    * The proxy intercepts accesses to elements and lazily deserializes them,
    * and blocks mutation of elements or `length` property.
    *
-   * @constructor
+   * @class
    * @param {number} pos - Buffer position of first element
    * @param {number} length - Number of elements
    * @param {number} stride - Element size in bytes

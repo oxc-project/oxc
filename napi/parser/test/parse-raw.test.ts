@@ -47,13 +47,10 @@ async function runCaseInWorker(type, props) {
   // to get a nice diff and stack trace
   if (!success) {
     if (!runCase) ({ runCase } = await import('./parse-raw-worker.mjs'));
-    try {
-      type |= TEST_TYPE_PRETTY;
-      await runCase({ type, props }, expect);
-      throw new Error('Failed on worker but unexpectedly passed on main thread');
-    } catch (err) {
-      throw err;
-    }
+
+    type |= TEST_TYPE_PRETTY;
+    await runCase({ type, props }, expect);
+    throw new Error('Failed on worker but unexpectedly passed on main thread');
   }
 }
 
@@ -102,11 +99,13 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
 }
 
 describe.concurrent('test262', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy test262', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_LAZY, path));
 });
 
@@ -119,11 +118,13 @@ const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
 
 describe.concurrent('JSX', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy JSX', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_LAZY, filename));
 });
 
@@ -140,11 +141,13 @@ const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
 
 describe.concurrent('TypeScript', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy TypeScript', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_LAZY, path));
 });
 
@@ -168,7 +171,9 @@ describe.concurrent('edge cases', () => {
     '#!/usr/bin/env node\nlet x;',
     '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
+    // oxlint-disable-next-line jest/expect-expect
     it('JS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.js', sourceText }));
+    // oxlint-disable-next-line jest/expect-expect
     it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
     itLazy(
@@ -184,11 +189,13 @@ describe.concurrent('edge cases', () => {
 
 // Test raw transfer output matches standard (via JSON) output for some large files
 describe.concurrent('fixtures', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy fixtures', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
 });
 
@@ -216,6 +223,7 @@ describe.concurrent('`parseAsync`', () => {
     expect(programRaw).toEqual(programStandard);
   });
 
+  // oxlint-disable-next-line jest/expect-expect
   it('processes multiple files', async () => {
     await testMultiple(4);
   });
@@ -223,6 +231,7 @@ describe.concurrent('`parseAsync`', () => {
   // This is primarily testing the queuing mechanism.
   // At least on Mac OS, this test does not cause out-of-memory without the queue implemented,
   // but the test doesn't complete in a reasonable time (I gave up waiting after 20 minutes).
+  // oxlint-disable-next-line jest/expect-expect
   it('does not exhaust memory when called huge number of times in succession', async () => {
     await testMultiple(10_000);
   });

@@ -53,6 +53,8 @@ export { default as name1 } from "module-name";
     expect(ret.errors.length).toBe(0);
     expect(JSON.stringify(ret.module, null, 2)).toMatchSnapshot();
     expect(ret.module.hasModuleSyntax).toBe(true);
+
+    // oxlint-disable jest/no-conditional-expect
     if (s.startsWith('import')) {
       expect(ret.module.staticImports.length).toBe(1);
       expect(ret.module.staticExports.length).toBe(0);
@@ -61,6 +63,7 @@ export { default as name1 } from "module-name";
       expect(ret.module.staticImports.length).toBe(0);
       expect(ret.module.staticExports.length).toBe(1);
     }
+    // oxlint-enable jest/no-conditional-expect
   });
 });
 

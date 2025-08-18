@@ -51,7 +51,7 @@ function applyFix(program, fixPath) {
   } else {
     try {
       node.value = RegExp(node.regex.pattern, node.regex.flags);
-    } catch (_err) {
+    } catch (_err) { // oxlint-disable-line no-unused-vars
       // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
     }
   }

@@ -62,28 +62,33 @@ const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
 
 // Run benchmarks
 for (const { filename, code } of fixtures) {
+  // oxlint-disable-next-line jest/valid-title
   describe(filename, () => {
     benchStandard('parser_napi', () => {
       const ret = parseSync(filename, code);
       // Read returned object's properties to execute getters which deserialize
+      // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
     benchRaw('parser_napi_raw', () => {
       const ret = parseSync(filename, code, { experimentalRawTransfer: true });
       // Read returned object's properties to execute getters
+      // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
     benchStandard('parser_napi_async', async () => {
       const ret = await parseAsync(filename, code);
       // Read returned object's properties to execute getters which deserialize
+      // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
     benchRaw('parser_napi_async_raw', async () => {
       const ret = await parseAsync(filename, code, { experimentalRawTransfer: true });
       // Read returned object's properties to execute getters
+      // oxlint-disable-next-line no-unused-vars
       const { program, comments, module, errors } = ret;
     });
 
@@ -105,22 +110,24 @@ for (const { filename, code } of fixtures) {
     // Create visitors
     const Visitor = experimentalGetLazyVisitor();
 
+    // oxlint-disable-next-line no-unused-vars
     let debuggerCount = 0;
     const debuggerVisitor = new Visitor({
-      DebuggerStatement(debuggerStmt) {
+      DebuggerStatement(_debuggerStmt) {
         debuggerCount++;
       },
     });
 
+    // oxlint-disable-next-line no-unused-vars
     let identCount = 0;
     const identVisitor = new Visitor({
-      BindingIdentifier(ident) {
+      BindingIdentifier(_ident) {
         identCount++;
       },
-      IdentifierReference(ident) {
+      IdentifierReference(_ident) {
         identCount++;
       },
-      IdentifierName(ident) {
+      IdentifierName(_ident) {
         identCount++;
       },
     });
@@ -143,7 +150,7 @@ for (const { filename, code } of fixtures) {
       const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
       debuggerCount = 0;
       const debuggerVisitor = new Visitor({
-        DebuggerStatement(debuggerStmt) {
+        DebuggerStatement(_debuggerStmt) {
           debuggerCount++;
         },
       });
@@ -155,13 +162,13 @@ for (const { filename, code } of fixtures) {
       const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
       identCount = 0;
       const identVisitor = new Visitor({
-        BindingIdentifier(ident) {
+        BindingIdentifier(_ident) {
           identCount++;
         },
-        IdentifierReference(ident) {
+        IdentifierReference(_ident) {
           identCount++;
         },
-        IdentifierName(ident) {
+        IdentifierName(_ident) {
           identCount++;
         },
       });

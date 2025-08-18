@@ -72,7 +72,10 @@ async function runTest262Case(path, lazy, expect) {
 
   const sourceType = getSourceTypeFromJSON(acornJson);
 
-  if (lazy) return testLazy(filename, sourceText, { sourceType });
+  if (lazy) {
+    testLazy(filename, sourceText, { sourceType });
+    return;
+  }
 
   // @ts-ignore
   const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
@@ -91,7 +94,10 @@ async function runJsxCase(filename, lazy, expect) {
 
   const sourceType = getSourceTypeFromJSON(acornJson);
 
-  if (lazy) return testLazy(filename, sourceText, { sourceType });
+  if (lazy) {
+    testLazy(filename, sourceText, { sourceType });
+    return;
+  }
 
   // @ts-ignore
   const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
@@ -143,7 +149,7 @@ async function runTsCase(path, lazy, expect) {
 
     try {
       expect(oxcJson).toEqual(estreeJson);
-    } catch (err) {
+    } catch {
       // Fall back to comparing to AST parsed via JSON transfer.
       // We can fail to match the TS-ESLint snapshots where there are syntax errors,
       // because our parser is not recoverable.

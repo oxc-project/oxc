@@ -12,8 +12,10 @@ function parseSyncLazy(filename, code, options = null) {
 
 // Get `NodeArray` constructor
 const NodeArray = Object.getPrototypeOf(parseSyncLazy('test.js', '').program.body).constructor;
+// oxlint-disable eslint-plugin-jest/no-standalone-expect
 expect(NodeArray).not.toBe(Array);
 expect(NodeArray.toString().startsWith('class NodeArray extends Array {')).toBe(true);
+// oxlint-enable eslint-plugin-jest/no-standalone-expect
 
 it('parses', () => {
   const { program } = parseSyncLazy('test.js', 'let x = y + z;');
@@ -177,7 +179,9 @@ describe('NodeArray', () => {
 
     it('join', () => {
       const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+      // oxlint-disable-next-line typescript-eslint/no-base-to-string
       expect(body.join()).toBe('[object Object],[object Object]');
+      // oxlint-disable-next-line typescript-eslint/no-base-to-string
       expect(body.join(' x ')).toBe('[object Object] x [object Object]');
     });
 
@@ -390,6 +394,7 @@ describe('NodeArray', () => {
 
     it('sort (throws)', () => {
       const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+      // oxlint-disable-next-line typescript-eslint/require-array-sort-compare
       expect(() => body.sort()).toThrow(new TypeError('Cannot redefine property: 0'));
     });
 
@@ -404,6 +409,7 @@ describe('NodeArray', () => {
 
     it('toLocaleString', () => {
       const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+      // oxlint-disable-next-line typescript-eslint/no-base-to-string
       expect(body.toLocaleString()).toBe('[object Object],[object Object]');
     });
 
@@ -442,6 +448,7 @@ describe('NodeArray', () => {
 
     it('toString', () => {
       const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
+      // oxlint-disable-next-line typescript-eslint/no-base-to-string
       expect(body.toString()).toBe('[object Object],[object Object]');
     });
 

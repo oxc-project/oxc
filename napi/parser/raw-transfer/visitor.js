@@ -34,7 +34,7 @@ class Visitor {
    * });
    * ```
    *
-   * @constructor
+   * @class
    * @param {Object} visitor - Object defining visit functions for AST nodes
    * @returns {Visitor}
    */
@@ -60,7 +60,7 @@ module.exports = { Visitor, getVisitorsArr };
  *   where each property is either a visitor function or `null`.
  *
  * @param {Object} visitor - Visitors object from user
- * @returns {Array<Object|function|null>} - Array of visitors
+ * @returns {Array<Object|Function|null>} - Array of visitors
  */
 function createVisitorsArr(visitor) {
   if (visitor === null || typeof visitor !== 'object') {
