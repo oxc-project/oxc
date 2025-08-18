@@ -251,19 +251,9 @@ impl Rule for JsxHandlerNames {
             let AstKind::JSXOpeningElement(opening_element) = parent_node.kind() else {
                 return;
             };
-            let component_name = match &opening_element.name {
-                JSXElementName::Identifier(ident) => ident.name.as_str(),
-                JSXElementName::IdentifierReference(ident) => ident.name.as_str(),
-                JSXElementName::MemberExpression(member_expr) => {
-                    &get_member_expression_name(member_expr)
-                }
-                JSXElementName::NamespacedName(namespaced_name) => {
-                    namespaced_name.name.name.as_str()
-                }
-                JSXElementName::ThisExpression(_) => "this",
-            };
+            let component_name = get_element_name(&opening_element.name);
             for name in &self.ignore_component_names {
-                if fast_glob::glob_match(name.as_ref(), component_name) {
+                if fast_glob::glob_match(name.as_ref(), component_name.as_str()) {
                     return;
                 }
             }
@@ -350,6 +340,21 @@ fn is_member_expression_event_handler(value_expr: &JSXExpression<'_>) -> bool {
         return false;
     };
     callee_expr.callee.is_member_expression()
+}
+
+fn get_element_name(name: &JSXElementName<'_>) -> CompactStr {
+    match name {
+        JSXElementName::Identifier(ident) => ident.name.as_str().into(),
+        JSXElementName::IdentifierReference(ident) => ident.name.as_str().into(),
+        JSXElementName::MemberExpression(member_expr) => get_member_expression_name(member_expr),
+        JSXElementName::NamespacedName(namespaced_name) => format!(
+            "{}:{}",
+            namespaced_name.namespace.name.as_str(),
+            namespaced_name.name.name.as_str()
+        )
+        .into(),
+        JSXElementName::ThisExpression(_) => "this".into(),
+    }
 }
 
 fn get_member_expression_name(member_expr: &JSXMemberExpression) -> CompactStr {
