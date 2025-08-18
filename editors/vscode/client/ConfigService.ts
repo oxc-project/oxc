@@ -81,7 +81,7 @@ export class ConfigService implements IDisposable {
 
   dispose() {
     for (const disposable of this._disposables) {
-      disposable.dispose();
+      void disposable.dispose();
     }
   }
 }
