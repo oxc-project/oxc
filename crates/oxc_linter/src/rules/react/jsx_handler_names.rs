@@ -1,5 +1,3 @@
-use std::sync::{LazyLock, Mutex};
-
 use crate::{AstNode, context::LintContext, rule::Rule};
 use lazy_regex::{Regex, RegexBuilder, regex};
 use oxc_ast::{
@@ -12,7 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 fn bad_handler_name_diagnostic(
@@ -122,45 +119,30 @@ declare_oxc_lint!(
     style,
 );
 
-type RegexCache = LazyLock<Mutex<FxHashMap<CompactStr, Regex>>>;
-
 fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) -> Option<Regex> {
-    static REGEX_CACHE: RegexCache = LazyLock::new(|| Mutex::new(FxHashMap::default()));
     if handler_prefix.is_empty() || handler_prop_prefix.is_empty() {
         return None;
     }
-    let cache_key = CompactStr::from(format!("{handler_prefix},{handler_prop_prefix}"));
-    if let Some(regex) = REGEX_CACHE.lock().unwrap().get(&cache_key) {
-        return Some(regex.clone());
-    }
-
     let prefixes = split_prefixes_string(handler_prefix);
-    let prop_prefixes = split_prefixes_string(handler_prop_prefix);
-
     let prefix_pattern = prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
+    let prop_prefixes = split_prefixes_string(handler_prop_prefix);
     let prop_prefix_pattern =
         prop_prefixes.iter().map(|p| regex::escape(p)).collect::<Vec<_>>().join("|");
     if prefix_pattern.is_empty() || prop_prefix_pattern.is_empty() {
         return None;
     }
-
     let regex = RegexBuilder::new(
         format!(r"^((props\.({prop_prefix_pattern}))|((.*\.)?({prefix_pattern})))[0-9]*[A-Z].*$")
             .as_str(),
     )
     .build()
     .expect("Failed to compile regex for event handler prefixes");
-    REGEX_CACHE.lock().unwrap().insert(cache_key, regex.clone());
     Some(regex)
 }
 
 fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
-    static REGEX_CACHE: RegexCache = LazyLock::new(|| Mutex::new(FxHashMap::default()));
     if handler_prop_prefix.is_empty() {
         return None;
-    }
-    if let Some(regex) = REGEX_CACHE.lock().unwrap().get(handler_prop_prefix) {
-        return Some(regex.clone());
     }
     let prop_prefixes = split_prefixes_string(handler_prop_prefix);
     let prop_prefix_pattern =
@@ -171,7 +153,6 @@ fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
     let regex = RegexBuilder::new(format!(r"^(({prop_prefix_pattern})[A-Z].*|ref)$").as_str())
         .build()
         .expect("Failed to compile regex for event handler prop prefixes");
-    REGEX_CACHE.lock().unwrap().insert(handler_prop_prefix.into(), regex.clone());
     Some(regex)
 }
 
