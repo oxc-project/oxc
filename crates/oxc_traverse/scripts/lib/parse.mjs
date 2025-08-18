@@ -71,10 +71,11 @@ export default async function getTypesFromCode() {
   const codeDirPath = pathJoin(fileURLToPath(import.meta.url), '../../../../oxc_ast/src/ast/');
 
   const types = Object.create(null);
-  await Promise.all(FILENAMES.map(async (filename) => {
+  for (const filename of FILENAMES) {
+    // oxlint-disable-next-line no-await-in-loop
     const code = await readFile(`${codeDirPath}${filename}`, 'utf8');
     parseFile(code, filename, types);
-  }));
+  }
   return types;
 }
 
