@@ -26,7 +26,6 @@
     "napi/**", // TODO
     "editors/vscode/tests/**", // TODO,
     "tasks/lint_rules/src/oxlint-rules.mjs", // TODO
-    "tasks/transform_conformance/update_fixtures.mjs", // TODO
     "tasks/lint_rules/src/main.mjs" // TODO
   ]
 }
