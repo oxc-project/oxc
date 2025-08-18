@@ -386,7 +386,7 @@ fn get_member_expression_name(member_expr: &JSXMemberExpression) -> CompactStr {
 
 fn normalize_handler_name(s: &str) -> CompactStr {
     // Remove whitespace and leading "this." or "props::" or "this.props::"
-    regex!(r"\s+|^this\.|\S*::").replace_all(s, "").into()
+    regex!(r"\s+|^this\.|[\w.]*::").replace_all(s, "").into()
 }
 
 // Tests for the normalize_handler_name function to ensure it correctly strips prefixes and whitespace.
