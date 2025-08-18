@@ -24,6 +24,9 @@ pub struct TsGoLintState {
     cwd: PathBuf,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
+    /// If `oxlint` will output the diagnostics or not.
+    /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
+    silent: bool,
 }
 
 impl TsGoLintState {
@@ -32,7 +35,18 @@ impl TsGoLintState {
             config_store,
             executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
+            silent: false,
         }
+    }
+
+    /// Set to `true` to skip file system reads.
+    /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_silent(mut self, yes: bool) -> Self {
+        self.silent = yes;
+        self
     }
 
     /// # Panics
@@ -147,18 +161,22 @@ impl TsGoLintState {
                                             },
                                         );
 
-                                        let source_text: &str =
-                                            if let Some(source_text) = source_text_map.get(&path) {
-                                                source_text.as_str()
-                                            } else {
-                                                let source_text = read_to_string(&path)
-                                                    .unwrap_or_else(|_| String::new());
-                                                // Insert and get a reference to the inserted string
-                                                let entry = source_text_map
-                                                    .entry(path.clone())
-                                                    .or_insert(source_text);
-                                                entry.as_str()
-                                            };
+                                        let source_text: &str = if self.silent {
+                                            // The source text is not needed in silent mode.
+                                            // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                            ""
+                                        } else if let Some(source_text) = source_text_map.get(&path)
+                                        {
+                                            source_text.as_str()
+                                        } else {
+                                            let source_text = read_to_string(&path)
+                                                .unwrap_or_else(|_| String::new());
+                                            // Insert and get a reference to the inserted string
+                                            let entry = source_text_map
+                                                .entry(path.clone())
+                                                .or_insert(source_text);
+                                            entry.as_str()
+                                        };
 
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
                                             cwd_clone.clone(),

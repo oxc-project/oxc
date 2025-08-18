@@ -300,6 +300,7 @@ impl LintRunner {
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
+                .with_silent(misc_options.silent)
                 .lint(&files_to_lint, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
@@ -1175,6 +1176,14 @@ mod test {
     fn test_tsgolint() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "no-floating-promises"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_silent() {
+        // TODO: test with other rules as well once diagnostics are more stable
+        let args = &["--type-aware", "--silent", "no-floating-promises"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 
