@@ -207,7 +207,7 @@ jobs:
           files: .
 
   lint:
-    name: Clippy
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -215,19 +215,9 @@ jobs:
         with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: clippy
-          components: clippy
+          components: clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
-
-  doc:
-    name: Doc
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        with:
-          cache-key: warm
-          components: rust-docs
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   conformance:
