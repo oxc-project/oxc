@@ -74,6 +74,7 @@ declare_oxc_lint!(
     /// You can specify which you prefer in the configuration.
     ///
     /// ### Examples
+    /// ```js
     /// // function declaration
     /// function doSomething() {
     ///     // ...
@@ -88,6 +89,7 @@ declare_oxc_lint!(
     /// const doSomethingAgain = function() {
     ///     // ...
     /// };
+    /// ```
     ///
     /// Examples of incorrect code for this rule with the default "expression" option:
     /// ```js
@@ -132,6 +134,7 @@ declare_oxc_lint!(
     /// var foo = function() {
     ///     // ...
     /// };
+    /// ```
     ///
     /// Examples of correct code for this rule with the "declaration" option:
     /// ```js
