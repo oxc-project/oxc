@@ -18,12 +18,14 @@
 
 use std::path::Path;
 
+use pico_args::Arguments;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::{ParseOptions, Parser};
+use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
-use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
@@ -36,9 +38,12 @@ fn main() -> std::io::Result<()> {
 
     let twice = args.contains("--twice");
     let minify = args.contains("--minify");
-    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
+    let sourcemap = args.contains("--sourcemap");
 
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
     let path = Path::new(&name);
+    let sourcemap = sourcemap.then_some(path);
+
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let mut allocator = Allocator::default();
@@ -46,7 +51,7 @@ fn main() -> std::io::Result<()> {
     // First round: parse and generate
     let printed = {
         let program = parse(&allocator, &source_text, source_type);
-        codegen(&program, minify)
+        codegen(&program, minify, sourcemap)
     };
     println!("First time:");
     println!("{printed}");
@@ -58,7 +63,7 @@ fn main() -> std::io::Result<()> {
 
         let program = parse(&allocator, &printed, source_type);
         println!("Second time:");
-        let printed2 = codegen(&program, minify);
+        let printed2 = codegen(&program, minify, None);
         println!("{printed2}");
         // Check syntax error
         parse(&allocator, &printed2, source_type);
@@ -87,9 +92,17 @@ fn parse<'a>(
 }
 
 /// Generate JavaScript code from an AST
-fn codegen(program: &Program<'_>, minify: bool) -> String {
-    Codegen::new()
-        .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })
-        .build(program)
-        .code
+fn codegen(program: &Program<'_>, minify: bool, source_map_path: Option<&Path>) -> String {
+    let mut options = if minify { CodegenOptions::minify() } else { CodegenOptions::default() };
+    options.source_map_path = source_map_path.map(Path::to_path_buf);
+
+    let CodegenReturn { code, map, .. } = Codegen::new().with_options(options).build(program);
+
+    if let Some(map) = map {
+        let visualizer = SourcemapVisualizer::new(&code, &map);
+        println!("{}", visualizer.get_url());
+        println!("{}", visualizer.get_text());
+    }
+
+    code
 }

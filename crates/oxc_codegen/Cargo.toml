@@ -37,7 +37,6 @@ nonmax = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
-base64 = { workspace = true }
 insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
