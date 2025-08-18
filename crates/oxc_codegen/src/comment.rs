@@ -9,6 +9,58 @@ use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
+/// Custom iterator that splits text on line terminators while handling CRLF as a single unit.
+/// This avoids creating empty strings between CR and LF characters.
+///
+/// # Example
+/// Standard split would turn `"line1\r\nline2"` into `["line1", "", "line2"]` because
+/// it treats \r and \n as separate terminators. This iterator correctly produces
+/// `["line1", "line2"]` by treating \r\n as a single terminator.
+struct LineTerminatorSplitter<'a> {
+    text: &'a str,
+    position: usize,
+}
+
+impl<'a> LineTerminatorSplitter<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text, position: 0 }
+    }
+}
+
+impl<'a> Iterator for LineTerminatorSplitter<'a> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position >= self.text.len() {
+            return None;
+        }
+
+        let start = self.position;
+        let chars = self.text[self.position..].char_indices();
+
+        for (i, c) in chars {
+            if is_line_terminator(c) {
+                let line = &self.text[start..start + i];
+                self.position = start + i + c.len_utf8();
+
+                // If this is CR followed by LF, skip the LF to treat CRLF as a single terminator
+                if c == '\r'
+                    && self.text.as_bytes().get(self.position).is_some_and(|&next| next == b'\n')
+                {
+                    self.position += 1;
+                }
+
+                return Some(line);
+            }
+        }
+
+        // Return the remaining text
+        let line = &self.text[start..];
+        self.position = self.text.len();
+        Some(line)
+    }
+}
+
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
         if self.options.comments == CommentOptions::disabled() {
@@ -132,8 +184,7 @@ impl Codegen<'_> {
                 self.print_str_escaping_script_close_tag(comment_source);
             }
             CommentKind::Block => {
-                // Print block comments with our own indentation.
-                for line in comment_source.split(is_line_terminator) {
+                for line in LineTerminatorSplitter::new(comment_source) {
                     if !line.starts_with("/*") {
                         self.print_indent();
                     }
@@ -167,7 +218,7 @@ impl Codegen<'_> {
             if comment.is_block() && text.contains(is_line_terminator) {
                 let mut buffer = String::with_capacity(text.len());
                 // Print block comments with our own indentation.
-                for line in text.split(is_line_terminator) {
+                for line in LineTerminatorSplitter::new(&text) {
                     if !line.starts_with("/*") {
                         buffer.push('\t');
                     }

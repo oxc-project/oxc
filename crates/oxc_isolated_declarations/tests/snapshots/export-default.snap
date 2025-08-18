@@ -5,7 +5,9 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/export-default.ts
 ```
 ==================== .D.TS ====================
 
-/** comment should be a leading comment of the class */
+/**
+* comment should be a leading comment of the class
+*/
 export default class Tokenizer {
 	delimiterClose: Uint8Array;
 }

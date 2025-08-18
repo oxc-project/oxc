@@ -20,17 +20,29 @@ export abstract class Qux {
 }
 
 export class Baz {
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   readonly prop1 = "some string";
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   prop2 = "another string";
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   private prop3 = "yet another string";
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   private prop4(): void {}
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   private static prop5 = "yet another string";
-  /** Just a comment */
+  /**
+   * Just a comment
+   */
   private static prop6(): void {}
 }
 

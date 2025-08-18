@@ -50,7 +50,9 @@ export interface StripInternalInterfaceSignatures {
    * @internal
    */
   internalProperty: number;
-  /**@internal */
+  /**
+   * @internal
+   */
   new (): any;
 }
 
@@ -63,7 +65,9 @@ export type StripInternalTypeSignatures = {
    * @internal
    */
   internalProperty: number;
-  /**@internal */
+  /**
+   * @internal
+   */
   new (): any;
 };
 
