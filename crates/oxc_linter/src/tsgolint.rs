@@ -92,6 +92,8 @@ impl TsGoLintState {
                 let mut buffer = Vec::with_capacity(8192);
                 let mut read_buf = [0u8; 8192];
 
+                let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
+
                 loop {
                     match stdout.read(&mut read_buf) {
                         Ok(0) => break, // EOF
@@ -145,11 +147,23 @@ impl TsGoLintState {
                                             },
                                         );
 
+                                        let source_text: &str =
+                                            if let Some(source_text) = source_text_map.get(&path) {
+                                                source_text.as_str()
+                                            } else {
+                                                let source_text = read_to_string(&path)
+                                                    .unwrap_or_else(|_| String::new());
+                                                // Insert and get a reference to the inserted string
+                                                let entry = source_text_map
+                                                    .entry(path.clone())
+                                                    .or_insert(source_text);
+                                                entry.as_str()
+                                            };
+
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
                                             cwd_clone.clone(),
                                             path.clone(),
-                                            &read_to_string(&path)
-                                                .unwrap_or_else(|_| String::new()),
+                                            source_text,
                                             vec![oxc_diagnostic],
                                         );
 
