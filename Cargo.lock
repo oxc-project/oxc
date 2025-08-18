@@ -2088,7 +2088,6 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.82.2"
 dependencies = [
- "base64",
  "cow-utils",
  "insta",
  "javascript-globals",
@@ -2100,6 +2099,7 @@ dependencies = [
  "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
  "oxc_traverse",
@@ -2469,6 +2469,7 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "oxc_traverse",
+ "pico-args",
  "rustc-hash",
  "similar",
 ]

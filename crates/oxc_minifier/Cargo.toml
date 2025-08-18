@@ -38,8 +38,8 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
+oxc_sourcemap = { workspace = true }
 
-base64 = { workspace = true }
 insta = { workspace = true }
 javascript-globals = { workspace = true }
 pico-args = { workspace = true }

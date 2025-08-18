@@ -20,7 +20,6 @@
 
 use std::path::{Path, PathBuf};
 
-use base64::{Engine, prelude::BASE64_STANDARD};
 use pico_args::Arguments;
 
 use oxc_allocator::Allocator;
@@ -28,6 +27,7 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn, CommentOptions};
 use oxc_mangler::MangleOptions;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
+use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 
 // Instruction:
@@ -53,16 +53,10 @@ fn main() -> std::io::Result<()> {
     let printed = ret.code;
     println!("{printed}");
 
-    if let Some(source_map) = ret.map {
-        let result = source_map.to_json_string();
-        let hash = BASE64_STANDARD.encode(format!(
-            "{}\0{}{}\0{}",
-            printed.len(),
-            printed,
-            result.len(),
-            result
-        ));
-        println!("https://evanw.github.io/source-map-visualization/#{hash}");
+    if let Some(map) = ret.map {
+        let visualizer = SourcemapVisualizer::new(&printed, &map);
+        println!("{}", visualizer.get_url());
+        println!("{}", visualizer.get_text());
     }
 
     if twice {

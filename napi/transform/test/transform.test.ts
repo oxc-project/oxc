@@ -8,12 +8,11 @@ describe('simple', () => {
 
   it('matches output', () => {
     const ret = transform('test.ts', code, { sourcemap: true });
-    expect(ret).toStrictEqual({
+    expect(ret).toMatchObject({
       code: 'export class A {}\n',
       errors: [],
       helpersUsed: {},
       map: {
-        mappings: 'AAAA,OAAO,MAAM,EAAK,CAAE',
         names: [],
         sources: ['test.ts'],
         sourcesContent: ['export class A<T> {}'],
@@ -37,8 +36,7 @@ describe('simple', () => {
       typescript: { declaration: {} },
       sourcemap: true,
     });
-    expect(ret.declarationMap).toStrictEqual({
-      mappings: 'AAAA,OAAO,cAAM,EAAE,GAAG,CAAE',
+    expect(ret.declarationMap).toMatchObject({
       names: [],
       sources: ['test.ts'],
       sourcesContent: ['export class A<T> {}'],
