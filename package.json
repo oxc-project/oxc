@@ -9,12 +9,14 @@
     "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' build-dev",
     "build-test": "pnpm --workspace-concurrency=1 --filter './napi/*' build-test",
-    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test"
+    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test",
+    "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.4.5",
-    "oxlint-tsgolint": "0.0.3",
+    "oxlint-tsgolint": "0.0.4",
+    "oxlint": "^1.12.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
