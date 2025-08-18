@@ -587,8 +587,6 @@ fn test() {
             ),
         ),
         ("<TestComponent onChange={this.onChange} />", None),
-        ("<TestComponent onChange={props::onChange} />", None),
-        ("<TestComponent onChange={props.foo::onChange} />", None),
         (
             "
             function App() {

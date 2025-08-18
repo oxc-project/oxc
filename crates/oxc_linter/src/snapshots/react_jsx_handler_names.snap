@@ -127,20 +127,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
-  × Expected `}` but found `:`
-   ╭─[jsx_handler_names.tsx:1:31]
- 1 │ <TestComponent onChange={props::onChange} />
-   ·                               ┬
-   ·                               ╰── `}` expected
-   ╰────
-
-  × Expected `}` but found `:`
-   ╭─[jsx_handler_names.tsx:1:35]
- 1 │ <TestComponent onChange={props.foo::onChange} />
-   ·                                   ┬
-   ·                                   ╰── `}` expected
-   ╰────
-
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler prop name: customPropNameBar
    ╭─[jsx_handler_names.tsx:5:31]
  4 │                 <div>
