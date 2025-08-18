@@ -1,3 +1,5 @@
+// oxlint-disable eslint-plugin-jsdoc/require-property-description
+
 import { readFile } from 'fs/promises';
 import { join as pathJoin } from 'path';
 import { fileURLToPath } from 'url';
@@ -69,10 +71,10 @@ export default async function getTypesFromCode() {
   const codeDirPath = pathJoin(fileURLToPath(import.meta.url), '../../../../oxc_ast/src/ast/');
 
   const types = Object.create(null);
-  for (const filename of FILENAMES) {
+  await Promise.all(FILENAMES.map(async (filename) => {
     const code = await readFile(`${codeDirPath}${filename}`, 'utf8');
     parseFile(code, filename, types);
-  }
+  }));
   return types;
 }
 
@@ -109,7 +111,7 @@ class Lines {
   /**
    * @param {string[]} lines
    * @param {string} filename
-   * @param {number} [offset=0]
+   * @param {number} [offset]
    */
   constructor(lines, filename, offset = 0) {
     /** @type {string[]} */
