@@ -185,3 +185,21 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────────────────────────────────
    ╰────
   help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:2:15]
+ 1 │ const a = { b: { c: { d: { e: [1, 2, 3] } } } };
+ 2 │          for (let i = 0; i < a.b.c.d.e.length; i++) {
+   ·               ────────────────────────────────────
+ 3 │              console.log(a.b.c.d.e[i]); // Same deeply nested array
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:2:15]
+ 1 │ const obj = { a: { b: [1, 2, 3] } };
+ 2 │          for (let i = 0; i < obj.a.b.length; i++) {
+   ·               ──────────────────────────────────
+ 3 │              console.log(obj.a.b[i]); // Same nested array
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
