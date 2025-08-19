@@ -1,6 +1,7 @@
 use std::{collections::hash_map::Entry, fmt, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
+use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
 use oxc_index::{Idx, IndexVec};
@@ -99,13 +100,141 @@ impl Default for Scoping {
     }
 }
 
-self_cell::self_cell!(
-    pub struct ScopingCell {
-        owner: Allocator,
-        #[covariant]
-        dependent: ScopingInner,
+/// [`ScopingCell`] contains parts of [`Scoping`] which are 2-dimensional structures
+/// e.g. `Vec<Vec<T>>`, `HashMap<Vec<T>>`, `Vec<HashMap<T>>`.
+///
+/// These structures are very expensive to construct and drop, due to the large number of allocations /
+/// deallocations involved. Therefore, we store them in an arena allocator to:
+/// 1. Avoid costly heap allocations.
+/// 2. Be able to drop all the data cheaply in one go.
+///
+/// We use [`self_cell!`] to be able to store the `Allocator` alongside `Vec`s and `HashMap`s which store
+/// their data in that `Allocator` (self-referential struct).
+///
+/// Conceptually, these structures own their data, and so `ScopingCell` (and therefore also `Scoping`)
+/// should be `Send` and `Sync`, exactly as it would be if `ScopingCell` contained standard heap-allocated
+/// `Vec`s and `HashMap`s.
+///
+/// However, the use of an arena allocator complicates matters, because `Allocator` is not `Sync`,
+/// and `oxc_allocator::Vec` is not `Send`.
+///
+/// ### `Sync`
+///
+/// For it to be safe for `&ScopingCell` to be sent across threads, we must make it impossible to obtain
+/// multiple `&Allocator` references from them on different threads, because those references could be
+/// used to allocate into the same arena simultaneously. `Allocator` is not thread-safe, and this would
+/// likely be undefined behavior.
+///
+/// We prevent this by wrapping the struct created by `self_cell!` in a further wrapper.
+/// That outer wrapper prevents access to `with_dependent` and `borrow_owner` methods of `ScopingCellInner`,
+/// which allow obtaining `&Allocator` from a `&ScopingCell`.
+///
+/// The only method which *does* allow access to `&Allocator` is `with_dependent_mut`.
+/// It takes `&mut self`, which guarantees exclusive access to `ScopingCell`. Therefore, no other code
+/// (on any thread) can simultaneously have access to the `Allocator` during a call to `with_dependent_mut`.
+///
+/// `allocator_used_bytes` obtains an `&Allocator` reference internally, without taking `&mut self`.
+/// But it doesn't mutate the `Allocator` in any way, and it doesn't expose the `&Allocator` to user.
+/// By taking `&self`, it guarantees that `with_dependent_mut` cannot be called at the same time.
+///
+/// ### `Send`
+///
+/// `Allocator` is `Send`. `oxc_allocator::Vec` is not, but that restriction is purely to prevent a `Vec`
+/// being moved to different thread from the `Allocator`, which would allow multiple threads making
+/// allocations in that arena simultaneously.
+///
+/// Here, the `Allocator` and the `Vec`s are contained in the same struct, and moving them to another
+/// thread *together* does not cause a problem.
+///
+/// This is all enclosed in a module, to prevent access to `ScopingCellInner` directly.
+mod scoping_cell {
+    use super::*;
+
+    // Inner self-referential struct containing `Allocator` and `ScopingInner`,
+    // where `ScopingInner` contains `Vec`s and `HashMap`s which store their data in the `Allocator`.
+    self_cell!(
+        pub struct ScopingCellInner {
+            owner: Allocator,
+            #[covariant]
+            dependent: ScopingInner,
+        }
+    );
+
+    /// Wrapper around [`ScopingCellInner`], which only provides methods that give access to an
+    /// `&Allocator` reference if provided with `&mut ScopingCell`. See comments above.
+    #[repr(transparent)]
+    pub struct ScopingCell(ScopingCellInner);
+
+    #[expect(clippy::inline_always)] // All methods just delegate
+    impl ScopingCell {
+        /// Construct a new [`ScopingCell`] with an [`Allocator`] and `dependent_builder` function.
+        #[inline(always)]
+        pub fn new(
+            allocator: Allocator,
+            dependent_builder: impl for<'_q> FnOnce(&'_q Allocator) -> ScopingInner<'_q>,
+        ) -> Self {
+            Self(ScopingCellInner::new(allocator, dependent_builder))
+        }
+
+        /// Borrow [`ScopingInner`].
+        #[inline(always)]
+        pub fn borrow_dependent(&self) -> &ScopingInner<'_> {
+            self.0.borrow_dependent()
+        }
+
+        /// Call given closure `func` with an unique reference to [`ScopingInner`].
+        #[inline(always)]
+        pub fn with_dependent_mut<'outer_fn, Ret>(
+            &'outer_fn mut self,
+            func: impl for<'_q> FnOnce(&'_q Allocator, &'outer_fn mut ScopingInner<'_q>) -> Ret,
+        ) -> Ret {
+            self.0.with_dependent_mut(func)
+        }
+
+        /// Calculate the total size of data used in the [`Allocator`], in bytes.
+        ///
+        /// See [`Allocator::used_bytes`] for more info.
+        #[expect(clippy::unnecessary_safety_comment)]
+        #[inline(always)]
+        pub fn allocator_used_bytes(&self) -> usize {
+            // SAFETY:
+            // `with_dependent_mut` is the only method which gives access to the `Allocator`, and it
+            // takes `&mut self`. This method takes `&self`, which means it can't be called at the same
+            // time as `with_dependent_mut` (or within `with_dependent_mut`'s callback closure).
+            //
+            // Therefore, the only other references to `&Allocator` which can be held at this point
+            // are in other calls to this method on other threads.
+            // `used_bytes` does not perform allocations, or mutate the `Allocator` in any way.
+            // So it's fine if 2 threads are calling this method simultaneously, because they're
+            // both performing read-only actions.
+            //
+            // Another thread could simultaneously hold a reference to `&ScopingInner` via `borrow_dependent`,
+            // but the `Vec`s and `HashMap`s in `ScopingInner` don't allow making allocations in the arena
+            // without a `&mut` reference (e.g. `Vec::push` takes `&mut self`). Such mutable references
+            // cannot be obtained from an immutable `&ScopingInner` reference.
+            // So there's no way for simultaneous usage of `borrow_dependent` on another thread to break
+            // the guarantee that no mutation of the `Allocator` can occur during this method.
+            self.0.borrow_owner().used_bytes()
+        }
+
+        /// Consume [`ScopingCell`] and return the [`Allocator`] it contains.
+        #[expect(dead_code)]
+        #[inline(always)]
+        pub fn into_owner(self) -> Allocator {
+            self.0.into_owner()
+        }
     }
-);
+
+    /// SAFETY: `ScopingCell` can be `Send` because both the `Allocator` and `Vec`s / `HashMap`s
+    /// storing their data in that `Allocator` are moved to another thread together.
+    unsafe impl Send for ScopingCell {}
+
+    /// SAFETY: `ScopingCell` can be `Sync` if `ScopingInner` is `Sync`, because `ScopingCell` provides
+    /// no methods which give access to an `&Allocator` reference, except when taking `&mut self`,
+    /// which guarantees exclusive access. See further explanation above.
+    unsafe impl<'cell> Sync for ScopingCell where ScopingInner<'cell>: Sync {}
+}
+use scoping_cell::ScopingCell;
 
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
@@ -839,6 +968,9 @@ impl Scoping {
     /// Clone all semantic data. Used in `Rolldown`.
     #[must_use]
     pub fn clone_in_with_semantic_ids_with_another_arena(&self) -> Self {
+        let used_bytes = self.cell.allocator_used_bytes();
+        let cell = self.cell.borrow_dependent();
+
         Self {
             symbol_spans: self.symbol_spans.clone(),
             symbol_flags: self.symbol_flags.clone(),
@@ -850,8 +982,8 @@ impl Scoping {
             scope_build_child_ids: self.scope_build_child_ids,
             scope_node_ids: self.scope_node_ids.clone(),
             scope_flags: self.scope_flags.clone(),
-            cell: self.cell.with_dependent(|allocator, cell| {
-                let allocator = Allocator::with_capacity(allocator.used_bytes());
+            cell: {
+                let allocator = Allocator::with_capacity(used_bytes);
                 ScopingCell::new(allocator, |allocator| ScopingInner {
                     symbol_names: cell.symbol_names.clone_in_with_semantic_ids(allocator),
                     resolved_references: cell
@@ -892,7 +1024,7 @@ impl Scoping {
                         copy
                     },
                 })
-            }),
+            },
         }
     }
 }
