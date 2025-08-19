@@ -15,29 +15,26 @@ const readAllImplementedRuleNames = async () => {
     line = line.trim();
 
     // Skip commented out rules
-    if (line.startsWith('//')) continue;
+    if (!line.startsWith('//')) {
+      if (line === 'oxc_macros::declare_all_lint_rules! {') {
+        found = true;
+      } else if (found && line === '}') {
+        return rules;
+      } else if (found) {
+        let prefixedName = line
+          .replaceAll(',', '')
+          .replaceAll('::', '/')
+          .replaceAll('_', '-');
 
-    if (line === 'oxc_macros::declare_all_lint_rules! {') {
-      found = true;
-      continue;
-    }
-    if (found && line === '}') {
-      return rules;
-    }
+        // Ignore no reference rules
+        if (!prefixedName.startsWith('oxc/')) {
+          if (prefixedName.startsWith('node/')) {
+            prefixedName = prefixedName.replace(/^node/, 'n');
+          }
 
-    if (found) {
-      let prefixedName = line
-        .replaceAll(',', '')
-        .replaceAll('::', '/')
-        .replaceAll('_', '-');
-
-      // Ignore no reference rules
-      if (prefixedName.startsWith('oxc/')) continue;
-      if (prefixedName.startsWith('node/')) {
-        prefixedName = prefixedName.replace(/^node/, 'n');
+          rules.add(prefixedName);
+        }
       }
-
-      rules.add(prefixedName);
     }
   }
 
@@ -243,7 +240,12 @@ export const createRuleEntries = (loadedAllRules) => {
 
   for (const [name, rule] of loadedAllRules) {
     // Default eslint rules are not prefixed
-    const prefixedName = name.includes('/') ? name : `eslint/${name}`;
+    let prefixedName = '';
+    if (name.includes('/')) {
+      prefixedName = name;
+    } else {
+      prefixedName = `eslint/${name}`;
+    }
 
     const docsUrl = rule.meta?.docs?.url ?? '';
     const isDeprecated = rule.meta?.deprecated ?? false;
@@ -252,10 +254,10 @@ export const createRuleEntries = (loadedAllRules) => {
     rulesEntry.set(prefixedName, {
       docsUrl,
       isDeprecated: !!isDeprecated,
-      isRecommended,
       // Will be updated later
       isImplemented: false,
       isNotSupported: false,
+      isRecommended,
     });
   }
 
@@ -268,8 +270,11 @@ export const updateImplementedStatus = async (ruleEntries) => {
 
   for (const name of implementedRuleNames) {
     const rule = ruleEntries.get(name);
-    if (rule) rule.isImplemented = true;
-    else console.log(`👀 ${name} is implemented but not found in their rules`);
+    if (rule) {
+      rule.isImplemented = true;
+    } else {
+      console.log(`👀 ${name} is implemented but not found in their rules`);
+    }
   }
 };
 
@@ -277,7 +282,9 @@ export const updateImplementedStatus = async (ruleEntries) => {
 export const updateNotSupportedStatus = (ruleEntries) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
     const rule = ruleEntries.get(name);
-    if (rule) rule.isNotSupported = true;
+    if (rule) {
+      rule.isNotSupported = true;
+    }
   }
 };
 
@@ -296,7 +303,9 @@ const getArrayEntries = (constName, fileContent) => {
   // ```
   const regSearch = new RegExp(`const ${constName}[^=]+= \\[([^\\]]+)`, 's');
 
-  const vitestCompatibleRules = fileContent.match(regSearch)?.[1];
+  const FIRST_CAPTURE_GROUP = 1;
+  const matchResult = fileContent.match(regSearch);
+  const vitestCompatibleRules = matchResult?.[FIRST_CAPTURE_GROUP];
   if (!vitestCompatibleRules) {
     throw new Error('Failed to find the list of vitest-compatible rules');
   }
@@ -310,7 +319,7 @@ const getArrayEntries = (constName, fileContent) => {
         line
           .replace(/"/g, '')
           .split(',')
-          .filter((s) => s !== '')
+          .filter((str) => str !== '')
       )
       .flat(),
   );
