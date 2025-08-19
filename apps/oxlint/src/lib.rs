@@ -1,8 +1,9 @@
 use std::io::BufWriter;
 
 pub use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterInitWorkerThreadsCb, ExternalLinterLintFileCb,
+    ExternalLinterLoadPluginCb, ExternalLinterLoadPluginsCb, ExternalLinterWorkerCallbacks,
+    LintFileResult, PluginLoadResult,
 };
 
 mod command;

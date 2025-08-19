@@ -34,6 +34,7 @@ oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
+futures = { workspace = true, optional = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 napi = { workspace = true }
@@ -43,6 +44,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true, optional = true }
 tempfile = { workspace = true }
+tokio = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
@@ -61,6 +63,6 @@ lazy-regex = { workspace = true }
 [features]
 default = []
 allocator = ["dep:mimalloc-safe"]
-oxlint2 = ["oxc_linter/oxlint2", "oxc_allocator/fixed_size", "dep:simdutf8"]
+oxlint2 = ["oxc_linter/oxlint2", "oxc_allocator/fixed_size", "dep:futures", "dep:simdutf8", "dep:tokio"]
 disable_oxlint2 = ["oxc_linter/disable_oxlint2", "oxc_allocator/disable_fixed_size"]
 force_test_reporter = ["oxc_linter/force_test_reporter"]

@@ -72,7 +72,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
-tokio = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt-multi-thread"], optional = true }
 
 [dev-dependencies]
 insta = { workspace = true }

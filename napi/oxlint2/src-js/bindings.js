@@ -393,5 +393,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { lint } = nativeBinding
+const { lint, registerWorker } = nativeBinding
 export { lint }
+export { registerWorker }

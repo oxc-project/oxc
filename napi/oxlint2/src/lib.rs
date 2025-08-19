@@ -1,6 +1,7 @@
 use std::{
+    mem,
     process::{ExitCode, Termination},
-    sync::{Arc, atomic::Ordering, mpsc::channel},
+    sync::{Arc, Mutex, atomic::Ordering, mpsc::channel},
 };
 
 use napi::{
@@ -12,8 +13,9 @@ use napi_derive::napi;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxlint::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult, lint as oxlint_lint,
+    ExternalLinter, ExternalLinterInitWorkerThreadsCb, ExternalLinterLintFileCb,
+    ExternalLinterLoadPluginCb, ExternalLinterLoadPluginsCb, ExternalLinterWorkerCallbacks,
+    LintFileResult, PluginLoadResult, lint as oxlint_lint,
 };
 
 mod generated {
@@ -21,6 +23,22 @@ mod generated {
 }
 use generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE};
 
+/// Initialize JS worker threads.
+#[napi]
+pub type JsInitWorkerThreadsCb = ThreadsafeFunction<
+    // Arguments
+    u32, // Number of threads
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    u32,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Load a JS plugin on main thread.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
     // Arguments
@@ -35,6 +53,22 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     false,
 >;
 
+/// Load multiple JS plugins on a worker thread.
+#[napi]
+pub type JsLoadPluginsCb = ThreadsafeFunction<
+    // Arguments
+    Vec<String>, // Absolute paths of plugin files
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    Vec<String>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Lint a file on a worker thread.
 #[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
     // Arguments
@@ -54,15 +88,88 @@ pub type JsLintFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// Callback functions for worker threads.
+static REGISTERED_WORKERS: Mutex<Vec<ExternalLinterWorkerCallbacks>> = Mutex::new(Vec::new());
+
+/// Register a JS worker thread.
+#[napi]
+pub fn register_worker(load_plugins: JsLoadPluginsCb, lint_file: JsLintFileCb) {
+    let callbacks = ExternalLinterWorkerCallbacks {
+        load_plugins: wrap_load_plugins(load_plugins),
+        lint_file: wrap_lint_file(lint_file),
+    };
+    #[expect(clippy::missing_panics_doc)]
+    REGISTERED_WORKERS.lock().unwrap().push(callbacks);
+}
+
+fn wrap_init_worker_threads(cb: JsInitWorkerThreadsCb) -> ExternalLinterInitWorkerThreadsCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |thread_count| {
+        Box::pin({
+            let cb = Arc::clone(&cb);
+            async move {
+                REGISTERED_WORKERS.lock().unwrap().reserve(thread_count as usize);
+
+                cb.call_async(thread_count)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .into_future()
+                    .await
+                    .map_err(|e| e.to_string())?;
+
+                let callbacks_vec = {
+                    let mut guard = REGISTERED_WORKERS.lock().unwrap();
+                    mem::take(&mut *guard)
+                };
+
+                if callbacks_vec.len() != thread_count as usize {
+                    return Err(format!(
+                        "Expected {} JS worker threads to be initialized, but only {} were",
+                        thread_count,
+                        callbacks_vec.len()
+                    ));
+                }
+
+                Ok(callbacks_vec.into_boxed_slice())
+            }
+        })
+    })
+}
+
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     let cb = Arc::new(cb);
     Arc::new(move |plugin_name| {
         Box::pin({
             let cb = Arc::clone(&cb);
             async move {
-                let result = cb.call_async(plugin_name).await?.into_future().await?;
-                let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
+                let result = cb
+                    .call_async(plugin_name)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .into_future()
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let plugin_load_result: PluginLoadResult =
+                    serde_json::from_str(&result).map_err(|e| e.to_string())?;
                 Ok(plugin_load_result)
+            }
+        })
+    })
+}
+
+fn wrap_load_plugins(cb: JsLoadPluginsCb) -> ExternalLinterLoadPluginsCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |plugin_names| {
+        Box::pin({
+            let cb = Arc::clone(&cb);
+            async move {
+                cb.call_async(plugin_names)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .into_future()
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(())
             }
         })
     })
@@ -70,46 +177,50 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
-    Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
-        let cb = Arc::clone(&cb);
+    Arc::new(
+        // TODO: There's no way to mark a closure as unsafe. Need to find another way.
+        // Like a `ThreadId` wrapper type?
+        // SAFETY: `thread_id` must be less than the number of threads in the Rayon global thread pool.
+        move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator, thread_id: usize| {
+            let cb = Arc::clone(&cb);
 
-        let (tx, rx) = channel();
+            let (tx, rx) = channel();
 
-        // At present, JS plugins all run on main thread, so `thread_id` is always 0
-        let thread_id = 0;
+            // SAFETY: This crate enables the `fixed_size` feature on `oxc_allocator`,
+            // so all AST `Allocator`s are created via `FixedSizeAllocator`.
+            // Caller guarantees that `thread_id` is less than number of threads in Rayon global thread pool.
+            let (buffer_id, buffer) = unsafe { get_buffer(allocator, thread_id) };
 
-        // SAFETY: This crate enables the `fixed_size` feature on `oxc_allocator`,
-        // so all AST `Allocator`s are created via `FixedSizeAllocator`.
-        // `thread_id` is valid. There there's always at least 1 thread, so 0 cannot be too high.
-        let (buffer_id, buffer) = unsafe { get_buffer(allocator, thread_id) };
+            // Send data to JS
+            let status = cb.call_with_return_value(
+                FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |result, _env| {
+                    let _ = match &result {
+                        Ok(r) => match serde_json::from_str::<Vec<LintFileResult>>(r) {
+                            Ok(v) => tx.send(Ok(v)),
+                            Err(_e) => {
+                                tx.send(Err("Failed to deserialize lint result".to_string()))
+                            }
+                        },
+                        Err(e) => tx.send(Err(e.to_string())),
+                    };
 
-        // Send data to JS
-        let status = cb.call_with_return_value(
-            FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
-            ThreadsafeFunctionCallMode::NonBlocking,
-            move |result, _env| {
-                let _ = match &result {
-                    Ok(r) => match serde_json::from_str::<Vec<LintFileResult>>(r) {
-                        Ok(v) => tx.send(Ok(v)),
-                        Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
-                    },
-                    Err(e) => tx.send(Err(e.to_string())),
-                };
+                    result.map(|_| ())
+                },
+            );
 
-                result.map(|_| ())
-            },
-        );
+            if status != Status::Ok {
+                return Err(format!("Failed to schedule callback: {status:?}"));
+            }
 
-        if status != Status::Ok {
-            return Err(format!("Failed to schedule callback: {status:?}"));
-        }
-
-        match rx.recv() {
-            Ok(Ok(x)) => Ok(x),
-            Ok(Err(e)) => Err(format!("Callback reported error: {e}")),
-            Err(e) => Err(format!("Callback did not respond: {e}")),
-        }
-    })
+            match rx.recv() {
+                Ok(Ok(x)) => Ok(x),
+                Ok(Err(e)) => Err(format!("Callback reported error: {e}")),
+                Err(e) => Err(format!("Callback did not respond: {e}")),
+            }
+        },
+    )
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to this JS thread,
@@ -217,10 +328,10 @@ unsafe fn get_buffer(
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
+pub async fn lint(init_worker_threads: JsInitWorkerThreadsCb, load_plugin: JsLoadPluginCb) -> bool {
+    let rust_init_worker_threads = wrap_init_worker_threads(init_worker_threads);
     let rust_load_plugin = wrap_load_plugin(load_plugin);
-    let rust_lint_file = wrap_lint_file(lint_file);
 
-    oxlint_lint(Some(ExternalLinter::new(rust_load_plugin, rust_lint_file))).report()
+    oxlint_lint(Some(ExternalLinter::new(rust_init_worker_threads, rust_load_plugin))).report()
         == ExitCode::SUCCESS
 }
