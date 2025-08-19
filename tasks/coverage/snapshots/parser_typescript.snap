@@ -8927,18 +8927,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try insert a semicolon here
 
-  × Duplicated export 'foo'
-   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:1:13]
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:1:8]
  1 │ export type foo = 5;
-   ·             ─┬─
-   ·              ╰── Export has already been declared here
+   ·        ────
  2 │ /**
-   ╰────
-   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:6:14]
- 5 │  */
- 6 │ export const foo = 5;
-   ·              ─┬─
-   ·               ╰── It cannot be redeclared here
    ╰────
 
   × Unexpected token
@@ -20723,9 +20716,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace_js.ts:1:13]
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace_js.ts:1:8]
  1 │ export type * from './a';
-   ·             ─
+   ·        ────
    ╰────
 
   × TS(2207): The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
@@ -21204,12 +21197,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
-    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsEnums.ts:10:1]
-  9 │ 
- 10 │ enum C {}
-    · ────
- 11 │ 
-    ╰────
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsEnums.ts:4:8]
+ 3 │ 
+ 4 │ export enum A {}
+   ·        ────
+ 5 │ 
+   ╰────
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts:1:1]
@@ -21226,27 +21219,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts:7:8]
- 6 │ export interface B {
- 7 │     cat: string;
-   ·        ─
- 8 │ }
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts:4:8]
+ 3 │ 
+ 4 │ export interface A {}
+   ·        ─────────
+ 5 │ 
    ╰────
 
-  × 'export statement' declaration can only be used at the top level of a module
-    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts:10:9]
-  9 │         // @ts-ignore
- 10 │         export { thing };
-    ·         ──────
- 11 │     }
-    ╰────
-
-  × 'export statement' declaration can only be used at the top level of a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts:6:5]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts:4:8]
+ 3 │ // @ts-ignore
+ 4 │ export namespace A {
+   ·        ─────────
  5 │     // @ts-ignore
- 6 │     export namespace B {
-   ·     ──────
- 7 │         const Something = require("fs").Something;
    ╰────
 
   × Identifier `err` has already been declared
