@@ -467,7 +467,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -479,7 +479,7 @@ mod tests {
         let cases = [(String::new(), r#""""#), ("foobar".to_string(), r#""foobar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             input.to_string().serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -491,7 +491,7 @@ mod tests {
         let cases = [("", r#""""#), ("a", r#""a""#), ("abc", r#""abc""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             JsonSafeString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -514,7 +514,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             LoneSurrogatesString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

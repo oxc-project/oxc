@@ -243,7 +243,7 @@ mod test {
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
 
-        let mut serializer = CompactTSSerializer::new(false);
+        let mut serializer = CompactTSSerializer::default();
         b.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#""x""#);
