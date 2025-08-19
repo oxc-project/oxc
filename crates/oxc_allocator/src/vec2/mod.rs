@@ -2067,26 +2067,6 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
 // Common trait implementations for Vec
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
-    #[cfg(not(test))]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-
-    // HACK(japaric): with cfg(test) the inherent `[T]::to_vec` method, which is
-    // required for this method definition, is not available. Instead use the
-    // `slice::to_vec`  function which is only available with cfg(test)
-    // NB see the slice::hack module in slice.rs for more information
-    #[cfg(test)]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::new_in(self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-}
-
 impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
