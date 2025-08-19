@@ -39,10 +39,20 @@ type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 #[derive(PartialEq, Eq)]
 pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
-/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
-unsafe impl<T> Send for Vec<'_, T> {}
-/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
-unsafe impl<T> Sync for Vec<'_, T> {}
+/// SAFETY: Even though `Bump` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:
+///
+/// 1. No public methods allow access to the `&Bump` that `Vec` contains (in `RawVec`),
+///    so user cannot illegally obtain 2 `&Bump`s on different threads via `Vec`.
+///
+/// 2. All internal methods which access the `&Bump` take a `&mut self`.
+///    `&mut Vec` cannot be transferred across threads, and nor can an owned `Vec` (`Vec` is not `Send`).
+///    Therefore these methods taking `&mut self` can be sure they're not operating on a `Vec`
+///    which has been moved across threads.
+///
+/// Note: `Vec` CANNOT be `Send`, even if `T` is `Send`, because that would allow 2 `Vec`s on different
+/// threads to both allocate into same arena simultaneously. `Bump` is not thread-safe, and this would
+/// be undefined behavior.
+unsafe impl<T: Sync> Sync for Vec<'_, T> {}
 
 impl<'alloc, T> Vec<'alloc, T> {
     /// Const assertion that `T` is not `Drop`.
