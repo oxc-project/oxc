@@ -557,7 +557,7 @@ impl<'a> PeepholeOptimizations {
                         };
                         let test = if_stmt.test.take_in(ctx.ast);
                         let mut test = Self::minimize_not(test.span(), test, ctx);
-                        Self::try_fold_expr_in_boolean_context(&mut test, ctx);
+                        Self::minimize_expression_in_boolean_context(&mut test, ctx);
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {

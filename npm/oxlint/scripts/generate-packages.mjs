@@ -94,7 +94,17 @@ function writeManifest() {
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);
-  manifestData.optionalDependencies['oxlint-tsgolint'] = '>=0.0.1';
+
+  // Do not automatically install 'oxlint-tsgolint'.
+  // https://docs.npmjs.com/cli/v11/configuring-npm/package-json#peerdependenciesmeta
+  manifestData.peerDependencies = {
+    'oxlint-tsgolint': '>=0.0.4',
+  };
+  manifestData.peerDependenciesMeta = {
+    'oxlint-tsgolint': {
+      'optional': true,
+    },
+  };
 
   console.log(`Update manifest ${manifestPath}`);
   const content = JSON.stringify(manifestData);

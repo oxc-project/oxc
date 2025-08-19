@@ -10,17 +10,17 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     pub fn minimize_not(span: Span, expr: Expression<'a>, ctx: &mut Ctx<'a, '_>) -> Expression<'a> {
         let mut unary = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, expr);
-        Self::try_minimize_not(&mut unary, ctx);
+        Self::minimize_unary(&mut unary, ctx);
         unary
     }
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    pub fn try_minimize_not(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::UnaryExpression(e) = expr else { return };
         if !e.operator.is_not() {
             return;
         }
-        Self::try_fold_expr_in_boolean_context(&mut e.argument, ctx);
+        Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
         match &mut e.argument {
             // `!!true` -> `true`
             // `!!false` -> `false`

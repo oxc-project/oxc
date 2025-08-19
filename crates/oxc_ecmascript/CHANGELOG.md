@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- fbe6663 minifier: Mark more known global methods as side-effect free (#13086) (Boshen)
+- 36386e4 ecmascript: Treat `[...arguments]` as side effect free (#13116) (sapphi-red)
+- fe4589b minifier: Mark more global constructors as side-effect free (#13082) (Boshen)
+
+### 🚜 Refactor
+
+- e190ee5 minifier: Clean up `remove_unused_expression` (#13080) (Boshen)
+
+
 ## [0.82.1] - 2025-08-13
 
 ### 📚 Documentation

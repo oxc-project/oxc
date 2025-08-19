@@ -73,28 +73,28 @@ after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(1
 rebuilt        : SymbolId(1): [ReferenceId(212), ReferenceId(214), ReferenceId(216), ReferenceId(218)]
 Symbol reference IDs mismatch for "IEditorService":
 after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(67), ReferenceId(184), ReferenceId(370), ReferenceId(371)]
-rebuilt        : SymbolId(2): [ReferenceId(57), ReferenceId(58), ReferenceId(79), ReferenceId(111), ReferenceId(239)]
+rebuilt        : SymbolId(2): [ReferenceId(38), ReferenceId(73), ReferenceId(74), ReferenceId(111), ReferenceId(239)]
 Symbol reference IDs mismatch for "IEditorGroupsService":
 after transform: SymbolId(4): [ReferenceId(25), ReferenceId(26), ReferenceId(57), ReferenceId(176), ReferenceId(375), ReferenceId(376)]
-rebuilt        : SymbolId(3): [ReferenceId(62), ReferenceId(63), ReferenceId(81), ReferenceId(102), ReferenceId(232)]
+rebuilt        : SymbolId(3): [ReferenceId(40), ReferenceId(78), ReferenceId(79), ReferenceId(102), ReferenceId(232)]
 Symbol reference IDs mismatch for "EditorService":
 after transform: SymbolId(5): [ReferenceId(61), ReferenceId(64), ReferenceId(178), ReferenceId(181)]
 rebuilt        : SymbolId(4): [ReferenceId(108), ReferenceId(236)]
 Symbol reference IDs mismatch for "IWorkingCopyBackupService":
 after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12), ReferenceId(51), ReferenceId(170), ReferenceId(340), ReferenceId(341)]
-rebuilt        : SymbolId(5): [ReferenceId(27), ReferenceId(28), ReferenceId(67), ReferenceId(96), ReferenceId(226)]
+rebuilt        : SymbolId(5): [ReferenceId(26), ReferenceId(43), ReferenceId(44), ReferenceId(96), ReferenceId(226)]
 Symbol reference IDs mismatch for "IFilesConfigurationService":
 after transform: SymbolId(10): [ReferenceId(13), ReferenceId(14), ReferenceId(345), ReferenceId(346)]
-rebuilt        : SymbolId(8): [ReferenceId(32), ReferenceId(33), ReferenceId(69)]
+rebuilt        : SymbolId(8): [ReferenceId(28), ReferenceId(48), ReferenceId(49)]
 Symbol reference IDs mismatch for "IWorkingCopyService":
 after transform: SymbolId(11): [ReferenceId(15), ReferenceId(16), ReferenceId(350), ReferenceId(351)]
-rebuilt        : SymbolId(9): [ReferenceId(37), ReferenceId(38), ReferenceId(71)]
+rebuilt        : SymbolId(9): [ReferenceId(30), ReferenceId(53), ReferenceId(54)]
 Symbol reference IDs mismatch for "ILogService":
 after transform: SymbolId(13): [ReferenceId(19), ReferenceId(20), ReferenceId(360), ReferenceId(361)]
-rebuilt        : SymbolId(10): [ReferenceId(47), ReferenceId(48), ReferenceId(75)]
+rebuilt        : SymbolId(10): [ReferenceId(34), ReferenceId(63), ReferenceId(64)]
 Symbol reference IDs mismatch for "ILifecycleService":
 after transform: SymbolId(14): [ReferenceId(17), ReferenceId(18), ReferenceId(355), ReferenceId(356)]
-rebuilt        : SymbolId(11): [ReferenceId(42), ReferenceId(43), ReferenceId(73)]
+rebuilt        : SymbolId(11): [ReferenceId(32), ReferenceId(58), ReferenceId(59)]
 Symbol reference IDs mismatch for "UntitledTextEditorInput":
 after transform: SymbolId(17): [ReferenceId(38), ReferenceId(87)]
 rebuilt        : SymbolId(13): [ReferenceId(83)]
@@ -106,7 +106,7 @@ after transform: SymbolId(21): [ReferenceId(1), ReferenceId(40), ReferenceId(71)
 rebuilt        : SymbolId(17): [ReferenceId(115), ReferenceId(243)]
 Symbol reference IDs mismatch for "IWorkingCopyEditorService":
 after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22), ReferenceId(365), ReferenceId(366)]
-rebuilt        : SymbolId(26): [ReferenceId(52), ReferenceId(53), ReferenceId(77)]
+rebuilt        : SymbolId(26): [ReferenceId(36), ReferenceId(68), ReferenceId(69)]
 Symbol span mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): Span { start: 3208, end: 3236 }
 rebuilt        : SymbolId(46): Span { start: 0, end: 0 }

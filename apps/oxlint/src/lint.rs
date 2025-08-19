@@ -17,12 +17,12 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    TsGoLintState,
 };
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    tsgolint::TsGoLintState,
     walk::Walk,
 };
 
@@ -118,15 +118,6 @@ impl LintRunner {
                     builder.add(&pattern).unwrap();
                 }
             }
-            if !oxlintrc.ignore_patterns.is_empty() {
-                let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
-                oxlintrc.ignore_patterns =
-                    Self::adjust_ignore_patterns(&self.cwd, &oxlint_wd, oxlintrc.ignore_patterns);
-                for pattern in &oxlintrc.ignore_patterns {
-                    let pattern = format!("!{pattern}");
-                    builder.add(&pattern).unwrap();
-                }
-            }
 
             let builder = builder.build().unwrap();
 
@@ -179,7 +170,6 @@ impl LintRunner {
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
         let paths = walker.paths();
-        let number_of_files = paths.len();
 
         let mut external_plugin_store = ExternalPluginStore::default();
 
@@ -301,11 +291,17 @@ impl LintRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        let files_to_lint = paths
+            .into_iter()
+            .filter(|path| !config_store.should_ignore(Path::new(path)))
+            .collect::<Vec<Arc<OsStr>>>();
+
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            if let Err(err) =
-                TsGoLintState::new(config_store.clone(), &paths, &options).lint(tx_error.clone())
+            if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
+                .with_silent(misc_options.silent)
+                .lint(&files_to_lint, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
@@ -315,6 +311,8 @@ impl LintRunner {
         let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
+
+        let number_of_files = files_to_lint.len();
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -340,7 +338,7 @@ impl LintRunner {
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
             let mut lint_service = LintService::new(linter, options);
-            lint_service.with_paths(paths);
+            lint_service.with_paths(files_to_lint);
 
             // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
             // This reads the source text into start of allocator, instead of the end.
@@ -550,30 +548,6 @@ impl LintRunner {
             Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
             Ok(None)
-        }
-    }
-
-    fn adjust_ignore_patterns(
-        base: &PathBuf,
-        path: &PathBuf,
-        ignore_patterns: Vec<String>,
-    ) -> Vec<String> {
-        if base == path {
-            ignore_patterns
-        } else {
-            let relative_ignore_path =
-                path.strip_prefix(base).map_or_else(|_| PathBuf::from("."), Path::to_path_buf);
-
-            ignore_patterns
-                .into_iter()
-                .map(|pattern| {
-                    let prefix_len = pattern.bytes().take_while(|&c| c == b'!').count();
-                    let (prefix, pattern) = pattern.split_at(prefix_len);
-
-                    let adjusted_path = relative_ignore_path.join(pattern);
-                    format!("{prefix}{}", adjusted_path.to_string_lossy().cow_replace('\\', "/"))
-                })
-                .collect()
         }
     }
 }
@@ -1049,21 +1023,6 @@ mod test {
     }
 
     #[test]
-    fn test_adjust_ignore_patterns() {
-        let base = PathBuf::from("/project/root");
-        let path = PathBuf::from("/project/root/src");
-        let ignore_patterns =
-            vec![String::from("target"), String::from("!dist"), String::from("!!dist")];
-
-        let adjusted_patterns = LintRunner::adjust_ignore_patterns(&base, &path, ignore_patterns);
-
-        assert_eq!(
-            adjusted_patterns,
-            vec![String::from("src/target"), String::from("!src/dist"), String::from("!!src/dist")]
-        );
-    }
-
-    #[test]
     fn test_nested_config() {
         let args = &[];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
@@ -1211,12 +1170,25 @@ mod test {
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
     }
 
+    #[test]
+    fn test_dot_folder() {
+        Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+    }
+
     // ToDo: `tsgolint` does not support `big-endian`?
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "no-floating-promises"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_silent() {
+        // TODO: test with other rules as well once diagnostics are more stable
+        let args = &["--type-aware", "--silent", "no-floating-promises"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 

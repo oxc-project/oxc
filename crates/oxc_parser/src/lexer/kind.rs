@@ -313,11 +313,6 @@ impl Kind {
         self.is_literal_property_name() || self == Self::PrivateIdentifier
     }
 
-    #[inline]
-    pub fn is_variable_declaration(self) -> bool {
-        matches!(self, Var | Let | Const)
-    }
-
     #[rustfmt::skip]
     #[inline]
     pub fn is_assignment_operator(self) -> bool {

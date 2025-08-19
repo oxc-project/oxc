@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- c63c944 ast_macros: Simplify code (#13101) (overlookmotel)
+
+
 
 
 ## [0.81.0] - 2025-08-06

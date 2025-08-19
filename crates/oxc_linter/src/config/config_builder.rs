@@ -199,6 +199,10 @@ impl ConfigStoreBuilder {
             settings: oxlintrc.settings,
             env: oxlintrc.env,
             globals: oxlintrc.globals,
+            ignore_patterns: LintConfig::resolve_oxlintrc_ignore_patterns(
+                &oxlintrc.ignore_patterns,
+                &oxlintrc.path,
+            ),
             path: Some(oxlintrc.path),
         };
 

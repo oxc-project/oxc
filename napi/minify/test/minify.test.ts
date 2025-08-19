@@ -8,22 +8,19 @@ describe('simple', () => {
 
   it('matches output', () => {
     const ret = minify('test.js', code, { sourcemap: true });
-    expect(ret).toStrictEqual({
-      'code': 'function foo(){var e;e(void 0)}foo();',
-      'map': {
-        'mappings': 'AACA,SAAS,KAAM,CAAE,IAAIA,EAAKA,EAAI,OAAY,CAAC',
-        'names': [
-          'bar',
-        ],
-        'sources': [
-          'test.js',
-        ],
-        'sourcesContent': [
-          code,
-        ],
-        'version': 3,
-      },
-      'errors': [],
+    expect(ret.code).toEqual('function foo(){var e;e(void 0)}foo();');
+    expect(ret.errors.length).toBe(0);
+    expect(ret.map).toMatchObject({
+      'names': [
+        'bar',
+      ],
+      'sources': [
+        'test.js',
+      ],
+      'sourcesContent': [
+        code,
+      ],
+      'version': 3,
     });
   });
 

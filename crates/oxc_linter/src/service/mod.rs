@@ -97,6 +97,11 @@ impl LintService {
         self.runtime.run_source(allocator)
     }
 
+    #[cfg(feature = "language_server")]
+    pub fn should_ignore(&self, path: &Path) -> bool {
+        self.runtime.linter.config.should_ignore(path)
+    }
+
     /// For tests
     #[cfg(test)]
     pub(crate) fn run_test_source<'a>(

@@ -274,6 +274,6 @@ log(__MEMBER__);
     let output = result.code;
     let output_map = result.map.unwrap();
     let visualizer = SourcemapVisualizer::new(&output, &output_map);
-    let snapshot = visualizer.into_visualizer_text();
+    let snapshot = visualizer.get_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }

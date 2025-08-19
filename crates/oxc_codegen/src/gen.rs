@@ -923,7 +923,6 @@ impl Gen for WithClause<'_> {
             p.print_soft_space();
         }
         p.print_ascii_byte(b'}');
-        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -1474,7 +1473,6 @@ impl Gen for ArrayExpression<'_> {
             p.print_indent();
         }
         p.print_ascii_byte(b']');
-        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -1517,7 +1515,6 @@ impl GenExpr for ObjectExpression<'_> {
                 p.print_soft_space();
             }
             p.print_ascii_byte(b'}');
-            p.add_source_mapping_end(self.span);
         });
     }
 }
@@ -1905,7 +1902,6 @@ impl Gen for ArrayAssignmentTarget<'_> {
             target.print(p, ctx);
         }
         p.print_ascii_byte(b']');
-        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -1922,7 +1918,6 @@ impl Gen for ObjectAssignmentTarget<'_> {
             target.print(p, ctx);
         }
         p.print_ascii_byte(b'}');
-        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -2789,7 +2784,6 @@ impl Gen for ObjectPattern<'_> {
             p.print_soft_space();
         }
         p.print_ascii_byte(b'}');
-        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -2863,7 +2857,6 @@ impl Gen for ArrayPattern<'_> {
             rest.print(p, ctx);
         }
         p.print_ascii_byte(b']');
-        p.add_source_mapping_end(self.span);
     }
 }
 

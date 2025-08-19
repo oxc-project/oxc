@@ -11,6 +11,7 @@ use super::{
 
 /// Convert `char` to UTF-8 bytes array.
 const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    assert!(ch.len_utf8() == N);
     let mut bytes = [0u8; N];
     ch.encode_utf8(&mut bytes);
     bytes
@@ -18,7 +19,8 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
 const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0]; // 0xEF
+const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
+const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 

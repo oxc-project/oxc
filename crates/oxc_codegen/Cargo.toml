@@ -1,6 +1,6 @@
 [package]
 name = "oxc_codegen"
-version = "0.82.1"
+version = "0.82.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -37,7 +37,6 @@ nonmax = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
-base64 = { workspace = true }
 insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }

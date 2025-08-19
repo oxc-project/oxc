@@ -29,4 +29,5 @@ export function getErrorMessage(err: unknown): string {
  *
  * @param value - Value
  */
+// oxlint-disable-next-line no-unused-vars
 export function assertIs<T>(value: unknown): asserts value is T {}

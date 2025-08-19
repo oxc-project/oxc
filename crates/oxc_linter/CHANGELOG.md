@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- 09b597f linter: Handle help message from tsgolint (#13143) (Boshen)
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+- c661bac linter: Add eslint/prefer-template rule (#13117) (yefan)
+- 920e06f linter: Implement fixer for jsx_curly_brace_presence (#13005) (RoelGo)
+- 1c79d02 linter: Add react/jsx-fragments rule (#12988) (Peter Cardenas)
+- a799982 linter/consistent-type-specifier-style: Add fixer for `top-level` style config (#13023) (Li Wei)
+- 61112a3 linter: Add 36 new TypeScript ESLint rules with comprehensive test fixtures (#12893) (Copilot)
+- 4ce252c linter: Add dangerous suggestion for `jsx-a11y/tabindex-no-positive` (#12963) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 81b0162 linter: Preserve json key order for `oxlint --init` (#13121) (Boshen)
+- f97791a linter/no-this-alias: Update NoThisAliasConfig default config (#13095) (camc314)
+- 43b1c5a linter: Do not count type-aware rules, when not enabled (#13062) (Sysix)
+- 618ee87 linter/array-callback-return: Fix handling of default case in switch statements for array-callback-return rule (#13081) (Li Wei)
+- c211d32 linter: Fix whitespace handling in disable directives (#13083) (Li Wei)
+- b0558a4 linter: Prevent unsound use of `Allocator` across threads (#13032) (overlookmotel)
+- 2d287d0 linter/no-unused-private-class-members: False positive with private member in compound assignments (#13053) (yefan)
+
+### 🚜 Refactor
+
+- 700b412 linter: Add impl for `TsGoLintDiagnostic` into `Message` (#13144) (Sysix)
+- 437a63d linter: `message_to_message_with_position` helper function (#13140) (Sysix)
+- 8459a12 linter: Pass paths to `TsGoLintState.lint` method (#13131) (Sysix)
+- 0dd7908 linter: Fix dead code warnings when compiling `napi/oxlint2` (#13132) (overlookmotel)
+- f0a517f linter: Pass cwd instead of `LintServiceOptions` into `TsGoLintState` (#13127) (Sysix)
+- 34ae2f0 linter: Move `tsgolint.rs` to `oxc_linter` crate (#13126) (Sysix)
+- 9f924f6 linter: Always explicitly initialize Rayon thread pool (#13122) (overlookmotel)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+- 0453ee3 linter: Rename var for consistency (#13074) (overlookmotel)
+- 5783df2 linter: Dereference `Allocator` from `AllocatorGuard` (#13073) (overlookmotel)
+- 1d77d92 linter: Avoid unnecessary var initialization (#13072) (overlookmotel)
+- 1c15288 linter: Extract duplicated `is_jsx_fragment` function to shared utils (#13093) (Copilot)
+- 0b61338 linter/jsx-curly-brace-presence: Iter over chars rather than using regex (#13094) (Copilot)
+- 74fb6c9 linter: Reduce repeated code (#13070) (overlookmotel)
+
+
 ## [1.11.2] - 2025-08-12
 
 ### 🐛 Bug Fixes

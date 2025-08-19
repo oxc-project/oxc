@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- fbe6663 minifier: Mark more known global methods as side-effect free (#13086) (Boshen)
+- 36386e4 ecmascript: Treat `[...arguments]` as side effect free (#13116) (sapphi-red)
+- 5dfb40e minifier: Drop `var r = [...arguments]` if `r` is not used (#13115) (sapphi-red)
+- 3d0d31a minifier: Rewrite `arguments` copy loops to spread syntax (#13114) (sapphi-red)
+- dea41dc minifier: Compress `Object(expr)(args)` to `(0, expr)(args)` (#13092) (sapphi-red)
+- fe4589b minifier: Mark more global constructors as side-effect free (#13082) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 896c3ba minifier: Keep `Array` reference id when compressing `Array()` (#13113) (sapphi-red)
+- 6686cc4 minifier: Do not remove `using x = ` (#13052) (Boshen)
+
+### 🚜 Refactor
+
+- a36c3ce minfier: Consistent method names (#13060) (Boshen)
+- e190ee5 minifier: Clean up `remove_unused_expression` (#13080) (Boshen)
+
+### ⚡ Performance
+
+- 2625bdf minifier: No need to collect references if AST is not changed (#13078) (Boshen)
+
+
 ## [0.82.1] - 2025-08-13
 
 ### 🚀 Features

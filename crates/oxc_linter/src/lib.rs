@@ -26,6 +26,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod tsgolint;
 mod utils;
 
 pub mod loader;
@@ -57,8 +58,8 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
-    utils::read_to_arena_str,
-    utils::read_to_string,
+    tsgolint::TsGoLintState,
+    utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},

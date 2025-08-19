@@ -9,47 +9,61 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
-use oxc_linter::{
-    AllowWarnDeny, ConfigStore, LintServiceOptions, ResolvedLinterState, read_to_string,
-};
 use oxc_span::{SourceType, Span};
+
+use crate::fixer::{CompositeFix, Message, PossibleFixes};
+
+use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
-pub struct TsGoLintState<'a> {
+pub struct TsGoLintState {
     /// The path to the `tsgolint` executable (at least our our best guess at it).
     executable_path: PathBuf,
     /// Current working directory, used for rendering paths in diagnostics.
     cwd: PathBuf,
-    /// The paths of files to lint
-    paths: &'a Vec<Arc<OsStr>>,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
     config_store: ConfigStore,
+    /// If `oxlint` will output the diagnostics or not.
+    /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
+    silent: bool,
 }
 
-impl<'a> TsGoLintState<'a> {
-    pub fn new(
-        config_store: ConfigStore,
-        paths: &'a Vec<Arc<OsStr>>,
-        options: &LintServiceOptions,
-    ) -> Self {
+impl TsGoLintState {
+    pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
-            executable_path: try_find_tsgolint_executable(options.cwd())
-                .unwrap_or(PathBuf::from("tsgolint")),
-            cwd: options.cwd().to_path_buf(),
-            paths,
+            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
+            cwd: cwd.to_path_buf(),
+            silent: false,
         }
     }
 
-    pub fn lint(self, error_sender: DiagnosticSender) -> Result<(), String> {
-        if self.paths.is_empty() {
+    /// Set to `true` to skip file system reads.
+    /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_silent(mut self, yes: bool) -> Self {
+        self.silent = yes;
+        self
+    }
+
+    /// # Panics
+    /// - when `stdin` of subprocess cannot be opened
+    /// - when `stdout` of subprocess cannot be opened
+    /// - when `tsgolint` process cannot be awaited
+    ///
+    /// # Errors
+    /// A human-readable error message indicating why the linting failed.
+    pub fn lint(self, paths: &[Arc<OsStr>], error_sender: DiagnosticSender) -> Result<(), String> {
+        if paths.is_empty() {
             return Ok(());
         }
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        let json_input = self.json_input(&mut resolved_configs);
+        let json_input = self.json_input(paths, &mut resolved_configs);
 
         let handler = std::thread::spawn(move || {
             let child = std::process::Command::new(&self.executable_path)
@@ -92,6 +106,8 @@ impl<'a> TsGoLintState<'a> {
                 let mut buffer = Vec::with_capacity(8192);
                 let mut read_buf = [0u8; 8192];
 
+                let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
+
                 loop {
                     match stdout.read(&mut read_buf) {
                         Ok(0) => break, // EOF
@@ -132,7 +148,7 @@ impl<'a> TsGoLintState<'a> {
                                         );
 
                                         let oxc_diagnostic: OxcDiagnostic =
-                                            tsgolint_diagnostic.into();
+                                            OxcDiagnostic::from(tsgolint_diagnostic);
                                         let Some(severity) = severity else {
                                             // If the severity is not found, we should not report the diagnostic
                                             continue;
@@ -145,11 +161,27 @@ impl<'a> TsGoLintState<'a> {
                                             },
                                         );
 
+                                        let source_text: &str = if self.silent {
+                                            // The source text is not needed in silent mode.
+                                            // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                            ""
+                                        } else if let Some(source_text) = source_text_map.get(&path)
+                                        {
+                                            source_text.as_str()
+                                        } else {
+                                            let source_text = read_to_string(&path)
+                                                .unwrap_or_else(|_| String::new());
+                                            // Insert and get a reference to the inserted string
+                                            let entry = source_text_map
+                                                .entry(path.clone())
+                                                .or_insert(source_text);
+                                            entry.as_str()
+                                        };
+
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
                                             cwd_clone.clone(),
                                             path.clone(),
-                                            &read_to_string(&path)
-                                                .unwrap_or_else(|_| String::new()),
+                                            source_text,
                                             vec![oxc_diagnostic],
                                         );
 
@@ -225,11 +257,11 @@ impl<'a> TsGoLintState<'a> {
     #[inline]
     fn json_input(
         &self,
+        paths: &[Arc<OsStr>],
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> TsGoLintInput {
         TsGoLintInput {
-            files: self
-                .paths
+            files: paths
                 .iter()
                 .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
                 .map(|path| TsGoLintInputFile {
@@ -296,7 +328,7 @@ struct TsGoLintDiagnosticPayload {
     pub file_path: PathBuf,
 }
 
-/// Represents a message from `tsgolint`, ready to be converted into [`OxcDiagnostic`].
+/// Represents a message from `tsgolint`, ready to be converted into [`OxcDiagnostic`] or [`Message`].
 #[derive(Debug, Clone)]
 pub struct TsGoLintDiagnostic {
     pub r#type: MessageType,
@@ -310,12 +342,38 @@ pub struct TsGoLintDiagnostic {
 
 impl From<TsGoLintDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintDiagnostic) -> Self {
-        OxcDiagnostic::warn(val.message.description)
+        let mut d = OxcDiagnostic::warn(val.message.description)
             .with_label(Span::new(val.range.pos, val.range.end))
-            .with_error_code("typescript-eslint", val.rule)
+            .with_error_code("typescript-eslint", val.rule);
+        if let Some(help) = val.message.help {
+            d = d.with_help(help);
+        }
+        d
     }
 }
 
+impl Message<'_> {
+    /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
+    #[expect(dead_code)]
+    fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
+        let possible_fix = if val.fixes.is_empty() {
+            PossibleFixes::None
+        } else {
+            let fixes = val
+                .fixes
+                .iter()
+                .map(|fix| crate::fixer::Fix {
+                    content: fix.text.clone().into(),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: None,
+                })
+                .collect();
+            PossibleFixes::Single(CompositeFix::merge_fixes(fixes, source_text))
+        };
+
+        Self::new(val.into(), possible_fix)
+    }
+}
 // TODO: Should this be removed and replaced with a `Span`?
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Range {
@@ -327,6 +385,7 @@ pub struct Range {
 pub struct RuleMessage {
     pub id: String,
     pub description: String,
+    pub help: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

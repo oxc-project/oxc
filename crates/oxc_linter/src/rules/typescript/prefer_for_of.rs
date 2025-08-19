@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn prefer_for_of_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -145,7 +145,7 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let array_name = {
+        let (array_name, array_expr) = {
             let Some(mem_expr) = test_expr.right.as_member_expression() else {
                 return;
             };
@@ -154,7 +154,8 @@ impl Rule for PreferForOf {
                 return;
             }
 
-            match mem_expr.object() {
+            let array_expr = mem_expr.object();
+            let array_name = match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
                 expr @ match_member_expression!(Expression) => {
                     match expr.to_member_expression().static_property_name() {
@@ -163,7 +164,9 @@ impl Rule for PreferForOf {
                     }
                 }
                 _ => return,
-            }
+            };
+
+            (array_name, array_expr)
         };
 
         let Some(update_expr) = &for_stmt.update else {
@@ -198,7 +201,7 @@ impl Rule for PreferForOf {
             }
 
             // Check if this is a non-array access that prevents conversion
-            prevents_for_of_non_array_access(parent, array_name)
+            prevents_for_of_non_array_access(parent, array_expr, ctx)
         }) {
             return;
         }
@@ -264,20 +267,15 @@ fn prevents_for_of_array_access(
 }
 
 /// Check if this is a non-array access that prevents conversion
-fn prevents_for_of_non_array_access(parent: &AstNode, array_name: &str) -> bool {
+fn prevents_for_of_non_array_access(
+    parent: &AstNode,
+    array_expr: &Expression,
+    ctx: &LintContext,
+) -> bool {
     let parent_kind = parent.kind();
 
     if let Some(mem_expr) = parent_kind.as_member_expression_kind() {
-        match &mem_expr.object() {
-            Expression::Identifier(id) => id.name.as_str() != array_name,
-            expr if expr.is_member_expression() => {
-                match expr.to_member_expression().static_property_name() {
-                    Some(prop_name) => prop_name != array_name,
-                    None => true,
-                }
-            }
-            _ => true,
-        }
+        !is_same_expression(mem_expr.object(), array_expr, ctx)
     } else {
         true
     }
@@ -370,6 +368,18 @@ fn test() {
         "for (var j = 0; j < 10; j++) {}",
         "const arr = [];
         for (i = 0; i < arr.length; i++) { el = arr[i]; console.log(i, el); }",
+        "for (let x = 0; x < series.data.length; x++) { let newValue = series.data[x].y; for (const otherSeries of subseries) { newValue -= otherSeries.data[x].y; } series.data[x].y = newValue; }",
+        // Deep nesting test cases
+        "const a = { b: { c: { d: { e: [1, 2, 3] } } } };
+         const x = { b: { c: { d: { e: [4, 5, 6] } } } };
+         for (let i = 0; i < a.b.c.d.e.length; i++) {
+             console.log(x.b.c.d.e[i]); // Different object with same path
+         }",
+        "const obj1 = { a: { b: [1, 2, 3] } };
+         const obj2 = { a: { b: [4, 5, 6] } };
+         for (let i = 0; i < obj1.a.b.length; i++) {
+             console.log(obj2.a.b[i]); // Different object
+         }",
     ];
 
     let fail = vec![
@@ -401,6 +411,15 @@ fn test() {
         "const array = []; for (let i = 0; i < array.length; i++) { let foo = array[i]; }",
         "const array = []; for (let i = 0; i < array.length; i++) { const foo = array[i]; }",
         "const array = []; for (let i = 0; i < array.length; i++) { var foo = array[i], bar = 1; }",
+        // Deep nesting test cases that should trigger warning
+        "const a = { b: { c: { d: { e: [1, 2, 3] } } } };
+         for (let i = 0; i < a.b.c.d.e.length; i++) {
+             console.log(a.b.c.d.e[i]); // Same deeply nested array
+         }",
+        "const obj = { a: { b: [1, 2, 3] } };
+         for (let i = 0; i < obj.a.b.length; i++) {
+             console.log(obj.a.b[i]); // Same nested array
+         }",
     ];
 
     Tester::new(PreferForOf::NAME, PreferForOf::PLUGIN, pass, fail).test_and_snapshot();

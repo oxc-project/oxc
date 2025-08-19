@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- f6ac2e6 allocator, napi/parser: Use `usize::is_multiple_of` (#13142) (overlookmotel)
+
+### ⚡ Performance
+
+- ecc9c60 napi/parser: Raw transfer: reduce maths complexity (#13145) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- f6ac2e6 allocator, napi/parser: Use `usize::is_multiple_of` (#13142) (overlookmotel)
+
+### ⚡ Performance
+
+- ecc9c60 napi/parser: Raw transfer: reduce maths complexity (#13145) (overlookmotel)
+
+
 
 
 ## [0.82.0] - 2025-08-12

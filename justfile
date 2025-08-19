@@ -67,7 +67,7 @@ oxlint :
 
 # Watch oxlint
 watch-oxlint *args='':
-  just watch 'cargo run -p oxlint -- {{args}}'
+  just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # Run cargo check
 check:
