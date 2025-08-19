@@ -429,9 +429,11 @@ impl<'a> ParserImpl<'a> {
                             ));
                         }
                         Kind::Namespace => {
-                            self.error(diagnostics::namespace_can_only_be_used_in_typescript_files(
-                                decl.span(),
-                            ));
+                            self.error(
+                                diagnostics::namespace_can_only_be_used_in_typescript_files(
+                                    decl.span(),
+                                ),
+                            );
                         }
                         _ => {} // Global is fine since it's a contextual keyword
                     }

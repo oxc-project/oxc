@@ -841,14 +841,12 @@ mod test {
             let ret = Parser::new(&allocator, source, js_source_type).parse();
             assert!(
                 !ret.errors.is_empty(),
-                "Expected error for '{}' in JavaScript file, but parsing succeeded",
-                expected_keyword
+                "Expected error for '{expected_keyword}' in JavaScript file, but parsing succeeded"
             );
             assert!(
-                ret.errors[0].to_string().contains(&format!("'{}'", expected_keyword))
+                ret.errors[0].to_string().contains(&format!("'{expected_keyword}'"))
                     && ret.errors[0].to_string().contains("TypeScript files"),
-                "Expected TypeScript-specific error for '{}', got: {}",
-                expected_keyword,
+                "Expected TypeScript-specific error for '{expected_keyword}', got: {}",
                 ret.errors[0]
             );
 
@@ -856,9 +854,8 @@ mod test {
             let ret = Parser::new(&allocator, source, ts_source_type).parse();
             assert!(
                 ret.errors.is_empty(),
-                "Unexpected error for '{}' in TypeScript file: {:?}",
-                expected_keyword,
-                ret.errors
+                "Unexpected error for '{expected_keyword}' in TypeScript file: {errors:?}",
+                errors = ret.errors
             );
         }
     }
