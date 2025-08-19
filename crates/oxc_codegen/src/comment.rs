@@ -1,29 +1,50 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, iter::FusedIterator};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::identifier::is_line_terminator;
+use oxc_syntax::identifier::{LS, PS, is_line_terminator};
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
+/// Convert `char` to UTF-8 bytes array.
+const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    assert!(ch.len_utf8() == N);
+    let mut bytes = [0u8; N];
+    ch.encode_utf8(&mut bytes);
+    bytes
+}
+
+/// `LS` character as UTF-8 bytes.
+const LS_BYTES: [u8; 3] = to_bytes(LS);
+/// `PS` character as UTF-8 bytes.
+const PS_BYTES: [u8; 3] = to_bytes(PS);
+
+const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
+
+const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
+const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
+
 /// Custom iterator that splits text on line terminators while handling CRLF as a single unit.
 /// This avoids creating empty strings between CR and LF characters.
 ///
+/// Also splits on irregular line breaks (LS and PS).
+///
 /// # Example
 /// Standard split would turn `"line1\r\nline2"` into `["line1", "", "line2"]` because
-/// it treats \r and \n as separate terminators. This iterator correctly produces
-/// `["line1", "line2"]` by treating \r\n as a single terminator.
+/// it treats `\r` and `\n` as separate terminators. This iterator correctly produces
+/// `["line1", "line2"]` by treating `\r\n` as a single terminator.
 struct LineTerminatorSplitter<'a> {
     text: &'a str,
-    position: usize,
 }
 
 impl<'a> LineTerminatorSplitter<'a> {
     fn new(text: &'a str) -> Self {
-        Self { text, position: 0 }
+        Self { text }
     }
 }
 
@@ -31,35 +52,64 @@ impl<'a> Iterator for LineTerminatorSplitter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.position >= self.text.len() {
+        if self.text.is_empty() {
             return None;
         }
 
-        let start = self.position;
-        let chars = self.text[self.position..].char_indices();
-
-        for (i, c) in chars {
-            if is_line_terminator(c) {
-                let line = &self.text[start..start + i];
-                self.position = start + i + c.len_utf8();
-
-                // If this is CR followed by LF, skip the LF to treat CRLF as a single terminator
-                if c == '\r'
-                    && self.text.as_bytes().get(self.position).is_some_and(|&next| next == b'\n')
-                {
-                    self.position += 1;
+        for (index, &byte) in self.text.as_bytes().iter().enumerate() {
+            match byte {
+                b'\n' => {
+                    // SAFETY: Byte at `index` is `\n`, so `index` and `index + 1` are both UTF-8 char boundaries.
+                    // Therefore, slices up to `index` and from `index + 1` are both valid `&str`s.
+                    unsafe {
+                        let line = self.text.get_unchecked(..index);
+                        self.text = self.text.get_unchecked(index + 1..);
+                        return Some(line);
+                    }
                 }
-
-                return Some(line);
+                b'\r' => {
+                    // SAFETY: Byte at `index` is `\r`, so `index` is on a UTF-8 char boundary
+                    let line = unsafe { self.text.get_unchecked(..index) };
+                    // If the next byte is `\n`, consume it as well
+                    let skip_bytes =
+                        if self.text.as_bytes().get(index + 1) == Some(&b'\n') { 2 } else { 1 };
+                    // SAFETY: `index + skip_bytes` is after `\r` or `\n`, so on a UTF-8 char boundary.
+                    // Therefore slice from `index + skip_bytes` is a valid `&str`.
+                    self.text = unsafe { self.text.get_unchecked(index + skip_bytes..) };
+                    return Some(line);
+                }
+                LS_OR_PS_FIRST_BYTE => {
+                    let next2: [u8; 2] = {
+                        // SAFETY: 0xE2 is always the start of a 3-byte Unicode character,
+                        // so there must be 2 more bytes available to consume
+                        let next2 =
+                            unsafe { self.text.as_bytes().get_unchecked(index + 1..index + 3) };
+                        next2.try_into().unwrap()
+                    };
+                    // If this is LS or PS, treat it as a line terminator
+                    if matches!(next2, LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
+                        // SAFETY: `index` is the start of a 3-byte Unicode character,
+                        // so `index` and `index + 3` are both UTF-8 char boundaries.
+                        // Therefore, slices up to `index` and from `index + 3` are both valid `&str`s.
+                        unsafe {
+                            let line = self.text.get_unchecked(..index);
+                            self.text = self.text.get_unchecked(index + 3..);
+                            return Some(line);
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 
-        // Return the remaining text
-        let line = &self.text[start..];
-        self.position = self.text.len();
+        // No line break found - return the remaining text. Next call will return `None`.
+        let line = self.text;
+        self.text = "";
         Some(line)
     }
 }
+
+impl FusedIterator for LineTerminatorSplitter<'_> {}
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
