@@ -5,6 +5,7 @@ let Example = class Example {
 
 Example = babelHelpers.decorate(
 	[
+		babelHelpers.decorateParam(0, dce),
 		babelHelpers.decorateMetadata("design:paramtypes", [
 			typeof (_ref =
 				typeof UnboundTypeReference !== "undefined" && UnboundTypeReference) ===
@@ -12,7 +13,6 @@ Example = babelHelpers.decorate(
 				? _ref
 				: Object,
 		]),
-		babelHelpers.decorateParam(0, dce),
 	],
 	Example,
 );

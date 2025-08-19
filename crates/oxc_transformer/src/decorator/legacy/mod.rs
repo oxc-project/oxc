@@ -835,10 +835,26 @@ impl<'a> LegacyDecorator<'a, '_> {
         }
 
         let mut decorations = ctx.ast.vec_with_capacity(method_decoration_count);
+
+        // Split metadata decorators from method decorators.
+        // Metadata decorators (typically used for emitting design-time type information)
+        // are identified by having an "unspanned" span. According to TypeScript's legacy
+        // decorator semantics, metadata decorators must be applied *after* all parameter
+        // decorators, so we separate them here and will insert them last.
+        let mut method_decorators = method.decorators.take_in(ctx.ast.allocator);
+        let metadata_position = method_decorators
+            .iter()
+            .position(|decorator| {
+                // All metadata decorators are unspanned
+                decorator.span.is_unspanned()
+            })
+            .unwrap_or(method_decorators.len());
+        let metadata_decorators = method_decorators.split_off(metadata_position);
+
+        // Method decorators should always be injected before all other decorators
         decorations.extend(
-            method
-                .decorators
-                .drain(..)
+            method_decorators
+                .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
 
@@ -846,6 +862,13 @@ impl<'a> LegacyDecorator<'a, '_> {
         if param_decoration_count > 0 {
             self.transform_decorators_of_parameters(&mut decorations, params, ctx);
         }
+
+        // `decorateMetadata` should always be injected after param decorators
+        decorations.extend(
+            metadata_decorators
+                .into_iter()
+                .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
+        );
 
         Some(ctx.ast.expression_array(SPAN, decorations))
     }

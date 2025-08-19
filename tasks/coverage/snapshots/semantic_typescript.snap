@@ -8599,7 +8599,7 @@ rebuilt        : [ReferenceId(13)]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImport.ts
 Symbol reference IDs mismatch for "Observable":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(12), ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImportOnDeclare.ts
 Symbol reference IDs mismatch for "Observable":
@@ -8791,7 +8791,7 @@ rebuilt        : ["Object", "database"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 Symbol reference IDs mismatch for "Yoha":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorReferences.ts
 Bindings mismatch:

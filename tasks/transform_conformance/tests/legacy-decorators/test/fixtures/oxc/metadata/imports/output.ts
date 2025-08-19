@@ -9,6 +9,7 @@ let Cls = class Cls {
 
 Cls = babelHelpers.decorate(
 	[
+		babelHelpers.decorateParam(0, dec),
 		babelHelpers.decorateMetadata("design:paramtypes", [
 			typeof (_ref = typeof Foo !== "undefined" && Foo) === "function"
 				? _ref
@@ -17,7 +18,6 @@ Cls = babelHelpers.decorate(
 			Object,
 			Object,
 		]),
-		babelHelpers.decorateParam(0, dec),
 	],
 	Cls,
 );
