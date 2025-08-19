@@ -158,8 +158,17 @@ impl Allocator {
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     pub unsafe fn alloc_bytes_start(&self, bytes: usize) -> NonNull<u8> {
         // Round up number of bytes to reserve to multiple of `MIN_ALIGN`,
-        // so data pointer remains aligned on `MIN_ALIGN`
-        let alloc_bytes = (bytes + MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
+        // so data pointer remains aligned on `MIN_ALIGN`.
+        //
+        // `saturating_add` is required to prevent overflow in case `bytes > usize::MAX - MIN_ALIGN`.
+        // In that case, `alloc_bytes` will be rounded down instead of up here, but that's OK because
+        // no allocation can be larger than `isize::MAX` bytes, and therefore it's guaranteed that
+        // `free_capacity < isize::MAX`. So `free_capacity > alloc_bytes` check below will always fail
+        // for such a large value of `alloc_bytes`, regardless of rounding.
+        //
+        // It's preferable to use branchless `saturating_add` instead of `assert!(size <= isize::MAX as usize)`,
+        // to avoid a branch here.
+        let alloc_bytes = bytes.saturating_add(MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
 
         let data_ptr = self.data_ptr();
         let cursor_ptr = self.cursor_ptr();
