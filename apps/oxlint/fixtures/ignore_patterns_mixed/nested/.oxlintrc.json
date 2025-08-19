@@ -1,0 +1,3 @@
+{
+  "ignorePatterns": ["*.ts", "!should_not_be_ignored.ts"]
+}

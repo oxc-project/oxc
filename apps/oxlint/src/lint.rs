@@ -25,6 +25,7 @@ use crate::{
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
+use oxc_linter::LintIgnoreMatcher;
 
 #[derive(Debug)]
 pub struct LintRunner {
@@ -178,6 +179,8 @@ impl LintRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none();
 
+        let mut nested_ignore_patterns = Vec::new();
+
         let nested_configs = if search_for_nested_configs {
             match Self::get_nested_configs(
                 stdout,
@@ -186,12 +189,17 @@ impl LintRunner {
                 &paths,
                 external_linter,
                 &mut external_plugin_store,
+                &mut nested_ignore_patterns,
             ) {
                 Ok(v) => v,
                 Err(v) => return v,
             }
         } else {
             FxHashMap::default()
+        };
+
+        let ignore_matcher = {
+            LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns)
         };
 
         {
@@ -205,8 +213,8 @@ impl LintRunner {
         } else {
             None
         };
-        let config_builder = match ConfigStoreBuilder::from_base_oxlintrc(
-            &self.cwd,
+
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
             external_linter,
@@ -294,7 +302,7 @@ impl LintRunner {
 
         let files_to_lint = paths
             .into_iter()
-            .filter(|path| !config_store.should_ignore(Path::new(path)))
+            .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
         // Run type-aware linting through tsgolint
@@ -446,6 +454,7 @@ impl LintRunner {
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
+        nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
@@ -485,6 +494,11 @@ impl LintRunner {
 
         // iterate over each config and build the ConfigStore
         for (dir, oxlintrc) in nested_oxlintrc {
+            // Collect ignore patterns and their root
+            nested_ignore_patterns.push((
+                oxlintrc.ignore_patterns.clone(),
+                oxlintrc.path.parent().unwrap().to_path_buf(),
+            ));
             // TODO(refactor): clean up all of the error handling in this function
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -501,7 +515,6 @@ impl LintRunner {
                             render_report(handler, &OxcDiagnostic::error(e.to_string()))
                         ),
                     );
-
                     return Err(CliRunResult::InvalidOptionConfig);
                 }
             }
@@ -675,6 +688,24 @@ mod test {
         let args2 = &["."];
         Tester::new()
             .with_cwd("fixtures/ignore_pattern_non_glob_syntax".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
+    fn ignore_patterns_empty_nested() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_patterns_empty_nested".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
+    fn ignore_patterns_relative() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_patterns_relative".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 
