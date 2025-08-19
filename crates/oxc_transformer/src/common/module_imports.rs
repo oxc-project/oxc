@@ -1,7 +1,7 @@
 //! Utility transform to add `import` / `require` statements to top of program.
 //!
 //! `ModuleImportsStore` contains an `IndexMap<Atom<'a>, Vec<ImportKind<'a>>>`.
-//! It is stored on `TransformCtx`.
+//! It is stored on `TransformState`.
 //!
 //! `ModuleImports` transform
 //!
@@ -11,7 +11,7 @@
 //!
 //! ```rs
 //! // import { jsx as _jsx } from 'react';
-//! self.ctx.module_imports.add_named_import(
+//! ctx.state.module_imports.add_named_import(
 //!     Atom::from("react"),
 //!     Atom::from("jsx"),
 //!     Atom::from("_jsx"),
@@ -20,14 +20,14 @@
 //!
 //! // ESM: import React from 'react';
 //! // CJS: var _React = require('react');
-//! self.ctx.module_imports.add_default_import(
+//! ctx.state.module_imports.add_default_import(
 //!     Atom::from("react"),
 //!     Atom::from("React"),
 //!     symbol_id
 //! );
 //! ```
 //!
-//! > NOTE: Using `import` or `require` is determined by [`TransformCtx::source_type`].
+//! > NOTE: Using `import` or `require` is determined by [`TransformState::source_type`].
 //!
 //! Based on `@babel/helper-module-imports`
 //! <https://github.com/nicolo-ribaudo/babel/tree/v7.25.8/packages/babel-helper-module-imports>
@@ -43,23 +43,32 @@ use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct ModuleImports<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct ModuleImports<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl<'a> ModuleImports<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ModuleImports<'a> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.ctx.module_imports.insert_into_program(self.ctx, ctx);
+        // TODO: This is a temporary workaround for borrowing issues.
+        // The real solution is to refactor these helper methods to work with the new architecture.
+        let module_imports_ptr = &ctx.state.module_imports as *const _;
+        let is_script = ctx.state.source_type.is_script();
+        unsafe {
+            if is_script {
+                (*module_imports_ptr).insert_require_statements(ctx);
+            } else {
+                (*module_imports_ptr).insert_import_statements(ctx);
+            }
+        }
     }
 }
 
@@ -158,23 +167,22 @@ impl<'a> ModuleImportsStore<'a> {
     }
 
     /// Insert `import` / `require` statements at top of program.
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
-        if transform_ctx.source_type.is_script() {
-            self.insert_require_statements(transform_ctx, ctx);
+    fn insert_into_program(&self, ctx: &mut TraverseCtx<'a>) {
+        if ctx.state.source_type.is_script() {
+            self.insert_require_statements(ctx);
         } else {
-            self.insert_import_statements(transform_ctx, ctx);
+            self.insert_import_statements(ctx);
         }
     }
 
-    fn insert_import_statements(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
+    fn insert_import_statements(&self, ctx: &TraverseCtx<'a>) {
         let mut imports = self.imports.borrow_mut();
         let stmts = imports.drain(..).map(|(source, names)| Self::get_import(source, names, ctx));
-        transform_ctx.top_level_statements.insert_statements(stmts);
+        ctx.state.top_level_statements.insert_statements(stmts);
     }
 
     fn insert_require_statements(
         &self,
-        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut imports = self.imports.borrow_mut();
@@ -186,7 +194,7 @@ impl<'a> ModuleImportsStore<'a> {
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
-        transform_ctx.top_level_statements.insert_statements(stmts);
+        ctx.state.top_level_statements.insert_statements(stmts);
     }
 
     fn get_import(

@@ -36,21 +36,18 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct NullishCoalescingOperator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct NullishCoalescingOperator;
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl NullishCoalescingOperator {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -67,7 +64,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> 
     }
 }
 
-impl<'a> NullishCoalescingOperator<'a, '_> {
+impl<'a> NullishCoalescingOperator {
     fn transform_logical_expression(
         &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -175,7 +172,8 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_var(&binding, ctx);
+            let var_declarations = &ctx.state.var_declarations;
+            var_declarations.insert_var(&binding, ctx);
         }
 
         new_expr

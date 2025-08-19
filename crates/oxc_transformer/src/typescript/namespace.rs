@@ -10,8 +10,7 @@ use oxc_syntax::{
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 use super::{
@@ -19,20 +18,19 @@ use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
-pub struct TypeScriptNamespace<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct TypeScriptNamespace<'a> {
 
     // Options
     allow_namespaces: bool,
 }
 
-impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, allow_namespaces: options.allow_namespaces }
+impl<'a> TypeScriptNamespace<'a> {
+    pub fn new(options: &TypeScriptOptions, ) -> Self {
+        Self { allow_namespaces: options.allow_namespaces }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -49,7 +47,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
-                        self.ctx.error(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
@@ -68,7 +66,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
                     };
 
                     if !self.allow_namespaces {
-                        self.ctx.error(namespace_not_supported(decl.span));
+                        ctx.state.error(namespace_not_supported(decl.span));
                     }
 
                     self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
@@ -84,7 +82,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptNamespace<'a, '_> {
+impl<'a> TypeScriptNamespace<'a> {
     fn handle_nested(
         &self,
         decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
@@ -101,7 +99,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
 
         let TSModuleDeclarationName::Identifier(ident) = id else {
-            self.ctx.error(ambient_module_nested(span));
+            ctx.state.error(ambient_module_nested(span));
             return;
         };
 
@@ -239,7 +237,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
                                     if !decl.kind.is_const() {
-                                        self.ctx.error(namespace_exporting_non_const(decl.span));
+                                        ctx.state.error(namespace_exporting_non_const(decl.span));
                                     }
                                 });
                                 let stmts =

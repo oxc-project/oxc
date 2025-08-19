@@ -11,9 +11,9 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::{TransformCtx, TraverseCtx};
+use crate::{state::TransformState, context::TraverseCtx};
 
-impl<'a> TransformCtx<'a> {
+impl<'a> TransformState<'a> {
     /// Duplicate expression to be used twice.
     ///
     /// If `expr` may have side effects, create a temp var `_expr` and assign to it.

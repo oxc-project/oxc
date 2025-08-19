@@ -1,6 +1,6 @@
 //! Utility transform to add statements to top of program.
 //!
-//! `TopLevelStatementsStore` contains a `Vec<Statement>`. It is stored on `TransformCtx`.
+//! `TopLevelStatementsStore` contains a `Vec<Statement>`. It is stored on `TransformState`.
 //!
 //! `TopLevelStatements` transform inserts those statements at top of program.
 //!
@@ -16,8 +16,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 /// Transform that inserts any statements which have been requested insertion via `TopLevelStatementsStore`
@@ -26,19 +25,19 @@ use crate::{
 /// Insertions are made after any existing `import` statements.
 ///
 /// Must run after all other transforms.
-pub struct TopLevelStatements<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct TopLevelStatements<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl<'a> TopLevelStatements<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TopLevelStatements<'a, '_> {
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.ctx.top_level_statements.insert_into_program(program);
+impl<'a> Traverse<'a, TransformState<'a>> for TopLevelStatements<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.top_level_statements.insert_into_program(program);
     }
 }
 

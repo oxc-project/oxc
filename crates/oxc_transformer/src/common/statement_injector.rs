@@ -1,15 +1,15 @@
 //! Utility transform to add new statements before or after the specified statement.
 //!
-//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformCtx`.
+//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformState`.
 //!
 //! `StatementInjector` transform inserts new statements before or after a statement which is determined by the address of the statement.
 //!
 //! Other transforms can add statements to the store with following methods:
 //!
 //! ```rs
-//! self.ctx.statement_injector.insert_before(address, statement);
-//! self.ctx.statement_injector.insert_after(address, statement);
-//! self.ctx.statement_injector.insert_many_after(address, statements);
+//! ctx.state.statement_injector.insert_before(address, statement);
+//! ctx.state.statement_injector.insert_after(address, statement);
+//! ctx.state.statement_injector.insert_many_after(address, statements);
 //! ```
 
 use std::{cell::RefCell, collections::hash_map::Entry};
@@ -21,33 +21,32 @@ use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
 /// Transform that inserts any statements which have been requested insertion via `StatementInjectorStore`
-pub struct StatementInjector<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct StatementInjector<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl<'a> StatementInjector<'a> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a> {
     fn exit_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.ctx.statement_injector.insert_into_statements(statements, ctx);
+        ctx.state.statement_injector.insert_into_statements(statements, ctx);
     }
 
     #[inline]
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.ctx.statement_injector.assert_no_insertions_remaining();
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.statement_injector.assert_no_insertions_remaining();
     }
 }
 

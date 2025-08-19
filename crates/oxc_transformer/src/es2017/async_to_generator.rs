@@ -66,22 +66,20 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct AsyncToGenerator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-    executor: AsyncGeneratorExecutor<'a, 'ctx>,
+pub struct AsyncToGenerator {
+    executor: AsyncGeneratorExecutor,
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator, ctx) }
+impl AsyncToGenerator {
+    pub fn new() -> Self {
+        Self { executor: AsyncGeneratorExecutor::new(Helper::AsyncToGenerator) }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -134,7 +132,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
         if let Some(function) = function {
             if function.r#async && !function.generator && !function.is_typescript_syntax() {
                 let new_statement = self.executor.transform_function_declaration(function, ctx);
-                self.ctx.statement_injector.insert_after(stmt, new_statement);
+                ctx.state.statement_injector.insert_after(stmt, new_statement);
             }
         }
     }
@@ -149,9 +147,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
     }
 }
 
-impl<'a> AsyncToGenerator<'a, '_> {
+impl AsyncToGenerator {
     /// Check whether the current node is inside an async function.
-    fn is_inside_async_function(ctx: &TraverseCtx<'a>) -> bool {
+    fn is_inside_async_function<'a>(ctx: &TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
         if ctx.current_scope_flags().is_top() {
             return false;
@@ -171,7 +169,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
 
     /// Transforms `await` expressions to `yield` expressions.
     /// Ignores top-level await expressions.
-    fn transform_await_expression(
+    fn transform_await_expression<'a>(
         expr: &mut AwaitExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -184,15 +182,17 @@ impl<'a> AsyncToGenerator<'a, '_> {
     }
 }
 
-pub struct AsyncGeneratorExecutor<'a, 'ctx> {
+pub struct AsyncGeneratorExecutor {
     helper: Helper,
-    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
-    pub fn new(helper: Helper, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { helper, ctx }
+impl AsyncGeneratorExecutor {
+    pub fn new(helper: Helper) -> Self {
+        Self { helper }
     }
+}
+
+impl<'a> AsyncGeneratorExecutor {
 
     /// Transforms async method definitions to generator functions wrapped in asyncToGenerator.
     ///
@@ -692,7 +692,11 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        self.ctx.helper_call_expr(self.helper, SPAN, arguments, ctx)
+        // TODO: Temporary workaround for borrowing issue
+        let helper_loader_ptr = &ctx.state.helper_loader as *const _;
+        unsafe {
+            (*helper_loader_ptr).helper_call_expr(self.helper, SPAN, arguments, ctx)
+        }
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

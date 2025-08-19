@@ -589,7 +589,7 @@ impl IdentifierReferenceRename<'_, '_> {
             return false;
         }
 
-        let scoping = self.ctx.scoping.scoping();
+        let scoping = self.ctx.scoping();
         let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             // No symbol found, yet the name is found in previous_enum_members.
             // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`

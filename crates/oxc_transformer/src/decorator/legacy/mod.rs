@@ -58,8 +58,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
 use metadata::LegacyDecoratorMetadata;
@@ -81,9 +80,9 @@ struct ClassDecoratedData<'a> {
     alias_binding: Option<BoundIdentifier<'a>>,
 }
 
-pub struct LegacyDecorator<'a, 'ctx> {
+pub struct LegacyDecorator<'a> {
     emit_decorator_metadata: bool,
-    metadata: LegacyDecoratorMetadata<'a, 'ctx>,
+    metadata: LegacyDecoratorMetadata<'a>,
     /// Decorated class data exists when a class or constructor is decorated.
     ///
     /// The data assigned in [`Self::transform_class`] and used in places where statements contain
@@ -95,22 +94,20 @@ pub struct LegacyDecorator<'a, 'ctx> {
     class_decorated_data: Option<ClassDecoratedData<'a>>,
     /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
     decorations: FxHashMap<Address, Vec<Statement<'a>>>,
-    ctx: &'ctx TransformCtx<'a>,
 }
 
-impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
-    pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> LegacyDecorator<'a> {
+    pub fn new(emit_decorator_metadata: bool, ) -> Self {
         Self {
             emit_decorator_metadata,
-            metadata: LegacyDecoratorMetadata::new(ctx),
+            metadata: LegacyDecoratorMetadata::new(),
             class_decorated_data: None,
-            ctx,
             decorations: FxHashMap::default(),
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -172,7 +169,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
     }
 }
 
-impl<'a> LegacyDecorator<'a, '_> {
+impl<'a> LegacyDecorator<'a> {
     /// Transforms a statement that is a class declaration
     ///
     ///
@@ -211,7 +208,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let new_stmt =
             Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
-        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
+        ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
         *stmt = new_stmt;
     }
 
@@ -263,8 +260,8 @@ impl<'a> LegacyDecorator<'a, '_> {
         // `export default Class`
         let export_default_class_reference =
             Self::create_export_default_class_reference(&binding, ctx);
-        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
-        self.ctx.statement_injector.insert_after(&new_stmt, export_default_class_reference);
+        ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
+        ctx.state.statement_injector.insert_after(&new_stmt, export_default_class_reference);
         *stmt = new_stmt;
     }
 
@@ -314,8 +311,8 @@ impl<'a> LegacyDecorator<'a, '_> {
 
         // `export { Class }`
         let export_class_reference = Self::create_export_named_class_reference(&binding, ctx);
-        self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
-        self.ctx.statement_injector.insert_after(&new_stmt, export_class_reference);
+        ctx.state.statement_injector.move_insertions(stmt, &new_stmt);
+        ctx.state.statement_injector.insert_after(&new_stmt, export_class_reference);
         *stmt = new_stmt;
     }
 
@@ -449,7 +446,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
         let class_alias_binding = class_binding.as_ref().and_then(|id| {
-            ClassReferenceChanger::new(id.clone(), ctx, self.ctx)
+            ClassReferenceChanger::new(id.clone(), ctx)
                 .get_class_alias_if_needed(&mut class.body)
         });
         let class_binding = class_binding
@@ -464,7 +461,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let mut decoration_stmts =
             self.transform_decorators_of_class_elements(class, &class_binding, ctx);
 
-        let class_alias_with_this_assignment = if self.ctx.is_class_properties_plugin_enabled {
+        let class_alias_with_this_assignment = if ctx.state.is_class_properties_plugin_enabled {
             None
         } else {
             // If we're emitting to ES2022 or later then we need to reassign the class alias before
@@ -708,7 +705,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             Argument::from(decorations),
             Argument::from(class_binding.create_read_expression(ctx)),
         ]);
-        let helper = self.ctx.helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = ctx.state.helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
@@ -775,7 +772,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                     .ast
                     .vec_from_array([Argument::from(index), Argument::from(decorator.expression)]);
                 // _decorateParam(index, decorator)
-                ArrayExpressionElement::from(self.ctx.helper_call_expr(
+                ArrayExpressionElement::from(ctx.state.helper_call_expr(
                     Helper::DecorateParam,
                     decorator.span,
                     arguments,
@@ -787,9 +784,9 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     /// Injects the class decorator statements after class-properties plugin has run, ensuring that
     /// all transformed fields are injected before the class decorator statements.
-    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+    pub fn exit_class_at_end(&mut self, _class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         for (address, stmts) in mem::take(&mut self.decorations) {
-            self.ctx.statement_injector.insert_many_after(&address, stmts);
+            ctx.state.statement_injector.insert_many_after(&address, stmts);
         }
     }
 
@@ -995,7 +992,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 // ```
 
                 // Create a unique binding for the computed property key, and insert it outside of the class
-                let binding = self.ctx.var_declarations.create_uid_var_based_on_node(key, ctx);
+                let binding = ctx.state.var_declarations.create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
                 let right = key.to_expression_mut().take_in(ctx.ast);
@@ -1021,7 +1018,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             Argument::from(name),
             Argument::from(descriptor),
         ]);
-        let helper = self.ctx.helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
+        let helper = ctx.state.helper_call_expr(Helper::Decorate, SPAN, arguments, ctx);
         ctx.ast.statement_expression(SPAN, helper)
     }
 
@@ -1104,16 +1101,14 @@ struct ClassReferenceChanger<'a, 'ctx> {
     // `Some` if there are references to the class inside the class body
     class_alias_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
-    transformer_ctx: &'ctx TransformCtx<'a>,
 }
 
 impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     fn new(
         class_binding: BoundIdentifier<'a>,
         ctx: &'ctx mut TraverseCtx<'a>,
-        transformer_ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
-        Self { class_binding, class_alias_binding: None, ctx, transformer_ctx }
+        Self { class_binding, class_alias_binding: None, ctx }
     }
 
     fn get_class_alias_if_needed(
@@ -1134,7 +1129,7 @@ impl<'a> VisitMut<'a> for ClassReferenceChanger<'a, '_> {
     }
 }
 
-impl<'a> ClassReferenceChanger<'a, '_> {
+impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     // Check if the identifier reference is a reference to the class
     fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         self.ctx
@@ -1146,7 +1141,7 @@ impl<'a> ClassReferenceChanger<'a, '_> {
 
     fn get_alias_ident_reference(&mut self) -> IdentifierReference<'a> {
         let binding = self.class_alias_binding.get_or_insert_with(|| {
-            self.transformer_ctx.var_declarations.create_uid_var(&self.class_binding.name, self.ctx)
+            self.ctx.state.var_declarations.create_uid_var(&self.class_binding.name, self.ctx)
         });
 
         binding.create_read_reference(self.ctx)

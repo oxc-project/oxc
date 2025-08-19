@@ -50,21 +50,18 @@ use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    state::TransformState, context::TraverseCtx,
 };
 
-pub struct ReactDisplayName<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct ReactDisplayName;
 
-impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl ReactDisplayName {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -131,7 +128,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
     }
 }
 
-impl<'a> ReactDisplayName<'a, '_> {
+impl<'a> ReactDisplayName {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
