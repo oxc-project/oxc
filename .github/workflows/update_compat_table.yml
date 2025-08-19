@@ -7,6 +7,9 @@ on:
     # Run weekly on Monday at 00:00 UTC
     - cron: '0 0 * * 1'
   workflow_dispatch: # Allow manual trigger
+  push:
+    branches:
+      - copilot/fix-75a508b9-5316-4650-b6fa-df816f454dd8
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -21,18 +24,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-        with:
-          fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
-        with:
-          node-version-file: .node-version
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
-        with:
-          version: 9
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
 
       - name: Get latest compat-table SHA
         id: get-sha
@@ -75,14 +69,10 @@ jobs:
         if: steps.check-update.outputs.update_needed == 'true'
         working-directory: tasks/compat_data
         run: |
-          # Install dependencies
-          pnpm install
-          # Clean up existing compat-table directory if it exists
           rm -rf compat-table
-          # Initialize with new SHA
           pnpm run init
-          # Build the data
           pnpm run build
+          cargo run -p oxc_compat_data
 
       - name: Check for changes
         if: steps.check-update.outputs.update_needed == 'true'
@@ -97,21 +87,21 @@ jobs:
             git diff --name-only
           fi
 
-      - name: Create Pull Request
-        if: steps.check-update.outputs.update_needed == 'true' && steps.changes.outputs.has_changes == 'true'
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update compat-table to ${{ steps.get-sha.outputs.latest_sha }}"
-          branch: update-compat-table
-          branch-suffix: timestamp
-          base: main
-          title: "chore: update compat-table to latest commit"
-          body: |
-            Updates compat-table dependency to the latest commit.
-            
-            - Previous SHA: `${{ steps.current-sha.outputs.current_sha }}`
-            - New SHA: `${{ steps.get-sha.outputs.latest_sha }}`
-            
-            This automatically updates the compat data used by oxc.
-          assignees: Boshen
+      # - name: Create Pull Request
+        # if: steps.check-update.outputs.update_needed == 'true' && steps.changes.outputs.has_changes == 'true'
+        # uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        # with:
+          # token: ${{ secrets.GITHUB_TOKEN }}
+          # commit-message: "chore: update compat-table to ${{ steps.get-sha.outputs.latest_sha }}"
+          # branch: update-compat-table
+          # branch-suffix: timestamp
+          # base: main
+          # title: "chore: update compat-table to latest commit"
+          # body: |
+            # Updates compat-table dependency to the latest commit.
+
+            # - Previous SHA: `${{ steps.current-sha.outputs.current_sha }}`
+            # - New SHA: `${{ steps.get-sha.outputs.latest_sha }}`
+
+            # This automatically updates the compat data used by oxc.
+          # assignees: Boshen
