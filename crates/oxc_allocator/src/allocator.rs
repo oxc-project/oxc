@@ -642,11 +642,6 @@ impl Allocator {
     }
 }
 
-/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
-unsafe impl Send for Allocator {}
-/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
-unsafe impl Sync for Allocator {}
-
 #[cfg(test)]
 mod test {
     use super::Allocator;
