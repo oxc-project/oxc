@@ -10,7 +10,6 @@
 //! Variants of `AstKind` and `AstType` are created for:
 //!
 //! * All structs which are visited, and are not listed in `STRUCTS_BLACK_LIST` below.
-//! * Enums listed in `ENUMS_WHITE_LIST` below.
 
 use quote::{format_ident, quote};
 
