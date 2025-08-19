@@ -3,31 +3,15 @@ use std::{borrow::Cow, iter::FusedIterator};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
-use oxc_syntax::identifier::{LS, PS, is_line_terminator};
+use oxc_syntax::identifier::is_line_terminator;
 
-use crate::{Codegen, LegalComment, options::CommentOptions};
+use crate::{
+    Codegen, LegalComment,
+    options::CommentOptions,
+    str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES},
+};
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
-
-/// Convert `char` to UTF-8 bytes array.
-const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
-    assert!(ch.len_utf8() == N);
-    let mut bytes = [0u8; N];
-    ch.encode_utf8(&mut bytes);
-    bytes
-}
-
-/// `LS` character as UTF-8 bytes.
-const LS_BYTES: [u8; 3] = to_bytes(LS);
-/// `PS` character as UTF-8 bytes.
-const PS_BYTES: [u8; 3] = to_bytes(PS);
-
-const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
-
-const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
-const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
-const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// Custom iterator that splits text on line terminators while handling CRLF as a single unit.
 /// This avoids creating empty strings between CR and LF characters.

@@ -281,6 +281,7 @@ impl PrintStringState<'_> {
 
 /// Convert `char` to UTF-8 bytes array.
 const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    assert!(ch.len_utf8() == N);
     let mut bytes = [0u8; N];
     ch.encode_utf8(&mut bytes);
     bytes
@@ -291,10 +292,16 @@ const LS_BYTES: [u8; 3] = to_bytes(LS);
 /// `PS` character as UTF-8 bytes.
 const PS_BYTES: [u8; 3] = to_bytes(PS);
 
-const _: () = assert!(LS_BYTES[0] == 0xE2);
-const _: () = assert!(PS_BYTES[0] == 0xE2);
-const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
-const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
+/// First byte of either `LS` or `PS`
+pub const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
+
+const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+
+/// Last 2 bytes of `LS` character.
+pub const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
+/// Last 2 bytes of `PS` character.
+pub const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// `NBSP` character as UTF-8 bytes.
 const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);

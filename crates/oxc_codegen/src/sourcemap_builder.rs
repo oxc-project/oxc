@@ -6,11 +6,7 @@ use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
-// Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
-const LS_OR_PS_FIRST: u8 = 0xE2;
-const LS_OR_PS_SECOND: u8 = 0x80;
-const LS_THIRD: u8 = 0xA8;
-const PS_THIRD: u8 = 0xA9;
+use crate::str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES};
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -268,12 +264,10 @@ impl<'a> SourcemapBuilder<'a> {
                 _ if b.is_ascii() => {
                     continue;
                 }
-                LS_OR_PS_FIRST => {
+                LS_OR_PS_FIRST_BYTE => {
                     let next_byte = *iter.next().unwrap();
                     let next_next_byte = *iter.next().unwrap();
-                    if next_byte != LS_OR_PS_SECOND
-                        || !matches!(next_next_byte, LS_THIRD | PS_THIRD)
-                    {
+                    if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
                         last_line_is_ascii = false;
                         continue;
                     }
