@@ -138,7 +138,7 @@ class Context {
   physicalFilename: string;
 
   /**
-   * @constructor
+   * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
   constructor(fullRuleName: string) {

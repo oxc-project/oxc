@@ -377,6 +377,7 @@ function createMerger(fnCount: number): Merger {
   }
   body += '}';
   args.push(body);
+  // oxlint-disable-next-line typescript-eslint/no-implied-eval
   return new Function(...args) as Merger;
 }
 
