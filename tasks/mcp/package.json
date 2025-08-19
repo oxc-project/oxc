@@ -15,7 +15,8 @@
     "test": "node test/test.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.2"
+    "@modelcontextprotocol/sdk": "^1.17.2",
+    "oxc-parser": "link:../../napi/parser"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
