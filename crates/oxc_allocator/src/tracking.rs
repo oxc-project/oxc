@@ -16,42 +16,40 @@
 //! As soon as we replace `bumpalo` with our own arena allocator, we'll remove the hack from `get_stats_ref`,
 //! and make this sound.
 
-use std::{
-    ptr,
-    sync::atomic::{AtomicUsize, Ordering::SeqCst},
-};
+use std::{cell::Cell, ptr};
 
 use bumpalo::Bump;
 
 use crate::{Allocator, allocator::STATS_FIELD_OFFSET};
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
-//
-// Note: These fields could be `Cell<usize>` instead of `AtomicUsize`, because `Allocator` should not
-// be `Sync`. But currently it is (which is unsound!) because of other terrible hacks.
 #[derive(Default)]
 pub struct AllocationStats {
     /// Number of allocations
-    num_alloc: AtomicUsize,
+    num_alloc: Cell<usize>,
     /// Number of reallocations
-    num_realloc: AtomicUsize,
+    num_realloc: Cell<usize>,
 }
 
 impl AllocationStats {
     /// Record that an allocation was made.
     pub(crate) fn record_allocation(&self) {
-        self.num_alloc.fetch_add(1, SeqCst);
+        // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+        // the exact number is not important
+        self.num_alloc.set(self.num_alloc.get().saturating_add(1));
     }
 
     /// Record that a reallocation was made.
     pub(crate) fn record_reallocation(&self) {
-        self.num_realloc.fetch_add(1, SeqCst);
+        // Counter maxes out at `usize::MAX`, but if there's that many allocations,
+        // the exact number is not important
+        self.num_realloc.set(self.num_realloc.get().saturating_add(1));
     }
 
     /// Reset allocation counters.
     pub(crate) fn reset(&self) {
-        self.num_alloc.store(0, SeqCst);
-        self.num_realloc.store(0, SeqCst);
+        self.num_alloc.set(0);
+        self.num_realloc.set(0);
     }
 }
 
@@ -59,8 +57,8 @@ impl Allocator {
     /// Get number of allocations and reallocations made in this [`Allocator`].
     #[doc(hidden)]
     pub fn get_allocation_stats(&self) -> (usize, usize) {
-        let num_alloc = self.stats.num_alloc.load(SeqCst);
-        let num_realloc = self.stats.num_realloc.load(SeqCst);
+        let num_alloc = self.stats.num_alloc.get();
+        let num_realloc = self.stats.num_realloc.get();
         (num_alloc, num_realloc)
     }
 }
