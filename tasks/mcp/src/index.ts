@@ -3,7 +3,10 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { parseSync } from 'oxc-parser';
+import { spawn } from 'child_process';
+import { writeFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 /**
  * MCP server for oxc project with echo command
@@ -117,69 +120,81 @@ class McpOxcServer {
         }
 
         try {
-          // Parse the source code using Oxc parser
-          const result = parseSync(filename, sourceCode);
-          const output: string[] = [];
+          // Create a temporary file with the source code
+          const tmpFile = join(tmpdir(), `oxc-mcp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${filename}`);
+          writeFileSync(tmpFile, sourceCode, 'utf8');
 
-          // Display comments if requested
-          if (showComments) {
-            output.push('Comments:');
-            if (result.comments.length === 0) {
-              output.push('  (no comments found)');
-            } else {
-              for (const comment of result.comments) {
-                output.push(`  ${comment.type}: ${comment.value}`);
-              }
+          try {
+            // Build the cargo command arguments
+            const cargoArgs = ['run', '-p', 'oxc_parser', '--example', 'parser', tmpFile];
+            
+            if (showAst) {
+              cargoArgs.push('--ast');
             }
-            output.push('');
-          }
-
-          // Display AST if requested
-          if (showAst) {
-            output.push('AST:');
-            output.push(JSON.stringify(result.program, null, 2));
-            output.push('');
-          }
-
-          // Display ESTree representation if requested
-          if (showEstree) {
-            // Get the ESTree representation
-            // Note: The NAPI bindings already return ESTree-compatible format
-            output.push('ESTree AST:');
-            output.push(JSON.stringify(result.program, null, 2));
-            output.push('');
-          }
-
-          // Report parsing results
-          if (result.errors.length === 0) {
-            output.push('Parsed Successfully.');
-          } else {
-            output.push('Parsing Errors:');
-            for (const error of result.errors) {
-              output.push(`  ${error.severity}: ${error.message}`);
-              if (error.labels && error.labels.length > 0) {
-                for (const label of error.labels) {
-                  output.push(`    at ${label.start}-${label.end}: ${label.message || 'error'}`);
-                }
-              }
+            if (showEstree) {
+              cargoArgs.push('--estree');
             }
-            output.push('Parsed with Errors.');
-          }
+            if (showComments) {
+              cargoArgs.push('--comments');
+            }
 
-          return {
-            content: [
-              {
-                type: 'text',
-                text: output.join('\n'),
-              },
-            ],
-          };
+            // Spawn the cargo command
+            const result = await this.spawnCommand('cargo', cargoArgs);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: result,
+                },
+              ],
+            };
+          } finally {
+            // Clean up temporary file
+            try {
+              unlinkSync(tmpFile);
+            } catch (e) {
+              // Ignore cleanup errors
+            }
+          }
         } catch (error) {
           throw new Error(`Parse error: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
 
       throw new Error(`Unknown tool: ${name}`);
+    });
+  }
+
+  private spawnCommand(command: string, args: string[]): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const process = spawn(command, args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: '/home/runner/work/oxc/oxc',  // Set working directory to the oxc repository root
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      process.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      process.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      process.on('close', (code) => {
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          reject(new Error(`Command failed with exit code ${code}:\n${stderr}`));
+        }
+      });
+
+      process.on('error', (error) => {
+        reject(new Error(`Failed to spawn command: ${error.message}`));
+      });
     });
   }
 
