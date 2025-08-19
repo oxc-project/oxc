@@ -720,26 +720,6 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         self.buf.set_len(new_len);
     }
 
-    /// Returns a shared reference to the allocator backing this `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// // uses the same allocator as the provided `Vec`
-    /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
-    ///     for string in ["foo", "bar", "baz"] {
-    ///         vec.push(vec.bump().alloc_str(string));
-    ///     }
-    /// }
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn bump(&self) -> &'a A {
-        self.buf.bump()
-    }
-
     /// Reserves capacity for at least `additional` more elements to be inserted
     /// in the given `Vec<'a, T>`. The collection may reserve more space to avoid
     /// frequent reallocations. After calling `reserve`, capacity will be
@@ -1735,7 +1715,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
         let other_len = self.len_usize() - at;
-        let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
+        // SAFETY: This method takes a `&mut self`. It lives for the duration of this method
+        // - longer than we use `bump` for.
+        let bump = unsafe { self.buf.bump() };
+        let mut other = Vec::with_capacity_in(other_len, bump);
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -2683,7 +2666,15 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.bump());
+
+            // SAFETY: `Splice` iterator is created in `Vec::splice`, which takes a `&mut self`.
+            // `Splice` inherits the lifetime of `&mut self` from that method, so the mut borrow
+            // of the `Vec` is held for the life of the `Splice`.
+            // Therefore we have exclusive access to the `Vec` until end of this method.
+            // That is longer than we use `bump` for.
+            let bump = self.drain.vec.as_ref().buf.bump();
+
+            let mut collected = Vec::new_in(bump);
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.
