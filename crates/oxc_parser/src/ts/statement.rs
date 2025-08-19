@@ -421,13 +421,48 @@ impl<'a> ParserImpl<'a> {
         match kind {
             Kind::Global | Kind::Module | Kind::Namespace => {
                 let decl = self.parse_ts_module_declaration(start_span, modifiers);
+                if !self.is_ts {
+                    match kind {
+                        Kind::Module => {
+                            self.error(diagnostics::module_can_only_be_used_in_typescript_files(
+                                decl.span(),
+                            ));
+                        }
+                        Kind::Namespace => {
+                            self.error(diagnostics::namespace_can_only_be_used_in_typescript_files(
+                                decl.span(),
+                            ));
+                        }
+                        _ => {} // Global is fine since it's a contextual keyword
+                    }
+                }
                 Declaration::TSModuleDeclaration(decl)
             }
-            Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
+            Kind::Type => {
+                let decl = self.parse_ts_type_alias_declaration(start_span, modifiers);
+                if !self.is_ts {
+                    self.error(diagnostics::type_alias_can_only_be_used_in_typescript_files(
+                        decl.span(),
+                    ));
+                }
+                decl
+            }
+            Kind::Enum => {
+                let decl = self.parse_ts_enum_declaration(start_span, modifiers);
+                if !self.is_ts {
+                    self.error(diagnostics::enum_can_only_be_used_in_typescript_files(decl.span()));
+                }
+                decl
+            }
             Kind::Interface => {
                 self.bump_any();
-                self.parse_ts_interface_declaration(start_span, modifiers)
+                let decl = self.parse_ts_interface_declaration(start_span, modifiers);
+                if !self.is_ts {
+                    self.error(diagnostics::interface_can_only_be_used_in_typescript_files(
+                        decl.span(),
+                    ));
+                }
+                decl
             }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers, decorators);

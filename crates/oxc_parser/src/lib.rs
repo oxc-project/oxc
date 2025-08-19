@@ -820,4 +820,58 @@ mod test {
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);
     }
+
+    #[test]
+    fn typescript_syntax_errors_in_js_files() {
+        let allocator = Allocator::default();
+        let js_source_type = SourceType::default().with_javascript(true);
+        let ts_source_type = SourceType::default().with_typescript(true);
+
+        // Test cases: TypeScript-only syntax that should error in JavaScript files
+        let test_cases = [
+            ("export enum A {}", "enum"),
+            ("export type B = {};", "type"),
+            ("export interface C {}", "interface"),
+            ("export module D {}", "module"),
+            ("export namespace E {}", "namespace"),
+        ];
+
+        for (source, expected_keyword) in test_cases {
+            // Should error in JavaScript files
+            let ret = Parser::new(&allocator, source, js_source_type).parse();
+            assert!(
+                !ret.errors.is_empty(),
+                "Expected error for '{}' in JavaScript file, but parsing succeeded",
+                expected_keyword
+            );
+            assert!(
+                ret.errors[0].to_string().contains(&format!("'{}'", expected_keyword))
+                    && ret.errors[0].to_string().contains("TypeScript files"),
+                "Expected TypeScript-specific error for '{}', got: {}",
+                expected_keyword,
+                ret.errors[0]
+            );
+
+            // Should work fine in TypeScript files
+            let ret = Parser::new(&allocator, source, ts_source_type).parse();
+            assert!(
+                ret.errors.is_empty(),
+                "Unexpected error for '{}' in TypeScript file: {:?}",
+                expected_keyword,
+                ret.errors
+            );
+        }
+    }
+
+    #[test]
+    fn standalone_typescript_syntax_still_errors_in_js() {
+        let allocator = Allocator::default();
+        let js_source_type = SourceType::default().with_javascript(true);
+
+        // Standalone enum should still error (this was already working)
+        let ret = Parser::new(&allocator, "enum A {}", js_source_type).parse();
+        assert!(!ret.errors.is_empty());
+        // This should be an "Unexpected token" error, not our TypeScript-specific error
+        assert!(ret.errors[0].to_string().contains("Unexpected token"));
+    }
 }

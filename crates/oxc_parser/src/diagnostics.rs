@@ -633,6 +633,31 @@ pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiag
 }
 
 #[cold]
+pub fn enum_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8003", "'enum' can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
+pub fn type_alias_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8004", "'type' alias can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
+pub fn interface_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'interface' can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
+pub fn module_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8006", "'module' can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
+pub fn namespace_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8007", "'namespace' can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
 pub fn index_signature_question_mark(span: Span) -> OxcDiagnostic {
     ts_error("1019", "An index signature parameter cannot have a question mark.").with_label(span)
 }
