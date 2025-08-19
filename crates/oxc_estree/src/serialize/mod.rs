@@ -7,15 +7,16 @@ use itoa::Buffer as ItoaBuffer;
 
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 
+pub mod config;
+use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+
 mod blanket;
 mod concat;
-mod config;
 mod formatter;
 mod primitives;
 mod sequences;
 mod strings;
 mod structs;
-use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
@@ -108,24 +109,24 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new(ranges: bool) -> Self {
+    pub fn new(config: C) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config,
         }
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
+    pub fn with_capacity(capacity: usize, config: C) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity(capacity),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(ranges),
+            config,
         }
     }
 
@@ -170,7 +171,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new(false)
+        Self::new(C::default())
     }
 }
 
