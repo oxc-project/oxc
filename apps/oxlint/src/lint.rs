@@ -1170,6 +1170,11 @@ mod test {
         Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
     }
 
+    #[test]
+    fn test_dot_folder() {
+        Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+    }
+
     // ToDo: `tsgolint` does not support `big-endian`?
     #[test]
     #[cfg(not(target_endian = "big"))]
