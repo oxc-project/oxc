@@ -166,9 +166,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.2
         version: 1.17.3
-      oxc-parser:
-        specifier: link:../../napi/parser
-        version: link:../../napi/parser
     devDependencies:
       '@types/node':
         specifier: ^24.0.0

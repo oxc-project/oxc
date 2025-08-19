@@ -80,6 +80,14 @@ class McpOxcServer {
                   description: 'Whether to include extracted comments in the output',
                   default: false,
                 },
+                additionalArgs: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                  },
+                  description: 'Additional command line arguments to pass to the parser',
+                  default: [],
+                },
               },
               required: ['sourceCode'],
             },
@@ -114,6 +122,7 @@ class McpOxcServer {
         const showAst = (args?.showAst as boolean) || false;
         const showEstree = (args?.showEstree as boolean) || false;
         const showComments = (args?.showComments as boolean) || false;
+        const additionalArgs = (args?.additionalArgs as string[]) || [];
 
         if (typeof sourceCode !== 'string') {
           throw new Error('sourceCode must be a string');
@@ -137,6 +146,9 @@ class McpOxcServer {
             if (showComments) {
               cargoArgs.push('--comments');
             }
+
+            // Pass all remaining args into the command
+            cargoArgs.push(...additionalArgs);
 
             // Spawn the cargo command
             const result = await this.spawnCommand('cargo', cargoArgs);
