@@ -473,23 +473,29 @@ impl<'a> ParserImpl<'a> {
                 let mut expressions = self.ast.vec_with_capacity(1);
                 let mut quasis = self.ast.vec_with_capacity(2);
 
-                quasis.push(self.parse_template_element(tagged));
+                quasis.push(self.parse_template_element(tagged), self.ast.allocator.bump());
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context(Context::In, Context::empty(), Self::parse_expr);
-                expressions.push(expr);
+                expressions.push(expr, self.ast.allocator.bump());
                 self.re_lex_template_substitution_tail();
                 while self.fatal_error.is_none() {
                     match self.cur_kind() {
                         Kind::TemplateTail => {
-                            quasis.push(self.parse_template_element(tagged));
+                            quasis.push(
+                                self.parse_template_element(tagged),
+                                self.ast.allocator.bump(),
+                            );
                             break;
                         }
                         Kind::TemplateMiddle => {
-                            quasis.push(self.parse_template_element(tagged));
+                            quasis.push(
+                                self.parse_template_element(tagged),
+                                self.ast.allocator.bump(),
+                            );
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr =
                                 self.context(Context::In, Context::empty(), Self::parse_expr);
-                            expressions.push(expr);
+                            expressions.push(expr, self.ast.allocator.bump());
                             self.re_lex_template_substitution_tail();
                         }
                         _ => {
@@ -1380,7 +1386,7 @@ impl<'a> ParserImpl<'a> {
         let mut expressions = self.ast.vec1(first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher();
-            expressions.push(expression);
+            expressions.push(expression, self.ast.allocator.bump());
         }
         self.ast.expression_sequence(self.end_span(span), expressions)
     }
@@ -1414,7 +1420,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::At) {
             let mut decorators = self.ast.vec_with_capacity(1);
             while self.at(Kind::At) {
-                decorators.push(self.parse_decorator());
+                decorators.push(self.parse_decorator(), self.ast.allocator.bump());
             }
             decorators
         } else {

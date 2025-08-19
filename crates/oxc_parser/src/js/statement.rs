@@ -61,14 +61,14 @@ impl<'a> ParserImpl<'a> {
                                 [string.span.start as usize + 1..string.span.end as usize - 1];
                             let directive =
                                 self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
-                            directives.push(directive);
+                            directives.push(directive, self.ast.allocator.bump());
                             continue;
                         }
                     }
                 }
                 expecting_directives = false;
             }
-            statements.push(stmt);
+            statements.push(stmt, self.ast.allocator.bump());
         }
 
         (directives, statements)
@@ -210,7 +210,7 @@ impl<'a> ParserImpl<'a> {
         let mut body = self.ast.vec();
         while !self.at(Kind::RCurly) && !self.has_fatal_error() {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
-            body.push(stmt);
+            body.push(stmt, self.ast.allocator.bump());
         }
         self.expect(Kind::RCurly);
         self.ast.alloc_block_statement(self.end_span(span), body)
@@ -624,7 +624,7 @@ impl<'a> ParserImpl<'a> {
             && !self.has_fatal_error()
         {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
-            consequent.push(stmt);
+            consequent.push(stmt, self.ast.allocator.bump());
         }
         Some(self.ast.switch_case(self.end_span(span), test, consequent))
     }

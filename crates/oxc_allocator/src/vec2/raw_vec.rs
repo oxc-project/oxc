@@ -25,6 +25,7 @@
 
 use core::alloc::Layout;
 use core::cmp;
+use core::marker::PhantomData;
 use core::mem;
 use core::ptr::{self, NonNull};
 
@@ -72,15 +73,15 @@ pub struct RawVec<'a, T, A: Alloc> {
     ptr: NonNull<T>,
     len: u32,
     cap: u32,
-    alloc: &'a A,
+    alloc: PhantomData<&'a A>,
 }
 
 impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
-    pub fn new_in(alloc: &'a A) -> Self {
+    pub fn new_in(_: &'a A) -> Self {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
-        RawVec { ptr: NonNull::dangling(), alloc, cap: 0, len: 0 }
+        RawVec { ptr: NonNull::dangling(), alloc: PhantomData, cap: 0, len: 0 }
     }
 
     /// Like `with_capacity` but parameterized over the choice of
@@ -110,7 +111,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             // cannot exceed `u32::MAX`.
             #[expect(clippy::cast_possible_truncation)]
             let cap = cap as u32;
-            RawVec { ptr, alloc, cap, len: 0 }
+            RawVec { ptr, alloc: PhantomData, cap, len: 0 }
         }
     }
 
@@ -126,7 +127,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, alloc: &'a A) -> Self {
+    pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, _: &'a A) -> Self {
         // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
         let ptr = unsafe { NonNull::new_unchecked(ptr) };
 
@@ -136,7 +137,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         #[expect(clippy::cast_possible_truncation)]
         let cap = cap as u32;
 
-        RawVec { ptr, len, cap, alloc }
+        RawVec { ptr, len, cap, alloc: PhantomData }
     }
 
     /// Gets a raw pointer to the start of the allocation. Note that this is
@@ -193,9 +194,6 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     }
 
     /// Returns a shared reference to the allocator backing this RawVec.
-    pub fn bump(&self) -> &'a A {
-        self.alloc
-    }
 
     fn current_layout(&self) -> Option<Layout> {
         if self.cap == 0 {
@@ -366,9 +364,14 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// # Errors
     ///
     /// Returns `Err(AllocError)` if unable to reserve requested space in the `RawVec`.
-    pub fn try_reserve_exact(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+    pub fn try_reserve_exact(
+        &mut self,
+        len: u32,
+        additional: usize,
+        a: &A,
+    ) -> Result<(), AllocError> {
         if self.needs_to_grow(len, additional) {
-            self.grow_exact(len, additional)?
+            self.grow_exact(len, additional, a)?
         }
 
         Ok(())
@@ -395,8 +398,8 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// # Aborts
     ///
     /// Aborts on OOM
-    pub fn reserve_exact(&mut self, len: u32, additional: usize) {
-        if let Err(err) = self.try_reserve_exact(len, additional) {
+    pub fn reserve_exact(&mut self, len: u32, additional: usize, a: &A) {
+        if let Err(err) = self.try_reserve_exact(len, additional, a) {
             handle_error(err)
         }
     }
@@ -406,9 +409,9 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// # Errors
     ///
     /// Returns `Err(AllocError)` if unable to reserve requested space in the `RawVec`.
-    pub fn try_reserve(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+    pub fn try_reserve(&mut self, len: u32, additional: usize, a: &A) -> Result<(), AllocError> {
         if self.needs_to_grow(len, additional) {
-            self.grow_amortized(len, additional)?;
+            self.grow_amortized(len, additional, a)?;
         }
 
         Ok(())
@@ -467,20 +470,25 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// # }
     /// ```
     #[inline]
-    pub fn reserve(&mut self, len: u32, additional: usize) {
+    pub fn reserve(&mut self, len: u32, additional: usize, a: &A) {
         // Callers expect this function to be very cheap when there is already sufficient capacity.
         // Therefore, we move all the resizing and error-handling logic from grow_amortized and
         // handle_reserve behind a call, while making sure that this function is likely to be
         // inlined as just a comparison and a call if the comparison fails.
         #[cold]
-        fn do_reserve_and_handle<T, A: Alloc>(slf: &mut RawVec<T, A>, len: u32, additional: usize) {
-            if let Err(err) = slf.grow_amortized(len, additional) {
+        fn do_reserve_and_handle<T, A: Alloc>(
+            slf: &mut RawVec<T, A>,
+            len: u32,
+            additional: usize,
+            a: &A,
+        ) {
+            if let Err(err) = slf.grow_amortized(len, additional, a) {
                 handle_error(err);
             }
         }
 
         if self.needs_to_grow(len, additional) {
-            do_reserve_and_handle(self, len, additional);
+            do_reserve_and_handle(self, len, additional, a);
         }
     }
 
@@ -490,8 +498,8 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     // Unlike standard library implementation marked as `#[inline(never)]`, we need to
     // mark as `#[inline]` because this function is common case in the oxc_parser.
     #[inline]
-    pub fn grow_one(&mut self) {
-        if let Err(err) = self.grow_amortized(self.cap, 1) {
+    pub fn grow_one(&mut self, a: &A) {
+        if let Err(err) = self.grow_amortized(self.cap, 1, a) {
             handle_error(err);
         }
     }
@@ -564,7 +572,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// # Aborts
     ///
     /// Aborts on OOM.
-    pub fn shrink_to_fit(&mut self, amount: u32) {
+    pub fn shrink_to_fit(&mut self, amount: u32, a: &'a A) {
         let elem_size = mem::size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
@@ -584,8 +592,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             // types that implement Drop.
 
             unsafe {
-                let a = self.alloc;
-                self.dealloc_buffer();
+                self.dealloc_buffer(a);
                 ptr::write(self, RawVec::new_in(a));
             }
         } else if self.cap != amount {
@@ -606,8 +613,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
-                self.ptr =
-                    self.alloc.shrink(self.ptr.cast::<u8>(), old_layout, new_layout).cast::<T>();
+                self.ptr = a.shrink(self.ptr.cast::<u8>(), old_layout, new_layout).cast::<T>();
             }
             self.cap = amount;
         }
@@ -650,7 +656,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn grow_exact(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+    fn grow_exact(&mut self, len: u32, additional: usize, a: &A) -> Result<(), AllocError> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than u32::MAX" in that case.
@@ -664,7 +670,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
             let new_layout =
                 Layout::array::<T>(new_cap).map_err(|_| AllocError::CapacityOverflow)?;
 
-            self.ptr = self.finish_grow(new_layout)?.cast();
+            self.ptr = self.finish_grow(new_layout, a)?.cast();
 
             // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
             // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
@@ -678,7 +684,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn grow_amortized(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+    fn grow_amortized(&mut self, len: u32, additional: usize, a: &A) -> Result<(), AllocError> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than u32::MAX" in that case.
@@ -725,7 +731,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
             let new_layout = Layout::array::<T>(cap).map_err(|_| AllocError::CapacityOverflow)?;
 
-            self.ptr = self.finish_grow(new_layout)?.cast();
+            self.ptr = self.finish_grow(new_layout, a)?.cast();
 
             // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
             // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
@@ -739,7 +745,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
     // Given a new layout, completes the grow operation.
     #[inline]
-    fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<u8>, AllocError> {
+    fn finish_grow(&self, new_layout: Layout, a: &A) -> Result<NonNull<u8>, AllocError> {
         alloc_guard(new_layout.size())?;
 
         let new_ptr = match self.current_layout() {
@@ -757,9 +763,9 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
                     alloc.grow(ptr.cast(), old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.alloc, self.ptr, layout, new_layout)
+                grow(a, self.ptr, layout, new_layout)
             },
-            None => self.alloc.alloc(new_layout),
+            None => a.alloc(new_layout),
         };
 
         Ok(new_ptr)
@@ -772,11 +778,11 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     /// # SAFETY
     ///
     /// Not sure what safety invariants of this method are! TODO
-    pub unsafe fn dealloc_buffer(&mut self) {
+    pub unsafe fn dealloc_buffer(&mut self, a: &A) {
         let elem_size = mem::size_of::<T>();
         if elem_size != 0 {
             if let Some(layout) = self.current_layout() {
-                self.alloc.dealloc(self.ptr.cast(), layout);
+                a.dealloc(self.ptr.cast(), layout);
             }
         }
     }
@@ -836,25 +842,25 @@ mod tests {
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`
-            v.reserve(0, 9);
+            v.reserve(0, 9, &arena);
             assert_eq!(9, v.capacity_u32());
         }
 
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
-            v.reserve(0, 7);
+            v.reserve(0, 7, &arena);
             assert_eq!(7, v.capacity_u32());
             // 97 if more than double of 7, so `reserve` should work
             // like `reserve_exact`.
-            v.reserve(7, 90);
+            v.reserve(7, 90, &arena);
             assert_eq!(97, v.capacity_u32());
         }
 
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
-            v.reserve(0, 12);
+            v.reserve(0, 12, &arena);
             assert_eq!(12, v.capacity_u32());
-            v.reserve(12, 3);
+            v.reserve(12, 3, &arena);
             // 3 is less than half of 12, so `reserve` must grow
             // exponentially. At the time of writing this test grow
             // factor is 2, so new capacity is 24, however, grow factor

@@ -70,32 +70,33 @@ impl<'a> ModuleRecordBuilder<'a> {
             .requested_modules
             .entry(name)
             .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
-            .push(requested_module);
+            .push(requested_module, self.allocator.bump());
     }
 
     fn add_import_entry(&mut self, entry: ImportEntry<'a>) {
-        self.module_record.import_entries.push(entry);
+        self.module_record.import_entries.push(entry, self.allocator.bump());
     }
 
     fn add_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.export_entries.push(entry);
+        self.export_entries.push(entry, self.allocator.bump());
     }
 
     fn append_local_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.local_export_entries.push(entry);
+        self.module_record.local_export_entries.push(entry, self.allocator.bump());
     }
 
     fn append_indirect_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.indirect_export_entries.push(entry);
+        self.module_record.indirect_export_entries.push(entry, self.allocator.bump());
     }
 
     fn append_star_export_entry(&mut self, entry: ExportEntry<'a>) {
-        self.module_record.star_export_entries.push(entry);
+        self.module_record.star_export_entries.push(entry, self.allocator.bump());
     }
 
     fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
-            self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
+            self.exported_bindings_duplicated
+                .push(NameSpan::new(name, old_node), self.allocator.bump());
         }
     }
 
@@ -177,14 +178,15 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_expression(&mut self, e: &ImportExpression<'a>) {
-        self.module_record
-            .dynamic_imports
-            .push(DynamicImport { span: e.span, module_request: e.source.span() });
+        self.module_record.dynamic_imports.push(
+            DynamicImport { span: e.span, module_request: e.source.span() },
+            self.allocator.bump(),
+        );
     }
 
     pub fn visit_import_meta(&mut self, span: Span) {
         self.module_record.has_module_syntax = true;
-        self.module_record.import_metas.push(span);
+        self.module_record.import_metas.push(span, self.allocator.bump());
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {

@@ -101,7 +101,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                 match_expression!(ArrayExpressionElement) => {
                     let expr = elem.into_expression();
                     let target = AssignmentTargetMaybeDefault::cover(expr, p);
-                    elements.push(Some(target));
+                    elements.push(Some(target), p.ast.allocator.bump());
                 }
                 ArrayExpressionElement::SpreadElement(elem) => {
                     if i == len - 1 {
@@ -128,7 +128,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                         return p.fatal_error(error);
                     }
                 }
-                ArrayExpressionElement::Elision(_) => elements.push(None),
+                ArrayExpressionElement::Elision(_) => elements.push(None, p.ast.allocator.bump()),
             }
         }
 
@@ -167,7 +167,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
             match elem {
                 ObjectPropertyKind::ObjectProperty(property) => {
                     let target = AssignmentTargetProperty::cover(property.unbox(), p);
-                    properties.push(target);
+                    properties.push(target, p.ast.allocator.bump());
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     if i == len - 1 {

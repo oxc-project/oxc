@@ -92,7 +92,7 @@ impl<'a> PatternParser<'a> {
 
         let mut body = Vec::new_in(self.allocator);
         loop {
-            body.push(self.parse_alternative()?);
+            body.push(self.parse_alternative()?, self.allocator.bump());
 
             if !self.reader.eat('|') {
                 break;
@@ -115,7 +115,7 @@ impl<'a> PatternParser<'a> {
 
         let mut body = Vec::new_in(self.allocator);
         while let Some(term) = self.parse_term()? {
-            body.push(term);
+            body.push(term, self.allocator.bump());
         }
 
         Ok(ast::Alternative {
@@ -841,7 +841,7 @@ impl<'a> PatternParser<'a> {
             let span_start = self.reader.offset();
             if !self.reader.eat('-') {
                 // ClassAtom[?UnicodeMode]
-                body.push(class_atom);
+                body.push(class_atom, self.allocator.bump());
                 continue;
             }
 
@@ -858,8 +858,8 @@ impl<'a> PatternParser<'a> {
                 // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] ClassAtom[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] -
-                body.push(class_atom);
-                body.push(dash);
+                body.push(class_atom, self.allocator.bump());
+                body.push(dash, self.allocator.bump());
                 continue;
             };
 
@@ -880,14 +880,17 @@ impl<'a> PatternParser<'a> {
                     ));
                 }
 
-                body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
-                    ast::CharacterClassRange {
-                        span: from.span.merge(to.span),
-                        min: **from,
-                        max: **to,
-                    },
-                    self.allocator,
-                )));
+                body.push(
+                    ast::CharacterClassContents::CharacterClassRange(Box::new_in(
+                        ast::CharacterClassRange {
+                            span: from.span.merge(to.span),
+                            min: **from,
+                            max: **to,
+                        },
+                        self.allocator,
+                    )),
+                    self.allocator.bump(),
+                );
                 continue;
             }
 
@@ -903,9 +906,9 @@ impl<'a> PatternParser<'a> {
                 ));
             }
 
-            body.push(class_atom);
-            body.push(dash);
-            body.push(class_atom_to);
+            body.push(class_atom, self.allocator.bump());
+            body.push(dash, self.allocator.bump());
+            body.push(class_atom_to, self.allocator.bump());
         }
 
         // [empty] is already covered by the caller, but for sure
@@ -1129,15 +1132,15 @@ impl<'a> PatternParser<'a> {
         class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
         let mut body = Vec::new_in(self.allocator);
-        body.push(class_set_range_or_class_set_operand);
+        body.push(class_set_range_or_class_set_operand, self.allocator.bump());
 
         loop {
             if let Some(class_set_range) = self.parse_class_set_range()? {
-                body.push(class_set_range);
+                body.push(class_set_range, self.allocator.bump());
                 continue;
             }
             if let Some(class_set_operand) = self.parse_class_set_operand()? {
-                body.push(class_set_operand);
+                body.push(class_set_operand, self.allocator.bump());
                 continue;
             }
 
@@ -1157,7 +1160,7 @@ impl<'a> PatternParser<'a> {
         class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
         let mut body = Vec::new_in(self.allocator);
-        body.push(class_set_operand);
+        body.push(class_set_operand, self.allocator.bump());
 
         loop {
             if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
@@ -1173,7 +1176,7 @@ impl<'a> PatternParser<'a> {
                 }
 
                 if let Some(class_set_operand) = self.parse_class_set_operand()? {
-                    body.push(class_set_operand);
+                    body.push(class_set_operand, self.allocator.bump());
                     continue;
                 }
             }
@@ -1198,7 +1201,7 @@ impl<'a> PatternParser<'a> {
         class_set_operand: ast::CharacterClassContents<'a>,
     ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
         let mut body = Vec::new_in(self.allocator);
-        body.push(class_set_operand);
+        body.push(class_set_operand, self.allocator.bump());
 
         loop {
             if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
@@ -1207,7 +1210,7 @@ impl<'a> PatternParser<'a> {
 
             if self.reader.eat2('-', '-') {
                 if let Some(class_set_operand) = self.parse_class_set_operand()? {
-                    body.push(class_set_operand);
+                    body.push(class_set_operand, self.allocator.bump());
                     continue;
                 }
             }
@@ -1393,7 +1396,7 @@ impl<'a> PatternParser<'a> {
             if class_string.strings {
                 strings = true;
             }
-            body.push(class_string);
+            body.push(class_string, self.allocator.bump());
 
             if !self.reader.eat('|') {
                 break;
@@ -1421,7 +1424,7 @@ impl<'a> PatternParser<'a> {
 
         let mut body = Vec::new_in(self.allocator);
         while let Some(class_set_character) = self.parse_class_set_character()? {
-            body.push(class_set_character);
+            body.push(class_set_character, self.allocator.bump());
         }
 
         // `true` if empty or contains 2 or more characters
