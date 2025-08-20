@@ -8,18 +8,54 @@ use std::{
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
 
-use crate::{
-    disable_directives::DisableDirectivesBuilder,
-    fixer::{CompositeFix, Message, PossibleFixes},
-};
+use crate::fixer::{CompositeFix, Message, PossibleFixes};
 
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
+
+/// A simple representation of disable directives for a file that can be passed across thread boundaries
+#[derive(Debug, Clone)]
+pub struct TsGoLintDisableDirectives {
+    /// Intervals where rules are disabled (start, end, rule_name, is_next_line)
+    /// rule_name is None for "disable all" directives
+    intervals: Vec<(u32, u32, Option<String>, bool)>,
+}
+
+impl TsGoLintDisableDirectives {
+    pub fn new(intervals: Vec<(u32, u32, Option<String>, bool)>) -> Self {
+        Self { intervals }
+    }
+
+    pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+        for (start, end, disabled_rule, is_next_line) in &self.intervals {
+            // Check if this rule should be disabled
+            let rule_matches = match disabled_rule {
+                None => true, // "disable all" directive
+                Some(name) => name.contains(rule_name), // Match rule name or prefix
+            };
+
+            if !rule_matches {
+                continue;
+            }
+
+            // Check if the diagnostic span is covered by this interval
+            let span_covered = if *is_next_line {
+                // For next-line directives, only check if the diagnostic starts within the interval
+                span.start >= *start && span.start < *end
+            } else {
+                // For regular disable directives, check if there's any overlap
+                span.start < *end && span.end > *start
+            };
+
+            if span_covered {
+                return true;
+            }
+        }
+        false
+    }
+}
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -62,7 +98,12 @@ impl TsGoLintState {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    pub fn lint(self, paths: &[Arc<OsStr>], error_sender: DiagnosticSender) -> Result<(), String> {
+    pub fn lint(
+        self,
+        paths: &[Arc<OsStr>],
+        disable_directives_map: FxHashMap<PathBuf, TsGoLintDisableDirectives>,
+        error_sender: DiagnosticSender,
+    ) -> Result<(), String> {
         if paths.is_empty() {
             return Ok(());
         }
@@ -186,30 +227,20 @@ impl TsGoLintState {
 
                                         // Check disable directives to see if this diagnostic should be suppressed
                                         if !source_text.is_empty() {
-                                            // Parse the source text and build disable directives
-                                            let allocator = Allocator::default();
-                                            let source_type =
-                                                SourceType::from_path(&path).unwrap_or_default();
-                                            let parser_ret =
-                                                Parser::new(&allocator, source_text, source_type)
-                                                    .parse();
-                                            let semantic_ret =
-                                                SemanticBuilder::new().build(&parser_ret.program);
-                                            let disable_directives = DisableDirectivesBuilder::new(
-                                            )
-                                            .build(source_text, semantic_ret.semantic.comments());
-
-                                            // Check if this diagnostic should be disabled
-                                            let diagnostic_span = Span::new(
-                                                tsgolint_diagnostic.range.pos,
-                                                tsgolint_diagnostic.range.end,
-                                            );
-                                            if disable_directives.contains(
-                                                tsgolint_diagnostic.rule.as_str(),
-                                                diagnostic_span,
-                                            ) {
-                                                // This diagnostic is disabled by a comment directive, skip it
-                                                continue;
+                                            // Use pre-computed disable directives if available
+                                            if let Some(disable_directives) = disable_directives_map.get(&path) {
+                                                // Check if this diagnostic should be disabled
+                                                let diagnostic_span = Span::new(
+                                                    tsgolint_diagnostic.range.pos,
+                                                    tsgolint_diagnostic.range.end,
+                                                );
+                                                if disable_directives.contains(
+                                                    tsgolint_diagnostic.rule.as_str(),
+                                                    diagnostic_span,
+                                                ) {
+                                                    // This diagnostic is disabled by a comment directive, skip it
+                                                    continue;
+                                                }
                                             }
                                         }
 
@@ -530,7 +561,14 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::{SourceType, Span};
+
+    use crate::disable_directives::DisableDirectivesBuilder;
+    
+    use super::TsGoLintDisableDirectives;
 
     #[test]
     fn test_disable_directives_with_tsgolint_diagnostic() {
@@ -548,38 +586,42 @@ const unused2: string = "should trigger diagnostic";
 const unused3: string = "should be disabled for next line";
 "#;
 
-        // Parse source and build disable directives
+        // Parse source and build disable directives, then convert to tsgolint format
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
         let disable_directives =
             DisableDirectivesBuilder::new().build(source_text, semantic_ret.semantic.comments());
+        
+        let tsgolint_directives = TsGoLintDisableDirectives::new(
+            disable_directives.to_tsgolint_format()
+        );
 
         // Test 1: Diagnostic in disabled region should be suppressed
         let disabled_span = Span::new(85, 95); // Points to "unused1" variable
         assert!(
-            disable_directives.contains("typescript-eslint/no-unused-vars", disabled_span),
+            tsgolint_directives.contains("typescript-eslint/no-unused-vars", disabled_span),
             "Diagnostic in disabled region should be suppressed"
         );
 
         // Test 2: Diagnostic after re-enable should not be suppressed
         let enabled_span = Span::new(200, 210); // Points to "unused2" variable  
         assert!(
-            !disable_directives.contains("typescript-eslint/no-unused-vars", enabled_span),
+            !tsgolint_directives.contains("typescript-eslint/no-unused-vars", enabled_span),
             "Diagnostic after re-enable should not be suppressed"
         );
 
         // Test 3: Diagnostic on disable-next-line should be suppressed
         let next_line_span = Span::new(330, 340); // Points to "unused3" variable
         assert!(
-            disable_directives.contains("typescript-eslint/no-unused-vars", next_line_span),
+            tsgolint_directives.contains("typescript-eslint/no-unused-vars", next_line_span),
             "Diagnostic on disable-next-line should be suppressed"
         );
 
         // Test 4: Rule name matching with short name should work
         assert!(
-            disable_directives.contains("no-unused-vars", disabled_span),
+            tsgolint_directives.contains("no-unused-vars", disabled_span),
             "Short rule name should match full rule name"
         );
     }

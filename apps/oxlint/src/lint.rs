@@ -15,10 +15,14 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
-    TsGoLintState,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DisableDirectivesBuilder,
+    ExternalLinter, ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintService,
+    LintServiceOptions, Linter, Oxlintrc, TsGoLintDisableDirectives, TsGoLintState, read_to_string,
 };
+use oxc_allocator::Allocator;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
@@ -299,9 +303,41 @@ impl LintRunner {
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
+            // Parse disable directives for all files that will be processed by tsgolint
+            let mut disable_directives_map = FxHashMap::default();
+            
+            for file_path in &files_to_lint {
+                let path = Path::new(file_path);
+                
+                // Skip files that don't have supported source types for parsing
+                if SourceType::from_path(path).is_err() {
+                    continue;
+                }
+                
+                // Read the file content
+                if let Ok(source_text) = read_to_string(path) {
+                    // Parse the file to extract comments
+                    let allocator = Allocator::default();
+                    let source_type = SourceType::from_path(path).unwrap_or_default();
+                    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+                    let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
+                    
+                    // Build disable directives
+                    let disable_directives = DisableDirectivesBuilder::new()
+                        .build(&source_text, semantic_ret.semantic.comments());
+                    
+                    // Convert to the format that can be passed to tsgolint
+                    let tsgolint_directives = TsGoLintDisableDirectives::new(
+                        disable_directives.to_tsgolint_format()
+                    );
+                        
+                    disable_directives_map.insert(path.to_path_buf(), tsgolint_directives);
+                }
+            }
+            
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
                 .with_silent(misc_options.silent)
-                .lint(&files_to_lint, tx_error.clone())
+                .lint(&files_to_lint, disable_directives_map, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;

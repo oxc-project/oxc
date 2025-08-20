@@ -45,6 +45,7 @@ pub use crate::{
         ESLintRule, LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::LintContext,
+    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
         PluginLoadResult,
@@ -58,7 +59,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
-    tsgolint::TsGoLintState,
+    tsgolint::{TsGoLintDisableDirectives, TsGoLintState},
     utils::{read_to_arena_str, read_to_string},
 };
 use crate::{

@@ -2505,6 +2505,8 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
+ "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "rayon",
  "rustc-hash",
