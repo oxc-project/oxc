@@ -224,7 +224,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut prev_member_name = None;
 
-        for member in members.take_in(ctx.ast.allocator) {
+        for member in members.take_in(ctx.ast) {
             let member_name = member.id.static_name();
 
             let init = if let Some(mut initializer) = member.initializer {

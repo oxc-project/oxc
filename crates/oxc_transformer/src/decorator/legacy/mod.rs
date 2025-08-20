@@ -841,7 +841,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         // are identified by having an "unspanned" span. According to TypeScript's legacy
         // decorator semantics, metadata decorators must be applied *after* all parameter
         // decorators, so we separate them here and will insert them last.
-        let mut method_decorators = method.decorators.take_in(ctx.ast.allocator);
+        let mut method_decorators = method.decorators.take_in(ctx.ast);
         let metadata_position = method_decorators
             .iter()
             .position(|decorator| {
