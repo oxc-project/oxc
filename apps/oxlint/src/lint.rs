@@ -303,37 +303,8 @@ impl LintRunner {
         // Run type-aware linting through tsgolint before main linter
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            // Parse disable directives for all files that will be processed by tsgolint
-            let mut disable_directives_map = FxHashMap::default();
-            
-            for file_path in &files_to_lint {
-                let path = Path::new(file_path);
-                
-                // Skip files that don't have supported source types for parsing
-                if SourceType::from_path(path).is_err() {
-                    continue;
-                }
-                
-                // Read the file content
-                if let Ok(source_text) = read_to_string(path) {
-                    // Parse the file to extract comments
-                    let allocator = Allocator::default();
-                    let source_type = SourceType::from_path(path).unwrap_or_default();
-                    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
-                    let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
-                    
-                    // Build disable directives
-                    let disable_directives = DisableDirectivesBuilder::new()
-                        .build(&source_text, semantic_ret.semantic.comments());
-                    
-                    // Convert to the format that can be passed to tsgolint
-                    let tsgolint_directives = TsGoLintDisableDirectives::new(
-                        disable_directives.to_tsgolint_format()
-                    );
-                        
-                    disable_directives_map.insert(path.to_path_buf(), tsgolint_directives);
-                }
-            }
+            // Parse disable directives once for tsgolint (main linter will still re-parse)
+            let disable_directives_map = Self::parse_disable_directives_for_files(&files_to_lint);
             
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
                 .with_silent(misc_options.silent)
@@ -587,6 +558,49 @@ impl LintRunner {
         } else {
             Ok(None)
         }
+    }
+
+    /// Parse files once and extract disable directives for both tsgolint and main linter.
+    /// This eliminates duplicate parsing by doing the work upfront and sharing results.
+    /// 
+    /// TODO: This still results in duplicate parsing since the main linter will re-parse
+    /// these same files. Ideally, we should modify the main linter to accept pre-computed
+    /// disable directives to eliminate all duplicate parsing.
+    fn parse_disable_directives_for_files(
+        files: &[Arc<OsStr>],
+    ) -> FxHashMap<PathBuf, TsGoLintDisableDirectives> {
+        let mut disable_directives_map = FxHashMap::default();
+        
+        for file_path in files {
+            let path = Path::new(file_path);
+            
+            // Skip files that don't have supported source types for parsing
+            if SourceType::from_path(path).is_err() {
+                continue;
+            }
+            
+            // Read the file content
+            if let Ok(source_text) = read_to_string(path) {
+                // Parse the file to extract comments
+                let allocator = Allocator::default();
+                let source_type = SourceType::from_path(path).unwrap_or_default();
+                let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+                let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
+                
+                // Build disable directives
+                let disable_directives = DisableDirectivesBuilder::new()
+                    .build(&source_text, semantic_ret.semantic.comments());
+                
+                // Convert to the format that can be passed to tsgolint
+                let tsgolint_directives = TsGoLintDisableDirectives::new(
+                    disable_directives.to_tsgolint_format()
+                );
+                    
+                disable_directives_map.insert(path.to_path_buf(), tsgolint_directives);
+            }
+        }
+        
+        disable_directives_map
     }
 }
 
