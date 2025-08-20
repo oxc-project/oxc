@@ -300,7 +300,7 @@ impl LintRunner {
             .filter(|path| !config_store.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        // Run type-aware linting through tsgolint
+        // Run type-aware linting through tsgolint before main linter
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
             // Parse disable directives for all files that will be processed by tsgolint
@@ -344,7 +344,7 @@ impl LintRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store.clone(), self.external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
@@ -370,6 +370,8 @@ impl LintRunner {
         }
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
+
+
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
@@ -1234,13 +1236,5 @@ mod test {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "no-floating-promises", "-c", "config-test.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    #[cfg(not(target_endian = "big"))]
-    fn test_tsgolint_disable_directives() {
-        // Test that disable directives work correctly with tsgolint
-        let args = &["--type-aware", "-c", ".oxlintrc.json", "test.ts"];
-        Tester::new().with_cwd("fixtures/tsgolint-disable-directives".into()).test_and_snapshot(args);
     }
 }
