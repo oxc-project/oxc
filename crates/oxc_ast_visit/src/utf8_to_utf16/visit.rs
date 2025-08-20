@@ -7,7 +7,7 @@
 //! defined below for these types.
 
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, GetSpanMut};
 
 use crate::{VisitMut, walk_mut};
 
@@ -206,31 +206,14 @@ impl Utf8ToUtf16Converter<'_> {
         // * `export {x}`
         // * `export {x} from 'foo.js;`
         // * `export {"a-b"} from 'foo.js';`
-        match (&mut specifier.local, &mut specifier.exported) {
-            (
-                ModuleExportName::IdentifierReference(local),
-                ModuleExportName::IdentifierName(exported),
-            ) if local.span == exported.span => {
-                self.visit_identifier_reference(local);
-                exported.span = local.span;
-            }
-            (
-                ModuleExportName::IdentifierName(local),
-                ModuleExportName::IdentifierName(exported),
-            ) if local.span == exported.span => {
-                self.visit_identifier_name(local);
-                exported.span = local.span;
-            }
-            (ModuleExportName::StringLiteral(local), ModuleExportName::StringLiteral(exported))
-                if local.span == exported.span =>
-            {
-                self.visit_string_literal(local);
-                exported.span = local.span;
-            }
-            (local, exported) => {
-                self.visit_module_export_name(local);
-                self.visit_module_export_name(exported);
-            }
+        let same_spans = specifier.local.span() == specifier.exported.span();
+
+        self.visit_module_export_name(&mut specifier.local);
+
+        if same_spans {
+            *specifier.exported.span_mut() = specifier.local.span();
+        } else {
+            self.visit_module_export_name(&mut specifier.exported);
         }
 
         self.convert_offset(&mut specifier.span.end);
@@ -240,15 +223,14 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut specifier.span.start);
 
         // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
-        match &mut specifier.imported {
-            ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
-                self.visit_identifier_name(imported);
-                specifier.local.span = imported.span;
-            }
-            imported => {
-                self.visit_module_export_name(imported);
-                self.visit_binding_identifier(&mut specifier.local);
-            }
+        let same_spans = specifier.imported.span() == specifier.local.span;
+
+        self.visit_module_export_name(&mut specifier.imported);
+
+        if same_spans {
+            specifier.local.span = specifier.imported.span();
+        } else {
+            self.visit_binding_identifier(&mut specifier.local);
         }
 
         self.convert_offset(&mut specifier.span.end);
