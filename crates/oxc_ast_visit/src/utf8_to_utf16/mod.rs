@@ -7,6 +7,7 @@ use crate::VisitMut;
 
 mod converter;
 mod translation;
+mod visit;
 pub use converter::Utf8ToUtf16Converter;
 use translation::{Translation, build_translations};
 
