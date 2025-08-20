@@ -592,6 +592,7 @@ mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
+    pub mod no_native;
     pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
@@ -944,6 +945,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::catch_or_return,
     promise::no_return_wrap,
+    promise::no_native,
     promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,

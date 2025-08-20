@@ -1,0 +1,15 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 413
+---
+  ⚠ eslint-plugin-promise(no-native): Promise is not defined.
+   ╭─[no_native.tsx:1:5]
+ 1 │ new Promise(function(reject, resolve) { })
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-native): Promise is not defined.
+   ╭─[no_native.tsx:1:1]
+ 1 │ Promise.resolve()
+   · ───────
+   ╰────
