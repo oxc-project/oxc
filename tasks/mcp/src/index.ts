@@ -34,20 +34,6 @@ class McpOxcServer {
       return {
         tools: [
           {
-            name: 'echo',
-            description: 'Echo back the provided message',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                message: {
-                  type: 'string',
-                  description: 'The message to echo back',
-                },
-              },
-              required: ['message'],
-            },
-          },
-          {
             name: 'parse',
             description: 'Parse JavaScript or TypeScript code using the Oxc parser',
             inputSchema: {
@@ -97,29 +83,12 @@ class McpOxcServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
-      if (name === 'echo') {
-        const message = args?.message;
-        if (typeof message !== 'string') {
-          throw new Error('Message must be a string');
-        }
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: message,
-            },
-          ],
-        };
-      }
-
       if (name === 'parse') {
         const sourceCode = args?.sourceCode as string;
         const filename = (args?.filename as string) || 'input.js';
         const showAst = (args?.showAst as boolean) || false;
         const showEstree = (args?.showEstree as boolean) || false;
         const showComments = (args?.showComments as boolean) || false;
-        const additionalArgs = (args?.additionalArgs as string[]) || [];
 
         try {
           const result = await parseCode({
@@ -128,9 +97,8 @@ class McpOxcServer {
             showAst,
             showEstree,
             showComments,
-            additionalArgs,
           });
-          
+
           return {
             content: [
               {

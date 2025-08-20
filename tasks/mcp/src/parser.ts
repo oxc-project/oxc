@@ -1,7 +1,8 @@
-import { spawn } from 'child_process';
 import { writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+
+import { spawnCommand } from './spawn'
 
 export interface ParseOptions {
   sourceCode: string;
@@ -19,7 +20,6 @@ export async function parseCode(options: ParseOptions): Promise<string> {
     showAst = false,
     showEstree = false,
     showComments = false,
-    additionalArgs = []
   } = options;
 
   if (typeof sourceCode !== 'string') {
@@ -34,7 +34,7 @@ export async function parseCode(options: ParseOptions): Promise<string> {
     try {
       // Build the cargo command arguments
       const cargoArgs = ['run', '-p', 'oxc_parser', '--example', 'parser', tmpFile];
-      
+
       if (showAst) {
         cargoArgs.push('--ast');
       }
@@ -45,12 +45,9 @@ export async function parseCode(options: ParseOptions): Promise<string> {
         cargoArgs.push('--comments');
       }
 
-      // Pass all remaining args into the command
-      cargoArgs.push(...additionalArgs);
-
       // Spawn the cargo command
       const result = await spawnCommand('cargo', cargoArgs);
-      
+
       return result;
     } finally {
       // Clean up temporary file
@@ -65,34 +62,3 @@ export async function parseCode(options: ParseOptions): Promise<string> {
   }
 }
 
-function spawnCommand(command: string, args: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const process = spawn(command, args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: '/home/runner/work/oxc/oxc',  // Set working directory to the oxc repository root
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    process.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    process.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    process.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout);
-      } else {
-        reject(new Error(`Command failed with exit code ${code}:\n${stderr}`));
-      }
-    });
-
-    process.on('error', (error) => {
-      reject(new Error(`Failed to spawn command: ${error.message}`));
-    });
-  });
-}
