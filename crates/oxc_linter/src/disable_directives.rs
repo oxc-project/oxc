@@ -10,15 +10,23 @@ use crate::fixer::Fix;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum DisabledRule<'a> {
-    All { comment_span: Span },
-    Single { rule_name: &'a str, name_span: Span, comment_span: Span },
+    All { comment_span: Span, is_next_line: bool },
+    Single { rule_name: &'a str, name_span: Span, comment_span: Span, is_next_line: bool },
 }
 
 impl DisabledRule<'_> {
     pub fn comment_span(&self) -> &Span {
         match self {
-            DisabledRule::All { comment_span } | DisabledRule::Single { comment_span, .. } => {
+            DisabledRule::All { comment_span, .. } | DisabledRule::Single { comment_span, .. } => {
                 comment_span
+            }
+        }
+    }
+
+    pub fn is_next_line(&self) -> bool {
+        match self {
+            DisabledRule::All { is_next_line, .. } | DisabledRule::Single { is_next_line, .. } => {
+                *is_next_line
             }
         }
     }
@@ -118,16 +126,44 @@ impl<'a> DisableDirectives<'a> {
     }
 
     pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
+        // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
+        // if the diagnostic's starting position falls within the disabled interval.
+        // This prevents suppressing diagnostics for larger constructs (like functions) that
+        // contain disabled lines.
+        //
+        // For regular `eslint-disable` directives (which disable rules for the rest of the file),
+        // we check if any part of the diagnostic span overlaps with the disabled interval.
+        // This ensures that diagnostics starting before the disable comment (like no-empty-file)
+        // are still suppressed.
         let matched_intervals = self
             .intervals
             .find(span.start, span.end)
             .filter(|interval| {
-                match interval.val {
+                // Check if this rule should be disabled
+                let rule_matches = match interval.val {
                     DisabledRule::All { .. } => true,
                     // Our rule name currently does not contain the prefix.
                     // For example, this will match `@typescript-eslint/no-var-requires` given
                     // our rule_name is `no-var-requires`.
                     DisabledRule::Single { rule_name: name, .. } => name.contains(rule_name),
+                };
+
+                if !rule_matches {
+                    return false;
+                }
+
+                // Check if the diagnostic span is covered by this interval
+                if interval.val.is_next_line() {
+                    // For next-line directives, only check if the diagnostic starts within the interval
+                    // We intentionally only check span.start (not span.end) to avoid suppressing
+                    // diagnostics for large constructs that merely contain the disabled line
+                    #[expect(clippy::suspicious_operation_groupings)]
+                    {
+                        span.start >= interval.start && span.start < interval.stop
+                    }
+                } else {
+                    // For regular disable directives, check if there's any overlap
+                    span.start < interval.stop && span.end > interval.start
                 }
             })
             .map(|interval| interval.val)
@@ -299,7 +335,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         self.add_interval(
                             comment_span.end,
                             stop,
-                            DisabledRule::All { comment_span },
+                            DisabledRule::All { comment_span, is_next_line: true },
                         );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
@@ -312,7 +348,12 @@ impl<'a> DisableDirectivesBuilder<'a> {
                             self.add_interval(
                                 comment_span.end,
                                 stop,
-                                DisabledRule::Single { rule_name, name_span, comment_span },
+                                DisabledRule::Single {
+                                    rule_name,
+                                    name_span,
+                                    comment_span,
+                                    is_next_line: true,
+                                },
                             );
                             rules.push(RuleCommentRule { rule_name, name_span });
                         });
@@ -336,7 +377,11 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
-                        self.add_interval(start, stop, DisabledRule::All { comment_span });
+                        self.add_interval(
+                            start,
+                            stop,
+                            DisabledRule::All { comment_span, is_next_line: true },
+                        );
                         self.disable_rule_comments.push(DisableRuleComment {
                             span: comment_span,
                             r#type: RuleCommentType::All,
@@ -348,7 +393,12 @@ impl<'a> DisableDirectivesBuilder<'a> {
                             self.add_interval(
                                 start,
                                 stop,
-                                DisabledRule::Single { rule_name, name_span, comment_span },
+                                DisabledRule::Single {
+                                    rule_name,
+                                    name_span,
+                                    comment_span,
+                                    is_next_line: true,
+                                },
                             );
                             rules.push(RuleCommentRule { rule_name, name_span });
                         });
@@ -390,7 +440,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         self.add_interval(
                             start,
                             comment_span.start,
-                            DisabledRule::All { comment_span },
+                            DisabledRule::All { comment_span, is_next_line: false },
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
@@ -403,7 +453,12 @@ impl<'a> DisableDirectivesBuilder<'a> {
                             self.add_interval(
                                 start,
                                 comment_span.start,
-                                DisabledRule::Single { rule_name, name_span, comment_span },
+                                DisabledRule::Single {
+                                    rule_name,
+                                    name_span,
+                                    comment_span,
+                                    is_next_line: false,
+                                },
                             );
                         } else {
                             // collect as unused enable (see more at note comments in beginning of this method)
@@ -416,7 +471,11 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
         // Lone `eslint-disable`
         if let Some((start, comment_span)) = self.disable_all_start {
-            self.add_interval(start, source_len, DisabledRule::All { comment_span });
+            self.add_interval(
+                start,
+                source_len,
+                DisabledRule::All { comment_span, is_next_line: false },
+            );
         }
 
         // Lone `eslint-disable rule_name`
@@ -425,7 +484,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
             self.add_interval(
                 start,
                 source_len,
-                DisabledRule::Single { rule_name, name_span, comment_span },
+                DisabledRule::Single { rule_name, name_span, comment_span, is_next_line: false },
             );
         }
 
@@ -1059,11 +1118,13 @@ mod tests {
                     rule_name: "no-console",
                     name_span: Span::sized(comments[0].content_span().start + 16, 10),
                     comment_span: comments[0].content_span(),
+                    is_next_line: false,
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-debugger",
                     name_span: Span::sized(comments[1].content_span().start + 16, 11),
                     comment_span: comments[1].content_span(),
+                    is_next_line: false,
                 });
 
                 assert!(directives.collect_unused_disable_comments().is_empty());
@@ -1125,5 +1186,51 @@ mod tests {
 
         RuleCommentRule { rule_name: "max-params", name_span: Span::sized(28, 10) }
             .create_fix(source_text, comment_span);
+    }
+
+    #[test]
+    fn test_disable_next_line_should_not_disable_large_span_diagnostics() {
+        // This test demonstrates that eslint-disable-next-line should NOT suppress
+        // diagnostics for larger constructs (like functions) that contain the disabled line.
+        // It should only suppress diagnostics that START on the disabled line.
+        let source_text = r"
+function test() {
+    // eslint-disable-next-line
+    console.log('this line is disabled');
+    console.warn('this line is not disabled');
+}
+";
+        let allocator = Allocator::default();
+        let semantic = process_source(&allocator, source_text);
+        let directives =
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
+
+        // The function spans from line 2 to line 6 (positions 1 to 138)
+        let function_span = Span::new(1, 138);
+
+        // The diagnostic for the entire function should NOT be suppressed
+        // even though it contains a disable-next-line directive
+        assert!(
+            !directives.contains("max-lines-per-function", function_span),
+            "eslint-disable-next-line should not suppress diagnostics for the entire function"
+        );
+
+        // A diagnostic that starts on the disabled line (line 4) SHOULD be suppressed
+        // The first console.log on line 4 starts at position 59
+        let first_console_log_span = Span::new(55, 66);
+        assert_eq!(first_console_log_span.source_text(source_text), "console.log");
+        assert!(
+            directives.contains("no-console", first_console_log_span),
+            "eslint-disable-next-line should suppress diagnostics on the next line"
+        );
+
+        // A diagnostic that starts on a non-disabled line (line 5) should NOT be suppressed
+        // The second console.log on line 5 starts at position 102
+        let second_console_log_span = Span::new(97, 109);
+        assert_eq!(second_console_log_span.source_text(source_text), "console.warn");
+        assert!(
+            !directives.contains("no-console", second_console_log_span),
+            "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
+        );
     }
 }
