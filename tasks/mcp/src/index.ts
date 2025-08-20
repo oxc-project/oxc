@@ -5,21 +5,27 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { parseCode } from './parser.js';
-import { spawnCommand } from './spawn.js';
-import { writeFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import {
+  lintCode,
+  formatCode,
+  analyzeCode,
+  transformCode,
+  compileCode,
+  generateCode,
+  minifyCode,
+  eliminateDeadCode,
+  mangleCode,
+  generateCFG,
+  generateIsolatedDeclarations,
+  defineCode,
+  visitCode,
+  parseTSXCode,
+  parseRegularExpressions,
+  visitRegex,
+  parseLiteral,
+} from './tools.js';
 
-/**
- * Write source code to a temporary file and return the path
- */
-function writeTempFile(sourceCode: string, filename: string): string {
-  // Create temp directory if it doesn't exist
-  mkdirSync('/tmp/oxc-mcp', { recursive: true });
-  
-  const tempPath = join('/tmp/oxc-mcp', filename);
-  writeFileSync(tempPath, sourceCode, 'utf8');
-  return tempPath;
-}
+
 
 /**
  * MCP server for oxc project with echo command
@@ -467,96 +473,77 @@ class McpOxcServer {
         }
       }
 
-      // Handle example-based tools that require writing to temp files
+      // Handle example-based tools
       const sourceCode = args?.sourceCode as string;
       const filename = (args?.filename as string) || 'input.js';
       
-      if (!sourceCode) {
-        throw new Error('sourceCode is required');
-      }
-
-      const tempFilePath = writeTempFile(sourceCode, filename);
-
       try {
         let result: string;
 
         switch (name) {
           case 'linter':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_linter', '--example', 'linter', tempFilePath]);
+            result = await lintCode({ sourceCode, filename });
             break;
 
           case 'formatter':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_formatter', '--example', 'formatter', tempFilePath]);
+            result = await formatCode({ sourceCode, filename });
             break;
 
           case 'semantic':
             const showSymbols = args?.showSymbols as boolean;
-            const semanticArgs = ['run', '-p', 'oxc_semantic', '--example', 'semantic', tempFilePath];
-            if (showSymbols) {
-              semanticArgs.push('--symbols');
-            }
-            result = await spawnCommand('cargo', semanticArgs);
+            result = await analyzeCode({ sourceCode, filename, showSymbols });
             break;
 
           case 'transformer':
             const targets = args?.targets as string;
-            const transformerArgs = ['run', '-p', 'oxc_transformer', '--example', 'transformer', tempFilePath];
-            if (targets) {
-              transformerArgs.push('--targets', targets);
-            }
-            result = await spawnCommand('cargo', transformerArgs);
+            result = await transformCode({ sourceCode, filename, targets });
             break;
 
           case 'compiler':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc', '--example', 'compiler', '--features=full', tempFilePath]);
+            result = await compileCode({ sourceCode, filename });
             break;
 
           case 'codegen':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_codegen', '--example', 'codegen', tempFilePath]);
+            result = await generateCode({ sourceCode, filename });
             break;
 
           case 'minifier':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_minifier', '--example', 'minifier', tempFilePath]);
+            result = await minifyCode({ sourceCode, filename });
             break;
 
           case 'dce':
             const nospace = args?.nospace as boolean;
             const twice = args?.twice as boolean;
-            const dceArgs = ['run', '-p', 'oxc_minifier', '--example', 'dce', tempFilePath];
-            if (nospace) dceArgs.push('--nospace');
-            if (twice) dceArgs.push('--twice');
-            result = await spawnCommand('cargo', dceArgs);
+            result = await eliminateDeadCode({ sourceCode, filename, nospace, twice });
             break;
 
           case 'mangler':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_minifier', '--example', 'mangler', tempFilePath]);
+            result = await mangleCode({ sourceCode, filename });
             break;
 
           case 'cfg':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_semantic', '--example', 'cfg', tempFilePath]);
+            result = await generateCFG({ sourceCode, filename });
             break;
 
           case 'isolated_declarations':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_isolated_declarations', '--example', 'isolated_declarations', tempFilePath]);
+            result = await generateIsolatedDeclarations({ sourceCode, filename });
             break;
 
           case 'define':
             const sourcemap = args?.sourcemap as boolean;
-            const defineArgs = ['run', '-p', 'oxc_transformer_plugins', '--example', 'define', tempFilePath];
-            if (sourcemap) defineArgs.push('--sourcemap');
-            result = await spawnCommand('cargo', defineArgs);
+            result = await defineCode({ sourceCode, filename, sourcemap });
             break;
 
           case 'visitor':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_parser', '--example', 'visitor', tempFilePath]);
+            result = await visitCode({ sourceCode, filename });
             break;
 
           case 'parser_tsx':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_parser', '--example', 'parser_tsx', tempFilePath]);
+            result = await parseTSXCode({ sourceCode, filename });
             break;
 
           case 'regular_expression':
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_parser', '--example', 'regular_expression', tempFilePath]);
+            result = await parseRegularExpressions({ sourceCode, filename });
             break;
 
           case 'regex_visitor':
@@ -565,10 +552,7 @@ class McpOxcServer {
             if (!pattern) {
               throw new Error('pattern is required for regex_visitor');
             }
-            // Create a temp file with the regex pattern
-            const regexContent = `/${pattern}/${flags}`;
-            const regexTempPath = writeTempFile(regexContent, 'regex.txt');
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_regular_expression', '--example', 'regex_visitor', regexTempPath]);
+            result = await visitRegex({ pattern, flags });
             break;
 
           case 'parse_literal':
@@ -577,10 +561,7 @@ class McpOxcServer {
             if (!literalPattern) {
               throw new Error('pattern is required for parse_literal');
             }
-            // Create a temp file with the regex pattern
-            const literalContent = `/${literalPattern}/${literalFlags}`;
-            const literalTempPath = writeTempFile(literalContent, 'regex.txt');
-            result = await spawnCommand('cargo', ['run', '-p', 'oxc_regular_expression', '--example', 'parse_literal', literalTempPath]);
+            result = await parseLiteral({ pattern: literalPattern, flags: literalFlags });
             break;
 
           default:
