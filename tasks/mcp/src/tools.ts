@@ -1,5 +1,4 @@
 import { unlinkSync, writeFileSync, mkdirSync } from 'fs';
-import { tmpdir } from 'os';
 import { join } from 'path';
 
 import { spawnCommand } from './spawn.js';
@@ -10,19 +9,10 @@ import { spawnCommand } from './spawn.js';
 function writeTempFile(sourceCode: string, filename: string): string {
   // Create temp directory if it doesn't exist
   mkdirSync('/tmp/oxc-mcp', { recursive: true });
-  
+
   const tempPath = join('/tmp/oxc-mcp', filename);
   writeFileSync(tempPath, sourceCode, 'utf8');
   return tempPath;
-}
-
-/**
- * Write source code to a temporary file and return the path (legacy method using tmpdir)
- */
-function writeTempFileLegacy(sourceCode: string, filename: string): string {
-  const tmpFile = join(tmpdir(), `oxc-mcp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${filename}`);
-  writeFileSync(tmpFile, sourceCode, 'utf8');
-  return tmpFile;
 }
 
 // Parser Tool (moved from parser.ts)
@@ -49,7 +39,7 @@ export async function parseCode(options: ParseOptions): Promise<string> {
 
   try {
     // Create a temporary file with the source code
-    const tmpFile = writeTempFileLegacy(sourceCode, filename);
+    const tmpFile = writeTempFile(sourceCode, filename);
 
     try {
       // Build the cargo command arguments
@@ -328,7 +318,7 @@ export interface RegexVisitorOptions {
 
 export async function visitRegex(options: RegexVisitorOptions): Promise<string> {
   const { pattern, flags = '' } = options;
-  
+
   if (typeof pattern !== 'string') {
     throw new Error('pattern must be a string');
   }
@@ -358,7 +348,7 @@ export interface ParseLiteralOptions {
 
 export async function parseLiteral(options: ParseLiteralOptions): Promise<string> {
   const { pattern, flags = '' } = options;
-  
+
   if (typeof pattern !== 'string') {
     throw new Error('pattern must be a string');
   }

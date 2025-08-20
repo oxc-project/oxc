@@ -4,25 +4,25 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import { parseCode } from './tools.js';
 import {
-  lintCode,
-  formatCode,
   analyzeCode,
-  transformCode,
   compileCode,
-  generateCode,
-  minifyCode,
-  eliminateDeadCode,
-  mangleCode,
-  generateCFG,
-  generateIsolatedDeclarations,
   defineCode,
-  visitCode,
-  parseTSXCode,
-  parseRegularExpressions,
-  visitRegex,
+  eliminateDeadCode,
+  formatCode,
+  generateCFG,
+  generateCode,
+  generateIsolatedDeclarations,
+  lintCode,
+  mangleCode,
+  minifyCode,
+  parseCode,
   parseLiteral,
+  parseRegularExpressions,
+  parseTSXCode,
+  transformCode,
+  visitCode,
+  visitRegex,
 } from './tools.js';
 
 
@@ -476,7 +476,7 @@ class McpOxcServer {
       // Handle example-based tools
       const sourceCode = args?.sourceCode as string;
       const filename = (args?.filename as string) || 'input.js';
-      
+
       try {
         let result: string;
 
