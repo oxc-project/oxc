@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 76a9865 transformer/legacy-decorator: Metadata should be inserted after all params decorators (#13215) (Dunqing)
+
+### 🚜 Refactor
+
+- 5463a99 transformer: Shorten code (#13220) (overlookmotel)
+- 49a6fda transformer/decorator: Re-order methods (#13219) (overlookmotel)
+
+### ⚡ Performance
+
+- ef3c23a transformer/decorator: Remove temporary `Vec` (#13218) (overlookmotel)
+
+
 
 ## [0.82.1] - 2025-08-13
 
