@@ -21,6 +21,8 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+#[cfg(feature = "language_server")]
+mod lsp;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -70,7 +72,7 @@ use crate::{
 };
 
 #[cfg(feature = "language_server")]
-pub use crate::fixer::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
+pub use crate::lsp::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
 
 #[cfg(target_pointer_width = "64")]
 #[test]

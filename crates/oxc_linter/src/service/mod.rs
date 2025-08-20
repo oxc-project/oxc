@@ -11,10 +11,6 @@ use crate::Linter;
 mod runtime;
 use runtime::Runtime;
 pub use runtime::RuntimeFileSystem;
-
-#[cfg(feature = "language_server")]
-pub mod offset_to_position;
-
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,

@@ -31,7 +31,7 @@ use crate::{
 };
 
 #[cfg(feature = "language_server")]
-use crate::fixer::MessageWithPosition;
+use crate::MessageWithPosition;
 
 use super::LintServiceOptions;
 
@@ -679,7 +679,7 @@ impl Runtime {
 
         use oxc_data_structures::rope::Rope;
 
-        use crate::fixer::message_to_message_with_position;
+        use crate::lsp::message_to_message_with_position;
 
         // Wrap allocator in `MessageCloner` so can clone `Message`s into it
         let message_cloner = MessageCloner::new(allocator);
