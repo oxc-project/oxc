@@ -27,6 +27,8 @@ jobs:
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          cache-key: warm
 
       - name: Get latest compat-table SHA
         id: get-sha
@@ -93,24 +95,19 @@ jobs:
             git diff --name-only
           fi
 
-      # - name: Create Pull Request
-        # if: steps.check-update.outputs.update_needed == 'true' && steps.changes.outputs.has_changes == 'true'
-        # uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
-        # env:
-          # LATEST_SHA: ${{ steps.get-sha.outputs.latest_sha }}
-          # CURRENT_SHA: ${{ steps.current-sha.outputs.current_sha }}
-        # with:
-          # token: ${{ secrets.GITHUB_TOKEN }}
-          # commit-message: "chore: update compat-table to ${{ steps.get-sha.outputs.latest_sha }}"
-          # branch: update-compat-table
-          # branch-suffix: timestamp
-          # base: main
-          # title: "chore: update compat-table to latest commit"
-          # body: |
-            # Updates compat-table dependency to the latest commit.
+      - name: Create Pull Request
+        if: steps.check-update.outputs.update_needed == 'true' && steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.OXC_BOT_PAT }}
+          commit-message: "chore(compat_data): update compat-table to ${{ steps.get-sha.outputs.latest_sha }}"
+          branch: update-compat-table
+          branch-suffix: timestamp
+          base: main
+          title: "chore(compat_data): update compat-table to latest commit"
+          assignees: Boshen
+          body: |
+            Updates compat-table dependency to the latest commit.
 
-            # - Previous SHA: `${{ steps.current-sha.outputs.current_sha }}`
-            # - New SHA: `${{ steps.get-sha.outputs.latest_sha }}`
-
-            # This automatically updates the compat data used by oxc.
-          # assignees: Boshen
+            - Previous SHA: `${{ steps.current-sha.outputs.current_sha }}`
+            - New SHA: `${{ steps.get-sha.outputs.latest_sha }}`
