@@ -4,6 +4,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
+import { parseCode } from './parser.js';
+
 /**
  * MCP server for oxc project with echo command
  */
@@ -33,17 +35,37 @@ class McpOxcServer {
       return {
         tools: [
           {
-            name: 'echo',
-            description: 'Echo back the provided message',
+            name: 'parse',
+            description: 'Parse JavaScript or TypeScript code using the Oxc parser',
             inputSchema: {
               type: 'object',
               properties: {
-                message: {
+                sourceCode: {
                   type: 'string',
-                  description: 'The message to echo back',
+                  description: 'The JavaScript or TypeScript source code to parse',
+                },
+                filename: {
+                  type: 'string',
+                  description: 'The filename (used to determine file type)',
+                  default: 'input.js',
+                },
+                showAst: {
+                  type: 'boolean',
+                  description: 'Whether to include the parsed AST in the output',
+                  default: false,
+                },
+                showEstree: {
+                  type: 'boolean',
+                  description: 'Whether to include the ESTree representation in the output',
+                  default: false,
+                },
+                showComments: {
+                  type: 'boolean',
+                  description: 'Whether to include extracted comments in the output',
+                  default: false,
                 },
               },
-              required: ['message'],
+              required: ['sourceCode'],
             },
           },
         ],
@@ -54,20 +76,33 @@ class McpOxcServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
-      if (name === 'echo') {
-        const message = args?.message;
-        if (typeof message !== 'string') {
-          throw new Error('Message must be a string');
-        }
+      if (name === 'parse') {
+        const sourceCode = args?.sourceCode as string;
+        const filename = (args?.filename as string) || 'input.js';
+        const showAst = (args?.showAst as boolean) || false;
+        const showEstree = (args?.showEstree as boolean) || false;
+        const showComments = (args?.showComments as boolean) || false;
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: message,
-            },
-          ],
-        };
+        try {
+          const result = await parseCode({
+            sourceCode,
+            filename,
+            showAst,
+            showEstree,
+            showComments,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: result,
+              },
+            ],
+          };
+        } catch (error) {
+          throw new Error(`Parse error: ${error instanceof Error ? error.message : String(error)}`);
+        }
       }
 
       throw new Error(`Unknown tool: ${name}`);

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Simple test script to verify the MCP server works
+ * Test script for the parser tool in MCP server
  */
 
 import { spawn } from 'child_process';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function testMcpServer() {
+function testParserTool() {
   return new Promise((resolve, reject) => {
     const serverPath = path.join(__dirname, '../dist/index.js');
     const server = spawn('node', [serverPath], {
@@ -37,13 +37,45 @@ function testMcpServer() {
       params: {},
     };
 
+    // Test parse tool with basic JavaScript
+    const parseRequest = {
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'tools/call',
+      params: {
+        name: 'parse',
+        arguments: {
+          sourceCode: "console.log('Hello World!'); // This is a comment",
+          filename: 'test.js',
+          showComments: true,
+        },
+      },
+    };
+
+    // Test parse tool with AST output
+    const parseAstRequest = {
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'tools/call',
+      params: {
+        name: 'parse',
+        arguments: {
+          sourceCode: 'function test() { return 42; }',
+          filename: 'test.js',
+          showAst: true,
+        },
+      },
+    };
+
     // Send requests
     server.stdin.write(JSON.stringify(listToolsRequest) + '\n');
+    server.stdin.write(JSON.stringify(parseRequest) + '\n');
+    server.stdin.write(JSON.stringify(parseAstRequest) + '\n');
     server.stdin.end();
 
     server.on('close', (code) => {
       if (code === 0) {
-        console.log('✓ MCP server started successfully');
+        console.log('✓ MCP server with parser tool started successfully');
         console.log('Server output:', output);
         if (errorOutput) {
           console.log('Server errors:', errorOutput);
@@ -70,12 +102,12 @@ function testMcpServer() {
 }
 
 // Run the test
-testMcpServer()
+testParserTool()
   .then(() => {
-    console.log('✓ All tests passed');
+    console.log('✓ All parser tests passed');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('✗ Test failed:', error);
+    console.error('✗ Parser test failed:', error);
     process.exit(1);
   });
