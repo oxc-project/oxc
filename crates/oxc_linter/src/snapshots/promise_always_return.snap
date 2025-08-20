@@ -1,0 +1,191 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 413
+---
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => {})
+   ·          ───────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { })
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { }).then(x)
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { }).then(function() { })
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:31]
+ 1 │ hey.then(function() { }).then(function() { })
+   ·                               ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:39]
+ 1 │ hey.then(function() { return; }).then(function() { })
+   ·                                       ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { doSomethingWicked(); })
+   ·          ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { if (x) { return x; } })
+   ·          ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { if (x) { return x; } else { }})
+   ·          ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { if (x) { } else { return x; }})
+   ·          ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { if (x) { process.chdir(); } else { return x; }})
+   ·          ────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function() { if (x) { return you.then(function() { return x; }); } })
+   ·          ────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:11]
+ 1 │ hey.then( x => { x ? x.id : null })
+   ·           ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(function(x) { x ? x.id : null })
+   ·          ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+    ╭─[always_return.tsx:2:21]
+  1 │     (function() {
+  2 │ ╭─▶     return hey.then(x => {
+  3 │ │           anotherFunc({
+  4 │ │               nested: {
+  5 │ │                   one: x === 1 ? 1 : 0,
+  6 │ │                   two: x === 2 ? 1 : 0
+  7 │ │               }
+  8 │ │           })
+  9 │ ╰─▶     })
+ 10 │     })()
+    ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ ╭─▶ hey.then(({x, y}) => {
+ 2 │ │       if (y) {
+ 3 │ │           throw new Error(x || y)
+ 4 │ │       }
+ 5 │ ╰─▶ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ ╭─▶ hey.then(({x, y}) => {
+ 2 │ │       if (y) {
+ 3 │ │           return x
+ 4 │ │       }
+ 5 │ ╰─▶ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:2:11]
+ 1 │ hey
+ 2 │     .then(function(x) { console.log(x) /* missing return here */ })
+   ·           ────────────────────────────────────────────────────────
+ 3 │     .then(function(y) { console.log(y) /* no error here */ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:22]
+ 1 │ const foo = hey.then(function(x) {});
+   ·                      ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:2:21]
+ 1 │ function foo() {
+ 2 │     return hey.then(function(x) {});
+   ·                     ──────────────
+ 3 │ }
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:2:27]
+ 1 │ async function foo() {
+ 2 │     return await hey.then(x => { console.log(x) })
+   ·                           ───────────────────────
+ 3 │ }
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:23]
+ 1 │ const foo = hey?.then(x => { console.log(x) })
+   ·                       ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { invalid = x })
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { invalid['x'] = x })
+   ·          ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { wind[x] = x })
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { wind['x'] = x })
+   ·          ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { windows['x'] = x })
+   ·          ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
+   ╭─[always_return.tsx:1:10]
+ 1 │ hey.then(x => { x() })
+   ·          ────────────
+   ╰────
