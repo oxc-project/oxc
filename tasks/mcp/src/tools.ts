@@ -9,67 +9,9 @@ import { spawnCommand } from './spawn.js';
 function writeTempFile(sourceCode: string, filename: string): string {
   // Create temp directory if it doesn't exist
   mkdirSync('/tmp/oxc-mcp', { recursive: true });
-
   const tempPath = join('/tmp/oxc-mcp', filename);
   writeFileSync(tempPath, sourceCode, 'utf8');
   return tempPath;
-}
-
-// Parser Tool (moved from parser.ts)
-export interface ParseOptions {
-  sourceCode: string;
-  filename?: string;
-  showAst?: boolean;
-  showEstree?: boolean;
-  showComments?: boolean;
-}
-
-export async function parseCode(options: ParseOptions): Promise<string> {
-  const {
-    sourceCode,
-    filename = 'input.js',
-    showAst = false,
-    showEstree = false,
-    showComments = false,
-  } = options;
-
-  if (typeof sourceCode !== 'string') {
-    throw new Error('sourceCode must be a string');
-  }
-
-  try {
-    // Create a temporary file with the source code
-    const tmpFile = writeTempFile(sourceCode, filename);
-
-    try {
-      // Build the cargo command arguments
-      const cargoArgs = ['run', '-p', 'oxc_parser', '--example', 'parser', tmpFile];
-
-      if (showAst) {
-        cargoArgs.push('--ast');
-      }
-      if (showEstree) {
-        cargoArgs.push('--estree');
-      }
-      if (showComments) {
-        cargoArgs.push('--comments');
-      }
-
-      // Spawn the cargo command
-      const result = await spawnCommand('cargo', cargoArgs);
-
-      return result;
-    } finally {
-      // Clean up temporary file
-      try {
-        unlinkSync(tmpFile);
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-  } catch (error) {
-    throw new Error(`Parse error: ${error instanceof Error ? error.message : String(error)}`);
-  }
 }
 
 /**
@@ -99,6 +41,31 @@ async function executeWithTempFile<T extends { sourceCode: string; filename?: st
       // Ignore cleanup errors
     }
   }
+}
+
+// Parser Tool
+export interface ParseOptions {
+  sourceCode: string;
+  filename?: string;
+  showAst?: boolean;
+  showEstree?: boolean;
+  showComments?: boolean;
+}
+
+export async function parseCode(options: ParseOptions): Promise<string> {
+  return executeWithTempFile(options, (tempPath, opts) => {
+    const args = ['run', '-p', 'oxc_linter', '--example', 'linter', tempPath];
+    if (opts.showAst) {
+      args.push('--ast');
+    }
+    if (opts.showEstree) {
+      args.push('--estree');
+    }
+    if (opts.showComments) {
+      args.push('--comments');
+    }
+    return { command: 'cargo', args };
+  });
 }
 
 // Linter Tool
