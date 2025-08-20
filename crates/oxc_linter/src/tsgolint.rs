@@ -188,15 +188,26 @@ impl TsGoLintState {
                                         if !source_text.is_empty() {
                                             // Parse the source text and build disable directives
                                             let allocator = Allocator::default();
-                                            let source_type = SourceType::from_path(&path).unwrap_or_default();
-                                            let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
-                                            let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
-                                            let disable_directives = DisableDirectivesBuilder::new()
-                                                .build(source_text, semantic_ret.semantic.comments());
+                                            let source_type =
+                                                SourceType::from_path(&path).unwrap_or_default();
+                                            let parser_ret =
+                                                Parser::new(&allocator, source_text, source_type)
+                                                    .parse();
+                                            let semantic_ret =
+                                                SemanticBuilder::new().build(&parser_ret.program);
+                                            let disable_directives = DisableDirectivesBuilder::new(
+                                            )
+                                            .build(source_text, semantic_ret.semantic.comments());
 
                                             // Check if this diagnostic should be disabled
-                                            let diagnostic_span = Span::new(tsgolint_diagnostic.range.pos, tsgolint_diagnostic.range.end);
-                                            if disable_directives.contains(tsgolint_diagnostic.rule.as_str(), diagnostic_span) {
+                                            let diagnostic_span = Span::new(
+                                                tsgolint_diagnostic.range.pos,
+                                                tsgolint_diagnostic.range.end,
+                                            );
+                                            if disable_directives.contains(
+                                                tsgolint_diagnostic.rule.as_str(),
+                                                diagnostic_span,
+                                            ) {
                                                 // This diagnostic is disabled by a comment directive, skip it
                                                 continue;
                                             }
@@ -542,8 +553,8 @@ const unused3: string = "should be disabled for next line";
         let source_type = SourceType::default().with_typescript(true);
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
-        let disable_directives = DisableDirectivesBuilder::new()
-            .build(source_text, semantic_ret.semantic.comments());
+        let disable_directives =
+            DisableDirectivesBuilder::new().build(source_text, semantic_ret.semantic.comments());
 
         // Test 1: Diagnostic in disabled region should be suppressed
         let disabled_span = Span::new(85, 95); // Points to "unused1" variable
@@ -565,7 +576,7 @@ const unused3: string = "should be disabled for next line";
             disable_directives.contains("typescript-eslint/no-unused-vars", next_line_span),
             "Diagnostic on disable-next-line should be suppressed"
         );
-        
+
         // Test 4: Rule name matching with short name should work
         assert!(
             disable_directives.contains("no-unused-vars", disabled_span),
