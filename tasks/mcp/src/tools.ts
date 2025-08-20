@@ -323,7 +323,20 @@ export async function visitRegex(options: RegexVisitorOptions): Promise<string> 
     } catch {
       // Ignore cleanup errors
     }
-  }
+  return executeWithTempFile(
+    { sourceCode: regexContent, filename: 'regex.txt' },
+    (tempPath) => ({
+      command: 'cargo',
+      args: [
+        'run',
+        '-p',
+        'oxc_regular_expression',
+        '--example',
+        'regex_visitor',
+        tempPath,
+      ],
+    })
+  );
 }
 
 // Parse Literal Tool
