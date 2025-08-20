@@ -9,7 +9,21 @@ import { spawnCommand } from './spawn.js';
 function writeTempFile(sourceCode: string, filename: string): string {
   // Create temp directory if it doesn't exist
   mkdirSync('/tmp/oxc-mcp', { recursive: true });
-  const tempPath = join('/tmp/oxc-mcp', filename);
+import { mkdirSync, unlinkSync, writeFileSync, mkdtempSync } from 'fs';
+import { join } from 'path';
+import * as os from 'os';
+
+import { spawnCommand } from './spawn.js';
+
+/**
+ * Write source code to a temporary file and return the path
+ */
+// Create a unique temp directory for this process
+const tempDir: string = mkdtempSync(join(os.tmpdir(), 'oxc-mcp-'));
+
+function writeTempFile(sourceCode: string, filename: string): string {
+  // Write the file to the unique temp directory
+  const tempPath = join(tempDir, filename);
   writeFileSync(tempPath, sourceCode, 'utf8');
   return tempPath;
 }
