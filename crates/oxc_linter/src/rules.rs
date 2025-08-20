@@ -339,6 +339,7 @@ mod react {
     pub mod jsx_curly_brace_presence;
     pub mod jsx_filename_extension;
     pub mod jsx_fragments;
+    pub mod jsx_handler_names;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -967,6 +968,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_filename_extension,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
+    react::jsx_handler_names,
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
