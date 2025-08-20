@@ -7,9 +7,6 @@ on:
     # Run weekly on Monday at 00:00 UTC
     - cron: '0 0 * * 1'
   workflow_dispatch: # Allow manual trigger
-  push:
-    branches:
-      - copilot/fix-75a508b9-5316-4650-b6fa-df816f454dd8
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
