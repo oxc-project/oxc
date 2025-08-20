@@ -6,7 +6,6 @@ This is a Model Context Protocol (MCP) server boilerplate for the oxc project. I
 
 - TypeScript-based MCP server
 - Single `echo` command that echoes back any message
-- **New:** `parse` command that parses JavaScript/TypeScript code using the Oxc parser
 - Built using @modelcontextprotocol/sdk
 
 ## Installation
@@ -83,44 +82,6 @@ Echoes back the provided message.
 }
 ```
 
-### parse
-
-Parses JavaScript or TypeScript code using the Oxc parser and displays the results.
-
-**Parameters:**
-
-- `sourceCode` (string, required): The JavaScript or TypeScript source code to parse
-- `filename` (string, optional): The filename (used to determine file type). Defaults to "input.js"
-- `showAst` (boolean, optional): Whether to include the parsed AST in the output. Defaults to false
-- `showEstree` (boolean, optional): Whether to include the ESTree representation in the output. Defaults to false
-- `showComments` (boolean, optional): Whether to include extracted comments in the output. Defaults to false
-
-**Example:**
-
-```json
-{
-  "name": "parse",
-  "arguments": {
-    "sourceCode": "console.log('Hello World!'); // Comment",
-    "filename": "test.js",
-    "showComments": true
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "Comments:\n  Line:  Comment\n\nParsed Successfully."
-    }
-  ]
-}
-```
-
 ## Development
 
 The MCP server is structured as follows:
@@ -134,8 +95,6 @@ To add new tools:
 1. Add the tool definition to the `ListToolsRequestSchema` handler
 2. Add the tool implementation to the `CallToolRequestSchema` handler
 3. Update this README with documentation for the new tool
-
-The `parse` tool demonstrates how to integrate Oxc's parser functionality into the MCP server, allowing clients to parse JavaScript and TypeScript code and inspect the resulting AST, comments, and parsing errors.
 
 ## MCP Integration
 
