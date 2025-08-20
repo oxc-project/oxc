@@ -141,8 +141,13 @@ impl<'a> Ctx<'a, '_> {
                 let value = format_atom!(self.ast.allocator, "{bigint}");
                 self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
-            ConstantValue::String(s) => {
-                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)
+            ConstantValue::String((s, lone_surrogates)) => {
+                self.ast.expression_string_literal_with_lone_surrogates(
+                    span,
+                    self.ast.atom_from_cow(&s),
+                    None,
+                    lone_surrogates,
+                )
             }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),

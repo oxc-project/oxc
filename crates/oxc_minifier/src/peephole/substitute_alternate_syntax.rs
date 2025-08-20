@@ -1092,7 +1092,11 @@ impl<'a> PeepholeOptimizations {
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx) else { return };
+        let Some((val, lone_surrogates)) = t.to_js_string(ctx) else { return };
+        // TODO: Handle lone surrogates
+        if lone_surrogates {
+            return;
+        }
         *expr = ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None);
         ctx.state.changed = true;
     }

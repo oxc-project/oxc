@@ -107,8 +107,8 @@ fn try_fold_string_casing<'a>(
         return None;
     }
 
-    let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+    let (value, ls) = match object {
+        Expression::StringLiteral(s) => (Cow::Borrowed(s.value.as_str()), s.lone_surrogates),
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
@@ -125,7 +125,7 @@ fn try_fold_string_casing<'a>(
         "trimEnd" => ctx.ast().atom(value.trim_end()),
         _ => return None,
     };
-    Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
+    Some(ConstantValue::String((Cow::Borrowed(result.as_str()), ls)))
 }
 
 fn try_fold_string_index_of<'a>(
@@ -138,6 +138,10 @@ fn try_fold_string_index_of<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if s.lone_surrogates {
+        return None;
+    }
     let search_value = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -145,6 +149,12 @@ fn try_fold_string_index_of<'a>(
         }
         None => None,
     };
+    // TODO: Handle lone surrogates
+    if let Some((_, lone_surrogates)) = search_value
+        && lone_surrogates
+    {
+        return None;
+    }
     let search_start_index = match args.get(1) {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -154,10 +164,13 @@ fn try_fold_string_index_of<'a>(
     };
 
     let result = match name {
-        "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
-        "lastIndexOf" => {
-            s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+        "indexOf" => {
+            s.value.as_str().index_of(search_value.map(|(s, _)| s).as_deref(), search_start_index)
         }
+        "lastIndexOf" => s
+            .value
+            .as_str()
+            .last_index_of(search_value.map(|(s, _)| s).as_deref(), search_start_index),
         _ => unreachable!(),
     };
     Some(ConstantValue::Number(result as f64))
@@ -172,6 +185,10 @@ fn try_fold_string_substring_or_slice<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if s.lone_surrogates {
+        return None;
+    }
     let start_idx = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -197,7 +214,7 @@ fn try_fold_string_substring_or_slice<'a>(
         }
     }
 
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx))))
+    Some(ConstantValue::String((Cow::Owned(s.value.as_str().substring(start_idx, end_idx)), false)))
 }
 
 fn try_fold_string_char_at<'a>(
@@ -209,6 +226,10 @@ fn try_fold_string_char_at<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if s.lone_surrogates {
+        return None;
+    }
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -222,7 +243,7 @@ fn try_fold_string_char_at<'a>(
         StringCharAtResult::InvalidChar(_) => return None,
         StringCharAtResult::OutOfRange => String::new(),
     };
-    Some(ConstantValue::String(Cow::Owned(result)))
+    Some(ConstantValue::String((Cow::Owned(result), false)))
 }
 
 fn try_fold_string_char_code_at<'a>(
@@ -231,6 +252,10 @@ fn try_fold_string_char_code_at<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if s.lone_surrogates {
+        return None;
+    }
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
         Some(arg @ match_expression!(Argument)) => {
@@ -253,6 +278,10 @@ fn try_fold_starts_with<'a>(
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if arg.lone_surrogates || s.lone_surrogates {
+        return None;
+    }
     Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
 }
 
@@ -266,8 +295,12 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let Expression::StringLiteral(s) = object else { return None };
+    // TODO: Handle lone surrogates
+    if s.lone_surrogates {
+        return None;
+    }
     let search_value = args.first().unwrap();
-    let search_value = match search_value {
+    let (search_value, search_ls) = match search_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
             let value = search_value.to_expression();
@@ -277,13 +310,21 @@ fn try_fold_string_replace<'a>(
             value.evaluate_value(ctx)?.into_string()?
         }
     };
+    // TODO: Handle lone surrogates
+    if search_ls {
+        return None;
+    }
     let replace_value = args.get(1).unwrap();
-    let replace_value = match replace_value {
+    let (replace_value, replace_ls) = match replace_value {
         Argument::SpreadElement(_) => return None,
         match_expression!(Argument) => {
             replace_value.to_expression().get_side_free_string_value(ctx)?
         }
     };
+    // TODO: Handle lone surrogates
+    if replace_ls {
+        return None;
+    }
     if replace_value.contains('$') {
         return None;
     }
@@ -292,7 +333,7 @@ fn try_fold_string_replace<'a>(
         "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
         _ => unreachable!(),
     };
-    Some(ConstantValue::String(result))
+    Some(ConstantValue::String((result, false)))
 }
 
 fn try_fold_string_from_char_code<'a>(
@@ -311,7 +352,7 @@ fn try_fold_string_from_char_code<'a>(
         let c = char::try_from(v).ok()?;
         s.push(c);
     }
-    Some(ConstantValue::String(Cow::Owned(s)))
+    Some(ConstantValue::String((Cow::Owned(s), false)))
 }
 
 fn try_fold_to_string<'a>(
@@ -337,16 +378,16 @@ fn try_fold_to_string<'a>(
             }
             if radix == 10 {
                 let s = lit.value.to_js_string();
-                return Some(ConstantValue::String(Cow::Owned(s)));
+                return Some(ConstantValue::String((Cow::Owned(s), false)));
             }
             // Only convert integers for other radix values.
             let value = lit.value;
             if value.is_infinite() {
                 let s = if value.is_sign_negative() { "-Infinity" } else { "Infinity" };
-                return Some(ConstantValue::String(Cow::Borrowed(s)));
+                return Some(ConstantValue::String((Cow::Borrowed(s), false)));
             }
             if value.is_nan() {
-                return Some(ConstantValue::String(Cow::Borrowed("NaN")));
+                return Some(ConstantValue::String((Cow::Borrowed("NaN"), false)));
             }
             if value >= 0.0 && value.fract() != 0.0 {
                 return None;
@@ -356,7 +397,7 @@ fn try_fold_to_string<'a>(
                 return None;
             }
             let result = format_radix(i, radix);
-            Some(ConstantValue::String(Cow::Owned(result)))
+            Some(ConstantValue::String((Cow::Owned(result), false)))
         }
         Expression::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
@@ -530,14 +571,19 @@ fn try_fold_encode_uri<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String((Cow::Borrowed("undefined"), false)));
     }
     if args.len() != 1 {
         return None;
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let (string_value, lone_surrogates) = expr.get_side_free_string_value(ctx)?;
+
+    // String with lone surrogates cannot be encoded as URI
+    if lone_surrogates {
+        return None;
+    }
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -551,7 +597,7 @@ fn try_fold_encode_uri<'a>(
             },
         )
     };
-    Some(ConstantValue::String(encoded))
+    Some(ConstantValue::String((encoded, false)))
 }
 
 fn try_fold_encode_uri_component<'a>(
@@ -559,14 +605,19 @@ fn try_fold_encode_uri_component<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String((Cow::Borrowed("undefined"), false)));
     }
     if args.len() != 1 {
         return None;
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let (string_value, lone_surrogates) = expr.get_side_free_string_value(ctx)?;
+
+    // String with lone surrogates cannot be encoded as URI component
+    if lone_surrogates {
+        return None;
+    }
 
     // SAFETY: should_encode only returns false for ascii chars
     let encoded = unsafe {
@@ -576,7 +627,7 @@ fn try_fold_encode_uri_component<'a>(
             |c| !is_uri_always_unescaped(c),
         )
     };
-    Some(ConstantValue::String(encoded))
+    Some(ConstantValue::String((encoded, false)))
 }
 
 fn try_fold_decode_uri<'a>(
@@ -584,21 +635,21 @@ fn try_fold_decode_uri<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String((Cow::Borrowed("undefined"), false)));
     }
     if args.len() != 1 {
         return None;
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let (string_value, lone_surrogates) = expr.get_side_free_string_value(ctx)?;
 
     let decoded = decode_uri_chars(
         string_value,
         #[inline(always)]
         |c| matches!(c, b';' | b',' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b'#'),
     )?;
-    Some(ConstantValue::String(decoded))
+    Some(ConstantValue::String((decoded, lone_surrogates)))
 }
 
 fn try_fold_decode_uri_component<'a>(
@@ -606,14 +657,14 @@ fn try_fold_decode_uri_component<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
     if args.is_empty() {
-        return Some(ConstantValue::String(Cow::Borrowed("undefined")));
+        return Some(ConstantValue::String((Cow::Borrowed("undefined"), false)));
     }
     if args.len() != 1 {
         return None;
     }
     let arg = args.first()?;
     let expr = arg.as_expression()?;
-    let string_value = expr.get_side_free_string_value(ctx)?;
+    let (string_value, lone_surrogates) = expr.get_side_free_string_value(ctx)?;
 
     // decodeURIComponent decodes all percent-encoded sequences
     let decoded = decode_uri_chars(
@@ -621,7 +672,7 @@ fn try_fold_decode_uri_component<'a>(
         #[inline(always)]
         |_| false,
     )?;
-    Some(ConstantValue::String(decoded))
+    Some(ConstantValue::String((decoded, lone_surrogates)))
 }
 
 fn try_fold_global_is_nan<'a>(
@@ -668,7 +719,7 @@ fn try_fold_global_parse_float<'a>(
     }
     let arg = args.first().unwrap();
     let expr = arg.as_expression()?;
-    let input_string = expr.get_side_free_string_value(ctx)?;
+    let (input_string, _) = expr.get_side_free_string_value(ctx)?;
     let trimmed = input_string.trim_start();
     let Some(trimmed_prefix) = find_str_decimal_literal_prefix(trimmed) else {
         return Some(ConstantValue::Number(f64::NAN));
@@ -796,7 +847,7 @@ fn try_fold_global_parse_int<'a>(
     }
     let string_arg = args.first().unwrap();
     let string_expr = string_arg.as_expression()?;
-    let string_value = string_expr.evaluate_value_to_string(ctx)?;
+    let (string_value, _) = string_expr.evaluate_value_to_string(ctx)?;
     let mut string_value = string_value.trim_start();
 
     let mut sign = 1;

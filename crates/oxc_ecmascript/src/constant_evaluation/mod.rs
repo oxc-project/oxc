@@ -70,7 +70,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     fn evaluate_value_to_string(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
-    ) -> Option<Cow<'a, str>> {
+    ) -> Option<(Cow<'a, str>, /* lone_surrogates */ bool)> {
         self.evaluate_value_to(ctx, Some(ValueType::String))?.to_js_string(ctx)
     }
 
@@ -96,7 +96,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     fn get_side_free_string_value(
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
-    ) -> Option<Cow<'a, str>> {
+    ) -> Option<(Cow<'a, str>, /* lone_surrogates */ bool)> {
         let value = self.evaluate_value_to_string(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
     }
@@ -162,9 +162,10 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::NullLiteral(_) => Some(ConstantValue::Null),
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
-            Expression::StringLiteral(lit) => {
-                Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
-            }
+            Expression::StringLiteral(lit) => Some(ConstantValue::String((
+                Cow::Borrowed(lit.value.as_str()),
+                lit.lone_surrogates,
+            ))),
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::CallExpression(e) => e.evaluate_value_to(ctx, target_ty),
@@ -216,9 +217,10 @@ fn binary_operation_evaluate_value_to<'a>(
             if left_to_primitive.is_string() == Some(true)
                 || right_to_primitive.is_string() == Some(true)
             {
-                let lval = left.evaluate_value_to_string(ctx)?;
-                let rval = right.evaluate_value_to_string(ctx)?;
-                return Some(ConstantValue::String(lval + rval));
+                let (lval, lls) = left.evaluate_value_to_string(ctx)?;
+                let (rval, rls) = right.evaluate_value_to_string(ctx)?;
+                let ls = lls || rls;
+                return Some(ConstantValue::String((lval + rval, ls)));
             }
             let left_to_numeric_type = left_to_primitive.to_numeric(ctx);
             let right_to_numeric_type = right_to_primitive.to_numeric(ctx);
@@ -446,7 +448,7 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
                         _ => return None,
                     },
                 };
-                Some(ConstantValue::String(Cow::Borrowed(s)))
+                Some(ConstantValue::String((Cow::Borrowed(s), false)))
             }
             UnaryOperator::Void => Some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => {
@@ -520,7 +522,11 @@ fn evaluate_value_length<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if let Some(ConstantValue::String(s)) = object.evaluate_value(ctx) {
+    if let Some(ConstantValue::String((s, lone_surrogates))) = object.evaluate_value(ctx) {
+        // TODO: Handle lone surrogates.
+        if lone_surrogates {
+            return None;
+        }
         Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
     } else if let Expression::ArrayExpression(arr) = object {
         if arr.elements.iter().any(|e| matches!(e, ArrayExpressionElement::SpreadElement(_))) {

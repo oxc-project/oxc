@@ -47,10 +47,17 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                 _ => None,
             },
             Expression::StringLiteral(string_literal) => {
+                // Lone surrogates cannot be converted to BigInt.
+                if string_literal.lone_surrogates {
+                    return None;
+                }
                 string_literal.value.as_str().string_to_big_int()
             }
             Expression::TemplateLiteral(_) => {
-                self.to_js_string(ctx).and_then(|value| value.as_ref().string_to_big_int())
+                self.to_js_string(ctx).and_then(|(value, lone_surrogates)| {
+                    // Lone surrogates cannot be converted to BigInt.
+                    if lone_surrogates { None } else { value.as_ref().string_to_big_int() }
+                })
             }
             _ => None,
         }

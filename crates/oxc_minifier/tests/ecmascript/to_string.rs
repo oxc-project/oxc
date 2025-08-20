@@ -39,10 +39,10 @@ fn test() {
         bigint_with_separators.to_js_string(&WithoutGlobalReferenceInformation {});
 
     assert_eq!(shadowed_undefined_string, None);
-    assert_eq!(global_undefined_string, Some("undefined".into()));
-    assert_eq!(empty_object_string, Some("[object Object]".into()));
+    assert_eq!(global_undefined_string, Some(("undefined".into(), false)));
+    assert_eq!(empty_object_string, Some(("[object Object]".into(), false)));
     assert_eq!(object_with_to_string_string, None);
-    assert_eq!(bigint_with_separators_string, Some("10".into()));
+    assert_eq!(bigint_with_separators_string, Some(("10".into(), false)));
 
     let num_cases = [
         (0.0, "0"),
@@ -58,7 +58,7 @@ fn test() {
         let num_lit = ast.expression_numeric_literal(SPAN, num, None, NumberBase::Decimal);
         assert_eq!(
             num_lit.to_js_string(&WithoutGlobalReferenceInformation {}),
-            Some(expected.into())
+            Some((expected.into(), false))
         );
     }
 }
