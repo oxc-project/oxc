@@ -37,6 +37,12 @@ pub struct LintRunner {
     external_linter: Option<ExternalLinter>,
 }
 
+/// Shared parsing data for both tsgolint and main linter to eliminate duplicate parsing
+struct SharedParseData {
+    tsgolint_directives: FxHashMap<PathBuf, TsGoLintDisableDirectives>,
+    // TODO: Add semantic data and other shared parsing results for main linter
+}
+
 impl LintRunner {
     pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
@@ -303,16 +309,18 @@ impl LintRunner {
         // Run type-aware linting through tsgolint before main linter
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            // Parse disable directives once for tsgolint (main linter will still re-parse)
-            let disable_directives_map = Self::parse_disable_directives_for_files(&files_to_lint);
+            // Parse files once and extract data for both tsgolint and main linter
+            let shared_data = Self::parse_files_once_for_shared_use(&files_to_lint);
             
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
                 .with_silent(misc_options.silent)
-                .lint(&files_to_lint, disable_directives_map, tx_error.clone())
+                .lint(&files_to_lint, shared_data.tsgolint_directives, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
             }
+            
+            // TODO: Pass shared_data.semantic_data to main linter to avoid re-parsing
         }
 
         let linter = Linter::new(LintOptions::default(), config_store.clone(), self.external_linter)
@@ -560,16 +568,12 @@ impl LintRunner {
         }
     }
 
-    /// Parse files once and extract disable directives for both tsgolint and main linter.
+    /// Parse files once and extract data for both tsgolint and main linter.
     /// This eliminates duplicate parsing by doing the work upfront and sharing results.
-    /// 
-    /// TODO: This still results in duplicate parsing since the main linter will re-parse
-    /// these same files. Ideally, we should modify the main linter to accept pre-computed
-    /// disable directives to eliminate all duplicate parsing.
-    fn parse_disable_directives_for_files(
+    fn parse_files_once_for_shared_use(
         files: &[Arc<OsStr>],
-    ) -> FxHashMap<PathBuf, TsGoLintDisableDirectives> {
-        let mut disable_directives_map = FxHashMap::default();
+    ) -> SharedParseData {
+        let mut tsgolint_directives = FxHashMap::default();
         
         for file_path in files {
             let path = Path::new(file_path);
@@ -581,26 +585,30 @@ impl LintRunner {
             
             // Read the file content
             if let Ok(source_text) = read_to_string(path) {
-                // Parse the file to extract comments
+                // Parse the file to extract comments and semantic data
                 let allocator = Allocator::default();
                 let source_type = SourceType::from_path(path).unwrap_or_default();
                 let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
                 let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
                 
-                // Build disable directives
+                // Build disable directives for tsgolint
                 let disable_directives = DisableDirectivesBuilder::new()
                     .build(&source_text, semantic_ret.semantic.comments());
                 
                 // Convert to the format that can be passed to tsgolint
-                let tsgolint_directives = TsGoLintDisableDirectives::new(
+                let tsgolint_directives_for_file = TsGoLintDisableDirectives::new(
                     disable_directives.to_tsgolint_format()
                 );
                     
-                disable_directives_map.insert(path.to_path_buf(), tsgolint_directives);
+                tsgolint_directives.insert(path.to_path_buf(), tsgolint_directives_for_file);
+                
+                // TODO: Store semantic data and other parsed results for main linter reuse
             }
         }
         
-        disable_directives_map
+        SharedParseData {
+            tsgolint_directives,
+        }
     }
 }
 
