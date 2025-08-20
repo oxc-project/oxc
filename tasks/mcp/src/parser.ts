@@ -1,8 +1,8 @@
-import { writeFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
+import { unlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
+import { join } from 'path';
 
-import { spawnCommand } from './spawn'
+import { spawnCommand } from './spawn';
 
 export interface ParseOptions {
   sourceCode: string;
@@ -61,4 +61,3 @@ export async function parseCode(options: ParseOptions): Promise<string> {
     throw new Error(`Parse error: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
-

@@ -52,17 +52,17 @@ function test() {
           const lines = output.trim().split('\n');
           const response = JSON.parse(lines[lines.length - 1]);
           const result = response.result.content[0].text;
-          
+
           console.log('✓ MCP Parser Tool Output:');
-          console.log('=' .repeat(50));
+          console.log('='.repeat(50));
           console.log(result);
-          console.log('=' .repeat(50));
-          
+          console.log('='.repeat(50));
+
           // Verify output contains expected sections
           const hasComments = result.includes('Comments:');
           const hasAST = result.includes('AST:');
           const hasSuccess = result.includes('Parsed Successfully');
-          
+
           if (hasComments && hasAST && hasSuccess) {
             console.log('✓ All expected sections present');
             resolve(true);
