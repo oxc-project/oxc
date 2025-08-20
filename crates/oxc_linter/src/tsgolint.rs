@@ -564,7 +564,7 @@ mod tests {
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
-    use oxc_span::{SourceType, Span};
+    use oxc_span::SourceType;
 
     use crate::disable_directives::DisableDirectivesBuilder;
     

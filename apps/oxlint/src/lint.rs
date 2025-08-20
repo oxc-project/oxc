@@ -1235,4 +1235,12 @@ mod test {
         let args = &["--type-aware", "no-floating-promises", "-c", "config-test.json"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_disable_directives() {
+        // Test that disable directives work correctly with tsgolint
+        let args = &["--type-aware", "-c", ".oxlintrc.json", "test.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint-disable-directives".into()).test_and_snapshot(args);
+    }
 }
