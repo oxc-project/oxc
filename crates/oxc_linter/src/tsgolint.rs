@@ -66,11 +66,25 @@ impl TsGoLintState {
         let json_input = self.json_input(paths, &mut resolved_configs);
 
         let handler = std::thread::spawn(move || {
-            let child = std::process::Command::new(&self.executable_path)
-                .arg("headless")
+            let mut cmd = std::process::Command::new(&self.executable_path);
+            cmd.arg("headless")
                 .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn();
+                .stdout(std::process::Stdio::piped());
+
+            if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
+                cmd.arg(format!("-trace={}", trace_file));
+            }
+            if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
+                cmd.arg(format!("-cpuprof={}", cpuprof_file));
+            }
+            if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
+                cmd.arg(format!("-heap={}", heap_file));
+            }
+            if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
+                cmd.arg(format!("-allocs={}", allocs_file));
+            }
+
+            let child = cmd.spawn();
 
             let mut child = match child {
                 Ok(c) => c,
