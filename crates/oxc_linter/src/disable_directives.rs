@@ -125,7 +125,7 @@ impl<'a> DisableDirectives<'a> {
         self.used_disable_comments.borrow_mut().push(disable_directive);
     }
 
-    pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
+    pub fn contains(&self, rule_name: &str, span: Span) -> bool {
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that

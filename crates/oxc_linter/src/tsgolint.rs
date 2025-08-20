@@ -8,10 +8,16 @@ use std::{
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
+use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
 
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::{
+    disable_directives::DisableDirectivesBuilder,
+    fixer::{CompositeFix, Message, PossibleFixes},
+};
 
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
@@ -148,7 +154,7 @@ impl TsGoLintState {
                                         );
 
                                         let oxc_diagnostic: OxcDiagnostic =
-                                            OxcDiagnostic::from(tsgolint_diagnostic);
+                                            OxcDiagnostic::from(tsgolint_diagnostic.clone());
                                         let Some(severity) = severity else {
                                             // If the severity is not found, we should not report the diagnostic
                                             continue;
@@ -177,6 +183,24 @@ impl TsGoLintState {
                                                 .or_insert(source_text);
                                             entry.as_str()
                                         };
+
+                                        // Check disable directives to see if this diagnostic should be suppressed
+                                        if !source_text.is_empty() {
+                                            // Parse the source text and build disable directives
+                                            let allocator = Allocator::default();
+                                            let source_type = SourceType::from_path(&path).unwrap_or_default();
+                                            let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                                            let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
+                                            let disable_directives = DisableDirectivesBuilder::new()
+                                                .build(source_text, semantic_ret.semantic.comments());
+
+                                            // Check if this diagnostic should be disabled
+                                            let diagnostic_span = Span::new(tsgolint_diagnostic.range.pos, tsgolint_diagnostic.range.end);
+                                            if disable_directives.contains(tsgolint_diagnostic.rule.as_str(), diagnostic_span) {
+                                                // This diagnostic is disabled by a comment directive, skip it
+                                                continue;
+                                            }
+                                        }
 
                                         let diagnostics = DiagnosticService::wrap_diagnostics(
                                             cwd_clone.clone(),
@@ -491,4 +515,61 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_disable_directives_with_tsgolint_diagnostic() {
+        use oxc_span::Span;
+
+        // Test source with disable directives
+        let source_text = r#"
+/* eslint-disable typescript-eslint/no-unused-vars */
+const unused1: string = "should be disabled";
+/* eslint-enable typescript-eslint/no-unused-vars */
+
+const unused2: string = "should trigger diagnostic";
+
+/* eslint-disable-next-line typescript-eslint/no-unused-vars */
+const unused3: string = "should be disabled for next line";
+"#;
+
+        // Parse source and build disable directives
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
+        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
+        let disable_directives = DisableDirectivesBuilder::new()
+            .build(source_text, semantic_ret.semantic.comments());
+
+        // Test 1: Diagnostic in disabled region should be suppressed
+        let disabled_span = Span::new(85, 95); // Points to "unused1" variable
+        assert!(
+            disable_directives.contains("typescript-eslint/no-unused-vars", disabled_span),
+            "Diagnostic in disabled region should be suppressed"
+        );
+
+        // Test 2: Diagnostic after re-enable should not be suppressed
+        let enabled_span = Span::new(200, 210); // Points to "unused2" variable  
+        assert!(
+            !disable_directives.contains("typescript-eslint/no-unused-vars", enabled_span),
+            "Diagnostic after re-enable should not be suppressed"
+        );
+
+        // Test 3: Diagnostic on disable-next-line should be suppressed
+        let next_line_span = Span::new(330, 340); // Points to "unused3" variable
+        assert!(
+            disable_directives.contains("typescript-eslint/no-unused-vars", next_line_span),
+            "Diagnostic on disable-next-line should be suppressed"
+        );
+        
+        // Test 4: Rule name matching with short name should work
+        assert!(
+            disable_directives.contains("no-unused-vars", disabled_span),
+            "Short rule name should match full rule name"
+        );
+    }
 }
