@@ -1,8 +1,11 @@
 use std::fmt;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use indexmap::IndexSet;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_index::{IndexVec, define_index_type};
+
+type FxIndexSet<T> = IndexSet<T, FxBuildHasher>;
 
 define_index_type! {
     pub struct ExternalPluginId = u32;
@@ -14,7 +17,7 @@ define_index_type! {
 
 #[derive(Debug, Default)]
 pub struct ExternalPluginStore {
-    registered_plugin_paths: FxHashSet<String>,
+    registered_plugin_paths: FxIndexSet<String>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
@@ -22,6 +25,10 @@ pub struct ExternalPluginStore {
 }
 
 impl ExternalPluginStore {
+    pub fn plugin_paths(&self) -> &FxIndexSet<String> {
+        &self.registered_plugin_paths
+    }
+
     pub fn is_plugin_registered(&self, plugin_path: &str) -> bool {
         self.registered_plugin_paths.contains(plugin_path)
     }

@@ -46,8 +46,9 @@ pub use crate::{
     },
     context::LintContext,
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-        PluginLoadResult,
+        ExternalLinter, ExternalLinterInitWorkerThreadsCb, ExternalLinterLintFileCb,
+        ExternalLinterLoadPluginCb, ExternalLinterLoadPluginsCb, ExternalLinterWorkerCallbacks,
+        LintFileResult, PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
@@ -260,7 +261,7 @@ impl Linter {
         unsafe { metadata_ptr.write(metadata) };
 
         // Pass AST and rule IDs to JS
-        let result = (external_linter.lint_file)(
+        let result = external_linter.lint_file(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             allocator,

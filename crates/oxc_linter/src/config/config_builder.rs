@@ -533,17 +533,12 @@ impl ConfigStoreBuilder {
             return Ok(());
         }
 
-        let result = {
-            let plugin_path = plugin_path.clone();
-            tokio::task::block_in_place(move || {
-                tokio::runtime::Handle::current()
-                    .block_on((external_linter.load_plugin)(plugin_path))
-            })
-            .map_err(|e| ConfigBuilderError::PluginLoadFailed {
+        let result = external_linter.load_plugin(&plugin_path).map_err(|error| {
+            ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
-            })
-        }?;
+                error,
+            }
+        })?;
 
         match result {
             PluginLoadResult::Success { name, offset, rule_names } => {

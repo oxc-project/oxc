@@ -289,6 +289,13 @@ impl LintRunner {
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
+        #[allow(unused_mut, clippy::allow_attributes)]
+        let mut external_linter = self.external_linter;
+        #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+        {
+            Self::init_js_worker_threads(external_linter.as_mut(), &external_plugin_store);
+        }
+
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
         let files_to_lint = paths
@@ -308,7 +315,7 @@ impl LintRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
@@ -371,6 +378,52 @@ impl LintRunner {
         } else {
             CliRunResult::LintSucceeded
         }
+    }
+
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    fn init_js_worker_threads(
+        external_linter: Option<&mut ExternalLinter>,
+        external_plugin_store: &ExternalPluginStore,
+    ) {
+        use futures::future::try_join_all;
+
+        // If no JS plugins used, exit
+        if external_plugin_store.plugin_paths().is_empty() {
+            return;
+        }
+
+        // Start 1 JS worker thread for each rayon thread
+        let external_linter = external_linter.unwrap();
+        let thread_count = u32::try_from(rayon::current_num_threads()).unwrap();
+
+        let callbacks = external_linter.init_worker_threads(thread_count);
+
+        // Load all plugins on each worker thread
+        let plugin_paths = external_plugin_store.plugin_paths().iter().cloned().collect::<Vec<_>>();
+
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on({
+                let callbacks = &*callbacks;
+                async move {
+                    let futures = callbacks
+                        .iter()
+                        .map(|callbacks| (callbacks.load_plugins)(plugin_paths.clone()));
+
+                    let joined = try_join_all(futures).await;
+                    joined.map(|_| ())
+                }
+            })
+        })
+        .unwrap();
+
+        // Store JS functions to lint a file in `ExternalLinter`.
+        // 1 function for each worker thread.
+        let lint_file_on_threads = callbacks
+            .into_iter()
+            .map(|callbacks| callbacks.lint_file)
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        external_linter.set_lint_file_on_threads(lint_file_on_threads);
     }
 }
 

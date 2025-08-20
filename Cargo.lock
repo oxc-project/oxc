@@ -2496,6 +2496,7 @@ version = "1.12.0"
 dependencies = [
  "bpaf",
  "cow-utils",
+ "futures",
  "ignore",
  "insta",
  "lazy-regex",
@@ -2512,6 +2513,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "tempfile",
+ "tokio",
  "tracing-subscriber",
 ]
 
