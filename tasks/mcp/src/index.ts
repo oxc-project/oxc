@@ -25,8 +25,6 @@ import {
   visitRegex,
 } from './tools.js';
 
-
-
 /**
  * MCP server for oxc project with echo command
  */

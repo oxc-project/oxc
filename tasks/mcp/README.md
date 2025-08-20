@@ -62,9 +62,11 @@ pnpm test
 ### Parser Tools
 
 #### parse
+
 Parse JavaScript or TypeScript code using the Oxc parser.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to parse
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 - `showAst` (boolean, optional): Whether to include the parsed AST in the output, default: false
@@ -72,75 +74,93 @@ Parse JavaScript or TypeScript code using the Oxc parser.
 - `showComments` (boolean, optional): Whether to include extracted comments in the output, default: false
 
 #### parser_tsx
+
 Parse TSX files using the Oxc parser.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The TSX source code to parse
 - `filename` (string, optional): The filename (should be .tsx), default: "input.tsx"
 
 #### visitor
+
 Demonstrate AST visitor pattern using the Oxc parser.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to visit
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 #### regular_expression
+
 Parse regular expressions using the Oxc parser.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript source code containing regular expressions
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Linter Tools
 
 #### linter
+
 Lint JavaScript or TypeScript code using the Oxc linter example.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to lint
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Formatter Tools
 
 #### formatter
+
 Format JavaScript or TypeScript code using the Oxc formatter.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to format
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Semantic Analysis Tools
 
 #### semantic
+
 Perform semantic analysis on JavaScript or TypeScript code.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to analyze
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 - `showSymbols` (boolean, optional): Whether to display symbol table and reference information, default: false
 
 #### cfg
+
 Generate control flow graph visualizations from JavaScript/TypeScript code.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to analyze
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Transformation Tools
 
 #### transformer
+
 Transform JavaScript or TypeScript code using the Oxc transformer.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to transform
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 - `targets` (string, optional): Browser/environment targets for transformation
 
 #### define
+
 Replace global defines in JavaScript code using transformer plugins.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript source code to transform
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 - `sourcemap` (boolean, optional): Generate source maps, default: false
@@ -148,66 +168,82 @@ Replace global defines in JavaScript code using transformer plugins.
 ### Compilation Tools
 
 #### compiler
+
 Run the complete Oxc compilation pipeline (parse, transform, codegen).
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to compile
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 #### codegen
+
 Generate code from an AST using the Oxc code generator.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript or TypeScript source code to process
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Minification Tools
 
 #### minifier
+
 Minify JavaScript code using the Oxc minifier.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript source code to minify
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 #### dce
+
 Perform dead code elimination using the Oxc compressor.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript source code to optimize
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 - `nospace` (boolean, optional): Remove extra whitespace, default: false
 - `twice` (boolean, optional): Test idempotency by running twice, default: false
 
 #### mangler
+
 Mangle JavaScript code using the Oxc mangler.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The JavaScript source code to mangle
 - `filename` (string, optional): The filename (used to determine file type), default: "input.js"
 
 ### Type Processing Tools
 
 #### isolated_declarations
+
 Generate isolated TypeScript declarations.
 
 **Parameters:**
+
 - `sourceCode` (string, required): The TypeScript source code to process
 - `filename` (string, optional): The filename (should be .ts or .tsx), default: "input.ts"
 
 ### Regular Expression Tools
 
 #### regex_visitor
+
 Demonstrate regular expression AST visitor pattern.
 
 **Parameters:**
+
 - `pattern` (string, required): The regular expression pattern to analyze
 - `flags` (string, optional): Regular expression flags (e.g., "gi"), default: ""
 
 #### parse_literal
+
 Parse regular expression literals.
 
 **Parameters:**
+
 - `pattern` (string, required): The regular expression pattern to parse
 - `flags` (string, optional): Regular expression flags (e.g., "gi"), default: ""
 
@@ -216,6 +252,7 @@ Parse regular expression literals.
 Here are some example tool calls:
 
 ### Parse and analyze code
+
 ```json
 {
   "name": "parse",
@@ -228,6 +265,7 @@ Here are some example tool calls:
 ```
 
 ### Format code
+
 ```json
 {
   "name": "formatter",
@@ -238,6 +276,7 @@ Here are some example tool calls:
 ```
 
 ### Lint code
+
 ```json
 {
   "name": "linter",
@@ -248,6 +287,7 @@ Here are some example tool calls:
 ```
 
 ### Minify code
+
 ```json
 {
   "name": "minifier",
@@ -258,6 +298,7 @@ Here are some example tool calls:
 ```
 
 ### Transform modern JavaScript
+
 ```json
 {
   "name": "transformer",

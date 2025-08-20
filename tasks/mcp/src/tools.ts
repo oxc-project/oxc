@@ -1,4 +1,4 @@
-import { unlinkSync, writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 import { spawnCommand } from './spawn.js';
@@ -77,7 +77,7 @@ export async function parseCode(options: ParseOptions): Promise<string> {
  */
 async function executeWithTempFile<T extends { sourceCode: string; filename?: string }>(
   options: T,
-  commandBuilder: (tempPath: string, options: T) => { command: string; args: string[] }
+  commandBuilder: (tempPath: string, options: T) => { command: string; args: string[] },
 ): Promise<string> {
   const { sourceCode, filename = 'input.js' } = options;
 
@@ -110,7 +110,7 @@ export interface LinterOptions {
 export async function lintCode(options: LinterOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_linter', '--example', 'linter', tempPath]
+    args: ['run', '-p', 'oxc_linter', '--example', 'linter', tempPath],
   }));
 }
 
@@ -123,7 +123,7 @@ export interface FormatterOptions {
 export async function formatCode(options: FormatterOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_formatter', '--example', 'formatter', tempPath]
+    args: ['run', '-p', 'oxc_formatter', '--example', 'formatter', tempPath],
   }));
 }
 
@@ -170,7 +170,7 @@ export interface CompilerOptions {
 export async function compileCode(options: CompilerOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc', '--example', 'compiler', '--features=full', tempPath]
+    args: ['run', '-p', 'oxc', '--example', 'compiler', '--features=full', tempPath],
   }));
 }
 
@@ -183,7 +183,7 @@ export interface CodegenOptions {
 export async function generateCode(options: CodegenOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_codegen', '--example', 'codegen', tempPath]
+    args: ['run', '-p', 'oxc_codegen', '--example', 'codegen', tempPath],
   }));
 }
 
@@ -196,7 +196,7 @@ export interface MinifierOptions {
 export async function minifyCode(options: MinifierOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_minifier', '--example', 'minifier', tempPath]
+    args: ['run', '-p', 'oxc_minifier', '--example', 'minifier', tempPath],
   }));
 }
 
@@ -226,7 +226,7 @@ export interface ManglerOptions {
 export async function mangleCode(options: ManglerOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_minifier', '--example', 'mangler', tempPath]
+    args: ['run', '-p', 'oxc_minifier', '--example', 'mangler', tempPath],
   }));
 }
 
@@ -239,7 +239,7 @@ export interface CFGOptions {
 export async function generateCFG(options: CFGOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_semantic', '--example', 'cfg', tempPath]
+    args: ['run', '-p', 'oxc_semantic', '--example', 'cfg', tempPath],
   }));
 }
 
@@ -252,7 +252,7 @@ export interface IsolatedDeclarationsOptions {
 export async function generateIsolatedDeclarations(options: IsolatedDeclarationsOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_isolated_declarations', '--example', 'isolated_declarations', tempPath]
+    args: ['run', '-p', 'oxc_isolated_declarations', '--example', 'isolated_declarations', tempPath],
   }));
 }
 
@@ -280,7 +280,7 @@ export interface VisitorOptions {
 export async function visitCode(options: VisitorOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_parser', '--example', 'visitor', tempPath]
+    args: ['run', '-p', 'oxc_parser', '--example', 'visitor', tempPath],
   }));
 }
 
@@ -293,7 +293,7 @@ export interface ParserTSXOptions {
 export async function parseTSXCode(options: ParserTSXOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_parser', '--example', 'parser_tsx', tempPath]
+    args: ['run', '-p', 'oxc_parser', '--example', 'parser_tsx', tempPath],
   }));
 }
 
@@ -306,7 +306,7 @@ export interface RegularExpressionOptions {
 export async function parseRegularExpressions(options: RegularExpressionOptions): Promise<string> {
   return executeWithTempFile(options, (tempPath) => ({
     command: 'cargo',
-    args: ['run', '-p', 'oxc_parser', '--example', 'regular_expression', tempPath]
+    args: ['run', '-p', 'oxc_parser', '--example', 'regular_expression', tempPath],
   }));
 }
 
@@ -328,7 +328,12 @@ export async function visitRegex(options: RegexVisitorOptions): Promise<string> 
 
   try {
     const result = await spawnCommand('cargo', [
-      'run', '-p', 'oxc_regular_expression', '--example', 'regex_visitor', tempPath
+      'run',
+      '-p',
+      'oxc_regular_expression',
+      '--example',
+      'regex_visitor',
+      tempPath,
     ]);
     return result;
   } finally {
@@ -358,7 +363,12 @@ export async function parseLiteral(options: ParseLiteralOptions): Promise<string
 
   try {
     const result = await spawnCommand('cargo', [
-      'run', '-p', 'oxc_regular_expression', '--example', 'parse_literal', tempPath
+      'run',
+      '-p',
+      'oxc_regular_expression',
+      '--example',
+      'parse_literal',
+      tempPath,
     ]);
     return result;
   } finally {
