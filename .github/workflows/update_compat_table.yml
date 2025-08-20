@@ -48,10 +48,13 @@ jobs:
 
       - name: Check if update is needed
         id: check-update
+        env:
+          LATEST_SHA: ${{ steps.get-sha.outputs.latest_sha }}
+          CURRENT_SHA: ${{ steps.current-sha.outputs.current_sha }}
         run: |
-          if [ "${{ steps.get-sha.outputs.latest_sha }}" != "${{ steps.current-sha.outputs.current_sha }}" ]; then
+          if [ "$LATEST_SHA" != "$CURRENT_SHA" ]; then
             echo "update_needed=true" >> $GITHUB_OUTPUT
-            echo "Update needed: ${{ steps.current-sha.outputs.current_sha }} -> ${{ steps.get-sha.outputs.latest_sha }}"
+            echo "Update needed: $CURRENT_SHA -> $LATEST_SHA"
           else
             echo "update_needed=false" >> $GITHUB_OUTPUT
             echo "No update needed, SHAs are the same"
@@ -60,9 +63,12 @@ jobs:
       - name: Update package.json with new SHA
         if: steps.check-update.outputs.update_needed == 'true'
         working-directory: tasks/compat_data
+        env:
+          LATEST_SHA: ${{ steps.get-sha.outputs.latest_sha }}
+          CURRENT_SHA: ${{ steps.current-sha.outputs.current_sha }}
         run: |
           # Update the SHA in package.json
-          sed -i "s/#${{ steps.current-sha.outputs.current_sha }}/#${{ steps.get-sha.outputs.latest_sha }}/g" package.json
+          sed -i "s/#$CURRENT_SHA/#$LATEST_SHA/g" package.json
           echo "Updated package.json with new SHA"
 
       - name: Install dependencies and run build
@@ -90,6 +96,9 @@ jobs:
       # - name: Create Pull Request
         # if: steps.check-update.outputs.update_needed == 'true' && steps.changes.outputs.has_changes == 'true'
         # uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        # env:
+          # LATEST_SHA: ${{ steps.get-sha.outputs.latest_sha }}
+          # CURRENT_SHA: ${{ steps.current-sha.outputs.current_sha }}
         # with:
           # token: ${{ secrets.GITHUB_TOKEN }}
           # commit-message: "chore: update compat-table to ${{ steps.get-sha.outputs.latest_sha }}"
