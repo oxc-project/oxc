@@ -1,6 +1,7 @@
 use std::{
     alloc::{self, GlobalAlloc, Layout, System},
     mem::ManuallyDrop,
+    num::NonZeroUsize,
     ops::Deref,
     ptr::NonNull,
     sync::{
@@ -19,23 +20,95 @@ use crate::{
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
 
+/// Maximum number of threads supported.
+///
+/// This is the same value that Rayon uses.
+/// <https://github.com/rayon-rs/rayon/blob/7af20d7692d5decbcb4adcaa079cd607e3e50814/rayon-core/src/sleep/counters.rs#L55-L77>
+///
+/// We don't use `rayon::max_num_threads()` to get this value because Rayon's docs state that
+/// "value may vary between different targets, and is subject to change in new Rayon versions".
+/// <https://docs.rs/rayon/latest/rayon/fn.max_num_threads.html>
+///
+/// We need an absolute guarantee that maximum `WorkerFlagsCount` is less than `TWO_GIB` minus size of
+/// all metadata, so worker thread flags definitely fit in the allocator chunk. So we hard-code it.
+///
+/// If Rayon decreases its max thread count in future, it's fine - thread count will never reach our limit.
+/// If Rayon increases its max thread count, that's also not too problematic - we just impose a lower limit
+/// than Rayon, and panic if that limit is exceeded. We can raise the limit if needed.
+///
+/// This is all academic anyway. It seems unlikely any machine running Oxc will have anywhere near
+/// 65535 CPU cores!
+const MAX_THREADS: usize = (1 << 16) - 1; // 65535
+
+mod worker_flags_count {
+    use super::*;
+
+    /// Number of bytes for worker thread flags in a [`FixedSizeAllocator`].
+    ///
+    /// Wrapper around `NonZeroUsize` which limits value to between 16 and `MAX_THREADS + 1`,
+    /// and a multiple of 16.
+    #[derive(Clone, Copy)]
+    #[repr(transparent)]
+    pub struct WorkerFlagsCount {
+        count: NonZeroUsize,
+    }
+
+    impl WorkerFlagsCount {
+        /// Create a new [`WorkerFlagsCount`] for the specified number of threads.
+        ///
+        /// # Panics
+        /// Panics if `thread_count` is 0 or exceeds `MAX_THREADS`.
+        #[inline]
+        pub fn new(thread_count: usize) -> Self {
+            assert!(thread_count > 0, "Thread count cannot be 0");
+            assert!(thread_count <= MAX_THREADS, "Thread count cannot exceed {MAX_THREADS}");
+
+            // Worker flags are stored at end of allocator chunks, just before `ChunkFooter`.
+            // Using a multiple of 16 may make it a little faster to initialize the flags bytes.
+            let count = thread_count.next_multiple_of(16);
+            // SAFETY: We checked that `count > 0` above
+            let count = unsafe { NonZeroUsize::new_unchecked(count) };
+            WorkerFlagsCount { count }
+        }
+
+        /// Get the worker flags count.
+        #[inline]
+        pub fn get(self) -> usize {
+            self.count.get()
+        }
+    }
+}
+use worker_flags_count::WorkerFlagsCount;
+
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
 pub struct AllocatorPool {
     /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
+    /// Number of bytes reserved for flags indicating which JS worker threads have been sent an allocator
+    worker_flags_count: WorkerFlagsCount,
     /// ID to assign to next `Allocator` that's created
     next_id: AtomicU32,
 }
 
 impl AllocatorPool {
     /// Creates a new [`AllocatorPool`] for use across the specified number of threads.
+    ///
+    /// # Panics
+    /// Panics if `thread_count` is 0 or exceeds `MAX_THREADS`.
     pub fn new(thread_count: usize) -> AllocatorPool {
+        let worker_flags_count = WorkerFlagsCount::new(thread_count);
+
         // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
         // in case not all threads end up being used (e.g. language server without `import` plugin)
         let allocators = Vec::with_capacity(thread_count);
-        AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
+
+        AllocatorPool {
+            allocators: Mutex::new(allocators),
+            worker_flags_count,
+            next_id: AtomicU32::new(0),
+        }
     }
 
     /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
@@ -58,7 +131,7 @@ impl AllocatorPool {
             // Protect against IDs wrapping around.
             // TODO: Does this work? Do we need it anyway?
             assert!(id < u32::MAX, "Created too many allocators");
-            FixedSizeAllocator::new(id)
+            FixedSizeAllocator::new(id, self.worker_flags_count)
         });
 
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
@@ -98,7 +171,7 @@ impl Drop for AllocatorGuard<'_> {
     fn drop(&mut self) {
         // SAFETY: After taking ownership of the `FixedSizeAllocator`, we do not touch the `ManuallyDrop` again
         let mut allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
-        allocator.reset();
+        allocator.reset(self.pool.worker_flags_count);
         self.pool.add(allocator);
     }
 }
@@ -179,7 +252,8 @@ pub const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC
 ///                                                         ALLOCATOR
 /// <----------------------------------------->             `Allocator` chunk (`CHUNK_SIZE` bytes)
 ///                                      <---->             Bumpalo's `ChunkFooter` (aligned on 16)
-/// <----------------------------------->                   `Allocator` chunk data storage (for AST)
+///                                <---->                   Worker thread flags (aligned on 16)
+/// <----------------------------->                         `Allocator` chunk data storage (for AST)
 ///
 ///                                                         METADATA
 ///                                            <---->       `RawTransferMetadata`
@@ -197,6 +271,9 @@ pub const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC
 /// * `BLOCK_SIZE` is a multiple of 16.
 /// * `RawTransferMetadata` is 16 bytes.
 /// * Size of `FixedSizeAllocatorMetadata` is rounded up to a multiple of 16.
+///
+/// TODO: This layout is a bit of a mess, and could be simplified.
+/// All the metadata could be stored inside the `Allocator` chunk.
 pub struct FixedSizeAllocator {
     /// `Allocator` which utilizes part of the original allocation
     allocator: ManuallyDrop<Allocator>,
@@ -205,7 +282,7 @@ pub struct FixedSizeAllocator {
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: u32, worker_flags_count: WorkerFlagsCount) -> Self {
         // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
         // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
         // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
@@ -269,24 +346,49 @@ impl FixedSizeAllocator {
             metadata_ptr.write(metadata);
         }
 
-        Self { allocator }
+        // Now that `FixedSizeAllocatorMetadata` is written, it's safe to wrap the `Allocator`
+        // in a `FixedSizeAllocator`.
+        // Do this now so the allocation gets freed in case of a panic later in this function.
+        let fixed_size_allocator = Self { allocator };
+        let allocator = &*fixed_size_allocator.allocator;
+
+        // Initialize worker thread flags.
+        // SAFETY: `data_end_ptr` is pointer to very end of the data region of the chunk.
+        // `worker_flags_count.get()` is guaranteed to be less than size of the chunk's data section,
+        // so subtracting it from `data_end_ptr` cannot go out of bounds of the chunk.
+        let flags_ptr = unsafe { allocator.data_end_ptr().sub(worker_flags_count.get()) };
+        // SAFETY: `flags_ptr` is valid for writing `flags_layout.size()` bytes.
+        // `u8` has no alignment requirements.
+        // These bytes will be read as `bool`s. 0 is a valid value for `bool` (`false`).
+        unsafe { flags_ptr.write_bytes(0, worker_flags_count.get()) };
+
+        // Set cursor to before flags, so they're not overwritten.
+        // SAFETY: `flags_ptr` points to within allocator chunk, and after chunk's data pointer.
+        unsafe { allocator.set_cursor_ptr(flags_ptr) };
+
+        fixed_size_allocator
     }
 
     /// Reset this [`FixedSizeAllocator`].
-    fn reset(&mut self) {
-        // Set cursor back to end
-        self.allocator.reset();
+    fn reset(&mut self, worker_flags_count: WorkerFlagsCount) {
+        // Set cursor back to end (but before the worker thread flags)
+        let data_end_ptr = self.allocator.data_end_ptr();
+        // SAFETY: `data_end_ptr` is pointer to very end of the data region of the chunk.
+        // `worker_flags_count.get()` is guaranteed to be less than size of the chunk's data section,
+        // so subtracting it from `data_end_ptr` cannot go out of bounds of the chunk.
+        let cursor_ptr = unsafe { data_end_ptr.sub(worker_flags_count.get()) };
+        // SAFETY: `cursor_ptr` points to within allocator chunk (see above)
+        unsafe { self.allocator.set_cursor_ptr(cursor_ptr) };
 
         // Set data pointer back to start.
         // SAFETY: Fixed-size allocators have data pointer originally aligned on `BLOCK_ALIGN`,
         // and size less than `BLOCK_ALIGN`. So we can restore original data pointer by rounding down
-        // to next multiple of `BLOCK_ALIGN`.
+        // any pointer to within the chunk to next multiple of `BLOCK_ALIGN`.
         // We're restoring the original data pointer, so it cannot break invariants about alignment,
         // being within the chunk's allocation, or being before cursor pointer.
         unsafe {
-            let data_ptr = self.allocator.data_ptr();
-            let offset = data_ptr.as_ptr() as usize % BLOCK_ALIGN;
-            let data_ptr = data_ptr.sub(offset);
+            let offset = cursor_ptr.as_ptr() as usize % BLOCK_ALIGN;
+            let data_ptr = cursor_ptr.sub(offset);
             self.allocator.set_data_ptr(data_ptr);
         }
     }

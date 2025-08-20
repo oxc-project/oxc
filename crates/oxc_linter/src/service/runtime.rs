@@ -252,6 +252,8 @@ impl Runtime {
         // > In the future, the default behavior may change to dynamically add or remove threads as needed.
         // https://docs.rs/rayon/1.11.0/rayon/struct.ThreadPoolBuilder.html#method.num_threads
         //
+        // That behavior change would break the assumption that number of threads is constant after
+        // this call, which could result in writing out of bounds of the worker threads flags array.
         // However, I (@overlookmotel) assume that would be considered a breaking change,
         // so we don't have to worry about it until Rayon v2.
         // When Rayon v2 is released and we upgrade to it, we'll need to revisit this and make sure
