@@ -1,7 +1,7 @@
 {
   "name": "compat-data",
   "scripts": {
-    "init": "degit compat-table/compat-table#b3427ba3a2d6fd2dc427c3dfcf191832f634eb06 compat-table",
+    "init": "degit compat-table/compat-table#047878d9b67327ebd642ea855649e029fe066a50 compat-table",
     "build": "node build.js"
   },
   "devDependencies": {
