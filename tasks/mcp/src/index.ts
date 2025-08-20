@@ -3,6 +3,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+
 import { parseCode } from './parser.js';
 
 /**
@@ -62,14 +63,6 @@ class McpOxcServer {
                   type: 'boolean',
                   description: 'Whether to include extracted comments in the output',
                   default: false,
-                },
-                additionalArgs: {
-                  type: 'array',
-                  items: {
-                    type: 'string',
-                  },
-                  description: 'Additional command line arguments to pass to the parser',
-                  default: [],
                 },
               },
               required: ['sourceCode'],

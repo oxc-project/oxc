@@ -37,21 +37,8 @@ function testMcpServer() {
       params: {},
     };
 
-    const echoRequest = {
-      jsonrpc: '2.0',
-      id: 2,
-      method: 'tools/call',
-      params: {
-        name: 'echo',
-        arguments: {
-          message: 'Hello, MCP!',
-        },
-      },
-    };
-
     // Send requests
     server.stdin.write(JSON.stringify(listToolsRequest) + '\n');
-    server.stdin.write(JSON.stringify(echoRequest) + '\n');
     server.stdin.end();
 
     server.on('close', (code) => {

@@ -2,7 +2,7 @@ import { unlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
-import { spawnCommand } from './spawn';
+import { spawnCommand } from './spawn.js';
 
 export interface ParseOptions {
   sourceCode: string;
@@ -10,7 +10,6 @@ export interface ParseOptions {
   showAst?: boolean;
   showEstree?: boolean;
   showComments?: boolean;
-  additionalArgs?: string[];
 }
 
 export async function parseCode(options: ParseOptions): Promise<string> {
