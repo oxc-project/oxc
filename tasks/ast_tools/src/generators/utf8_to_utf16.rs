@@ -36,7 +36,6 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 /// The only exceptions are:
 ///
 /// * Types where a shorthand syntax means 2 nodes have same span e.g. `const {x} = y;`, `export {x}`.
-/// * `WithClause`, where `IdentifierName` for `with` keyword has span outside of the `WithClause`.
 /// * `TemplateLiteral`s and `TSTemplateLiteralType`s, where `quasis` and `expressions` are interleaved.
 /// * Decorators before `export` in `@dec export class C {}` / `@dec export default class {}`
 ///   have span before the start of `ExportNamedDeclaration` / `ExportDefaultDeclaration` span.
@@ -62,7 +61,6 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportDefaultDeclaration",
         "ExportSpecifier",
         "ImportSpecifier",
-        "WithClause",
         "TemplateLiteral",
         "TSTemplateLiteralType",
     ]

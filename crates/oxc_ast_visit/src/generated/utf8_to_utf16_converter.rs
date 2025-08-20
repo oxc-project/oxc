@@ -529,8 +529,9 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     }
 
     fn visit_with_clause(&mut self, it: &mut WithClause<'a>) {
-        // Custom implementation
-        self.convert_with_clause(it);
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_with_clause(self, it);
+        self.convert_offset(&mut it.span.end);
     }
 
     fn visit_import_attribute(&mut self, it: &mut ImportAttribute<'a>) {

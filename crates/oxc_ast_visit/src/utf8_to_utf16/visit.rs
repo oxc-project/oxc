@@ -254,13 +254,6 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut specifier.span.end);
     }
 
-    pub(crate) fn convert_with_clause(&mut self, with_clause: &mut WithClause<'_>) {
-        // `WithClause::attributes_keyword` has a span before start of the `WithClause`.
-        // ESTree does not include that node, nor the span of the `WithClause` itself,
-        // so skip processing those spans.
-        self.visit_import_attributes(&mut with_clause.with_entries);
-    }
-
     pub(crate) fn convert_template_literal(&mut self, lit: &mut TemplateLiteral<'_>) {
         self.convert_offset(&mut lit.span.start);
 
