@@ -152,7 +152,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
             return;
         }
 
-        let metadata_decorators = ctx.ast.vec_from_array([
+        method.decorators.extend([
             self.create_metadata_decorate("design:type", Self::global_function(ctx), ctx),
             {
                 let serialized_type =
@@ -164,8 +164,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
                 self.create_metadata_decorate("design:returntype", serialized_type, ctx)
             },
         ]);
-
-        method.decorators.extend(metadata_decorators);
     }
 
     #[inline]
