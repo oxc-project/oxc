@@ -1,8 +1,29 @@
-commit: 4b5d36ab
+commit: baa48a41
 
 semantic_test262 Summary:
-AST Parsed     : 44422/44422 (100.00%)
-Positive Passed: 42790/44422 (96.33%)
+AST Parsed     : 44517/44517 (100.00%)
+Positive Passed: 42876/44517 (96.31%)
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
+Cannot assign to this expression
+
 semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Bindings mismatch:
 after transform: ScopeId(4): []
@@ -14586,6 +14607,28 @@ rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["a", "b", "rest"]
+
+semantic Error: tasks/coverage/test262/test/language/statements/for-of/head-await-using-bound-names-fordecl-tdz.js
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): []
+rebuilt        : SymbolId(2): [ReferenceId(9)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(1): [ReferenceId(4)]
+rebuilt        : SymbolId(5): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(1) "x"
+rebuilt        : SymbolId(2) "x"
+
+semantic Error: tasks/coverage/test262/test/language/statements/for-of/head-using-bound-names-fordecl-tdz.js
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): []
+rebuilt        : SymbolId(1): [ReferenceId(4)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(1): [ReferenceId(3)]
+rebuilt        : SymbolId(4): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(1) "x"
+rebuilt        : SymbolId(1) "x"
 
 semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
 Bindings mismatch:

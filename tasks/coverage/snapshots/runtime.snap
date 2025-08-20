@@ -1,8 +1,8 @@
-commit: 4b5d36ab
+commit: baa48a41
 
 runtime Summary:
-AST Parsed     : 18261/18261 (100.00%)
-Positive Passed: 17284/18261 (94.65%)
+AST Parsed     : 18265/18265 (100.00%)
+Positive Passed: 17297/18265 (94.70%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -245,9 +245,6 @@ Test262Error: Expected SameValue(«true», «false») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/async-generator/forbidden-ext/b1/async-gen-named-func-expr-forbidden-ext-direct-access-prop-caller.js
 Test262Error: Expected SameValue(«true», «false») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/async-generator/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
 minify Error: tasks/coverage/test262/test/language/expressions/async-generator/name.js
 Test262Error: obj['name'] descriptor value should be func; obj['name'] value should be func
@@ -1194,9 +1191,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-codegen Error: tasks/coverage/test262/test/language/expressions/generators/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
 minify Error: tasks/coverage/test262/test/language/expressions/generators/name.js
 Test262Error: obj['name'] descriptor value should be func; obj['name'] value should be func
 
@@ -1398,18 +1392,6 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
 
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-getvalue.js
-Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-compound-assign.js
-Test262Error: Expected SameValue(«0», «2») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue-increment.js
-Test262Error: Expected SameValue(«0», «2») to be true
-
-codegen Error: tasks/coverage/test262/test/language/expressions/super/prop-expr-getsuperbase-before-topropertykey-putvalue.js
-Test262Error: Expected SameValue(«"bad"», «"ok"») to be true
-
 transform Error: tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-arguments.js
 Test262Error: Expected SameValue(«true», «false») to be true
 
@@ -1457,9 +1439,6 @@ Test262Error: Expected SameValue(«true», «false») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-caller.js
 Test262Error: Expected SameValue(«true», «false») to be true
-
-codegen Error: tasks/coverage/test262/test/language/statements/async-generator/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
 transform Error: tasks/coverage/test262/test/language/statements/async-generator/return-undefined-implicit-and-explicit.js
 Test262Error: Actual [tick 1, tick 2, g1 ret, g2 ret, g3 ret, g4 ret] and expected [tick 1, g1 ret, g2 ret, tick 2, g3 ret, g4 ret] should have the same contents. Ticks for implicit and explicit return undefined
@@ -1649,9 +1628,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-elem-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-codegen Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-id-elision-next-err.js
-io: Connection reset by peer (os error 54)
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2888,9 +2864,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/generators/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-codegen Error: tasks/coverage/test262/test/language/statements/generators/generator-created-after-decl-inst.js
-Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/let/block-local-use-before-initialization-in-prior-statement.js
 Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all

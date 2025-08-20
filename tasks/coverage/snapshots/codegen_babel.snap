@@ -1,8 +1,8 @@
-commit: 98d18aa4
+commit: 41d96516
 
 codegen_babel Summary:
-AST Parsed     : 2419/2419 (100.00%)
-Positive Passed: 2417/2419 (99.92%)
+AST Parsed     : 2423/2423 (100.00%)
+Positive Passed: 2421/2423 (99.92%)
 Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/47/input.js
 
 Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/48/input.js

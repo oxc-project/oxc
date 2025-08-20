@@ -1,9 +1,79 @@
-commit: 4b5d36ab
+commit: baa48a41
 
 parser_test262 Summary:
-AST Parsed     : 44422/44422 (100.00%)
-Positive Passed: 44422/44422 (100.00%)
-Negative Passed: 4519/4519 (100.00%)
+AST Parsed     : 44510/44517 (99.98%)
+Positive Passed: 44510/44517 (99.98%)
+Negative Passed: 4535/4535 (100.00%)
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js:27:8]
+ 26 │ assert.throws(ReferenceError, function() {
+ 27 │   for (f() in [1]) {}
+    ·        ───
+ 28 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js:27:8]
+ 26 │ assert.throws(ReferenceError, function() {
+ 27 │   for (f() of [1]) {}
+    ·        ───
+ 28 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js:33:3]
+ 32 │ assert.throws(ReferenceError, function() {
+ 33 │   f() += g();
+    ·   ───
+ 34 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js:27:3]
+ 26 │ assert.throws(ReferenceError, function() {
+ 27 │   f()++;
+    ·   ───
+ 28 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js:27:5]
+ 26 │ assert.throws(ReferenceError, function() {
+ 27 │   ++f();
+    ·     ───
+ 28 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js:33:3]
+ 32 │ assert.throws(ReferenceError, function() {
+ 33 │   f() = g();
+    ·   ───
+ 34 │ });
+    ╰────
+
+Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
+
+  × Cannot assign to this expression
+    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js:20:3]
+ 19 │ assert.throws(ReferenceError, function() {
+ 20 │   async() = 1;
+    ·   ───────
+ 21 │ });
+    ╰────
+
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -4621,10 +4691,45 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Cannot assign to this expression
-    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-arguments.js:21:1]
- 20 │ 
- 21 │ f() = 1;
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-as-for-in-lhs.js:25:6]
+ 24 │ 
+ 25 │ for (f() in [1]) {}
+    ·      ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-as-for-of-lhs.js:25:6]
+ 24 │ 
+ 25 │ for (f() of [1]) {}
+    ·      ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-in-compound-assignment.js:25:1]
+ 24 │ 
+ 25 │ f() += 1;
     · ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-in-logical-assignment.js:25:1]
+ 24 │ 
+ 25 │ f() &&= 1;
+    · ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-in-postfix-update.js:25:1]
+ 24 │ 
+ 25 │ f()++;
+    · ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression-in-prefix-update.js:25:3]
+ 24 │ 
+ 25 │ ++f();
+    ·   ───
     ╰────
 
   × Cannot assign to this expression
@@ -4632,6 +4737,13 @@ Negative Passed: 4519/4519 (100.00%)
  20 │ 
  21 │ f()`` = 1;
     · ─────
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-callexpression.js:25:1]
+ 24 │ 
+ 25 │ f() = 1;
+    · ───
     ╰────
 
   × Cannot assign to this expression
@@ -5731,9 +5843,16 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Cannot assign to this expression
-    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-callexpression-arguments.js:24:2]
- 23 │ 
- 24 │ (f()) = 1;
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-callexpression-in-compound-assignment.js:28:2]
+ 27 │ 
+ 28 │ (f()) += 1;
+    ·  ───
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-callexpression-in-logical-assignment.js:28:2]
+ 27 │ 
+ 28 │ (f()) &&= 1;
     ·  ───
     ╰────
 
@@ -5742,6 +5861,13 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ 
  24 │ (f()``) = 1;
     ·  ─────
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-callexpression.js:28:2]
+ 27 │ 
+ 28 │ (f()) = 1;
+    ·  ───
     ╰────
 
   × Cannot assign to this expression
@@ -34356,6 +34482,14 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × for-of loop variable declaration may not have an initializer
+    ╭─[test262/test/language/statements/for-await-of/head-await-using-init.js:21:14]
+ 20 │   const obj = { async [Symbol.asyncDispose]() {} };
+ 21 │   for await (await using x = obj of []) {}
+    ·              ───────────────────
+ 22 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
     ╭─[test262/test/language/statements/for-await-of/head-const-init.js:20:14]
  19 │ async function fn() {
  20 │   for await (const x = 1 of []) {}
@@ -34369,6 +34503,14 @@ Negative Passed: 4519/4519 (100.00%)
  20 │   for await (let x = 1 of []) {}
     ·              ─────────
  21 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[test262/test/language/statements/for-await-of/head-using-init.js:21:14]
+ 20 │   const obj = { [Symbol.dispose]() {} };
+ 21 │   for await (using x = obj of []) {}
+    ·              ─────────────
+ 22 │ }
     ╰────
 
   × for-of loop variable declaration may not have an initializer
@@ -35429,6 +35571,34 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Identifier `x` has already been declared
+    ╭─[test262/test/language/statements/for-of/head-await-using-bound-names-in-stmt.js:18:18]
+ 17 │ 
+ 18 │ for (await using x of []) {
+    ·                  ┬
+    ·                  ╰── `x` has already been declared here
+ 19 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 20 │ }
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `await using` declaration
+    ╭─[test262/test/language/statements/for-of/head-await-using-bound-names-let.js:17:20]
+ 16 │ async function f() {
+ 17 │   for (await using let of []) {}
+    ·                    ───
+ 18 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[test262/test/language/statements/for-of/head-await-using-init.js:22:8]
+ 21 │ async function f() {
+ 22 │   for (await using x = obj of []) {}
+    ·        ───────────────────
+ 23 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/for-of/head-const-bound-names-dup.js:18:13]
  17 │ 
  18 │ for (const [x, x] of []) {}
@@ -35555,6 +35725,32 @@ Negative Passed: 4519/4519 (100.00%)
  18 │ 
  19 │ for (this of []) {}
     ·      ────
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[test262/test/language/statements/for-of/head-using-bound-names-in-stmt.js:18:12]
+ 17 │ 
+ 18 │ for (using x of []) {
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+ 19 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 20 │ }
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `using` declaration
+    ╭─[test262/test/language/statements/for-of/head-using-bound-names-let.js:17:12]
+ 16 │ 
+ 17 │ for (using let of []) {}
+    ·            ───
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[test262/test/language/statements/for-of/head-using-init.js:21:6]
+ 20 │ const obj = { [Symbol.dispose]() { } };
+ 21 │ for (using x = obj of []) {}
+    ·      ─────────────
     ╰────
 
   × for-of loop variable declaration may not have an initializer
