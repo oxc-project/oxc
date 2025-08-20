@@ -111,6 +111,18 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+    #[inline]
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_class(class, ctx);
+        }
+    }
+
+    #[inline]
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class(class, ctx);
+    }
+
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -123,18 +135,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        }
-    }
-
-    #[inline]
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.transform_class(class, ctx);
-    }
-
-    #[inline]
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_class(class, ctx);
         }
     }
 
