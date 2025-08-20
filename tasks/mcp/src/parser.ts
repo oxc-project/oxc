@@ -53,7 +53,7 @@ export async function parseCode(options: ParseOptions): Promise<string> {
       // Clean up temporary file
       try {
         unlinkSync(tmpFile);
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     }
