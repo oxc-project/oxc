@@ -419,7 +419,7 @@ const CHUNK_SIZE: usize = 32;
 const CHUNK_ALIGNMENT: usize = align_of::<AlignedChunk>();
 const _: () = {
     assert!(CHUNK_SIZE >= CHUNK_ALIGNMENT);
-    assert!(CHUNK_SIZE % CHUNK_ALIGNMENT == 0);
+    assert!(CHUNK_SIZE.is_multiple_of(CHUNK_ALIGNMENT));
     assert!(CHUNK_SIZE == size_of::<AlignedChunk>());
 };
 
