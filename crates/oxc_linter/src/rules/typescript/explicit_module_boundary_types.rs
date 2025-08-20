@@ -513,6 +513,23 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
 
+    fn visit_statements(&mut self, it: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        for stmt in it {
+            match stmt {
+                Statement::ReturnStatement(_) => {
+                    self.visit_statement(stmt);
+                }
+                // Only process expression statements when they are the sole statement in the block.
+                // This is typically to handle cases like concise arrow functions or modules with a single expression.
+                // If this logic needs to be expanded to handle more cases, revisit this condition.
+                Statement::ExpressionStatement(_) if it.len() == 1 => {
+                    self.visit_statement(stmt);
+                }
+                _ => {}
+            }
+        }
+    }
+
     fn visit_variable_declarator(&mut self, var: &VariableDeclarator<'a>) {
         if self.rule.allow_typed_function_expressions && var.id.type_annotation.is_some() {
             return;
@@ -1486,6 +1503,11 @@ mod test {
                 None,
             ),
             ("export namespace B{return}", None),
+            ("function Test(): void { const _x = () => {}; } export default Test;", None),
+            (
+                "function Test(): void { const _x = () => { }; } function Test2() { return (): void => { }; } export { Test2 };",
+                None,
+            ),
         ];
 
         let fail = vec![
@@ -1963,6 +1985,10 @@ mod test {
               }
             }
             ",
+                None,
+            ),
+            (
+                "function Test(): void { const _x = () => { }; } function Test2() { return () => { }; } export { Test2 };",
                 None,
             ),
         ];
