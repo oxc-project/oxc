@@ -72,16 +72,16 @@ impl TsGoLintState {
                 .stdout(std::process::Stdio::piped());
 
             if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
-                cmd.arg(format!("-trace={}", trace_file));
+                cmd.arg(format!("-trace={trace_file}"));
             }
             if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
-                cmd.arg(format!("-cpuprof={}", cpuprof_file));
+                cmd.arg(format!("-cpuprof={cpuprof_file}"));
             }
             if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
-                cmd.arg(format!("-heap={}", heap_file));
+                cmd.arg(format!("-heap={heap_file}"));
             }
             if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
-                cmd.arg(format!("-allocs={}", allocs_file));
+                cmd.arg(format!("-allocs={allocs_file}"));
             }
 
             let child = cmd.spawn();
