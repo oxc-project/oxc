@@ -1778,6 +1778,7 @@ mod test {
         // Cannot fold
         fold("x = [foo(), 0].length", "x = [foo(),0].length");
         fold_same("x = y.length");
+        fold_same("[...[1, 2, 3]].length");
     }
 
     #[test]
