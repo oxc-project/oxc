@@ -1,23 +1,9 @@
-import { mkdirSync, unlinkSync, writeFileSync } from 'fs';
-import { join } from 'path';
-
-import { spawnCommand } from './spawn.js';
-
-/**
- * Write source code to a temporary file and return the path
- */
-function writeTempFile(sourceCode: string, filename: string): string {
-  // Create temp directory if it doesn't exist
-  mkdirSync('/tmp/oxc-mcp', { recursive: true });
 import { mkdirSync, unlinkSync, writeFileSync, mkdtempSync } from 'fs';
 import { join } from 'path';
 import * as os from 'os';
 
 import { spawnCommand } from './spawn.js';
 
-/**
- * Write source code to a temporary file and return the path
- */
 // Create a unique temp directory for this process
 const tempDir: string = mkdtempSync(join(os.tmpdir(), 'oxc-mcp-'));
 
@@ -305,24 +291,7 @@ export async function visitRegex(options: RegexVisitorOptions): Promise<string> 
   }
 
   const regexContent = `/${pattern}/${flags}`;
-  const tempPath = writeTempFile(regexContent, 'regex.txt');
-
-  try {
-    const result = await spawnCommand('cargo', [
-      'run',
-      '-p',
-      'oxc_regular_expression',
-      '--example',
-      'regex_visitor',
-      tempPath,
-    ]);
-    return result;
-  } finally {
-    try {
-      unlinkSync(tempPath);
-    } catch {
-      // Ignore cleanup errors
-    }
+  
   return executeWithTempFile(
     { sourceCode: regexContent, filename: 'regex.txt' },
     (tempPath) => ({
@@ -353,23 +322,19 @@ export async function parseLiteral(options: ParseLiteralOptions): Promise<string
   }
 
   const literalContent = `/${pattern}/${flags}`;
-  const tempPath = writeTempFile(literalContent, 'regex.txt');
-
-  try {
-    const result = await spawnCommand('cargo', [
-      'run',
-      '-p',
-      'oxc_regular_expression',
-      '--example',
-      'parse_literal',
-      tempPath,
-    ]);
-    return result;
-  } finally {
-    try {
-      unlinkSync(tempPath);
-    } catch {
-      // Ignore cleanup errors
-    }
-  }
+  
+  return executeWithTempFile(
+    { sourceCode: literalContent, filename: 'regex.txt' },
+    (tempPath) => ({
+      command: 'cargo',
+      args: [
+        'run',
+        '-p',
+        'oxc_regular_expression',
+        '--example',
+        'parse_literal',
+        tempPath,
+      ],
+    })
+  );
 }
