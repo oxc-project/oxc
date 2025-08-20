@@ -36,6 +36,15 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Install just
+      shell: bash
+      run: |
+        # Install just if not already available
+        if ! command -v just &> /dev/null; then
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        fi
+    
     - name: Clone submodules using enhanced just command
       shell: bash
       run: |
