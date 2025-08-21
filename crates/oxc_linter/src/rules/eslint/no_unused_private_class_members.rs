@@ -232,7 +232,8 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::TSInstantiationExpression(_)
         | AstKind::TSNonNullExpression(_)
         | AstKind::TSTypeAssertion(_)
-        | AstKind::UpdateExpression(_) => {
+        | AstKind::UpdateExpression(_)
+        | AstKind::AwaitExpression(_) => {
             is_value_context(semantic.nodes().parent_node(kind.id()), semantic)
         }
 
@@ -452,6 +453,7 @@ fn test() {
         r"class C { #field = 1; static { const obj = new C(); console.log(obj.#field); } }",
         r"class C { #method() { return 42; } static { const obj = new C(); obj.#method(); } }",
         r"class C { #field = 1; static { const getField = obj => { return obj.#field; }; } }",
+        r"export class Database<const S extends idb.DBSchema> { readonly #db: Promise<idb.IDBPDatabase<S>>; constructor(name: string, version: number, hooks: idb.OpenDBCallbacks<S>) { this.#db = idb.openDB<S>(name, version, hooks); }  async read() { let db = await this.#db; } }",
     ];
 
     let fail = vec![
@@ -597,6 +599,7 @@ fn test() {
 			        }
 			    }
 			}",
+        r"class Foo { #awaitedMember; async method() { await this.#awaitedMember; } }",
     ];
 
     Tester::new(NoUnusedPrivateClassMembers::NAME, NoUnusedPrivateClassMembers::PLUGIN, pass, fail)
