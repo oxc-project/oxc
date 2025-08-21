@@ -30,6 +30,8 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }

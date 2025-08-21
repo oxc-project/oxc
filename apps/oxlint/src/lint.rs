@@ -15,10 +15,14 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
-    TsGoLintState,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DisableDirectivesBuilder,
+    ExternalLinter, ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintService,
+    LintServiceOptions, Linter, Oxlintrc, TsGoLintDisableDirectives, TsGoLintState, read_to_string,
 };
+use oxc_allocator::Allocator;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
@@ -31,6 +35,12 @@ pub struct LintRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
+}
+
+/// Shared parsing data for both tsgolint and main linter to eliminate duplicate parsing
+struct SharedParseData {
+    tsgolint_directives: FxHashMap<PathBuf, TsGoLintDisableDirectives>,
+    // TODO: Add semantic data and other shared parsing results for main linter
 }
 
 impl LintRunner {
@@ -296,19 +306,24 @@ impl LintRunner {
             .filter(|path| !config_store.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        // Run type-aware linting through tsgolint
+        // Run type-aware linting through tsgolint before main linter
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
+            // Parse files once and extract data for both tsgolint and main linter
+            let shared_data = Self::parse_files_once_for_shared_use(&files_to_lint);
+            
             if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
                 .with_silent(misc_options.silent)
-                .lint(&files_to_lint, tx_error.clone())
+                .lint(&files_to_lint, shared_data.tsgolint_directives, tx_error.clone())
             {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
             }
+            
+            // TODO: Pass shared_data.semantic_data to main linter to avoid re-parsing
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store.clone(), self.external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
@@ -334,6 +349,8 @@ impl LintRunner {
         }
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
+
+
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
@@ -548,6 +565,49 @@ impl LintRunner {
             Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
             Ok(None)
+        }
+    }
+
+    /// Parse files once and extract data for both tsgolint and main linter.
+    /// This eliminates duplicate parsing by doing the work upfront and sharing results.
+    fn parse_files_once_for_shared_use(
+        files: &[Arc<OsStr>],
+    ) -> SharedParseData {
+        let mut tsgolint_directives = FxHashMap::default();
+        
+        for file_path in files {
+            let path = Path::new(file_path);
+            
+            // Skip files that don't have supported source types for parsing
+            if SourceType::from_path(path).is_err() {
+                continue;
+            }
+            
+            // Read the file content
+            if let Ok(source_text) = read_to_string(path) {
+                // Parse the file to extract comments and semantic data
+                let allocator = Allocator::default();
+                let source_type = SourceType::from_path(path).unwrap_or_default();
+                let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+                let semantic_ret = SemanticBuilder::new().build(&parser_ret.program);
+                
+                // Build disable directives for tsgolint
+                let disable_directives = DisableDirectivesBuilder::new()
+                    .build(&source_text, semantic_ret.semantic.comments());
+                
+                // Convert to the format that can be passed to tsgolint
+                let tsgolint_directives_for_file = TsGoLintDisableDirectives::new(
+                    disable_directives.to_tsgolint_format()
+                );
+                    
+                tsgolint_directives.insert(path.to_path_buf(), tsgolint_directives_for_file);
+                
+                // TODO: Store semantic data and other parsed results for main linter reuse
+            }
+        }
+        
+        SharedParseData {
+            tsgolint_directives,
         }
     }
 }

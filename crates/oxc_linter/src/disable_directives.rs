@@ -125,7 +125,7 @@ impl<'a> DisableDirectives<'a> {
         self.used_disable_comments.borrow_mut().push(disable_directive);
     }
 
-    pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
+    pub fn contains(&self, rule_name: &str, span: Span) -> bool {
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -182,6 +182,21 @@ impl<'a> DisableDirectives<'a> {
 
     pub fn unused_enable_comments(&self) -> &[(Option<&'a str>, Span)] {
         &self.unused_enable_comments
+    }
+
+    pub fn to_tsgolint_format(&self) -> Vec<(u32, u32, Option<String>, bool)> {
+        self.intervals
+            .iter()
+            .map(|interval| {
+                let (rule_name, is_next_line) = match interval.val {
+                    DisabledRule::All { is_next_line, .. } => (None, is_next_line),
+                    DisabledRule::Single { rule_name, is_next_line, .. } => {
+                        (Some(rule_name.to_string()), is_next_line)
+                    }
+                };
+                (interval.start, interval.stop, rule_name, is_next_line)
+            })
+            .collect()
     }
 
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment<'a>> {
