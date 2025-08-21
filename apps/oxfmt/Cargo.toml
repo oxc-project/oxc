@@ -1,0 +1,55 @@
+[package]
+name = "oxfmt"
+version = "0.1.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["lib"]
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+name = "oxfmt"
+path = "src/main.rs"
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_formatter = { workspace = true }
+oxc_span = { workspace = true }
+
+bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+cow-utils = { workspace = true }
+ignore = { workspace = true, features = ["simd-accel"] }
+napi = { workspace = true }
+rayon = { workspace = true }
+rustc-hash = { workspace = true }
+tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
+
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
+
+[dev-dependencies]
+
+[features]
+default = []
+allocator = ["dep:mimalloc-safe"]
