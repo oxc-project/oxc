@@ -4,16 +4,17 @@ use std::process::{ExitCode, Termination};
 pub enum CliRunResult {
     // Success
     None,
-    LintNoFilesFound,
+    FormatSucceeded,
     // Failure
+    FormatNoFilesFound,
     InvalidOptionConfig,
 }
 
 impl Termination for CliRunResult {
     fn report(self) -> ExitCode {
         match self {
-            Self::None | Self::LintNoFilesFound => ExitCode::SUCCESS,
-            Self::InvalidOptionConfig => ExitCode::FAILURE,
+            Self::None | Self::FormatSucceeded => ExitCode::SUCCESS,
+            Self::FormatNoFilesFound | Self::InvalidOptionConfig => ExitCode::FAILURE,
         }
     }
 }

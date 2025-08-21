@@ -1,13 +1,19 @@
-use std::io::{BufWriter, Write};
-
+mod command;
+mod format;
 mod result;
+mod walk;
 
 pub mod cli {
-    pub use crate::result::CliRunResult;
-    // pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
+    pub use crate::{
+        command::{FormatCommand, format_command},
+        format::FormatRunner,
+        result::CliRunResult,
+    };
 }
 
-use cli::CliRunResult;
+use std::io::BufWriter;
+
+use cli::{CliRunResult, FormatRunner, format_command};
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
@@ -24,28 +30,23 @@ pub fn format() -> CliRunResult {
     }
     let args = args.collect::<Vec<_>>();
 
-    // let cmd = crate::cli::lint_command();
-    // let command = match cmd.run_inner(&*args) {
-    //     Ok(cmd) => cmd,
-    //     Err(e) => {
-    //         e.print_message(100);
-    //         return if e.exit_code() == 0 {
-    //             CliRunResult::LintSucceeded
-    //         } else {
-    //             CliRunResult::InvalidOptionConfig
-    //         };
-    //     }
-    // };
+    let command = match format_command().run_inner(&*args) {
+        Ok(cmd) => cmd,
+        Err(e) => {
+            e.print_message(100);
+            return if e.exit_code() == 0 {
+                CliRunResult::FormatSucceeded
+            } else {
+                CliRunResult::InvalidOptionConfig
+            };
+        }
+    };
+    command.handle_threads();
 
-    // command.handle_threads();
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
-
-
-    // LintRunner::new(command, external_linter).run(&mut stdout)
-    writeln!(stdout, "Arguments: {args:?}",).unwrap();
-    CliRunResult::None
+    FormatRunner::new(command).run(&mut stdout)
 }
 
 /// To debug `oxc_formatter`:
