@@ -44,7 +44,7 @@ function testMcpServer() {
     server.on('close', (code) => {
       if (code === 0) {
         console.log('✓ MCP server started successfully');
-        console.log('Server output:', output);
+        console.log('Server output:', JSON.stringify(JSON.parse(output), null, 2));
         if (errorOutput) {
           console.log('Server errors:', errorOutput);
         }
