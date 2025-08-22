@@ -200,6 +200,8 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             status
         }
 
+        Statement::ThrowStatement(_) => StatementReturnStatus::AlwaysExplicit,
+
         _ => StatementReturnStatus::NotReturn,
     }
 }
@@ -447,5 +449,31 @@ mod tests {
         }
       ";
         parse_statement_and_test(source, StatementReturnStatus::AlwaysImplicit);
+    }
+
+    #[test]
+    fn test_throw_statement() {
+        let source = "
+        function foo() {
+          throw new Error('test');
+        }
+      ";
+        parse_statement_and_test(source, StatementReturnStatus::AlwaysExplicit);
+    }
+
+    #[test]
+    fn test_if_with_throw() {
+        let source = "
+        function foo() {
+          if (a) {
+            return 1;
+          } else if (b) {
+            return 2;
+          } else {
+            throw new Error('test');
+          }
+        }
+      ";
+        parse_statement_and_test(source, StatementReturnStatus::AlwaysExplicit);
     }
 }

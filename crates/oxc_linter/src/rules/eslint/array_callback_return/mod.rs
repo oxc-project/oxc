@@ -426,6 +426,10 @@ fn test() {
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
         ("return function() {}", None),
+        (
+            "array.map((node) => { if (isTaskNode(node)) { return someObj; } else if (isOtherNode(node)) { return otherObj; } else { throw new Error('Unsupported'); } })",
+            None,
+        ),
     ];
 
     let fail = vec![
