@@ -463,10 +463,214 @@ impl<'a> ReplaceGlobalDefines<'a> {
         for meta_property_define in &self.config.0.meta_property {
             if Self::is_meta_property_define(meta_property_define, member) {
                 let value = self.parse_value(&meta_property_define.value);
+                
+                // For wildcard patterns, check if this is a partial match that should
+                // preserve remaining property accesses
+                if meta_property_define.postfix_wildcard {
+                    if let Some(remaining_props) = self.get_remaining_properties_after_wildcard_match(meta_property_define, member) {
+                        if !remaining_props.is_empty() {
+                            // Partial match - build replacement with remaining properties
+                            let mut result = value;
+                            for prop_name in remaining_props.iter().rev() {
+                                let prop_ident = ctx.ast.identifier_name(SPAN, ctx.ast.atom(prop_name));
+                                result = ctx.ast.member_expression_static(SPAN, result, prop_ident, false).into();
+                            }
+                            return Some(result);
+                        }
+                    }
+                }
+                
+                // Full match or non-wildcard pattern
                 return Some(destructing_dot_define_optimizer(value, ctx));
             }
         }
         None
+    }
+
+    /// For wildcard patterns, determine what properties should remain after the replacement.
+    /// Returns None if this is not a proper wildcard match, or Some(Vec) with the remaining properties.
+    fn get_remaining_properties_after_wildcard_match(
+        &self,
+        meta_define: &MetaPropertyDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<Vec<String>> {
+        if !meta_define.postfix_wildcard {
+            return None;
+        }
+        
+        // For import.meta.env.*, we want to match import.meta.env.X and potentially keep .Y.Z.etc
+        // The original logic in is_meta_property_define should tell us if there's a partial match
+        
+        // Walk the expression chain to find where the pattern matches
+        let mut current = member;
+        let mut collected_props = Vec::new();
+        
+        loop {
+            // Check if the current expression is where the pattern matches exactly
+            if self.is_wildcard_match_point(meta_define, current) {
+                // Found the match point - the properties we collected so far are the remaining ones
+                return Some(collected_props);
+            }
+            
+            // Collect this property for potential remaining properties
+            collected_props.push(current.property.name.to_string());
+            
+            // Move to the next level
+            match &current.object {
+                Expression::StaticMemberExpression(next) => {
+                    current = next;
+                }
+                _ => break,
+            }
+        }
+        
+        None
+    }
+    
+    /// Check if this specific member expression is where a wildcard pattern would match.
+    /// For import.meta.env.*, this should match at the level where we have "someProperty"
+    /// and the object is "import.meta.env".
+    fn is_wildcard_match_point(
+        &self,
+        meta_define: &MetaPropertyDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> bool {
+        if !meta_define.postfix_wildcard {
+            return false;
+        }
+        
+        // For import.meta.env.* pattern
+        if meta_define.parts.len() == 1 {
+            // Check if the object is exactly import.meta.env
+            if let Expression::StaticMemberExpression(obj_member) = &member.object {
+                if obj_member.property.name.as_str() == meta_define.parts[0] {
+                    if let Expression::MetaProperty(meta) = &obj_member.object {
+                        return meta.meta.name == "import" && meta.property.name == "meta";
+                    }
+                }
+            }
+        }
+        
+        // For import.meta.* pattern
+        if meta_define.parts.is_empty() {
+            if let Expression::MetaProperty(meta) = &member.object {
+                return meta.meta.name == "import" && meta.property.name == "meta";
+            }
+        }
+        
+        false
+    }
+
+    /// Build a partial replacement where only part of the member expression chain is replaced.
+    /// For example, replace `import.meta.env` with `undefined` in `import.meta.env.n.e.s.t.e.d`
+    /// to get `(undefined).n.e.s.t.e.d`.
+    fn build_partial_replacement(
+        &self,
+        replacement_value: Expression<'a>,
+        member: &StaticMemberExpression<'a>,
+        match_depth: usize,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // Collect the property names that come before the matched part
+        // match_depth tells us how many levels down the match was found
+        // We want the properties from level 0 to level (match_depth - 1)
+        let mut remaining_properties = Vec::new();
+        let mut current = member;
+        
+        for _ in 0..match_depth {
+            remaining_properties.push(&current.property.name);
+            if let Expression::StaticMemberExpression(next) = &current.object {
+                current = next;
+            } else {
+                break;
+            }
+        }
+        
+        // Build the member expression chain with the replacement as the base
+        // The properties should be applied in reverse order (innermost to outermost)
+        let mut result = replacement_value;
+        for prop_name in remaining_properties.iter().rev() {
+            let prop_ident = ctx.ast.identifier_name(SPAN, ctx.ast.atom(prop_name));
+            result = ctx.ast.member_expression_static(SPAN, result, prop_ident, false).into();
+        }
+        
+        result
+    }
+
+    /// Check if a meta property pattern matches and return match information.
+    /// Returns (match_depth, is_full_match) where:
+    /// - match_depth: how many levels deep the match was found (0 = top level)
+    /// - is_full_match: whether the entire expression was matched
+    fn meta_property_match_info(
+        meta_define: &MetaPropertyDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<(usize, bool)> {
+        // Check each level of the member expression chain
+        let mut current = member;
+        let mut depth = 0;
+        
+        loop {
+            // Check if the pattern matches at this specific level (not the whole chain)
+            if Self::is_meta_property_define_exact(meta_define, current) {
+                // Found a match at this depth
+                let is_full_match = depth == 0;
+                return Some((depth, is_full_match));
+            }
+            
+            // Move to the next inner level
+            match &current.object {
+                Expression::StaticMemberExpression(inner) => {
+                    current = inner;
+                    depth += 1;
+                }
+                _ => break,
+            }
+        }
+        
+        None
+    }
+
+    /// Check if a meta property pattern matches exactly at this member expression level.
+    /// Unlike `is_meta_property_define`, this doesn't traverse the whole chain.
+    fn is_meta_property_define_exact(
+        meta_define: &MetaPropertyDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> bool {
+        // Handle the special case for import.meta.*
+        if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
+            match &member.object {
+                Expression::MetaProperty(meta) => {
+                    return meta.meta.name == "import" && meta.property.name == "meta";
+                }
+                _ => return false,
+            }
+        }
+        
+        // Handle patterns with specific parts like import.meta.env.*
+        // For wildcard patterns, we want to match when we have the pattern parts
+        // followed by exactly one more level that the wildcard will consume
+        if meta_define.parts.len() == 1 && meta_define.postfix_wildcard {
+            // For import.meta.env.*, we need to find a member expression where:
+            // - Some property in the chain is "env" 
+            // - That "env" property's object is import.meta
+            // - And we're looking at a property that comes after that "env"
+            
+            // Check if the immediate object has the pattern property
+            if let Expression::StaticMemberExpression(obj_member) = &member.object {
+                if obj_member.property.name.as_str() == meta_define.parts[0] {
+                    match &obj_member.object {
+                        Expression::MetaProperty(meta) => {
+                            return meta.meta.name == "import" && meta.property.name == "meta";
+                        }
+                        _ => return false,
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // For non-wildcard patterns, only match if this is exactly the right level
+        false
     }
 
     pub fn is_meta_property_define(
