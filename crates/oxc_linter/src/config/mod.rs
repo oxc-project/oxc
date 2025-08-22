@@ -14,14 +14,14 @@ pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
-use ignore::overrides::OverrideBuilder;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::{BuiltinLintPlugins, LintPlugins};
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 
-pub type ResolvedIgnorePatterns = ignore::overrides::Override;
+pub type ResolvedIgnorePatterns = Gitignore;
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
@@ -53,23 +53,19 @@ impl From<Oxlintrc> for LintConfig {
 impl LintConfig {
     pub(crate) fn resolve_oxlintrc_ignore_patterns(
         ignore_patterns: &[String],
-        config_path: &Path,
+        ignore_root: &Path,
     ) -> Option<ResolvedIgnorePatterns> {
         if ignore_patterns.is_empty() {
             return None;
         }
-        // expect that every oxlint config file with "ignorePatterns" provides its config path with parent.
-        // for the default config the path is empty, but there should be no ignore patterns
-        let oxlint_wd = config_path.parent()?.to_path_buf();
 
-        let mut builder = OverrideBuilder::new(&oxlint_wd);
+        let mut gitignore_builder = GitignoreBuilder::new(ignore_root);
 
         for pattern in ignore_patterns {
-            let pattern = format!("!{pattern}");
-            builder.add(&pattern).unwrap();
+            gitignore_builder.add_line(None, pattern).unwrap();
         }
 
-        builder.build().ok()
+        gitignore_builder.build().ok()
     }
 }
 

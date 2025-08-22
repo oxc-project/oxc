@@ -49,7 +49,8 @@ impl ServerLinter {
             Oxlintrc::default()
         };
 
-        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+        let config_builder = ConfigStoreBuilder::from_base_oxlintrc(
+            &root_path,
             false,
             oxlintrc,
             None,
