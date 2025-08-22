@@ -32,6 +32,7 @@ suiteSetup(async () => {
 teardown(async () => {
   await workspace.getConfiguration('oxc').update('flags', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
+  await workspace.getConfiguration('oxc').update('typeAware', undefined);
   await workspace.saveAll();
 });
 
@@ -235,6 +236,20 @@ suite('E2E Diagnostics', () => {
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
     assert(secondDiagnostics[0].message.startsWith("Dependency cycle detected"));
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
+  testSingleFolderMode('changing oxc.typeAware will revalidate the tsgolint diagnostics', async () => {
+    await loadFixture('type_aware');
+    const firstDiagnostics = await getDiagnostics('index.ts');
+
+    strictEqual(firstDiagnostics.length, 0);
+
+    await workspace.getConfiguration('oxc').update('typeAware', true);
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('index.ts');
+    assert(secondDiagnostics.length != 0);
   });
 
   test('cross module', async () => {
