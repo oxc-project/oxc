@@ -6,6 +6,76 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext};
 
+fn run_on_arguments<'a, M>(
+    arg1: Option<&'a Argument>,
+    arg2: Option<&'a Argument>,
+    ctx: &'a LintContext<'_>,
+    cb: M,
+) where
+    M: FnOnce(&Pattern<'_>, Span),
+{
+    // note: improvements required for strings used via identifier references
+    // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
+    match (arg1, arg2) {
+        (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
+                cb(&pat, pattern.span);
+            }
+        }
+        (Some(Argument::StringLiteral(pattern)), Some(Argument::TemplateLiteral(flags))) => {
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(
+                &allocator,
+                pattern.span,
+                flags.is_no_substitution_template().then(|| flags.span),
+                ctx,
+            ) {
+                cb(&pat, pattern.span);
+            }
+        }
+        (Some(Argument::StringLiteral(pattern)), _) => {
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
+                cb(&pat, pattern.span);
+            }
+        }
+        (Some(Argument::TemplateLiteral(pattern)), Some(Argument::TemplateLiteral(flags))) => {
+            if !pattern.is_no_substitution_template() {
+                return;
+            }
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(
+                &allocator,
+                pattern.span,
+                flags.is_no_substitution_template().then(|| flags.span),
+                ctx,
+            ) {
+                cb(&pat, pattern.span);
+            }
+        }
+        (Some(Argument::TemplateLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
+            if !pattern.is_no_substitution_template() {
+                return;
+            }
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx) {
+                cb(&pat, pattern.span);
+            }
+        }
+        (Some(Argument::TemplateLiteral(pattern)), _) => {
+            if !pattern.is_no_substitution_template() {
+                return;
+            }
+            let allocator = Allocator::default();
+            if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
+                cb(&pat, pattern.span);
+            }
+        }
+        _ => {}
+    }
+}
+
 pub fn run_on_regex_node<'a, 'b, M>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>, cb: M)
 where
     M: FnOnce(&Pattern<'_>, Span),
@@ -19,48 +89,14 @@ where
         AstKind::NewExpression(expr)
             if expr.callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) =>
         {
-            // note: improvements required for strings used via identifier references
-            // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-            match (&expr.arguments.first(), &expr.arguments.get(1)) {
-                (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
-                    let allocator = Allocator::default();
-                    if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx)
-                    {
-                        cb(&pat, pattern.span);
-                    }
-                }
-                (Some(Argument::StringLiteral(pattern)), _) => {
-                    let allocator = Allocator::default();
-                    if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
-                        cb(&pat, pattern.span);
-                    }
-                }
-                _ => {}
-            }
+            run_on_arguments(expr.arguments.first(), expr.arguments.get(1), ctx, cb);
         }
 
         // RegExp()
         AstKind::CallExpression(expr)
             if expr.callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) =>
         {
-            // note: improvements required for strings used via identifier references
-            // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
-            match (&expr.arguments.first(), &expr.arguments.get(1)) {
-                (Some(Argument::StringLiteral(pattern)), Some(Argument::StringLiteral(flags))) => {
-                    let allocator = Allocator::default();
-                    if let Some(pat) = parse_regex(&allocator, pattern.span, Some(flags.span), ctx)
-                    {
-                        cb(&pat, pattern.span);
-                    }
-                }
-                (Some(Argument::StringLiteral(pattern)), _) => {
-                    let allocator = Allocator::default();
-                    if let Some(pat) = parse_regex(&allocator, pattern.span, None, ctx) {
-                        cb(&pat, pattern.span);
-                    }
-                }
-                _ => {}
-            }
+            run_on_arguments(expr.arguments.first(), expr.arguments.get(1), ctx, cb);
         }
         _ => {}
     }
