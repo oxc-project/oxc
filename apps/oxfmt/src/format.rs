@@ -19,39 +19,34 @@ impl FormatRunner {
     }
 
     pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let _cwd = self.cwd;
-        let FormatCommand { paths, basic_options: _, misc_options: _ } = self.options;
+        let cwd = self.cwd;
+        let FormatCommand { paths, basic_options: _, .. } = self.options;
 
-        // Separate override patterns (starting with !) from regular paths
-        let (override_patterns, regular_paths): (Vec<_>, Vec<_>) =
-            paths.iter().partition(|path| path.to_string_lossy().starts_with('!'));
-
+        let (exclude_patterns, regular_paths): (Vec<_>, Vec<_>) =
+            paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
         println!("PATHS: {regular_paths:#?}");
-        println!("OVERRIDE_PATTERNS: {override_patterns:#?}");
+        println!("EXCLUDE_PATTERNS: {exclude_patterns:#?}");
 
         // Need at least one regular path
         if regular_paths.is_empty() {
             print_and_flush_stdout(
                 stdout,
-                "Expected at least one target file/dir (non-override pattern)\n",
+                "Expected at least one target file/dir/glob(non-override pattern)\n",
             );
             return CliRunResult::FormatNoFilesFound;
         }
 
-        // Build override patterns if any exist
-        let override_builder = if override_patterns.is_empty() {
-            None
-        } else {
-            let first_regular_path = &regular_paths[0];
-            let mut builder = OverrideBuilder::new(first_regular_path);
-            for pattern in &override_patterns {
-                let pattern = pattern.to_string_lossy();
-                builder.add(&pattern).unwrap();
-            }
-            builder.build().ok()
-        };
+        // Build exclude patterns if any exist
+        let override_builder = (!exclude_patterns.is_empty())
+            .then(|| {
+                let mut builder = OverrideBuilder::new(cwd);
+                for pattern in exclude_patterns {
+                    builder.add(&pattern.to_string_lossy()).ok()?;
+                }
+                builder.build().ok()
+            })
+            .flatten();
 
-        let regular_paths: Vec<PathBuf> = regular_paths.into_iter().cloned().collect();
         let walker = Walk::new(&regular_paths, override_builder);
         let paths = walker.paths();
 
@@ -60,6 +55,11 @@ impl FormatRunner {
             // .filter(|path| !config_store.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
         println!("TO_FMT: {files_to_format:#?}");
+
+        if files_to_format.is_empty() {
+            print_and_flush_stdout(stdout, "Expected at least one target file\n");
+            return CliRunResult::FormatNoFilesFound;
+        }
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
