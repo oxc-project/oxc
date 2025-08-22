@@ -114,6 +114,13 @@ fn dot_with_postfix_wildcard() {
 }
 
 #[test]
+fn dot_with_postfix_wildcard_nested() {
+    let config = config(&[("import.meta.env.*", "undefined")]);
+    // This is the bug - should produce (void 0).e.s.t.e.d instead of void 0
+    test("foo(import.meta.env.n.e.s.t.e.d)", "foo((void 0).e.s.t.e.d)", &config);
+}
+
+#[test]
 fn dot_with_postfix_mixed() {
     let config = config(&[
         ("import.meta.env.*", "undefined"),
