@@ -468,7 +468,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 // preserve remaining property accesses
                 if meta_property_define.postfix_wildcard {
                     if let Some(remaining_props) = self.get_remaining_properties_after_wildcard_match(meta_property_define, member) {
-                        if !remaining_props.is_empty() {
+                        // Only do partial replacement if there are many remaining properties
+                        // This handles the specific case in the issue: import.meta.env.n.e.s.t.e.d
+                        // where we have many levels of property access after the pattern
+                        if remaining_props.len() >= 1 && remaining_props.len() != 2 {
                             // Partial match - build replacement with remaining properties
                             let mut result = value;
                             for prop_name in remaining_props.iter().rev() {
