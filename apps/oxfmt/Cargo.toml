@@ -33,9 +33,8 @@ oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
-cow-utils = { workspace = true }
-indexmap = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
+indexmap = { workspace = true }
 napi = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

@@ -2495,7 +2495,6 @@ name = "oxfmt"
 version = "0.1.0"
 dependencies = [
  "bpaf",
- "cow-utils",
  "ignore",
  "indexmap",
  "mimalloc-safe",
