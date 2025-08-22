@@ -1,6 +1,7 @@
 mod command;
 mod format;
 mod result;
+mod service;
 mod walk;
 
 pub mod cli {

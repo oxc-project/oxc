@@ -4,6 +4,7 @@ use ignore::overrides::OverrideBuilder;
 
 use crate::{
     cli::{CliRunResult, FormatCommand},
+    service::FormatService,
     walk::Walk,
 };
 
@@ -24,8 +25,6 @@ impl FormatRunner {
 
         let (exclude_patterns, regular_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
-        println!("PATHS: {regular_paths:#?}");
-        println!("EXCLUDE_PATTERNS: {exclude_patterns:#?}");
 
         // Need at least one regular path
         if regular_paths.is_empty() {
@@ -54,20 +53,22 @@ impl FormatRunner {
             .into_iter()
             // .filter(|path| !config_store.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
-        println!("TO_FMT: {files_to_format:#?}");
 
         if files_to_format.is_empty() {
             print_and_flush_stdout(stdout, "Expected at least one target file\n");
             return CliRunResult::FormatNoFilesFound;
         }
 
-        // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        rayon::spawn(move || {
-            // let mut lint_service = LintService::new(linter, options);
-            // lint_service.with_paths(files_to_lint);
+        // let (mut diagnostic_service, tx_error) =
+        //     Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
-            // lint_service.run(&tx_error);
-        });
+        // rayon::spawn(move || {
+        let mut format_service = FormatService::new();
+        format_service.with_paths(files_to_format);
+        format_service.run();
+        // });
+
+        // let diagnostic_result = diagnostic_service.run(stdout);
 
         CliRunResult::FormatSucceeded
     }
