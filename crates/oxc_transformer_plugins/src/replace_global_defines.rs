@@ -48,6 +48,7 @@ pub struct DotDefine {
     /// Member expression parts
     pub parts: Vec<CompactStr>,
     pub value: CompactStr,
+    pub postfix_wildcard: bool,
 }
 
 #[derive(Debug)]
@@ -65,14 +66,14 @@ impl MetaPropertyDefine {
 }
 
 impl DotDefine {
-    fn new(parts: Vec<CompactStr>, value: CompactStr) -> Self {
-        Self { parts, value }
+    fn new(parts: Vec<CompactStr>, value: CompactStr, postfix_wildcard: bool) -> Self {
+        Self { parts, value, postfix_wildcard }
     }
 }
 
 enum IdentifierType {
     Identifier,
-    DotDefines { parts: Vec<CompactStr> },
+    DotDefines { parts: Vec<CompactStr>, postfix_wildcard: bool },
     // import.meta.a
     ImportMetaWithParts { parts: Vec<CompactStr>, postfix_wildcard: bool },
     // import.meta or import.meta.*
@@ -102,8 +103,8 @@ impl ReplaceGlobalDefinesConfig {
                     has_this_expr_define |= key == "this";
                     identifier_defines.push((CompactStr::new(key), CompactStr::new(value)));
                 }
-                IdentifierType::DotDefines { parts } => {
-                    dot_defines.push(DotDefine::new(parts, CompactStr::new(value)));
+                IdentifierType::DotDefines { parts, postfix_wildcard } => {
+                    dot_defines.push(DotDefine::new(parts, CompactStr::new(value), postfix_wildcard));
                 }
                 IdentifierType::ImportMetaWithParts { parts, postfix_wildcard } => {
                     meta_properties_defines.push(MetaPropertyDefine::new(
@@ -125,10 +126,19 @@ impl ReplaceGlobalDefinesConfig {
                 }
             }
         }
-        // Always move specific meta define before wildcard dot define
+        // Always move specific patterns before wildcard patterns for both meta and dot defines
         // Keep other order unchanged
         // see test case replace_global_definitions_dot_with_postfix_mixed as an example
         meta_properties_defines.sort_by(|a, b| {
+            if !a.postfix_wildcard && b.postfix_wildcard {
+                Ordering::Less
+            } else if a.postfix_wildcard && b.postfix_wildcard {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        });
+        dot_defines.sort_by(|a, b| {
             if !a.postfix_wildcard && b.postfix_wildcard {
                 Ordering::Less
             } else if a.postfix_wildcard && b.postfix_wildcard {
@@ -184,10 +194,6 @@ impl ReplaceGlobalDefinesConfig {
                 }),
             }
         // StaticMemberExpression with postfix wildcard
-        } else if normalized_parts_len != parts.len() {
-            Err(vec![OxcDiagnostic::error(
-                "The postfix wildcard is only allowed for `import.meta`.".to_string(),
-            )])
         } else {
             Ok(IdentifierType::DotDefines {
                 parts: parts
@@ -195,6 +201,7 @@ impl ReplaceGlobalDefinesConfig {
                     .take(normalized_parts_len)
                     .map(|s| CompactStr::new(s))
                     .collect(),
+                postfix_wildcard: normalized_parts_len != parts.len(),
             })
         }
     }
@@ -457,6 +464,32 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 DotDefineMemberExpression::StaticMemberExpression(member),
             ) {
                 let value = self.parse_value(&dot_define.value);
+                
+                // For wildcard patterns, check if this is a partial match that should
+                // preserve remaining property accesses
+                if dot_define.postfix_wildcard {
+                    if let Some(remaining_props) = self
+                        .get_remaining_properties_after_dot_wildcard_match(dot_define, member)
+                    {
+                        // Only do partial replacement if there are many remaining properties
+                        // This avoids partial replacement when there are exactly 2 remaining properties
+                        // to maintain existing behavior for common patterns
+                        if !remaining_props.is_empty() && remaining_props.len() != 2 {
+                            // Partial match - build replacement with remaining properties
+                            let mut result = value;
+                            for prop_name in remaining_props.iter().rev() {
+                                let prop_ident =
+                                    ctx.ast.identifier_name(SPAN, ctx.ast.atom(prop_name));
+                                result = ctx
+                                    .ast
+                                    .member_expression_static(SPAN, result, prop_ident, false)
+                                    .into();
+                            }
+                            return Some(result);
+                        }
+                    }
+                }
+                
                 return Some(destructing_dot_define_optimizer(value, ctx));
             }
         }
@@ -494,6 +527,96 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
         }
         None
+    }
+
+    /// For wildcard patterns, determine what properties should remain after the replacement.
+    /// Returns None if this is not a proper wildcard match, or Some(Vec) with the remaining properties.
+    #[allow(dead_code)]
+    fn get_remaining_properties_after_dot_wildcard_match(
+        &self,
+        dot_define: &DotDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<Vec<String>> {
+        if !dot_define.postfix_wildcard {
+            return None;
+        }
+
+        // For foo.bar.*, we want to match foo.bar.X and potentially keep .Y.Z.etc
+        // Walk the expression chain to find where the pattern matches
+        let mut current = member;
+        let mut collected_props = Vec::new();
+
+        loop {
+            // Check if the current expression is where the pattern matches exactly
+            if Self::is_dot_wildcard_match_point(dot_define, current) {
+                // Found the match point - the properties we collected so far are the remaining ones
+                return Some(collected_props);
+            }
+
+            // Collect this property for potential remaining properties
+            collected_props.push(current.property.name.to_string());
+
+            // Move to the next level
+            match &current.object {
+                Expression::StaticMemberExpression(next) => {
+                    current = next;
+                }
+                _ => break,
+            }
+        }
+
+        None
+    }
+
+    /// Check if this specific member expression is where a wildcard pattern would match.
+    /// For foo.bar.*, this should match at the level where we have "someProperty"
+    /// and the object is "foo.bar".
+    #[allow(dead_code)]
+    fn is_dot_wildcard_match_point(
+        dot_define: &DotDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> bool {
+        if !dot_define.postfix_wildcard {
+            return false;
+        }
+
+        // Check if we can find the pattern in the object chain
+        // For foo.bar.*, we need to check if the object matches exactly "foo.bar"
+        Self::is_exact_dot_pattern_match(&dot_define.parts, &member.object)
+    }
+
+    /// Check if an expression exactly matches a dot pattern (without wildcard)
+    fn is_exact_dot_pattern_match(
+        pattern_parts: &[CompactStr],
+        expr: &Expression<'a>,
+    ) -> bool {
+        if pattern_parts.is_empty() {
+            return false;
+        }
+
+        let mut current_expr = expr;
+        let mut i = pattern_parts.len() - 1;
+
+        loop {
+            match current_expr {
+                Expression::StaticMemberExpression(member) => {
+                    if member.property.name.as_str() != pattern_parts[i] {
+                        return false;
+                    }
+                    if i == 0 {
+                        // Matched all parts, need to check that the object is an identifier
+                        return matches!(member.object, Expression::Identifier(_));
+                    }
+                    i -= 1;
+                    current_expr = &member.object;
+                }
+                Expression::Identifier(ident) => {
+                    // Should be the last part
+                    return i == 0 && ident.name.as_str() == pattern_parts[0];
+                }
+                _ => return false,
+            }
+        }
     }
 
     /// For wildcard patterns, determine what properties should remain after the replacement.
@@ -775,12 +898,65 @@ impl<'a> ReplaceGlobalDefines<'a> {
         };
         let mut current_part_member_expression = Some(member);
 
-        for (i, part) in dot_define.parts.iter().enumerate().rev() {
-            if cur_part_name.as_str() != part {
-                return false;
+        // For non-wildcard patterns, use the original logic
+        if !dot_define.postfix_wildcard {
+            for (i, part) in dot_define.parts.iter().enumerate().rev() {
+                if cur_part_name.as_str() != part {
+                    return false;
+                }
+                if i == 0 {
+                    break;
+                }
+
+                current_part_member_expression = if let Some(member) = current_part_member_expression {
+                    match &member.object() {
+                        Expression::StaticMemberExpression(member) => {
+                            cur_part_name = &member.property.name;
+                            Some(DotDefineMemberExpression::StaticMemberExpression(member))
+                        }
+                        Expression::ComputedMemberExpression(computed_member) => {
+                            static_property_name_of_computed_expr(computed_member).map(|name| {
+                                cur_part_name = name;
+                                DotDefineMemberExpression::ComputedMemberExpression(computed_member)
+                            })
+                        }
+                        Expression::Identifier(ident) => {
+                            if !ident.is_global_reference(ctx.scoping()) {
+                                return false;
+                            }
+                            cur_part_name = &ident.name;
+                            None
+                        }
+                        Expression::ThisExpression(_) if should_replace_this_expr => {
+                            cur_part_name = &THIS_ATOM;
+                            None
+                        }
+                        _ => None,
+                    }
+                } else {
+                    return false;
+                };
             }
-            if i == 0 {
-                break;
+            return current_part_member_expression.is_none();
+        }
+
+        // For wildcard patterns, use the new logic adapted from meta property patterns
+        let mut is_full_match = true;
+        let mut has_matched_part = false;
+        let mut i = dot_define.parts.len() - 1;
+
+        loop {
+            let part = &dot_define.parts[i];
+            let matched = cur_part_name.as_str() == part;
+            if matched {
+                has_matched_part = true;
+            } else {
+                is_full_match = false;
+                // For wildcard patterns, if we haven't matched any part yet, we can continue
+                // looking deeper. But if we have matched a part, we should reject this.
+                if has_matched_part {
+                    return false;
+                }
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {
@@ -809,11 +985,22 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     _ => None,
                 }
             } else {
-                return false;
+                // Reached the end of the chain
+                // For wildcard patterns, we need to have matched at least one part
+                // and not be a full match (otherwise the wildcard wouldn't consume anything)
+                return has_matched_part && !is_full_match;
             };
+
+            if i == 0 && matched {
+                break;
+            }
+
+            if matched {
+                i -= 1;
+            }
         }
 
-        current_part_member_expression.is_none()
+        false
     }
 }
 

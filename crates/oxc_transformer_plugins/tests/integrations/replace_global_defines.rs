@@ -292,3 +292,23 @@ log(__MEMBER__);
     let snapshot = visualizer.get_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }
+
+#[test]
+fn general_wildcard_patterns() {
+    // Test that wildcard patterns work for any pattern, not just import.meta
+    let config = config(&[("foo.bar.*", "undefined")]);
+    
+    // Basic wildcard match
+    test("console.log(foo.bar.baz)", "console.log(void 0)", &config);
+    
+    // Partial replacement with remaining properties  
+    test("console.log(foo.bar.baz.que)", "console.log((void 0).que)", &config);
+    
+    // Deep nesting should use partial replacement
+    test("console.log(foo.bar.x.y.z.w)", "console.log((void 0).y.z.w)", &config);
+    
+    // Non-matching patterns should remain unchanged
+    test("console.log(foo.bar)", "console.log(foo.bar)", &config);
+    test("console.log(foo.other.test)", "console.log(foo.other.test)", &config);
+    test("console.log(other.bar.baz)", "console.log(other.bar.baz)", &config);
+}

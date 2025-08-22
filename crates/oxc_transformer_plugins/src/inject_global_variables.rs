@@ -103,7 +103,7 @@ impl From<&InjectImport> for DotDefineState<'_> {
     fn from(inject: &InjectImport) -> Self {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();
-        let dot_define = DotDefine { parts, value };
+        let dot_define = DotDefine { parts, value, postfix_wildcard: false };
         Self { dot_define, value_atom: None }
     }
 }
