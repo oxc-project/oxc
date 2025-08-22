@@ -117,13 +117,13 @@ fn dot_with_postfix_wildcard() {
 fn dot_with_postfix_wildcard_nested() {
     // Test without other conflicting patterns
     let config = config(&[("import.meta.env.*", "undefined")]);
-    
+
     // These should work with the original logic (full replacement)
     test("foo(import.meta.env.result)", "foo(void 0)", &config);
-    
+
     // This should work with my fix (partial replacement for single additional property)
     test("foo(import.meta.env.a.b)", "foo((void 0).b)", &config);
-    
+
     // This is the original issue case (partial replacement for multiple additional properties)
     test("foo(import.meta.env.n.e.s.t.e.d)", "foo((void 0).e.s.t.e.d)", &config);
 }
