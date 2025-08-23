@@ -80,11 +80,16 @@ use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, p
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
+    estimated_capacity: usize,
 }
 
 impl<'a> Formatted<'a> {
     pub fn new(document: Document<'a>, context: FormatContext<'a>) -> Self {
-        Self { document, context }
+        Self { document, context, estimated_capacity: 0 }
+    }
+    
+    pub fn new_with_capacity(document: Document<'a>, context: FormatContext<'a>, capacity: usize) -> Self {
+        Self { document, context, estimated_capacity: capacity }
     }
 
     /// Returns the context used during formatting.
@@ -107,7 +112,11 @@ impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
 
-        let printed = Printer::new(print_options).print(&self.document)?;
+        let printed = if self.estimated_capacity > 0 {
+            Printer::with_capacity(print_options, self.estimated_capacity).print(&self.document)?
+        } else {
+            Printer::new(print_options).print(&self.document)?
+        };
 
         // let printed = match self.context.source_map() {
         // Some(source_map) => source_map.map_printed(printed),
@@ -371,12 +380,15 @@ pub fn format<'ast>(
     arguments: Arguments<'_, 'ast>,
 ) -> FormatResult<Formatted<'ast>> {
     let mut state = FormatState::new(program, context);
-    let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
+    // Pre-allocate buffer based on source text size
+    // Most formatted code is 1.1-1.3x the source size, plus some overhead for indentation
+    let estimated_capacity = (program.source_text.len() as f64 * 1.2) as usize + 1024;
+    let mut buffer = VecBuffer::with_capacity(estimated_capacity, &mut state);
 
     buffer.write_fmt(arguments)?;
 
     let mut document = Document::from(buffer.into_vec());
     document.propagate_expand();
 
-    Ok(Formatted::new(document, state.into_context()))
+    Ok(Formatted::new_with_capacity(document, state.into_context(), estimated_capacity))
 }
