@@ -76,11 +76,35 @@ pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> boo
             if call.arguments.is_empty() {
                 return false;
             }
-            // Use direct span equality first (faster), fall back to contains_inclusive only if needed
-            call.arguments.iter().any(|arg| {
+
+            // Phase 1 Optimization: Single argument fast path
+            if call.arguments.len() == 1 {
+                let arg_span = call.arguments[0].span();
+                return arg_span == span || arg_span.contains_inclusive(span);
+            }
+
+            // Phase 1 Optimization: Span bounds checking
+            if let (Some(first), Some(last)) = (call.arguments.first(), call.arguments.last()) {
+                let first_start = first.span().start;
+                let last_end = last.span().end;
+
+                // If target span is completely outside the arguments range, it can't be an argument
+                if span.end < first_start || span.start > last_end {
+                    return false;
+                }
+            }
+
+            // Phase 1 Optimization: Early exit iteration with span equality first
+            for arg in &call.arguments {
                 let arg_span = arg.span();
-                arg_span == span || arg_span.contains_inclusive(span)
-            })
+                if arg_span == span {
+                    return true; // Exact match - most common case
+                }
+                if arg_span.contains_inclusive(span) {
+                    return true; // Containment match
+                }
+            }
+            false
         }
         AstNodes::NewExpression(new_expr) => {
             // Fast path: if callee matches, it's not an argument
@@ -91,11 +115,37 @@ pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> boo
             if new_expr.arguments.is_empty() {
                 return false;
             }
-            // Use direct span equality first (faster), fall back to contains_inclusive only if needed
-            new_expr.arguments.iter().any(|arg| {
+
+            // Phase 1 Optimization: Single argument fast path
+            if new_expr.arguments.len() == 1 {
+                let arg_span = new_expr.arguments[0].span();
+                return arg_span == span || arg_span.contains_inclusive(span);
+            }
+
+            // Phase 1 Optimization: Span bounds checking
+            if let (Some(first), Some(last)) =
+                (new_expr.arguments.first(), new_expr.arguments.last())
+            {
+                let first_start = first.span().start;
+                let last_end = last.span().end;
+
+                // If target span is completely outside the arguments range, it can't be an argument
+                if span.end < first_start || span.start > last_end {
+                    return false;
+                }
+            }
+
+            // Phase 1 Optimization: Early exit iteration with span equality first
+            for arg in &new_expr.arguments {
                 let arg_span = arg.span();
-                arg_span == span || arg_span.contains_inclusive(span)
-            })
+                if arg_span == span {
+                    return true; // Exact match - most common case
+                }
+                if arg_span.contains_inclusive(span) {
+                    return true; // Containment match
+                }
+            }
+            false
         }
         _ => false,
     }
