@@ -130,58 +130,31 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let mut has_empty_line = false;
-
         let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
 
         if has_empty_line || is_function_composition_args(self) {
-            return format_all_args_broken_out(
-                self,
-                true,
-                call_expression.map(std::convert::AsRef::as_ref),
-                f,
-            );
+            return format_all_args_broken_out(self, true, f);
         }
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
-            write_grouped_arguments(
-                self,
-                group_layout,
-                call_expression.map(std::convert::AsRef::as_ref),
-                f,
-            )
+            write_grouped_arguments(self, group_layout, f)
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             write!(
                 f,
                 [
                     l_paren_token,
                     soft_block_indent(&format_once(|f| {
-                        if let Some(call) = call_expression {
-                            f.format_arguments(call.span, |f| {
-                                write_arguments_multi_line(
-                                    FormatSeparatedIter::new(self.iter(), ",")
-                                        .with_trailing_separator(TrailingSeparator::Omit),
-                                    f,
-                                )
-                            })
-                        } else {
-                            write_arguments_multi_line(
-                                FormatSeparatedIter::new(self.iter(), ",")
-                                    .with_trailing_separator(TrailingSeparator::Omit),
-                                f,
-                            )
-                        }
+                        write_arguments_multi_line(
+                            FormatSeparatedIter::new(self.iter(), ",")
+                                .with_trailing_separator(TrailingSeparator::Omit),
+                            f,
+                        )
                     })),
                     r_paren_token,
                 ]
             )
         } else {
-            format_all_args_broken_out(
-                self,
-                false,
-                call_expression.map(std::convert::AsRef::as_ref),
-                f,
-            )
+            format_all_args_broken_out(self, false, f)
         }
     }
 }
@@ -266,7 +239,6 @@ fn format_all_elements_broken_out<'a, 'b>(
 fn format_all_args_broken_out<'a, 'b>(
     node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
-    call_expression: Option<&CallExpression<'a>>,
     mut buffer: impl Buffer<'a>,
 ) -> FormatResult<()> {
     let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
@@ -276,35 +248,18 @@ fn format_all_args_broken_out<'a, 'b>(
         [group(&format_args!(
             "(",
             soft_block_indent(&format_once(move |f| {
-                if let Some(call) = call_expression {
-                    f.format_arguments(call.span, |f| {
-                        for (index, argument) in node.iter().enumerate() {
-                            if index > 0 {
-                                match get_lines_before(argument.span(), f) {
-                                    0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                                    _ => write!(f, [empty_line()])?,
-                                }
-                            }
-
-                            write!(f, [argument, (index != last_index).then_some(",")])?;
+                for (index, argument) in node.iter().enumerate() {
+                    if index > 0 {
+                        match get_lines_before(argument.span(), f) {
+                            0 | 1 => write!(f, [soft_line_break_or_space()])?,
+                            _ => write!(f, [empty_line()])?,
                         }
-
-                        write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
-                    })
-                } else {
-                    for (index, argument) in node.iter().enumerate() {
-                        if index > 0 {
-                            match get_lines_before(argument.span(), f) {
-                                0 | 1 => write!(f, [soft_line_break_or_space()])?,
-                                _ => write!(f, [empty_line()])?,
-                            }
-                        }
-
-                        write!(f, [argument, (index != last_index).then_some(",")])?;
                     }
 
-                    write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+                    write!(f, [argument, (index != last_index).then_some(",")])?;
                 }
+
+                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
             })),
             ")",
         ))
@@ -616,7 +571,6 @@ fn can_group_arrow_function_expression_argument(
 fn write_grouped_arguments<'a>(
     node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
-    call_expression: Option<&CallExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
     let last_index = node.len() - 1;

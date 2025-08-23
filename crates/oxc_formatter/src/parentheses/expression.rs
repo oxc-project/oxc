@@ -11,7 +11,7 @@ use crate::{
     Format,
     formatter::Formatter,
     generated::ast_nodes::{AstNode, AstNodes},
-    utils::{is_expression_used_as_call_argument, is_expression_used_as_call_argument_fast},
+    utils::is_expression_used_as_call_argument,
     write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
 };
 
@@ -159,23 +159,19 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         let parent = self.parent;
 
         // Object expressions don't need parentheses when used as function arguments
-        if is_expression_used_as_call_argument_fast(self.span, parent, f) {
+        if is_expression_used_as_call_argument(self.span, parent) {
             return false;
         }
 
         // Object expressions don't need parentheses when used as the expression of a cast
         // that is itself used as an argument
         if let AstNodes::TSAsExpression(as_expr) = parent {
-            if is_expression_used_as_call_argument_fast(as_expr.span, as_expr.parent, f) {
+            if is_expression_used_as_call_argument(as_expr.span, as_expr.parent) {
                 return false;
             }
         }
         if let AstNodes::TSSatisfiesExpression(satisfies_expr) = parent {
-            if is_expression_used_as_call_argument_fast(
-                satisfies_expr.span,
-                satisfies_expr.parent,
-                f,
-            ) {
+            if is_expression_used_as_call_argument(satisfies_expr.span, satisfies_expr.parent) {
                 return false;
             }
         }
@@ -455,24 +451,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Function<'a>> {
         // If so, it doesn't need parentheses
         match parent {
             AstNodes::CallExpression(call) => {
-                // Fast path: Use O(1) context check when available during formatting
-                if f.is_in_arguments() {
-                    // If we're in argument context, this function is likely an argument
-                    return false;
-                }
-                // Fallback: Check if this function is in the arguments array
+                // Check if this function is in the arguments array
                 !call.arguments.iter().any(|arg| match arg {
                     Argument::FunctionExpression(func) => func.span() == self.span(),
                     _ => false,
                 })
             }
             AstNodes::NewExpression(new_expr) => {
-                // Fast path: Use O(1) context check when available during formatting
-                if f.is_in_arguments() {
-                    // If we're in argument context, this function is likely an argument
-                    return false;
-                }
-                // Fallback: Check if this function is in the arguments array
+                // Check if this function is in the arguments array
                 !new_expr.arguments.iter().any(|arg| match arg {
                     Argument::FunctionExpression(func) => func.span() == self.span(),
                     _ => false,
@@ -571,7 +557,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Class<'a>> {
         }
 
         // Class expressions don't need parentheses when used as function arguments
-        if is_expression_used_as_call_argument_fast(self.span, parent, f) {
+        if is_expression_used_as_call_argument(self.span, parent) {
             return false;
         }
 
