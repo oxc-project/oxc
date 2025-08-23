@@ -178,11 +178,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         }
 
         is_class_extends(parent, span)
-            || is_first_in_statement(
-                span,
-                parent,
-                FirstInStatementMode::ExpressionStatementOrArrow,
-            )
+            || is_first_in_statement(span, parent, FirstInStatementMode::ExpressionStatementOrArrow)
     }
 }
 
@@ -262,7 +258,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
-        
+
         // Call expressions used directly as the callee of a new expression need parentheses
         // Example: new (factory())()
         if let AstNodes::NewExpression(new_expr) = self.parent {
@@ -572,11 +568,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Class<'a>> {
 
         match parent {
             AstNodes::ExportDefaultDeclaration(_) => true,
-            _ => is_first_in_statement(
-                span,
-                parent,
-                FirstInStatementMode::ExpressionOrExportDefault,
-            ),
+            _ => {
+                is_first_in_statement(span, parent, FirstInStatementMode::ExpressionOrExportDefault)
+            }
         }
     }
 }
