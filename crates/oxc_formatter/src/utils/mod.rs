@@ -98,27 +98,6 @@ pub fn is_expression_used_as_call_argument_fast(
     is_expression_used_as_call_argument(span, parent)
 }
 
-/// Optimized O(1) version using pre-computed argument spans
-pub fn is_expression_used_as_call_argument_optimized(
-    span: Span,
-    parent: &AstNodes,
-    f: &Formatter<'_, '_>,
-) -> bool {
-    // First check if this span is registered as an argument (O(1) lookup)
-    if f.is_argument_span(span) {
-        // Verify it's actually an argument of this parent, not some other call
-        match parent {
-            AstNodes::CallExpression(call) => call.callee.span() != span,
-            AstNodes::NewExpression(new_expr) => new_expr.callee.span() != span,
-            _ => false,
-        }
-    } else {
-        // Fallback to O(n) check if not found in pre-computed set
-        // This handles cases where argument registration happens after parentheses check
-        is_expression_used_as_call_argument(span, parent)
-    }
-}
-
 /// Check if an expression is used as a call argument by examining the parent node.
 /// This replaces the missing AstKind::Argument detection capability.
 pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> bool {

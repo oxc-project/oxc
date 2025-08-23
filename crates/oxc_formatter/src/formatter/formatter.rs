@@ -93,16 +93,6 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         result
     }
 
-    /// Register an argument span for O(1) parentheses detection
-    pub fn register_argument_span(&self, span: Span) {
-        self.state().register_argument_span(span);
-    }
-
-    /// Check if a span is registered as an argument (O(1) lookup)
-    pub fn is_argument_span(&self, span: Span) -> bool {
-        self.state().is_argument_span(span)
-    }
-
     /// Joins multiple [Format] together without any separator
     ///
     /// ## Examples
