@@ -370,7 +370,7 @@ struct ArgumentAnalysis {
 fn analyze_call_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> ArgumentAnalysis {
     let mut analysis = ArgumentAnalysis { has_arrow_or_function: false, all_simple: true };
 
-    for argument in call.arguments().iter() {
+    for argument in call.arguments() {
         // Check for arrow or function expressions
         if matches!(
             &**argument,
