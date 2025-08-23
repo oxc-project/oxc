@@ -1,7 +1,6 @@
 use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Span;
-use std::collections::HashMap;
 
 use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 
@@ -13,8 +12,6 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
-    /// Cache for get_lines_before results to avoid expensive text scanning
-    lines_before_cache: std::cell::RefCell<HashMap<u32, usize>>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -33,7 +30,6 @@ impl<'ast> FormatState<'ast> {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
-            lines_before_cache: std::cell::RefCell::new(HashMap::new()),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }
@@ -58,21 +54,6 @@ impl<'ast> FormatState<'ast> {
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.group_id_builder.group_id(debug_name)
-    }
-
-    /// Get cached lines_before result or compute and cache it
-    pub fn get_lines_before_cached(
-        &self,
-        span_start: u32,
-        compute_fn: impl FnOnce() -> usize,
-    ) -> usize {
-        let mut cache = self.lines_before_cache.borrow_mut();
-        if let Some(&cached_result) = cache.get(&span_start) {
-            return cached_result;
-        }
-        let result = compute_fn();
-        cache.insert(span_start, result);
-        result
     }
 
     #[cfg(not(debug_assertions))]

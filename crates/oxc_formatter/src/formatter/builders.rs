@@ -2463,52 +2463,49 @@ where
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
 pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
-    // Use cached result if available to avoid expensive text scanning
-    f.state().get_lines_before_cached(span.start, || {
-        let mut start = span.start;
+    let mut start = span.start;
 
-        // Should skip the leading comments of the node.
-        let comments = f.comments().unprinted_comments();
-        if let Some(comment) = comments.first() {
-            if comment.span.end < start {
-                start = comment.span.start;
-            }
+    // Should skip the leading comments of the node.
+    let comments = f.comments().unprinted_comments();
+    if let Some(comment) = comments.first() {
+        if comment.span.end < start {
+            start = comment.span.start;
+        }
+    }
+
+    // Count the newlines in the leading trivia of the next node
+    let mut count = 0;
+    let mut right_parent_start = span.end as usize;
+    for c in f.source_text()[..start as usize].chars().rev() {
+        if is_white_space_single_line(c) {
+            continue;
         }
 
-        // Count the newlines in the leading trivia of the next node
-        let mut count = 0;
-        let mut right_parent_start = span.end as usize;
-        for c in f.source_text()[..start as usize].chars().rev() {
-            if is_white_space_single_line(c) {
-                continue;
-            }
+        if c == '(' {
+            // We don't have a parenthesis node when `preserveParens` is turned off,
+            // but we will find the `(` and `)` around the node if it exists.
+            // If we find a `(`, we try to find the matching `)` and reset the count.
+            // This is necessary to avoid counting the newlines inside the parenthesis.
 
-            if c == '(' {
-                // We don't have a parenthesis node when `preserveParens` is turned off,
-                // but we will find the `(` and `)` around the node if it exists.
-                // If we find a `(`, we try to find the matching `)` and reset the count.
-                // This is necessary to avoid counting the newlines inside the parenthesis.
-
-                let Some((pos, ')')) =
-                    f.source_text()[right_parent_start..].trim_start().chars().enumerate().next()
-                else {
-                    return count;
-                };
-
-                right_parent_start = pos;
-                count = 0;
-                continue;
-            }
-
-            if !is_line_terminator(c) {
+            let Some((pos, ')')) =
+                f.source_text()[right_parent_start..].trim_start().chars().enumerate().next()
+            else {
                 return count;
-            }
+            };
 
-            count += 1;
+            right_parent_start = pos;
+            count = 0;
+            continue;
         }
 
-        count
-    })
+        if !is_line_terminator(c) {
+            return count;
+        }
+
+        count += 1;
+    }
+
+    count
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
