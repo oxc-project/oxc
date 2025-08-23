@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- bf9ae3b ast/estree: Remove custom serializer for `TSImportTypeQualifier` (#12961) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47e2c59 estree: Fix serialization of `TSImportTypeQualifier` (#12801) (camc314)
+
+
+
+
+
+
+
+
 ## [0.77.1] - 2025-07-16
 
 ### 🚀 Features

@@ -274,7 +274,7 @@ where
 ///
 /// # Indexing
 ///
-/// The `Vec` type allows to access values by index, because it implements the
+/// The `Vec` type allows accessing values by index, because it implements the
 /// [`Index`] trait. An example will be more explicit:
 ///
 /// ```
@@ -718,26 +718,6 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         #[expect(clippy::cast_possible_truncation)]
         let new_len = new_len as u32;
         self.buf.set_len(new_len);
-    }
-
-    /// Returns a shared reference to the allocator backing this `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// // uses the same allocator as the provided `Vec`
-    /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
-    ///     for string in ["foo", "bar", "baz"] {
-    ///         vec.push(vec.bump().alloc_str(string));
-    ///     }
-    /// }
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn bump(&self) -> &'a A {
-        self.buf.bump()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -1621,7 +1601,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// v.drain(..);
     /// assert_eq!(v, &[]);
     /// ```
-    pub fn drain<R>(&mut self, range: R) -> Drain<T, A>
+    pub fn drain<R>(&mut self, range: R) -> Drain<'_, '_, T, A>
     where
         R: RangeBounds<usize>,
     {
@@ -1735,7 +1715,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
         let other_len = self.len_usize() - at;
-        let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
+        // SAFETY: This method takes a `&mut self`. It lives for the duration of this method
+        // - longer than we use `bump` for.
+        let bump = unsafe { self.buf.bump() };
+        let mut other = Vec::with_capacity_in(other_len, bump);
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -2067,26 +2050,6 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
 // Common trait implementations for Vec
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
-    #[cfg(not(test))]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-
-    // HACK(japaric): with cfg(test) the inherent `[T]::to_vec` method, which is
-    // required for this method definition, is not available. Instead use the
-    // `slice::to_vec`  function which is only available with cfg(test)
-    // NB see the slice::hack module in slice.rs for more information
-    #[cfg(test)]
-    fn clone(&self) -> Vec<'a, T, A> {
-        let mut v = Vec::new_in(self.buf.bump());
-        v.extend(self.iter().cloned());
-        v
-    }
-}
-
 impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
@@ -2280,7 +2243,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(u, &[1, 2]);
     /// ```
     #[inline]
-    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<I::IntoIter, A>
+    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, '_, I::IntoIter, A>
     where
         R: RangeBounds<usize>,
         I: IntoIterator<Item = T>,
@@ -2703,7 +2666,15 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.bump());
+
+            // SAFETY: `Splice` iterator is created in `Vec::splice`, which takes a `&mut self`.
+            // `Splice` inherits the lifetime of `&mut self` from that method, so the mut borrow
+            // of the `Vec` is held for the life of the `Splice`.
+            // Therefore we have exclusive access to the `Vec` until end of this method.
+            // That is longer than we use `bump` for.
+            let bump = self.drain.vec.as_ref().buf.bump();
+
+            let mut collected = Vec::new_in(bump);
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.

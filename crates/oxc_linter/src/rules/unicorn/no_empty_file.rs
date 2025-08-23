@@ -43,7 +43,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyFile {
     fn run_once(&self, ctx: &LintContext) {
-        let program = ctx.nodes().program().unwrap();
+        let program = ctx.nodes().program();
         if program.body.iter().any(|node| !is_empty_stmt(node)) {
             return;
         }

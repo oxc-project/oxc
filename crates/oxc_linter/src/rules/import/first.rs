@@ -110,7 +110,7 @@ impl Rule for First {
         let mut non_import_count = 0;
         let mut any_relative = false;
 
-        let program = ctx.nodes().program().unwrap();
+        let program = ctx.nodes().program();
 
         for statement in &program.body {
             match statement {

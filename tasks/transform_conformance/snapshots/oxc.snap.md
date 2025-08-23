@@ -1,6 +1,6 @@
-commit: 1d4546bc
+commit: 41d96516
 
-Passed: 180/300
+Passed: 183/304
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -20,7 +20,26 @@ Passed: 180/300
 * regexp
 
 
-# babel-plugin-transform-class-properties (22/28)
+# babel-plugin-transform-explicit-resource-management (2/4)
+* export-class-name/input.js
+x Output mismatch
+
+* function-with-scopes-in-params/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
+rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(4): ["x", "y"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(4)
+
+
+# babel-plugin-transform-class-properties (23/29)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -502,7 +521,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (44/47)
+# babel-plugin-transform-react-jsx (45/48)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -520,26 +539,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (2/4)
-* export-class-name/input.js
-x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-
-# legacy-decorators (6/79)
+# legacy-decorators (6/80)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -554,7 +554,7 @@ rebuilt        : SymbolId(4): Span { start: 69, end: 82 }
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(8), ReferenceId(9)]
 Symbol span mismatch for "Example":
 after transform: SymbolId(1): Span { start: 87, end: 94 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
@@ -571,7 +571,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(0): [ReferenceId(11), ReferenceId(12)]
 Symbol span mismatch for "Cls":
 after transform: SymbolId(7): Span { start: 145, end: 148 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
@@ -584,6 +584,41 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
+
+* oxc/metadata/params/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "methodDecorator", "paramDecorator"]
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Boolean", "Function", "String", "babelHelpers"]
+rebuilt        : ["Boolean", "Function", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
 * oxc/metadata/this/input.ts
 Symbol span mismatch for "Example":
@@ -614,13 +649,13 @@ after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(2): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : [ReferenceId(4), ReferenceId(5)]
+rebuilt        : [ReferenceId(6), ReferenceId(7)]
 
 * oxc/metadata/without-decorator/input.ts
 Symbol span mismatch for "C":
@@ -1470,7 +1505,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (20/34)
+# plugin-styled-components (21/35)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 

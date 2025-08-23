@@ -22,7 +22,6 @@ const FOUR_GIB: usize = 1 << 32;
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
 /// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
-#[derive(Default)]
 pub struct AllocatorPool {
     /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
@@ -31,10 +30,11 @@ pub struct AllocatorPool {
 }
 
 impl AllocatorPool {
-    /// Creates a new [`AllocatorPool`] with capacity for the given number of `FixedSizeAllocator` instances.
-    pub fn new(size: usize) -> AllocatorPool {
-        // Each allocator consumes a large block of memory, so create them on demand instead of upfront
-        let allocators = Vec::with_capacity(size);
+    /// Creates a new [`AllocatorPool`] for use across the specified number of threads.
+    pub fn new(thread_count: usize) -> AllocatorPool {
+        // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
+        // in case not all threads end up being used (e.g. language server without `import` plugin)
+        let allocators = Vec::with_capacity(thread_count);
         AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
     }
 
@@ -45,7 +45,7 @@ impl AllocatorPool {
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    pub fn get(&self) -> AllocatorGuard {
+    pub fn get(&self) -> AllocatorGuard<'_> {
         let allocator = {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
@@ -207,12 +207,25 @@ impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
     pub fn new(id: u32) -> Self {
+        // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
+        // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
+        // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
+        // `Allocator::from_raw_parts` cannot panic, as that'd result in a large memory leak.
+        // Compiler will optimize this out.
+        #[expect(clippy::manual_assert)]
+        if cfg!(target_endian = "big") {
+            panic!("`FixedSizeAllocator` is not supported on big-endian systems.");
+        }
+
         // Allocate block of memory.
         // SAFETY: `ALLOC_LAYOUT` does not have zero size.
         let alloc_ptr = unsafe { System.alloc(ALLOC_LAYOUT) };
         let Some(alloc_ptr) = NonNull::new(alloc_ptr) else {
             alloc::handle_alloc_error(ALLOC_LAYOUT);
         };
+
+        // All code in the rest of this function is infallible, so the allocation will always end up
+        // owned by a `FixedSizeAllocator`, which takes care of freeing the memory correctly on drop
 
         // Get pointer to use for allocator chunk, aligned to 4 GiB.
         // `alloc_ptr` is aligned on 2 GiB, so `alloc_ptr % FOUR_GIB` is either 0 or `TWO_GIB`.
@@ -243,6 +256,7 @@ impl FixedSizeAllocator {
         // the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
         let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        let allocator = ManuallyDrop::new(allocator);
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
@@ -257,7 +271,7 @@ impl FixedSizeAllocator {
             metadata_ptr.write(metadata);
         }
 
-        Self { allocator: ManuallyDrop::new(allocator) }
+        Self { allocator }
     }
 
     /// Reset this [`FixedSizeAllocator`].
@@ -269,6 +283,8 @@ impl FixedSizeAllocator {
         // SAFETY: Fixed-size allocators have data pointer originally aligned on `BLOCK_ALIGN`,
         // and size less than `BLOCK_ALIGN`. So we can restore original data pointer by rounding down
         // to next multiple of `BLOCK_ALIGN`.
+        // We're restoring the original data pointer, so it cannot break invariants about alignment,
+        // being within the chunk's allocation, or being before cursor pointer.
         unsafe {
             let data_ptr = self.allocator.data_ptr();
             let offset = data_ptr.as_ptr() as usize % BLOCK_ALIGN;

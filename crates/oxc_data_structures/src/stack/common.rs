@@ -5,8 +5,6 @@ use std::{
     slice,
 };
 
-use crate::pointer_ext::PointerExt;
-
 use super::StackCapacity;
 
 pub trait StackCommon<T>: StackCapacity<T> {
@@ -151,7 +149,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // This implies that both pointers are always within bounds of a single allocation.
         // Caller guarantees `cursor >= start`.
         // Caller guarantees distance between pointers is a multiple of `size_of::<T>()`.
-        unsafe { self.cursor().offset_from_usize(self.start()) }
+        unsafe { self.cursor().offset_from_unsigned(self.start()) }
     }
 
     /// Get capacity.
@@ -162,7 +160,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // * `start` and `end` are both within bounds of a single allocation.
         // * `end` is always >= `start`.
         // * Distance between `start` and `end` is always a multiple of `size_of::<T>()`.
-        unsafe { self.end().offset_from_usize(self.start()) }
+        unsafe { self.end().offset_from_unsigned(self.start()) }
     }
 
     /// Get capacity in bytes.
@@ -173,7 +171,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // * `start` and `end` are both within bounds of a single allocation.
         // * `end` is always >= `start`.
         // * Distance between `start` and `end` is always a multiple of `size_of::<T>()`.
-        unsafe { self.end().byte_offset_from_usize(self.start()) }
+        unsafe { self.end().byte_offset_from_unsigned(self.start()) }
     }
 
     /// Get contents of stack as a slice `&[T]`.

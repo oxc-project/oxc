@@ -111,6 +111,18 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+    #[inline]
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_class(class, ctx);
+        }
+    }
+
+    #[inline]
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class(class, ctx);
+    }
+
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -123,18 +135,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        }
-    }
-
-    #[inline]
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.transform_class(class, ctx);
-    }
-
-    #[inline]
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_class(class, ctx);
         }
     }
 
@@ -835,10 +835,26 @@ impl<'a> LegacyDecorator<'a, '_> {
         }
 
         let mut decorations = ctx.ast.vec_with_capacity(method_decoration_count);
+
+        // Split metadata decorators from method decorators.
+        // Metadata decorators (typically used for emitting design-time type information)
+        // are identified by having an "unspanned" span. According to TypeScript's legacy
+        // decorator semantics, metadata decorators must be applied *after* all parameter
+        // decorators, so we separate them here and will insert them last.
+        let mut method_decorators = method.decorators.take_in(ctx.ast);
+        let metadata_position = method_decorators
+            .iter()
+            .position(|decorator| {
+                // All metadata decorators are unspanned
+                decorator.span.is_unspanned()
+            })
+            .unwrap_or(method_decorators.len());
+        let metadata_decorators = method_decorators.split_off(metadata_position);
+
+        // Method decorators should always be injected before all other decorators
         decorations.extend(
-            method
-                .decorators
-                .drain(..)
+            method_decorators
+                .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
 
@@ -846,6 +862,13 @@ impl<'a> LegacyDecorator<'a, '_> {
         if param_decoration_count > 0 {
             self.transform_decorators_of_parameters(&mut decorations, params, ctx);
         }
+
+        // `decorateMetadata` should always be injected after param decorators
+        decorations.extend(
+            metadata_decorators
+                .into_iter()
+                .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
+        );
 
         Some(ctx.ast.expression_array(SPAN, decorations))
     }
@@ -1032,7 +1055,6 @@ impl<'a> LegacyDecorator<'a, '_> {
     ) -> Statement<'a> {
         let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
             SPAN,
-            ctx.ast.module_export_name_identifier_name(SPAN, "default"),
             ExportDefaultDeclarationKind::Identifier(
                 ctx.ast.alloc(class_binding.create_read_reference(ctx)),
             ),

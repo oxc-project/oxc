@@ -92,7 +92,8 @@ impl Walk {
             }
         }
 
-        let inner = inner.ignore(false).git_global(false).follow_links(true).build_parallel();
+        let inner =
+            inner.ignore(false).git_global(false).follow_links(true).hidden(false).build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
 

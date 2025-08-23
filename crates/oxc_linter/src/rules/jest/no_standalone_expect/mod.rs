@@ -49,6 +49,13 @@ declare_oxc_lint!(
     /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
     /// calls will execute if they are not in a test block.
     ///
+    /// ### Why is this bad?
+    ///
+    /// `expect` statements outside of test blocks will not be executed by the Jest
+    /// test runner, which means they won't actually test anything. This can lead to
+    /// false confidence in test coverage and may hide bugs that would otherwise be
+    /// caught by proper testing.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -210,7 +217,6 @@ fn is_var_declarator_or_test_block<'a>(
                 return true;
             }
         }
-        /*TODO: AstKind::Argument(_) |*/
         AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
             let mut current = node;
             loop {
@@ -224,9 +230,6 @@ fn is_var_declarator_or_test_block<'a>(
                             ctx,
                         );
                     }
-                    // TODO: Fix argument handling here
-                    /*AstKind::Argument(_)
-                    | */
                     AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
                         current = parent;
                     }

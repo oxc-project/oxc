@@ -72,6 +72,8 @@ pub struct RawVec<'a, T, A: Alloc> {
     ptr: NonNull<T>,
     len: u32,
     cap: u32,
+    // SAFETY: Methods must not mutate the allocator (e.g. allocate into it), unless they can guarantee
+    // they have exclusive access to it, by taking `&mut self`
     alloc: &'a A,
 }
 
@@ -192,8 +194,47 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
     }
 
-    /// Returns a shared reference to the allocator backing this RawVec.
-    pub fn bump(&self) -> &'a A {
+    /// Get a shared reference to the allocator backing this `RawVec`.
+    ///
+    /// This method is hazardous.
+    ///
+    /// `Vec` is `Sync`, but `Bump` is not, because it utilizes interior mutability.
+    /// It is possible to make allocations into the arena while holding only a `&Bump`.
+    /// Because `Vec` is `Sync`, it's possible for multiple `&Vec` references to the same `Vec`,
+    /// or references to multiple `Vec`s attached to the same `Bump`, to exist simultaneously
+    /// on different threads.
+    ///
+    /// So this method could be used to obtain 2 `&Bump` references simultaneously on different threads.
+    /// Utilizing those references to allocate into the arena simultaneously from different threads
+    /// would be UB.
+    ///
+    /// We cannot rely on the type system or borrow checker to ensure correct synchronization.
+    ///
+    /// Therefore callers must ensure by other means that they have exclusive access, by:
+    ///
+    /// 1. Taking a `&mut self`.
+    ///    No methods of `Vec` or `RawVec` which do not hold a `&mut Vec` / `&mut RawVec` can use this method.
+    ///
+    /// 2. That `&mut self` must be held for at least as long as the `&'a A` reference returned by
+    ///    this method is held.
+    ///
+    /// Note: It's tempting to think we could make this a safe method by making it take `&mut self`,
+    /// but that's insufficient. That would enforce that the caller holds a `&mut self`, but the `&'a A`
+    /// returned by this method outlives the lifetime of `&self` that the method takes, so it would
+    /// NOT guarantee anything about *how long* they hold it for.
+    /// Taking a `&'a mut self` *would* be safe, but it'd be impractical.
+    ///
+    /// For further information, see comments on the `impl Sync` implementation of `Vec`.
+    ///
+    /// # IMPORTANT
+    /// The ability to obtain a reference to the allocator MUST NOT be exposed to user,
+    /// outside of `Vec`'s internals.
+    ///
+    /// # SAFETY
+    /// Caller must ensure they have exclusive access, but holding a `&mut Vec` or `&mut RawVec`
+    /// for the duration that the reference returned by this method is held.
+    /// See text above for further detail.
+    pub unsafe fn bump(&self) -> &'a A {
         self.alloc
     }
 

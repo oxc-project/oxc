@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.82.2] - 2025-08-17
+
+### 🐛 Bug Fixes
+
+- 6686cc4 minifier: Do not remove `using x = ` (#13052) (Boshen)
+
+### 🚜 Refactor
+
+- 7b86340 ast: Shorten serialize code using let chains (#13100) (overlookmotel)
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- bf9ae3b ast/estree: Remove custom serializer for `TSImportTypeQualifier` (#12961) (overlookmotel)
+- e5e2496 minifier: Clean up `try_compress_typeof_undefined` (#12958) (Boshen)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47e2c59 estree: Fix serialization of `TSImportTypeQualifier` (#12801) (camc314)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 📚 Documentation
+
+- d7a3e03 ast: Improve docs for `ImportSpecifier` (#12740) (overlookmotel)
+- eb22805 ast: Fix JavaScript/TypeScript code snippets to use proper backticks in documentation (#12729) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- 26249cf ast: Add `AstKind::ident_reference_is_assigned_to_in_parent` method (#12597) (overlookmotel)
+- 106f56f ast: Add `MemberExpressionKind::is_assigned_to_in_parent` method (#12596) (overlookmotel)
+- c763e0e ast: Implement `GetAddress` for `MemberExpressionKind` (#12593) (overlookmotel)
+- 23f7f82 minifier: Remove unused assignment expression (#12509) (Boshen)
+- 515b473 ast: Add `as_property` method to `ObjectPropertyKind` to access `ObjectProperty` if relevent (#12495) (camc314)
+
+### 🐛 Bug Fixes
+
+- 94b06ef ast: Correct logic in `Expression::is_call_like_expression` (#12534) (Dunqing)
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

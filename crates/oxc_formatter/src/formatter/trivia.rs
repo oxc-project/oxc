@@ -97,12 +97,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let leading_comments = f
-                    .context()
-                    .comments()
-                    .unprinted_comments()
-                    .iter()
-                    .take_while(|comment| comment.span.end <= span.start);
+                let leading_comments = f.context().comments().comments_before(span.start);
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -208,14 +203,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
-                format_trailing_comments_impl(
-                    f.context().comments().get_trailing_comments(
-                        enclosing_node,
-                        preceding_node,
-                        *following_node,
-                    ),
-                    f,
-                )
+                let comments = f.context().comments().get_trailing_comments(
+                    enclosing_node,
+                    preceding_node,
+                    *following_node,
+                );
+
+                format_trailing_comments_impl(comments, f)
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }
@@ -357,11 +351,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
             FormatDanglingComments::Node { span, indent } => {
                 let source_text = f.context().source_text();
                 format_dangling_comments_impl(
-                    f.context()
-                        .comments()
-                        .unprinted_comments()
-                        .iter()
-                        .take_while(|comment| span.contains_inclusive(comment.span)),
+                    f.context().comments().comments_before(span.end),
                     *indent,
                     f,
                 )
@@ -377,7 +367,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 ///
 /// ## Warning
 /// It's your responsibility to format any skipped trivia.
-pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken {
+pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken<'_> {
     FormatTrimmedToken { token }
 }
 

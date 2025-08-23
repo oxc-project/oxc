@@ -7,6 +7,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+
+
+
+
+
 ## [0.77.1] - 2025-07-16
 
 ### 🚀 Features

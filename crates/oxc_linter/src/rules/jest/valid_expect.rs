@@ -275,8 +275,6 @@ fn is_acceptable_return_node<'a, 'b>(
 
         match node.kind() {
             AstKind::ConditionalExpression(_)
-            // TODO:
-            // | AstKind::Argument(_)
             | AstKind::ExpressionStatement(_)
             | AstKind::FunctionBody(_) => {
                 node = ctx.nodes().parent_node(node.id());

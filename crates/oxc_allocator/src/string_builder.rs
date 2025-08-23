@@ -11,7 +11,7 @@ use std::{
     slice, str,
 };
 
-use oxc_data_structures::{assert_unchecked, pointer_ext::PointerExt};
+use oxc_data_structures::assert_unchecked;
 
 use crate::{Allocator, alloc::Alloc};
 
@@ -245,7 +245,7 @@ impl<'a> StringBuilder<'a> {
     #[inline(always)]
     pub fn len(&self) -> usize {
         // SAFETY: `end_ptr` is always equal to or after `start_ptr`
-        unsafe { self.end_ptr.offset_from_usize(self.start_ptr) }
+        unsafe { self.end_ptr.offset_from_unsigned(self.start_ptr) }
     }
 
     /// Returns `true` if string is empty.
@@ -258,7 +258,7 @@ impl<'a> StringBuilder<'a> {
     #[inline(always)]
     pub fn capacity(&self) -> usize {
         // SAFETY: `end_capacity_ptr` is always equal to or after `start_ptr`
-        unsafe { self.end_capacity_ptr.offset_from_usize(self.start_ptr) }
+        unsafe { self.end_capacity_ptr.offset_from_unsigned(self.start_ptr) }
     }
 
     /// Consume [`StringBuilder`] and produce a `&'a str` with lifetime of the arena.
@@ -437,7 +437,7 @@ impl<'a> StringBuilder<'a> {
     #[inline(always)]
     pub fn reserve(&mut self, additional: usize) {
         // SAFETY: `end_capacity` is always equal to or after `end`
-        let free_bytes = unsafe { self.end_capacity_ptr.offset_from_usize(self.end_ptr) };
+        let free_bytes = unsafe { self.end_capacity_ptr.offset_from_unsigned(self.end_ptr) };
         if free_bytes < additional {
             // Insufficient capacity for `additional` bytes. Grow the allocation.
             // SAFETY: We just checked allocation is full to capacity.

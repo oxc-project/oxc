@@ -2,5 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigestsToSemver"],
   "ignorePaths": ["crates/oxc_linter/fixtures/**"],
-  "ignoreDeps": ["@types/vscode", "allocator-api2"]
+  "ignoreDeps": ["@types/vscode", "allocator-api2"],
+  "packageRules": [
+    {
+      "groupName": "oxlint",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint"],
+      "rangeStrategy": "auto",
+      "schedule": ["at any time"],
+      "automergeSchedule": ["at any time"]
+    }
+  ]
 }

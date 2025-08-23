@@ -4,6 +4,126 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- da3c7fb oxlint: Oxlint v0.0.3 (#13148) (Boshen)
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+- 61112a3 linter: Add 36 new TypeScript ESLint rules with comprehensive test fixtures (#12893) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 66a350e oxlint: Should type linting files after ignore (#13149) (Boshen)
+- 43b1c5a linter: Do not count type-aware rules, when not enabled (#13062) (Sysix)
+- a0ccada tsgolint: Handle non-zero exit status from tsgolint process (#13087) (camc314)
+
+### 🚜 Refactor
+
+- 8459a12 linter: Pass paths to `TsGoLintState.lint` method (#13131) (Sysix)
+- f0a517f linter: Pass cwd instead of `LintServiceOptions` into `TsGoLintState` (#13127) (Sysix)
+- 34ae2f0 linter: Move `tsgolint.rs` to `oxc_linter` crate (#13126) (Sysix)
+- 9f924f6 linter: Always explicitly initialize Rayon thread pool (#13122) (overlookmotel)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+- cc2a85b linter: Remove `CliRunResult` from `TsGoLintState` (#13119) (Sysix)
+- 23e5642 linter: Move `TsGoLintInput` creation into own function (#13118) (Sysix)
+
+### ⚡ Performance
+
+- 3bfb235 linter: Implement streaming diagnostics for tsgolint instead of waiting for output to finish (#13098) (copilot-swe-agent)
+
+### 🎨 Styling
+
+- 4f2cc96 linter: Add line break (#13061) (overlookmotel)
+
+
+## [1.11.2] - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- c461a86 oxlint: Fix type-aware linting crash when Vue files are present (#13007) (Copilot)
+- 2936545 linter/tsgolint: Report an error if tsgolint executable failed to spawn (#12984) (camc314)
+- a13b3ee oxlint: Run `tsgolint.CMD` under windows (#12932) (Sysix)
+
+### 🚜 Refactor
+
+- 69303de oxlint: Pass `DiagnosticService` as a parameter for `TsGoLintState.lint()` (#13004) (Sysix)
+
+### 🧪 Testing
+
+- fb8cbbf oxlint: Enable tsgolint test with config parameter for windows (#13001) (Alexander S.)
+- d59f3bb oxlint: Match `x.ys` when replacing var (#12990) (camc314)
+- d7cca12 linter: Add test for extended configs and overrides for tsgolint (#12924) (camchenry)
+
+
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- 7fc907f linter: Resolve configured rules for every file linted by `tsgolint` (#12886) (camchenry)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+### 🧪 Testing
+
+- 9d946aa oxlint: Skip `--type--aware` test for `big-endian` (#12911) (Sysix)
+- 695fbdd oxlint: Fix `--type-aware` test on `big-endian` and skip for `windows` (#12910) (Sysix)
+- 38118ab oxlint: Fix `--type-aware` snapshot + add non tsgolint rule (#12909) (Sysix)
+
+
+## [1.11.0] - 2025-08-07
+
+### 🚀 Features
+
+- ac46347 oxlint: Add `tsgolint` integration (#12485) (camchenry)
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 9b35600 linter/jsx-a11y: Add support for mapped attributes in label association checks (#12805) (camc314)
+
+### 🐛 Bug Fixes
+
+- 45206dd linter: Apply fix span offset after fixing the section source text (#12758) (Sysix)
+
+### 🚜 Refactor
+
+- 030e397 linter: Simplify parsing CLI args (#12802) (overlookmotel)
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+
+### ⚡ Performance
+
+- 693673b linter: Reduce iterations when collecting directories for nested configs (#12329) (overlookmotel)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- d8ccff7 oxlint: Add `Tester::test_fix` mehod (#12754) (Sysix)
+
+
+## [1.9.0] - 2025-07-29
+
+### 🚜 Refactor
+
+- 543fd53 napi/oxlint: Rename `run` to `lintFile` (#12567) (overlookmotel)
+- 491c401 linter: Remove `#[must_use]` from `LintService::with_*` methods (#12560) (overlookmotel)
+- d44b0ac linter: Remove `Runner` trait (#12559) (overlookmotel)
+- bea652f linter: Add `vue` and `regex` to `BuiltinLintPlugins` (#12542) (Sysix)
+- 5c33fc7 diagnostics: Implement `Eq` and `Ord` for `InfoPosition` (#12505) (overlookmotel)
+- 7a0da04 diagnostics: Remove Option wrapper from MPSC channel and sender field (#12467) (camc314)
+
+### 🧪 Testing
+
+- d31adcf linter: Improve sorting diagnostics (#12504) (overlookmotel)
+
+
 ## [1.8.0] - 2025-07-22
 
 ### 🐛 Bug Fixes

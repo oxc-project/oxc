@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minifier"
-version = "0.78.0"
+version = "0.82.3"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -38,7 +38,8 @@ rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
+oxc_sourcemap = { workspace = true }
 
-base64 = { workspace = true }
 insta = { workspace = true }
+javascript-globals = { workspace = true }
 pico-args = { workspace = true }

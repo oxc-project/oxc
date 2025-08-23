@@ -13,6 +13,7 @@ const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 
 /// Convert `char` to UTF-8 bytes array.
 const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    assert!(ch.len_utf8() == N);
     let mut bytes = [0u8; N];
     ch.encode_utf8(&mut bytes);
     bytes

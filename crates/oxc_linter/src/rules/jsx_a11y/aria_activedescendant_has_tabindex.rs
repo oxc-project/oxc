@@ -28,6 +28,13 @@ declare_oxc_lint!(
     ///
     /// Enforce elements with aria-activedescendant are tabbable.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Elements with `aria-activedescendant` must be tabbable for users to
+    /// navigate to them using keyboard input. Without proper tabindex, screen
+    /// reader users cannot access the element through keyboard navigation,
+    /// making the functionality inaccessible.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

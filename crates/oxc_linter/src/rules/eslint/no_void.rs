@@ -22,10 +22,10 @@ declare_oxc_lint!(
     ///
     /// Disallows the use of the `void` operator.
     ///
-    /// Why is this bad
+    /// ### Why is this bad?
     ///
-    /// The `void` operator is often used to get `undefined`,
-    /// but this is unnecessary because `undefined` can be used directly instead.
+    /// The `void` operator is often used to get `undefined`, but this is
+    /// unnecessary because `undefined` can be used directly instead.
     ///
     /// ### Examples
     ///

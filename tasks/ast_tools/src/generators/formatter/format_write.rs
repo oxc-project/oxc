@@ -11,6 +11,9 @@ use crate::{
     schema::{Def, Schema, TypeDef},
 };
 
+const NEEDS_PARENTHESES: &[&str] =
+    &["AssignmentTarget", "SimpleAssignmentTarget", "AssignmentTargetPattern"];
+
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
 pub struct FormatterFormatWriteGenerator;
@@ -64,16 +67,46 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         let node_type =
             field_type.maybe_inner_type(schema).map_or_else(|| field_type.ident(), TypeDef::ident);
 
-        Some(quote! {
-            #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
-                    inner,
-                    parent,
-                    allocator,
-                    following_node: self.following_node,
-                }).fmt(f)
-            },
-        })
+        // Optimization: For simple literal types that don't use parent/allocator/following_node,
+        // we can format directly without allocating an AstNode wrapper
+        let is_simple_literal = matches!(
+            variant_name.to_string().as_str(),
+            "BooleanLiteral"
+                | "NullLiteral"
+                | "NumericLiteral"
+                | "StringLiteral"
+                | "BigIntLiteral"
+                | "RegExpLiteral"
+                | "Identifier"
+        );
+
+        if is_simple_literal && enum_ident == "Expression" {
+            // Direct formatting for simple literals without allocation
+            Some(quote! {
+                #enum_ident::#variant_name(inner) => {
+                    // Create a stack-allocated AstNode to avoid heap allocation
+                    let node = AstNode::<#node_type> {
+                        inner,
+                        parent: self.parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    };
+                    node.fmt(f)
+                },
+            })
+        } else {
+            // Keep existing allocation for complex types that may need the wrapper
+            Some(quote! {
+                #enum_ident::#variant_name(inner) => {
+                    allocator.alloc(AstNode::<#node_type> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_node: self.following_node,
+                    }).fmt(f)
+                },
+            })
+        }
     });
 
     let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
@@ -110,6 +143,41 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     };
     let node_type = get_node_type(&enum_ty);
 
+    let inner_match = quote! {
+        match self.inner {
+            #(#variant_match_arms)*
+            #(#inherits_match_arms)*
+        }
+    };
+    let needs_parentheses = NEEDS_PARENTHESES.contains(&enum_def.name.as_str());
+
+    let print_parentheses = |paren: &str| {
+        if needs_parentheses {
+            quote! {
+                if needs_parentheses {
+                    #paren.fmt(f)?;
+                }
+            }
+        } else {
+            quote!()
+        }
+    };
+
+    let left_paren = print_parentheses("(");
+    let right_paren = print_parentheses(")");
+
+    let body = if needs_parentheses {
+        quote! {
+            let needs_parentheses = self.needs_parentheses(f);
+            #left_paren;
+            let result = #inner_match;
+            #right_paren;
+            result
+        }
+    } else {
+        inner_match
+    };
+
     quote! {
         ///@@line_break
         impl<'a> FormatWrite<'a> for #node_type {
@@ -117,10 +185,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
             fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 let allocator = self.allocator;
                 #parent;
-                match self.inner {
-                    #(#variant_match_arms)*
-                    #(#inherits_match_arms)*
-                }
+                #body
             }
         }
     }

@@ -20,54 +20,60 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Expression<'a>> {
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
-            Expression::BooleanLiteral(inner) => allocator
-                .alloc(AstNode::<BooleanLiteral> {
+            Expression::BooleanLiteral(inner) => {
+                let node = AstNode::<BooleanLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
-            Expression::NullLiteral(inner) => allocator
-                .alloc(AstNode::<NullLiteral> {
+                };
+                node.fmt(f)
+            }
+            Expression::NullLiteral(inner) => {
+                let node = AstNode::<NullLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
-            Expression::NumericLiteral(inner) => allocator
-                .alloc(AstNode::<NumericLiteral> {
+                };
+                node.fmt(f)
+            }
+            Expression::NumericLiteral(inner) => {
+                let node = AstNode::<NumericLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
-            Expression::BigIntLiteral(inner) => allocator
-                .alloc(AstNode::<BigIntLiteral> {
+                };
+                node.fmt(f)
+            }
+            Expression::BigIntLiteral(inner) => {
+                let node = AstNode::<BigIntLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
-            Expression::RegExpLiteral(inner) => allocator
-                .alloc(AstNode::<RegExpLiteral> {
+                };
+                node.fmt(f)
+            }
+            Expression::RegExpLiteral(inner) => {
+                let node = AstNode::<RegExpLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
-            Expression::StringLiteral(inner) => allocator
-                .alloc(AstNode::<StringLiteral> {
+                };
+                node.fmt(f)
+            }
+            Expression::StringLiteral(inner) => {
+                let node = AstNode::<StringLiteral> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
+                };
+                node.fmt(f)
+            }
             Expression::TemplateLiteral(inner) => allocator
                 .alloc(AstNode::<TemplateLiteral> {
                     inner,
@@ -76,14 +82,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Expression<'a>> {
                     following_node: self.following_node,
                 })
                 .fmt(f),
-            Expression::Identifier(inner) => allocator
-                .alloc(AstNode::<IdentifierReference> {
+            Expression::Identifier(inner) => {
+                let node = AstNode::<IdentifierReference> {
                     inner,
-                    parent,
-                    allocator,
+                    parent: self.parent,
+                    allocator: self.allocator,
                     following_node: self.following_node,
-                })
-                .fmt(f),
+                };
+                node.fmt(f)
+            }
             Expression::MetaProperty(inner) => allocator
                 .alloc(AstNode::<MetaProperty> {
                     inner,
@@ -523,7 +530,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 let inner = it.to_simple_assignment_target();
                 allocator
@@ -546,7 +557,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTarget<'a>> {
                     })
                     .fmt(f)
             }
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 
@@ -554,8 +569,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
-        match self.inner {
+        let parent = self.parent;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner) => allocator
                 .alloc(AstNode::<IdentifierReference> {
                     inner,
@@ -607,7 +626,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     })
                     .fmt(f)
             }
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 
@@ -616,7 +639,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
         let parent = self.parent;
-        match self.inner {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(inner) => allocator
                 .alloc(AstNode::<ArrayAssignmentTarget> {
                     inner,
@@ -633,7 +660,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
                     following_node: self.following_node,
                 })
                 .fmt(f),
+        };
+        if needs_parentheses {
+            ")".fmt(f)?;
         }
+        result
     }
 }
 
@@ -2213,6 +2244,32 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
                     })
                     .fmt(f)
             }
+        }
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
+    #[inline]
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            TSImportTypeQualifier::Identifier(inner) => allocator
+                .alloc(AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                })
+                .fmt(f),
+            TSImportTypeQualifier::QualifiedName(inner) => allocator
+                .alloc(AstNode::<TSImportTypeQualifiedName> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                })
+                .fmt(f),
         }
     }
 }

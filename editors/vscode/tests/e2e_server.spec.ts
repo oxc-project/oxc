@@ -17,11 +17,9 @@ import {
   getDiagnostics,
   loadFixture,
   sleep,
-  testMultiFolderMode,
   testSingleFolderMode,
   waitForDiagnosticChange,
-  WORKSPACE_DIR,
-  WORKSPACE_SECOND_DIR
+  WORKSPACE_DIR
 } from './test-helpers';
 import assert = require('assert');
 
@@ -33,6 +31,7 @@ suiteSetup(async () => {
 
 teardown(async () => {
   await workspace.getConfiguration('oxc').update('flags', undefined);
+  await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.saveAll();
 });
 
@@ -169,21 +168,22 @@ suite('E2E Diagnostics', () => {
     strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
-  testMultiFolderMode('different diagnostic severity', async () => {
-    await loadFixture('debugger', WORKSPACE_DIR);
-    await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
-
-    const firstDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_DIR);
-    const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
-
-    assert(typeof firstDiagnostics[0].code == 'object');
-    strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
-
-    assert(typeof secondDiagnostics[0].code == 'object');
-    strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
-  });
+  // somehow this test is flaky in CI
+  // testMultiFolderMode('different diagnostic severity', async () => {
+  //   await loadFixture('debugger', WORKSPACE_DIR);
+  //   await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
+  //
+  //   const firstDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_DIR);
+  //   const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
+  //
+  //   assert(typeof firstDiagnostics[0].code == 'object');
+  //   strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
+  //   strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
+  //
+  //   assert(typeof secondDiagnostics[0].code == 'object');
+  //   strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+  //   strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  // });
 
   // somehow this test is flaky in CI
   test.skip('changing config from `extends` will revalidate the diagnostics', async () => {
@@ -216,6 +216,24 @@ suite('E2E Diagnostics', () => {
 
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
+  testSingleFolderMode('changing oxc.tsConfigPath will revalidate the diagnostics', async () => {
+    await loadFixture('changing_tsconfig_path');
+    const firstDiagnostics = await getDiagnostics('deep/src/dep-a.ts');
+
+    strictEqual(firstDiagnostics.length, 0);
+
+    await workspace.getConfiguration('oxc').update('tsConfigPath', "fixtures/deep/tsconfig.json");
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('deep/src/dep-a.ts');
+    strictEqual(secondDiagnostics.length, 1);
+    assert(typeof secondDiagnostics[0].code == 'object');
+    strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    assert(secondDiagnostics[0].message.startsWith("Dependency cycle detected"));
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 

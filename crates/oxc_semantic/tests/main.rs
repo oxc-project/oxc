@@ -1,13 +1,13 @@
-mod conformance;
-
 use std::{fs, path::Path};
 
-use conformance::SemanticConformance;
 use oxc_allocator::Allocator;
 use oxc_index::Idx;
 use oxc_parser::Parser;
 use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
+
+mod conformance;
+use conformance::SemanticConformance;
 
 /// A test case representing an input source file.
 struct TestContext<'a> {

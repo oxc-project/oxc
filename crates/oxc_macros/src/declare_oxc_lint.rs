@@ -9,6 +9,8 @@ use syn::{
 
 pub struct LintRuleMeta {
     name: Ident,
+    // Whether this rule should be exposed to tsgolint integration
+    is_tsgolint_rule: bool,
     plugin: Ident,
     category: Ident,
     /// Describes what auto-fixing capabilities the rule has
@@ -49,7 +51,25 @@ impl Parse for LintRuleMeta {
             }
         }
 
-        let struct_name = input.parse()?;
+        let struct_name: Ident = input.parse()?;
+        // Optional marker `(tsgolint)` directly after the rule struct name
+        let mut is_tsgolint_rule = false;
+        if input.peek(syn::token::Paren) {
+            let content;
+            syn::parenthesized!(content in input);
+            let marker: Ident = content.parse()?;
+            if marker == "tsgolint" {
+                if !content.is_empty() {
+                    return Err(Error::new_spanned(marker, "unexpected tokens after 'tsgolint'"));
+                }
+                is_tsgolint_rule = true;
+            } else {
+                return Err(Error::new_spanned(
+                    marker,
+                    "unsupported marker (only 'tsgolint' is allowed)",
+                ));
+            }
+        }
         input.parse::<Token!(,)>()?;
         let plugin = input.parse()?;
         input.parse::<Token!(,)>()?;
@@ -101,6 +121,7 @@ impl Parse for LintRuleMeta {
 
         Ok(Self {
             name: struct_name,
+            is_tsgolint_rule,
             plugin,
             category,
             fix,
@@ -119,6 +140,7 @@ pub fn rule_name_converter() -> Converter {
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta {
         name,
+        is_tsgolint_rule,
         plugin,
         category,
         fix,
@@ -193,6 +215,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
             const CATEGORY: RuleCategory = #category;
 
+            const IS_TSGOLINT_RULE: bool = #is_tsgolint_rule;
+
             #fix
 
             #docs
@@ -259,7 +283,7 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
             // e.g. "safe_fix". safe is implied
             "safe"
             // e.g. fix_or_suggestion
-            | "and" | "or" 
+            | "and" | "or"
             => false,
             _ => true,
         })

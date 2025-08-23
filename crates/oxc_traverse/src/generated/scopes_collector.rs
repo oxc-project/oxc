@@ -1906,6 +1906,16 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         }
     }
 
+    #[inline(always)]
+    fn visit_ts_import_type_qualifier(&mut self, it: &TSImportTypeQualifier<'a>) {
+        // Enum does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_ts_import_type_qualified_name(&mut self, it: &TSImportTypeQualifiedName<'a>) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
     #[inline]
     fn visit_ts_function_type(&mut self, it: &TSFunctionType<'a>) {
         self.add_scope(&it.scope_id);

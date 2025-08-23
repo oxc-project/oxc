@@ -11,6 +11,8 @@ use crate::service::offset_to_position::SpanPositionMessage;
 #[cfg(feature = "language_server")]
 pub use fix::{FixWithPosition, PossibleFixesWithPosition};
 #[cfg(feature = "language_server")]
+use oxc_data_structures::rope::Rope;
+#[cfg(feature = "language_server")]
 use oxc_diagnostics::{OxcCode, Severity};
 
 mod fix;
@@ -260,6 +262,68 @@ impl From<OxcDiagnostic> for MessageWithPosition<'_> {
     }
 }
 
+// clippy: the source field is checked and assumed to be less than 4GB, and
+// we assume that the fix offset will not exceed 2GB in either direction
+#[cfg(feature = "language_server")]
+#[expect(clippy::cast_possible_truncation)]
+pub fn message_to_message_with_position<'a>(
+    message: &Message<'a>,
+    source_text: &str,
+    rope: &Rope,
+) -> MessageWithPosition<'a> {
+    use crate::service::offset_to_position::offset_to_position;
+
+    let labels = message.error.labels.as_ref().map(|labels| {
+        labels
+            .iter()
+            .map(|labeled_span| {
+                let offset = labeled_span.offset() as u32;
+                let start_position = offset_to_position(rope, offset, source_text);
+                let end_position =
+                    offset_to_position(rope, offset + labeled_span.len() as u32, source_text);
+                let message = labeled_span.label().map(|label| Cow::Owned(label.to_string()));
+
+                SpanPositionMessage::new(start_position, end_position).with_message(message)
+            })
+            .collect::<Vec<_>>()
+    });
+
+    MessageWithPosition {
+        message: message.error.message.clone(),
+        severity: message.error.severity,
+        help: message.error.help.clone(),
+        url: message.error.url.clone(),
+        code: message.error.code.clone(),
+        labels,
+        fixes: match &message.fixes {
+            PossibleFixes::None => PossibleFixesWithPosition::None,
+            PossibleFixes::Single(fix) => {
+                PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
+            }
+            PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
+                fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
+            ),
+        },
+    }
+}
+
+#[cfg(feature = "language_server")]
+fn fix_to_fix_with_position<'a>(
+    fix: &Fix<'a>,
+    rope: &Rope,
+    source_text: &str,
+) -> FixWithPosition<'a> {
+    use crate::service::offset_to_position::offset_to_position;
+
+    let start_position = offset_to_position(rope, fix.span.start, source_text);
+    let end_position = offset_to_position(rope, fix.span.end, source_text);
+    FixWithPosition {
+        content: fix.content.clone(),
+        span: SpanPositionMessage::new(start_position, end_position)
+            .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
+    }
+}
+
 impl<'new> CloneIn<'new> for Message<'_> {
     type Cloned = Message<'new>;
 
@@ -290,6 +354,40 @@ impl<'a> Message<'a> {
             (0, 0)
         };
         Self { error, span: Span::new(start, end), fixes, fixed: false }
+    }
+
+    /// move the offset of all spans (except fixes) to the right
+    /// for moving fixes use [`Message::move_fix_offset`].
+    pub fn move_offset(&mut self, offset: u32) -> &mut Self {
+        debug_assert!(offset != 0);
+
+        self.span = self.span.move_right(offset);
+
+        if let Some(labels) = &mut self.error.labels {
+            for label in labels {
+                label.set_span_offset(label.offset().saturating_add(offset as usize));
+            }
+        }
+
+        self
+    }
+
+    pub fn move_fix_offset(&mut self, offset: u32) -> &mut Self {
+        debug_assert!(offset != 0);
+
+        match &mut self.fixes {
+            PossibleFixes::None => {}
+            PossibleFixes::Single(fix) => {
+                fix.span = fix.span.move_right(offset);
+            }
+            PossibleFixes::Multiple(fixes) => {
+                for fix in fixes {
+                    fix.span = fix.span.move_right(offset);
+                }
+            }
+        }
+
+        self
     }
 }
 
@@ -343,7 +441,7 @@ impl<'a> Fixer<'a> {
         self.messages.sort_unstable_by_key(|m| m.fixes.span());
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
-        let mut last_pos: i64 = -1;
+        let mut last_pos: u32 = 0;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -367,21 +465,20 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             }
-            if i64::from(start) < last_pos {
+            if start < last_pos {
                 filtered_messages.push(m);
                 continue;
             }
 
             m.fixed = true;
             fixed = true;
-            let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
+            let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
             output.push_str(content);
-            last_pos = i64::from(end);
+            last_pos = end;
         }
 
-        let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
-        output.push_str(&source_text[offset..]);
+        output.push_str(&source_text[last_pos as usize..]);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
         FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }

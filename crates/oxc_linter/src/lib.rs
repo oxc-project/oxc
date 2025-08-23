@@ -26,6 +26,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod tsgolint;
 mod utils;
 
 pub mod loader;
@@ -41,11 +42,12 @@ mod generated {
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, LintPlugins, Oxlintrc,
+        ESLintRule, LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::LintContext,
     external_linter::{
-        ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb, LintResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
+        PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
@@ -56,11 +58,11 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
-    utils::read_to_arena_str,
-    utils::read_to_string,
+    tsgolint::TsGoLintState,
+    utils::{read_to_arena_str, read_to_string},
 };
 use crate::{
-    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
+    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
     fixer::{Fixer, Message},
     rules::RuleEnum,
@@ -117,8 +119,8 @@ impl Linter {
     /// Returns the number of rules that will are being used, unless there
     /// nested configurations in use, in which case it returns `None` since the
     /// number of rules depends on which file is being linted.
-    pub fn number_of_rules(&self) -> Option<usize> {
-        self.config.number_of_rules()
+    pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
+        self.config.number_of_rules(type_aware)
     }
 
     pub fn run<'a>(
@@ -135,7 +137,7 @@ impl Linter {
 
         let rules = rules
             .iter()
-            .filter(|(rule, _)| rule.should_run(&ctx_host))
+            .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
             .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
 
         let semantic = ctx_host.semantic();
@@ -248,17 +250,17 @@ impl Linter {
         let external_linter = self.external_linter.as_ref().unwrap();
 
         // Write offset of `Program` in metadata at end of buffer
-        let program = semantic.nodes().program().unwrap();
+        let program = semantic.nodes().program();
         let program_offset = ptr::from_ref(program) as u32;
 
         let metadata = RawTransferMetadata::new(program_offset);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
-        // for a `RawTransferMetadata`. `end_ptr` is aligned for `FixedSizeAllocator`.
+        // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
         // Pass AST and rule IDs to JS
-        let result = (external_linter.run)(
+        let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             allocator,

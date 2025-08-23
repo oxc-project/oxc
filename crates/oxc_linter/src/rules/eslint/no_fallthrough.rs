@@ -437,12 +437,12 @@ fn get_switch_semantic_cases(
     let cfg = ctx.cfg();
     let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
-    let (tests, exit) = graph
+    let (mut cfg_ids, tests, exit) = graph
         .edges_directed(node.cfg_id(), Direction::Outgoing)
-        .fold((Vec::new(), None), |(mut conds, exit), it| {
+        .fold((Vec::new(), Vec::new(), None), |(mut cfg_ids, mut conds, exit), it| {
             let target = it.target();
             if !matches!(it.weight(), EdgeType::Normal) {
-                (conds, exit)
+                (cfg_ids, conds, exit)
             } else if cfg
                 .basic_block(target)
                 .instructions()
@@ -466,22 +466,19 @@ fn get_switch_semantic_cases(
                             })
                     })
                     .is_some_and(|it| it.consequent.is_empty() || it.consequent.iter().exactly_one().is_ok_and(|it| matches!(it, Statement::BlockStatement(b) if b.body.is_empty())));
+                cfg_ids.push(target);
                 conds.push((target, is_empty));
-                (conds, exit)
+                (cfg_ids, conds, exit)
             } else {
-                (conds, Some(target))
+                if has_default {
+                    cfg_ids.push(target);
+                }
+                (cfg_ids, conds, Some(target))
             }
         });
 
-    let mut cfg_ids: Vec<_> = tests.iter().rev().map(|it| it.0).collect();
-    let (default, exit) = if has_default {
-        if let Some(exit) = exit {
-            cfg_ids.push(exit);
-        }
-        (exit, None)
-    } else {
-        (None, exit)
-    };
+    let (default, exit) = if has_default { (exit, None) } else { (None, exit) };
+    cfg_ids.reverse();
     (cfg_ids, FxHashMap::from_iter(tests), default, exit)
 }
 
@@ -535,6 +532,7 @@ fn test() {
             "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
             None,
         ),
+        ("switch(foo) { case 0: default: a(); break; case 1: b(); }", None),
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{

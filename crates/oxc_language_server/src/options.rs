@@ -27,6 +27,7 @@ pub enum UnusedDisableDirectives {
 pub struct Options {
     pub run: Run,
     pub config_path: Option<String>,
+    pub ts_config_path: Option<String>,
     pub unused_disable_directives: UnusedDisableDirectives,
     pub flags: FxHashMap<String, String>,
 }
@@ -98,6 +99,9 @@ impl TryFrom<Value> for Options {
                 .unwrap_or_default(),
             config_path: object
                 .get("configPath")
+                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            ts_config_path: object
+                .get("tsConfigPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
             flags,
         })

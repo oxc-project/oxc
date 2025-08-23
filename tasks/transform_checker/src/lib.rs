@@ -415,7 +415,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.get_resolved_reference_ids(symbol_id).iter().copied().collect::<Vec<_>>()
+                scoping.get_resolved_reference_ids(symbol_id).to_vec()
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(

@@ -11,6 +11,7 @@ describe('parse', () => {
     assertType<Statement>(ret.program.body[0]);
   });
 
+  // oxlint-disable-next-line jest/expect-expect
   it('Node type', () => {
     function example(node: Node) {
       node.type satisfies string;

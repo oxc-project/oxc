@@ -116,16 +116,17 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
 
                 let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
                 let source_text = f.source_text();
+
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                let entries = FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
-                    .with_trailing_separator(trailing_separator)
-                    .zip(FormalParametersIter::from(self.list));
-                for (formatted, param) in entries {
-                    joiner.entry(param.span(), &formatted);
+                for formatted in
+                    FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
+                        .with_trailing_separator(trailing_separator)
+                {
+                    joiner.entry(formatted.element.span(), &formatted);
                 }
                 joiner.finish()
             }

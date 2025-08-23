@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 76a9865 transformer/legacy-decorator: Metadata should be inserted after all params decorators (#13215) (Dunqing)
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 76a9865 transformer/legacy-decorator: Metadata should be inserted after all params decorators (#13215) (Dunqing)
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+
+
+
+
+
+
+
+
+## [0.80.0] - 2025-08-03
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+
+
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 💥 BREAKING CHANGES

@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 76a9865 transformer/legacy-decorator: Metadata should be inserted after all params decorators (#13215) (Dunqing)
+
+### 🚜 Refactor
+
+- 5463a99 transformer: Shorten code (#13220) (overlookmotel)
+- 49a6fda transformer/decorator: Re-order methods (#13219) (overlookmotel)
+
+### ⚡ Performance
+
+- ef3c23a transformer/decorator: Remove temporary `Vec` (#13218) (overlookmotel)
+
+
+
+## [0.82.1] - 2025-08-13
+
+### 🐛 Bug Fixes
+
+- 6fe0bb5 transformer/react: Spread props optimization breaks __self and __source injection (#13009) (#13020) (Dunqing)
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+- 65e2112 transformer: Use to `@babel/plugin-transform-explicit-resource-management` (#12874) (Copilot)
+
+### 📚 Documentation
+
+- ed40581 transformer: Improve doc comment formatting (#12899) (overlookmotel)
+- d14b8b8 transformer/styled-components: Remove duplicate backtick (#12897) (camc314)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- d02e17c transformer/class-properties: Preserve computed keys if they may have side effects when `remove_class_fields_without_initializer` is enabled (#12772) (Dunqing)
+- 701399e transformer/typescript: Don't remove class fields without initializers when class-properties plugin is enabled (#12771) (Dunqing)
+- 8854c1a transformer/typescript: Revert "remove properties with definite assignment assertion" (#12759) (Copilot)
+- 0e1e79d transformer/typescript: Remove properties with definite assignment assertion (#12713) (Dunqing)
+
+### 🚜 Refactor
+
+- 5c9fdd2 transformer/object-rest-spread: Extract unboxed field earlier (#12717) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🐛 Bug Fixes
+
+- 2f66dd2 transformer/styled-components: Preserve whitespace before interpolations in minification (#12558) (Dunqing)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 💥 BREAKING CHANGES

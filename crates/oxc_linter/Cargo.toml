@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "1.8.0"
+version = "1.12.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -52,15 +52,14 @@ constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
-globset = { workspace = true }
 icu_segmenter = { workspace = true }
+ignore = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
 javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy-regex = { workspace = true }
-lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
@@ -70,7 +69,7 @@ rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }
 self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
 tokio = { workspace = true, optional = true }

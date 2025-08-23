@@ -1,11 +1,12 @@
 {
   "name": "oxc-parser",
-  "version": "0.78.0",
+  "version": "0.82.3",
+  "type": "commonjs",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --platform --js bindings.js",
-    "build-test": "pnpm run build",
+    "build-test": "pnpm run build-dev --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
@@ -30,7 +31,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/parser"
   },
   "funding": {
@@ -67,7 +68,7 @@
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
-    "@napi-rs/wasm-runtime": "^1.0.0",
+    "@napi-rs/wasm-runtime": "catalog:",
     "@vitest/browser": "3.2.4",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",

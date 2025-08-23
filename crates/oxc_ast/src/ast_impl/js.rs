@@ -91,6 +91,7 @@ impl<'a> Expression<'a> {
     /// Returns `true` for [string literals](StringLiteral) matching the
     /// expected value. Note that [non-substitution template
     /// literals](TemplateLiteral) are not considered.
+    #[inline]
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         match self {
             Self::StringLiteral(s) => s.value == string,
@@ -341,7 +342,7 @@ impl<'a> Expression<'a> {
     /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
-            && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+            || matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
     /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
@@ -786,7 +787,7 @@ impl CallExpression<'_> {
     /// require() // => false
     /// require(123) // => false
     /// ```
-    pub fn common_js_require(&self) -> Option<&StringLiteral> {
+    pub fn common_js_require(&self) -> Option<&StringLiteral<'_>> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
         }
@@ -983,6 +984,21 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
             _ => None,
         }
     }
+
+    /// Returns mut identifier bound by this assignment target.
+    pub fn identifier_mut(&mut self) -> Option<&mut IdentifierReference<'a>> {
+        match self {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
+            Self::AssignmentTargetWithDefault(target) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &mut target.binding {
+                    Some(id)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Statement<'_> {
@@ -1151,6 +1167,11 @@ impl VariableDeclarationKind {
     /// Returns `true` if declared using `let`, `const` or `using` (such as `let x` or `const x`)
     pub fn is_lexical(self) -> bool {
         matches!(self, Self::Const | Self::Let | Self::Using | Self::AwaitUsing)
+    }
+
+    /// Returns `true` if declared with `using` (such as `using x` or `await using x`)
+    pub fn is_using(self) -> bool {
+        self == Self::Using || self == Self::AwaitUsing
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)

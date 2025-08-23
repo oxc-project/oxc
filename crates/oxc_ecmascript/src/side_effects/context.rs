@@ -1,6 +1,6 @@
 use oxc_ast::ast::Expression;
 
-use crate::is_global_reference::IsGlobalReference;
+use crate::GlobalContext;
 
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyReadSideEffects {
@@ -14,7 +14,7 @@ pub enum PropertyReadSideEffects {
     All,
 }
 
-pub trait MayHaveSideEffectsContext<'a>: IsGlobalReference<'a> {
+pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
     /// Whether to respect the pure annotations.
     ///
     /// Pure annotations are the comments that marks that a expression is pure.

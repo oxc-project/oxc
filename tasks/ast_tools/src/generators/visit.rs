@@ -491,20 +491,20 @@ impl VisitBuilder<'_> {
         // We handle exiting scope first, to create correct output if entering and exiting on same field.
         // The `if` block for entering scope prepends `enter_scope` call *before* whatever it's passed.
         // If both entering and exiting, that means `enter_scope` is inserted before `leave_scope`.
-        if let Some((exit_index, _)) = scope_exit {
-            if *exit_index <= field_index {
-                let (_, leave_scope) = scope_exit.take().unwrap();
-                visit = quote!( #leave_scope #visit );
-                visit_mut = quote!( #leave_scope #visit_mut );
-            }
+        if let Some((exit_index, _)) = scope_exit
+            && *exit_index <= field_index
+        {
+            let (_, leave_scope) = scope_exit.take().unwrap();
+            visit = quote!( #leave_scope #visit );
+            visit_mut = quote!( #leave_scope #visit_mut );
         }
 
-        if let Some((enter_index, _)) = scope_entry {
-            if *enter_index <= field_index {
-                let (_, enter_scope) = scope_entry.take().unwrap();
-                visit = quote!( #enter_scope #visit );
-                visit_mut = quote!( #enter_scope #visit_mut );
-            }
+        if let Some((enter_index, _)) = scope_entry
+            && *enter_index <= field_index
+        {
+            let (_, enter_scope) = scope_entry.take().unwrap();
+            visit = quote!( #enter_scope #visit );
+            visit_mut = quote!( #enter_scope #visit_mut );
         }
 
         Some((visit, visit_mut))

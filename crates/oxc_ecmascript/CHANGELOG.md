@@ -4,6 +4,95 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- d27a04b ecmascript: Skip array length evaluation if there are any spread elements (#13162) (Monad)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- fbe6663 minifier: Mark more known global methods as side-effect free (#13086) (Boshen)
+- 36386e4 ecmascript: Treat `[...arguments]` as side effect free (#13116) (sapphi-red)
+- fe4589b minifier: Mark more global constructors as side-effect free (#13082) (Boshen)
+
+### 🚜 Refactor
+
+- e190ee5 minifier: Clean up `remove_unused_expression` (#13080) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 📚 Documentation
+
+- 9c05e2f ecmascript: Correct docs for `GlobalContext::is_global_reference` (#13022) (overlookmotel)
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 54d1750 ecmascript: Handle `typeof` guarded global access as side effect free (#12981) (Copilot)
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+- 208e6f7 ecmascript: Add URI encoding/decoding support to constant evaluation (#12934) (Copilot)
+- 53f7a9f minifier: `new Date()` has `ValueType::Object` (#12951) (Boshen)
+- 784796d minifier: Fold `(!0).toString()` to `true` (#12938) (Boshen)
+- bc1d716 ecmascript: Add ARM64 FJCVTZS instruction optimization for ToInt32 with function-specific target features and runtime detection (#12823) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- c72f49e ecmascript: Fix merge error (Boshen)
+
+### 🚜 Refactor
+
+- 8a5c9b9 minifier,ecmascript: Clean up `is_global_reference` (#12953) (Boshen)
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ce27e9 ecmascript, minifier: Revert changes to changelogs (#12962) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 🚜 Refactor
+
+- f3f6012 ecmascript: Avoid redundant checks by splitting up match arms (#12782) (Ulrich Stark)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚜 Refactor
+
+- 5f50bc3 minifier: Move string method constant evaluation from minifier to ecmascript crate (#12672) (Copilot)
+
+### 📚 Documentation
+
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- 763a618 minifier: Inline small constant values (#12639) (Boshen)
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- b877039 minifier: Inline `const` variables that are only used once (#12488) (Boshen)
+
+### 🐛 Bug Fixes
+
+- fe9c8e1 minifier: Do not remove non-plain empty functions (#12573) (Boshen)
+
+
 
 
 

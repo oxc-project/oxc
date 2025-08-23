@@ -57,8 +57,6 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         declaration.map(|(var_decl, declaration)| {
-            let exported =
-                ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
             // When `var_decl` is Some, the comments are moved to the variable declaration, otherwise
             // keep the comments on the export default declaration to avoid losing them.
             // ```ts
@@ -82,7 +80,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
             let span = if var_decl.is_some() { SPAN } else { decl.span };
             let declaration =
-                self.ast.module_declaration_export_default_declaration(span, exported, declaration);
+                self.ast.module_declaration_export_default_declaration(span, declaration);
             (var_decl, Statement::from(declaration))
         })
     }

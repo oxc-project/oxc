@@ -31,7 +31,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
 
-        f.join_with(&soft_line_break_or_space())
+        f.join_with(soft_line_break_or_space())
             .entries(
                 FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(trailing_separator),
@@ -63,8 +63,6 @@ impl<'a> Format<'a> for FormatTsTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.decl.params().is_empty() && self.options.is_type_or_interface_decl {
             write!(f, "<>")
-        } else if self.decl.params().is_empty() {
-            return Err(FormatError::SyntaxError);
         } else {
             write!(
                 f,

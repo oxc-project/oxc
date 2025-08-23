@@ -4,6 +4,136 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🚜 Refactor
+
+- 5baa4f1 napi/parser: Fix lint errors (#13185) (overlookmotel)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🚜 Refactor
+
+- 5baa4f1 napi/parser: Fix lint errors (#13185) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- f6ac2e6 allocator, napi/parser: Use `usize::is_multiple_of` (#13142) (overlookmotel)
+
+### ⚡ Performance
+
+- ecc9c60 napi/parser: Raw transfer: reduce maths complexity (#13145) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- f6ac2e6 allocator, napi/parser: Use `usize::is_multiple_of` (#13142) (overlookmotel)
+
+### ⚡ Performance
+
+- ecc9c60 napi/parser: Raw transfer: reduce maths complexity (#13145) (overlookmotel)
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- bf9ae3b ast/estree: Remove custom serializer for `TSImportTypeQualifier` (#12961) (overlookmotel)
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- bf9ae3b ast/estree: Remove custom serializer for `TSImportTypeQualifier` (#12961) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47e2c59 estree: Fix serialization of `TSImportTypeQualifier` (#12801) (camc314)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 47e2c59 estree: Fix serialization of `TSImportTypeQualifier` (#12801) (camc314)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+- 2f255a0 napi/parser: Ensure `target` dir exists (#12751) (overlookmotel)
+- 02504b9 napi/parser: Disable raw transfer tests by default (#12742) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+- 2f255a0 napi/parser: Ensure `target` dir exists (#12751) (overlookmotel)
+- 02504b9 napi/parser: Disable raw transfer tests by default (#12742) (overlookmotel)
+
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- 8717807 napi/oxlint: Make `types.js` importable (#12581) (overlookmotel)
+- f0b1f0d napi/oxlint, napi/parser: Remove source length from `RawTransferMetadata` (#12483) (overlookmotel)
+
+### ⚡ Performance
+
+- 69f8b63 napi/parser, napi/oxlint: Lazy visit: faster check for exit visitor (#12496) (overlookmotel)
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- 8717807 napi/oxlint: Make `types.js` importable (#12581) (overlookmotel)
+- f0b1f0d napi/oxlint, napi/parser: Remove source length from `RawTransferMetadata` (#12483) (overlookmotel)
+
+### ⚡ Performance
+
+- 69f8b63 napi/parser, napi/oxlint: Lazy visit: faster check for exit visitor (#12496) (overlookmotel)
+
+
 
 
 ## [0.77.3] - 2025-07-20

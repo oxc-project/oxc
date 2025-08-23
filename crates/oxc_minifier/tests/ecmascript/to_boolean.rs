@@ -1,17 +1,9 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, ast::*};
-use oxc_ecmascript::{ToBoolean, is_global_reference::IsGlobalReference};
+use oxc_ast::AstBuilder;
+use oxc_ecmascript::ToBoolean;
 use oxc_span::SPAN;
 
-struct GlobalReferenceInformation {
-    is_undefined_shadowed: bool,
-}
-
-impl<'a> IsGlobalReference<'a> for GlobalReferenceInformation {
-    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
-        if ident.name == "undefined" { Some(!self.is_undefined_shadowed) } else { None }
-    }
-}
+use super::GlobalReferenceInformation;
 
 #[test]
 fn test() {

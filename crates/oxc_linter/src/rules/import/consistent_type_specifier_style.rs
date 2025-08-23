@@ -1,10 +1,15 @@
-use oxc_ast::{AstKind, ast::ImportDeclarationSpecifier};
+use oxc_allocator::{Allocator, CloneIn};
+use oxc_ast::{
+    AstBuilder, AstKind,
+    ast::{ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind},
+};
+use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDiagnostic {
     let (warn_msg, help_msg) = if *mode == Mode::PreferInline {
@@ -101,14 +106,32 @@ impl Rule for ConsistentTypeSpecifierStyle {
             return;
         }
         if self.mode == Mode::PreferTopLevel && import_decl.import_kind.is_value() {
-            for item in specifiers {
-                if matches!(item, ImportDeclarationSpecifier::ImportSpecifier(specifier) if specifier.import_kind.is_type())
-                {
-                    ctx.diagnostic(consistent_type_specifier_style_diagnostic(
-                        item.span(),
-                        &self.mode,
-                    ));
-                }
+            let (value_specifiers, type_specifiers) = split_import_specifiers_by_kind(specifiers);
+            if type_specifiers.is_empty() {
+                return;
+            }
+
+            for item in &type_specifiers {
+                ctx.diagnostic_with_fix(
+                    consistent_type_specifier_style_diagnostic(item.span(), &self.mode),
+                    |fixer| {
+                        let mut import_source = String::new();
+
+                        if !value_specifiers.is_empty() {
+                            let value_import_declaration =
+                                gen_value_import_declaration(fixer, import_decl, &value_specifiers);
+                            import_source.push_str(&value_import_declaration);
+                        }
+
+                        let type_import_declaration =
+                            gen_type_import_declaration(fixer, import_decl, &type_specifiers);
+                        import_source.push_str(&type_import_declaration);
+
+                        fixer
+                            .replace(import_decl.span, import_source.trim_end().to_string())
+                            .with_message("Convert to a `top-level` type import")
+                    },
+                );
             }
         }
         if self.mode == Mode::PreferInline && import_decl.import_kind.is_type() {
@@ -137,6 +160,93 @@ impl Rule for ConsistentTypeSpecifierStyle {
             );
         }
     }
+}
+
+fn split_import_specifiers_by_kind<'a, I>(specifiers: I) -> (Vec<I::Item>, Vec<I::Item>)
+where
+    I: IntoIterator<Item = &'a ImportDeclarationSpecifier<'a>>,
+{
+    let (value_kind_specifiers, type_kind_specifiers) = specifiers.into_iter().fold(
+        (vec![], vec![]),
+        |(mut value_kind_specifiers, mut type_kind_specifiers), it| {
+            match it {
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
+                    value_kind_specifiers.push(it);
+                }
+                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                    if specifier.import_kind.is_value() {
+                        value_kind_specifiers.push(it);
+                    } else {
+                        type_kind_specifiers.push(it);
+                    }
+                }
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {}
+            }
+            (value_kind_specifiers, type_kind_specifiers)
+        },
+    );
+    (value_kind_specifiers, type_kind_specifiers)
+}
+
+fn gen_value_import_declaration<'c, 'a: 'c>(
+    fixer: RuleFixer<'c, 'a>,
+    import_decl: &'a ImportDeclaration<'a>,
+    specifiers: &Vec<&'a ImportDeclarationSpecifier<'a>>,
+) -> String {
+    let mut codegen = fixer.codegen();
+
+    let alloc = Allocator::default();
+    let ast_builder = AstBuilder::new(&alloc);
+
+    let specifiers: Vec<_> = specifiers.iter().map(|it| it.clone_in(&alloc)).collect();
+    let import_declaration = ast_builder.alloc_import_declaration(
+        SPAN,
+        Some(oxc_allocator::Vec::from_iter_in(specifiers, &alloc)),
+        import_decl.source.clone_in(&alloc),
+        None,
+        import_decl.with_clause.clone_in(&alloc),
+        ImportOrExportKind::Value,
+    );
+
+    import_declaration.print(&mut codegen, Context::empty());
+    codegen.into_source_text()
+}
+
+fn gen_type_import_declaration<'c, 'a: 'c>(
+    fixer: RuleFixer<'c, 'a>,
+    import_decl: &'a ImportDeclaration<'a>,
+    specifiers: &Vec<&'a ImportDeclarationSpecifier<'a>>,
+) -> String {
+    let mut codegen = fixer.codegen();
+
+    let alloc = Allocator::default();
+    let ast_builder = AstBuilder::new(&alloc);
+
+    let specifiers: Vec<_> = specifiers
+        .iter()
+        .filter_map(|it| match it {
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                Some(ast_builder.import_declaration_specifier_import_specifier(
+                    SPAN,
+                    specifier.imported.clone_in(&alloc),
+                    specifier.local.clone_in(&alloc),
+                    ImportOrExportKind::Value,
+                ))
+            }
+            _ => None,
+        })
+        .collect();
+    let import_declaration = ast_builder.alloc_import_declaration(
+        SPAN,
+        Some(oxc_allocator::Vec::from_iter_in(specifiers, &alloc)),
+        import_decl.source.clone_in(&alloc),
+        None,
+        import_decl.with_clause.clone_in(&alloc),
+        ImportOrExportKind::Type,
+    );
+
+    import_declaration.print(&mut codegen, Context::empty());
+    codegen.into_source_text()
 }
 
 #[test]
@@ -217,6 +327,46 @@ fn test() {
                 } from 'foo'
             ",
             Some(json!(["prefer-inline"])),
+        ),
+        (
+            "import { type Foo } from 'Foo';",
+            "import type { Foo } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo as Bar } from 'Foo';",
+            "import type { Foo as Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo, type Bar } from 'Foo';",
+            "import type { Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo, type Bar } from 'Foo';",
+            "import type { Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { Foo, type Bar } from 'Foo';",
+            "import { Foo } from 'Foo';\nimport type { Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import { type Foo, Bar } from 'Foo';",
+            "import { Bar } from 'Foo';\nimport type { Foo } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import Foo, { type Bar } from 'Foo';",
+            "import Foo from 'Foo';\nimport type { Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
+        ),
+        (
+            "import Foo, { type Bar, Baz } from 'Foo';",
+            "import Foo, { Baz } from 'Foo';\nimport type { Bar } from 'Foo';",
+            Some(json!(["prefer-top-level"])),
         ),
     ];
 

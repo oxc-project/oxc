@@ -106,12 +106,13 @@ impl TestRunner {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| {
-                    if let Some(filter) = &options.filter {
-                        if !e.path().to_string_lossy().contains(filter) {
-                            return false;
-                        }
+                    if let Some(filter) = &options.filter
+                        && !e.path().to_string_lossy().contains(filter)
+                    {
+                        false
+                    } else {
+                        true
                     }
-                    true
                 })
                 .filter_map(|e| TestCase::new(cwd, e.path()))
                 .filter(|test_case| !test_case.skip_test_case())

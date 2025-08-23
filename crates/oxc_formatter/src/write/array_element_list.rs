@@ -46,18 +46,17 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 let mut filler = f.fill();
 
                 // Using format_separated is valid in this case as can_print_fill does not allow holes
-                for (element, formatted) in self.elements.iter().zip(
-                    FormatSeparatedIter::new(self.elements.iter(), ",")
-                        .with_trailing_separator(trailing_separator)
-                        .with_group_id(self.group_id),
-                ) {
+                for (formatted) in FormatSeparatedIter::new(self.elements.iter(), ",")
+                    .with_trailing_separator(trailing_separator)
+                    .with_group_id(self.group_id)
+                {
                     filler.entry(
                         &format_once(|f| {
-                            if get_lines_before(element.span(), f) > 1 {
+                            if get_lines_before(formatted.element.span(), f) > 1 {
                                 write!(f, empty_line())
                             } else if f
                                 .comments()
-                                .has_leading_own_line_comments(element.span().start)
+                                .has_leading_own_line_comments(formatted.element.span().start)
                             {
                                 write!(f, hard_line_break())
                             } else {

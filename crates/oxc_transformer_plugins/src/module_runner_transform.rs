@@ -550,7 +550,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
+        let ExportDefaultDeclaration { span, declaration } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
@@ -629,7 +629,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
-        if !ctx.scoping().get_resolved_reference_ids(symbol_id).is_empty() {
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 

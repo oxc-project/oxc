@@ -4,6 +4,155 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- d27a04b ecmascript: Skip array length evaluation if there are any spread elements (#13162) (Monad)
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- fbe6663 minifier: Mark more known global methods as side-effect free (#13086) (Boshen)
+- 36386e4 ecmascript: Treat `[...arguments]` as side effect free (#13116) (sapphi-red)
+- 5dfb40e minifier: Drop `var r = [...arguments]` if `r` is not used (#13115) (sapphi-red)
+- 3d0d31a minifier: Rewrite `arguments` copy loops to spread syntax (#13114) (sapphi-red)
+- dea41dc minifier: Compress `Object(expr)(args)` to `(0, expr)(args)` (#13092) (sapphi-red)
+- fe4589b minifier: Mark more global constructors as side-effect free (#13082) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 896c3ba minifier: Keep `Array` reference id when compressing `Array()` (#13113) (sapphi-red)
+- 6686cc4 minifier: Do not remove `using x = ` (#13052) (Boshen)
+
+### 🚜 Refactor
+
+- a36c3ce minfier: Consistent method names (#13060) (Boshen)
+- e190ee5 minifier: Clean up `remove_unused_expression` (#13080) (Boshen)
+
+### ⚡ Performance
+
+- 2625bdf minifier: No need to collect references if AST is not changed (#13078) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+### 🚜 Refactor
+
+- 73a6f25 minifier: Inline statement methods (#13044) (Boshen)
+- 53c51f9 minifier: Remove clippy allow directives and fix needless_pass_by_ref_mut warnings in oxc_minifier (#13030) (Copilot)
+- 3a8a3ce minifier: Remove clippy::unused_self allow directive by converting methods to associated functions (#13029) (Copilot)
+- 7223686 minifier: Use the original vec in-place in `minimize_statements` (#13028) (Boshen)
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 54d1750 ecmascript: Handle `typeof` guarded global access as side effect free (#12981) (Copilot)
+- 7b9a781 minifier: Return total number of iterations for debugging (#12995) (Boshen)
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+- 577d742 minifier: Logical assignment with sequential (#12957) (sapphi-red)
+- 96a1a4f minifier: Remove optional chaining calls when the function is `undefined` or `null` (#12956) (sapphi-red)
+- 208e6f7 ecmascript: Add URI encoding/decoding support to constant evaluation (#12934) (Copilot)
+- 53f7a9f minifier: `new Date()` has `ValueType::Object` (#12951) (Boshen)
+- e0e835b minifier: `f(!a === !1)` -> `f(!!a)` (#12942) (Boshen)
+- 6e393ec minifier: Evaluate String constructor (#12943) (Boshen)
+- 784796d minifier: Fold `(!0).toString()` to `true` (#12938) (Boshen)
+- 2c303f5 minifier: Fold `({ ...!0 })` into `({})` (#12935) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 64326c1 minifier: Improve quoted property key handling for class methods and properties (#12999) (Copilot)
+- ad4aeaf minifier: Evaluate `e ? consequent : alternate` (#12940) (Boshen)
+
+### 🚜 Refactor
+
+- ca91a26 minfier: Single match expression (#13000) (Boshen)
+- 70f742a minifier: Change AST in-place instead of returning `Option<Expression>` (#12993) (Boshen)
+- d3ba782 minifier: Fix double mut in DerefMut for Ctx by correcting Target type (#12994) (Copilot)
+- 451bc07 minifier: Change AST in-place instead of returning `Option<Expression>` (#12969) (Boshen)
+- e5e2496 minifier: Clean up `try_compress_typeof_undefined` (#12958) (Boshen)
+- 8a5c9b9 minifier,ecmascript: Clean up `is_global_reference` (#12953) (Boshen)
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+
+### 📚 Documentation
+
+- 3ce27e9 ecmascript, minifier: Revert changes to changelogs (#12962) (overlookmotel)
+
+### ⚡ Performance
+
+- 96b4009 minifier: Remove late optimization pass (#12670) (Boshen)
+
+### 🧪 Testing
+
+- 2c06eda minifier: Add comprehensive test coverage for unary plus removal (#12860) (Copilot)
+
+
+## [0.81.0] - 2025-08-06
+
+### 🐛 Bug Fixes
+
+- 44b37f7 minifier: Keep classes with static properties + side effect initializer (#12848) (Boshen)
+- 00fda91 minifier: Fix `KATAKANA MIDDLE DOT` syntax error for unicode 4.1 to 15 (#12829) (Boshen)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🐛 Bug Fixes
+
+- 7dae2e4 minifier: Keep class if class has decorators (#12669) (Boshen)
+
+### 🚜 Refactor
+
+- 5f50bc3 minifier: Move string method constant evaluation from minifier to ecmascript crate (#12672) (Copilot)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- 16312d7 minifier: Add more tests (#12722) (Copilot)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 763a618 minifier: Inline small constant values (#12639) (Boshen)
+- f46818a minifier: Remove unused class expression (#12618) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 08a7379 minifier: Do not read constant value from for loop init (#12654) (Boshen)
+- 5642b29 minifier: Initialize constant value in DCE (#12610) (Boshen)
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- 23f7f82 minifier: Remove unused assignment expression (#12509) (Boshen)
+- b877039 minifier: Inline `const` variables that are only used once (#12488) (Boshen)
+
+### 🐛 Bug Fixes
+
+- fe9c8e1 minifier: Do not remove non-plain empty functions (#12573) (Boshen)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

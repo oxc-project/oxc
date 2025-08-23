@@ -411,7 +411,7 @@ export interface StyledComponentsOptions {
    * from this list, the directory name will be used instead of the file name for
    * the component's display name.
    *
-   * @default ["index"]
+   * @default `["index"]`
    */
   meaninglessFileNames?: Array<string>
   /**
@@ -474,8 +474,8 @@ export interface TransformOptions {
    *
    * Example:
    *
-   * * 'es2015'
-   * * ['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']
+   * * `'es2015'`
+   * * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
    *
    * @default `esnext` (No transformation)
    *

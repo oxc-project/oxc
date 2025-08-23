@@ -5,6 +5,40 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- 8c57153 npm/oxlint: Fix `oxlint-tsgolint` version range for yarn (Boshen)
+
+### 🚜 Refactor
+
+- 238b183 linter: Use `fast-glob` instead of `globset` for `GlobSet` (#12870) (shulaoda)
+
+
+## [1.11.0] - 2025-08-07
+
+### 🚀 Features
+
+- ac46347 oxlint: Add `tsgolint` integration (#12485) (camchenry)
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 9b35600 linter/jsx-a11y: Add support for mapped attributes in label association checks (#12805) (camc314)
+
+
+## [1.9.0] - 2025-07-29
+
+### 🚜 Refactor
+
+- bea652f linter: Add `vue` and `regex` to `BuiltinLintPlugins` (#12542) (Sysix)
+
+
+
 ## [1.7.0] - 2025-07-16
 
 ### 🚀 Features
