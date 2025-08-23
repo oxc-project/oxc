@@ -2,6 +2,7 @@
 
 use oxc_allocator::{Address, Allocator};
 use oxc_ast::AstKind;
+use oxc_span::Span;
 
 use crate::options::FormatOptions;
 
@@ -67,6 +68,29 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     #[inline]
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.state().group_id(debug_name)
+    }
+
+    /// Returns true if currently formatting inside call arguments
+    #[inline]
+    pub fn is_in_arguments(&self) -> bool {
+        self.state().is_in_arguments()
+    }
+
+    /// Returns the current argument nesting depth
+    #[inline]
+    pub fn argument_depth(&self) -> u8 {
+        self.state().argument_depth()
+    }
+
+    /// Execute formatting logic within argument context
+    pub fn format_arguments<F, R>(&mut self, call_span: Span, f: F) -> FormatResult<R>
+    where
+        F: FnOnce(&mut Self) -> FormatResult<R>,
+    {
+        self.state_mut().enter_arguments(call_span);
+        let result = f(self);
+        self.state_mut().exit_arguments();
+        result
     }
 
     /// Joins multiple [Format] together without any separator

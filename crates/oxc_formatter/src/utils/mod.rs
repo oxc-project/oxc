@@ -63,6 +63,37 @@ pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
     false
 }
 
+/// Context-aware version that can use argument context when available during formatting
+pub fn is_expression_used_as_call_argument_fast(span: Span, parent: &AstNodes, f: &Formatter<'_, '_>) -> bool {
+    // Fast path: Use O(1) context check when available during formatting
+    if f.is_in_arguments() {
+        match parent {
+            AstNodes::CallExpression(call) => {
+                // If this is the callee, it's not an argument
+                if call.callee.span() == span {
+                    return false;
+                }
+                // If we're in argument context and this isn't the callee, it's likely an argument
+                return true;
+            }
+            AstNodes::NewExpression(new_expr) => {
+                // If this is the callee, it's not an argument
+                if new_expr.callee.span() == span {
+                    return false;
+                }
+                // If we're in argument context and this isn't the callee, it's likely an argument
+                return true;
+            }
+            _ => {
+                // For other parent types, fall through to span-based detection
+            }
+        }
+    }
+    
+    // Fallback to existing span-based detection when context isn't available
+    is_expression_used_as_call_argument(span, parent)
+}
+
 /// Check if an expression is used as a call argument by examining the parent node.
 /// This replaces the missing AstKind::Argument detection capability.
 pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> bool {
