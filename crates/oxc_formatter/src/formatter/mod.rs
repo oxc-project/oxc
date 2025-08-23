@@ -87,8 +87,12 @@ impl<'a> Formatted<'a> {
     pub fn new(document: Document<'a>, context: FormatContext<'a>) -> Self {
         Self { document, context, estimated_capacity: 0 }
     }
-    
-    pub fn new_with_capacity(document: Document<'a>, context: FormatContext<'a>, capacity: usize) -> Self {
+
+    pub fn new_with_capacity(
+        document: Document<'a>,
+        context: FormatContext<'a>,
+        capacity: usize,
+    ) -> Self {
         Self { document, context, estimated_capacity: capacity }
     }
 

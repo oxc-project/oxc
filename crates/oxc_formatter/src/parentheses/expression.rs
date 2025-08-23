@@ -566,9 +566,9 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 
     let parent_operator = parent.operator();
     let operator = binary_like.operator();
-    
+
     // Only cache span calculation for multiple uses
-    
+
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -586,7 +586,6 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     if is_right && parent_precedence == precedence {
         return true;
     }
-
 
     // Add parentheses around bitwise and bit shift operators
     // `a * 3 >> 5` -> `(a * 3) >> 5`
