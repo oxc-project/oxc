@@ -372,11 +372,11 @@ pub fn format<'ast>(
 ) -> FormatResult<Formatted<'ast>> {
     // Pre-collect all argument spans for O(1) parentheses detection
     let argument_spans = crate::argument_collector::ArgumentCollector::collect(program);
-    
+
     let mut state = FormatState::new(program, context);
     // Initialize the state with pre-collected argument spans
     state.set_argument_spans(argument_spans);
-    
+
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 
     buffer.write_fmt(arguments)?;

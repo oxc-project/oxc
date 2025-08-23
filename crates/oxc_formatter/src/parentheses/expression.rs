@@ -171,7 +171,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
             }
         }
         if let AstNodes::TSSatisfiesExpression(satisfies_expr) = parent {
-            if is_expression_used_as_call_argument_optimized(satisfies_expr.span, satisfies_expr.parent, f) {
+            if is_expression_used_as_call_argument_optimized(
+                satisfies_expr.span,
+                satisfies_expr.parent,
+                f,
+            ) {
                 return false;
             }
         }
