@@ -16,7 +16,7 @@ use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait,
+    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, ToUint32,
     constant_evaluation::url_encoding::{
         decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
     },
@@ -478,18 +478,7 @@ fn try_fold_math_unary<'a>(
         "sign" if arg_val.to_bits() == 0f64.to_bits() => 0f64,
         "sign" if arg_val.to_bits() == (-0f64).to_bits() => -0f64,
         "sign" => arg_val.signum(),
-        #[expect(clippy::cast_sign_loss)]
-        #[expect(clippy::cast_possible_truncation)]
-        "clz32" => {
-            let modulus = 2f64.powi(32);
-            let base = if arg_val < 0f64 {
-                let intermediate = arg_val % modulus;
-                if intermediate < 0f64 { intermediate + modulus } else { intermediate }
-            } else {
-                arg_val % modulus
-            } as u32;
-            f64::from(base.leading_zeros())
-        }
+        "clz32" => f64::from(arg_val.to_uint_32().leading_zeros()),
         _ => unreachable!(),
     };
     // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
@@ -538,16 +527,9 @@ fn try_fold_math_variadic<'a>(
             }
         }
         "imul" => {
-            if numbers.is_empty() {
-                return None;
-            }
-            if numbers.iter().take(2).any(|n| n.is_nan() || n.is_infinite()) {
-                0f64
-            } else {
-                let a = numbers.first().copied()?;
-                let b = numbers.get(1).copied().unwrap_or(f64::NAN);
-                f64::from(a.to_int_32().wrapping_mul(b.to_int_32()))
-            }
+            let a = numbers.first().copied().unwrap_or(f64::NAN).to_uint_32();
+            let b = numbers.get(1).copied().unwrap_or(f64::NAN).to_uint_32();
+            f64::from(a.wrapping_mul(b).cast_signed())
         }
         _ => return None,
     };

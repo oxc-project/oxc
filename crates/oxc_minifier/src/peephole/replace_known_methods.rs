@@ -1014,6 +1014,7 @@ mod test {
     #[test]
     fn test_fold_math_functions_imul() {
         test_same_value("Math.imul(Math.random(),2)");
+        test_value("Math.imul()", "0");
         test_value("Math.imul(-1,1)", "-1");
         test_value("Math.imul(2,2)", "4");
         test_value("Math.imul(2)", "0");
@@ -1099,13 +1100,12 @@ mod test {
         test_value("Math.clz32(0)", "32");
         test_value("Math.clz32(0.0)", "32");
         test_value("Math.clz32(-0.0)", "32");
-        // FIXME not implemented yet
-        // let mut x = 1;
-        // for i in (0..=31).rev() {
-        //     test(&format!("{x}.leading_zeros()"), &i.to_string());
-        //     test(&format!("{}.leading_zeros()", 2 * x - 1), &i.to_string());
-        //     x *= 2;
-        // }
+        let mut x = 1_i64;
+        for i in (0..=31).rev() {
+            test_value(&format!("Math.clz32({x})"), &i.to_string());
+            test_value(&format!("Math.clz32({})", 2 * x - 1), &i.to_string());
+            x *= 2;
+        }
         test_value("Math.clz32('52')", "26");
         test_value("Math.clz32([52])", "26");
         test_value("Math.clz32([52, 53])", "32");
