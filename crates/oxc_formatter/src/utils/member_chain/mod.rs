@@ -369,24 +369,27 @@ struct ArgumentAnalysis {
 
 fn analyze_call_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> ArgumentAnalysis {
     let mut analysis = ArgumentAnalysis { has_arrow_or_function: false, all_simple: true };
-    
+
     for argument in call.arguments().iter() {
         // Check for arrow or function expressions
-        if matches!(&**argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)) {
+        if matches!(
+            &**argument,
+            Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
+        ) {
             analysis.has_arrow_or_function = true;
         }
-        
+
         // Check if argument is simple
         if analysis.all_simple && !SimpleArgument::new(argument).is_simple() {
             analysis.all_simple = false;
         }
-        
+
         // Early exit if we've determined both conditions
         if analysis.has_arrow_or_function && !analysis.all_simple {
             break;
         }
     }
-    
+
     analysis
 }
 
