@@ -30,14 +30,6 @@ fn member_has_call_object(member: &MemberExpression) -> bool {
 fn expression_is_or_contains_call(expr: &Expression) -> bool {
     match expr {
         Expression::CallExpression(_) => true,
-        // Fast path: identifiers and literals never contain calls
-        Expression::Identifier(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::StringLiteral(_) => false,
         Expression::TaggedTemplateExpression(t) => {
             // Tagged templates like x()`` where the tag is a call expression
             expression_is_or_contains_call(&t.tag)
@@ -45,6 +37,7 @@ fn expression_is_or_contains_call(expr: &Expression) -> bool {
         Expression::ComputedMemberExpression(m) => expression_is_or_contains_call(&m.object),
         Expression::StaticMemberExpression(m) => expression_is_or_contains_call(&m.object),
         Expression::PrivateFieldExpression(m) => expression_is_or_contains_call(&m.object),
+        // Fast path: all other expressions (identifiers, literals, etc.) never contain calls
         _ => false,
     }
 }
