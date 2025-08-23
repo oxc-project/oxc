@@ -360,14 +360,42 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     )
 }
 
+/// Combined analysis of call arguments to avoid multiple iterations
+#[derive(Debug, Default)]
+struct ArgumentAnalysis {
+    has_arrow_or_function: bool,
+    all_simple: bool,
+}
+
+fn analyze_call_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> ArgumentAnalysis {
+    let mut analysis = ArgumentAnalysis { has_arrow_or_function: false, all_simple: true };
+    
+    for argument in call.arguments().iter() {
+        // Check for arrow or function expressions
+        if matches!(&**argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)) {
+            analysis.has_arrow_or_function = true;
+        }
+        
+        // Check if argument is simple
+        if analysis.all_simple && !SimpleArgument::new(argument).is_simple() {
+            analysis.all_simple = false;
+        }
+        
+        // Early exit if we've determined both conditions
+        if analysis.has_arrow_or_function && !analysis.all_simple {
+            break;
+        }
+    }
+    
+    analysis
+}
+
 fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
-    call.as_ref().arguments.iter().any(|argument| {
-        matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
-    })
+    analyze_call_arguments(call).has_arrow_or_function
 }
 
 fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
+    analyze_call_arguments(call).all_simple
 }
 
 /// In order to detect those cases, we use an heuristic: if the first
