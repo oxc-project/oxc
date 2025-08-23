@@ -330,9 +330,9 @@ impl ConfigStore {
     }
 
     pub fn should_ignore(&self, path: &Path) -> bool {
-        self.get_related_config(path)
-            .ignore_patterns()
-            .is_some_and(|ignore_patterns| ignore_patterns.matched(path, false).is_ignore())
+        self.get_related_config(path).ignore_patterns().is_some_and(|ignore_patterns| {
+            ignore_patterns.matched_path_or_any_parents(path, false).is_ignore()
+        })
     }
 
     // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs

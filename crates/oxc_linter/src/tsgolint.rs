@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
+use crate::fixer::Message;
+#[cfg(test)]
+use crate::fixer::{CompositeFix, PossibleFixes};
 
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
@@ -66,11 +68,25 @@ impl TsGoLintState {
         let json_input = self.json_input(paths, &mut resolved_configs);
 
         let handler = std::thread::spawn(move || {
-            let child = std::process::Command::new(&self.executable_path)
-                .arg("headless")
+            let mut cmd = std::process::Command::new(&self.executable_path);
+            cmd.arg("headless")
                 .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn();
+                .stdout(std::process::Stdio::piped());
+
+            if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
+                cmd.arg(format!("-trace={trace_file}"));
+            }
+            if let Ok(cpuprof_file) = std::env::var("OXLINT_TSGOLINT_CPU") {
+                cmd.arg(format!("-cpuprof={cpuprof_file}"));
+            }
+            if let Ok(heap_file) = std::env::var("OXLINT_TSGOLINT_HEAP") {
+                cmd.arg(format!("-heap={heap_file}"));
+            }
+            if let Ok(allocs_file) = std::env::var("OXLINT_TSGOLINT_ALLOCS") {
+                cmd.arg(format!("-allocs={allocs_file}"));
+            }
+
+            let child = cmd.spawn();
 
             let mut child = match child {
                 Ok(c) => c,
@@ -354,12 +370,13 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    #[expect(dead_code)]
+    #[cfg(test)]
     fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
-        let possible_fix = if val.fixes.is_empty() {
-            PossibleFixes::None
-        } else {
-            let fixes = val
+        let mut fixes =
+            Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
+
+        if !val.fixes.is_empty() {
+            let fix_vec = val
                 .fixes
                 .iter()
                 .map(|fix| crate::fixer::Fix {
@@ -368,7 +385,30 @@ impl Message<'_> {
                     message: None,
                 })
                 .collect();
-            PossibleFixes::Single(CompositeFix::merge_fixes(fixes, source_text))
+
+            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
+        }
+
+        for suggestion in &val.suggestions {
+            let fix_vec = suggestion
+                .fixes
+                .iter()
+                .map(|fix| crate::fixer::Fix {
+                    content: fix.text.clone().into(),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: Some(suggestion.message.description.clone().into()),
+                })
+                .collect();
+
+            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
+        }
+
+        let possible_fix = if fixes.is_empty() {
+            PossibleFixes::None
+        } else if fixes.len() == 1 {
+            PossibleFixes::Single(fixes.into_iter().next().unwrap())
+        } else {
+            PossibleFixes::Multiple(fixes)
         };
 
         Self::new(val.into(), possible_fix)
@@ -491,4 +531,188 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
     }
 
     None
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
+    use oxc_span::{GetSpan, Span};
+
+    use crate::{
+        fixer::{Message, PossibleFixes},
+        tsgolint::{Fix, MessageType, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
+    };
+
+    /// Implements `PartialEq` for `PossibleFixes` to enable equality assertions in tests.
+    /// In production a `PossibleFix` can not be equal.
+    impl PartialEq for PossibleFixes<'_> {
+        fn eq(&self, other: &Self) -> bool {
+            match (self, other) {
+                (Self::None, Self::None) => true,
+                (Self::Single(fix1), Self::Single(fix2)) => fix1 == fix2,
+                (Self::Multiple(fixes1), Self::Multiple(fixes2)) => {
+                    fixes1.iter().zip(fixes2.iter()).all(|(f1, f2)| f1 == f2)
+                }
+                _ => false,
+            }
+        }
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_basic() {
+        let diagnostic = TsGoLintDiagnostic {
+            r#type: MessageType::Diagnostic,
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: Some("Some help".into()),
+            },
+            fixes: vec![],
+            suggestions: vec![],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert_eq!(message.error.message, "Some description");
+        assert_eq!(message.error.severity, Severity::Warning);
+        assert_eq!(message.span(), Span::new(0, 10));
+        assert_eq!(
+            message.error.code,
+            OxcCode { scope: Some("typescript-eslint".into()), number: Some("some_rule".into()) }
+        );
+        assert!(message.error.labels.as_ref().is_some());
+        assert_eq!(message.error.labels.as_ref().unwrap().len(), 1);
+        assert_eq!(message.error.labels.as_ref().unwrap()[0], LabeledSpan::new(None, 0, 10));
+        assert_eq!(message.error.help, Some("Some help".into()));
+        assert!(message.fixes.is_empty());
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_fixes() {
+        let diagnostic = TsGoLintDiagnostic {
+            r#type: MessageType::Diagnostic,
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![
+                Fix { text: "fixed".into(), range: Range { pos: 0, end: 5 } },
+                Fix { text: "hello".into(), range: Range { pos: 5, end: 10 } },
+            ],
+            suggestions: vec![],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert_eq!(message.fixes.len(), 1);
+        assert_eq!(
+            message.fixes,
+            PossibleFixes::Single(crate::fixer::Fix {
+                content: "fixedhello".into(),
+                span: Span::new(0, 10),
+                message: None,
+            })
+        );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_multiple_suggestions() {
+        let diagnostic = TsGoLintDiagnostic {
+            r#type: MessageType::Diagnostic,
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![],
+            suggestions: vec![
+                Suggestion {
+                    message: RuleMessage {
+                        id: "some_id".into(),
+                        description: "Suggestion 1".into(),
+                        help: None,
+                    },
+                    fixes: vec![Fix { text: "hello".into(), range: Range { pos: 0, end: 5 } }],
+                },
+                Suggestion {
+                    message: RuleMessage {
+                        id: "some_id".into(),
+                        description: "Suggestion 2".into(),
+                        help: None,
+                    },
+                    fixes: vec![
+                        Fix { text: "hello".into(), range: Range { pos: 0, end: 5 } },
+                        Fix { text: "world".into(), range: Range { pos: 5, end: 10 } },
+                    ],
+                },
+            ],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert_eq!(
+            message.fixes,
+            PossibleFixes::Multiple(vec![
+                crate::fixer::Fix {
+                    content: "hello".into(),
+                    span: Span::new(0, 5),
+                    message: Some("Suggestion 1".into()),
+                },
+                crate::fixer::Fix {
+                    content: "helloworld".into(),
+                    span: Span::new(0, 10),
+                    message: Some("Suggestion 2".into()),
+                },
+            ])
+        );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_fix_and_suggestions() {
+        let diagnostic = TsGoLintDiagnostic {
+            r#type: MessageType::Diagnostic,
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![Fix { text: "fixed".into(), range: Range { pos: 0, end: 5 } }],
+            suggestions: vec![Suggestion {
+                message: RuleMessage {
+                    id: "some_id".into(),
+                    description: "Suggestion 1".into(),
+                    help: None,
+                },
+                fixes: vec![Fix { text: "Suggestion 1".into(), range: Range { pos: 0, end: 5 } }],
+            }],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        assert_eq!(message.fixes.len(), 2);
+        assert_eq!(
+            message.fixes,
+            PossibleFixes::Multiple(vec![
+                crate::fixer::Fix { content: "fixed".into(), span: Span::new(0, 5), message: None },
+                crate::fixer::Fix {
+                    content: "Suggestion 1".into(),
+                    span: Span::new(0, 5),
+                    message: Some("Suggestion 1".into()),
+                },
+            ])
+        );
+    }
 }

@@ -680,3 +680,9 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  6 │                 return a;
    ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:1:75]
+ 1 │ function Test(): void { const _x = () => { }; } function Test2() { return () => { }; } export { Test2 };
+   ·                                                                           ──
+   ╰────

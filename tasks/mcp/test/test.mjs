@@ -37,27 +37,14 @@ function testMcpServer() {
       params: {},
     };
 
-    const echoRequest = {
-      jsonrpc: '2.0',
-      id: 2,
-      method: 'tools/call',
-      params: {
-        name: 'echo',
-        arguments: {
-          message: 'Hello, MCP!',
-        },
-      },
-    };
-
     // Send requests
     server.stdin.write(JSON.stringify(listToolsRequest) + '\n');
-    server.stdin.write(JSON.stringify(echoRequest) + '\n');
     server.stdin.end();
 
     server.on('close', (code) => {
       if (code === 0) {
         console.log('✓ MCP server started successfully');
-        console.log('Server output:', output);
+        console.log('Server output:', JSON.stringify(JSON.parse(output), null, 2));
         if (errorOutput) {
           console.log('Server errors:', errorOutput);
         }

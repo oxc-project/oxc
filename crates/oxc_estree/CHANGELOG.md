@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🚜 Refactor
+
+- 3f92fa8 estree: Add `#[repr(transparent)]` to config structs (#13212) (overlookmotel)
+
+### 🧪 Testing
+
+- 792ae31 estree, allocator: Use `default` to create `ESTreeSerializer`s (#13211) (overlookmotel)
+
+
 
 
 ## [0.82.0] - 2025-08-12

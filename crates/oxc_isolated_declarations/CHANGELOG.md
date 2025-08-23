@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 8f533aa codegen: Correct `CRLF` handling in comment processing (#13169) (copilot-swe-agent)
+
+
 
 
 ## [0.82.0] - 2025-08-12

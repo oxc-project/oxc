@@ -205,7 +205,8 @@ impl LintRunner {
         } else {
             None
         };
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+        let config_builder = match ConfigStoreBuilder::from_base_oxlintrc(
+            &self.cwd,
             false,
             oxlintrc,
             external_linter,
@@ -664,6 +665,16 @@ mod test {
         let args2 = &["."];
         Tester::new()
             .with_cwd("fixtures/ignore_file_current_dir".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/13204
+    fn ignore_pattern_non_glob_syntax() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_pattern_non_glob_syntax".into())
             .test_and_snapshot_multiple(&[args1, args2]);
     }
 

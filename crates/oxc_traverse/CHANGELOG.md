@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- 4f8506e traverse: Fix codegen (#13192) (overlookmotel)
+
+### 🚜 Refactor
+
+- 72880a7 traverse: Fix lint errors in codegen (#13186) (overlookmotel)
+
+
 
 
 

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- d27a04b ecmascript: Skip array length evaluation if there are any spread elements (#13162) (Monad)
+
+
 ## [0.82.2] - 2025-08-17
 
 ### 🚀 Features

@@ -1,8 +1,12 @@
-commit: 81c95189
+commit: 261630d6
 
 estree_typescript Summary:
-AST Parsed     : 8725/8725 (100.00%)
-Positive Passed: 8722/8725 (99.97%)
+AST Parsed     : 8755/8755 (100.00%)
+Positive Passed: 8750/8755 (99.94%)
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx

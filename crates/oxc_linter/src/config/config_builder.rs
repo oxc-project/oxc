@@ -101,6 +101,49 @@ impl ConfigStoreBuilder {
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<Self, ConfigBuilderError> {
+        let parent_path =
+            oxlintrc.path.parent().map_or_else(|| PathBuf::from("."), std::path::Path::to_path_buf);
+
+        Self::from_oxlintrc_with_ignore_root(
+            start_empty,
+            oxlintrc,
+            external_linter,
+            external_plugin_store,
+            parent_path.as_path(),
+        )
+    }
+
+    /// Similar to the [`ConfigStoreBuilder::from_oxlintrc`] method, but
+    /// applies the config on top of a default [`Oxlintrc`].
+    /// The ignore root of this file, should be the current working directory.
+    /// Even if the file is not located at the current working directory.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ConfigBuilderError::InvalidConfigFile`] if a referenced config file is not valid.
+    pub fn from_base_oxlintrc(
+        cwd: &Path,
+        start_empty: bool,
+        oxlintrc: Oxlintrc,
+        external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
+    ) -> Result<Self, ConfigBuilderError> {
+        Self::from_oxlintrc_with_ignore_root(
+            start_empty,
+            oxlintrc,
+            external_linter,
+            external_plugin_store,
+            cwd,
+        )
+    }
+
+    fn from_oxlintrc_with_ignore_root(
+        start_empty: bool,
+        oxlintrc: Oxlintrc,
+        external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
+        ignore_root: &Path,
+    ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
@@ -167,7 +210,6 @@ impl ConfigStoreBuilder {
 
             let resolver = Resolver::default();
 
-            #[expect(clippy::missing_panics_doc, reason = "oxlintrc.path is always a file path")]
             let oxlintrc_dir = oxlintrc.path.parent().unwrap();
 
             for plugin_specifier in &external_plugins {
@@ -201,7 +243,7 @@ impl ConfigStoreBuilder {
             globals: oxlintrc.globals,
             ignore_patterns: LintConfig::resolve_oxlintrc_ignore_patterns(
                 &oxlintrc.ignore_patterns,
-                &oxlintrc.path,
+                ignore_root,
             ),
             path: Some(oxlintrc.path),
         };

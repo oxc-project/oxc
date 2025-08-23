@@ -36,11 +36,11 @@ ready:
 # Clone or update submodules
 # Make sure to update `.github/actions/clone-submodules/action.yml` too
 submodules:
-  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git 4b5d36ab6ef2f59d0a8902cd383762547a3a74c4
-  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 98d18aa4f66ce300a6a863bad223ab67b3fdf282
-  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git 81c951894e93bdc37c6916f18adcd80de76679bc
-  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 7584432401a47a26943dd7a9ca9a8e032ead7285
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 d9ba02ddea22800a285c7ad24e3fbfbb00ccbb02
+  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262 baa48a416c9e9abd698a9010378eccf3d1f4ed1e
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel 41d96516130ff48f16eca9f387996c0272125f16
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript 261630d650c0c961860187bebc86e25c3707c05d
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier 7584432401a47a26943dd7a9ca9a8e032ead7285
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 090bba4ab63458850b294f55b17f2ca0ee982062
   just update-transformer-fixtures
 
 # Install git pre-commit to format files

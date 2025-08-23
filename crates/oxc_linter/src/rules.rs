@@ -304,6 +304,7 @@ mod jest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod no_untyped_mock_factory;
+    pub mod padding_around_test_blocks;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
     pub mod prefer_each;
@@ -339,6 +340,7 @@ mod react {
     pub mod jsx_curly_brace_presence;
     pub mod jsx_filename_extension;
     pub mod jsx_fragments;
+    pub mod jsx_handler_names;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -589,6 +591,7 @@ mod jsdoc {
 }
 
 mod promise {
+    pub mod always_return;
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
@@ -825,6 +828,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_test_return_statement,
     jest::no_untyped_mock_factory,
+    jest::padding_around_test_blocks,
     jest::prefer_each,
     jest::prefer_called_with,
     jest::prefer_comparison_matcher,
@@ -941,6 +945,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
+    promise::always_return,
     promise::avoid_new,
     promise::catch_or_return,
     promise::no_return_wrap,
@@ -965,6 +970,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_filename_extension,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
+    react::jsx_handler_names,
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
