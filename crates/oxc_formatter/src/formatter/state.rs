@@ -1,6 +1,8 @@
 use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
+use std::cell::RefCell;
 
 use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 
@@ -22,6 +24,8 @@ pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
     argument_context: ArgumentContext,
+    /// Pre-computed set of argument spans for O(1) parentheses detection
+    argument_spans: RefCell<FxHashSet<u32>>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -44,6 +48,7 @@ impl<'ast> FormatState<'ast> {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
             argument_context: ArgumentContext::default(),
+            argument_spans: RefCell::new(FxHashSet::default()),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }
@@ -98,6 +103,21 @@ impl<'ast> FormatState<'ast> {
                 self.argument_context.current_call = None;
             }
         }
+    }
+
+    /// Register an argument span for O(1) parentheses detection
+    pub fn register_argument_span(&self, span: Span) {
+        self.argument_spans.borrow_mut().insert(span.start);
+    }
+
+    /// Check if a span is registered as an argument (O(1) lookup)
+    pub fn is_argument_span(&self, span: Span) -> bool {
+        self.argument_spans.borrow().contains(&span.start)
+    }
+
+    /// Initialize with pre-collected argument spans
+    pub fn set_argument_spans(&mut self, spans: FxHashSet<u32>) {
+        *self.argument_spans.borrow_mut() = spans;
     }
 
     #[cfg(not(debug_assertions))]

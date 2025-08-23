@@ -14,6 +14,7 @@ mod generated {
     pub mod format;
     pub mod format_write;
 }
+mod argument_collector;
 mod formatter;
 mod options;
 mod parentheses;
