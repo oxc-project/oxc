@@ -77,7 +77,7 @@ impl<'ast> FormatState<'ast> {
     }
 
     /// Returns the current argument nesting depth
-    #[inline] 
+    #[inline]
     pub fn argument_depth(&self) -> u8 {
         self.argument_context.depth
     }

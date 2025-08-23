@@ -64,7 +64,11 @@ pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
 }
 
 /// Context-aware version that can use argument context when available during formatting
-pub fn is_expression_used_as_call_argument_fast(span: Span, parent: &AstNodes, f: &Formatter<'_, '_>) -> bool {
+pub fn is_expression_used_as_call_argument_fast(
+    span: Span,
+    parent: &AstNodes,
+    f: &Formatter<'_, '_>,
+) -> bool {
     // Fast path: Use O(1) context check when available during formatting
     if f.is_in_arguments() {
         match parent {
@@ -89,7 +93,7 @@ pub fn is_expression_used_as_call_argument_fast(span: Span, parent: &AstNodes, f
             }
         }
     }
-    
+
     // Fallback to existing span-based detection when context isn't available
     is_expression_used_as_call_argument(span, parent)
 }
