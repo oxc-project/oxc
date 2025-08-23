@@ -734,6 +734,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
 
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     let parent = match binary_like.parent() {
+        // Fast path: these parent types always require parentheses
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::TSTypeAssertion(_)
@@ -763,6 +764,9 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 
     let parent_operator = parent.operator();
     let operator = binary_like.operator();
+    
+    // Only cache span calculation for multiple uses
+    
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -772,12 +776,15 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         return true;
     }
 
-    let is_right = parent.right().span() == binary_like.span();
+    // Cache span for multiple comparisons to avoid recalculation
+    let binary_span = binary_like.span();
+    let is_right = parent.right().span() == binary_span;
 
     // `a ** b ** c`
     if is_right && parent_precedence == precedence {
         return true;
     }
+
 
     // Add parentheses around bitwise and bit shift operators
     // `a * 3 >> 5` -> `(a * 3) >> 5`
