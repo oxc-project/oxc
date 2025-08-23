@@ -80,7 +80,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                 | "Identifier"
         );
 
-        if is_simple_literal && enum_ident.to_string() == "Expression" {
+        if is_simple_literal && enum_ident == "Expression" {
             // Direct formatting for simple literals without allocation
             Some(quote! {
                 #enum_ident::#variant_name(inner) => {
