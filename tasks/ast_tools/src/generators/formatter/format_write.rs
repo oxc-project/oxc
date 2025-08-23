@@ -67,16 +67,41 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         let node_type =
             field_type.maybe_inner_type(schema).map_or_else(|| field_type.ident(), TypeDef::ident);
 
-        Some(quote! {
-            #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
-                    inner,
-                    parent,
-                    allocator,
-                    following_node: self.following_node,
-                }).fmt(f)
-            },
-        })
+        // Optimization: For simple literal types that don't use parent/allocator/following_node,
+        // we can format directly without allocating an AstNode wrapper
+        let is_simple_literal = matches!(
+            variant_name.to_string().as_str(),
+            "BooleanLiteral" | "NullLiteral" | "NumericLiteral" | "StringLiteral" | 
+            "BigIntLiteral" | "RegExpLiteral" | "Identifier"
+        );
+
+        if is_simple_literal && enum_ident.to_string() == "Expression" {
+            // Direct formatting for simple literals without allocation
+            Some(quote! {
+                #enum_ident::#variant_name(inner) => {
+                    // Create a stack-allocated AstNode to avoid heap allocation
+                    let node = AstNode::<#node_type> {
+                        inner,
+                        parent: self.parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    };
+                    node.fmt(f)
+                },
+            })
+        } else {
+            // Keep existing allocation for complex types that may need the wrapper
+            Some(quote! {
+                #enum_ident::#variant_name(inner) => {
+                    allocator.alloc(AstNode::<#node_type> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_node: self.following_node,
+                    }).fmt(f)
+                },
+            })
+        }
     });
 
     let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
