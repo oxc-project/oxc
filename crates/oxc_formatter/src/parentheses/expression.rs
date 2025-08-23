@@ -11,7 +11,7 @@ use crate::{
     Format,
     formatter::Formatter,
     generated::ast_nodes::{AstNode, AstNodes},
-    write::{BinaryLikeExpression, BinaryLikeOperator, ExpressionLeftSide, should_flatten},
+    write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
 };
 
 use super::NeedsParentheses;
@@ -542,7 +542,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
 
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     let parent = match binary_like.parent() {
-        // Fast path: these parent types always require parentheses
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::TSTypeAssertion(_)
@@ -566,9 +565,6 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
 
     let parent_operator = parent.operator();
     let operator = binary_like.operator();
-
-    // Only cache span calculation for multiple uses
-
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -578,9 +574,7 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         return true;
     }
 
-    // Cache span for multiple comparisons to avoid recalculation
-    let binary_span = binary_like.span();
-    let is_right = parent.right().span() == binary_span;
+    let is_right = parent.right().span() == binary_like.span();
 
     // `a ** b ** c`
     if is_right && parent_precedence == precedence {
