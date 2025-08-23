@@ -31,7 +31,7 @@ fn expression_is_or_contains_call(expr: &Expression) -> bool {
     match expr {
         Expression::CallExpression(_) => true,
         // Fast path: identifiers and literals never contain calls
-        Expression::Identifier(_) 
+        Expression::Identifier(_)
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
