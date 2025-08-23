@@ -68,10 +68,34 @@ pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
 pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> bool {
     match parent {
         AstNodes::CallExpression(call) => {
-            call.arguments.iter().any(|arg| arg.span().contains_inclusive(span))
+            // Fast path: if callee matches, it's not an argument
+            if call.callee.span() == span {
+                return false;
+            }
+            // Only check arguments if there are any
+            if call.arguments.is_empty() {
+                return false;
+            }
+            // Use direct span equality first (faster), fall back to contains_inclusive only if needed
+            call.arguments.iter().any(|arg| {
+                let arg_span = arg.span();
+                arg_span == span || arg_span.contains_inclusive(span)
+            })
         }
         AstNodes::NewExpression(new_expr) => {
-            new_expr.arguments.iter().any(|arg| arg.span().contains_inclusive(span))
+            // Fast path: if callee matches, it's not an argument
+            if new_expr.callee.span() == span {
+                return false;
+            }
+            // Only check arguments if there are any
+            if new_expr.arguments.is_empty() {
+                return false;
+            }
+            // Use direct span equality first (faster), fall back to contains_inclusive only if needed
+            new_expr.arguments.iter().any(|arg| {
+                let arg_span = arg.span();
+                arg_span == span || arg_span.contains_inclusive(span)
+            })
         }
         _ => false,
     }
