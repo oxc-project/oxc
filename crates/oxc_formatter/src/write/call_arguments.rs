@@ -135,11 +135,11 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
 
         if has_empty_line || is_function_composition_args(self) {
-            return format_all_args_broken_out(self, true, call_expression.map(|c| c.as_ref()), f);
+            return format_all_args_broken_out(self, true, call_expression.map(std::convert::AsRef::as_ref), f);
         }
 
         if let Some(group_layout) = arguments_grouped_layout(self, f) {
-            write_grouped_arguments(self, group_layout, call_expression.map(|c| c.as_ref()), f)
+            write_grouped_arguments(self, group_layout, call_expression.map(std::convert::AsRef::as_ref), f)
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             write!(
                 f,
@@ -166,7 +166,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 ]
             )
         } else {
-            format_all_args_broken_out(self, false, call_expression.map(|c| c.as_ref()), f)
+            format_all_args_broken_out(self, false, call_expression.map(std::convert::AsRef::as_ref), f)
         }
     }
 }
