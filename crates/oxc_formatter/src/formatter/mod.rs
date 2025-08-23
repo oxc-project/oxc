@@ -386,6 +386,7 @@ pub fn format<'ast>(
     let mut state = FormatState::new(program, context);
     // Pre-allocate buffer based on source text size
     // Most formatted code is 1.1-1.3x the source size, plus some overhead for indentation
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
     let estimated_capacity = (program.source_text.len() as f64 * 1.2) as usize + 1024;
     let mut buffer = VecBuffer::with_capacity(estimated_capacity, &mut state);
 

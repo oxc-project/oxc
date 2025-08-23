@@ -44,8 +44,10 @@ impl<'a> Printer<'a> {
     }
 
     pub fn with_capacity(options: PrinterOptions, capacity: usize) -> Self {
-        let mut state = PrinterState::default();
-        state.buffer = String::with_capacity(capacity);
+        let state = PrinterState {
+            buffer: String::with_capacity(capacity),
+            ..Default::default()
+        };
         Self { options, state }
     }
 
