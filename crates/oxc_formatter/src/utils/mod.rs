@@ -26,15 +26,10 @@ where
     let mut iterator = separated.peekable();
     let mut join_with = f.join_with(soft_line_break_or_space());
 
-    // Fast path for empty arguments
-    if iterator.peek().is_none() {
-        return join_with.finish();
-    }
-
     while let Some(element) = iterator.next() {
-        let is_last = iterator.peek().is_none();
+        let last = iterator.peek().is_none();
 
-        if is_last {
+        if last {
             join_with.entry(&format_args!(element, FormatTrailingCommas::All));
         } else {
             join_with.entry(&element);
@@ -51,12 +46,8 @@ where
 /// ```
 pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
     if let AstNodes::CallExpression(parent_call) = call.parent {
-        let parent_args_len = parent_call.arguments().len();
-        // Fast path: if parent has no arguments, it's not a curried call
-        if parent_args_len == 0 {
-            return false;
-        }
-        return call.arguments().len() > parent_args_len;
+        return call.arguments().len() > parent_call.arguments().len()
+            && !parent_call.arguments().is_empty();
     }
 
     false
