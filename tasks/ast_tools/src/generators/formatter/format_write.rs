@@ -71,8 +71,13 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         // we can format directly without allocating an AstNode wrapper
         let is_simple_literal = matches!(
             variant_name.to_string().as_str(),
-            "BooleanLiteral" | "NullLiteral" | "NumericLiteral" | "StringLiteral" | 
-            "BigIntLiteral" | "RegExpLiteral" | "Identifier"
+            "BooleanLiteral"
+                | "NullLiteral"
+                | "NumericLiteral"
+                | "StringLiteral"
+                | "BigIntLiteral"
+                | "RegExpLiteral"
+                | "Identifier"
         );
 
         if is_simple_literal && enum_ident.to_string() == "Expression" {
