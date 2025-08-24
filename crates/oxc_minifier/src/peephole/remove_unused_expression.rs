@@ -733,8 +733,8 @@ mod test {
     use crate::{
         CompressOptions, TreeShakeOptions,
         tester::{
-            default_options, test, test_options, test_same, test_same_options,
-            test_same_options_source_type,
+            default_options, test, test_options, test_options_source_type, test_same,
+            test_same_options, test_same_options_source_type,
         },
     };
 
@@ -1040,13 +1040,16 @@ mod test {
     fn remove_unused_assignment_expression() {
         use oxc_span::SourceType;
         let options = CompressOptions::smallest();
-        // Vars are not handled yet due to TDZ.
-        test_same_options("var x = 1; x = 2;", &options);
-        test_same_options("var x = 1; x = foo();", &options);
+        test_options("var x = 1; x = 2;", "", &options);
+        test_options("var x = 1; x = foo();", "foo()", &options);
         test_same_options("export var foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
         test_same_options("function foo() { return t = x(); } foo();", &options);
-        test_same_options("function foo() { var t; return t = x(); } foo();", &options);
+        test_options(
+            "function foo() { var t; return t = x(); } foo();",
+            "function foo() { return x(); } foo();",
+            &options,
+        );
         test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         test_options("let x = 1; x = 2;", "", &options);
@@ -1081,8 +1084,9 @@ mod test {
         let source_type = SourceType::cjs();
         test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
         test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
-        test_same_options_source_type(
+        test_options_source_type(
             "function foo() { var x = 1; x = 2, bar() } foo()",
+            "function foo() { bar() } foo()",
             source_type,
             &options,
         );

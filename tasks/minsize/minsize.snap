@@ -1,7 +1,7 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Iterations | File      
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.38 kB   | 23.70 kB   | 8.45 kB    | 8.54 kB    |          2 | react.development.js 
+72.14 kB   | 23.34 kB   | 23.70 kB   | 8.43 kB    | 8.54 kB    |          2 | react.development.js 
 
 173.90 kB  | 59.48 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   |          2 | moment.js  
 
@@ -19,9 +19,9 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 2.14 MB    | 715.37 kB  | 724.14 kB  | 161.66 kB  | 181.07 kB  |          2 | victory.js 
 
-3.20 MB    | 1.01 MB    | 1.01 MB    | 323.98 kB  | 331.56 kB  |          2 | echarts.js 
+3.20 MB    | 1.01 MB    | 1.01 MB    | 324.01 kB  | 331.56 kB  |          2 | echarts.js 
 
-6.69 MB    | 2.23 MB    | 2.31 MB    | 461.69 kB  | 488.28 kB  |          3 | antd.js    
+6.69 MB    | 2.23 MB    | 2.31 MB    | 461.08 kB  | 488.28 kB  |          4 | antd.js    
 
-10.95 MB   | 3.35 MB    | 3.49 MB    | 860.58 kB  | 915.50 kB  |          2 | typescript.js 
+10.95 MB   | 3.34 MB    | 3.49 MB    | 857.11 kB  | 915.50 kB  |          3 | typescript.js 
 
