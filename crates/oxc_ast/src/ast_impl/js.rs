@@ -734,6 +734,18 @@ impl<'a> ChainElement<'a> {
     }
 }
 
+impl<'a> From<ChainElement<'a>> for Expression<'a> {
+    fn from(value: ChainElement<'a>) -> Self {
+        match value {
+            ChainElement::CallExpression(e) => Expression::CallExpression(e),
+            ChainElement::TSNonNullExpression(e) => Expression::TSNonNullExpression(e),
+            match_member_expression!(ChainElement) => {
+                Expression::from(value.into_member_expression())
+            }
+        }
+    }
+}
+
 impl CallExpression<'_> {
     /// Returns the static name of the callee, if it has one, or `None` otherwise.
     pub fn callee_name(&self) -> Option<&str> {

@@ -138,6 +138,12 @@ impl<'a> PeepholeOptimizations {
         Self::try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
+    pub fn substitute_chain_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ChainExpression(e) = expr else { return };
+        Self::try_flatten_nested_chain_expression(e, ctx);
+        Self::substitute_chain_call_expression(e, ctx);
+    }
+
     pub fn substitute_swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
             && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
@@ -1070,9 +1076,8 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    pub fn substitute_chain_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        let Expression::ChainExpression(e) = expr else { return };
-        if let ChainElement::CallExpression(call_expr) = &mut e.expression {
+    pub fn substitute_chain_call_expression(expr: &mut ChainExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        if let ChainElement::CallExpression(call_expr) = &mut expr.expression {
             // `window.Object?.()` -> `Object?.()`
             if call_expr.arguments.is_empty()
                 && call_expr
@@ -1191,6 +1196,43 @@ impl<'a> PeepholeOptimizations {
             }
         }
         ctx.state.changed = true;
+    }
+
+    /// Flatten nested chain expressions
+    /// `(foo?.bar)?.baz` -> `foo?.bar?.baz`
+    fn try_flatten_nested_chain_expression(expr: &mut ChainExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        match &mut expr.expression {
+            ChainElement::StaticMemberExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::ComputedMemberExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::PrivateFieldExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::CallExpression(call) => {
+                if let Expression::ChainExpression(chain) = call.callee.without_parentheses_mut() {
+                    call.callee = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::TSNonNullExpression(_) => {
+                // noop
+            }
+        }
     }
 
     /// `Object(expr)(args)` -> `(0, expr)(args)`
@@ -2288,5 +2330,22 @@ mod test {
         test_same(
             "for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
         );
+    }
+
+    #[test]
+    fn test_flatten_nested_chain_expression() {
+        test("(a.b)?.c", "a.b?.c");
+
+        test("(a?.b)?.c", "a?.b?.c");
+        test("(a?.b?.c)?.d", "a?.b?.c?.d");
+        test("(((a?.b)?.c)?.d)?.e", "a?.b?.c?.d?.e");
+        test("(a?.b)?.()", "a?.b?.()");
+        test("(a?.b)?.(arg)", "a?.b?.(arg)");
+        test("(a?.b)?.[0]", "a?.b?.[0]");
+        test("(a?.b)?.[key]", "a?.b?.[key]");
+        test("(a?.#b)?.c", "a?.#b?.c");
+        test_same("a.b?.c");
+        test_same("a?.b?.c");
+        test_same("(a?.b).c");
     }
 }

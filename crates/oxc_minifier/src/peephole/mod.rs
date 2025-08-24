@@ -234,7 +234,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::ChainExpression(_) => {
                 Self::fold_chain_expr(expr, ctx);
-                Self::substitute_chain_call_expression(expr, ctx);
+                Self::substitute_chain_expression(expr, ctx);
             }
             Expression::CallExpression(_) => {
                 Self::fold_call_expression(expr, ctx);
