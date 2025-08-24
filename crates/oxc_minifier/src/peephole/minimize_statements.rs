@@ -374,11 +374,21 @@ impl<'a> PeepholeOptimizations {
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
-        var_decl: Box<'a, VariableDeclaration<'a>>,
+        mut var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(first_decl) = var_decl.declarations.first_mut()
+            && let Some(first_decl_init) = first_decl.init.as_mut()
+        {
+            let changed =
+                Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx);
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
             && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
@@ -421,6 +431,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut expr_stmt.expression, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
@@ -439,6 +455,15 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut switch_stmt.discriminant,
+            result,
+            ctx,
+        );
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
@@ -460,6 +485,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         // Absorb a previous expression statement
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -666,6 +697,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut throw_stmt.argument, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
