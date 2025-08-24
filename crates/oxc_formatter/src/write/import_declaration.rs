@@ -4,7 +4,8 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator,
+    Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator, best_fitting,
+    format_args,
     formatter::{
         Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
@@ -14,20 +15,6 @@ use crate::{
 };
 
 use super::FormatWrite;
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import"])?;
-        if let Some(phase) = &self.phase() {
-            write!(f, [".", phase.as_str()])?;
-        }
-        write!(f, ["(", self.source()])?;
-        if let Some(options) = &self.options() {
-            write!(f, [",", space(), options])?;
-        }
-        write!(f, ")")
-    }
-}
 
 impl<'a> Format<'a> for ImportOrExportKind {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {

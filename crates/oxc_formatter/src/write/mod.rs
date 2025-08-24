@@ -11,6 +11,7 @@ mod decorators;
 mod export_declarations;
 mod function;
 mod import_declaration;
+mod import_expression;
 mod jsx;
 mod member_expression;
 mod object_like;

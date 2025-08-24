@@ -1,16 +1,14 @@
-js compatibility: 616/699 (88.13%)
+js compatibility: 620/699 (88.70%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/curried.js | 💥💥 | 92.55% |
 | js/assignment/sequence.js | 💥 | 71.43% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/comments/15661.js | 💥💥 | 55.81% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
-| js/comments/dynamic_imports.js | 💥💥 | 71.43% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
@@ -51,7 +49,6 @@ js compatibility: 616/699 (88.13%)
 | js/identifier/parentheses/let.js | 💥💥 | 81.36% |
 | js/import-assertions/keyword-detect.js | 💥 | 71.43% |
 | js/import-attributes/keyword-detect.js | 💥 | 71.43% |
-| js/import-attributes/long-sources.js | 💥 | 75.00% |
 | js/label/comment.js | 💥 | 53.33% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
@@ -80,7 +77,6 @@ js compatibility: 616/699 (88.13%)
 | js/ternaries/test.js | 💥💥💥💥💥✨✨✨ | 34.24% |
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
-| js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
