@@ -117,6 +117,37 @@ fn test_in_function(source_text: &str, expected: bool) {
     assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
 }
 
+#[track_caller]
+fn test_assign_target(source_text: &str, expected: bool) {
+    test_assign_target_with_global_variables(source_text, &[], expected);
+}
+
+#[track_caller]
+fn test_assign_target_with_global_variables(
+    source_text: &str,
+    global_variable_names: &[&'static str],
+    expected: bool,
+) {
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    let Expression::AssignmentExpression(assign_expr) = &stmt.expression.without_parentheses()
+    else {
+        panic!("should have a assignment expression: {source_text}");
+    };
+
+    assert_eq!(assign_expr.left.may_have_side_effects(&ctx), expected, "{source_text}");
+}
+
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
 #[test]
 fn closure_compiler_tests() {
@@ -1069,4 +1100,21 @@ fn test_typeof_guard_patterns() {
         &["x", "y"],
         true, // This can be improved
     );
+}
+
+#[test]
+fn test_assignment_targets() {
+    test_assign_target("a = 1", false);
+    test_assign_target("String = 1", false);
+    test_assign_target("({ a } = 1)", true); // this can be improved
+    test_assign_target("([a] = 1)", true); // this can be improved
+    test_assign_target("a.b = 1", false); // the side effect of the setter of `a.b` happens in `PutValue`
+    test_assign_target_with_global_variables("a.b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).b = 1", true); // `foo()` may have sideeffect
+    test_assign_target("a['b'] = 1", false);
+    test_assign_target("a[foo()] = 1", true); // `foo()` may have sideeffect
+    test_assign_target_with_global_variables("a['b'] = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("a.#b = 1", false);
+    test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
 }

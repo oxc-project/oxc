@@ -662,6 +662,41 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
     }
 }
 
+impl<'a> MayHaveSideEffects<'a> for AssignmentTarget<'a> {
+    /// This only checks the `Evaluation of <AssignmentTarget>`.
+    /// The sideeffect of `PutValue(<AssignmentTarget>)` is not considered here.
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        match self {
+            match_simple_assignment_target!(AssignmentTarget) => {
+                self.to_simple_assignment_target().may_have_side_effects(ctx)
+            }
+            match_assignment_target_pattern!(AssignmentTarget) => true,
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for SimpleAssignmentTarget<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        match self {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
+            SimpleAssignmentTarget::StaticMemberExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+                    || member_expr.expression.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::TSAsExpression(_)
+            | SimpleAssignmentTarget::TSNonNullExpression(_)
+            | SimpleAssignmentTarget::TSSatisfiesExpression(_)
+            | SimpleAssignmentTarget::TSTypeAssertion(_) => true,
+        }
+    }
+}
+
 /// Helper function to check if accessing an unbound identifier reference is side-effect-free based on a guard condition.
 ///
 /// This function analyzes patterns like:
