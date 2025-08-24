@@ -62,7 +62,7 @@ use crate::{
     state::TransformState,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
-use metadata::LegacyDecoratorMetadata;
+use metadata::{LegacyDecoratorMetadata, MethodMetadata};
 
 #[derive(Default)]
 struct ClassDecoratorInfo {
@@ -598,7 +598,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transform decorators of [`ClassElement::MethodDefinition`],
     /// [`ClassElement::PropertyDefinition`] and [`ClassElement::AccessorProperty`].
     fn transform_decorators_of_class_elements(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -680,7 +680,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ], Class);
     /// ```
     fn transform_decorators_of_class_and_constructor(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         class_alias_binding: Option<&BoundIdentifier<'a>>,
@@ -821,7 +821,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ]
     /// ```
     fn get_all_decorators_of_class_method(
-        &self,
+        &mut self,
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -836,24 +836,11 @@ impl<'a> LegacyDecorator<'a, '_> {
 
         let mut decorations = ctx.ast.vec_with_capacity(method_decoration_count);
 
-        // Split metadata decorators from method decorators.
-        // Metadata decorators (typically used for emitting design-time type information)
-        // are identified by having an "unspanned" span. According to TypeScript's legacy
-        // decorator semantics, metadata decorators must be applied *after* all parameter
-        // decorators, so we separate them here and will insert them last.
-        let mut method_decorators = method.decorators.take_in(ctx.ast);
-        let metadata_position = method_decorators
-            .iter()
-            .position(|decorator| {
-                // All metadata decorators are unspanned
-                decorator.span.is_unspanned()
-            })
-            .unwrap_or(method_decorators.len());
-        let metadata_decorators = method_decorators.split_off(metadata_position);
-
         // Method decorators should always be injected before all other decorators
         decorations.extend(
-            method_decorators
+            method
+                .decorators
+                .take_in(ctx.ast)
                 .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
@@ -864,11 +851,16 @@ impl<'a> LegacyDecorator<'a, '_> {
         }
 
         // `decorateMetadata` should always be injected after param decorators
-        decorations.extend(
-            metadata_decorators
-                .into_iter()
-                .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
-        );
+        if let Some(metadata) = self.metadata.pop_method_metadata() {
+            match metadata {
+                MethodMetadata::Constructor(meta) => {
+                    decorations.push(ArrayExpressionElement::from(meta));
+                }
+                MethodMetadata::Normal(meta) => {
+                    decorations.extend(meta.map(ArrayExpressionElement::from));
+                }
+            }
+        }
 
         Some(ctx.ast.expression_array(SPAN, decorations))
     }

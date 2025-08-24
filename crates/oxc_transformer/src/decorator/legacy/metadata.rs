@@ -87,8 +87,11 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
+use std::collections::VecDeque;
+
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
@@ -100,13 +103,19 @@ use crate::{
     utils::ast_builder::create_property_access,
 };
 
+pub enum MethodMetadata<'a> {
+    Constructor(Expression<'a>),
+    Normal([Expression<'a>; 3]),
+}
+
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
+    metadata_stack: NonEmptyStack<VecDeque<MethodMetadata<'a>>>,
 }
 
 impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        LegacyDecoratorMetadata { ctx }
+        LegacyDecoratorMetadata { ctx, metadata_stack: NonEmptyStack::new(VecDeque::new()) }
     }
 }
 
@@ -121,19 +130,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
             _ => None,
         });
 
-        if let Some(constructor) = constructor {
-            if class.decorators.is_empty()
-                && constructor.value.params.items.iter().all(|param| param.decorators.is_empty())
-            {
-                return;
-            }
-
+        if let Some(constructor) = constructor
+            && !(class.decorators.is_empty()
+                && constructor.value.params.items.iter().all(|param| param.decorators.is_empty()))
+        {
             let serialized_type =
                 self.serialize_parameter_types_of_node(&constructor.value.params, ctx);
-            let metadata_decorator =
-                self.create_metadata_decorate("design:paramtypes", serialized_type, ctx);
 
-            class.decorators.push(metadata_decorator);
+            self.metadata_stack.push(VecDeque::from_iter([MethodMetadata::Constructor(
+                self.create_metadata("design:paramtypes", serialized_type, ctx),
+            )]));
+        } else {
+            self.metadata_stack.push(VecDeque::new());
         }
     }
 
@@ -152,18 +160,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
             return;
         }
 
-        method.decorators.extend([
-            self.create_metadata_decorate("design:type", Self::global_function(ctx), ctx),
+        let metadata = [
+            self.create_metadata("design:type", Self::global_function(ctx), ctx),
             {
                 let serialized_type =
                     self.serialize_parameter_types_of_node(&method.value.params, ctx);
-                self.create_metadata_decorate("design:paramtypes", serialized_type, ctx)
+                self.create_metadata("design:paramtypes", serialized_type, ctx)
             },
             {
                 let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
-                self.create_metadata_decorate("design:returntype", serialized_type, ctx)
+                self.create_metadata("design:returntype", serialized_type, ctx)
             },
-        ]);
+        ];
+        self.metadata_stack.last_mut().push_back(MethodMetadata::Normal(metadata));
     }
 
     #[inline]
@@ -192,6 +201,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
 }
 
 impl<'a> LegacyDecoratorMetadata<'a, '_> {
+    pub fn pop_method_metadata(&mut self) -> Option<MethodMetadata<'a>> {
+        self.metadata_stack.last_mut().pop_front()
+    }
+
     fn serialize_type_annotation(
         &mut self,
         type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
@@ -607,18 +620,27 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     }
 
     // `_metadata(key, value)
+    fn create_metadata(
+        &self,
+        key: &'a str,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
+            Argument::from(value),
+        ]);
+        self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
+    }
+
+    // `_metadata(key, value)
     fn create_metadata_decorate(
         &self,
         key: &'a str,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
-            Argument::from(value),
-        ]);
-        let expr = self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx);
-        ctx.ast.decorator(SPAN, expr)
+        ctx.ast.decorator(SPAN, self.create_metadata(key, value, ctx))
     }
 
     /// `_metadata("design:type", type)`

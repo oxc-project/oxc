@@ -40311,7 +40311,7 @@ after transform: ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_ge
 rebuilt        : ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
 Symbol reference IDs mismatch for "_decorateMetadata":
 after transform: SymbolId(10): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(42), ReferenceId(43), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(49), ReferenceId(51), ReferenceId(52), ReferenceId(54), ReferenceId(56)]
-rebuilt        : SymbolId(1): [ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(20), ReferenceId(22), ReferenceId(24), ReferenceId(27), ReferenceId(31)]
+rebuilt        : SymbolId(1): [ReferenceId(14), ReferenceId(18)]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -40350,16 +40350,10 @@ after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Function", "Number", "Object", "require"]
-rebuilt        : ["Function", "Number", "Object", "dec", "require"]
-Unresolved reference IDs mismatch for "Function":
-after transform: [ReferenceId(23), ReferenceId(27), ReferenceId(31), ReferenceId(40), ReferenceId(44), ReferenceId(48)]
-rebuilt        : [ReferenceId(9), ReferenceId(15), ReferenceId(21)]
+rebuilt        : ["Object", "dec", "require"]
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(36), ReferenceId(38), ReferenceId(53), ReferenceId(55)]
-rebuilt        : [ReferenceId(28), ReferenceId(32)]
-Unresolved reference IDs mismatch for "Number":
-after transform: [ReferenceId(33), ReferenceId(50)]
-rebuilt        : [ReferenceId(23)]
+rebuilt        : [ReferenceId(15), ReferenceId(19)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.1.ts
 Bindings mismatch:

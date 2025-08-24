@@ -592,6 +592,12 @@ rebuilt        : ScopeId(0): ["Foo"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(4): Span { start: 107, end: 110 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 107, end: 110 }
 Reference symbol mismatch for "methodDecorator":
 after transform: SymbolId(0) "methodDecorator"
 rebuilt        : <None>
@@ -606,6 +612,9 @@ after transform: SymbolId(0) "methodDecorator"
 rebuilt        : <None>
 Reference symbol mismatch for "methodDecorator":
 after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
 rebuilt        : <None>
 Reference symbol mismatch for "paramDecorator":
 after transform: SymbolId(2) "paramDecorator"
@@ -617,8 +626,8 @@ Reference symbol mismatch for "paramDecorator":
 after transform: SymbolId(2) "paramDecorator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Boolean", "Function", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Function", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
+after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
+rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
 * oxc/metadata/this/input.ts
 Symbol span mismatch for "Example":

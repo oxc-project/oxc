@@ -1,10 +1,11 @@
-export class Foo {
+let Foo = class Foo {
 	method1(param) {
 		return !!param;
 	}
 	method2(param) {
 		return !!param;
 	}
+  constructor(param) {}
 	method3(param) {
 		return !!param;
 	}
@@ -64,3 +65,5 @@ babelHelpers.decorate(
 	"method4",
 	null,
 );
+Foo = babelHelpers.decorate([babelHelpers.decorateParam(0, paramDecorator), babelHelpers.decorateMetadata("design:paramtypes", [Number])], Foo);
+export { Foo };
