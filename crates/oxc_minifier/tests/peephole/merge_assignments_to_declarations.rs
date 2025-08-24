@@ -9,10 +9,17 @@ fn merge_assignments_to_declarations_var() {
     test_same("var a, b = 1; a = 0"); // this can be improved to `var a = 0, b = 1`
     test_same("var a, b = c(); a = 0"); // `c()` may access `a`
     test("var a, b; a = 0", "var a = 0, b");
+    test("var a, b; a = 0, b = 1", "var a = 0, b = 1");
     test("var a, b; a = 0; b = 1", "var a = 0, b = 1");
     test("var a, b; a = c()", "var a = c(), b");
+    test("var a, b; a = c(), b = d()", "var a = c(), b = d()");
     test("var a, b; a = c(); b = d()", "var a = c(), b = d()");
     test("var a, b; a = b", "var a = b, b");
+
+    test("var a, b, c; a = 0, b = 1, c = 2", "var a = 0, b = 1, c = 2");
+    test("var a, b; a = 0, b = 1, foo()", "var a = 0, b = 1; foo()");
+    test("var a; a = 0, foo(), bar()", "var a = 0; foo(), bar()");
+    test_same("var a, b; foo(), bar()");
 }
 
 #[test]

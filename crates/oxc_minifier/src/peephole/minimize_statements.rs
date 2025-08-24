@@ -449,52 +449,100 @@ impl<'a> PeepholeOptimizations {
         // "var a; a = b();" => "var a = b();"
         match &mut expr_stmt.expression {
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign
-                    && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
+                let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
+                if merged {
+                    ctx.state.changed = true;
+                    return;
+                }
+            }
+            Expression::SequenceExpression(sequence_expr) => {
+                if result
+                    .last()
+                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_)))
                 {
-                    if let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() {
-                        if matches!(
-                            &var_decl.kind,
-                            VariableDeclarationKind::Var | VariableDeclarationKind::Let
-                        ) {
-                            for decl in var_decl.declarations.iter_mut().rev() {
-                                let BindingPatternKind::BindingIdentifier(kind) = &decl.id.kind
-                                else {
-                                    break;
-                                };
-                                if kind.name == id.name {
-                                    if decl.init.is_none() {
-                                        // "var a; a = b();" => "var a = b();"
-                                        decl.init = Some(assign_expr.right.take_in(ctx.ast));
-                                        ctx.state.changed = true;
-                                        return;
-                                    }
-                                    // Note it is not possible to compress like:
-                                    // - "var a = b(); a = c();" => "var a = (b(), c());"
-                                    //   This is not possible as we need to consider cases when `c()` accesses `a`
-                                    // - "var a = 1; a = b();" => "var a = b();"
-                                    //   This is not possible as we need to consider cases when `b()` accesses `a`
-                                    break;
-                                }
-                                // should not move assignment above variables with initializer to keep the execution order
-                                if decl.init.is_some() {
-                                    break;
-                                }
-                                // should not move assignment above other variables for let
-                                // this could cause TDZ errors (e.g. `let a, b; b = a;`)
-                                if decl.kind == VariableDeclarationKind::Let {
-                                    break;
-                                }
+                    let first_non_merged_index =
+                        sequence_expr.expressions.iter_mut().position(|expr| {
+                            if let Expression::AssignmentExpression(assign_expr) = expr {
+                                !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                            } else {
+                                true
                             }
+                        });
+                    let sequence_len = sequence_expr.expressions.len();
+                    match first_non_merged_index {
+                        None => {
+                            // all elements are merged
+                            ctx.state.changed = true;
+                            return;
+                        }
+                        Some(val) if val == sequence_len - 1 => {
+                            // all elements are merged except for the last expression
+                            let last_expr = sequence_expr.expressions.pop().unwrap();
+                            result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                            ctx.state.changed = true;
+                            return;
+                        }
+                        Some(0) => {
+                            // no elements are merged
+                        }
+                        Some(val) => {
+                            sequence_expr.expressions.drain(0..val);
+                            ctx.state.changed = true;
                         }
                     }
                 }
             }
-            Expression::SequenceExpression(_exprs) => {}
             _ => {}
         }
 
         result.push(Statement::ExpressionStatement(expr_stmt));
+    }
+
+    fn merge_assignment_to_declaration(
+        assign_expr: &mut AssignmentExpression<'a>,
+        result: &mut Vec<'a, Statement<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        if assign_expr.operator != AssignmentOperator::Assign {
+            return false;
+        }
+        let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
+            return false;
+        };
+        let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
+            return false;
+        };
+        if !matches!(&var_decl.kind, VariableDeclarationKind::Var | VariableDeclarationKind::Let) {
+            return false;
+        }
+        for decl in var_decl.declarations.iter_mut().rev() {
+            let BindingPatternKind::BindingIdentifier(kind) = &decl.id.kind else {
+                break;
+            };
+            if kind.name == id.name {
+                if decl.init.is_none() {
+                    // "var a; a = b();" => "var a = b();"
+                    decl.init = Some(assign_expr.right.take_in(ctx.ast));
+                    return true;
+                }
+                // Note it is not possible to compress like:
+                // - "var a = b(); a = c();" => "var a = (b(), c());"
+                //   This is not possible as we need to consider cases when `c()` accesses `a`
+                // - "var a = 1; a = b();" => "var a = b();"
+                //   This is not possible as we need to consider cases when `b()` accesses `a`
+                break;
+            }
+            // should not move assignment above variables with initializer to keep the execution order
+            if decl.init.is_some() {
+                break;
+            }
+            // should not move assignment above other variables for let
+            // this could cause TDZ errors (e.g. `let a, b; b = a;`)
+            if decl.kind == VariableDeclarationKind::Let {
+                break;
+            }
+        }
+        false
     }
 
     fn handle_switch_statement(
