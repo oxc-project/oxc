@@ -357,6 +357,14 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        // property access should be kept to keep `this` value
+        if matches!(
+            ctx.parent(),
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
+        ) {
+            return;
+        }
+
         let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object, member.span)
@@ -1612,6 +1620,20 @@ mod test {
         test_same("v = [...a, 1][1]");
         test_same("v = [1, ...a][0]");
         test("v = [1, ...[1,2]][0]", "v = 1");
+
+        // property access should be kept to keep `this` value
+        test_same(
+            "
+            function f(){ console.log(this[0]) }
+            ['PASS',f][1]()
+        ",
+        );
+        test_same(
+            "
+            function f(){ console.log(this[0]) }
+            ['PASS',f][1]``
+        ",
+        );
     }
 
     #[test]
