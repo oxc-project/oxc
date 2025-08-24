@@ -1,6 +1,7 @@
 mod collapse_variable_declarations;
 mod dead_code_elimination;
 mod esbuild;
+mod inline_single_use_variable;
 mod minimize_exit_points;
 mod obscure_edge_cases;
 mod oxc;

@@ -1538,7 +1538,7 @@ mod test {
         );
         test(
             "async function* foo() { let bar = () => { return void 0 }; return bar }",
-            "async function* foo() { let bar = () => {}; return bar }",
+            "async function* foo() { return () => {} }",
         );
     }
 

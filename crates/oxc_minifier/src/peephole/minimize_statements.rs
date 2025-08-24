@@ -613,6 +613,14 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(ret_argument_expr) = &mut ret_stmt.argument {
+            let changed =
+                Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx);
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         if let Some(argument) = &mut ret_stmt.argument
             && argument.value_type(ctx) == ValueType::Undefined
             // `return undefined` has a different semantic in async generator function.
@@ -873,5 +881,145 @@ impl<'a> PeepholeOptimizations {
             Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }
+    }
+
+    /// Inline single-use variable declarations where possible:
+    /// ```js
+    /// // before
+    /// let x = fn();
+    /// return x.y();
+    ///
+    /// // after
+    /// return fn().y();
+    /// ```
+    ///
+    /// part of `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9111-L9189>
+    /// `substituteSingleUseSymbolInStmt`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9583>
+    fn substitute_single_use_symbol_in_statement(
+        expr_in_stmt: &mut Expression<'a>,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        // TODO: we should skip this compression when direct eval exists
+        //       because the code inside eval may reference the variable
+
+        if ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id() {
+            return false;
+        }
+        let Some(Statement::VariableDeclaration(prev_var_decl)) = stmts.last_mut() else {
+            return false;
+        };
+        if prev_var_decl.kind.is_using() {
+            return false;
+        }
+
+        let last_non_inlined_index = prev_var_decl.declarations.iter_mut().rposition(|prev_decl| {
+            let Some(prev_decl_init) = &mut prev_decl.init else {
+                return true;
+            };
+            let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
+                return true;
+            };
+            let Some(symbol_value) =
+                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
+            else {
+                return true;
+            };
+            // we should check whether it's exported by `symbol_value.exported`
+            // because the variable might be exported with `export { foo }` rather than `export var foo`
+            if symbol_value.exported
+                || symbol_value.read_references_count > 1
+                || symbol_value.write_references_count > 0
+            {
+                return true;
+            }
+            let replaced = Self::substitute_single_use_symbol_in_expression(
+                expr_in_stmt,
+                &prev_decl_id.name,
+                prev_decl_init,
+                prev_decl_init.may_have_side_effects(ctx),
+                ctx,
+            );
+            if replaced != Some(true) {
+                return true;
+            }
+            false
+        });
+        match last_non_inlined_index {
+            None => {
+                // all inlined
+                stmts.pop();
+                true
+            }
+            Some(last_non_inlined_index)
+                if last_non_inlined_index + 1 == prev_var_decl.declarations.len() =>
+            {
+                // no change
+                false
+            }
+            Some(last_non_inlined_index) => {
+                prev_var_decl.declarations.truncate(last_non_inlined_index + 1);
+                true
+            }
+        }
+    }
+
+    /// Returns Some(true) when the expression is successfully replaced.
+    /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
+    /// Return None when the expression is not replaced, and can try the subsequent expressions.
+    ///
+    /// `substituteSingleUseSymbolInExpr`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9642>
+    fn substitute_single_use_symbol_in_expression(
+        target_expr: &mut Expression<'a>,
+        search_for: &str,
+        replacement: &mut Expression<'a>,
+        replacement_has_side_effect: bool,
+        ctx: &Ctx<'a, '_>,
+    ) -> Option<bool> {
+        match target_expr {
+            Expression::Identifier(id) => {
+                if id.name == search_for {
+                    *target_expr = replacement.take_in(ctx.ast);
+                    return Some(true);
+                }
+            }
+            Expression::UnaryExpression(unary_expr) => {
+                if unary_expr.operator != UnaryOperator::Delete
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut unary_expr.argument,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            _ => {}
+        }
+
+        // If both the replacement and this expression have no observable side
+        // effects, then we can reorder the replacement past this expression
+        //
+        // ```js
+        // // Substitution is ok
+        // let replacement = 123;
+        // return x + replacement;
+        //
+        // // Substitution is not ok because "fn()" may change "x"
+        // let replacement = fn();
+        // return x + replacement;
+        //
+        // // Substitution is not ok because "x == x" may change "x" due to "valueOf()" evaluation
+        // let replacement = [x];
+        // return (x == x) + replacement;
+        // ```
+        if !replacement_has_side_effect && !target_expr.may_have_side_effects(ctx) {
+            return None;
+        }
+
+        // Otherwise we should stop trying to substitute past this point
+        Some(false)
     }
 }
