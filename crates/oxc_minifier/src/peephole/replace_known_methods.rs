@@ -1012,9 +1012,9 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_imul() {
         test_same_value("Math.imul(Math.random(),2)");
+        test_value("Math.imul()", "0");
         test_value("Math.imul(-1,1)", "-1");
         test_value("Math.imul(2,2)", "4");
         test_value("Math.imul(2)", "0");
@@ -1096,27 +1096,33 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_clz32() {
-        test("Math.clz32(0)", "32");
-        let mut x = 1;
+        test_value("Math.clz32(0)", "32");
+        test_value("Math.clz32(0.0)", "32");
+        test_value("Math.clz32(-0.0)", "32");
+        let mut x = 1_i64;
         for i in (0..=31).rev() {
-            test(&format!("{x}.leading_zeros()"), &i.to_string());
-            test(&format!("{}.leading_zeros()", 2 * x - 1), &i.to_string());
+            test_value(&format!("Math.clz32({x})"), &i.to_string());
+            test_value(&format!("Math.clz32({})", 2 * x - 1), &i.to_string());
             x *= 2;
         }
-        test("Math.clz32('52')", "26");
-        test("Math.clz32([52])", "26");
-        test("Math.clz32([52, 53])", "32");
+        test_value("Math.clz32('52')", "26");
+        test_value("Math.clz32([52])", "26");
+        test_value("Math.clz32([52, 53])", "32");
 
         // Overflow cases
-        test("Math.clz32(0x100000000)", "32");
-        test("Math.clz32(0x100000001)", "31");
+        test_value("Math.clz32(0x100000000)", "32");
+        test_value("Math.clz32(0x100000001)", "31");
+
+        // Negative cases
+        test_value("Math.clz32(-1)", "0");
+        test_value("Math.clz32(-2147483647)", "0");
+        test_value("Math.clz32(-2147483649)", "1");
 
         // NaN -> 0
-        test("Math.clz32(NaN)", "32");
-        test("Math.clz32('foo')", "32");
-        test("Math.clz32(Infinity)", "32");
+        test_value("Math.clz32(NaN)", "32");
+        test_value("Math.clz32('foo')", "32");
+        test_value("Math.clz32(Infinity)", "32");
     }
 
     #[test]
