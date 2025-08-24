@@ -21,7 +21,7 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument, write_arguments_multi_line,
+        member_chain::simple_argument::SimpleArgument,
     },
     write,
     write::{
@@ -44,13 +44,15 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
+        let call_like_span = self.parent.span();
+
         if self.is_empty() {
             return write!(
                 f,
                 [
                     l_paren_token,
                     // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(self.parent.span()).with_soft_block_indent(),
+                    format_dangling_comments(call_like_span).with_soft_block_indent(),
                     r_paren_token
                 ]
             );
@@ -59,26 +61,24 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let call_expression =
             if let AstNodes::CallExpression(call) = self.parent { Some(call) } else { None };
 
-        let (is_commonjs_or_amd_call, is_test_call) = if let Some(call) = call_expression {
-            (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
-        } else {
-            (false, false)
-        };
-
-        let is_first_arg_string_literal_or_template = self.len() != 2
-            || matches!(
-                self.as_ref().first(),
-                Some(
-                    Argument::StringLiteral(_)
-                        | Argument::TemplateLiteral(_)
-                        | Argument::TaggedTemplateExpression(_)
-                )
-            );
+        let (is_commonjs_or_amd_call, is_test_call) = call_expression
+            .map(|call| (is_commonjs_or_amd_call(self, call), is_test_call_expression(call)))
+            .unwrap_or_default();
 
         if is_commonjs_or_amd_call
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || (is_test_call && is_first_arg_string_literal_or_template)
+            || (is_test_call && {
+                self.len() != 2
+                    || matches!(
+                        self.as_ref().first(),
+                        Some(
+                            Argument::StringLiteral(_)
+                                | Argument::TemplateLiteral(_)
+                                | Argument::TaggedTemplateExpression(_)
+                        )
+                    )
+            })
         {
             return write!(
                 f,
@@ -98,15 +98,12 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let mut has_empty_line = false;
-
         let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
-
         if has_empty_line || is_function_composition_args(self) {
             return format_all_args_broken_out(self, true, f);
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f) {
+        if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
             write_grouped_arguments(self, group_layout, f)
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             write!(
@@ -114,11 +111,13 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     soft_block_indent(&format_once(|f| {
-                        write_arguments_multi_line(
-                            FormatSeparatedIter::new(self.iter(), ",")
-                                .with_trailing_separator(TrailingSeparator::Omit),
-                            f,
-                        )
+                        f.join_with(soft_line_break_or_space())
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Allowed,
+                            )
+                            .finish()
                     })),
                     r_paren_token,
                 ]
@@ -175,11 +174,9 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 
 fn format_all_elements_broken_out<'a, 'b>(
     elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
 ) -> FormatResult<()> {
-    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
     write!(
         buffer,
         [group(&format_args!(
@@ -198,7 +195,7 @@ fn format_all_elements_broken_out<'a, 'b>(
                     }
                 }
 
-                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+                write!(f, FormatTrailingCommas::All)
             })),
             ")",
         ))
@@ -211,7 +208,6 @@ fn format_all_args_broken_out<'a, 'b>(
     expand: bool,
     mut buffer: impl Buffer<'a>,
 ) -> FormatResult<()> {
-    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
     let last_index = node.len() - 1;
     write!(
         buffer,
@@ -229,7 +225,7 @@ fn format_all_args_broken_out<'a, 'b>(
                     write!(f, [argument, (index != last_index).then_some(",")])?;
                 }
 
-                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+                write!(f, FormatTrailingCommas::All)
             })),
             ")",
         ))
@@ -238,12 +234,13 @@ fn format_all_args_broken_out<'a, 'b>(
 }
 
 pub fn arguments_grouped_layout(
-    args: &AstNode<ArenaVec<Argument>>,
+    call_like_span: Span,
+    args: &[Argument],
     f: &Formatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
-    if should_group_first_argument(args, f) {
+    if should_group_first_argument(call_like_span, args, f) {
         Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-    } else if should_group_last_argument(args, f) {
+    } else if should_group_last_argument(call_like_span, args, f) {
         Some(GroupedCallArgumentLayout::GroupedLastArgument)
     } else {
         None
@@ -251,7 +248,11 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+fn should_group_first_argument(
+    call_like_span: Span,
+    args: &[Argument],
+    f: &Formatter<'_, '_>,
+) -> bool {
     let mut iter = args.iter();
     match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
     {
@@ -279,7 +280,6 @@ fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter
                 return false;
             }
 
-            let call_like_span = args.parent.span();
             !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
                 && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
@@ -289,8 +289,12 @@ fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
-    let mut iter = args.as_ref().iter();
+fn should_group_last_argument(
+    call_like_span: Span,
+    args: &[Argument],
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let mut iter = args.iter();
     let last = iter.next_back();
 
     match last.and_then(|arg| arg.as_expression()) {
@@ -303,7 +307,6 @@ fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<
                 // }
             }
 
-            let call_like_span = args.parent.span();
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
             if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
                 return false;
@@ -595,13 +598,10 @@ fn write_grouped_arguments<'a>(
             // which would lead to a wrong line count.
             let lines_before = get_lines_before(argument.span(), f);
 
-            let interned = f.intern(
-                &format_once(|f| {
-                    format_argument.fmt(f)?;
-                    write!(f, (last_index != index).then_some(","))
-                })
-                .memoized(),
-            );
+            let interned = f.intern(&format_once(|f| {
+                format_argument.fmt(f)?;
+                write!(f, (last_index != index).then_some(","))
+            }));
 
             let break_type =
                 if is_grouped_argument { &mut grouped_breaks } else { &mut non_grouped_breaks };
@@ -618,7 +618,7 @@ fn write_grouped_arguments<'a>(
     // If any of the not grouped elements break, then fall back to the variant where
     // all arguments are printed in expanded mode.
     if non_grouped_breaks {
-        return format_all_elements_broken_out(elements.into_iter(), node, true, f);
+        return format_all_elements_broken_out(elements.into_iter(), true, f);
     }
 
     // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
@@ -631,7 +631,7 @@ fn write_grouped_arguments<'a>(
         let mut buffer = VecBuffer::new(f.state_mut());
         buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-        format_all_elements_broken_out(elements.iter().cloned(), node, true, &mut buffer);
+        format_all_elements_broken_out(elements.iter().cloned(), true, &mut buffer);
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
