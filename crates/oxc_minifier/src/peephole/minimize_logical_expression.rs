@@ -1,5 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
@@ -236,6 +237,8 @@ impl<'a> PeepholeOptimizations {
                 unreachable!()
             };
 
+            Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+
             let assign_value = assignment_expr.right.take_in(ctx.ast);
             sequence_expr.expressions.push(assign_value);
             *expr = ctx.ast.expression_assignment(
@@ -259,6 +262,9 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
+
+        Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+
         let span = e.span;
         let Expression::AssignmentExpression(assignment_expr) = &mut e.right else {
             return;
@@ -267,5 +273,16 @@ impl<'a> PeepholeOptimizations {
         assignment_expr.operator = new_op;
         *expr = e.right.take_in(ctx.ast);
         ctx.state.changed = true;
+    }
+
+    /// Marks the AssignmentTargetIdentifier of assignment expressions as ReferenceFlags::Read
+    ///
+    /// When creating AssignmentTargetIdentifier from normal expressions, the identifier only has ReferenceFlags::Write.
+    /// But assignment expressions changes the value, so we should add ReferenceFlags::Read.
+    pub fn mark_assignment_target_as_read(assign_target: &AssignmentTarget, ctx: &mut Ctx<'a, '_>) {
+        if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
+            let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
+            reference.flags_mut().insert(ReferenceFlags::Read);
+        }
     }
 }

@@ -4,6 +4,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
+use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -200,6 +201,9 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
+        let reference = ctx.scoping_mut().get_reference_mut(write_id_ref.reference_id());
+        reference.flags_mut().insert(ReferenceFlags::Read);
+
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
         expr.right = logical_expr.right.take_in(ctx.ast);
@@ -220,6 +224,9 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
+
+        Self::mark_assignment_target_as_read(&expr.left, ctx);
+
         expr.operator = new_op;
         expr.right = binary_expr.right.take_in(ctx.ast);
         ctx.state.changed = true;
