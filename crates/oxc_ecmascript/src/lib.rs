@@ -48,7 +48,7 @@ pub use self::{
     string_to_number::StringToNumber,
     to_big_int::ToBigInt,
     to_boolean::ToBoolean,
-    to_int_32::ToInt32,
+    to_int_32::{ToInt32, ToUint32},
     to_integer_index::ToIntegerIndex,
     to_number::ToNumber,
     to_primitive::ToPrimitive,

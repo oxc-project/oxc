@@ -20,7 +20,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 
 use crate::{
-    ToBigInt, ToBoolean, ToInt32, ToJsString as ToJsStringTrait, ToNumber,
+    ToBigInt, ToBoolean, ToInt32, ToJsString as ToJsStringTrait, ToNumber, ToUint32,
     is_less_than::is_less_than,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
     to_numeric::ToNumeric,
@@ -265,29 +265,26 @@ fn binary_operation_evaluate_value_to<'a>(
             }
             Some(ConstantValue::Number(result))
         }
-        #[expect(clippy::cast_sign_loss)]
         BinaryOperator::ShiftLeft => {
             let left = left.evaluate_value_to_number(ctx)?;
             let right = right.evaluate_value_to_number(ctx)?;
             let left = left.to_int_32();
-            let right = (right.to_int_32() as u32) & 31;
+            let right = right.to_uint_32() & 31;
             Some(ConstantValue::Number(f64::from(left << right)))
         }
-        #[expect(clippy::cast_sign_loss)]
         BinaryOperator::ShiftRight => {
             let left = left.evaluate_value_to_number(ctx)?;
             let right = right.evaluate_value_to_number(ctx)?;
             let left = left.to_int_32();
-            let right = (right.to_int_32() as u32) & 31;
+            let right = right.to_uint_32() & 31;
             Some(ConstantValue::Number(f64::from(left >> right)))
         }
-        #[expect(clippy::cast_sign_loss)]
         BinaryOperator::ShiftRightZeroFill => {
             let left = left.evaluate_value_to_number(ctx)?;
             let right = right.evaluate_value_to_number(ctx)?;
-            let left = left.to_int_32();
-            let right = (right.to_int_32() as u32) & 31;
-            Some(ConstantValue::Number(f64::from((left as u32) >> right)))
+            let left = left.to_uint_32();
+            let right = right.to_uint_32() & 31;
+            Some(ConstantValue::Number(f64::from(left >> right)))
         }
         BinaryOperator::LessThan => is_less_than(ctx, left, right).map(|value| match value {
             ConstantValue::Undefined => ConstantValue::Boolean(false),

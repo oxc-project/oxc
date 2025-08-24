@@ -6,7 +6,7 @@ use oxc_allocator::{StringBuilder, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
@@ -444,7 +444,6 @@ impl<'a> TypeScriptEnum<'a> {
         }
     }
 
-    #[expect(clippy::cast_sign_loss)]
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
@@ -485,13 +484,13 @@ impl<'a> TypeScriptEnum<'a> {
 
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
-                left.to_int_32().wrapping_shr(right.to_int_32() as u32),
+                left.to_int_32().wrapping_shr(right.to_uint_32()),
             ))),
             BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
-                (left.to_int_32() as u32).wrapping_shr(right.to_int_32() as u32),
+                (left.to_uint_32()).wrapping_shr(right.to_uint_32()),
             ))),
             BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
-                left.to_int_32().wrapping_shl(right.to_int_32() as u32),
+                left.to_int_32().wrapping_shl(right.to_uint_32()),
             ))),
             BinaryOperator::BitwiseXOR => {
                 Some(ConstantValue::Number(f64::from(left.to_int_32() ^ right.to_int_32())))
