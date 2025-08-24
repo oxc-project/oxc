@@ -616,7 +616,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(argument) = &mut ret_stmt.argument
             && argument.value_type(ctx) == ValueType::Undefined
             // `return undefined` has a different semantic in async generator function.
-            && !ctx.is_in_async_generator()
+            && !ctx.is_closest_function_scope_an_async_generator()
         {
             ctx.state.changed = true;
             if argument.may_have_side_effects(ctx) {

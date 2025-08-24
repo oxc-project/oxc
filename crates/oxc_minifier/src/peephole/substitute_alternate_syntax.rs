@@ -790,7 +790,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         // `return undefined` has a different semantic in async generator function.
-        if ctx.is_in_async_generator() {
+        if ctx.is_closest_function_scope_an_async_generator() {
             return;
         }
         stmt.argument = None;
@@ -1490,6 +1490,14 @@ mod test {
         test("async function foo() { return undefined }", "async function foo() { }");
         test_same("async function* foo() { return void 0 }");
         test_same("class Foo { async * foo() { return void 0 } }");
+        test(
+            "async function* foo() { function bar () { return void 0 } return bar }",
+            "async function* foo() { function bar () {} return bar }",
+        );
+        test(
+            "async function* foo() { let bar = () => { return void 0 }; return bar }",
+            "async function* foo() { let bar = () => {}; return bar }",
+        );
     }
 
     #[test]

@@ -255,7 +255,14 @@ impl<'a> Ctx<'a, '_> {
             && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
     }
 
-    pub fn is_in_async_generator(&self) -> bool {
-        self.ancestors().any(|ancestor| matches!(ancestor, Ancestor::FunctionBody(body) if *body.r#async() && *body.generator()))
+    /// Whether the closest function scope is created by an async generator
+    pub fn is_closest_function_scope_an_async_generator(&self) -> bool {
+        self.ancestors()
+            .find_map(|ancestor| match ancestor {
+                Ancestor::FunctionBody(body) => Some(*body.r#async() && *body.generator()),
+                Ancestor::ArrowFunctionExpressionBody(_) => Some(false),
+                _ => None,
+            })
+            .unwrap_or_default()
     }
 }
