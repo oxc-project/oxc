@@ -1,4 +1,4 @@
-ts compatibility: 323/573 (56.37%)
+ts compatibility: 321/573 (56.02%)
 
 # Failed
 
@@ -7,10 +7,10 @@ ts compatibility: 323/573 (56.37%)
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
-| jsx/jsx/await.js | 💥💥💥💥 | 93.75% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
+| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 85.71% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/text-wrap/test.js | 💥 | 98.85% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
@@ -41,6 +41,7 @@ ts compatibility: 323/573 (56.37%)
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/test2.ts | 💥 | 56.25% |
 | typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 86.30% |
@@ -217,6 +218,7 @@ ts compatibility: 323/573 (56.37%)
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
+| typescript/template-literals/expressions.ts | 💥 | 0.00% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 87.66% |

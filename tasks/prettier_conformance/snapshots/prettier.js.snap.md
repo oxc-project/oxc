@@ -1,4 +1,4 @@
-js compatibility: 582/699 (83.26%)
+js compatibility: 583/699 (83.40%)
 
 # Failed
 
@@ -6,7 +6,7 @@ js compatibility: 582/699 (83.26%)
 | :-------- | :--------------: | :---------: |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
-| js/assignment/issue-10218.js | 💥 | 52.63% |
+| js/assignment/issue-15534.js | 💥 | 25.00% |
 | js/assignment/sequence.js | 💥 | 71.43% |
 | js/chain-expression/issue-15785-3.js | 💥 | 50.00% |
 | js/class-comment/misc.js | 💥 | 72.73% |
@@ -69,7 +69,6 @@ js compatibility: 582/699 (83.26%)
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/line-suffix-boundary/boundary.js | 💥 | 36.73% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
-| js/method-chain/break-last-member.js | 💥 | 80.56% |
 | js/method-chain/comment.js | 💥 | 97.56% |
 | js/method-chain/conditional.js | 💥 | 85.19% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
@@ -90,13 +89,13 @@ js compatibility: 582/699 (83.26%)
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/strings/escaped.js | 💥💥 | 73.68% |
 | js/strings/template-literals.js | 💥💥 | 62.96% |
-| js/template/comment.js | 💥 | 23.08% |
+| js/template/comment.js | 💥 | 24.00% |
 | js/template/graphql.js | 💥 | 81.25% |
 | js/template/indent.js | 💥 | 85.71% |
 | js/template-align/indent.js | 💥💥 | 14.47% |
 | js/template-literals/binary-exporessions.js | 💥 | 0.00% |
 | js/template-literals/conditional-expressions.js | 💥 | 0.00% |
-| js/template-literals/expressions.js | 💥 | 88.89% |
+| js/template-literals/expressions.js | 💥 | 67.67% |
 | js/template-literals/indention.js | 💥 | 51.16% |
 | js/template-literals/logical-expressions.js | 💥 | 0.00% |
 | js/template-literals/sequence-expressions.js | 💥 | 0.00% |
@@ -117,7 +116,7 @@ js compatibility: 582/699 (83.26%)
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
-| jsx/jsx/await.js | 💥💥💥💥 | 93.75% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
+| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 85.71% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/text-wrap/test.js | 💥 | 98.85% |

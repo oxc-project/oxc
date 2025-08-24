@@ -12,6 +12,7 @@ mod export_declarations;
 mod function;
 mod import_declaration;
 mod jsx;
+mod member_expression;
 mod object_like;
 mod object_pattern_like;
 mod parameter_list;
@@ -283,38 +284,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, dynamic_text(self.value().raw.as_str()))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.object())?;
-
-        if matches!(self.expression, Expression::NumericLiteral(_)) {
-            write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"])
-        } else {
-            write!(
-                f,
-                group(&format_args!(
-                    self.optional().then_some("?."),
-                    "[",
-                    soft_block_indent(self.expression()),
-                    "]"
-                ))
-            )
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), ".", self.property()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()])
     }
 }
 
