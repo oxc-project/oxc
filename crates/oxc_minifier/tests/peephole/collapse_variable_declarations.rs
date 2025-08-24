@@ -53,7 +53,7 @@ mod join_vars {
 
     #[test]
     fn test_issue397() {
-        test_same("var x; x = 5; var z = 7;");
+        test("var x; x = 5; var z = 7;", "var x = 5, z = 7");
         test("var x; var y = 3; x = 5;", "var x, y = 3; x = 5;");
         test("var a = 1; var x; var y = 3; x = 5;", "var a = 1, x, y = 3; x = 5;");
         test("var x; var y = 3; x = 5; var z = 7;", "var x, y = 3; x = 5; var z = 7;");

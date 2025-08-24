@@ -265,7 +265,7 @@ impl<'a> PeepholeOptimizations {
 mod test {
     use crate::{
         CompressOptions,
-        tester::{test, test_same, test_same_options},
+        tester::{test, test_options, test_same, test_same_options},
     };
     use oxc_syntax::es_target::ESTarget;
 
@@ -1432,7 +1432,7 @@ mod test {
 
         let target = ESTarget::ES2019;
         let options = CompressOptions { target, ..CompressOptions::default() };
-        test_same_options("var x; x = x || 1", &options);
+        test_options("var x; x = x || 1", "var x = x || 1", &options);
     }
 
     #[test]
