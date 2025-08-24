@@ -1,5 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     formatter::{
@@ -22,8 +23,8 @@ enum BindingPropertyListNode<'a, 'b> {
     Rest(&'b AstNode<'a, BindingRestElement<'a>>),
 }
 
-impl BindingPropertyListNode<'_, '_> {
-    pub fn span(&self) -> Span {
+impl GetSpan for BindingPropertyListNode<'_, '_> {
+    fn span(&self) -> Span {
         match self {
             BindingPropertyListNode::Property(property) => property.span,
             BindingPropertyListNode::Rest(rest) => rest.span,
@@ -75,17 +76,13 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
         let source_text = f.source_text();
-        let entries = FormatSeparatedIter::new(
-            BindingPropertyListIter { properties: self.properties.iter(), rest: self.rest },
-            ",",
-        )
-        .with_trailing_separator(trailing_separator);
 
-        let mut join = f.join_nodes_with_soft_line();
-        for entry in entries {
-            join.entry(entry.element.span(), &entry);
-        }
-
-        join.finish()
+        f.join_nodes_with_soft_line()
+            .entries_with_trailing_separator(
+                BindingPropertyListIter { properties: self.properties.iter(), rest: self.rest },
+                ",",
+                trailing_separator,
+            )
+            .finish()
     }
 }

@@ -187,6 +187,13 @@ impl Generator for FormatterAstNodesGenerator {
                 pub(super) following_node: Option<SiblingNode<'a>>,
             }
 
+
+            impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
+                fn span(&self) -> Span {
+                    self.inner.span()
+                }
+            }
+
             #ast_node_ast_nodes_impls
 
             #impls

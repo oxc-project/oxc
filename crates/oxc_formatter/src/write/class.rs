@@ -201,9 +201,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
                     format_once(|f| {
                         // the grouping will be applied by the parent
                         f.join_with(&soft_line_break_or_space())
-                            .entries(
-                                FormatSeparatedIter::new(self.iter(), ",")
-                                    .with_trailing_separator(TrailingSeparator::Disallowed),
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Disallowed,
                             )
                             .finish()
                     })

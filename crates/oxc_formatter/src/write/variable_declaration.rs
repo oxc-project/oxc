@@ -68,7 +68,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
         // `VariableDeclaration` always has at least one declarator.
         let first_declarator = declarators.next().unwrap();
 
-        if length == 1 && !f.comments().has_comments_before(first_declarator.element.span().start) {
+        if length == 1 && !f.comments().has_comments_before(first_declarator.span().start) {
             return write!(f, first_declarator);
         }
 

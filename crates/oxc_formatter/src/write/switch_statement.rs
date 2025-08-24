@@ -43,12 +43,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.source_text();
-        let mut join = f.join_nodes_with_hardline();
-        for case in self {
-            join.entry(case.span(), case);
-        }
-        join.finish()
+        f.join_nodes_with_hardline().entries(self).finish()
     }
 }
 
