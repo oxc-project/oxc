@@ -983,6 +983,49 @@ impl<'a> PeepholeOptimizations {
                     return Some(true);
                 }
             }
+            Expression::AwaitExpression(await_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut await_expr.argument,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::YieldExpression(yield_expr) => {
+                if let Some(argument) = &mut yield_expr.argument
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        argument,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            Expression::ImportExpression(import_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut import_expr.source,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+
+                // The "import()" expression has side effects but the side effects are
+                // always asynchronous so there is no way for the side effects to modify
+                // the replacement value. So it's ok to reorder the replacement value
+                // past the "import()" expression assuming everything else checks out.
+                if !replacement_has_side_effect && !import_expr.source.may_have_side_effects(ctx) {
+                    return None;
+                }
+            }
             Expression::UnaryExpression(unary_expr) => {
                 if unary_expr.operator != UnaryOperator::Delete
                     && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -995,6 +1038,324 @@ impl<'a> PeepholeOptimizations {
                 {
                     return Some(changed);
                 }
+            }
+            Expression::StaticMemberExpression(member_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut member_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::BinaryExpression(binary_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut binary_expr.left,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut binary_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::AssignmentExpression(_assign_expr) => {
+                // TODO: requires implementing `MayHaveSideEffects` to `AssignmentTarget`
+            }
+            Expression::LogicalExpression(logical_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut logical_expr.left,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut logical_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::PrivateInExpression(_private_in_expr) => {
+                // TODO: implement
+            }
+            Expression::ConditionalExpression(cond_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut cond_expr.test,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if !replacement_has_side_effect {
+                    // Unlike other branches in this function such as "a && b" or "a?.[b]",
+                    // the "a ? b : c" form has potential code evaluation along both control
+                    // flow paths. Handle this by allowing substitution into either branch.
+                    // Side effects in one branch should not prevent the substitution into
+                    // the other branch.
+
+                    let consequent_changed = Self::substitute_single_use_symbol_in_expression(
+                        &mut cond_expr.consequent,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    );
+                    if consequent_changed == Some(true) {
+                        return consequent_changed;
+                    }
+                    let alternate_changed = Self::substitute_single_use_symbol_in_expression(
+                        &mut cond_expr.alternate,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    );
+                    if alternate_changed == Some(true) {
+                        return alternate_changed;
+                    }
+                    // Side effects in either branch should stop us from continuing to try to
+                    // substitute the replacement after the control flow branches merge again.
+                    if consequent_changed == Some(false) || alternate_changed == Some(false) {
+                        return Some(false);
+                    }
+                }
+            }
+            Expression::ComputedMemberExpression(member_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut member_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if (!replacement_has_side_effect || !member_expr.optional)
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut member_expr.expression,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            Expression::PrivateFieldExpression(_private_field_expr) => {
+                // TODO: implement
+            }
+            Expression::CallExpression(call_expr) => {
+                // Don't substitute something into a call target that could change "this"
+                if !((replacement.is_member_expression()
+                    || matches!(replacement, Expression::ChainExpression(_)))
+                    && call_expr.callee.is_identifier_reference())
+                {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut call_expr.callee,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+
+                    // Do not substitute our unconditionally-executed value into a branch
+                    // unless the value itself has no side effects
+                    if !replacement_has_side_effect || !call_expr.optional {
+                        for arg in &mut call_expr.arguments {
+                            match arg {
+                                Argument::SpreadElement(spread_elem) => {
+                                    if let Some(changed) =
+                                        Self::substitute_single_use_symbol_in_expression(
+                                            &mut spread_elem.argument,
+                                            search_for,
+                                            replacement,
+                                            replacement_has_side_effect,
+                                            ctx,
+                                        )
+                                    {
+                                        return Some(changed);
+                                    }
+                                    // spread element may have sideeffects
+                                    return Some(false);
+                                }
+                                match_expression!(Argument) => {
+                                    if let Some(changed) =
+                                        Self::substitute_single_use_symbol_in_expression(
+                                            arg.to_expression_mut(),
+                                            search_for,
+                                            replacement,
+                                            replacement_has_side_effect,
+                                            ctx,
+                                        )
+                                    {
+                                        return Some(changed);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Expression::NewExpression(_new_expr) => {
+                // TODO: implement
+            }
+            Expression::ArrayExpression(array_expr) => {
+                for elem in &mut array_expr.elements {
+                    match elem {
+                        ArrayExpressionElement::SpreadElement(spread_elem) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut spread_elem.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                            // spread element may have sideeffects
+                            return Some(false);
+                        }
+                        ArrayExpressionElement::Elision(_) => {}
+                        match_expression!(ArrayExpressionElement) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                elem.to_expression_mut(),
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                        }
+                    }
+                }
+            }
+            Expression::ObjectExpression(obj_expr) => {
+                for prop in &mut obj_expr.properties {
+                    match prop {
+                        ObjectPropertyKind::ObjectProperty(prop) => match prop.key {
+                            PropertyKey::StaticIdentifier(_)
+                            | PropertyKey::PrivateIdentifier(_) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        &mut prop.value,
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                            }
+                            match_expression!(PropertyKey) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        prop.key.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // Stop now because computed keys have side effects
+                                return Some(false);
+                            }
+                        },
+                        ObjectPropertyKind::SpreadProperty(prop) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut prop.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                            // Stop now because spread properties have side effects
+                            return Some(false);
+                        }
+                    }
+                }
+            }
+            Expression::TaggedTemplateExpression(tagged_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut tagged_expr.tag,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                for elem in &mut tagged_expr.quasi.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        elem,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
+            }
+            Expression::TemplateLiteral(template_literal) => {
+                for elem in &mut template_literal.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        elem,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
+            }
+            Expression::ChainExpression(chain_expr) => {
+                let mut expr = Expression::from(chain_expr.expression.take_in(ctx.ast));
+                let changed = Self::substitute_single_use_symbol_in_expression(
+                    &mut expr,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                );
+                chain_expr.expression = expr.into_chain_element().expect("should be chain element");
+                return changed;
+            }
+            Expression::SequenceExpression(_sequence_expr) => {
+                // TODO: implement
             }
             _ => {}
         }
@@ -1016,6 +1377,12 @@ impl<'a> PeepholeOptimizations {
         // return (x == x) + replacement;
         // ```
         if !replacement_has_side_effect && !target_expr.may_have_side_effects(ctx) {
+            return None;
+        }
+
+        // We can always reorder past primitive values
+        // TODO(sapphi-red): we may use is_literal_value after I checked if it handles edge cases properly
+        if replacement.is_literal() || target_expr.is_literal() {
             return None;
         }
 

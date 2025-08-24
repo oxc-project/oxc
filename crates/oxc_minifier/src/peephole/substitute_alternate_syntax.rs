@@ -536,15 +536,19 @@ impl<'a> PeepholeOptimizations {
 
         // Parse statement: `r[a - offset] = arguments[a];`
         let body_assign_expr = {
-            let assign = match &for_stmt.body {
+            let assign = match &mut for_stmt.body {
                 Statement::ExpressionStatement(expr_stmt) => expr_stmt,
-                Statement::BlockStatement(block) if block.body.len() == 1 => match &block.body[0] {
-                    Statement::ExpressionStatement(expr_stmt) => expr_stmt,
-                    _ => return,
-                },
+                Statement::BlockStatement(block) if block.body.len() == 1 => {
+                    match &mut block.body[0] {
+                        Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+                        _ => return,
+                    }
+                }
                 _ => return,
             };
-            let Expression::AssignmentExpression(assign_expr) = &assign.expression else { return };
+            let Expression::AssignmentExpression(assign_expr) = &mut assign.expression else {
+                return;
+            };
             if !assign_expr.operator.is_assign() {
                 return;
             }
@@ -578,12 +582,13 @@ impl<'a> PeepholeOptimizations {
             (lhs_member_expr_obj.name, base_name, offset)
         };
 
-        {
-            let Expression::ComputedMemberExpression(rhs_member_expr) = &body_assign_expr.right
+        let arguments_id = {
+            let Expression::ComputedMemberExpression(rhs_member_expr) = &mut body_assign_expr.right
             else {
                 return;
             };
-            let Expression::Identifier(rhs_member_expr_obj) = &rhs_member_expr.object else {
+            let ComputedMemberExpression { object, expression, .. } = rhs_member_expr.as_mut();
+            let Expression::Identifier(rhs_member_expr_obj) = object else {
                 return;
             };
             if rhs_member_expr_obj.name != "arguments"
@@ -591,13 +596,13 @@ impl<'a> PeepholeOptimizations {
             {
                 return;
             }
-            let Expression::Identifier(rhs_member_expr_expr_id) = &rhs_member_expr.expression
-            else {
+            let Expression::Identifier(rhs_member_expr_expr_id) = expression else {
                 return;
             };
             if rhs_member_expr_expr_id.name != a_id_name {
                 return;
             }
+            rhs_member_expr_obj
         };
 
         // Parse update: `a++`
@@ -737,7 +742,7 @@ impl<'a> PeepholeOptimizations {
             SPAN,
             ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
                 SPAN,
-                ctx.ast.expression_identifier(SPAN, "arguments"),
+                Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
             )),
         );
         // wrap with `.slice(offset)`

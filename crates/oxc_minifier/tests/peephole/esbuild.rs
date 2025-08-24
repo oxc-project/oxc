@@ -832,51 +832,51 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a[b] : undefined }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a(b) : undefined }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a.b }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a[b] }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a(b) }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a[b] : undefined }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a(b) : undefined }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a.b }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a[b] }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a(b) }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { return a != null ? a.b : undefined }",
@@ -888,7 +888,7 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != null ? b.a : undefined }",
-        "function _() { let a = foo(); return a == null ? void 0 : b.a; }",
+        "function _() { return foo() == null ? void 0 : b.a; }",
     );
     test(
         "function _() { let a = foo(); return a != 0 ? a.b : undefined }",
@@ -900,27 +900,27 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != undefined ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b.c[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c[d](e); }",
+        "function _() { return foo()?.b.c[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b.c[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c[d](e); }",
+        "function _() { return foo()?.b.c[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b.c?.[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c?.[d](e); }",
+        "function _() { return foo()?.b.c?.[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b.c?.[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c?.[d](e); }",
+        "function _() { return foo()?.b.c?.[d](e); }",
     );
 }
 
@@ -1693,11 +1693,6 @@ fn test_inline_single_use_variable() {
         "var foo; function wrapper(arg0, arg1) { let x = foo; return typeof x}",
         "var foo; function wrapper(arg0, arg1) { return typeof foo;}",
     );
-}
-
-#[test]
-#[ignore]
-fn test_inline_single_use_variable_ignored() {
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return `<${x}>`}",
         "var foo; function wrapper(arg0, arg1) { return `<${foo}>`;}",
@@ -1724,7 +1719,7 @@ fn test_inline_single_use_variable_ignored() {
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return fn() + x}",
-        "var foo; function wrapper(arg0, arg1) { return fn() + foo;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return fn() + x;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return x + undef}",
@@ -1732,7 +1727,7 @@ fn test_inline_single_use_variable_ignored() {
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return undef + x}",
-        "var foo; function wrapper(arg0, arg1) { return undef + foo;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return undef + x;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); return x + 2}",
@@ -1798,54 +1793,54 @@ fn test_inline_single_use_variable_ignored() {
         "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2}",
         "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2;}",
     );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 = x}",
-        "var foo; function wrapper(arg0, arg1) { arg0 = foo;}",
-    );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 += x}",
-        "var foo; function wrapper(arg0, arg1) { arg0 += foo;}",
-    );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 ||= x}",
-        "var foo; function wrapper(arg0, arg1) { arg0 ||= foo;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); arg0 = x}",
-        "function wrapper(arg0, arg1) { arg0 = fn();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); arg0 += x}",
-        "function wrapper(arg0, arg1) { let x = fn(); arg0 += x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x}",
-        "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x;}",
-    );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x}",
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x;}",
-    );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x}",
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x;}",
-    );
-    test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x}",
-        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); y.z = x}",
-        "function wrapper(arg0, arg1) { let x = fn(); y.z = x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); y.z += x}",
-        "function wrapper(arg0, arg1) { let x = fn(); y.z += x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x}",
-        "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x;}",
-    );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 = x}",
+    //     "var foo; function wrapper(arg0, arg1) { arg0 = foo;}",
+    // );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 += x}",
+    //     "var foo; function wrapper(arg0, arg1) { arg0 += foo;}",
+    // );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 ||= x}",
+    //     "var foo; function wrapper(arg0, arg1) { arg0 ||= foo;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 = x}",
+    //     "function wrapper(arg0, arg1) { arg0 = fn();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 += x}",
+    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 += x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x}",
+    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x;}",
+    // );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x}",
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x;}",
+    // );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x}",
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x;}",
+    // );
+    // test(
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x}",
+    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z = x}",
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z = x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z += x}",
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z += x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x}",
+    //     "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x;}",
+    // );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return x ? y : z;}",
         "function wrapper(arg0, arg1) { return arg0 ? y : z;}",
@@ -1962,13 +1957,21 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) { let x = fn(); return arg0 ?? x;}",
         "function wrapper(arg0, arg1) { let x = fn(); return arg0 ?? x;}",
     );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(); let y = x[prop]; let z = y.val; throw z}",
+    //     "function wrapper(arg0, arg1) { throw fn()[prop].val;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = fn(), y = x[prop], z = y.val; throw z}",
+    //     "function wrapper(arg0, arg1) { throw fn()[prop].val;}",
+    // );
     test(
-        "function wrapper(arg0, arg1) { let x = fn(); let y = x[prop]; let z = y.val; throw z}",
-        "function wrapper(arg0, arg1) { throw fn()[prop].val;}",
+        "function wrapper(arg0, arg1) { let x = fn(); let y = x[prop]; let z = y.val; return z}",
+        "function wrapper(arg0, arg1) { return fn()[prop].val;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = fn(), y = x[prop], z = y.val; throw z}",
-        "function wrapper(arg0, arg1) { throw fn()[prop].val;}",
+        "function wrapper(arg0, arg1) { let x = fn(), y = x[prop], z = y.val; return z}",
+        "function wrapper(arg0, arg1) { return fn()[prop].val;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; let y = ++x; return y}",
@@ -1982,9 +1985,10 @@ fn test_inline_single_use_variable_ignored() {
         "var foo; function wrapper(arg0, arg1) { let x = foo; let y = ++x; return [x, y]}",
         "var foo; function wrapper(arg0, arg1) { let x = foo, y = ++x; return [x, y];}",
     );
+    // NOTE: differently from esbuild, we assume `valueOf` does not have a sideeffect
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; let y = {valueOf() { x = 1 }}; let z = x; return [y == 1, z]}",
-        "var foo; function wrapper(arg0, arg1) { let x = foo, y = { valueOf() { x = 1; } }, z = x; return [y == 1, z];}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return [{ valueOf() { x = 1; } } == 1, x];}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return [...x];}",
@@ -2010,42 +2014,42 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) { let x = arg0; return arg1(...arg1, x);}",
         "function wrapper(arg0, arg1) { let x = arg0; return arg1(...arg1, x);}",
     );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; arg1(x);}",
-        "function wrapper(arg0, arg1) { arg1(arg0);}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; throw x;}",
-        "function wrapper(arg0, arg1) { throw arg0;}",
-    );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; arg1(x);}",
+    //     "function wrapper(arg0, arg1) { arg1(arg0);}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; throw x;}",
+    //     "function wrapper(arg0, arg1) { throw arg0;}",
+    // );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return x;}",
         "function wrapper(arg0, arg1) { return arg0;}",
     );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; if (x) return 1;}",
-        "function wrapper(arg0, arg1) { if (arg0) return 1;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
-        "function wrapper(arg0, arg1) { let y = arg0; return y + y;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; do {} while (x);}",
-        "function wrapper(arg0, arg1) { let x = arg0; do ; while (x);}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; while (x) return 1;}",
-        "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
-        "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
-    );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; if (x) return 1;}",
+    //     "function wrapper(arg0, arg1) { if (arg0) return 1;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
+    //     "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
+    //     "function wrapper(arg0, arg1) { let y = arg0; return y + y;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; do {} while (x);}",
+    //     "function wrapper(arg0, arg1) { let x = arg0; do ; while (x);}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; while (x) return 1;}",
+    //     "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
+    //     "function wrapper(arg0, arg1) { let x = arg0; for (; x; ) return 1;}",
+    // );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return arg1?.[x];}",
         "function wrapper(arg0, arg1) { return arg1?.[arg0];}",
@@ -2171,10 +2175,6 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) { return arg1`a${arg0}b`;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 'x'; return `a${x}b`;}",
-        "function wrapper(arg0, arg1) { return `axb`;}",
-    );
-    test(
         "function wrapper(arg0, arg1) { let x = arg0; return import(x);}",
         "function wrapper(arg0, arg1) { return import(arg0);}",
     );
@@ -2186,10 +2186,10 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) { let x = arg0; return [import(arg1), x];}",
         "function wrapper(arg0, arg1) { return [import(arg1), arg0];}",
     );
-    test(
-        "function wrapper(arg0, arg1) {return async () => { let x = arg0; await x; };}",
-        "function wrapper(arg0, arg1) { return async () => { await arg0; };}",
-    );
+    // test(
+    //     "function wrapper(arg0, arg1) {return async () => { let x = arg0; await x; };}",
+    //     "function wrapper(arg0, arg1) { return async () => { await arg0; };}",
+    // );
     test(
         "function wrapper(arg0, arg1) {return async () => { let x = arg0; await y; return x; };}",
         "function wrapper(arg0, arg1) { return async () => { let x = arg0; return await y, x; };}",
@@ -2198,10 +2198,10 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) {return async () => { let x = arg0; await arg1; return x; };}",
         "function wrapper(arg0, arg1) { return async () => { let x = arg0; return await arg1, x; };}",
     );
-    test(
-        "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield x; };}",
-        "function wrapper(arg0, arg1) { return function* () { yield arg0; };}",
-    );
+    // test(
+    //     "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield x; };}",
+    //     "function wrapper(arg0, arg1) { return function* () { yield arg0; };}",
+    // );
     test(
         "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield; return x; };}",
         "function wrapper(arg0, arg1) { return function* () { let x = arg0; return yield, x; };}",
@@ -2214,70 +2214,70 @@ fn test_inline_single_use_variable_ignored() {
         "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield arg1; return x; };}",
         "function wrapper(arg0, arg1) { return function* () { let x = arg0; return yield arg1, x; };}",
     );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; x()}",
-        "function wrapper(arg0, arg1) { arg0();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0; (0, x)()}",
-        "function wrapper(arg0, arg1) { arg0();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x.bar()}",
-        "function wrapper(arg0, arg1) { arg0.foo.bar();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
-        "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
-        "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",
-        "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = arg0(); /* @__PURE__ */ arg1() + x}",
-        "function wrapper(arg0, arg1) { let x = arg0(); /* @__PURE__ */ arg1() + x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); arg1() + x}",
-        "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); arg1() + x;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); /* @__PURE__ */ arg1() + x}",
-        "function wrapper(arg0, arg1) { /* @__PURE__ */ arg1() + /* @__PURE__ */ arg0();}",
-    );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; x()}",
+    //     "function wrapper(arg0, arg1) { arg0();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0; (0, x)()}",
+    //     "function wrapper(arg0, arg1) { arg0();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; x.bar()}",
+    //     "function wrapper(arg0, arg1) { arg0.foo.bar();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; x[bar]()}",
+    //     "function wrapper(arg0, arg1) { arg0.foo[bar]();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; x()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0[foo]; x()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0?.foo; x()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; (0, x)()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0.foo; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0[foo]; (0, x)()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0[foo]; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0?.foo; (0, x)()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0?.foo; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0?.[foo]; (0, x)()}",
+    //     "function wrapper(arg0, arg1) { let x = arg0?.[foo]; x();}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x}",
+    //     "function wrapper(arg0, arg1) { let x = arg0(); arg1() + x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = arg0(); /* @__PURE__ */ arg1() + x}",
+    //     "function wrapper(arg0, arg1) { let x = arg0(); /* @__PURE__ */ arg1() + x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); arg1() + x}",
+    //     "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); arg1() + x;}",
+    // );
+    // test(
+    //     "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); /* @__PURE__ */ arg1() + x}",
+    //     "function wrapper(arg0, arg1) { /* @__PURE__ */ arg1() + /* @__PURE__ */ arg0();}",
+    // );
 }
 
 #[test]
