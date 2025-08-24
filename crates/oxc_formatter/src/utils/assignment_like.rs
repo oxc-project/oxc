@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    format_args,
+    FormatOptions, format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
@@ -23,6 +23,8 @@ use crate::{
         FormatJsArrowFunctionExpressionOptions,
     },
 };
+
+use super::string_utils::{FormatLiteralStringToken, StringLiteralParentKind};
 
 #[derive(Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
@@ -792,7 +794,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         let is_breakable_call = match args.len() {
             0 => false,
             1 => match args.iter().next() {
-                Some(first_argument) => !is_short_argument(first_argument, threshold),
+                Some(first_argument) => !is_short_argument(first_argument, threshold, f),
                 None => false,
             },
             _ => true,
@@ -819,7 +821,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// We need it to decide if `JsCallExpression` with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L374>
-fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
+fn is_short_argument(argument: &Argument, threshold: u16, f: &Formatter) -> bool {
     match argument {
         Argument::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Argument::UnaryExpression(unary_expression) => {
@@ -828,15 +830,15 @@ fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
         }
         Argument::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
         Argument::StringLiteral(literal) => {
-            // let formatter = FormatLiteralStringToken::new(
-            //     &literal.value,
-            //     literal.span,
-            //     false,
-            //     StringLiteralParentKind::Expression,
-            // );
+            let formatter = FormatLiteralStringToken::new(
+                literal.span.source_text(f.source_text()),
+                literal.span,
+                false,
+                StringLiteralParentKind::Expression,
+            );
 
-            // formatter.clean_text(f).width() <= threshold as usize
-            literal.raw.is_some_and(|text| text.len() <= threshold as usize)
+            formatter.clean_text(f.context().source_type(), f.options()).width()
+                <= threshold as usize
         }
         Argument::TemplateLiteral(literal) => {
             let elements = &literal.expressions;

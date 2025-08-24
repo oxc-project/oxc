@@ -263,20 +263,20 @@ impl TestRunner {
                     // println!("--- {title} {}", "-".repeat(w - title.len() - 5));
                     // };
 
-                    // println!(
-                    // "{} Test: {}",
-                    // if result { "✨" } else { "💥" },
-                    // path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
-                    // );
-                    // println!(
-                    // "Options: {{ {} }}",
-                    // snapshot_options
-                    // .iter()
-                    // .filter(|(k, _)| k != "parsers")
-                    // .map(|(k, v)| format!("{k}: {v}"))
-                    // .collect::<Vec<_>>()
-                    // .join(", ")
-                    // );
+                    println!(
+                        "{} Test: {}",
+                        if result { "✨" } else { "💥" },
+                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
+                    );
+                    println!(
+                        "Options: {{ {} }}",
+                        snapshot_options
+                            .iter()
+                            .filter(|(k, _)| k != "parsers")
+                            .map(|(k, v)| format!("{k}: {v}"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
 
                     if !result {
                         // print_with_border("Input");

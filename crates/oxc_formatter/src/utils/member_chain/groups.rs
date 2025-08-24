@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use oxc_span::{GetSpan, Span};
 
@@ -100,17 +100,14 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
     }
 
     /// Test if any group except the last group [break](FormatElements::will_break).
-    pub(super) fn any_except_last_will_break(
-        &self,
-        f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<bool> {
+    pub(super) fn any_except_last_will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
         for group in &self.groups[..self.groups.len().saturating_sub(1)] {
-            if group.will_break(f)? {
-                return Ok(true);
+            if group.will_break(f) {
+                return true;
             }
         }
 
-        Ok(false)
+        false
     }
 
     /// Returns an iterator over all members
@@ -134,6 +131,8 @@ pub(super) struct MemberChainGroup<'a, 'b> {
     /// Manual implementation of `Memoized` to only memorizing the formatted result
     /// if [MemberChainGroup::will_break] is called but not otherwise.
     formatted: RefCell<Option<FormatElement<'a>>>,
+
+    needs_empty_line: Cell<bool>,
 }
 
 impl<'a, 'b> MemberChainGroup<'a, 'b> {
@@ -154,26 +153,41 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         self.members.extend(members);
     }
 
-    /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
-    pub(super) fn will_break(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    pub(super) fn inspect(&self, tail: bool, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let mut cell = self.formatted.borrow_mut();
-        Ok(if let Some(formatted) = cell.as_ref() {
-            formatted.will_break()
-        } else {
+        if cell.is_none() {
             let interned = f.intern(&FormatMemberChainGroup { group: self })?;
 
-            if let Some(interned) = interned {
-                let breaks = interned.will_break();
-                *cell = Some(interned);
-                breaks
-            } else {
-                false
+            if tail {
+                self.needs_empty_line.set(self.needs_empty_line_before(f));
             }
-        })
+
+            if let Some(interned) = interned {
+                *cell = Some(interned);
+            }
+        }
+        Ok(())
     }
 
-    pub(super) fn needs_empty_line_before(&self, f: &Formatter) -> bool {
-        // TODO: Needs to consider there is a comment around the `?`, `.` or `[` character.
+    /// Tests if the formatted result of this group results in a [break](FormatElements::will_break).
+    pub(super) fn will_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
+        let mut cell = self.formatted.borrow_mut();
+        if let Some(formatted) = cell.as_ref() {
+            formatted.will_break()
+        } else {
+            unreachable!("Ensure that `inspect` is called before this method")
+        }
+    }
+
+    pub(crate) fn set_needs_empty_line(&self, v: bool) {
+        self.needs_empty_line.set(v);
+    }
+
+    pub(crate) fn needs_empty_line(&self) -> bool {
+        self.needs_empty_line.get()
+    }
+
+    fn needs_empty_line_before(&self, f: &Formatter) -> bool {
         let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
             return false;
         };
@@ -231,7 +245,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
 impl<'a, 'b> From<Vec<ChainMember<'a, 'b>>> for MemberChainGroup<'a, 'b> {
     fn from(entries: Vec<ChainMember<'a, 'b>>) -> Self {
-        Self { members: entries, formatted: RefCell::new(None) }
+        Self { members: entries, formatted: RefCell::new(None), needs_empty_line: Cell::new(false) }
     }
 }
 
