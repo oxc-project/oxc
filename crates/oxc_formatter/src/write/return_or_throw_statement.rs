@@ -122,7 +122,7 @@ impl<'a> Format<'a> for FormatReturnOrThrowArgument<'a, '_> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: &Expression, f: &Formatter<'_, '_>) -> bool {
+fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
     let source_text = f.source_text();
 
     let mut current = Some(ExpressionLeftSide::from(argument));
@@ -147,7 +147,7 @@ fn has_argument_leading_comments(argument: &Expression, f: &Formatter<'_, '_>) -
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
         if let ExpressionLeftSide::Expression(left_side) = left_side {
-            let has_leading_own_line_comment = match left_side {
+            let has_leading_own_line_comment = match left_side.as_ref() {
                 Expression::ChainExpression(chain) => {
                     if let ChainElement::StaticMemberExpression(member) = &chain.expression {
                         is_line_comment_or_multi_line_comment(

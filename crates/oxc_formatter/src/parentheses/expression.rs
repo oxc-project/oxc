@@ -173,7 +173,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
             AstNodes::NewExpression(_) => true,
             AstNodes::Decorator(_) => !is_identifier_or_static_member_only(&self.callee),
             AstNodes::ExportDefaultDeclaration(_) => {
-                let callee = &self.callee;
+                let callee = &self.callee();
                 let callee_span = callee.span();
                 let leftmost = ExpressionLeftSide::leftmost(callee);
                 // require parens for iife and
@@ -181,9 +181,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
                 callee_span != leftmost.span()
                     && matches!(
                         leftmost,
-                        ExpressionLeftSide::Expression(
-                            Expression::ClassExpression(_) | Expression::FunctionExpression(_)
-                        )
+                        ExpressionLeftSide::Expression(e)
+                         if matches!(e.as_ref(), Expression::ClassExpression(_) | Expression::FunctionExpression(_))
                     )
             }
             _ => false,

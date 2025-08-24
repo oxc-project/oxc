@@ -53,7 +53,7 @@ use crate::{
         },
     },
     generated::ast_nodes::{AstNode, AstNodes},
-    options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
+    options::{FormatTrailingCommas, QuoteProperties, Semicolons, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::{
         assignment_like::AssignmentLike,
@@ -382,7 +382,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
                 group(&soft_block_indent(&format_once(|f| {
                     if !self.elements.is_empty() {
                         write_array_node(
-                            self.elements.len(),
+                            self.elements.len() + usize::from(self.rest.is_some()),
                             self.elements().iter().map(AstNode::as_ref),
                             f,
                         )?;
@@ -589,8 +589,97 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     }
 }
 
+/// Returns `true` if the expression needs a leading semicolon to prevent ASI issues
+fn expression_statement_needs_semicolon<'a>(
+    stmt: &AstNode<'a, ExpressionStatement<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    if matches!(
+        stmt.parent,
+        // `if (true) (() => {})`
+        AstNodes::IfStatement(_)
+        // `do ({} => {}) while (true)`
+        | AstNodes::DoWhileStatement(_)
+        // `while (true) (() => {})`
+        | AstNodes::WhileStatement(_)
+        // `for (;;) (() => {})`
+        | AstNodes::ForStatement(_)
+        // `for (i in o) (() => {})`
+        | AstNodes::ForInStatement(_)
+        // `for (i of o) (() => {})`
+        | AstNodes::ForOfStatement(_)
+        // `with(true) (() => {})`
+        | AstNodes::WithStatement(_)
+        // `label: (() => {})`
+        | AstNodes::LabeledStatement(_)
+    ) {
+        return false;
+    }
+    // Arrow functions need semicolon only if they will have parentheses
+    // e.g., `(a) => {}` needs `;(a) => {}` but `a => {}` doesn't need semicolon
+    if let Expression::ArrowFunctionExpression(arrow) = &stmt.expression {
+        return !can_avoid_parentheses(arrow, f);
+    }
+
+    // First check if the expression itself needs protection
+    let expr = stmt.expression();
+
+    // Get the leftmost expression to check what the line starts with
+    let mut current = ExpressionLeftSide::Expression(expr);
+    loop {
+        let needs_semi = match current {
+            ExpressionLeftSide::Expression(expr) => {
+                expr.needs_parentheses(f)
+                    || match expr.as_ref() {
+                        Expression::ArrayExpression(_)
+                        | Expression::RegExpLiteral(_)
+                        | Expression::TSTypeAssertion(_)
+                        | Expression::ArrowFunctionExpression(_)
+                        | Expression::JSXElement(_) => true,
+
+                        Expression::TemplateLiteral(template) => true,
+                        Expression::UnaryExpression(unary) => {
+                            matches!(
+                                unary.operator,
+                                UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+                            )
+                        }
+                        _ => false,
+                    }
+            }
+            ExpressionLeftSide::AssignmentTarget(assignment) => {
+                matches!(
+                    assignment.as_ref(),
+                    AssignmentTarget::ArrayAssignmentTarget(_)
+                        | AssignmentTarget::TSTypeAssertion(_)
+                )
+            }
+            ExpressionLeftSide::SimpleAssignmentTarget(assignment) => {
+                matches!(
+                    assignment.as_ref(),
+                        | SimpleAssignmentTarget::TSTypeAssertion(_)
+                )
+            }
+            _ => false,
+        };
+
+        if needs_semi {
+            return true;
+        }
+
+        if let Some(next) = current.left_expression() { current = next } else { return false }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        // Check if we need a leading semicolon to prevent ASI issues
+        if f.options().semicolons == Semicolons::AsNeeded
+            && expression_statement_needs_semicolon(self, f)
+        {
+            write!(f, ";")?;
+        }
+
         write!(f, [self.expression(), OptionalSemicolon])
     }
 }
@@ -932,7 +1021,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
                 group(&soft_block_indent(&format_once(|f| {
                     if !self.elements.is_empty() {
                         write_array_node(
-                            self.elements.len(),
+                            self.elements.len() + usize::from(self.rest.is_some()),
                             self.elements().iter().map(AstNode::as_ref),
                             f,
                         )?;

@@ -1,4 +1,4 @@
-ts compatibility: 326/573 (56.89%)
+ts compatibility: 329/573 (57.42%)
 
 # Failed
 
@@ -182,7 +182,6 @@ ts compatibility: 326/573 (56.89%)
 | typescript/module/namespace_function.ts | 💥 | 66.67% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/new/new-signature.ts | 💥 | 93.85% |
-| typescript/no-semi/no-semi.ts | 💥✨ | 45.45% |
 | typescript/no-semi/non-null.ts | 💥💥 | 66.67% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/non-null/parens.ts | 💥 | 80.00% |
@@ -198,21 +197,19 @@ ts compatibility: 326/573 (56.89%)
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
 | typescript/readonly/array.ts | 💥 | 0.00% |
-| typescript/rest/rest.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 72.00% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
 | typescript/satisfies-operators/assignment.ts | 💥💥 | 72.73% |
-| typescript/satisfies-operators/basic.ts | 💥💥 | 93.33% |
+| typescript/satisfies-operators/basic.ts | 💥✨ | 45.00% |
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/gt-lt.ts | 💥💥 | 0.00% |
-| typescript/satisfies-operators/lhs.ts | 💥✨ | 30.00% |
+| typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
-| typescript/satisfies-operators/satisfies.ts | 💥💥 | 68.18% |
+| typescript/satisfies-operators/satisfies.ts | 💥💥 | 81.82% |
 | typescript/satisfies-operators/ternary.ts | 💥💥 | 82.00% |
-| typescript/satisfies-operators/types-comments.ts | 💥✨ | 33.33% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |

@@ -1,31 +1,24 @@
-js compatibility: 603/699 (86.27%)
+js compatibility: 616/699 (88.13%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrows/curried.js | 💥💥 | 92.55% |
-| js/arrows/semi/semi.js | 💥✨ | 0.00% |
 | js/assignment/sequence.js | 💥 | 71.43% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/comments/15661.js | 💥💥 | 55.81% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/blank.js | 💥💥 | 95.24% |
-| js/comments/dangling_array.js | 💥✨ | 40.00% |
 | js/comments/dynamic_imports.js | 💥💥 | 71.43% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export.js | 💥💥 | 97.37% |
-| js/comments/function-declaration.js | 💥💥 | 89.60% |
-| js/comments/issues.js | 💥✨ | 48.53% |
+| js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
-| js/comments/jsdoc.js | 💥✨ | 48.08% |
-| js/comments/jsx.js | 💥✨ | 40.74% |
 | js/comments/last-arg.js | 💥💥 | 80.65% |
 | js/comments/return-statement.js | 💥💥 | 98.27% |
-| js/comments/template-literal.js | 💥✨ | 46.43% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
-| js/comments/variable_declarator.js | 💥✨ | 49.31% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
 | js/comments-closure-typecast/binary-expr.js | 💥 | 0.00% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 66.13% |
@@ -46,8 +39,6 @@ js compatibility: 603/699 (86.27%)
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |
 | js/conditional/postfix-ternary-regressions.js | 💥✨ | 20.77% |
-| js/decorators/class-expression/class-expression.js | 💥✨ | 43.55% |
-| js/decorators/class-expression/member-expression.js | 💥✨ | 37.50% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 83.33% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 91.89% |
 | js/explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js | 💥 | 50.00% |
@@ -57,7 +48,7 @@ js compatibility: 603/699 (86.27%)
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/await.js | 💥 | 50.00% |
 | js/identifier/for-of/let.js | 💥 | 69.23% |
-| js/identifier/parentheses/let.js | 💥💥 | 79.55% |
+| js/identifier/parentheses/let.js | 💥💥 | 81.36% |
 | js/import-assertions/keyword-detect.js | 💥 | 71.43% |
 | js/import-attributes/keyword-detect.js | 💥 | 71.43% |
 | js/import-attributes/long-sources.js | 💥 | 75.00% |
@@ -67,10 +58,6 @@ js compatibility: 603/699 (86.27%)
 | js/method-chain/comment.js | 💥 | 97.56% |
 | js/method-chain/conditional.js | 💥 | 85.19% |
 | js/new-expression/new_expression.js | 💥 | 55.56% |
-| js/no-semi/class.js | 💥✨ | 46.55% |
-| js/no-semi/comments.js | 💥✨ | 36.36% |
-| js/no-semi/issue2006.js | 💥✨ | 37.50% |
-| js/no-semi/no-semi.js | 💥💥 | 90.66% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/object-property-ignore/ignore.js | 💥💥💥 | 84.78% |
 | js/object-property-ignore/issue-5678.js | 💥💥💥 | 52.50% |
