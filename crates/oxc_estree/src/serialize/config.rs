@@ -6,15 +6,19 @@ pub trait Config {
     const FIXES: bool;
 
     fn new(ranges: bool) -> Self;
+    fn new_with_loc(ranges: bool, loc: bool) -> Self;
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
+
+    /// Get whether output should contain `loc` fields.
+    fn loc(&self) -> bool;
 }
 
 /// Config for serializing AST with TypeScript fields.
-#[repr(transparent)]
 pub struct ConfigTS {
     ranges: bool,
+    loc: bool,
 }
 
 impl Config for ConfigTS {
@@ -23,19 +27,29 @@ impl Config for ConfigTS {
 
     #[inline(always)]
     fn new(ranges: bool) -> Self {
-        Self { ranges }
+        Self { ranges, loc: false }
+    }
+
+    #[inline(always)]
+    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+        Self { ranges, loc }
     }
 
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.ranges
     }
+
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.loc
+    }
 }
 
 /// Config for serializing AST without TypeScript fields.
-#[repr(transparent)]
 pub struct ConfigJS {
     ranges: bool,
+    loc: bool,
 }
 
 impl Config for ConfigJS {
@@ -44,19 +58,29 @@ impl Config for ConfigJS {
 
     #[inline(always)]
     fn new(ranges: bool) -> Self {
-        Self { ranges }
+        Self { ranges, loc: false }
+    }
+
+    #[inline(always)]
+    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+        Self { ranges, loc }
     }
 
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.ranges
     }
+
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.loc
+    }
 }
 
 /// Config for serializing AST with TypeScript fields, with fixes.
-#[repr(transparent)]
 pub struct ConfigFixesTS {
     ranges: bool,
+    loc: bool,
 }
 
 impl Config for ConfigFixesTS {
@@ -65,19 +89,29 @@ impl Config for ConfigFixesTS {
 
     #[inline(always)]
     fn new(ranges: bool) -> Self {
-        Self { ranges }
+        Self { ranges, loc: false }
+    }
+
+    #[inline(always)]
+    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+        Self { ranges, loc }
     }
 
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.ranges
     }
+
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.loc
+    }
 }
 
 /// Config for serializing AST without TypeScript fields, with fixes.
-#[repr(transparent)]
 pub struct ConfigFixesJS {
     ranges: bool,
+    loc: bool,
 }
 
 impl Config for ConfigFixesJS {
@@ -86,11 +120,21 @@ impl Config for ConfigFixesJS {
 
     #[inline(always)]
     fn new(ranges: bool) -> Self {
-        Self { ranges }
+        Self { ranges, loc: false }
+    }
+
+    #[inline(always)]
+    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+        Self { ranges, loc }
     }
 
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.ranges
+    }
+
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.loc
     }
 }
