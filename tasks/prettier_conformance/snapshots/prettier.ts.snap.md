@@ -65,7 +65,7 @@ ts compatibility: 277/573 (48.34%)
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
 | typescript/as/long-identifiers.ts | 💥 | 92.86% |
-| typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
+| typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
 | typescript/as/ternary.ts | 💥 | 80.00% |
 | typescript/assert/comment.ts | 💥 | 0.00% |
 | typescript/assert/index.ts | 💥 | 75.00% |
@@ -249,7 +249,7 @@ ts compatibility: 277/573 (48.34%)
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/gt-lt.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 30.00% |
-| typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 16.67% |
+| typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 68.18% |
 | typescript/satisfies-operators/template-literal.ts | 💥💥 | 14.29% |
