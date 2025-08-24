@@ -13,7 +13,7 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{BracketSameLine, FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -46,7 +46,8 @@ fn main() -> Result<(), String> {
     }
 
     // Format the parsed code
-    let options = FormatOptions::default();
+    let options =
+        FormatOptions { bracket_same_line: BracketSameLine::from(true), ..Default::default() };
     let code = Formatter::new(&allocator, options).build(&ret.program);
 
     println!("{code}");

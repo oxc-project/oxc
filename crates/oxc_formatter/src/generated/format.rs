@@ -1259,9 +1259,14 @@ impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
-        self.format_trailing_comments(f)?;
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         result
     }
 }
@@ -1286,9 +1291,14 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
-        self.format_trailing_comments(f)?;
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         result
     }
 }

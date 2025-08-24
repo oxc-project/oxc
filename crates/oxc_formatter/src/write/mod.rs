@@ -11,6 +11,7 @@ mod decorators;
 mod export_declarations;
 mod function;
 mod import_declaration;
+mod jsx;
 mod object_like;
 mod object_pattern_like;
 mod parameter_list;
@@ -21,6 +22,7 @@ mod try_statement;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
+
 pub use arrow_function_expression::{
     ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
@@ -1167,11 +1169,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
         FormatLiteralStringToken::new(
             self.span().source_text(f.source_text()),
             self.span(),
             /* jsx */
-            false,
+            is_jsx,
             StringLiteralParentKind::Expression,
         )
         .fmt(f)
@@ -1199,127 +1202,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         let flags = flags.iter().collect::<String>();
         let s = StringBuilder::from_strs_array_in([pattern, "/", &flags], f.context().allocator());
         write!(f, dynamic_text(s.into_str(),))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["<", self.opening_element().name()])?;
-        for attr in self.opening_element().attributes() {
-            match attr.as_ref() {
-                JSXAttributeItem::Attribute(_) => {
-                    write!(f, hard_space())?;
-                }
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    write!(f, space())?;
-                }
-            }
-            write!(f, attr)?;
-        }
-        if self.closing_element().is_none() {
-            write!(f, [space(), "/"])?;
-        }
-        write!(f, ">")?;
-
-        for child in self.children() {
-            write!(f, child)?;
-        }
-        write!(f, self.closing_element())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // Implemented in JSXElement above due to no access to
-        // no `self_closing`.
-        unreachable!()
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["</", self.name(), ">"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.opening_fragment())?;
-        for child in self.children() {
-            write!(f, child)?;
-        }
-        write!(f, self.closing_fragment())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "<>")
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "</>")
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXNamespacedName<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.namespace(), ":", self.name()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object(), ".", self.property()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{", self.expression(), "}"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.name())?;
-        if let Some(value) = &self.value() {
-            write!(f, ["=", value])?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{...", self.argument(), "}"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_str()))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let expression = self.expression();
-        write!(f, ["{...", expression, "}"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value().as_str()))
     }
 }
 

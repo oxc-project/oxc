@@ -741,24 +741,28 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     // Keeping track of all call expressions in the chain to check them later
     let mut call_expressions = vec![];
 
-    let mut expression = expression;
+    let mut expression = expression.as_ast_nodes();
 
     loop {
-        expression = match expression.as_ast_nodes() {
-            AstNodes::TSNonNullExpression(assertion) => assertion.expression(),
+        expression = match expression {
+            AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
             AstNodes::CallExpression(call_expression) => {
                 is_chain = true;
                 let callee = &call_expression.callee();
                 call_expressions.push(call_expression);
-                callee
+                callee.as_ast_nodes()
             }
             AstNodes::StaticMemberExpression(node) => {
                 is_chain = true;
-                node.object()
+                node.object().as_ast_nodes()
             }
             AstNodes::ComputedMemberExpression(node) => {
                 is_chain = true;
-                node.object()
+                node.object().as_ast_nodes()
+            }
+            AstNodes::ChainExpression(chain) => {
+                is_chain = true;
+                chain.expression().as_ast_nodes()
             }
             AstNodes::IdentifierReference(_) | AstNodes::ThisExpression(_) => {
                 is_chain_head_simple = true;

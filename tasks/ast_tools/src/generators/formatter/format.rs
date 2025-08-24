@@ -25,6 +25,9 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "ExportNamedDeclaration",
     "ExportDefaultDeclaration",
     "TSClassImplements",
+    //
+    "JSXElement",
+    "JSXFragment",
 ];
 
 const NEEDS_PARENTHESES: &[&str] = &[
@@ -133,8 +136,9 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     };
 
     let type_def_name = type_def.name();
-    let needs_parentheses =
-        type_def_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&type_def_name);
+    let needs_parentheses = matches!(type_def_name, "JSXElement" | "JSXFragment")
+        || type_def_name.ends_with("Expression")
+        || NEEDS_PARENTHESES.contains(&type_def_name);
     let needs_parentheses_before = if needs_parentheses {
         quote! {
             let needs_parentheses = self.needs_parentheses(f);

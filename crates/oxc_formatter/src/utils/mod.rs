@@ -2,6 +2,7 @@ pub mod assignment_like;
 pub mod call_expression;
 pub mod conditional;
 pub mod expression;
+pub mod jsx;
 pub mod member_chain;
 pub mod object;
 pub mod string_utils;

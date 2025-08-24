@@ -147,7 +147,9 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
-            // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
+            AstNodes::JSXExpressionContainer(container) => {
+                matches!(container.parent, AstNodes::JSXAttribute(_))
+            }
             AstNodes::ExpressionStatement(statement) => {
                 if let AstNodes::FunctionBody(arrow) = statement.parent {
                     arrow.span == self.span()
@@ -155,17 +157,15 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     false
                 }
             }
-            AstNodes::ConditionalExpression(conditional) => {
-                matches!(
-                    parent.parent(),
-                    AstNodes::ReturnStatement(_)
-                        | AstNodes::ThrowStatement(_)
-                        | AstNodes::CallExpression(_)
-                        | AstNodes::ImportExpression(_)
-                        | AstNodes::Argument(_)
-                        | AstNodes::MetaProperty(_)
-                )
-            }
+            AstNodes::ConditionalExpression(conditional) => !matches!(
+                parent.parent(),
+                AstNodes::ReturnStatement(_)
+                    | AstNodes::ThrowStatement(_)
+                    | AstNodes::CallExpression(_)
+                    | AstNodes::ImportExpression(_)
+                    | AstNodes::Argument(_)
+                    | AstNodes::MetaProperty(_)
+            ),
             _ => false,
         }
     }
