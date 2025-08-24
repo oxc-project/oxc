@@ -1793,54 +1793,54 @@ fn test_inline_single_use_variable() {
         "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2}",
         "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2;}",
     );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 = x}",
-    //     "var foo; function wrapper(arg0, arg1) { arg0 = foo;}",
-    // );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 += x}",
-    //     "var foo; function wrapper(arg0, arg1) { arg0 += foo;}",
-    // );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 ||= x}",
-    //     "var foo; function wrapper(arg0, arg1) { arg0 ||= foo;}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 = x}",
-    //     "function wrapper(arg0, arg1) { arg0 = fn();}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 += x}",
-    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 += x;}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x}",
-    //     "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x;}",
-    // );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x}",
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x;}",
-    // );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x}",
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x;}",
-    // );
-    // test(
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x}",
-    //     "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x;}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z = x}",
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z = x;}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z += x}",
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z += x;}",
-    // );
-    // test(
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x}",
-    //     "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x;}",
-    // );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 = x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 = foo;}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 += x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 += foo;}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 ||= x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 ||= foo;}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); arg0 = x}",
+        "function wrapper(arg0, arg1) { arg0 = fn();}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); arg0 += x}",
+        "function wrapper(arg0, arg1) { let x = fn(); arg0 += x;}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x}",
+        "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x;}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x;}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x;}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x;}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); y.z = x}",
+        "function wrapper(arg0, arg1) { let x = fn(); y.z = x;}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); y.z += x}",
+        "function wrapper(arg0, arg1) { let x = fn(); y.z += x;}",
+    );
+    test(
+        "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x}",
+        "function wrapper(arg0, arg1) { let x = fn(); y.z ||= x;}",
+    );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return x ? y : z;}",
         "function wrapper(arg0, arg1) { return arg0 ? y : z;}",

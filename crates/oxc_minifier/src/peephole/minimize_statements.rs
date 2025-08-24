@@ -1107,8 +1107,39 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::AssignmentExpression(_assign_expr) => {
-                // TODO: requires implementing `MayHaveSideEffects` to `AssignmentTarget`
+            Expression::AssignmentExpression(assign_expr) => {
+                if assign_expr.left.may_have_side_effects(ctx) {
+                    // Do not reorder past a side effect in an assignment target, as that may
+                    // change the replacement value. For example, "fn()" may change "a" here:
+                    // ```js
+                    // let a = 1;
+                    // foo[fn()] = a;
+                    // ```
+                    return Some(false);
+                }
+                if assign_expr.operator != AssignmentOperator::Assign && replacement_has_side_effect
+                {
+                    // If this is a read-modify-write assignment and the replacement has side
+                    // effects, don't reorder it past the assignment target. The assignment
+                    // target is being read so it may be changed by the side effect. For
+                    // example, "fn()" may change "foo" here:
+                    // ```js
+                    // let a = fn();
+                    // foo += a;
+                    // ```
+                    return Some(false);
+                }
+                // If we get here then it should be safe to attempt to substitute the
+                // replacement past the left operand into the right operand.
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut assign_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
             }
             Expression::LogicalExpression(logical_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1130,8 +1161,16 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::PrivateInExpression(_private_in_expr) => {
-                // TODO: implement
+            Expression::PrivateInExpression(private_in_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut private_in_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
             }
             Expression::ConditionalExpression(cond_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1203,8 +1242,16 @@ impl<'a> PeepholeOptimizations {
                     return Some(changed);
                 }
             }
-            Expression::PrivateFieldExpression(_private_field_expr) => {
-                // TODO: implement
+            Expression::PrivateFieldExpression(private_field_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut private_field_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
             }
             Expression::CallExpression(call_expr) => {
                 // Don't substitute something into a call target that could change "this"
@@ -1260,8 +1307,55 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-            Expression::NewExpression(_new_expr) => {
-                // TODO: implement
+            Expression::NewExpression(new_expr) => {
+                // Don't substitute something into a call target that could change "this"
+                if !((replacement.is_member_expression()
+                    || matches!(replacement, Expression::ChainExpression(_)))
+                    && new_expr.callee.is_identifier_reference())
+                {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut new_expr.callee,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+
+                    for arg in &mut new_expr.arguments {
+                        match arg {
+                            Argument::SpreadElement(spread_elem) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        &mut spread_elem.argument,
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // spread element may have sideeffects
+                                return Some(false);
+                            }
+                            match_expression!(Argument) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        arg.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             Expression::ArrayExpression(array_expr) => {
                 for elem in &mut array_expr.elements {
@@ -1391,8 +1485,18 @@ impl<'a> PeepholeOptimizations {
                 chain_expr.expression = expr.into_chain_element().expect("should be chain element");
                 return changed;
             }
-            Expression::SequenceExpression(_sequence_expr) => {
-                // TODO: implement
+            Expression::SequenceExpression(sequence_expr) => {
+                for expr in &mut sequence_expr.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        expr,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
             }
             _ => {}
         }
