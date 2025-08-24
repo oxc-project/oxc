@@ -3,7 +3,10 @@ use std::{iter, ops::ControlFlow};
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
@@ -610,6 +613,30 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(argument) = &mut ret_stmt.argument
+            && argument.value_type(ctx) == ValueType::Undefined
+            // `return undefined` has a different semantic in async generator function.
+            && !ctx.is_in_async_generator()
+        {
+            ctx.state.changed = true;
+            if argument.may_have_side_effects(ctx) {
+                if ctx.options().sequences
+                    && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+                {
+                    let a = &mut prev_expr_stmt.expression;
+                    prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
+                } else {
+                    result.push(
+                        ctx.ast.statement_expression(argument.span(), argument.take_in(ctx.ast)),
+                    );
+                }
+            }
+            ret_stmt.argument = None;
+            result.push(Statement::ReturnStatement(ret_stmt));
+            *is_control_flow_dead = true;
+            return;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 if let Some(argument) = &mut ret_stmt.argument {

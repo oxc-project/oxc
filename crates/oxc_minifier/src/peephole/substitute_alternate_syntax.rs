@@ -790,12 +790,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         // `return undefined` has a different semantic in async generator function.
-        for ancestor in ctx.ancestors() {
-            if let Ancestor::FunctionBody(func) = ancestor {
-                if *func.r#async() && *func.generator() {
-                    return;
-                }
-            }
+        if ctx.is_in_async_generator() {
+            return;
         }
         stmt.argument = None;
         ctx.state.changed = true;
@@ -1482,7 +1478,7 @@ mod test {
         test("function f(){return !1;}", "function f(){return !1}");
         test("function f(){return null;}", "function f(){return null}");
         test("function f(){return void 0;}", "function f(){}");
-        test("function f(){return void foo();}", "function f(){return void foo()}");
+        test("function f(){return void foo();}", "function f(){foo()}");
         test("function f(){return undefined;}", "function f(){}");
         test("function f(){if(a()){return undefined;}}", "function f(){a()}");
         test_same("function a(undefined) { return undefined; }");

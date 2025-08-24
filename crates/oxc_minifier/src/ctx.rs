@@ -13,6 +13,7 @@ use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_start},
     reference::ReferenceId,
 };
+use oxc_traverse::Ancestor;
 
 use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
 
@@ -252,5 +253,9 @@ impl<'a> Ctx<'a, '_> {
         let mut chars = s.chars();
         chars.next().is_some_and(is_identifier_start)
             && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
+    }
+
+    pub fn is_in_async_generator(&self) -> bool {
+        self.ancestors().any(|ancestor| matches!(ancestor, Ancestor::FunctionBody(body) if *body.r#async() && *body.generator()))
     }
 }
