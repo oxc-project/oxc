@@ -7,8 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentWidth, LineEnding,
-    LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentStyle, IndentWidth,
+    LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
+    TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -142,6 +143,12 @@ impl VisitMut<'_> for SpecParser {
                                     QuoteStyle::Single
                                 } else {
                                     QuoteStyle::Double
+                                };
+                            } else if name == "useTabs" {
+                                options.indent_style = if literal.value {
+                                    IndentStyle::Tab
+                                } else {
+                                    IndentStyle::Space
                                 };
                             }
                         }

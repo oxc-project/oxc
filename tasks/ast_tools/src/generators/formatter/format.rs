@@ -28,6 +28,8 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     //
     "JSXElement",
     "JSXFragment",
+    //
+    "TemplateElement",
 ];
 
 const NEEDS_PARENTHESES: &[&str] = &[

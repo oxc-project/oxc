@@ -171,10 +171,7 @@ impl<'a> Format<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, TemplateElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
-        let result = self.write(f);
-        self.format_trailing_comments(f)?;
-        result
+        self.write(f)
     }
 }
 

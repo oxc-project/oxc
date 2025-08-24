@@ -19,6 +19,7 @@ mod parameter_list;
 mod return_or_throw_statement;
 mod semicolon;
 mod switch_statement;
+mod template;
 mod try_statement;
 mod type_parameters;
 mod utils;
@@ -56,7 +57,7 @@ use crate::{
     parentheses::NeedsParentheses,
     utils::{
         assignment_like::AssignmentLike,
-        call_expression::is_test_call_expression,
+        call_expression::{contains_a_test_pattern, is_test_call_expression, is_test_each_pattern},
         conditional::ConditionalLike,
         member_chain::MemberChain,
         object::format_property_key,
@@ -256,34 +257,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
         } else {
             write!(f, AssignmentLike::ObjectProperty(self))
         }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "`")?;
-        let mut expressions = self.expressions().iter();
-
-        for quasi in self.quasis() {
-            write!(f, quasi);
-            if let Some(expr) = expressions.next() {
-                write!(f, ["${", expr, "}"]);
-            }
-        }
-
-        write!(f, "`")
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.tag(), self.type_arguments(), self.quasi()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value().raw.as_str()))
     }
 }
 
@@ -1958,21 +1931,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 "}",
             ]
         )
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "`")?;
-        let mut quasis = self.quasis().iter();
-        let quasi = quasis.next().unwrap();
-        write!(f, dynamic_text(quasi.value().raw.as_str()));
-
-        for (index, (quasi, types)) in quasis.zip(self.types().iter()).enumerate() {
-            write!(f, ["${", types, "}"])?;
-            write!(f, dynamic_text(quasi.value().raw.as_str()));
-        }
-        write!(f, "`")
     }
 }
 

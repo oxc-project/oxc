@@ -651,7 +651,6 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
             | AstNodes::CallExpression(_)
             | AstNodes::NewExpression(_)
             | AstNodes::StaticMemberExpression(_)
-            | AstNodes::TemplateLiteral(_)
             | AstNodes::TaggedTemplateExpression(_)
     ) || is_class_extends(span, parent)
     {

@@ -177,8 +177,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                         | JSXExpression::BinaryExpression(_)
                 );
 
-                let should_inline = (is_conditional_or_binary
-                    || should_inline_jsx_expression(&self.expression, f.comments()));
+                let should_inline =
+                    (is_conditional_or_binary || should_inline_jsx_expression(self, f.comments()));
 
                 if should_inline {
                     write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -195,7 +195,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 }
             }
         } else {
-            let should_inline = should_inline_jsx_expression(&self.expression, f.comments());
+            let should_inline = should_inline_jsx_expression(self, f.comments());
 
             if should_inline {
                 write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -241,14 +241,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 ///     } />
 /// ```
 pub fn should_inline_jsx_expression(
-    expression: &JSXExpression<'_>,
+    container: &JSXExpressionContainer<'_>,
     comments: &Comments<'_>,
 ) -> bool {
-    if comments.has_comments_before(expression.span().start) {
+    let expression = &container.expression;
+    let span = expression.span();
+    if comments.has_comments_before(span.start)
+        || comments.has_comments_between(span.end, container.span().end)
+    {
         return false;
     }
-
-    match expression {
+    match &expression {
         JSXExpression::ArrayExpression(_)
         | JSXExpression::ObjectExpression(_)
         | JSXExpression::ArrowFunctionExpression(_)

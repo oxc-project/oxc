@@ -1,4 +1,4 @@
-ts compatibility: 321/573 (56.02%)
+ts compatibility: 326/573 (56.89%)
 
 # Failed
 
@@ -8,9 +8,8 @@ ts compatibility: 321/573 (56.02%)
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 85.71% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/text-wrap/test.js | 💥 | 98.85% |
+| jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
@@ -212,13 +211,10 @@ ts compatibility: 321/573 (56.02%)
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 68.18% |
-| typescript/satisfies-operators/template-literal.ts | 💥💥 | 14.29% |
 | typescript/satisfies-operators/ternary.ts | 💥💥 | 82.00% |
 | typescript/satisfies-operators/types-comments.ts | 💥✨ | 33.33% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
-| typescript/template-literals/as-expression.ts | 💥 | 14.29% |
-| typescript/template-literals/expressions.ts | 💥 | 0.00% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 87.66% |
@@ -242,7 +238,6 @@ ts compatibility: 321/573 (56.02%)
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 21.74% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |
 | typescript/typeparams/long-function-arg.ts | 💥 | 66.67% |
-| typescript/typeparams/tagged-template-expression.ts | 💥 | 75.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |

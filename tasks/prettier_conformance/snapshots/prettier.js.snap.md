@@ -1,4 +1,4 @@
-js compatibility: 583/699 (83.40%)
+js compatibility: 603/699 (86.27%)
 
 # Failed
 
@@ -6,9 +6,7 @@ js compatibility: 583/699 (83.40%)
 | :-------- | :--------------: | :---------: |
 | js/arrows/curried.js | 💥💥 | 92.55% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
-| js/assignment/issue-15534.js | 💥 | 25.00% |
 | js/assignment/sequence.js | 💥 | 71.43% |
-| js/chain-expression/issue-15785-3.js | 💥 | 50.00% |
 | js/class-comment/misc.js | 💥 | 72.73% |
 | js/comments/15661.js | 💥💥 | 55.81% |
 | js/comments/16398.js | 💥💥 | 80.00% |
@@ -18,7 +16,6 @@ js compatibility: 583/699 (83.40%)
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 89.60% |
-| js/comments/issue-3532.js | 💥💥 | 97.30% |
 | js/comments/issues.js | 💥✨ | 48.53% |
 | js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
@@ -26,8 +23,7 @@ js compatibility: 583/699 (83.40%)
 | js/comments/jsx.js | 💥✨ | 40.74% |
 | js/comments/last-arg.js | 💥💥 | 80.65% |
 | js/comments/return-statement.js | 💥💥 | 98.27% |
-| js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
-| js/comments/template-literal.js | 💥💥 | 30.43% |
+| js/comments/template-literal.js | 💥✨ | 46.43% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
 | js/comments/variable_declarator.js | 💥✨ | 49.31% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
@@ -67,7 +63,6 @@ js compatibility: 583/699 (83.40%)
 | js/import-attributes/long-sources.js | 💥 | 75.00% |
 | js/label/comment.js | 💥 | 53.33% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/line-suffix-boundary/boundary.js | 💥 | 36.73% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/method-chain/comment.js | 💥 | 97.56% |
 | js/method-chain/conditional.js | 💥 | 85.19% |
@@ -88,35 +83,20 @@ js compatibility: 583/699 (83.40%)
 | js/sequence-break/break.js | 💥 | 53.45% |
 | js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/strings/escaped.js | 💥💥 | 73.68% |
-| js/strings/template-literals.js | 💥💥 | 62.96% |
-| js/template/comment.js | 💥 | 24.00% |
-| js/template/graphql.js | 💥 | 81.25% |
-| js/template/indent.js | 💥 | 85.71% |
-| js/template-align/indent.js | 💥💥 | 14.47% |
-| js/template-literals/binary-exporessions.js | 💥 | 0.00% |
-| js/template-literals/conditional-expressions.js | 💥 | 0.00% |
-| js/template-literals/expressions.js | 💥 | 67.67% |
-| js/template-literals/indention.js | 💥 | 51.16% |
-| js/template-literals/logical-expressions.js | 💥 | 0.00% |
-| js/template-literals/sequence-expressions.js | 💥 | 0.00% |
-| js/ternaries/binary.js | 💥💥💥💥💥💥✨✨ | 20.36% |
-| js/ternaries/func-call.js | 💥💥💥💥💥💥✨✨ | 28.33% |
-| js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥✨✨ | 30.97% |
-| js/ternaries/indent.js | 💥💥💥💥💥💥💥✨ | 6.16% |
-| js/ternaries/nested-in-condition.js | 💥💥💥💥💥💥💥✨ | 30.62% |
-| js/ternaries/nested.js | 💥💥💥💥💥💥💥✨ | 23.60% |
-| js/ternaries/parenthesis.js | 💥💥💥💥💥💥💥✨ | 29.31% |
-| js/ternaries/test.js | 💥💥💥💥💥💥💥✨ | 32.79% |
+| js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
+| js/ternaries/func-call.js | 💥💥💥💥✨✨✨✨ | 25.00% |
+| js/ternaries/indent-after-paren.js | 💥💥💥💥✨✨✨✨ | 24.59% |
+| js/ternaries/indent.js | 💥💥💥💥💥✨✨✨ | 6.65% |
+| js/ternaries/nested-in-condition.js | 💥💥💥💥💥✨✨✨ | 31.61% |
+| js/ternaries/nested.js | 💥💥💥💥💥💥💥✨ | 47.40% |
+| js/ternaries/parenthesis.js | 💥💥💥💥💥✨✨✨ | 22.22% |
+| js/ternaries/test.js | 💥💥💥💥💥✨✨✨ | 34.24% |
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
-| js/test-declarations/jest-each-template-string.js | 💥💥 | 27.78% |
-| js/test-declarations/jest-each.js | 💥💥 | 67.65% |
-| js/test-declarations/test_declarations.js | 💥💥 | 75.81% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 85.71% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/text-wrap/test.js | 💥 | 98.85% |
+| jsx/text-wrap/test.js | 💥 | 99.56% |
