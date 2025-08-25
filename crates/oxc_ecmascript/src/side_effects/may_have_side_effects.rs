@@ -85,13 +85,14 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        match self.name.as_str() {
-            "NaN" | "Infinity" | "undefined" => false,
-            // Reading global variables may have a side effect.
-            // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
-            // NOTE: we ignore TDZ errors
-            _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self),
+        let name = self.name.as_str();
+        if is_global_identifier_pure(name) {
+            return false;
         }
+        // Reading global variables may have a side effect.
+        // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
+        // NOTE: we ignore TDZ errors
+        ctx.unknown_global_side_effects() && ctx.is_global_reference(self)
     }
 }
 
@@ -322,6 +323,39 @@ fn is_known_global_constructor(name: &str) -> bool {
     )
 }
 
+/// Check if a global object method is pure (side-effect free).
+/// 
+/// This function determines if accessing `object.method` on a global object
+/// is considered pure and won't have side effects.
+#[rustfmt::skip]
+fn is_global_object_method_pure(object: &str, method: &str) -> bool {
+    match object {
+        "Array" => matches!(method, "isArray" | "of"),
+        "ArrayBuffer" => method == "isView",
+        "Date" => matches!(method, "now" | "parse" | "UTC"),
+        "Math" => matches!(method, "abs" | "acos" | "acosh" | "asin" | "asinh" | "atan" | "atan2" | "atanh"
+                | "cbrt" | "ceil" | "clz32" | "cos" | "cosh" | "exp" | "expm1" | "floor" | "fround" | "hypot"
+                | "imul" | "log" | "log10" | "log1p" | "log2" | "max" | "min" | "pow" | "random" | "round"
+                | "sign" | "sin" | "sinh" | "sqrt" | "tan" | "tanh" | "trunc"),
+        "Number" => matches!(method, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
+        "Object" => matches!(method, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
+                | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
+        "String" => matches!(method, "fromCharCode" | "fromCodePoint" | "raw"),
+        "Symbol" => matches!(method, "for" | "keyFor"),
+        "URL" => method == "canParse",
+        "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Uint16Array" | "Uint32Array" | "Uint8Array" | "Uint8ClampedArray" => method == "of",
+        _ => false,
+    }
+}
+
+/// Check if a global identifier is a pure global object.
+///
+/// This function determines if accessing a global identifier is considered
+/// pure and won't have side effects.
+fn is_global_identifier_pure(name: &str) -> bool {
+    matches!(name, "NaN" | "Infinity" | "undefined")
+}
+
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if self.left.may_have_side_effects(ctx) {
@@ -519,6 +553,15 @@ fn property_access_may_have_side_effects<'a>(
         return false;
     }
 
+    // Check if this is a pure global object method access
+    if let Some(ident) = object.get_identifier_reference() {
+        if ctx.is_global_reference(ident)
+            && is_global_object_method_pure(ident.name.as_str(), property)
+        {
+            return false;
+        }
+    }
+
     match property {
         "length" => {
             !(matches!(object, Expression::ArrayExpression(_))
@@ -594,26 +637,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         let Some(object) = ident.map(|ident| ident.name.as_str()) else { return true };
 
-        #[rustfmt::skip]
-        let is_global = match object {
-            "Array" => matches!(name, "isArray" | "of"),
-            "ArrayBuffer" => name == "isView",
-            "Date" => matches!(name, "now" | "parse" | "UTC"),
-            "Math" => matches!(name, "abs" | "acos" | "acosh" | "asin" | "asinh" | "atan" | "atan2" | "atanh"
-                    | "cbrt" | "ceil" | "clz32" | "cos" | "cosh" | "exp" | "expm1" | "floor" | "fround" | "hypot"
-                    | "imul" | "log" | "log10" | "log1p" | "log2" | "max" | "min" | "pow" | "random" | "round"
-                    | "sign" | "sin" | "sinh" | "sqrt" | "tan" | "tanh" | "trunc"),
-            "Number" => matches!(name, "isFinite" | "isInteger" | "isNaN" | "isSafeInteger" | "parseFloat" | "parseInt"),
-            "Object" => matches!(name, "create" | "getOwnPropertyDescriptor" | "getOwnPropertyDescriptors" | "getOwnPropertyNames"
-                    | "getOwnPropertySymbols" | "getPrototypeOf" | "hasOwn" | "is" | "isExtensible" | "isFrozen" | "isSealed" | "keys"),
-            "String" => matches!(name, "fromCharCode" | "fromCodePoint" | "raw"),
-            "Symbol" => matches!(name, "for" | "keyFor"),
-            "URL" => name == "canParse",
-            "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Uint16Array" | "Uint32Array" | "Uint8Array" | "Uint8ClampedArray" => name == "of",
-            _ => false,
-        };
-
-        if is_global {
+        if is_global_object_method_pure(object, name) {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
