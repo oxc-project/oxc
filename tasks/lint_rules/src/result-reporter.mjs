@@ -9,17 +9,21 @@ export const updateGitHubIssue = async ({ issueNo }, markdown) => {
     const res = await fetch(
       `https://api.github.com/repos/oxc-project/oxc/issues/${issueNo}`,
       {
-        method: 'PATCH',
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+        body: JSON.stringify({ body: markdown }),
         headers: {
           Accept: 'application/vnd.github+json',
           Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
         },
-        body: JSON.stringify({ body: markdown }),
+        method: 'PATCH',
       },
     );
-    if (!res.ok) throw new Error(res.statusText);
-  } catch (err) {
-    throw new Error(`Failed to update issue: ${issueUrl}`, { cause: err });
+    if (!res.ok) {
+      throw new Error(res.statusText);
+    }
+  } catch (error) {
+    throw new Error(`Failed to update issue: ${issueUrl}`, { cause: error });
   }
 
   return `✅ ${issueUrl} is successfully updated`;
