@@ -140,6 +140,50 @@ declare_oxc_lint!(
     ///     }
     /// };
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule accepts two arguments:
+    /// 1. A string value to control the order of the getter/setter pairs:
+    ///    - `"anyOrder"` (default): Accessors can be in any order
+    ///    - `"getBeforeSet"`: Getters must come before setters
+    ///    - `"setBeforeGet"`: Setters must come before getters
+    /// 2. An object with the following option:
+    ///    - `enforceForTSTypes` (boolean, default: false): When enabled, also checks TypeScript interfaces and type aliases for grouped accessor pairs
+    ///
+    /// ### TypeScript
+    ///
+    /// When `enforceForTSTypes` is enabled, this rule also applies to TypeScript interfaces and type aliases:
+    ///
+    /// Examples of **incorrect** TypeScript code:
+    /// ```ts
+    /// interface Foo {
+    ///     get a(): string;
+    ///     someProperty: string;
+    ///     set a(value: string);
+    /// }
+    ///
+    /// type Bar = {
+    ///     get b(): string;
+    ///     someProperty: string;
+    ///     set b(value: string);
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** TypeScript code:
+    /// ```ts
+    /// interface Foo {
+    ///     get a(): string;
+    ///     set a(value: string);
+    ///     someProperty: string;
+    /// }
+    ///
+    /// type Bar = {
+    ///     get b(): string;
+    ///     set b(value: string);
+    ///     someProperty: string;
+    /// };
+    /// ```
     GroupedAccessorPairs,
     eslint,
     style,
