@@ -12,9 +12,7 @@ use crate::{
 
 impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let result = self.write(f);
-        FormatTrailingComments::Comments(f.context().comments().unprinted_comments()).fmt(f)?;
-        result
+        self.write(f)
     }
 }
 
@@ -36,7 +34,14 @@ impl<'a> Format<'a> for AstNode<'a, IdentifierName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }

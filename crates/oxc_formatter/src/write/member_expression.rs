@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::ast::*;
 
 use crate::{
@@ -7,6 +9,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
+    utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
     write,
 };
 
@@ -15,20 +18,7 @@ use super::FormatWrite;
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, self.object())?;
-
-        if matches!(self.expression, Expression::NumericLiteral(_)) {
-            write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"])
-        } else {
-            write!(
-                f,
-                group(&format_args!(
-                    self.optional().then_some("?."),
-                    "[",
-                    soft_block_indent(self.expression()),
-                    "]"
-                ))
-            )
-        }
+        FormatComputedMemberExpressionWithoutObject(self).fmt(f)
     }
 }
 

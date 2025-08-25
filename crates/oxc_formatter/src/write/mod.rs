@@ -19,6 +19,7 @@ mod object_pattern_like;
 mod parameter_list;
 mod return_or_throw_statement;
 mod semicolon;
+mod sequence_expression;
 mod switch_statement;
 mod template;
 mod try_statement;
@@ -94,7 +95,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
         if f.source_text().chars().next().is_some_and(|c| c == ZWNBSP) {
             write!(f, "\u{feff}");
         }
-        write!(f, [self.hashbang(), self.directives(), self.body(), hard_line_break()])
+
+        let format_trailing_comments = format_once(|f| {
+            let comments = f.context().comments().comments_before(self.span.end);
+            FormatTrailingComments::Comments(comments).fmt(f)
+        });
+        write!(
+            f,
+            [
+                self.hashbang(),
+                self.directives(),
+                self.body(),
+                format_trailing_comments,
+                hard_line_break()
+            ]
+        )
     }
 }
 
@@ -441,21 +456,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_inner = format_with(|f| {
-            for (i, expr) in self.expressions().iter().enumerate() {
-                if i != 0 {
-                    write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()])?;
-                }
-                write!(f, expr)?;
-            }
-            Ok(())
-        });
-        write!(f, group(&format_inner))
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, Super> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "super")
@@ -561,12 +561,13 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value().as_str())])?;
-        let count = f.source_text()[self.span().end as usize..]
-            .chars()
-            .take_while(|&c| is_line_terminator(c))
-            .count();
-        write!(f, if count <= 1 { hard_line_break() } else { empty_line() })
+        write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
+
+        if get_lines_after(self.span.end, f.source_text()) > 1 {
+            write!(f, [empty_line()])
+        } else {
+            write!(f, [hard_line_break()])
+        }
     }
 }
 
@@ -845,9 +846,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            let comments = f.context().comments().comments_before(alternate.span().start);
-            let has_dangling_comments = !comments.is_empty();
+            let alternate_start = alternate.span().start;
+            let comments = f.context().comments().comments_before(alternate_start);
+
             let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
+            let has_dangling_comments = has_line_comment
+                || comments.last().is_some_and(|last_comment| {
+                    // Ensure the comments are placed before the else keyword or on a new line
+                    let gap_str =
+                        &f.source_text()[last_comment.span.end as usize..alternate_start as usize];
+                    gap_str.contains("else") || gap_str.contains('\n')
+                });
 
             let else_on_same_line =
                 matches!(consequent.as_ref(), Statement::BlockStatement(_)) && !has_line_comment;
@@ -924,6 +933,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().comments_before(self.body.span().start);
+        FormatLeadingComments::Comments(comments).fmt(f)?;
+
         let label = self.label();
         let body = self.body();
         write!(f, [label, ":"])?;
