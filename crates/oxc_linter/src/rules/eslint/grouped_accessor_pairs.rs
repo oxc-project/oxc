@@ -624,27 +624,27 @@ fn test() {
             Some(serde_json::json!(["setBeforeGet"])),
         ),
         (
-            "interface I { set prop(value: any): void, get prop(): any }",
+            "interface I { set prop(value: any), get prop(): any }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface I { get a(): any, between: true, set b(value: any): void }",
+            "interface I { get a(): any, between: true, set b(value: any) }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface I { before: true, get prop(): any, set prop(value: any): void, after: true }",
+            "interface I { before: true, get prop(): any, set prop(value: any), after: true }",
             Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface I { set prop(value: any): void, get prop(): any }",
+            "interface I { set prop(value: any), get prop(): any }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
         (
-            "type T = { get prop(): any, set prop(value: any): void }",
+            "type T = { get prop(): any, set prop(value: any) }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "type T = { set prop(value: any): void, get prop(): any }",
+            "type T = { set prop(value: any), get prop(): any }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
@@ -835,19 +835,19 @@ fn test() {
             Some(serde_json::json!(["getBeforeSet"])),
         ),
         (
-            "interface I { get a(): any, set a(value: any): void }",
+            "interface I { get a(): any, set a(value: any) }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface I { set a(value: any): void, get a(): any }",
+            "interface I { set a(value: any), get a(): any }",
             Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
         ),
         (
-            "type T = { get a(): any, between: true, set a(value: any): void }",
+            "type T = { get a(): any, between: true, set a(value: any) }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "type T = { get a(): any, set a(value: any): void }",
+            "type T = { get a(): any, set a(value: any) }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
