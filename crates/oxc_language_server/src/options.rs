@@ -29,6 +29,7 @@ pub struct Options {
     pub config_path: Option<String>,
     pub ts_config_path: Option<String>,
     pub unused_disable_directives: UnusedDisableDirectives,
+    pub type_aware: bool,
     pub flags: FxHashMap<String, String>,
 }
 
@@ -103,6 +104,9 @@ impl TryFrom<Value> for Options {
             ts_config_path: object
                 .get("tsConfigPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
+            type_aware: object
+                .get("typeAware")
+                .is_some_and(|key| serde_json::from_value::<bool>(key.clone()).unwrap_or_default()),
             flags,
         })
     }
@@ -128,6 +132,7 @@ mod test {
             "run": "onSave",
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
+            "typeAware": true,
             "flags": {
                 "disable_nested_config": "true",
                 "fix_kind": "dangerous_fix"
@@ -138,6 +143,7 @@ mod test {
         assert_eq!(options.run, Run::OnSave);
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
+        assert!(options.type_aware);
         assert_eq!(options.flags.get("disable_nested_config"), Some(&"true".to_string()));
         assert_eq!(options.flags.get("fix_kind"), Some(&"dangerous_fix".to_string()));
     }
@@ -150,6 +156,7 @@ mod test {
         assert_eq!(options.run, Run::OnType);
         assert_eq!(options.config_path, None);
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
+        assert!(!options.type_aware);
         assert!(options.flags.is_empty());
     }
 

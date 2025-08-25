@@ -1,6 +1,6 @@
 use std::{str::FromStr, sync::Arc, vec};
 
-use log::debug;
+use log::{debug, warn};
 use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
@@ -129,12 +129,23 @@ impl WorkspaceWorker {
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind() != new_options.fix_kind()
             || old_options.unused_disable_directives != new_options.unused_disable_directives
+            // TODO: only the TsgoLinter needs to be dropped or created
+            || old_options.type_aware != new_options.type_aware
     }
 
     pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let run_level = { self.options.lock().await.run };
+        let options = self.options.lock().await;
+        // `tsgolint` only supported the os file system. We can not run it on memory file system.
+        if options.type_aware {
+            if options.run == Run::OnType {
+                warn!(
+                    "Linting with type aware is only supported with the OS file system. Change your settings to use onSave."
+                );
+            }
+            return current_run == Run::OnSave;
+        }
 
-        run_level == current_run
+        options.run == current_run
     }
 
     pub async fn lint_file(
