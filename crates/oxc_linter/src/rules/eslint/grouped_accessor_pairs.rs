@@ -498,6 +498,7 @@ fn report(
 #[test]
 fn test() {
     use crate::tester::Tester;
+
     let pass = vec![
         ("({})", None),
         ("({ a })", None),
@@ -622,44 +623,28 @@ fn test() {
         }",
             Some(serde_json::json!(["setBeforeGet"])),
         ),
-        // TypeScript interface tests - should not trigger without enforceForTSTypes
-        ("interface Foo { get a(): string; set a(value: string); }", None),
-        ("interface Foo { set a(value: string); get a(): string; }", None),
-        // TypeScript interface tests - should work with enforceForTSTypes
         (
-            "interface Foo { get a(): string; set a(value: string); }",
+            "interface I { set prop(value: any): void, get prop(): any }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface Foo { set a(value: string); get a(): string; }",
+            "interface I { get a(): any, between: true, set b(value: any): void }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface Foo { get a(): string; set a(value: string); }",
+            "interface I { before: true, get prop(): any, set prop(value: any): void, after: true }",
             Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
         ),
         (
-            "interface Foo { set a(value: string); get a(): string; }",
+            "interface I { set prop(value: any): void, get prop(): any }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
-        // TypeScript type alias tests - should not trigger without enforceForTSTypes
-        ("type Foo = { get a(): string; set a(value: string); }", None),
-        ("type Foo = { set a(value: string); get a(): string; }", None),
-        // TypeScript type alias tests - should work with enforceForTSTypes
         (
-            "type Foo = { get a(): string; set a(value: string); }",
+            "type T = { get prop(): any, set prop(value: any): void }",
             Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
         (
-            "type Foo = { set a(value: string); get a(): string; }",
-            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
-        ),
-        (
-            "type Foo = { get a(): string; set a(value: string); }",
-            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
-        ),
-        (
-            "type Foo = { set a(value: string); get a(): string; }",
+            "type T = { set prop(value: any): void, get prop(): any }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
@@ -762,15 +747,15 @@ fn test() {
         ),
         (
             "({ get a(){},
-    			    b: 1,
-    			    set a(foo){}
-    			})",
+			    b: 1,
+			    set a(foo){}
+			})",
             None,
         ),
         (
             "class A { static set a(foo){} b(){} static get
-    			 a(){}
-    			}",
+			 a(){}
+			}",
             None,
         ),
         (
@@ -841,7 +826,7 @@ fn test() {
 
             }
             set 23(val) {
-                
+
             }
             get 23() {
 
@@ -849,30 +834,20 @@ fn test() {
         }",
             Some(serde_json::json!(["getBeforeSet"])),
         ),
-        // TypeScript interface tests - should fail with enforceForTSTypes when not grouped
         (
-            "interface Foo { get a(): string; b: string; set a(value: string); }",
-            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
-        ),
-        (
-            "interface Foo { set a(value: string); get a(): string; }",
-            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
-        ),
-        (
-            "interface Foo { get a(): string; set a(value: string); }",
+            "interface I { get a(): any, set a(value: any): void }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
-        // TypeScript type alias tests - should fail with enforceForTSTypes when not grouped
         (
-            "type Foo = { get a(): string; b: string; set a(value: string); }",
-            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
-        ),
-        (
-            "type Foo = { set a(value: string); get a(): string; }",
+            "interface I { set a(value: any): void, get a(): any }",
             Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
         ),
         (
-            "type Foo = { get a(): string; set a(value: string); }",
+            "type T = { get a(): any, between: true, set a(value: any): void }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type T = { get a(): any, set a(value: any): void }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
