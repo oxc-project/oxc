@@ -372,10 +372,14 @@ impl<'a> PeepholeOptimizations {
         // a + 'b' + 'c' -> a + 'bc'
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
             if left_binary_expr.right.value_type(ctx).is_string() {
-                if let (Some(left_str), Some(right_str)) = (
+                if let (Some((left_str, left_ls)), Some((right_str, right_ls))) = (
                     left_binary_expr.right.get_side_free_string_value(ctx),
                     e.right.get_side_free_string_value(ctx),
                 ) {
+                    // TODO: Handle lone surrogates
+                    if left_ls || right_ls {
+                        return None;
+                    }
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
                     let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
@@ -429,7 +433,11 @@ impl<'a> PeepholeOptimizations {
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
-            if let Some(right_str) = right_expr.get_side_free_string_value(ctx) {
+            if let Some((right_str, right_ls)) = right_expr.get_side_free_string_value(ctx) {
+                // TODO: Handle lone surrogates
+                if right_ls {
+                    return None;
+                }
                 left.span = Span::new(left.span.start, right_expr.span().end);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
@@ -445,12 +453,16 @@ impl<'a> PeepholeOptimizations {
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
-            if let Some(left_str) = left_expr.get_side_free_string_value(ctx) {
+            if let Some((left_str, left_ls)) = left_expr.get_side_free_string_value(ctx) {
                 right.span = Span::new(left_expr.span().start, right.span.end);
                 let first_quasi = right
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
+                // TODO: Handle lone surrogates
+                if left_ls {
+                    return None;
+                }
                 let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
                     + first_quasi.value.raw.as_str();
                 first_quasi.value.raw = ctx.ast.atom(&new_raw);
@@ -737,11 +749,17 @@ impl<'a> PeepholeOptimizations {
                     Some(expr)
                 }
             }));
+
+        // TODO: Handle lone surrogates
+        if inline_exprs.iter().any(|(_, (_, ls))| *ls) {
+            return;
+        }
+
         t.expressions = new_exprs;
 
         // inline the extracted inline-able expressions into quasis
         // "current_quasis + extracted_value + next_quasis"
-        for (i, (idx, str)) in inline_exprs.into_iter().enumerate() {
+        for (i, (idx, (str, _))) in inline_exprs.into_iter().enumerate() {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];

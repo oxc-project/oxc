@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
                 ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
+                ConstantValue::String((s, _)) => s.len() <= 3,
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
