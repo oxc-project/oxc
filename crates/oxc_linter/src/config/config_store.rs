@@ -7,7 +7,6 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny, LintPlugins,
-    config::ResolvedIgnorePatterns,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -124,10 +123,6 @@ impl Config {
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
-    }
-
-    pub fn ignore_patterns(&self) -> Option<&ResolvedIgnorePatterns> {
-        self.base.config.ignore_patterns.as_ref()
     }
 
     pub fn number_of_rules(&self) -> usize {
@@ -327,12 +322,6 @@ impl ConfigStore {
         } else {
             &self.base
         }
-    }
-
-    pub fn should_ignore(&self, path: &Path) -> bool {
-        self.get_related_config(path).ignore_patterns().is_some_and(|ignore_patterns| {
-            ignore_patterns.matched_path_or_any_parents(path, false).is_ignore()
-        })
     }
 
     // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs
@@ -761,7 +750,6 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
-            ignore_patterns: None,
         };
 
         // Set up categories to enable restriction rules
@@ -852,7 +840,6 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
-            ignore_patterns: None,
         };
 
         // Set up categories
@@ -957,7 +944,6 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
-            ignore_patterns: None,
         };
 
         // Set up categories

@@ -1,10 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 mod categories;
 mod config_builder;
 mod config_store;
 mod env;
 mod globals;
+mod ignore_matcher;
 mod overrides;
 mod oxlintrc;
 mod plugins;
@@ -14,14 +15,12 @@ pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::{BuiltinLintPlugins, LintPlugins};
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
-
-pub type ResolvedIgnorePatterns = Gitignore;
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
@@ -31,8 +30,6 @@ pub struct LintConfig {
     pub(crate) env: OxlintEnv,
     /// Enabled or disabled specific global variables.
     pub(crate) globals: OxlintGlobals,
-    /// The struct containing all `ignorePatterns` for the runtime
-    pub(crate) ignore_patterns: Option<ResolvedIgnorePatterns>,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
 }
@@ -44,28 +41,8 @@ impl From<Oxlintrc> for LintConfig {
             settings: config.settings,
             env: config.env,
             globals: config.globals,
-            ignore_patterns: None,
             path: Some(config.path),
         }
-    }
-}
-
-impl LintConfig {
-    pub(crate) fn resolve_oxlintrc_ignore_patterns(
-        ignore_patterns: &[String],
-        ignore_root: &Path,
-    ) -> Option<ResolvedIgnorePatterns> {
-        if ignore_patterns.is_empty() {
-            return None;
-        }
-
-        let mut gitignore_builder = GitignoreBuilder::new(ignore_root);
-
-        for pattern in ignore_patterns {
-            gitignore_builder.add_line(None, pattern).unwrap();
-        }
-
-        gitignore_builder.build().ok()
     }
 }
 
