@@ -161,8 +161,11 @@ fn find_rule_source_file(root: &Path, module_path: &str) -> Option<std::path::Pa
 /// Returns `Some(bitset)` if at least one node type can be determined, otherwise `None`.
 pub fn detect_top_level_node_types(file: &File) -> Option<AstTypesBitset> {
     // Strategy: prefer a single top-level `if let AstKind::... = node.kind()` chain.
-    // If not present, try a single top-level `match node.kind()`.
+    // If not present, look for a top-level `let AstKind::... = node.kind() else { ... };` in run.
+    // If still not present, try a single top-level `match node.kind()`.
     let variants: BTreeSet<String> = if let Some(det) = IfElseKindDetector::from_file(file) {
+        det.variants
+    } else if let Some(det) = LetElseDetector::from_file(file) {
         det.variants
     } else if let Some(det) = MatchKindDetector::from_file(file) {
         det.variants
@@ -243,6 +246,61 @@ fn collect_if_chain_variants(ifexpr: &ExprIf, out: &mut BTreeSet<String>) -> boo
     }
 }
 
+/// Detects top-level `let AstKind::... = node.kind() else { ... };` statements in `run`.
+struct LetElseDetector {
+    variants: BTreeSet<String>,
+}
+
+impl LetElseDetector {
+    fn from_file(file: &File) -> Option<Self> {
+        for item in &file.items {
+            let syn::Item::Impl(imp) = item else { continue };
+            for impl_item in &imp.items {
+                let syn::ImplItem::Fn(func) = impl_item else { continue };
+                if func.sig.ident != "run" {
+                    continue;
+                }
+                let mut variants = BTreeSet::new();
+                for (idx, stmt) in func.block.stmts.iter().enumerate() {
+                    if let Stmt::Local(local) = stmt {
+                        // Must have initializer and an else branch (let-else)
+                        if let Some(init) = &local.init {
+                            // Check RHS is `node.kind()`
+                            if !is_node_kind_call(&init.expr) {
+                                continue;
+                            }
+                            // Ensure there is an else branch and it contains only a single `return` statement
+                            let has_else_return = init
+                                .diverge
+                                .as_ref()
+                                .is_some_and(|d| else_expr_is_only_return(&d.1));
+                            if !has_else_return {
+                                continue;
+                            }
+                            // Ensure there are no top-level `if` statements before this let-else
+                            if func
+                                .block
+                                .stmts
+                                .iter()
+                                .take(idx)
+                                .any(|s| matches!(s, Stmt::Expr(Expr::If(_), _)))
+                            {
+                                return None;
+                            }
+                            // Ensure that else
+                            let _ = extract_variants_from_pat(&local.pat, &mut variants);
+                        }
+                    }
+                }
+                if !variants.is_empty() {
+                    return Some(Self { variants });
+                }
+            }
+        }
+        None
+    }
+}
+
 /// Detects top-level `match node.kind()` expressions in the `run` method.
 struct MatchKindDetector {
     variants: BTreeSet<String>,
@@ -305,6 +363,18 @@ fn arm_body_has_code(expr: &Expr) -> bool {
     match expr {
         Expr::Block(b) => !b.block.stmts.is_empty(),
         _ => true,
+    }
+}
+
+fn else_expr_is_only_return(expr: &Expr) -> bool {
+    if let Expr::Block(b) = expr {
+        let stmts = &b.block.stmts;
+        if stmts.len() != 1 {
+            return false;
+        }
+        matches!(stmts[0], Stmt::Expr(Expr::Return(_), _))
+    } else {
+        false
     }
 }
 
