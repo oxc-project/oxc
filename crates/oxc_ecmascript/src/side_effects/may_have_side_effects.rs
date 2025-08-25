@@ -577,7 +577,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
-        let (ident, name) = match &self.callee {
+        let (object, name) = match &self.callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.object.get_identifier_reference(), member.property.name.as_str())
             }
@@ -592,10 +592,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             _ => return true,
         };
 
-        let Some(object) = ident.map(|ident| ident.name.as_str()) else { return true };
+        let Some(object) = object else { return true };
+        if !ctx.is_global_reference(object) {
+            return true;
+        }
 
         #[rustfmt::skip]
-        let is_global = match object {
+        let is_global = match object.name.as_str() {
             "Array" => matches!(name, "isArray" | "of"),
             "ArrayBuffer" => name == "isView",
             "Date" => matches!(name, "now" | "parse" | "UTC"),

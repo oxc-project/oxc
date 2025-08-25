@@ -1,5 +1,3 @@
-use std::iter;
-
 use javascript_globals::GLOBALS;
 
 use rustc_hash::FxHashSet;
@@ -27,7 +25,7 @@ impl Default for Ctx {
             global_variable_names: GLOBALS["builtin"]
                 .keys()
                 .copied()
-                .chain(iter::once("arguments"))
+                .chain(["arguments", "URL"])
                 .collect::<FxHashSet<_>>(),
             annotation: true,
             pure_function_names: vec![],
@@ -927,6 +925,10 @@ fn test_call_expressions() {
     test("Uint32Array.of()", false);
     test("Uint8Array.of()", false);
     test("Uint8ClampedArray.of()", false);
+
+    // may have side effects if shadowed
+    test_with_global_variables("Date()", &[], true);
+    test_with_global_variables("Object.create()", &[], true);
 }
 
 #[test]
