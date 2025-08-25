@@ -17,6 +17,7 @@
 //! - `--nospace`: Remove extra whitespace
 //! - `--twice`: Test idempotency by running twice
 //! - `--sourcemap`: Generate source maps
+//! - `--max-iterations <u8>`: Set the maximum number of compress pass iterations
 
 use std::path::{Path, PathBuf};
 
@@ -41,6 +42,9 @@ fn main() -> std::io::Result<()> {
     let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
     let sourcemap = args.contains("--sourcemap");
+    let max_iterations = args
+        .opt_value_from_str::<&str, u8>("--max-iterations")
+        .expect("Invalid number for --max-iterations");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
@@ -49,7 +53,15 @@ fn main() -> std::io::Result<()> {
     let source_map_path = sourcemap.then(|| path.to_path_buf());
 
     let mut allocator = Allocator::default();
-    let ret = minify(&allocator, &source_text, source_type, source_map_path, mangle, nospace);
+    let ret = minify(
+        &allocator,
+        &source_text,
+        source_type,
+        source_map_path,
+        mangle,
+        nospace,
+        max_iterations,
+    );
     let printed = ret.code;
     println!("{printed}");
 
@@ -61,7 +73,7 @@ fn main() -> std::io::Result<()> {
 
     if twice {
         allocator.reset();
-        let printed2 = minify(&allocator, &printed, source_type, None, mangle, nospace).code;
+        let printed2 = minify(&allocator, &printed, source_type, None, mangle, nospace, None).code;
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -76,12 +88,13 @@ fn minify(
     source_map_path: Option<PathBuf>,
     mangle: bool,
     nospace: bool,
+    max_iterations: Option<u8>,
 ) -> CodegenReturn {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
     let options = MinifierOptions {
         mangle: mangle.then(MangleOptions::default),
-        compress: Some(CompressOptions::smallest()),
+        compress: Some(CompressOptions { max_iterations, ..CompressOptions::smallest() }),
     };
     let ret = Minifier::new(options).minify(allocator, &mut program);
     Codegen::new()

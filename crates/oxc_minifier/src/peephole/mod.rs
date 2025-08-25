@@ -32,6 +32,7 @@ use crate::{
 pub use self::normalize::{Normalize, NormalizeOptions};
 
 pub struct PeepholeOptimizations {
+    max_iterations: Option<u8>,
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
     /// in top level and each function. No minification code are run if the function is not changed
@@ -41,8 +42,8 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
-    pub fn new() -> Self {
-        Self { iteration: 0, changed: false }
+    pub fn new(max_iterations: Option<u8>) -> Self {
+        Self { max_iterations, iteration: 0, changed: false }
     }
 
     fn run_once(
@@ -64,7 +65,11 @@ impl<'a> PeepholeOptimizations {
             if !self.changed {
                 break;
             }
-            if self.iteration > 10 {
+            if let Some(max_iterations) = self.max_iterations {
+                if self.iteration >= max_iterations {
+                    break;
+                }
+            } else if self.iteration > 10 {
                 debug_assert!(false, "Ran loop more than 10 times.");
                 break;
             }

@@ -30,12 +30,13 @@ impl<'a> Compressor<'a> {
         scoping: Scoping,
         options: CompressOptions,
     ) -> u8 {
+        let max_iterations = options.max_iterations;
         let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        PeepholeOptimizations::new().run_in_loop(program, &mut ctx)
+        PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
