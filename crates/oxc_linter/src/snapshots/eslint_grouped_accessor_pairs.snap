@@ -750,3 +750,57 @@ source: crates/oxc_linter/src/tester.rs
  12 │ 
     ╰────
   help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:17]
+ 1 │ interface Foo { get a(): string; b: string; set a(value: string); }
+   ·                 ──┬──                       ──┬──
+   ·                   │                           ╰── setter 'a' is here
+   ·                   ╰── getter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Expected getter 'a' to be before setter 'a'.
+   ╭─[grouped_accessor_pairs.tsx:1:17]
+ 1 │ interface Foo { set a(value: string); get a(): string; }
+   ·                 ──┬──                 ──┬──
+   ·                   │                     ╰── getter 'a' is here
+   ·                   ╰── setter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Expected setter 'a' to be before getter 'a'.
+   ╭─[grouped_accessor_pairs.tsx:1:17]
+ 1 │ interface Foo { get a(): string; set a(value: string); }
+   ·                 ──┬──            ──┬──
+   ·                   │                ╰── setter 'a' is here
+   ·                   ╰── getter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:14]
+ 1 │ type Foo = { get a(): string; b: string; set a(value: string); }
+   ·              ──┬──                       ──┬──
+   ·                │                           ╰── setter 'a' is here
+   ·                ╰── getter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Expected getter 'a' to be before setter 'a'.
+   ╭─[grouped_accessor_pairs.tsx:1:14]
+ 1 │ type Foo = { set a(value: string); get a(): string; }
+   ·              ──┬──                 ──┬──
+   ·                │                     ╰── getter 'a' is here
+   ·                ╰── setter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Expected setter 'a' to be before getter 'a'.
+   ╭─[grouped_accessor_pairs.tsx:1:14]
+ 1 │ type Foo = { get a(): string; set a(value: string); }
+   ·              ──┬──            ──┬──
+   ·                │                ╰── setter 'a' is here
+   ·                ╰── getter 'a' is here
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes

@@ -5,7 +5,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, PropertyKind,
+        ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
+        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -51,6 +52,7 @@ impl PairOrder {
 #[derive(Debug, Default, Clone)]
 pub struct GroupedAccessorPairs {
     pair_order: PairOrder,
+    enforce_for_ts_types: bool,
 }
 
 declare_oxc_lint!(
@@ -152,6 +154,11 @@ impl Rule for GroupedAccessorPairs {
                 .and_then(Value::as_str)
                 .map(PairOrder::from)
                 .unwrap_or_default(),
+            enforce_for_ts_types: value
+                .get(1)
+                .and_then(|v| v.get("enforceForTSTypes"))
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
         }
     }
 
@@ -283,7 +290,74 @@ impl Rule for GroupedAccessorPairs {
                     }
                 }
             }
+            AstKind::TSInterfaceBody(interface_body) if self.enforce_for_ts_types => {
+                self.check_ts_interface_body(interface_body, ctx);
+            }
+            AstKind::TSTypeLiteral(type_literal) if self.enforce_for_ts_types => {
+                self.check_ts_type_literal(type_literal, ctx);
+            }
             _ => {}
+        }
+    }
+}
+
+impl GroupedAccessorPairs {
+    fn check_ts_interface_body<'a>(
+        &self,
+        interface_body: &TSInterfaceBody<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        self.check_ts_signatures(&interface_body.body, ctx);
+    }
+
+    fn check_ts_type_literal<'a>(&self, type_literal: &TSTypeLiteral<'a>, ctx: &LintContext<'a>) {
+        self.check_ts_signatures(&type_literal.members, ctx);
+    }
+
+    fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
+        let mut prop_map =
+            FxHashMap::<(String, bool), Vec<(usize, &Box<TSMethodSignature>)>>::default();
+
+        for (idx, signature) in signatures.iter().enumerate() {
+            let TSSignature::TSMethodSignature(method_sig) = signature else {
+                continue;
+            };
+            if !matches!(method_sig.kind, TSMethodSignatureKind::Get | TSMethodSignatureKind::Set) {
+                continue;
+            }
+            let (key_name, is_literal) = get_key_name_and_check_literal(ctx, &method_sig.key);
+            let is_computed = if is_literal { false } else { method_sig.computed };
+            prop_map.entry((key_name, is_computed)).or_default().push((idx, method_sig));
+        }
+
+        for ((key, is_computed), val) in prop_map {
+            if val.len() == 2 {
+                let (first_idx, first_node) = val[0];
+                let (second_idx, second_node) = val[1];
+                if first_node.kind == second_node.kind {
+                    continue;
+                }
+                let (getter_idx, getter_node, setter_idx, setter_node) =
+                    if first_node.kind == TSMethodSignatureKind::Get {
+                        (first_idx, first_node, second_idx, second_node)
+                    } else {
+                        (second_idx, second_node, first_idx, first_node)
+                    };
+                let getter_key =
+                    get_diagnostic_access_name("getter", &key, is_computed, false, false);
+                let setter_key =
+                    get_diagnostic_access_name("setter", &key, is_computed, false, false);
+                report(
+                    ctx,
+                    self.pair_order,
+                    (&getter_key, &setter_key),
+                    (
+                        Span::new(getter_node.span.start, getter_node.key.span().end),
+                        Span::new(setter_node.span.start, setter_node.key.span().end),
+                    ),
+                    (getter_idx, setter_idx),
+                );
+            }
         }
     }
 }
@@ -504,6 +578,46 @@ fn test() {
         }",
             Some(serde_json::json!(["setBeforeGet"])),
         ),
+        // TypeScript interface tests - should not trigger without enforceForTSTypes
+        ("interface Foo { get a(): string; set a(value: string); }", None),
+        ("interface Foo { set a(value: string); get a(): string; }", None),
+        // TypeScript interface tests - should work with enforceForTSTypes
+        (
+            "interface Foo { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "interface Foo { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "interface Foo { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "interface Foo { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
+        ),
+        // TypeScript type alias tests - should not trigger without enforceForTSTypes
+        ("type Foo = { get a(): string; set a(value: string); }", None),
+        ("type Foo = { set a(value: string); get a(): string; }", None),
+        // TypeScript type alias tests - should work with enforceForTSTypes
+        (
+            "type Foo = { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type Foo = { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type Foo = { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type Foo = { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -690,6 +804,32 @@ fn test() {
             }
         }",
             Some(serde_json::json!(["getBeforeSet"])),
+        ),
+        // TypeScript interface tests - should fail with enforceForTSTypes when not grouped
+        (
+            "interface Foo { get a(): string; b: string; set a(value: string); }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "interface Foo { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "interface Foo { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
+        ),
+        // TypeScript type alias tests - should fail with enforceForTSTypes when not grouped
+        (
+            "type Foo = { get a(): string; b: string; set a(value: string); }",
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type Foo = { set a(value: string); get a(): string; }",
+            Some(serde_json::json!(["getBeforeSet", { "enforceForTSTypes": true }])),
+        ),
+        (
+            "type Foo = { get a(): string; set a(value: string); }",
+            Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
     ];
 
