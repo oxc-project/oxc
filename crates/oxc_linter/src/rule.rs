@@ -360,6 +360,11 @@ mod test {
             &eslint::default_case::DefaultCase::default(),
             &[SwitchStatement],
         );
+        assert_rule_runs_on_node_types(&eslint::for_direction::ForDirection, &[ForStatement]);
+        assert_rule_runs_on_node_types(
+            &eslint::no_useless_constructor::NoUselessConstructor,
+            &[MethodDefinition],
+        );
         assert_rule_runs_on_node_types(
             &import::no_mutable_exports::NoMutableExports,
             &[ExportNamedDeclaration, ExportDefaultDeclaration],
@@ -369,9 +374,14 @@ mod test {
             &[TSAsExpression, TSTypeAssertion],
         );
         assert_rule_runs_on_node_types(
+            &jest::prefer_called_with::PreferCalledWith,
+            &[CallExpression],
+        );
+        assert_rule_runs_on_node_types(
             &jsx_a11y::anchor_is_valid::AnchorIsValid::default(),
             &[JSXElement],
         );
+        assert_rule_runs_on_node_types(&jsx_a11y::lang::Lang, &[JSXOpeningElement]);
         assert_rule_runs_on_node_types(
             &nextjs::no_head_element::NoHeadElement,
             &[JSXOpeningElement],
@@ -395,6 +405,10 @@ mod test {
         assert_rule_runs_on_node_types(
             &unicorn::explicit_length_check::ExplicitLengthCheck::default(),
             &[StaticMemberExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::no_zero_fractions::NoZeroFractions,
+            &[NumericLiteral],
         );
     }
 
