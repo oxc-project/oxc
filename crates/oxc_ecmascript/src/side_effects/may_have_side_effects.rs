@@ -356,6 +356,14 @@ fn is_global_identifier_pure(name: &str) -> bool {
     matches!(name, "NaN" | "Infinity" | "undefined")
 }
 
+/// Check if a global function call is pure (side-effect free).
+///
+/// This function determines if calling a global function with the given name
+/// and arguments is considered pure and won't have side effects.
+fn is_global_function_call_pure(name: &str, args: &[Argument<'_>]) -> bool {
+    is_pure_global_function(name) || is_pure_call(name) || is_pure_regexp(name, args)
+}
+
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if self.left.may_have_side_effects(ctx) {
@@ -613,9 +621,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
             && let name = ident.name.as_str()
-            && (is_pure_global_function(name)
-                || is_pure_call(name)
-                || is_pure_regexp(name, &self.arguments))
+            && is_global_function_call_pure(name, &self.arguments)
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
