@@ -139,7 +139,24 @@ impl Linter {
 
         let rules = rules
             .iter()
-            .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
+            .filter(|(rule, _)| {
+                if !rule.should_run(&ctx_host) {
+                    return false;
+                }
+                // Skip tsgolint rules in Rust linter
+                if rule.is_tsgolint_rule() {
+                    return false;
+                }
+                // Skip rules that only run on nodes that this file does not contain
+                let (ast_types, all_types, only_runs_on_nodes) = rule.types_info();
+                if !all_types
+                    && only_runs_on_nodes
+                    && !ctx_host.semantic().nodes().node_kinds_set.intersects(&ast_types)
+                {
+                    return false;
+                }
+                true
+            })
             .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
 
         let semantic = ctx_host.semantic();
@@ -181,7 +198,7 @@ impl Linter {
                 // Collect node type information for rules. In large files, benchmarking showed it was worth
                 // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
                 if rule.should_run(&ctx_host) {
-                    let (ast_types, all_types) = rule.types_info();
+                    let (ast_types, all_types, _) = rule.types_info();
                     if all_types {
                         rules_any_ast_type.push((rule, ctx));
                     } else {
@@ -227,7 +244,7 @@ impl Linter {
 
                 // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
                 // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                let (ast_types, all_types) = rule.types_info();
+                let (ast_types, all_types, _) = rule.types_info();
                 if all_types {
                     for node in semantic.nodes() {
                         rule.run(node, ctx);
