@@ -35,6 +35,7 @@
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
 #![warn(missing_docs)]
+#![cfg_attr(nightly, feature(allocator_api))]
 
 mod accessor;
 mod address;
