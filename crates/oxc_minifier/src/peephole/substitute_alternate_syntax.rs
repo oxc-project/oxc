@@ -439,21 +439,19 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         }
 
+        let is_null_id_ref = ctx.ast.expression_identifier_with_reference_id(
+            is_null_id_ref.span,
+            is_null_id_ref.name,
+            is_null_id_ref.reference_id(),
+        );
+
         let new_right_expr = if inversed {
-            ctx.ast.expression_unary(
-                SPAN,
-                UnaryOperator::LogicalNot,
-                ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
-            )
+            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref)
         } else {
             ctx.ast.expression_unary(
                 SPAN,
                 UnaryOperator::LogicalNot,
-                ctx.ast.expression_unary(
-                    SPAN,
-                    UnaryOperator::LogicalNot,
-                    ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
-                ),
+                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref),
             )
         };
         Some(ctx.ast.expression_logical(
