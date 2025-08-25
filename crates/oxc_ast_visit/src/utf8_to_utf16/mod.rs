@@ -9,21 +9,28 @@ mod converter;
 mod translation;
 mod visit;
 pub use converter::Utf8ToUtf16Converter;
-use translation::{Translation, build_translations};
+use translation::{LineTranslation, Translation, build_translations_and_lines};
 
 /// Conversion table of UTF-8 span offsets to UTF-16.
 pub struct Utf8ToUtf16 {
     translations: Vec<Translation>,
+    lines: Option<Vec<LineTranslation>>,
 }
 
 impl Utf8ToUtf16 {
     /// Create new [`Utf8ToUtf16`] conversion table from source text.
     pub fn new(source_text: &str) -> Self {
+        Self::new_with_lines(source_text, false)
+    }
+
+    /// Create new [`Utf8ToUtf16`] conversion table from source text, optionally with line information.
+    pub fn new_with_lines(source_text: &str, include_lines: bool) -> Self {
         let mut translations = Vec::with_capacity(16);
+        let mut lines = if include_lines { Some(Vec::with_capacity(16)) } else { None };
 
         translations.push(Translation { utf8_offset: 0, utf16_difference: 0 });
 
-        build_translations(source_text, &mut translations);
+        build_translations_and_lines(source_text, &mut translations, lines.as_mut());
 
         // If no translations have been added after the first `0, 0` dummy, then source is entirely ASCII.
         // Remove the dummy entry.
@@ -38,7 +45,7 @@ impl Utf8ToUtf16 {
             }
         }
 
-        Self { translations }
+        Self { translations, lines }
     }
 
     /// Create a [`Utf8ToUtf16Converter`] converter, to convert offsets from UTF-8 to UTF-16.
@@ -103,6 +110,32 @@ impl Utf8ToUtf16 {
             converter.visit_module_record(module_record);
         }
     }
+
+    /// Convert UTF-8 offset to line and column.
+    /// Returns (line, column) where both are 0-based.
+    /// This method expects UTF-8 byte offset as input.
+    pub fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)> {
+        let lines = self.lines.as_ref()?;
+
+        if lines.is_empty() {
+            return Some((0, utf8_offset));
+        }
+
+        // Find the line containing this offset
+        let line_index = lines
+            .binary_search_by(|line| line.utf8_offset.cmp(&utf8_offset))
+            .unwrap_or_else(|insertion_point| insertion_point.saturating_sub(1));
+
+        let line = &lines[line_index];
+        let column_utf8_bytes = utf8_offset - line.utf8_offset;
+
+        // Column is just the byte difference from line start
+        // Since we're dealing with UTF-8 positions within a line,
+        // we don't need to convert to UTF-16 for column calculation here
+        #[expect(clippy::cast_possible_truncation)]
+        let line_index_u32 = line_index as u32;
+        Some((line_index_u32, column_utf8_bytes))
+    }
 }
 
 #[cfg(test)]
@@ -147,6 +180,27 @@ mod test {
         let Expression::StringLiteral(s) = &expr_stmt.expression else { unreachable!() };
         assert_eq!(s.span, Span::new(1, 5));
         assert_eq!(program.comments[0].span, Span::new(6, 11));
+    }
+
+    #[test]
+    fn test_loc_functionality() {
+        let source = "hello\nworld\n🤨";
+        let table = Utf8ToUtf16::new_with_lines(source, true);
+
+        // Test line 0, column 0 (start of "hello")
+        assert_eq!(table.offset_to_line_column(0), Some((0, 0)));
+
+        // Test line 0, column 5 (end of "hello")
+        assert_eq!(table.offset_to_line_column(5), Some((0, 5)));
+
+        // Test line 1, column 0 (start of "world")
+        assert_eq!(table.offset_to_line_column(6), Some((1, 0)));
+
+        // Test line 1, column 5 (end of "world")
+        assert_eq!(table.offset_to_line_column(11), Some((1, 5)));
+
+        // Test line 2, column 0 (Unicode character)
+        assert_eq!(table.offset_to_line_column(12), Some((2, 0)));
     }
 
     #[test]
