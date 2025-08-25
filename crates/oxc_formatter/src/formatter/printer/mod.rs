@@ -43,6 +43,11 @@ impl<'a> Printer<'a> {
         Self { options, state: PrinterState::default() }
     }
 
+    pub fn with_capacity(options: PrinterOptions, capacity: usize) -> Self {
+        let state = PrinterState { buffer: String::with_capacity(capacity), ..Default::default() };
+        Self { options, state }
+    }
+
     /// Prints the passed in element as well as all its content
     pub fn print(self, document: &'a Document) -> PrintResult<Printed> {
         self.print_with_indent(document, 0)
