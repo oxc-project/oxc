@@ -238,30 +238,45 @@ impl Linter {
             }
         } else {
             for (rule, ref ctx) in rules {
-                rule.run_once(ctx);
+                let (ast_types, all_types, only_runs_on_nodes) = rule.types_info();
 
-                for symbol in semantic.scoping().symbol_ids() {
-                    rule.run_on_symbol(symbol, ctx);
-                }
-
-                // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                let (ast_types, all_types, _) = rule.types_info();
-                if all_types {
-                    for node in semantic.nodes() {
-                        rule.run(node, ctx);
-                    }
-                } else {
-                    for node in semantic.nodes() {
-                        if ast_types.has(node.kind().ty()) {
+                if only_runs_on_nodes {
+                    if all_types {
+                        for node in semantic.nodes() {
                             rule.run(node, ctx);
                         }
+                    } else {
+                        for node in semantic.nodes() {
+                            if ast_types.has(node.kind().ty()) {
+                                rule.run(node, ctx);
+                            }
+                        }
                     }
-                }
+                } else {
+                    rule.run_once(ctx);
 
-                if should_run_on_jest_node {
-                    for jest_node in iter_possible_jest_call_node(semantic) {
-                        rule.run_on_jest_node(&jest_node, ctx);
+                    for symbol in semantic.scoping().symbol_ids() {
+                        rule.run_on_symbol(symbol, ctx);
+                    }
+
+                    // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
+                    // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
+                    if all_types {
+                        for node in semantic.nodes() {
+                            rule.run(node, ctx);
+                        }
+                    } else {
+                        for node in semantic.nodes() {
+                            if ast_types.has(node.kind().ty()) {
+                                rule.run(node, ctx);
+                            }
+                        }
+                    }
+
+                    if should_run_on_jest_node {
+                        for jest_node in iter_possible_jest_call_node(semantic) {
+                            rule.run_on_jest_node(&jest_node, ctx);
+                        }
                     }
                 }
             }
