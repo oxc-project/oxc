@@ -432,6 +432,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))] // TODO: tsgolint doesn't support big endian?
     fn test_tsgo_lint() {
         let tester = Tester::new(
             "fixtures/linter/tsgolint",
