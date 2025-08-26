@@ -16,7 +16,7 @@ use crate::fixer::{CompositeFix, Message, PossibleFixes};
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 #[cfg(feature = "language_server")]
-use crate::{MessageWithPosition, fixer::message_to_message_with_position};
+use crate::lsp::{MessageWithPosition, message_to_message_with_position};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
