@@ -122,9 +122,10 @@ fn dot_with_postfix_mixed() {
         ("import.meta", "1"),
     ]);
     test("foo(import.meta.env.result)", "foo(void 0)", &config);
-    test("foo(import.meta.env.result.many.nested)", "foo(void 0)", &config);
+    test("foo(import.meta.env.result.many.nested)", "foo((void 0).many.nested)", &config);
     test("foo(import.meta.env)", "foo(env)", &config);
     test("foo(import.meta.somethingelse)", "foo(metaProperty)", &config);
+    test("foo(import.meta.somethingelse.nested.one)", "foo(metaProperty.nested.one)", &config);
     test("foo(import.meta)", "foo(1)", &config);
 }
 
