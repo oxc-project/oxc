@@ -9,8 +9,9 @@ use oxc_semantic::AstTypesBitset;
 use oxc_ast::AstType;
 
 impl RuleRunner for crate::rules::eslint::array_callback_return::ArrayCallbackReturn {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -118,8 +119,9 @@ impl RuleRunner for crate::rules::eslint::func_style::FuncStyle {
     }
 }
 impl RuleRunner for crate::rules::eslint::getter_return::GetterReturn {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -224,8 +226,9 @@ impl RuleRunner for crate::rules::eslint::max_params::MaxParams {
     }
 }
 impl RuleRunner for crate::rules::eslint::new_cap::NewCap {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -242,8 +245,9 @@ impl RuleRunner for crate::rules::eslint::no_alert::NoAlert {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_array_constructor::NoArrayConstructor {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -260,8 +264,9 @@ impl RuleRunner for crate::rules::eslint::no_async_promise_executor::NoAsyncProm
     }
 }
 impl RuleRunner for crate::rules::eslint::no_await_in_loop::NoAwaitInLoop {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::AwaitExpression, AstType::ForOfStatement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -319,8 +324,15 @@ impl RuleRunner for crate::rules::eslint::no_compare_neg_zero::NoCompareNegZero 
     }
 }
 impl RuleRunner for crate::rules::eslint::no_cond_assign::NoCondAssign {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::ConditionalExpression,
+        AstType::DoWhileStatement,
+        AstType::ForStatement,
+        AstType::IfStatement,
+        AstType::WhileStatement,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -328,8 +340,11 @@ impl RuleRunner for crate::rules::eslint::no_cond_assign::NoCondAssign {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_console::NoConsole {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::StaticMemberExpression,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -481,8 +496,9 @@ impl RuleRunner for crate::rules::eslint::no_else_return::NoElseReturn {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_empty::NoEmpty {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::BlockStatement, AstType::SwitchStatement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -535,8 +551,12 @@ impl RuleRunner for crate::rules::eslint::no_eq_null::NoEqNull {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_eval::NoEval {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::Program,
+        AstType::ThisExpression,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -571,8 +591,9 @@ impl RuleRunner for crate::rules::eslint::no_extra_bind::NoExtraBind {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_extra_boolean_cast::NoExtraBooleanCast {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::UnaryExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -580,8 +601,9 @@ impl RuleRunner for crate::rules::eslint::no_extra_boolean_cast::NoExtraBooleanC
     }
 }
 impl RuleRunner for crate::rules::eslint::no_extra_label::NoExtraLabel {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::BreakStatement, AstType::ContinueStatement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -625,8 +647,9 @@ impl RuleRunner for crate::rules::eslint::no_import_assign::NoImportAssign {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_inner_declarations::NoInnerDeclarations {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::Function, AstType::VariableDeclaration]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -670,8 +693,12 @@ impl RuleRunner for crate::rules::eslint::no_label_var::NoLabelVar {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_labels::NoLabels {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::BreakStatement,
+        AstType::ContinueStatement,
+        AstType::LabeledStatement,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -697,8 +724,8 @@ impl RuleRunner for crate::rules::eslint::no_lonely_if::NoLonelyIf {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_loss_of_precision::NoLossOfPrecision {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[AstType::NumericLiteral]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -733,8 +760,9 @@ impl RuleRunner for crate::rules::eslint::no_multi_str::NoMultiStr {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_negated_condition::NoNegatedCondition {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::ConditionalExpression, AstType::IfStatement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -797,8 +825,9 @@ impl RuleRunner for crate::rules::eslint::no_nonoctal_decimal_escape::NoNonoctal
     }
 }
 impl RuleRunner for crate::rules::eslint::no_obj_calls::NoObjCalls {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -806,8 +835,9 @@ impl RuleRunner for crate::rules::eslint::no_obj_calls::NoObjCalls {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_object_constructor::NoObjectConstructor {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -851,8 +881,12 @@ impl RuleRunner for crate::rules::eslint::no_redeclare::NoRedeclare {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_regex_spaces::NoRegexSpaces {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -890,8 +924,9 @@ impl RuleRunner for crate::rules::eslint::no_return_assign::NoReturnAssign {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_script_url::NoScriptUrl {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::StringLiteral, AstType::TemplateLiteral]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1061,8 +1096,26 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation {
     }
 }
 impl RuleRunner for crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeOptionalChaining {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::Argument,
+        AstType::ArrayExpression,
+        AstType::AssignmentExpression,
+        AstType::AssignmentPattern,
+        AstType::AssignmentTargetWithDefault,
+        AstType::BinaryExpression,
+        AstType::CallExpression,
+        AstType::Class,
+        AstType::ComputedMemberExpression,
+        AstType::ForOfStatement,
+        AstType::NewExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+        AstType::TaggedTemplateExpression,
+        AstType::UnaryExpression,
+        AstType::VariableDeclarator,
+        AstType::WithStatement,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1154,8 +1207,12 @@ impl RuleRunner for crate::rules::eslint::no_useless_constructor::NoUselessConst
     }
 }
 impl RuleRunner for crate::rules::eslint::no_useless_escape::NoUselessEscape {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::RegExpLiteral,
+        AstType::StringLiteral,
+        AstType::TemplateLiteral,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1215,8 +1272,9 @@ impl RuleRunner for crate::rules::eslint::operator_assignment::OperatorAssignmen
     }
 }
 impl RuleRunner for crate::rules::eslint::prefer_destructuring::PreferDestructuring {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::AssignmentExpression, AstType::VariableDeclarator]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1373,8 +1431,13 @@ impl RuleRunner for crate::rules::eslint::unicode_bom::UnicodeBom {
     }
 }
 impl RuleRunner for crate::rules::eslint::use_isnan::UseIsnan {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::BinaryExpression,
+        AstType::CallExpression,
+        AstType::SwitchCase,
+        AstType::SwitchStatement,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1502,8 +1565,9 @@ impl RuleRunner for crate::rules::import::namespace::Namespace {
     }
 }
 impl RuleRunner for crate::rules::import::no_absolute_path::NoAbsolutePath {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ImportDeclaration]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1652,8 +1716,9 @@ impl RuleRunner for crate::rules::import::no_unassigned_import::NoUnassignedImpo
     }
 }
 impl RuleRunner for crate::rules::import::no_webpack_loader_syntax::NoWebpackLoaderSyntax {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ImportDeclaration]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -1905,8 +1970,9 @@ impl RuleRunner for crate::rules::jest::no_test_prefixes::NoTestPrefixes {
     }
 }
 impl RuleRunner for crate::rules::jest::no_test_return_statement::NoTestReturnStatement {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::Function]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -2975,8 +3041,9 @@ impl RuleRunner for crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRa
     }
 }
 impl RuleRunner for crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursion {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3162,8 +3229,9 @@ impl RuleRunner for crate::rules::react::exhaustive_deps::ExhaustiveDeps {
     }
 }
 impl RuleRunner for crate::rules::react::forbid_elements::ForbidElements {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::JSXOpeningElement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3218,8 +3286,9 @@ impl RuleRunner for crate::rules::react::jsx_filename_extension::JsxFilenameExte
     }
 }
 impl RuleRunner for crate::rules::react::jsx_fragments::JsxFragments {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::JSXElement, AstType::JSXFragment]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3310,8 +3379,9 @@ impl RuleRunner for crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSp
     }
 }
 impl RuleRunner for crate::rules::react::no_array_index_key::NoArrayIndexKey {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::JSXElement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3339,8 +3409,9 @@ impl RuleRunner for crate::rules::react::no_danger::NoDanger {
     }
 }
 impl RuleRunner for crate::rules::react::no_danger_with_children::NoDangerWithChildren {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::JSXElement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3440,8 +3511,9 @@ impl RuleRunner for crate::rules::react::prefer_es6_class::PreferEs6Class {
     }
 }
 impl RuleRunner for crate::rules::react::react_in_jsx_scope::ReactInJsxScope {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::JSXFragment, AstType::JSXOpeningElement]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3625,8 +3697,12 @@ impl RuleRunner
 impl RuleRunner
     for crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions
 {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::ExportDefaultDeclaration,
+        AstType::TSInterfaceDeclaration,
+        AstType::TSTypeAliasDeclaration,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3690,8 +3766,9 @@ impl RuleRunner for crate::rules::typescript::no_base_to_string::NoBaseToString 
 impl RuleRunner
     for crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion
 {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::AssignmentExpression, AstType::BinaryExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -3749,8 +3826,9 @@ impl RuleRunner for crate::rules::typescript::no_empty_interface::NoEmptyInterfa
     }
 }
 impl RuleRunner for crate::rules::typescript::no_empty_object_type::NoEmptyObjectType {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::TSInterfaceDeclaration, AstType::TSTypeLiteral]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4132,8 +4210,12 @@ impl RuleRunner for crate::rules::typescript::no_var_requires::NoVarRequires {
     }
 }
 impl RuleRunner for crate::rules::typescript::no_wrapper_object_types::NoWrapperObjectTypes {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::TSClassImplements,
+        AstType::TSInterfaceHeritage,
+        AstType::TSTypeReference,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4370,8 +4452,9 @@ impl RuleRunner for crate::rules::typescript::use_unknown_in_catch_callback_vari
                 }
             }
 impl RuleRunner for crate::rules::unicorn::catch_error_name::CatchErrorName {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::CatchParameter]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4429,8 +4512,14 @@ impl RuleRunner for crate::rules::unicorn::consistent_function_scoping::Consiste
     }
 }
 impl RuleRunner for crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::BlockStatement,
+        AstType::Class,
+        AstType::FunctionBody,
+        AstType::ObjectExpression,
+        AstType::StaticBlock,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4622,8 +4711,9 @@ impl RuleRunner for crate::rules::unicorn::no_instanceof_builtins::NoInstanceofB
     }
 }
 impl RuleRunner for crate::rules::unicorn::no_invalid_fetch_options::NoInvalidFetchOptions {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4823,8 +4913,9 @@ impl RuleRunner for crate::rules::unicorn::no_unnecessary_slice_end::NoUnnecessa
 impl RuleRunner
     for crate::rules::unicorn::no_unreadable_array_destructuring::NoUnreadableArrayDestructuring
 {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::ArrayAssignmentTarget, AstType::ArrayPattern]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4890,8 +4981,9 @@ impl RuleRunner for crate::rules::unicorn::no_useless_switch_case::NoUselessSwit
     }
 }
 impl RuleRunner for crate::rules::unicorn::no_useless_undefined::NoUselessUndefined {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::IdentifierReference]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = false;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4908,8 +5000,9 @@ impl RuleRunner for crate::rules::unicorn::no_zero_fractions::NoZeroFractions {
     }
 }
 impl RuleRunner for crate::rules::unicorn::number_literal_case::NumberLiteralCase {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::BigIntLiteral, AstType::NumericLiteral]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -4937,8 +5030,13 @@ impl RuleRunner for crate::rules::unicorn::prefer_add_event_listener::PreferAddE
     }
 }
 impl RuleRunner for crate::rules::unicorn::prefer_array_find::PreferArrayFind {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::VariableDeclarator,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -5103,8 +5201,12 @@ impl RuleRunner for crate::rules::unicorn::prefer_math_min_max::PreferMathMinMax
     }
 }
 impl RuleRunner for crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::BinaryExpression,
+        AstType::UnaryExpression,
+    ]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
@@ -5359,8 +5461,9 @@ impl RuleRunner for crate::rules::unicorn::switch_case_braces::SwitchCaseBraces 
 impl RuleRunner
     for crate::rules::unicorn::text_encoding_identifier_case::TextEncodingIdentifierCase
 {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: &AstTypesBitset =
+        &AstTypesBitset::from_types(&[AstType::JSXText, AstType::StringLiteral]);
+    const ANY_NODE_TYPE: bool = false;
     const ONLY_RUNS_ON_NODES: bool = true;
     #[inline]
     fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {

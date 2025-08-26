@@ -248,18 +248,22 @@ impl IfElseKindDetector {
                 if func.sig.ident != "run" {
                     continue;
                 }
-                // Only consider when the body has exactly one top-level statement and it's an `if`.
-                let block = &func.block;
-                if block.stmts.len() != 1 {
-                    return None;
-                }
-                let stmt = &block.stmts[0];
-                let Stmt::Expr(Expr::If(ifexpr), _) = stmt else { return None };
+                // New behavior: the entire run body must be composed of only
+                // top-level `if let AstKind::... = node.kind()` chains. Aggregate
+                // variants across all these `if` statements. If any other kind of
+                // statement appears, we bail.
                 let mut variants = BTreeSet::new();
-                if !collect_if_chain_variants(ifexpr, &mut variants) {
-                    return None;
+                let mut saw_if = false;
+                for stmt in &func.block.stmts {
+                    let Stmt::Expr(Expr::If(ifexpr), _) = stmt else { return None };
+                    saw_if = true;
+                    if !collect_if_chain_variants(ifexpr, &mut variants) {
+                        return None;
+                    }
                 }
-                return Some(Self { variants });
+                if saw_if && !variants.is_empty() {
+                    return Some(Self { variants });
+                }
             }
         }
         None
@@ -344,6 +348,9 @@ struct MatchKindDetector {
 
 impl MatchKindDetector {
     fn from_file(file: &File) -> Option<Self> {
+        // Collect variants from any top-level `match node.kind()` expressions,
+        // including those embedded in a let-binding initializer.
+        let mut collected: BTreeSet<String> = BTreeSet::new();
         for item in &file.items {
             let syn::Item::Impl(imp) = item else { continue };
             for impl_item in &imp.items {
@@ -351,39 +358,42 @@ impl MatchKindDetector {
                 if func.sig.ident != "run" {
                     continue;
                 }
-                let block = &func.block;
-                if block.stmts.len() != 1 {
-                    return None;
-                }
-                let stmt = &block.stmts[0];
-                let matchexpr: &ExprMatch = match stmt {
-                    Stmt::Expr(Expr::Match(m), _) => m,
-                    _ => return None,
-                };
-                // Ensure the scrutinee is node.kind()
-                if !is_node_kind_call(&matchexpr.expr) {
-                    return None;
-                }
-                // If any arm has a guard `if ...`, or the wildcard arm contains code, bail to ANY
-                for arm in &matchexpr.arms {
-                    if arm.guard.is_some() {
-                        return None;
-                    }
-                    if arm_pat_has_wildcard(&arm.pat) && arm_body_has_code(&arm.body) {
-                        return None;
-                    }
-                }
-                let mut variants = BTreeSet::new();
-                for arm in &matchexpr.arms {
-                    if arm_pat_has_wildcard(&arm.pat) {
+
+                // Special-case: If the run body contains exactly one statement and it is a
+                // bare `match node.kind()`, then allow guards in arms and include all explicit
+                // variants from that match. Otherwise, guards are disallowed.
+                if func.block.stmts.len() == 1 {
+                    if let Stmt::Expr(Expr::Match(m), _) = &func.block.stmts[0] {
+                        if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/true) {
+                            collected.extend(vars);
+                        }
+                        // We handled the only statement; proceed to next impl item.
                         continue;
                     }
-                    let _ = extract_variants_from_pat(&arm.pat, &mut variants);
                 }
-                return Some(Self { variants });
+
+                for stmt in &func.block.stmts {
+                    // Case 1: bare `match node.kind()` as a top-level statement
+                    if let Stmt::Expr(Expr::Match(m), _) = stmt {
+                        if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/false) {
+                            collected.extend(vars);
+                        }
+                        continue;
+                    }
+                    // Case 2: `let ... = match node.kind() { .. };`
+                    if let Stmt::Local(local) = stmt {
+                        if let Some(init) = &local.init {
+                            if let Expr::Match(m) = &*init.expr {
+                                if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/false) {
+                                    collected.extend(vars);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        None
+        if collected.is_empty() { None } else { Some(Self { variants: collected }) }
     }
 }
 
@@ -395,11 +405,33 @@ fn arm_pat_has_wildcard(pat: &Pat) -> bool {
     }
 }
 
-fn arm_body_has_code(expr: &Expr) -> bool {
+// Returns true if the expression is a plain `return` (diverging) or a block
+// whose sole statement is a plain `return`.
+fn arm_body_is_diverging_return_only(expr: &Expr) -> bool {
     match expr {
-        Expr::Block(b) => !b.block.stmts.is_empty(),
-        _ => true,
+        Expr::Return(ret) => ret.expr.is_none(),
+        Expr::Block(b) => {
+            let stmts = &b.block.stmts;
+            if stmts.len() != 1 {
+                return false;
+            }
+            match &stmts[0] {
+                Stmt::Expr(Expr::Return(ret), _) => ret.expr.is_none(),
+                _ => false,
+            }
+        }
+        _ => false,
     }
+}
+
+// Returns true if the expression is a block with no statements
+fn arm_body_is_empty_block(expr: &Expr) -> bool {
+    matches!(expr, Expr::Block(b) if b.block.stmts.is_empty())
+}
+
+// Returns true if the expression is the unit value `()`.
+fn arm_body_is_unit(expr: &Expr) -> bool {
+    matches!(expr, Expr::Tuple(t) if t.elems.is_empty())
 }
 
 fn else_expr_is_only_return(expr: &Expr) -> bool {
@@ -460,6 +492,63 @@ fn extract_variants_from_pat(pat: &Pat, out: &mut BTreeSet<String>) -> bool {
                 false
             }
         }
+        _ => false,
+    }
+}
+
+// Given a top-level match expression, validate it's over `node.kind()` and that
+// either there is no wildcard arm or the wildcard arm is a diverging `return`.
+// If valid, extract and return the set of AstKind variants from non-wildcard arms.
+fn extract_variants_from_top_level_match(
+    matchexpr: &ExprMatch,
+    allow_guards: bool,
+) -> Option<BTreeSet<String>> {
+    // Ensure the scrutinee is node.kind()
+    if !is_node_kind_call(&matchexpr.expr) {
+        return None;
+    }
+    // If any arm has a guard `if ...`, bail
+    if !allow_guards {
+        for arm in &matchexpr.arms {
+            if arm.guard.is_some() {
+                return None;
+            }
+        }
+    } else {
+        // Guards are only allowed when the arm pattern itself is an AstKind pattern.
+        // Disallow guarded arms like `pat_ident if ...` that are not matching AstKind.
+        for arm in &matchexpr.arms {
+            if arm.guard.is_some() && !pat_is_astkind(&arm.pat) {
+                return None;
+            }
+        }
+    }
+    // Check wildcard arm behavior
+    if let Some(wild) = matchexpr.arms.iter().find(|a| arm_pat_has_wildcard(&a.pat)) {
+        // Allow empty block (no-op), unit `()`, or a diverging `return;` only
+        if !(arm_body_is_empty_block(&wild.body)
+            || arm_body_is_unit(&wild.body)
+            || arm_body_is_diverging_return_only(&wild.body))
+        {
+            return None;
+        }
+    }
+    let mut variants = BTreeSet::new();
+    for arm in &matchexpr.arms {
+        if arm_pat_has_wildcard(&arm.pat) {
+            continue;
+        }
+        let _ = extract_variants_from_pat(&arm.pat, &mut variants);
+    }
+    if variants.is_empty() { None } else { Some(variants) }
+}
+
+// Returns true if the pattern is of the form `AstKind::Variant(..)` or `AstKind::Variant`.
+fn pat_is_astkind(pat: &Pat) -> bool {
+    match pat {
+        Pat::TupleStruct(ts) => astkind_variant_from_path(&ts.path).is_some(),
+        Pat::Path(ppath) => astkind_variant_from_path(&ppath.path).is_some(),
+        Pat::Or(orpat) => orpat.cases.iter().all(pat_is_astkind),
         _ => false,
     }
 }
