@@ -90,6 +90,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         let full_type_path = format!("crate::rules::{path}::{struct_name}");
         // Try to open the rule source file and use syn to detect node types
         let mut detected_types: BTreeSet<String> = BTreeSet::new();
+        let mut only_runs_on_nodes = false;
         if let Some(src_path) = find_rule_source_file(&root, path)
             && let Ok(src_contents) = fs::read_to_string(&src_path)
             && let Ok(file) = syn::parse_file(&src_contents)
@@ -100,6 +101,10 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
                 }
             } else {
                 // No reliable detection; default to ANY (no textual fallback here)
+            }
+
+            if has_only_run_method(&file) {
+                only_runs_on_nodes = true;
             }
         }
 
@@ -118,8 +123,17 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         }
         write!(
             impls_buf,
-            "impl RuleRunner for {full_type_path} {{\n    const NODE_TYPES: &AstTypesBitset = &{node_types_init};\n    const ANY_NODE_TYPE: bool = {any_node_type};\n\n    #[inline] fn types_info(&self) -> (&'static AstTypesBitset, bool) {{ (Self::NODE_TYPES, Self::ANY_NODE_TYPE) }}\n}}\n\n"
-        ).unwrap();
+            "impl RuleRunner for {full_type_path} {{
+                const NODE_TYPES: &AstTypesBitset = &{node_types_init};
+                const ANY_NODE_TYPE: bool = {any_node_type};
+                const ONLY_RUNS_ON_NODES: bool = {only_runs_on_nodes};
+                #[inline]
+                fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {{
+                    (Self::NODE_TYPES, Self::ANY_NODE_TYPE, Self::ONLY_RUNS_ON_NODES)
+                }}
+            }}"
+        )
+        .unwrap();
     }
 
     if needs_ast_type_import {
@@ -132,6 +146,28 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
     fs::write(&target_path, formatted_out)?;
     println!("Generated {} impls into {}", rule_entries.len(), target_path.display());
     Ok(())
+}
+
+fn has_only_run_method(file: &File) -> bool {
+    for item in &file.items {
+        let syn::Item::Impl(imp) = item else { continue };
+        // Check that it is the `Rule` trait impl
+        if !imp
+            .trait_
+            .as_ref()
+            .is_some_and(|(bang, path, _)| bang.is_none() && path.is_ident("Rule"))
+        {
+            continue;
+        }
+        for impl_item in &imp.items {
+            let syn::ImplItem::Fn(func) = impl_item else { continue };
+            if func.sig.ident == "run" {
+                // If the impl has only one method and it's run, return true
+                return imp.items.len() == 1;
+            }
+        }
+    }
+    false
 }
 
 /// Given a module path like `eslint::no_debugger`, attempt to find the corresponding source file path

@@ -71,9 +71,12 @@ pub trait RuleRunner: Rule {
     const NODE_TYPES: &AstTypesBitset;
     /// `true` if codegen can't figure out what node types rule acts on
     const ANY_NODE_TYPE: bool;
+    /// `true` if this rule only has a `run` implementation and does not implement
+    /// `run_on_symbol`, `run_once`, or `run_on_jest_node`.
+    const ONLY_RUNS_ON_NODES: bool = false;
 
-    fn types_info(&self) -> (&'static AstTypesBitset, bool) {
-        (Self::NODE_TYPES, Self::ANY_NODE_TYPE)
+    fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
+        (Self::NODE_TYPES, Self::ANY_NODE_TYPE, Self::ONLY_RUNS_ON_NODES)
     }
 }
 pub trait RuleMeta {
@@ -410,13 +413,15 @@ mod test {
             &unicorn::no_zero_fractions::NoZeroFractions,
             &[NumericLiteral],
         );
+
+        assert!(!&jest::max_expects::MaxExpects::ONLY_RUNS_ON_NODES);
     }
 
     fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
         rule: &R,
         node_types: &[oxc_ast::AstType],
     ) {
-        let (types, _) = rule.types_info();
+        let (types, _, _) = rule.types_info();
         assert!(!R::ANY_NODE_TYPE, "{} should not have ANY_NODE_TYPE set to true", R::NAME);
         for node_type in node_types {
             assert!(
