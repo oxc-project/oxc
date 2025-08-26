@@ -184,7 +184,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
+            pub fn types_info(&self) -> (&'static AstTypesBitset, bool, bool, bool) {
                 match self {
                     #(Self::#struct_names(rule) => rule.types_info()),*
                 }

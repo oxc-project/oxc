@@ -74,9 +74,17 @@ pub trait RuleRunner: Rule {
     /// `true` if this rule only has a `run` implementation and does not implement
     /// `run_on_symbol`, `run_once`, or `run_on_jest_node`.
     const ONLY_RUNS_ON_NODES: bool = false;
+    /// `true` if this rule only has a `run_on_jest_node` implementation and does not implement
+    /// `run_on_symbol`, `run_once`, or `run`.
+    const ONLY_RUNS_ON_JEST_NODES: bool = false;
 
-    fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {
-        (Self::NODE_TYPES, Self::ANY_NODE_TYPE, Self::ONLY_RUNS_ON_NODES)
+    fn types_info(&self) -> (&'static AstTypesBitset, bool, bool, bool) {
+        (
+            Self::NODE_TYPES,
+            Self::ANY_NODE_TYPE,
+            Self::ONLY_RUNS_ON_NODES,
+            Self::ONLY_RUNS_ON_JEST_NODES,
+        )
     }
 }
 pub trait RuleMeta {
@@ -464,7 +472,7 @@ mod test {
         rule: &R,
         node_types: &[oxc_ast::AstType],
     ) {
-        let (types, _, _) = rule.types_info();
+        let types = rule.types_info().0;
         assert!(!R::ANY_NODE_TYPE, "{} should not have ANY_NODE_TYPE set to true", R::NAME);
         for node_type in node_types {
             assert!(

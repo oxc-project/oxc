@@ -150,7 +150,7 @@ impl Linter {
                     return false;
                 }
                 // Skip rules that only run on nodes that this file does not contain
-                let (ast_types, all_types, only_runs_on_nodes) = rule.types_info();
+                let (ast_types, all_types, only_runs_on_nodes, _) = rule.types_info();
                 if !all_types
                     && only_runs_on_nodes
                     && !ctx_host.semantic().nodes().contains_any(ast_types)
@@ -200,7 +200,7 @@ impl Linter {
                 // Collect node type information for rules. In large files, benchmarking showed it was worth
                 // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
                 if rule.should_run(&ctx_host) {
-                    let (ast_types, all_types, _) = rule.types_info();
+                    let (ast_types, all_types, _, _) = rule.types_info();
                     if all_types {
                         rules_any_ast_type.push((rule, ctx));
                     } else {
@@ -238,7 +238,8 @@ impl Linter {
             }
         } else {
             for (rule, ref ctx) in rules {
-                let (ast_types, all_types, only_runs_on_nodes) = rule.types_info();
+                let (ast_types, all_types, only_runs_on_nodes, only_runs_on_jest_nodes) =
+                    rule.types_info();
 
                 if only_runs_on_nodes {
                     if all_types {
@@ -250,6 +251,12 @@ impl Linter {
                             if ast_types.has(node.kind().ty()) {
                                 rule.run(node, ctx);
                             }
+                        }
+                    }
+                } else if only_runs_on_jest_nodes {
+                    if should_run_on_jest_node {
+                        for jest_node in iter_possible_jest_call_node(semantic) {
+                            rule.run_on_jest_node(&jest_node, ctx);
                         }
                     }
                 } else {

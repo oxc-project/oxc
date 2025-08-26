@@ -91,6 +91,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         // Try to open the rule source file and use syn to detect node types
         let mut detected_types: BTreeSet<String> = BTreeSet::new();
         let mut only_runs_on_nodes = false;
+        let mut only_runs_on_jest_nodes = false;
         if let Some(src_path) = find_rule_source_file(&root, path)
             && let Ok(src_contents) = fs::read_to_string(&src_path)
             && let Ok(file) = syn::parse_file(&src_contents)
@@ -105,6 +106,8 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
 
             if has_only_run_method(&file) {
                 only_runs_on_nodes = true;
+            } else if has_only_run_on_jest_node(&file) {
+                only_runs_on_jest_nodes = true;
             }
         }
 
@@ -127,10 +130,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
                 const NODE_TYPES: &AstTypesBitset = &{node_types_init};
                 const ANY_NODE_TYPE: bool = {any_node_type};
                 const ONLY_RUNS_ON_NODES: bool = {only_runs_on_nodes};
-                #[inline]
-                fn types_info(&self) -> (&'static AstTypesBitset, bool, bool) {{
-                    (Self::NODE_TYPES, Self::ANY_NODE_TYPE, Self::ONLY_RUNS_ON_NODES)
-                }}
+                const ONLY_RUNS_ON_JEST_NODES: bool = {only_runs_on_jest_nodes};
             }}"
         )
         .unwrap();
@@ -163,6 +163,28 @@ fn has_only_run_method(file: &File) -> bool {
             let syn::ImplItem::Fn(func) = impl_item else { continue };
             if func.sig.ident == "run" {
                 // If the impl has only one method and it's run, return true
+                return imp.items.len() == 1;
+            }
+        }
+    }
+    false
+}
+
+fn has_only_run_on_jest_node(file: &File) -> bool {
+    for item in &file.items {
+        let syn::Item::Impl(imp) = item else { continue };
+        // Check that it is the `Rule` trait impl
+        if !imp
+            .trait_
+            .as_ref()
+            .is_some_and(|(bang, path, _)| bang.is_none() && path.is_ident("Rule"))
+        {
+            continue;
+        }
+        for impl_item in &imp.items {
+            let syn::ImplItem::Fn(func) = impl_item else { continue };
+            if func.sig.ident == "run_on_jest_node" {
+                // If the impl has only one method and it's run_on_jest_node, return true
                 return imp.items.len() == 1;
             }
         }
