@@ -141,6 +141,12 @@
           "default": "allow",
           "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
         },
+        "oxc.typeAware": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Enable type-aware linting."
+        },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",

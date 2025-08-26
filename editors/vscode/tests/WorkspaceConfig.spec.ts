@@ -3,11 +3,13 @@ import { ConfigurationTarget, workspace } from 'vscode';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
+const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware'];
+
 suite('WorkspaceConfig', () => {
   setup(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives'];
+
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -18,7 +20,6 @@ suite('WorkspaceConfig', () => {
   teardown(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives'];
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -32,6 +33,7 @@ suite('WorkspaceConfig', () => {
     strictEqual(config.configPath, null);
     strictEqual(config.tsConfigPath, null);
     strictEqual(config.unusedDisableDirectives, 'allow');
+    strictEqual(config.typeAware, false);
     deepStrictEqual(config.flags, {});
   });
 
@@ -65,6 +67,7 @@ suite('WorkspaceConfig', () => {
       config.updateConfigPath('./somewhere'),
       config.updateTsConfigPath('./tsconfig.json'),
       config.updateUnusedDisableDirectives('deny'),
+      config.updateTypeAware(true),
       config.updateFlags({ test: 'value' }),
     ]);
 
@@ -74,6 +77,7 @@ suite('WorkspaceConfig', () => {
     strictEqual(wsConfig.get('configPath'), './somewhere');
     strictEqual(wsConfig.get('tsConfigPath'), './tsconfig.json');
     strictEqual(wsConfig.get('unusedDisableDirectives'), 'deny');
+    strictEqual(wsConfig.get('typeAware'), true);
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
   });
 });
