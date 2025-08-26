@@ -216,7 +216,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         // but module record has few entries, so is not critical for performance.
 
         // Find the first entry in table *after* the UTF-8 offset. This is the end of the new range.
-        // Only need to search before current range, as we already current range starts after `utf8_offset`.
+        // Only need to search before current range, as we already know current range starts after `utf8_offset`.
         // SAFETY: `index` is always in bounds of `translations`.
         let search_ranges = unsafe { self.translations.get_unchecked(..self.index as usize) };
         let next_index =
@@ -227,7 +227,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         let range_end_utf8 = unsafe { self.translations.get_unchecked(next_index) }.utf8_offset;
 
         // First entry in table is `0, 0`. `partition_point` finds the first entry where
-        // `utf8_offset >= translation.utf8_offset` (or `translations.len()` if none exists).
+        // `utf8_offset < translation.utf8_offset` (or `translations.len()` if none exists).
         // So guaranteed `next_index > 0`, and `next_index <= translations.len()`.
         (next_index, range_end_utf8)
     }
@@ -252,8 +252,11 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         const LINEAR_SEARCH_ITERATIONS: usize = 8;
 
         // `utf8_offset` is after current range, so there must be another range after this one.
-        // We don't need to include next range in search because we know it starts before `uft8_offset`,
-        // and we're looking for a range which starts *after* `uft8_offset`.
+        // We don't need to include next range in search because we know it starts before `utf8_offset`,
+        // and we're looking for a range which starts *after* `utf8_offset`.
+        //
+        // Note: `translations` is a slice, which has max length of `isize::MAX` on all platforms.
+        // `self.index` is always in bounds of `translations`. So additions here cannot overflow `usize`.
         let mut next_index = self.index as usize + 2;
         let linear_search_end_index =
             min(next_index + LINEAR_SEARCH_ITERATIONS, self.translations.len());
