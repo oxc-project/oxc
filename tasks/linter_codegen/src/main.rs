@@ -364,7 +364,9 @@ impl MatchKindDetector {
                 // variants from that match. Otherwise, guards are disallowed.
                 if func.block.stmts.len() == 1 {
                     if let Stmt::Expr(Expr::Match(m), _) = &func.block.stmts[0] {
-                        if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/true) {
+                        if let Some(vars) =
+                            extract_variants_from_top_level_match(m, /*allow_guards=*/ true)
+                        {
                             collected.extend(vars);
                         }
                         // We handled the only statement; proceed to next impl item.
@@ -375,7 +377,9 @@ impl MatchKindDetector {
                 for stmt in &func.block.stmts {
                     // Case 1: bare `match node.kind()` as a top-level statement
                     if let Stmt::Expr(Expr::Match(m), _) = stmt {
-                        if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/false) {
+                        if let Some(vars) =
+                            extract_variants_from_top_level_match(m, /*allow_guards=*/ false)
+                        {
                             collected.extend(vars);
                         }
                         continue;
@@ -384,7 +388,9 @@ impl MatchKindDetector {
                     if let Stmt::Local(local) = stmt {
                         if let Some(init) = &local.init {
                             if let Expr::Match(m) = &*init.expr {
-                                if let Some(vars) = extract_variants_from_top_level_match(m, /*allow_guards=*/false) {
+                                if let Some(vars) = extract_variants_from_top_level_match(
+                                    m, /*allow_guards=*/ false,
+                                ) {
                                     collected.extend(vars);
                                 }
                             }
