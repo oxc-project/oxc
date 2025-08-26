@@ -44,7 +44,7 @@ mod generated {
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, LintPlugins, Oxlintrc, ResolvedLinterState,
+        ESLintRule, LintIgnoreMatcher, LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::LintContext,
     external_linter::{
