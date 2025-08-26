@@ -16,6 +16,7 @@ use tower_lsp_server::UriExt;
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+    tsgo_linter::TsgoLinter,
 };
 use crate::options::UnusedDisableDirectives;
 use crate::{ConcurrentHashMap, OXC_CONFIG_FILE, Options};
@@ -24,6 +25,7 @@ use super::config_walker::ConfigWalker;
 
 pub struct ServerLinter {
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
+    tsgo_linter: Arc<Option<TsgoLinter>>,
     gitignore_glob: Vec<Gitignore>,
     pub extended_paths: Vec<PathBuf>,
 }
@@ -98,7 +100,7 @@ impl ServerLinter {
 
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
-            config_store,
+            config_store.clone(), // clone because tsgo linter needs it
             &IsolatedLintHandlerOptions {
                 use_cross_module,
                 root_path: root_path.to_path_buf(),
@@ -113,6 +115,11 @@ impl ServerLinter {
             isolated_linter: Arc::new(Mutex::new(isolated_linter)),
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
+            tsgo_linter: if options.type_aware {
+                Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
+            } else {
+                Arc::new(None)
+            },
         }
     }
 
@@ -221,7 +228,19 @@ impl ServerLinter {
             return None;
         }
 
-        self.isolated_linter.lock().await.run_single(uri, content)
+        // when `IsolatedLintHandler` returns `None`, it means it does not want to lint.
+        // Do not try `tsgolint` because it could be ignored or is not supported.
+        let mut reports = self.isolated_linter.lock().await.run_single(uri, content.clone())?;
+
+        let Some(tsgo_linter) = &*self.tsgo_linter else {
+            return Some(reports);
+        };
+
+        if let Some(tsgo_reports) = tsgo_linter.lint_file(uri, content) {
+            reports.extend(tsgo_reports);
+        }
+
+        Some(reports)
     }
 }
 
@@ -410,5 +429,14 @@ mod test {
             }),
         )
         .test_and_snapshot_single_file("deep/src/dep-a.ts");
+    }
+
+    #[test]
+    fn test_tsgo_lint() {
+        let tester = Tester::new(
+            "fixtures/linter/tsgolint",
+            Some(Options { type_aware: true, ..Default::default() }),
+        );
+        tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
     }
 }
