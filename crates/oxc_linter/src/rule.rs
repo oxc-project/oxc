@@ -369,8 +369,39 @@ mod test {
             &[MethodDefinition],
         );
         assert_rule_runs_on_node_types(
-            &import::no_mutable_exports::NoMutableExports,
-            &[ExportNamedDeclaration, ExportDefaultDeclaration],
+            &eslint::no_array_constructor::NoArrayConstructor,
+            &[CallExpression, NewExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::no_console::NoConsole::default(),
+            &[StaticMemberExpression, ComputedMemberExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::no_extra_label::NoExtraLabel,
+            &[BreakStatement, ContinueStatement],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::getter_return::GetterReturn::default(),
+            &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::new_cap::NewCap::default(),
+            &[NewExpression, CallExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::no_cond_assign::NoCondAssign::default(),
+            &[
+                IfStatement,
+                WhileStatement,
+                DoWhileStatement,
+                ForStatement,
+                ConditionalExpression,
+                AssignmentExpression,
+            ],
+        );
+        assert_rule_runs_on_node_types(
+            &import::no_webpack_loader_syntax::NoWebpackLoaderSyntax,
+            &[CallExpression, ImportDeclaration],
         );
         assert_rule_runs_on_node_types(
             &jest::prefer_jest_mocked::PreferJestMocked,
@@ -394,6 +425,10 @@ mod test {
             &[BinaryExpression, AssignmentExpression],
         );
         assert_rule_runs_on_node_types(
+            &oxc::only_used_in_recursion::OnlyUsedInRecursion,
+            &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
             &promise::prefer_await_to_callbacks::PreferAwaitToCallbacks,
             &[CallExpression, Function, ArrowFunctionExpression],
         );
@@ -406,12 +441,20 @@ mod test {
             &[TSTypeReference, TSTypeLiteral],
         );
         assert_rule_runs_on_node_types(
+            &typescript::no_wrapper_object_types::NoWrapperObjectTypes,
+            &[TSTypeReference, TSClassImplements, TSInterfaceHeritage],
+        );
+        assert_rule_runs_on_node_types(
             &unicorn::explicit_length_check::ExplicitLengthCheck::default(),
             &[StaticMemberExpression],
         );
         assert_rule_runs_on_node_types(
             &unicorn::no_zero_fractions::NoZeroFractions,
             &[NumericLiteral],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::prefer_array_find::PreferArrayFind,
+            &[AssignmentExpression, CallExpression, ComputedMemberExpression, VariableDeclarator],
         );
 
         assert!(!&jest::max_expects::MaxExpects::ONLY_RUNS_ON_NODES);
