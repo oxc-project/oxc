@@ -1,4 +1,10 @@
-use std::{borrow::Cow, cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use std::{
+    borrow::Cow,
+    cell::{Cell, RefCell},
+    path::Path,
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
@@ -117,7 +123,7 @@ pub struct ContextHost<'a> {
     /// Some rules (like vue) need the information of the other entries.
     pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
     /// The current index which will be linted.
-    current_sub_host_index: RefCell<usize>,
+    current_sub_host_index: Cell<usize>,
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across a single file.
@@ -157,7 +163,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             sub_hosts,
-            current_sub_host_index: RefCell::new(0),
+            current_sub_host_index: Cell::new(0),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
@@ -169,7 +175,7 @@ impl<'a> ContextHost<'a> {
 
     /// The current [`ContextSubHost`]
     fn current_sub_host(&self) -> &ContextSubHost<'a> {
-        &self.sub_hosts[*self.current_sub_host_index.borrow()]
+        &self.sub_hosts[self.current_sub_host_index.get()]
     }
 
     /// Shared reference to the [`Semantic`] analysis of current script block.
@@ -233,8 +239,13 @@ impl<'a> ContextHost<'a> {
 
     // move the context to the next sub host
     pub fn next_sub_host(&self) -> bool {
-        *self.current_sub_host_index.borrow_mut() += 1;
-        self.sub_hosts.get(*self.current_sub_host_index.borrow()).is_some()
+        let next_index = self.current_sub_host_index.get() + 1;
+        if next_index < self.sub_hosts.len() {
+            self.current_sub_host_index.set(next_index);
+            true
+        } else {
+            false
+        }
     }
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
@@ -387,7 +398,7 @@ impl<'a> ContextHost<'a> {
         self.sub_hosts
             .iter()
             .enumerate()
-            .filter(|(index, _)| *index != *self.current_sub_host_index.borrow())
+            .filter(|&(index, _)| index != self.current_sub_host_index.get())
             .map(|(_, sub_host)| sub_host)
             .collect()
     }
