@@ -38,6 +38,7 @@ Avoid editing `generated` subdirectories.
 Prerequisites: Rust (MSRV: 1.87.0), Node.js, pnpm, just
 
 **Setup Notes:**
+
 - All tools already installed (`cargo-insta`, `typos-cli`, `cargo-shear`, `dprint`)
 - Rust components already installed (`clippy`, `rust-docs`, `rustfmt`)
 - Run `just ready` after commits for final checks
@@ -119,6 +120,7 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 ## Testing
 
 Oxc uses multiple testing approaches tailored to each crate:
+
 - **Unit/Integration tests**: Standard Rust tests in `tests/` directories
 - **Conformance tests**: Against external suites (Test262, Babel, TypeScript, Prettier)
 - **Snapshot tests**: Track failures and expected outputs using `insta`
@@ -145,14 +147,17 @@ pnpm test                                    # Test all Node.js bindings
 Each crate follows distinct testing patterns:
 
 #### oxc_parser
+
 - **Conformance only** via `tasks/coverage`
 - **Command**: `cargo coverage -- parser`
 - **Suites**: Test262, Babel, TypeScript
 - **Special**: `just allocs` for allocation tracking
 
 #### oxc_linter
+
 - **Inline tests** in rule files (`src/rules/**/*.rs`)
 - **Pattern**: Use `Tester` helper with pass/fail cases
+
 ```rust
 #[test]
 fn test() {
@@ -162,12 +167,14 @@ fn test() {
 ```
 
 #### oxc_formatter
+
 - **Prettier conformance** only (no unit tests)
 - **Command**: `cargo run -p oxc_prettier_conformance`
 - **Debug**: Add `-- --filter <name>`
 - Compares output with Prettier's snapshots
 
 #### oxc_minifier
+
 - **Unit tests** in `tests/` subdirectories:
   - `ecmascript/` - Operations
   - `peephole/` - Optimizations
@@ -175,11 +182,13 @@ fn test() {
 - **Size tracking**: `just minsize`
 
 #### oxc_transformer
+
 - **Multiple approaches**:
   - Unit tests: `tests/integrations/`
   - Conformance: `tasks/transform_conformance/`
   - Babel plugins: `tasks/transform_conformance/tests/babel-plugin-*/`
 - **Commands**:
+
 ```bash
 cargo test -p oxc_transformer                    # Unit tests
 cargo run -p oxc_transform_conformance          # Conformance
@@ -187,16 +196,19 @@ just test-transform --filter <path>             # Filter tests
 ```
 
 #### oxc_codegen
+
 - **Integration tests** in `tests/integration/`
 - Test files: `js.rs`, `ts.rs`, `sourcemap.rs`, `comments.rs`
 
 #### oxc_isolated_declarations
+
 - **Snapshot testing** with `insta`
 - Input: `tests/fixtures/*.{ts,tsx}`
 - Output: `tests/snapshots/*.snap`
 - Update: `cargo insta review`
 
 #### oxc_semantic
+
 - **Multiple testing approaches**:
   - **Conformance tests** (`tests/conformance/`) - Contract-as-code tests for symbols and identifier references
   - **Integration tests** (`tests/integration/`) - Tests for scopes, symbols, modules, classes, CFG
@@ -206,6 +218,7 @@ just test-transform --filter <path>             # Filter tests
 - **Update snapshots**: `cargo insta review`
 
 #### Other Crates
+
 - **oxc_traverse**: AST traversal - `cargo test -p oxc_traverse`
 - **oxc_ecmascript**: ECMAScript operations - `cargo test -p oxc_ecmascript`
 - **oxc_regular_expression**: Regex parsing - `cargo test -p oxc_regular_expression`
@@ -217,15 +230,16 @@ just test-transform --filter <path>             # Filter tests
 
 Git submodules managed via `just submodules`:
 
-| Submodule | Description | Location | Used by Crates |
-|-----------|-------------|----------|----------------|
-| `test262` | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification | `tasks/coverage/test262` | parser, semantic, codegen, transformer, minifier, estree |
-| `babel` | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel` | parser, semantic, codegen, transformer, minifier |
-| `typescript` | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics | `tasks/coverage/typescript` | parser, semantic, codegen, transformer, estree |
-| `prettier` | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards | `tasks/prettier_conformance/prettier` | formatter (conformance) |
-| `acorn-test262` | **Acorn ESTree Tests**<br>Test262 suite adapted for ESTree format validation, ensuring correct AST structure | `tasks/coverage/acorn-test262` | estree |
+| Submodule       | Description                                                                                                                                        | Location                              | Used by Crates                                           |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `test262`       | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
+| `babel`         | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
+| `typescript`    | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
+| `prettier`      | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
+| `acorn-test262` | **Acorn ESTree Tests**<br>Test262 suite adapted for ESTree format validation, ensuring correct AST structure                                       | `tasks/coverage/acorn-test262`        | estree                                                   |
 
 **These suites provide:**
+
 - **Thousands of battle-tested cases** from real-world usage
 - **Edge case coverage** that would be impossible to write manually
 - **Industry standard compliance** ensuring compatibility
@@ -251,26 +265,26 @@ pnpm test         # Run all NAPI tests
 ```
 
 **Package-specific commands:**
+
 - `oxc-parser`: `cd napi/parser && pnpm test` (also has `pnpm test-browser`)
 - `oxc-minify`: `cd napi/minify && pnpm test`
 - `oxc-transform`: `cd napi/transform && pnpm test`
 
 Tests are TypeScript files in each package's `test/` directory.
 
-
 ### Where to Add Tests
 
-| Crate | Location |
-|-------|----------|
-| Parser | `tasks/coverage/misc/pass/` or `fail/` |
-| Linter | Inline in rule files |
-| Formatter | Prettier conformance suite |
-| Minifier | `tests/` subdirectories |
-| Transformer | `tests/integrations/` or Babel fixtures |
-| Codegen | `tests/integration/` |
-| Isolated Declarations | `tests/fixtures/*.ts` |
-| Semantic | `tests/` directory |
-| NAPI packages | `test/` directory (Vitest) |
+| Crate                 | Location                                |
+| --------------------- | --------------------------------------- |
+| Parser                | `tasks/coverage/misc/pass/` or `fail/`  |
+| Linter                | Inline in rule files                    |
+| Formatter             | Prettier conformance suite              |
+| Minifier              | `tests/` subdirectories                 |
+| Transformer           | `tests/integrations/` or Babel fixtures |
+| Codegen               | `tests/integration/`                    |
+| Isolated Declarations | `tests/fixtures/*.ts`                   |
+| Semantic              | `tests/` directory                      |
+| NAPI packages         | `test/` directory (Vitest)              |
 
 ## Notes
 
