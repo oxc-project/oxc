@@ -968,11 +968,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
 
         if flags.is_function() && !flags.is_arrow() {
             // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
-            // Check this function if is a class method, if it isn't, then it a plain function
+            // Check this function if is a class or object method, if it isn't, then it a plain function
             let function_node_id = ctx.scoping.get_node_id(scope_id);
-            let is_class_method =
-                matches!(ctx.nodes.parent_kind(function_node_id), AstKind::MethodDefinition(_));
-            if !is_class_method {
+            let parent_kind = ctx.nodes.parent_kind(function_node_id);
+            let is_class_method = matches!(parent_kind, AstKind::MethodDefinition(_));
+            // For `class C { foo() { return { bar() { super.bar(); } }; } }`
+            // TypeScript reports the error but not in ECMA262.
+            let is_object_method = !ctx.source_type.is_typescript()
+                && matches!(parent_kind, AstKind::ObjectProperty(_));
+            if !is_class_method && !is_object_method {
                 ctx.error(unexpected_super_reference(sup.span));
             }
             return;
