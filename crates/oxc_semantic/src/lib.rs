@@ -69,7 +69,7 @@ pub struct Semantic<'a> {
     classes: ClassTable<'a>,
 
     /// Parsed comments.
-    comments: &'a oxc_allocator::Vec<'a, Comment>,
+    comments: &'a [Comment],
     irregular_whitespaces: Box<[Span]>,
 
     /// Parsed JSDoc comments.
