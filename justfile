@@ -51,6 +51,9 @@ install-hook:
 watch *args='':
   watchexec --no-vcs-ignore {{args}}
 
+watch-test *args='':
+  watchexec --no-vcs-ignore -- cargo test {{args}}
+
 watch-check:
   just watch "'cargo check; cargo clippy'"
 
