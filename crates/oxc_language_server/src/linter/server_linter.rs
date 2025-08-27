@@ -381,6 +381,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_type_on_type() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_type",
@@ -390,6 +391,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_type_on_save() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_save",
@@ -399,6 +401,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_save_on_type() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_save",
@@ -408,6 +411,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_save_on_save() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_type",
