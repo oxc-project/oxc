@@ -25,9 +25,9 @@ use super::{LintContext, plugin_name_to_prefix};
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
-    /// Shared semantic information about the file being linted, which includes scopes, symbols
-    /// and AST nodes. See [`Semantic`].
-    pub(super) semantic: Rc<Semantic<'a>>,
+    /// Semantic information about the file being linted, which includes scopes, symbols and AST nodes.
+    /// See [`Semantic`].
+    pub(super) semantic: Semantic<'a>,
     /// Cross module information.
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
@@ -41,7 +41,7 @@ pub struct ContextSubHost<'a> {
 
 impl<'a> ContextSubHost<'a> {
     pub fn new(
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
     ) -> Self {
@@ -56,7 +56,7 @@ impl<'a> ContextSubHost<'a> {
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new_with_framework_options(
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
@@ -82,7 +82,7 @@ impl<'a> ContextSubHost<'a> {
 
     /// Shared reference to the [`Semantic`] analysis
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+    pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
     }
 
@@ -180,7 +180,7 @@ impl<'a> ContextHost<'a> {
 
     /// Shared reference to the [`Semantic`] analysis of current script block.
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+    pub fn semantic(&self) -> &Semantic<'a> {
         &self.current_sub_host().semantic
     }
 

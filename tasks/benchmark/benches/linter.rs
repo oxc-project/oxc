@@ -1,4 +1,4 @@
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use rustc_hash::FxHashMap;
 
@@ -39,7 +39,6 @@ fn bench_linter(criterion: &mut Criterion) {
                 let semantic = semantic_ret.semantic;
                 let module_record =
                     Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
-                let semantic = Rc::new(semantic);
                 let external_plugin_store = ExternalPluginStore::default();
                 let lint_config = ConfigStoreBuilder::all().build(&external_plugin_store).unwrap();
                 let linter = Linter::new(
@@ -52,11 +51,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 runner.run(|| {
                     linter.run(
                         path,
-                        vec![ContextSubHost::new(
-                            Rc::clone(&semantic),
-                            Arc::clone(&module_record),
-                            0,
-                        )],
+                        vec![ContextSubHost::new(semantic, Arc::clone(&module_record), 0)],
                         &allocator,
                     )
                 });
