@@ -31,7 +31,6 @@ pub struct ContextSubHost<'a> {
     #[expect(dead_code)]
     pub(super) framework_options: FrameworkOptions,
     /// The source text offset of the sub host
-    #[expect(dead_code)]
     pub(super) source_text_offset: u32,
 }
 
@@ -197,12 +196,21 @@ impl<'a> ContextHost<'a> {
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(crate) fn push_diagnostic(&self, diagnostic: Message<'a>) {
+    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message<'a>) {
+        if self.current_sub_host().source_text_offset != 0 {
+            diagnostic.move_offset(self.current_sub_host().source_text_offset);
+        }
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.
-    fn append_diagnostics(&self, diagnostics: Vec<Message<'a>>) {
+    fn append_diagnostics(&self, mut diagnostics: Vec<Message<'a>>) {
+        if self.current_sub_host().source_text_offset != 0 {
+            let offset = self.current_sub_host().source_text_offset;
+            for diagnostic in &mut diagnostics {
+                diagnostic.move_offset(offset);
+            }
+        }
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 

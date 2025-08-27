@@ -22,16 +22,18 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
+#[cfg(feature = "language_server")]
+use crate::lsp::MessageWithPosition;
+
+#[cfg(test)]
+use crate::fixer::{Message, PossibleFixes};
 use crate::{
-    Fixer, Linter, Message,
-    fixer::PossibleFixes,
+    Fixer, Linter,
+    context::ContextSubHost,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_arena_str,
 };
-
-#[cfg(feature = "language_server")]
-use crate::MessageWithPosition;
 
 use super::LintServiceOptions;
 
@@ -113,7 +115,7 @@ struct SectionContent<'a> {
 /// A module with its source text and semantic, ready to be linted.
 ///
 /// A `ModuleWithContent` is generated for each path in `runtime.paths`. It's basically the same
-/// as `ProcessedModule`, except `content` is non-Option.
+/// as [`ProcessedModule`], except `content` is non-Option.
 struct ModuleToLint<'alloc_pool> {
     path: Arc<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
@@ -174,7 +176,7 @@ impl RuntimeFileSystem for OsFileSystem {
 }
 
 /// [`MessageCloner`] is a wrapper around an `&Allocator` which allows it to be safely shared across threads,
-/// in order to clone [`Message`]s into it.
+/// in order to clone [`crate::fixer::Message`]s into it.
 ///
 /// `Allocator` is not thread safe (it is not `Sync`), so cannot be shared across threads.
 /// It would be undefined behavior to allocate into an `Allocator` from multiple threads simultaneously.
@@ -580,9 +582,6 @@ impl Runtime {
         }
     }
 
-    // clippy: the source field is checked and assumed to be less than 4GB, and
-    // we assume that the fix offset will not exceed 2GB in either direction
-    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
@@ -591,10 +590,6 @@ impl Runtime {
                     // This means we do not write multiple times to the same file if there are multiple sources
                     // in the same file (for example, multiple scripts in an `.astro` file).
                     let mut new_source_text = Cow::from(dep.source_text);
-                    // This is used to keep track of the cumulative offset from applying fixes.
-                    // Otherwise, spans for fixes will be incorrect due to varying size of the
-                    // source code after each fix.
-                    let mut fix_offset: i32 = 0;
 
                     let path = Path::new(&module_to_lint.path);
 
@@ -602,61 +597,63 @@ impl Runtime {
                         module_to_lint.section_module_records.len(),
                         dep.section_contents.len()
                     );
-                    for (record_result, section) in module_to_lint
+
+                    let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                         .section_module_records
                         .into_iter()
                         .zip(dep.section_contents.drain(..))
-                    {
-                        let mut messages = match record_result {
-                            Ok(module_record) => me.linter.run(
-                                path,
+                        .filter_map(|(record_result, section)| match record_result {
+                            Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
                                 Rc::new(section.semantic.unwrap()),
                                 Arc::clone(&module_record),
-                                allocator_guard,
-                            ),
-                            Err(errors) => errors
-                                .into_iter()
-                                .map(|err| Message::new(err, PossibleFixes::None))
-                                .collect(),
-                        };
-
-                        // adjust offset for multiple source text in a single file
-                        if section.source.start != 0 {
-                            for message in &mut messages {
-                                message.move_offset(section.source.start);
+                                section.source.start,
+                                section.source.framework_options,
+                            )),
+                            Err(messages) => {
+                                if !messages.is_empty() {
+                                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                                        &me.cwd,
+                                        path,
+                                        dep.source_text,
+                                        messages,
+                                    );
+                                    tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+                                }
+                                None
                             }
-                        }
+                        })
+                        .collect();
 
-                        let source_text = section.source.source_text;
-                        if me.linter.options().fix.is_some() {
-                            let fix_result = Fixer::new(source_text, messages).fix();
-                            if fix_result.fixed {
-                                // write to file, replacing only the changed part
-                                let start =
-                                    section.source.start.saturating_add_signed(fix_offset) as usize;
-                                let end = start + source_text.len();
-                                new_source_text
-                                    .to_mut()
-                                    .replace_range(start..end, &fix_result.fixed_code);
-                                let old_code_len = source_text.len() as u32;
-                                let new_code_len = fix_result.fixed_code.len() as u32;
-                                fix_offset += new_code_len as i32;
-                                fix_offset -= old_code_len as i32;
-                            }
-                            messages = fix_result.messages;
-                        }
-
-                        if !messages.is_empty() {
-                            let errors = messages.into_iter().map(Into::into).collect();
-                            let diagnostics = DiagnosticService::wrap_diagnostics(
-                                &me.cwd,
-                                path,
-                                dep.source_text,
-                                errors,
-                            );
-                            tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
-                        }
+                    if context_sub_hosts.is_empty() {
+                        return;
                     }
+
+                    let mut messages = me.linter.run(path, context_sub_hosts, allocator_guard);
+
+                    if me.linter.options().fix.is_some() {
+                        let fix_result = Fixer::new(dep.source_text, messages).fix();
+                        if fix_result.fixed {
+                            // write to file, replacing only the changed part
+                            let start = 0;
+                            let end = start + dep.source_text.len();
+                            new_source_text
+                                .to_mut()
+                                .replace_range(start..end, &fix_result.fixed_code);
+                        }
+                        messages = fix_result.messages;
+                    }
+
+                    if !messages.is_empty() {
+                        let errors = messages.into_iter().map(Into::into).collect();
+                        let diagnostics = DiagnosticService::wrap_diagnostics(
+                            &me.cwd,
+                            path,
+                            dep.source_text,
+                            errors,
+                        );
+                        tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+                    }
+
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
                     if let Cow::Owned(new_source_text) = &new_source_text {
@@ -687,50 +684,56 @@ impl Runtime {
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, &sender, |me, mut module| {
-                module.content.with_dependent_mut(
+            self.resolve_modules(scope, true, &sender, |me, mut module_to_lint| {
+                module_to_lint.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
-                        assert_eq!(module.section_module_records.len(), section_contents.len());
+                        assert_eq!(
+                            module_to_lint.section_module_records.len(),
+                            section_contents.len()
+                        );
 
                         let rope = &Rope::from_str(source_text);
 
-                        for (record_result, section) in module
+                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
-                        {
-                            let mut section_messages = match record_result {
+                            .filter_map(|(record_result, section)| match record_result {
+                                Ok(module_record) => {
+                                    Some(ContextSubHost::new_with_framework_options(
+                                        Rc::new(section.semantic.unwrap()),
+                                        Arc::clone(&module_record),
+                                        section.source.start,
+                                        section.source.framework_options,
+                                    ))
+                                }
                                 Err(diagnostics) => {
-                                    messages
-                                        .lock()
-                                        .unwrap()
-                                        .extend(diagnostics.into_iter().map(Into::into));
-                                    continue;
+                                    if !diagnostics.is_empty() {
+                                        messages
+                                            .lock()
+                                            .unwrap()
+                                            .extend(diagnostics.into_iter().map(Into::into));
+                                    }
+                                    None
                                 }
-                                Ok(module_record) => me.linter.run(
-                                    Path::new(&module.path),
-                                    Rc::new(section.semantic.unwrap()),
-                                    Arc::clone(&module_record),
-                                    allocator_guard,
-                                ),
-                            };
-                            // adjust offset for multiple source text in a single file
-                            if section.source.start != 0 {
-                                for message in &mut section_messages {
-                                    message
-                                        .move_offset(section.source.start)
-                                        .move_fix_offset(section.source.start);
-                                }
-                            }
+                            })
+                            .collect();
 
-                            messages.lock().unwrap().extend(section_messages.iter().map(
-                                |message| {
-                                    let message = message_cloner.clone_message(message);
-
-                                    message_to_message_with_position(&message, source_text, rope)
-                                },
-                            ));
+                        if context_sub_hosts.is_empty() {
+                            return;
                         }
+
+                        let section_messages = me.linter.run(
+                            Path::new(&module_to_lint.path),
+                            context_sub_hosts,
+                            allocator_guard,
+                        );
+
+                        messages.lock().unwrap().extend(section_messages.iter().map(|message| {
+                            let message = message_cloner.clone_message(message);
+
+                            message_to_message_with_position(&message, source_text, rope)
+                        }));
                     },
                 );
             });
@@ -769,34 +772,47 @@ impl Runtime {
                 module.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
-                        for (record_result, section) in module
+
+                        let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
                             .zip(section_contents.drain(..))
-                        {
-                            messages.lock().unwrap().extend(
-                                match record_result {
-                                    Ok(module_record) => me.linter.run(
-                                        Path::new(&module.path),
-                                        Rc::new(section.semantic.unwrap()),
-                                        Arc::clone(&module_record),
-                                        allocator_guard,
-                                    ),
-                                    Err(errors) => errors
+                            .filter_map(|(record_result, section)| match record_result {
+                                Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
+                                    Rc::new(section.semantic.unwrap()),
+                                    Arc::clone(&module_record),
+                                    section.source.start,
+                                    section.source.framework_options
+                                )),
+                                Err(errors) => {
+                                    if !errors.is_empty() {
+                                        messages
+                                            .lock()
+                                            .unwrap()
+                                            .extend(errors
                                         .into_iter()
                                         .map(|err| Message::new(err, PossibleFixes::None))
-                                        .collect(),
-                                }
-                                .iter_mut()
-                                .map(|message| {
-                                    if section.source.start != 0 {
-                                        message.move_offset(section.source.start)
-                                        .move_fix_offset(section.source.start);
+                                    );
                                     }
+                                    None
+                                }
+                            })
+                            .collect();
+
+                        if context_sub_hosts.is_empty() {
+                            return;
+                        }
+
+                        messages.lock().unwrap().extend(
+                            me.linter.run(
+                                Path::new(&module.path),
+                                context_sub_hosts,
+                                allocator_guard
+                            ).iter_mut()
+                                .map(|message| {
                                     message_cloner.clone_message(message)
                                 }),
-                            );
-                        }
+                        );
                     },
                 );
             });

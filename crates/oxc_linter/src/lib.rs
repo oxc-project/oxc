@@ -1,13 +1,15 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
 #![allow(clippy::literal_string_with_formatting_args)]
 
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
-use oxc_semantic::{AstNode, Semantic};
+use oxc_semantic::AstNode;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 use oxc_ast_macros::ast;
+#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+use oxc_semantic::Semantic;
 
 #[cfg(test)]
 mod tester;
@@ -46,7 +48,7 @@ pub use crate::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
         ESLintRule, LintIgnoreMatcher, LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::LintContext,
+    context::{ContextSubHost, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
         PluginLoadResult,
@@ -65,7 +67,7 @@ pub use crate::{
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
-    context::{ContextHost, ContextSubHost},
+    context::ContextHost,
     fixer::{Fixer, Message},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
@@ -128,18 +130,12 @@ impl Linter {
     pub fn run<'a>(
         &self,
         path: &Path,
-        semantic: Rc<Semantic<'a>>,
-        module_record: Arc<ModuleRecord>,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &Allocator,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let ctx_host = Rc::new(ContextHost::new(
-            path,
-            vec![ContextSubHost::new(semantic, module_record, 0)],
-            self.options,
-            config,
-        ));
+        let ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
         loop {
             let rules = rules
