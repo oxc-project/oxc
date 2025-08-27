@@ -65,7 +65,7 @@ pub use crate::{
 };
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
-    context::ContextHost,
+    context::{ContextHost, ContextSubHost},
     fixer::{Fixer, Message},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
@@ -134,94 +134,105 @@ impl Linter {
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
+        let ctx_host = Rc::new(ContextHost::new(
+            path,
+            vec![ContextSubHost::new(semantic, module_record, 0)],
+            self.options,
+            config,
+        ));
 
-        let rules = rules
-            .iter()
-            .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
-            .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
+        loop {
+            let rules = rules
+                .iter()
+                .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
+                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
 
-        let semantic = ctx_host.semantic();
+            let semantic = ctx_host.semantic();
 
-        let should_run_on_jest_node =
-            ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+            let should_run_on_jest_node =
+                ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-        // IMPORTANT: We have two branches here for performance reasons:
-        //
-        // 1) Branch where we iterate over each node, then each rule
-        // 2) Branch where we iterate over each rule, then each node
-        //
-        // When the number of nodes is relatively small, most of them can fit
-        // in the cache and we can save iterating over the rules multiple times.
-        // But for large files, the number of nodes can be so large that it
-        // starts to not fit into the cache and pushes out other data, like the rules.
-        // So we end up thrashing the cache with each rule iteration. In this case,
-        // it's better to put rules in the inner loop, as the rules data is smaller
-        // and is more likely to fit in the cache.
-        //
-        // The threshold here is chosen to balance between performance improvement
-        // from not iterating over rules multiple times, but also ensuring that we
-        // don't thrash the cache too much. Feel free to tweak based on benchmarking.
-        //
-        // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-        if semantic.nodes().len() > 200_000 {
-            // Collect rules into a Vec so that we can iterate over the rules multiple times
-            let rules = rules.collect::<Vec<_>>();
+            // IMPORTANT: We have two branches here for performance reasons:
+            //
+            // 1) Branch where we iterate over each node, then each rule
+            // 2) Branch where we iterate over each rule, then each node
+            //
+            // When the number of nodes is relatively small, most of them can fit
+            // in the cache and we can save iterating over the rules multiple times.
+            // But for large files, the number of nodes can be so large that it
+            // starts to not fit into the cache and pushes out other data, like the rules.
+            // So we end up thrashing the cache with each rule iteration. In this case,
+            // it's better to put rules in the inner loop, as the rules data is smaller
+            // and is more likely to fit in the cache.
+            //
+            // The threshold here is chosen to balance between performance improvement
+            // from not iterating over rules multiple times, but also ensuring that we
+            // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+            //
+            // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+            if semantic.nodes().len() > 200_000 {
+                // Collect rules into a Vec so that we can iterate over the rules multiple times
+                let rules = rules.collect::<Vec<_>>();
 
-            for (rule, ctx) in &rules {
-                rule.run_once(ctx);
-            }
-
-            for symbol in semantic.scoping().symbol_ids() {
                 for (rule, ctx) in &rules {
-                    rule.run_on_symbol(symbol, ctx);
+                    rule.run_once(ctx);
                 }
-            }
-
-            for node in semantic.nodes() {
-                for (rule, ctx) in &rules {
-                    rule.run(node, ctx);
-                }
-            }
-
-            if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
-                    for (rule, ctx) in &rules {
-                        rule.run_on_jest_node(&jest_node, ctx);
-                    }
-                }
-            }
-        } else {
-            for (rule, ref ctx) in rules {
-                rule.run_once(ctx);
 
                 for symbol in semantic.scoping().symbol_ids() {
-                    rule.run_on_symbol(symbol, ctx);
+                    for (rule, ctx) in &rules {
+                        rule.run_on_symbol(symbol, ctx);
+                    }
                 }
 
                 for node in semantic.nodes() {
-                    rule.run(node, ctx);
+                    for (rule, ctx) in &rules {
+                        rule.run(node, ctx);
+                    }
                 }
 
                 if should_run_on_jest_node {
                     for jest_node in iter_possible_jest_call_node(semantic) {
-                        rule.run_on_jest_node(&jest_node, ctx);
+                        for (rule, ctx) in &rules {
+                            rule.run_on_jest_node(&jest_node, ctx);
+                        }
+                    }
+                }
+            } else {
+                for (rule, ref ctx) in rules {
+                    rule.run_once(ctx);
+
+                    for symbol in semantic.scoping().symbol_ids() {
+                        rule.run_on_symbol(symbol, ctx);
+                    }
+
+                    for node in semantic.nodes() {
+                        rule.run(node, ctx);
+                    }
+
+                    if should_run_on_jest_node {
+                        for jest_node in iter_possible_jest_call_node(semantic) {
+                            rule.run_on_jest_node(&jest_node, ctx);
+                        }
                     }
                 }
             }
-        }
 
-        #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-        self.run_external_rules(&external_rules, path, semantic, &ctx_host, allocator);
+            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            self.run_external_rules(&external_rules, path, semantic, &ctx_host, allocator);
 
-        // Stop clippy complaining about unused vars
-        #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
-        let (_, _) = (external_rules, allocator);
+            // Stop clippy complaining about unused vars
+            #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+            let (_, _) = (&external_rules, allocator);
 
-        if let Some(severity) = self.options.report_unused_directive {
-            if severity.is_warn_deny() {
-                ctx_host.report_unused_directives(severity.into());
+            if let Some(severity) = self.options.report_unused_directive {
+                if severity.is_warn_deny() {
+                    ctx_host.report_unused_directives(severity.into());
+                }
+            }
+
+            // no next `<script>` block found, the complete file is finished linting
+            if !ctx_host.next_sub_host() {
+                break;
             }
         }
 
