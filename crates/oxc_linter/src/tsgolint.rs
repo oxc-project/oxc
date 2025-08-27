@@ -138,13 +138,11 @@ impl TsGoLintState {
                             while cursor.position() < buffer.len() as u64 {
                                 let start_pos = cursor.position();
                                 match parse_single_message(&mut cursor) {
-                                    Ok(Some(tsgolint_diagnostic)) => {
+                                    Ok(Some(TsGoLintMessage::Error(err))) => {
+                                        return Err(err.error);
+                                    }
+                                    Ok(Some(TsGoLintMessage::Diagnostic(tsgolint_diagnostic))) => {
                                         processed_up_to = cursor.position();
-
-                                        // For now, ignore any `tsgolint` errors.
-                                        if tsgolint_diagnostic.r#type == MessageType::Error {
-                                            continue;
-                                        }
 
                                         let path = tsgolint_diagnostic.file_path.clone();
                                         let Some(resolved_config) = resolved_configs.get(&path)
@@ -240,12 +238,18 @@ impl TsGoLintState {
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
-                return Err(format!("tsgolint process exited with status: {exit_status}"));
+                return Err(
+                    if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
+                        format!("exit status: {exit_status}, error: {err}")
+                    } else {
+                        format!("exit status: {exit_status}")
+                    },
+                );
             }
 
             match stdout_result {
                 Ok(Ok(())) => Ok(()),
-                Ok(Err(err)) => Err(err),
+                Ok(Err(err)) => Err(format!("exit status: {exit_status}, error: {err}")),
                 Err(_) => Err("Failed to join stdout processing thread".to_string()),
             }
         });
@@ -334,13 +338,13 @@ impl TsGoLintState {
                                 while cursor.position() < buffer.len() as u64 {
                                     let start_pos = cursor.position();
                                     match parse_single_message(&mut cursor) {
-                                        Ok(Some(tsgolint_diagnostic)) => {
+                                        Ok(Some(TsGoLintMessage::Error(err))) => {
+                                            return Err(err.error);
+                                        }
+                                        Ok(Some(TsGoLintMessage::Diagnostic(
+                                            tsgolint_diagnostic,
+                                        ))) => {
                                             processed_up_to = cursor.position();
-
-                                            // For now, ignore any `tsgolint` errors.
-                                            if tsgolint_diagnostic.r#type == MessageType::Error {
-                                                continue;
-                                            }
 
                                             let path = tsgolint_diagnostic.file_path.clone();
                                             let Some(resolved_config) = resolved_configs.get(&path)
@@ -521,16 +525,31 @@ struct TsGoLintDiagnosticPayload {
     pub file_path: PathBuf,
 }
 
-/// Represents a message from `tsgolint`, ready to be converted into [`OxcDiagnostic`] or [`Message`].
+/// Represents the error payload from `tsgolint`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct TsGoLintErrorPayload {
+    pub error: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum TsGoLintMessage {
+    Diagnostic(TsGoLintDiagnostic),
+    Error(TsGoLintError),
+}
+
 #[derive(Debug, Clone)]
 pub struct TsGoLintDiagnostic {
-    pub r#type: MessageType,
     pub range: Range,
     pub rule: String,
     pub message: RuleMessage,
     pub fixes: Vec<Fix>,
     pub suggestions: Vec<Suggestion>,
     pub file_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+pub struct TsGoLintError {
+    pub error: String,
 }
 
 impl From<TsGoLintDiagnostic> for OxcDiagnostic {
@@ -590,6 +609,7 @@ impl Message<'_> {
         Self::new(val.into(), possible_fix)
     }
 }
+
 // TODO: Should this be removed and replaced with a `Span`?
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Range {
@@ -637,14 +657,13 @@ impl MessageType {
 // | Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |
 fn parse_single_message(
     cursor: &mut std::io::Cursor<&[u8]>,
-) -> Result<Option<TsGoLintDiagnostic>, String> {
+) -> Result<Option<TsGoLintMessage>, String> {
     let mut size_bytes = [0u8; 4];
     if cursor.read_exact(&mut size_bytes).is_err() {
         return Err("Failed to read size bytes".to_string());
     }
     let size = u32::from_le_bytes(size_bytes) as usize;
 
-    // TODO: Use message type byte for diagnostic
     let mut message_type_byte = [0u8; 1];
     if cursor.read_exact(&mut message_type_byte).is_err() {
         return Err("Failed to read message type byte".to_string());
@@ -656,21 +675,29 @@ fn parse_single_message(
     if cursor.read_exact(&mut payload_bytes).is_err() {
         return Err("Failed to read payload bytes".to_string());
     }
-    let payload = String::from_utf8_lossy(&payload_bytes);
+    let payload_str = String::from_utf8_lossy(&payload_bytes);
 
-    let payload = serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload);
+    match message_type {
+        MessageType::Error => {
+            let error_payload = serde_json::from_str::<TsGoLintErrorPayload>(&payload_str)
+                .map_err(|e| format!("Failed to parse tsgolint error payload: {e}"))?;
 
-    match payload {
-        Ok(diagnostic) => Ok(Some(TsGoLintDiagnostic {
-            r#type: message_type,
-            range: diagnostic.range,
-            rule: diagnostic.rule,
-            message: diagnostic.message,
-            fixes: diagnostic.fixes,
-            suggestions: diagnostic.suggestions,
-            file_path: diagnostic.file_path,
-        })),
-        Err(e) => Err(format!("Failed to parse tsgolint payload: {e}")),
+            Ok(Some(TsGoLintMessage::Error(TsGoLintError { error: error_payload.error })))
+        }
+        MessageType::Diagnostic => {
+            let diagnostic_payload =
+                serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload_str)
+                    .map_err(|e| format!("Failed to parse tsgolint diagnostic payload: {e}"))?;
+
+            Ok(Some(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic {
+                range: diagnostic_payload.range,
+                rule: diagnostic_payload.rule,
+                message: diagnostic_payload.message,
+                fixes: diagnostic_payload.fixes,
+                suggestions: diagnostic_payload.suggestions,
+                file_path: diagnostic_payload.file_path,
+            })))
+        }
     }
 }
 
@@ -716,7 +743,7 @@ mod test {
 
     use crate::{
         fixer::{Message, PossibleFixes},
-        tsgolint::{Fix, MessageType, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
+        tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
     };
 
     /// Implements `PartialEq` for `PossibleFixes` to enable equality assertions in tests.
@@ -737,7 +764,6 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
         let diagnostic = TsGoLintDiagnostic {
-            r#type: MessageType::Diagnostic,
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -769,7 +795,6 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fixes() {
         let diagnostic = TsGoLintDiagnostic {
-            r#type: MessageType::Diagnostic,
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -801,7 +826,6 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_multiple_suggestions() {
         let diagnostic = TsGoLintDiagnostic {
-            r#type: MessageType::Diagnostic,
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -856,7 +880,6 @@ mod test {
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fix_and_suggestions() {
         let diagnostic = TsGoLintDiagnostic {
-            r#type: MessageType::Diagnostic,
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
