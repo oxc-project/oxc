@@ -14,6 +14,18 @@ pub struct Translation {
     pub utf16_difference: u32,
 }
 
+/// A translation from UTF-8 offset to line number.
+#[derive(Clone, Copy)]
+#[repr(align(8))]
+pub struct LineTranslation {
+    /// UTF-8 byte offset of the start of the line.
+    pub utf8_offset: u32,
+    /// UTF-16 offset difference at the start of this line.
+    /// This is needed to convert column offsets from UTF-8 to UTF-16.
+    #[expect(dead_code)]
+    pub utf16_difference: u32,
+}
+
 const CHUNK_SIZE: usize = 32;
 const CHUNK_ALIGNMENT: usize = align_of::<AlignedChunk>();
 const _: () = {
@@ -75,13 +87,79 @@ impl AlignedChunk {
 ///   UTF-16 len = UTF-8 len - 2
 ///
 /// So UTF-16 offset = UTF-8 offset - count of bytes `>= 0xC0` - count of bytes `>= 0xE0`
+#[expect(dead_code)]
 pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
+    build_translations_and_lines(source_text, translations, None);
+}
+
+/// Build tables of translations from UTF-8 offsets to UTF-16 offsets and line numbers.
+///
+/// Line breaks handled are \r, \n, \r\n (considered as 1 line break), LS, and PS.
+/// LS and PS are Unicode chars, so handled in the cold path for non-ASCII.
+pub fn build_translations_and_lines(
+    source_text: &str,
+    translations: &mut Vec<Translation>,
+    lines: Option<&mut Vec<LineTranslation>>,
+) {
     // Running counter of difference between UTF-8 and UTF-16 offset
     let mut utf16_difference = 0;
 
+    // Line tracking
+    let track_lines = lines.is_some();
+    let mut lines = lines;
+    if track_lines {
+        // Add first line starting at offset 0
+        lines.as_mut().unwrap().push(LineTranslation { utf8_offset: 0, utf16_difference: 0 });
+    }
+
     // Closure that processes a slice of bytes
     let mut process_slice = |slice: &[u8], start_offset: usize| {
-        for (index, &byte) in slice.iter().enumerate() {
+        let mut index = 0;
+        while index < slice.len() {
+            let byte = slice[index];
+
+            // Handle line breaks
+            if track_lines {
+                let mut is_line_break = false;
+                let mut line_break_len = 1;
+
+                match byte {
+                    b'\n' => is_line_break = true,
+                    b'\r' => {
+                        is_line_break = true;
+                        // Check for \r\n
+                        if index + 1 < slice.len() && slice[index + 1] == b'\n' {
+                            line_break_len = 2;
+                        }
+                    }
+                    // Unicode line separators LS (\u2028) and PS (\u2029)
+                    // LS: E2 80 A8, PS: E2 80 A9
+                    0xE2 if index + 2 < slice.len()
+                        && slice[index + 1] == 0x80
+                        && (slice[index + 2] == 0xA8 || slice[index + 2] == 0xA9) =>
+                    {
+                        is_line_break = true;
+                        line_break_len = 3;
+                    }
+                    _ => {}
+                }
+
+                if is_line_break {
+                    let line_end_offset = start_offset + index + line_break_len;
+                    if line_end_offset < source_text.len() {
+                        #[expect(clippy::cast_possible_truncation)]
+                        let utf8_offset = line_end_offset as u32;
+                        lines
+                            .as_mut()
+                            .unwrap()
+                            .push(LineTranslation { utf8_offset, utf16_difference });
+                    }
+                    index += line_break_len;
+                    continue;
+                }
+            }
+
+            // Handle Unicode characters
             #[expect(clippy::cast_possible_truncation)]
             if byte >= 0xC0 {
                 let difference_for_this_byte = u32::from(byte >= 0xE0) + 1;
@@ -95,6 +173,8 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
                 let utf8_offset = (offset + 1) as u32;
                 translations.push(Translation { utf8_offset, utf16_difference });
             }
+
+            index += 1;
         }
     };
 

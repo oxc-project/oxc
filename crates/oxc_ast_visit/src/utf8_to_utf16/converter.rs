@@ -3,7 +3,7 @@ use std::cmp::min;
 use oxc_span::Span;
 use oxc_syntax::module_record::VisitMutModuleRecord;
 
-use super::Translation;
+use super::{Translation, Utf8ToUtf16};
 
 /// Offset converter, optimized for converting a sequence of offsets in ascending order.
 ///
@@ -298,6 +298,12 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     pub fn convert_span(&mut self, span: &mut Span) {
         self.convert_offset(&mut span.start);
         self.convert_offset(&mut span.end);
+    }
+
+    /// Convert UTF-16 offset to line and column using the provided table.
+    /// Returns (line, column) where both are 0-based.
+    pub fn offset_to_line_column(table: &Utf8ToUtf16, utf16_offset: u32) -> Option<(u32, u32)> {
+        table.offset_to_line_column(utf16_offset)
     }
 }
 
