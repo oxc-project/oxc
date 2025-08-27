@@ -243,34 +243,127 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
     }
 }
 
-fn is_pure_regexp(name: &str, args: &[Argument<'_>]) -> bool {
-    name == "RegExp"
-        && match args.len() {
+/// Information about global function calls and their purity.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GlobalFunctionInformation {
+    /// Pure global utility functions like decodeURI, parseFloat, etc.
+    PureGlobalFunction,
+    /// Pure constructor calls when used as functions (Date, Boolean, etc.)
+    PureCall,
+    /// Pure constructor calls when used with `new` (includes Set, Map, etc.)
+    PureConstructor,
+    /// Pure RegExp constructor calls with specific argument patterns
+    PureRegexp,
+    /// Function call that may have side effects
+    Impure,
+}
+
+/// Classify a global function call and determine if it's pure and what type of pure function it is.
+///
+/// This function consolidates the logic from `is_pure_global_function`, `is_pure_call`,
+/// and `is_pure_regexp` into a single function that provides more detailed information.
+fn classify_global_function_call(name: &str, args: &[Argument<'_>]) -> GlobalFunctionInformation {
+    // Check for pure global utility functions
+    if matches!(
+        name,
+        "decodeURI"
+            | "decodeURIComponent"
+            | "encodeURI"
+            | "encodeURIComponent"
+            | "escape"
+            | "isFinite"
+            | "isNaN"
+            | "parseFloat"
+            | "parseInt"
+    ) {
+        return GlobalFunctionInformation::PureGlobalFunction;
+    }
+
+    // Check for pure constructor calls when used as functions
+    if matches!(
+        name,
+        "Date"
+            | "Boolean"
+            | "Error"
+            | "EvalError"
+            | "RangeError"
+            | "ReferenceError"
+            | "SyntaxError"
+            | "TypeError"
+            | "URIError"
+            | "Number"
+            | "Object"
+            | "String"
+            | "Symbol"
+    ) {
+        return GlobalFunctionInformation::PureCall;
+    }
+
+    // Check for pure RegExp constructor calls
+    if name == "RegExp" {
+        let is_pure = match args.len() {
             0 | 1 => true,
             2 => args[1].as_expression().is_some_and(|e| {
                 matches!(e, Expression::Identifier(_) | Expression::StringLiteral(_))
             }),
             _ => false,
+        };
+        if is_pure {
+            return GlobalFunctionInformation::PureRegexp;
         }
+    }
+
+    GlobalFunctionInformation::Impure
 }
 
-#[rustfmt::skip]
-fn is_pure_global_function(name: &str) -> bool {
-    matches!(name, "decodeURI" | "decodeURIComponent" | "encodeURI" | "encodeURIComponent"
-            | "escape" | "isFinite" | "isNaN" | "parseFloat" | "parseInt")
-}
+/// Classify a global constructor call and determine if it's pure.
+///
+/// This function handles constructor-specific pure functions including
+/// those that can only be used with `new` (like Set, Map).
+fn classify_global_constructor_call(
+    name: &str,
+    args: &[Argument<'_>],
+) -> GlobalFunctionInformation {
+    // Check for pure constructor calls (includes additional constructor-only functions)
+    if matches!(
+        name,
+        "Set"
+            | "Map"
+            | "WeakSet"
+            | "WeakMap"
+            | "ArrayBuffer"
+            | "Date"
+            | "Boolean"
+            | "Error"
+            | "EvalError"
+            | "RangeError"
+            | "ReferenceError"
+            | "SyntaxError"
+            | "TypeError"
+            | "URIError"
+            | "Number"
+            | "Object"
+            | "String"
+            | "Symbol"
+    ) {
+        return GlobalFunctionInformation::PureConstructor;
+    }
 
-#[rustfmt::skip]
-fn is_pure_call(name: &str) -> bool {
-    matches!(name, "Date" | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
-}
+    // Check for pure RegExp constructor calls
+    if name == "RegExp" {
+        let is_pure = match args.len() {
+            0 | 1 => true,
+            2 => args[1].as_expression().is_some_and(|e| {
+                matches!(e, Expression::Identifier(_) | Expression::StringLiteral(_))
+            }),
+            _ => false,
+        };
+        if is_pure {
+            return GlobalFunctionInformation::PureRegexp;
+        }
+    }
 
-#[rustfmt::skip]
-fn is_pure_constructor(name: &str) -> bool {
-    matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
-            | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
+    GlobalFunctionInformation::Impure
 }
 
 /// Whether the name matches any known global constructors.
@@ -361,7 +454,7 @@ fn is_global_identifier_pure(name: &str) -> bool {
 /// This function determines if calling a global function with the given name
 /// and arguments is considered pure and won't have side effects.
 fn is_global_function_call_pure(name: &str, args: &[Argument<'_>]) -> bool {
-    is_pure_global_function(name) || is_pure_call(name) || is_pure_regexp(name, args)
+    !matches!(classify_global_function_call(name, args), GlobalFunctionInformation::Impure)
 }
 
 impl<'a> MayHaveSideEffects<'a> for LogicalExpression<'a> {
@@ -660,7 +753,10 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
             && let name = ident.name.as_str()
-            && (is_pure_constructor(name) || is_pure_regexp(name, &self.arguments))
+            && !matches!(
+                classify_global_constructor_call(name, &self.arguments),
+                GlobalFunctionInformation::Impure
+            )
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
