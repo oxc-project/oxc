@@ -55,7 +55,7 @@ If you are unable to contribute by code, you can still participate by:
 
 - Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
 - Join us on [Discord][discord-url].
-- [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
+- [Follow me on X](https://x.com/boshen_c) and post about this project.
 
 ## ⚡️ Linter Quick Start
 
