@@ -22,109 +22,73 @@ function normalizeOutput(output: string): string {
 
 describe('oxlint2 CLI', () => {
   it('should lint a directory without errors', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/built_in_no_errors',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_no_errors');
     expect(exitCode).toBe(0);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should lint a directory with errors', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/built_in_errors',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_errors');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should load a custom plugin', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/basic_custom_plugin',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should load a custom plugin with multiple files', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/basic_custom_plugin_many_files',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin_many_files');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should load a custom plugin when configured in overrides', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/custom_plugin_via_overrides',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_via_overrides');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should report an error if a custom plugin cannot be loaded', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/missing_custom_plugin',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/missing_custom_plugin');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should report an error if a rule is not found within a custom plugin', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/custom_plugin_missing_rule',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_missing_rule');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should report an error if a a rule is not found within a custom plugin (via overrides)', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/custom_plugin_via_overrides_missing_rule',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_via_overrides_missing_rule');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should report the correct severity when using a custom plugin', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/basic_custom_plugin_warn_severity',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin_warn_severity');
     expect(exitCode).toBe(0);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should work with multiple rules', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/basic_custom_plugin_multiple_rules',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin_multiple_rules');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should receive data via `context`', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/context_properties',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/context_properties');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
   it('should have UTF-16 spans in AST', async () => {
-    const { stdout, exitCode } = await runOxlint(
-      'test/fixtures/utf16_offsets',
-    );
-
+    const { stdout, exitCode } = await runOxlint('test/fixtures/utf16_offsets');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
