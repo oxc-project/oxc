@@ -50,7 +50,6 @@ fn bench_minifier(criterion: &mut Criterion) {
     group.finish();
 }
 
-#[expect(dead_code)]
 fn bench_mangler(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("mangler");
     for file in TestFiles::minimal().files() {
@@ -76,9 +75,5 @@ fn bench_mangler(criterion: &mut Criterion) {
     group.finish();
 }
 
-// Mangler benchmark disabled, as it displays too much variance to be useful.
-// e.g. this PR does not touch the mangler, but shows a 13% regression on mangler benchmark:
-// https://github.com/oxc-project/oxc/pull/12106
-// criterion_group!(minifier, bench_minifier, bench_mangler);
-criterion_group!(minifier, bench_minifier);
+criterion_group!(minifier, bench_minifier, bench_mangler);
 criterion_main!(minifier);
