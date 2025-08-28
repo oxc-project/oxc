@@ -346,3 +346,33 @@ source: crates/oxc_linter/src/tester.rs
  12 │         
     ╰────
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:26]
+ 1 │ const arr = [];arr.push(<div />);
+   ·                          ───
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:43]
+ 1 │ const arr = [];arr.push(<div key={0} />, <div />);
+   ·                                           ───
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:26]
+ 1 │ const arr = [];arr.push(<div />, <div key={0} />);
+   ·                          ───
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:26]
+ 1 │ const arr = [];arr.push(<div />, <div />);
+   ·                          ───
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
+   ╭─[jsx_key.tsx:1:35]
+ 1 │ const arr = [];arr.push(<div />, <div />);
+   ·                                   ───
+   ╰────
