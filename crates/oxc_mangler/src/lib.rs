@@ -305,7 +305,7 @@ impl<'t> Mangler<'t> {
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
-        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
+        let mut slot_liveness: Vec<'_, FixedBitSet> = Vec::new_in(temp_allocator);
         let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
 
         let mut reusable_slots = Vec::new_in(temp_allocator);
@@ -346,8 +346,28 @@ impl<'t> Mangler<'t> {
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
-                slot_liveness
-                    .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
+                // Allocator does not have the method `resize_with`.
+                // pub fn resize_with<F>(&mut self, new_len: usize, f: F)
+                // where
+                //     F: FnMut() -> T,
+                // {
+                //     let len = self.len();
+                //     if new_len > len {
+                //         self.extend_trusted(iter::repeat_with(f).take(new_len - len));
+                //     } else {
+                //         self.truncate(new_len);
+                //     }
+                // }
+                let len = slot_liveness.len();
+                let new_len = slot;
+                if new_len > len {
+                    slot_liveness.extend(
+                        iter::repeat_with(|| FixedBitSet::with_capacity(scoping.scopes_len()))
+                            .take(new_len - len),
+                    );
+                } else {
+                    slot_liveness.truncate(new_len);
+                }
             }
 
             for (&symbol_id, assigned_slot) in
