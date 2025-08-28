@@ -137,7 +137,8 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
-    // `#[inline]` so compiler knows `stmt` is a `TSEnumDeclaration`
+    // `#[inline]` because this is a hot path and most `Statement`s are not `TSEnumDeclaration`s.
+    // We want to avoid overhead of a function call for the common case.
     #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Collect enum types here instead of in `enter_ts_enum_declaration` because the TypeScript
