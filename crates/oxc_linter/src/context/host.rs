@@ -178,10 +178,21 @@ impl<'a> ContextHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
     }
 
+    /// Get mutable reference to the current [`ContextSubHost`]
+    fn current_sub_host_mut(&mut self) -> &mut ContextSubHost<'a> {
+        &mut self.sub_hosts[self.current_sub_host_index.get()]
+    }
+
     /// Shared reference to the [`Semantic`] analysis of current script block.
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.current_sub_host().semantic
+    }
+
+    /// Mutable reference to the [`Semantic`] analysis of current script block.
+    #[inline]
+    pub fn semantic_mut(&mut self) -> &mut Semantic<'a> {
+        &mut self.current_sub_host_mut().semantic
     }
 
     /// Shared reference to the [`ModuleRecord`] of the current script block.
