@@ -6,9 +6,6 @@ use crate::GlobalContext;
 pub enum PropertyReadSideEffects {
     /// Treat all property read accesses as side effect free.
     None,
-    /// Treat non-member property accesses as side effect free.
-    /// Member property accesses are still considered to have side effects.
-    OnlyMemberPropertyAccess,
     /// Treat all property read accesses as possible side effects.
     #[default]
     All,

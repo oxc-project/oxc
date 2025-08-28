@@ -992,24 +992,17 @@ fn test_is_pure_call_support() {
 fn test_property_read_side_effects_support() {
     let all_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::All, ..Default::default() };
-    let only_member_ctx = Ctx {
-        property_read_side_effects: PropertyReadSideEffects::OnlyMemberPropertyAccess,
-        ..Default::default()
-    };
     let none_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Default::default() };
 
     test_with_ctx("foo.bar", &all_ctx, true);
-    test_with_ctx("foo.bar", &only_member_ctx, true);
     test_with_ctx("foo.bar", &none_ctx, false);
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
     test_with_ctx("foo.#bar", &all_ctx, true);
-    test_with_ctx("foo.#bar", &only_member_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
-    // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 }
 
