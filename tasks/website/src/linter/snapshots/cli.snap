@@ -3,12 +3,13 @@ source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[_`PATH`_\]...
 
 ## Basic Configuration
-- **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
+- **`-c`**, **`--config`**=_`<./.oxlintrc.json>`_ &mdash; 
   Oxlint configuration file (experimental)
 * only `.json` extension is supported
+* you can use comments in configuration files.
 * tries to be compatible with the ESLint v8's format
 
   If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
