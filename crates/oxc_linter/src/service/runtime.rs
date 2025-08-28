@@ -4,7 +4,6 @@ use std::{
     fs,
     mem::take,
     path::{Path, PathBuf},
-    rc::Rc,
     sync::{Arc, mpsc},
 };
 
@@ -604,7 +603,7 @@ impl Runtime {
                         .zip(dep.section_contents.drain(..))
                         .filter_map(|(record_result, section)| match record_result {
                             Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                Rc::new(section.semantic.unwrap()),
+                                section.semantic.unwrap(),
                                 Arc::clone(&module_record),
                                 section.source.start,
                                 section.source.framework_options,
@@ -701,7 +700,7 @@ impl Runtime {
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => {
                                     Some(ContextSubHost::new_with_framework_options(
-                                        Rc::new(section.semantic.unwrap()),
+                                        section.semantic.unwrap(),
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
@@ -779,7 +778,7 @@ impl Runtime {
                             .zip(section_contents.drain(..))
                             .filter_map(|(record_result, section)| match record_result {
                                 Ok(module_record) => Some(ContextSubHost::new_with_framework_options(
-                                    Rc::new(section.semantic.unwrap()),
+                                    section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
                                     section.source.framework_options

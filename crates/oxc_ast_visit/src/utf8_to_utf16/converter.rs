@@ -1,7 +1,10 @@
 use std::cmp::min;
 
+use oxc_ast::ast::Program;
 use oxc_span::Span;
 use oxc_syntax::module_record::VisitMutModuleRecord;
+
+use crate::VisitMut;
 
 use super::Translation;
 
@@ -13,7 +16,7 @@ use super::Translation;
 /// This range starts at byte `range_start`, and is `range_len` bytes long.
 /// The range describes a stretch of source text which contains only ASCII characters.
 /// A UTF-8 offset within this range can be converted to UTF-16 offset with the formula
-/// `utf16_offset = (utf8_offset - range_start_utf8).wrapping_add(range_start_utf16)`.
+/// `utf16_offset = utf8_offset - range_start_utf8 + range_start_utf16`.
 ///
 /// [`convert_offset`] has a very fast path for converting offsets in the current range.
 ///
@@ -36,12 +39,10 @@ pub struct Utf8ToUtf16Converter<'t> {
     range_len_utf8: u32,
     /// UTF-16 offset of start of range.
     /// To convert offset within this range:
-    /// `utf16_offset = (utf8_offset - range_start_utf8).wrapping_add(range_start_utf16)`.
-    /// Note: `range_start_utf16` is calculated and used with wrapping addition/subtraction,
-    /// because it can wrap around when there's a Unicode character very close to start of source.
+    /// `utf16_offset = utf8_offset - range_start_utf8 + range_start_utf16`.
     /// We store UTF-16 range start, rather than `utf16_difference`, because it makes
     /// [`Self::convert_offset`] more efficient - 1 less instruction, and 1 less register.
-    /// <https://godbolt.org/z/1xnx1v17T>
+    /// <https://godbolt.org/z/hz5xWGfYn>
     range_start_utf16: u32,
     /// Index of current `Translation`
     index: u32,
@@ -111,7 +112,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     //
     // This method is written to reduce this common path to as few instructions as possible.
     // It's only 8 instructions on x86_64, with 2 branches, and using only 1 register.
-    // https://godbolt.org/z/1xnx1v17T
+    // https://godbolt.org/z/hz5xWGfYn
     //
     // `#[inline(always)]` because this function is small and on a very hot path.
     #[expect(clippy::inline_always)]
@@ -134,10 +135,9 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         }
 
         let bytes_from_start_of_range = utf8_offset.wrapping_sub(self.range_start_utf8);
-        if bytes_from_start_of_range <= self.range_len_utf8 {
-            // Offset is within current range.
-            // `wrapping_add` because `range_start_utf16` can be `u32::MAX`.
-            *offset = self.range_start_utf16.wrapping_add(bytes_from_start_of_range);
+        if bytes_from_start_of_range < self.range_len_utf8 {
+            // Offset is within current range
+            *offset = self.range_start_utf16 + bytes_from_start_of_range;
         } else {
             // Offset is outside current range - slow path
             self.convert_offset_slow(offset);
@@ -179,18 +179,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         self.index = index as u32;
         self.range_start_utf8 = range_start_utf8;
         self.range_len_utf8 = range_end_utf8 - range_start_utf8;
-
-        // `wrapping_sub` because `utf16_difference` can be `> range_start_utf8` where one of
-        // first few characters of source is Unicode. e.g.:
-        //
-        // * 1st char is Unicode:
-        //   * `range_start_utf8 = 1` (offsets in `Translation`s are the offset of the character + 1).
-        //   * `utf16_difference` is the length of the Unicode char, which is `> 1`.
-        //
-        // * If 1st 2 chars are ASCII, but 3rd char is a 4-byte Unicode char:
-        //   * `range_start_utf8 = 3`.
-        //   * `utf16_difference = 4`.
-        self.range_start_utf16 = range_start_utf8.wrapping_sub(utf16_difference);
+        self.range_start_utf16 = range_start_utf8 - utf16_difference;
 
         *offset = utf8_offset - utf16_difference;
     }
@@ -252,7 +241,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         const LINEAR_SEARCH_ITERATIONS: usize = 8;
 
         // `utf8_offset` is after current range, so there must be another range after this one.
-        // We don't need to include next range in search because we know it starts before `utf8_offset`,
+        // We don't need to include next range in search because we know it starts on or before `utf8_offset`,
         // and we're looking for a range which starts *after* `utf8_offset`.
         //
         // Note: `translations` is a slice, which has max length of `isize::MAX` on all platforms.
@@ -294,10 +283,45 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         (next_index, range_end_utf8)
     }
 
+    /// Convert all spans in AST to UTF-16.
+    #[inline] // Because it just delegates
+    pub fn convert_program(&mut self, program: &mut Program<'_>) {
+        self.visit_program(program);
+    }
+
     /// Convert [`Span`] from UTF-8 offsets to UTF-16 offsets.
     pub fn convert_span(&mut self, span: &mut Span) {
         self.convert_offset(&mut span.start);
         self.convert_offset(&mut span.end);
+    }
+
+    /// Convert a single UTF-16 offset back to UTF-8.
+    ///
+    /// Note: This method is not optimized. It always performs a binary search.
+    /// It's only intended for use in linter, where it will be called infrequently.
+    pub fn convert_offset_back(&self, offset: &mut u32) {
+        // Find first translation whose UTF-16 offset is after `utf16_offset`
+        let utf16_offset = *offset;
+        let next_index = self.translations.partition_point(|translation| {
+            utf16_offset >= translation.utf8_offset - translation.utf16_difference
+        });
+
+        // First entry in table is `0, 0`. `partition_point` finds the first entry where
+        // `utf16_offset < translation.utf8_offset - translation.utf16_difference`
+        // (or `translations.len()` if none exists).
+        // So guaranteed `next_index > 0`, and `next_index <= translations.len()`.
+        let index = next_index - 1;
+
+        // SAFETY: `next_index <= translations.len()`, so `next_index - 1` is in bounds
+        let translation = unsafe { self.translations.get_unchecked(index) };
+
+        *offset += translation.utf16_difference;
+    }
+
+    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
+    pub fn convert_span_back(&self, span: &mut Span) {
+        self.convert_offset_back(&mut span.start);
+        self.convert_offset_back(&mut span.end);
     }
 }
 

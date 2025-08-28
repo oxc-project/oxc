@@ -20221,22 +20221,22 @@ after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(3): [ReferenceId(2)]
-rebuilt        : SymbolId(8): []
+rebuilt        : SymbolId(7): []
 Symbol flags mismatch for "E":
 after transform: SymbolId(5): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
-after transform: SymbolId(5): [ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(42), ReferenceId(47), ReferenceId(48), ReferenceId(55), ReferenceId(56)]
-rebuilt        : SymbolId(10): [ReferenceId(30), ReferenceId(39), ReferenceId(40), ReferenceId(53), ReferenceId(54)]
+after transform: SymbolId(5): [ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(42), ReferenceId(47), ReferenceId(48)]
+rebuilt        : SymbolId(9): [ReferenceId(30), ReferenceId(39), ReferenceId(40)]
 Unresolved references mismatch:
-after transform: ["Boolean", "Object", "String", "require"]
-rebuilt        : ["Boolean", "Object", "require"]
+after transform: ["Boolean", "Number", "Object", "String", "require"]
+rebuilt        : ["Boolean", "Number", "Object", "require"]
 Unresolved reference IDs mismatch for "Boolean":
 after transform: [ReferenceId(20), ReferenceId(21), ReferenceId(24)]
 rebuilt        : [ReferenceId(14)]
 Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(0), ReferenceId(18), ReferenceId(25), ReferenceId(51), ReferenceId(53), ReferenceId(59), ReferenceId(61)]
-rebuilt        : [ReferenceId(9), ReferenceId(19), ReferenceId(42), ReferenceId(47), ReferenceId(56), ReferenceId(61)]
+after transform: [ReferenceId(0), ReferenceId(18), ReferenceId(25), ReferenceId(51), ReferenceId(53), ReferenceId(57)]
+rebuilt        : [ReferenceId(9), ReferenceId(19), ReferenceId(42), ReferenceId(47), ReferenceId(57)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfUnionWithNull.ts
 Symbol reference IDs mismatch for "A":

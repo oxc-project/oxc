@@ -5,7 +5,9 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use crate::{Options, worker::WorkspaceWorker};
+use crate::{
+    Options, linter::server_linter::ServerLinterRun, options::Run, worker::WorkspaceWorker,
+};
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -113,12 +115,33 @@ impl Tester<'_> {
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
     /// and return the resulting diagnostics in a custom snapshot format.
-    #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
+        self.test_and_snapshot_single_file_with_run_type(
+            relative_file_path,
+            self.options.as_ref().map_or(Run::default(), |o| o.run),
+        );
+    }
+
+    #[expect(clippy::disallowed_methods)]
+    pub fn test_and_snapshot_single_file_with_run_type(
+        &self,
+        relative_file_path: &str,
+        run_type: Run,
+    ) {
         let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-        let reports = tokio::runtime::Runtime::new()
-            .unwrap()
-            .block_on(async { self.create_workspace_worker().await.lint_file(&uri, None).await });
+        let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            self.create_workspace_worker()
+                .await
+                .lint_file(
+                    &uri,
+                    None,
+                    match run_type {
+                        Run::OnSave => ServerLinterRun::OnSave,
+                        Run::OnType => ServerLinterRun::OnType,
+                    },
+                )
+                .await
+        });
         let snapshot = if let Some(reports) = reports {
             if reports.is_empty() {
                 "No diagnostic reports".to_string()

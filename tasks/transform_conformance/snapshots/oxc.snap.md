@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 183/304
+Passed: 183/306
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -539,7 +539,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (6/80)
+# legacy-decorators (6/81)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -561,6 +561,104 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/enum-types/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["StringEnum", "bar", "foo"]
+rebuilt        : ScopeId(1): ["StringEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["TemplateStringEnum", "mixed", "template"]
+rebuilt        : ScopeId(2): ["TemplateStringEnum"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["NumberEnum", "a", "b"]
+rebuilt        : ScopeId(3): ["NumberEnum"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(4): ["BigIntEnum", "big", "bigger"]
+rebuilt        : ScopeId(4): ["BigIntEnum"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(5): ["UnaryEnum", "bitwise", "negative", "positive"]
+rebuilt        : ScopeId(5): ["UnaryEnum"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(0x0)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(6): ["AutoIncrementEnum", "first", "second", "third"]
+rebuilt        : ScopeId(6): ["AutoIncrementEnum"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(7): ["MixedEnum", "num", "str"]
+rebuilt        : ScopeId(7): ["MixedEnum"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(8): ["ComputedEnum", "computed", "expression"]
+rebuilt        : ScopeId(8): ["ComputedEnum"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(0x0)
+rebuilt        : ScopeId(8): ScopeFlags(Function)
+Symbol flags mismatch for "StringEnum":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "StringEnum":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(18), ReferenceId(24)]
+rebuilt        : SymbolId(0): [ReferenceId(3)]
+Symbol flags mismatch for "TemplateStringEnum":
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "TemplateStringEnum":
+after transform: SymbolId(3): [ReferenceId(4), ReferenceId(28)]
+rebuilt        : SymbolId(2): [ReferenceId(7)]
+Symbol flags mismatch for "NumberEnum":
+after transform: SymbolId(6): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "NumberEnum":
+after transform: SymbolId(6): [ReferenceId(6), ReferenceId(19), ReferenceId(20), ReferenceId(34)]
+rebuilt        : SymbolId(4): [ReferenceId(13), ReferenceId(48)]
+Symbol flags mismatch for "BigIntEnum":
+after transform: SymbolId(9): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "BigIntEnum":
+after transform: SymbolId(9): [ReferenceId(8), ReferenceId(40)]
+rebuilt        : SymbolId(6): [ReferenceId(19)]
+Symbol flags mismatch for "UnaryEnum":
+after transform: SymbolId(12): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "UnaryEnum":
+after transform: SymbolId(12): [ReferenceId(10), ReferenceId(48)]
+rebuilt        : SymbolId(8): [ReferenceId(27)]
+Symbol flags mismatch for "AutoIncrementEnum":
+after transform: SymbolId(16): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "AutoIncrementEnum":
+after transform: SymbolId(16): [ReferenceId(12), ReferenceId(56)]
+rebuilt        : SymbolId(10): [ReferenceId(35)]
+Symbol flags mismatch for "MixedEnum":
+after transform: SymbolId(20): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "MixedEnum":
+after transform: SymbolId(20): [ReferenceId(14), ReferenceId(61)]
+rebuilt        : SymbolId(12): [ReferenceId(40)]
+Symbol flags mismatch for "ComputedEnum":
+after transform: SymbolId(23): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "ComputedEnum":
+after transform: SymbolId(23): [ReferenceId(16), ReferenceId(67)]
+rebuilt        : SymbolId(14): [ReferenceId(47)]
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
@@ -1514,7 +1612,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (21/35)
+# plugin-styled-components (21/36)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 
@@ -1534,6 +1632,9 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/does-not-replace-native-with-no-tags/input.js
+x Output mismatch
+
+* styled-components/minify-single-line-comments-with-interpolations/input.js
 x Output mismatch
 
 * styled-components/pre-transpiled/input.js
