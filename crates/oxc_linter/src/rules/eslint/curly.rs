@@ -344,28 +344,31 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         return true;
     };
 
-    // Find the start of the current line containing the statement
+    // Follow ESLint's approach: be more precise about text extraction to avoid
+    // including comments from previous lines in multi-line detection
     let source_text = ctx.source_text();
     let statement_start = span.start as usize;
     
-    // Find the beginning of the line containing this statement
+    // Find the start of the line containing the statement
     let line_start = source_text[..statement_start]
         .rfind('\n')
         .map(|pos| pos + 1)
         .unwrap_or(0);
     
-    // Special case: if next_char_offset is before the line containing the statement,
-    // and the text between contains an inline comment (// comment), 
-    // use the line start to avoid including the inline comment in the check
+    // Only adjust text_start if next_char_offset is before the current line
+    // AND there are comments in between that would affect the analysis
     let text_start = if (next_char_offset as usize) < line_start {
         let between_text = &source_text[next_char_offset as usize..line_start];
         
-        // Only apply the fix if there's an inline comment in the between text
-        // This is specifically to handle the case where an inline comment
-        // on the previous line causes false positives
+        // Check if there are line comments that would incorrectly affect the multi-line detection
+        // This specifically handles cases like:
+        // if (condition) something(); // comment
+        // else other();
         if between_text.contains("//") {
+            // Skip to line start to avoid including the comment
             line_start as u32
         } else {
+            // No comments, use original logic
             next_char_offset
         }
     } else {
@@ -855,6 +858,15 @@ fn test() {
                 else return typeof value[Symbol.iterator] === 'function';
             };",
             Some(serde_json::json!(["multi"])),
+        ),
+        // Test cases for inline comment issue - should NOT trigger curly error with multi-line setting
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root);\nelse text = extractTextFromDraftJS(rt);",
+            Some(serde_json::json!(["multi-line"])),
         ),
     ];
 
@@ -1944,24 +1956,4 @@ fn test() {
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
 
-#[test]
-fn test_curly_inline_comment_issue() {
-    use crate::tester::Tester;
 
-    let pass = vec![
-        // This should NOT trigger curly error with multi-line setting
-        (
-            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
-            Some(serde_json::json!(["multi-line"])),
-        ),
-        // This should also NOT trigger curly error with multi-line setting 
-        (
-            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root);\nelse text = extractTextFromDraftJS(rt);",
-            Some(serde_json::json!(["multi-line"])),
-        ),
-    ];
-
-    let fail = vec![];
-
-    Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).test_and_snapshot();
-}
