@@ -9,7 +9,7 @@ use crate::{GlobalContext, ToBoolean, ToJsString, ToNumber};
 pub enum ConstantValue<'a> {
     Number(f64),
     BigInt(BigInt),
-    String(Cow<'a, str>),
+    String((Cow<'a, str>, /* lone_surrogates */ bool)),
     Boolean(bool),
     Undefined,
     Null,
@@ -40,7 +40,7 @@ impl<'a> ConstantValue<'a> {
         matches!(self, Self::Null)
     }
 
-    pub fn into_string(self) -> Option<Cow<'a, str>> {
+    pub fn into_string(self) -> Option<(Cow<'a, str>, /* lone_surrogates */ bool)> {
         match self {
             Self::String(s) => Some(s),
             _ => None,
@@ -70,18 +70,21 @@ impl<'a> ConstantValue<'a> {
 }
 
 impl<'a> ToJsString<'a> for ConstantValue<'a> {
-    fn to_js_string(&self, _ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _ctx: &impl GlobalContext<'a>,
+    ) -> Option<(Cow<'a, str>, /* lone_surrogates */ bool)> {
         match self {
             Self::Number(n) => {
                 use oxc_syntax::number::ToJsString;
-                Some(Cow::Owned(n.to_js_string()))
+                Some((Cow::Owned(n.to_js_string()), false))
             }
             // https://tc39.es/ecma262/#sec-numeric-types-bigint-tostring
-            Self::BigInt(n) => Some(Cow::Owned(n.to_string())),
+            Self::BigInt(n) => Some((Cow::Owned(n.to_string()), false)),
             Self::String(s) => Some(s.clone()),
-            Self::Boolean(b) => Some(Cow::Borrowed(if *b { "true" } else { "false" })),
-            Self::Undefined => Some(Cow::Borrowed("undefined")),
-            Self::Null => Some(Cow::Borrowed("null")),
+            Self::Boolean(b) => Some((Cow::Borrowed(if *b { "true" } else { "false" }), false)),
+            Self::Undefined => Some((Cow::Borrowed("undefined"), false)),
+            Self::Null => Some((Cow::Borrowed("null"), false)),
         }
     }
 }
@@ -92,7 +95,7 @@ impl<'a> ToNumber<'a> for ConstantValue<'a> {
         match self {
             Self::Number(n) => Some(*n),
             Self::BigInt(_) => None,
-            Self::String(s) => Some(s.as_ref().string_to_number()),
+            Self::String((s, _)) => Some(s.as_ref().string_to_number()),
             Self::Boolean(true) => Some(1.0),
             Self::Boolean(false) | Self::Null => Some(0.0),
             Self::Undefined => Some(f64::NAN),
@@ -105,7 +108,7 @@ impl<'a> ToBoolean<'a> for ConstantValue<'a> {
         match self {
             Self::Number(n) => Some(!n.is_nan() && *n != 0.0),
             Self::BigInt(n) => Some(*n != BigInt::zero()),
-            Self::String(s) => Some(!s.as_ref().is_empty()),
+            Self::String((s, _)) => Some(!s.as_ref().is_empty()),
             Self::Boolean(b) => Some(*b),
             Self::Null | Self::Undefined => Some(false),
         }

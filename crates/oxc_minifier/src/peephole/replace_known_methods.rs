@@ -1662,9 +1662,11 @@ mod test {
         test("x = encodeURI('hello\\t\\n')", "x = 'hello%09%0A'");
         test("x = encodeURI('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
         test("x = encodeURI('测试')", "x = '%E6%B5%8B%E8%AF%95'");
+        test("x = encodeURI('\\uD800\\uDE00')", "x = '%F0%90%88%80'");
 
         test_same("x = encodeURI('a', 'b')");
         test_same("x = encodeURI(x)");
+        test_same("x = encodeURI('\\uD800')"); // URI malformed
     }
 
     #[test]
@@ -1681,9 +1683,11 @@ mod test {
         test("x = encodeURIComponent('hello<>\"')", "x = 'hello%3C%3E%22'");
         test("x = encodeURIComponent('café')", "x = 'caf%C3%A9'"); // spellchecker:disable-line
         test("x = encodeURIComponent('测试')", "x = '%E6%B5%8B%E8%AF%95'");
+        test("x = encodeURIComponent('\\uD800\\uDE00')", "x = '%F0%90%88%80'");
 
         test_same("x = encodeURIComponent('a', 'b')");
         test_same("x = encodeURIComponent(x)");
+        test_same("x = encodeURIComponent('\\uD800')"); // URI malformed
     }
 
     #[test]
@@ -1702,6 +1706,7 @@ mod test {
         test("x = decodeURI('hello%09%0A')", "x = 'hello\\t\\n'");
         test("x = decodeURI('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
         test("x = decodeURI('%E6%B5%8B%E8%AF%95')", "x = '测试'");
+        test("x = decodeURI('\\uD800')", "x = '\\uD800'");
 
         test_same("x = decodeURI('%ZZ')"); // URIError
         test_same("x = decodeURI('%A')"); // URIError
@@ -1725,6 +1730,7 @@ mod test {
         test("x = decodeURIComponent('hello%09%0A')", "x = 'hello\\t\\n'");
         test("x = decodeURIComponent('caf%C3%A9')", "x = 'café'"); // spellchecker:disable-line
         test("x = decodeURIComponent('%E6%B5%8B%E8%AF%95')", "x = '测试'");
+        test("x = decodeURIComponent('\\uD800')", "x = '\\uD800'");
 
         test_same("x = decodeURIComponent('%ZZ')"); // URIError
         test_same("x = decodeURIComponent('%A')"); // URIError

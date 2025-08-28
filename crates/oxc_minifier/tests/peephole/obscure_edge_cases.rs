@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use super::{test, test_output, test_same};
 
 /// Tests for edge cases that should reveal minification problems
 /// Focus on cases where optimizations might be unsafe or incorrect
@@ -34,6 +34,10 @@ fn test_string_concatenation_edge_cases() {
     test("return 'hello ' + 'world'", "return 'hello world'"); // string literal concatenation
     test("return 'count: ' + 42", "return 'count: 42'"); // string + number concatenation
     test("return 42 + ' items'", "return '42 items'"); // number + string concatenation
+
+    // Test cases where string lone surrogates is optimized
+    test_output("return '\\uD83D' + '\\uDD25';", "return '\\ud83d\\udd25';");
+    test_output("return `\\uD83D` + `\\uDD25`;", "return '\\ud83d\\udd25';");
 
     // Test with complex expressions - should not optimize if there are side effects
     test_same("return getValue() + 'suffix'");
