@@ -107,10 +107,11 @@ impl LintCommand {
 pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
     ///  * only `.json` extension is supported
+    ///  * you can use comments in configuration files.
     ///  * tries to be compatible with the ESLint v8's format
     ///
     /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
-    #[bpaf(long, short, argument("./oxlintrc.json"))]
+    #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
