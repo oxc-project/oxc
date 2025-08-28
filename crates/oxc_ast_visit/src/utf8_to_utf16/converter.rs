@@ -1,7 +1,10 @@
 use std::cmp::min;
 
+use oxc_ast::ast::Program;
 use oxc_span::Span;
 use oxc_syntax::module_record::VisitMutModuleRecord;
+
+use crate::VisitMut;
 
 use super::Translation;
 
@@ -278,6 +281,12 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         // We started search at a non-zero index, so `next_index` cannot be 0.
         // `next_index <= translations.len()`.
         (next_index, range_end_utf8)
+    }
+
+    /// Convert all spans in AST to UTF-16.
+    #[inline] // Because it just delegates
+    pub fn convert_program(&mut self, program: &mut Program<'_>) {
+        self.visit_program(program);
     }
 
     /// Convert [`Span`] from UTF-8 offsets to UTF-16 offsets.

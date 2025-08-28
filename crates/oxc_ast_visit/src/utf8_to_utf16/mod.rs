@@ -4,8 +4,6 @@ use oxc_ast::ast::{Comment, Program};
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
-use crate::VisitMut;
-
 mod converter;
 mod translation;
 mod visit;
@@ -61,7 +59,7 @@ impl Utf8ToUtf16 {
     /// Convert all spans in AST to UTF-16.
     pub fn convert_program(&self, program: &mut Program<'_>) {
         if let Some(mut converter) = self.converter() {
-            converter.visit_program(program);
+            converter.convert_program(program);
         }
     }
 
@@ -86,7 +84,7 @@ impl Utf8ToUtf16 {
 
         // SAFETY: We just checked `translations` contains at least 2 entries
         let mut converter = unsafe { Utf8ToUtf16Converter::new(&self.translations, true) };
-        converter.visit_program(program);
+        converter.convert_program(program);
     }
 
     /// Convert all spans in comments to UTF-16.
