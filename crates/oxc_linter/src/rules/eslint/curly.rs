@@ -1,5 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{AstKind, ast::Statement, CommentKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -327,56 +327,14 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         u32::try_from(node_string.trim_end_matches(|c: char| c.is_whitespace() || c == ';').len())
             .expect("Failed to convert to u32");
 
-    let before_node_span = get_token_before(node, ctx).map_or_else(
-        || {
-            let parent = ctx.nodes().parent_node(node.id());
-
-            if parent.span().start < span.start {
-                Span::empty(parent.span().start)
-            } else {
-                Span::empty(0)
-            }
-        },
-        oxc_span::GetSpan::span,
-    );
+    let before_node_span = get_token_before_span(node, ctx);
 
     let Some(next_char_offset) = get_next_char_offset(before_node_span, ctx) else {
         return true;
     };
 
-    // Follow ESLint's approach: be more precise about text extraction to avoid
-    // including comments from previous lines in multi-line detection
-    let source_text = ctx.source_text();
-    let statement_start = span.start as usize;
-    
-    // Find the start of the line containing the statement
-    let line_start = source_text[..statement_start]
-        .rfind('\n')
-        .map(|pos| pos + 1)
-        .unwrap_or(0);
-    
-    // Only adjust text_start if next_char_offset is before the current line
-    // AND there are comments in between that would affect the analysis
-    let text_start = if (next_char_offset as usize) < line_start {
-        let between_text = &source_text[next_char_offset as usize..line_start];
-        
-        // Check if there are line comments that would incorrectly affect the multi-line detection
-        // This specifically handles cases like:
-        // if (condition) something(); // comment
-        // else other();
-        if between_text.contains("//") {
-            // Skip to line start to avoid including the comment
-            line_start as u32
-        } else {
-            // No comments, use original logic
-            next_char_offset
-        }
-    } else {
-        next_char_offset
-    };
-    
     let text = ctx.source_range(Span::new(
-        text_start,
+        next_char_offset,
         span.end - ((node_string.len() as u32) - trimmed_len),
     ));
 
@@ -393,10 +351,43 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     !trimmed.contains('\n')
 }
 
-fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
+fn get_token_before_span(node: &AstNode, ctx: &LintContext) -> Span {
     let span_start = node.span().start;
-    ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
+    
+    if let Some(token) = ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end) {
+        let token_span = token.span();
+        
+        // Check if there are any line comments between this token and the current node
+        let line_comments_between: Vec<_> = ctx.comments()
+            .iter()
+            .filter(|comment| {
+                comment.kind == CommentKind::Line 
+                    && comment.span.start >= token_span.end 
+                    && comment.span.end < span_start
+            })
+            .collect();
+        
+        if !line_comments_between.is_empty() {
+            // Find the last line comment before the current node
+            if let Some(last_comment) = line_comments_between.iter().max_by_key(|comment| comment.span.end) {
+                // Return a span that ends at the end of the last comment
+                // This way, get_next_char_offset will start from after the comment
+                return Span::new(last_comment.span.start, last_comment.span.end);
+            }
+        }
+        
+        token_span
+    } else {
+        // Fallback logic from the original code
+        let parent = ctx.nodes().parent_node(node.id());
+        if parent.span().start < span_start {
+            Span::empty(parent.span().start)
+        } else {
+            Span::empty(0)
+        }
+    }
 }
+
 
 pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
     let Statement::BlockStatement(block) = node else {
