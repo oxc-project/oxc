@@ -337,7 +337,11 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
-        self.code = lit.single_quasi().map(|quasi| quasi.to_string());
+        self.code = Some(
+            lit.single_quasi()
+                .expect("Expected template literal to have a single quasi")
+                .to_string(),
+        );
         self.config = None;
     }
 
@@ -676,7 +680,7 @@ impl RuleConfigOutput {
         }
     }
 
-    fn log_error(&mut self, message: &String) {
+    fn log_error(&mut self, message: &str) {
         if self.log_errors {
             println!("\x1b[31m[ERROR]\x1b[0m: {message}");
         }
@@ -895,7 +899,7 @@ impl<'a> RuleConfig<'a> {
         Self { elements: vec![], next_element: None, source_text, has_errors: false, log_errors }
     }
 
-    fn log_error(&mut self, message: &String) {
+    fn log_error(&mut self, message: &str) {
         if self.log_errors {
             println!("\x1b[31m[ERROR]\x1b[0m: {message}");
         }
