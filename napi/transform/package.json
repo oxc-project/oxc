@@ -1,11 +1,11 @@
 {
   "name": "oxc-transform",
   "version": "0.82.3",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi build --platform",
+    "build-dev": "napi build --esm --platform",
     "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
