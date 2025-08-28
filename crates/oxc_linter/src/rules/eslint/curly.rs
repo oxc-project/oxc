@@ -344,8 +344,27 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         return true;
     };
 
+    // Find the start of the current line containing the statement
+    let source_text = ctx.source_text();
+    let statement_start = span.start as usize;
+    
+    // Find the beginning of the line containing this statement
+    let line_start = source_text[..statement_start]
+        .rfind('\n')
+        .map(|pos| pos + 1)
+        .unwrap_or(0);
+    
+    // If next_char_offset is before the line containing the statement,
+    // use the line start instead. This handles cases where inline comments
+    // from previous lines would incorrectly be included in the check.
+    let text_start = if (next_char_offset as usize) < line_start {
+        line_start as u32
+    } else {
+        next_char_offset
+    };
+    
     let text = ctx.source_range(Span::new(
-        next_char_offset,
+        text_start,
         span.end - ((node_string.len() as u32) - trimmed_len),
     ));
 
@@ -1914,4 +1933,26 @@ fn test() {
         ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+}
+
+#[test]
+fn test_curly_inline_comment_issue() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // This should NOT trigger curly error with multi-line setting
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        // This should also NOT trigger curly error with multi-line setting 
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root);\nelse text = extractTextFromDraftJS(rt);",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+    ];
+
+    let fail = vec![];
+
+    Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).test_and_snapshot();
 }
