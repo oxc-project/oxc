@@ -285,6 +285,35 @@ impl<'t> Utf8ToUtf16Converter<'t> {
         self.convert_offset(&mut span.start);
         self.convert_offset(&mut span.end);
     }
+
+    /// Convert a single UTF-16 offset back to UTF-8.
+    ///
+    /// Note: This method is not optimized. It always performs a binary search.
+    /// It's only intended for use in linter, where it will be called infrequently.
+    pub fn convert_offset_back(&self, offset: &mut u32) {
+        // Find first translation whose UTF-16 offset is after `utf16_offset`
+        let utf16_offset = *offset;
+        let next_index = self.translations.partition_point(|translation| {
+            utf16_offset >= translation.utf8_offset - translation.utf16_difference
+        });
+
+        // First entry in table is `0, 0`. `partition_point` finds the first entry where
+        // `utf16_offset < translation.utf8_offset - translation.utf16_difference`
+        // (or `translations.len()` if none exists).
+        // So guaranteed `next_index > 0`, and `next_index <= translations.len()`.
+        let index = next_index - 1;
+
+        // SAFETY: `next_index <= translations.len()`, so `next_index - 1` is in bounds
+        let translation = unsafe { self.translations.get_unchecked(index) };
+
+        *offset += translation.utf16_difference;
+    }
+
+    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
+    pub fn convert_span_back(&self, span: &mut Span) {
+        self.convert_offset_back(&mut span.start);
+        self.convert_offset_back(&mut span.end);
+    }
 }
 
 impl VisitMutModuleRecord for Utf8ToUtf16Converter<'_> {

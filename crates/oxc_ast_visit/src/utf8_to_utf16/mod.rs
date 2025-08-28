@@ -1,6 +1,7 @@
 //! Convert UTF-8 span offsets to UTF-16.
 
 use oxc_ast::ast::{Comment, Program};
+use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
 use crate::VisitMut;
@@ -103,6 +104,20 @@ impl Utf8ToUtf16 {
             converter.visit_module_record(module_record);
         }
     }
+
+    /// Convert a single UTF-16 offset back to UTF-8.
+    pub fn convert_offset_back(&self, utf16_offset: &mut u32) {
+        if let Some(converter) = self.converter() {
+            converter.convert_offset_back(utf16_offset);
+        }
+    }
+
+    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
+    pub fn convert_span_back(&self, span: &mut Span) {
+        if let Some(converter) = self.converter() {
+            converter.convert_span_back(span);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -147,6 +162,19 @@ mod test {
         let Expression::StringLiteral(s) = &expr_stmt.expression else { unreachable!() };
         assert_eq!(s.span, Span::new(1, 5));
         assert_eq!(program.comments[0].span, Span::new(6, 11));
+
+        // Check converting back from UTF-16 to UTF-8
+        let convert_back = |utf16_offset: u32| {
+            let mut utf8_offset = utf16_offset;
+            span_converter.convert_offset_back(&mut utf8_offset);
+            utf8_offset
+        };
+
+        assert_eq!(convert_back(0), 0);
+        assert_eq!(convert_back(2), 2);
+        assert_eq!(convert_back(4), 6);
+        assert_eq!(convert_back(9), 11);
+        assert_eq!(convert_back(11), 15);
     }
 
     #[test]
@@ -245,6 +273,13 @@ mod test {
                     let mut utf16_offset = utf8_offset;
                     converter.convert_offset(&mut utf16_offset);
                     assert_eq!(utf16_offset, expected_utf16_offset);
+                }
+
+                // Convert back from UTF-16 to UTF-8
+                for &(expected_utf8_offset, utf16_offset) in &translations {
+                    let mut utf8_offset = utf16_offset;
+                    converter.convert_offset_back(&mut utf8_offset);
+                    assert_eq!(utf8_offset, expected_utf8_offset);
                 }
             } else {
                 // No Unicode chars. All offsets should be the same.
