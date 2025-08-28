@@ -719,6 +719,15 @@ mod test {
     }
 
     #[test]
+    fn ignore_patterns_whitelist() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_patterns_whitelist".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         Tester::new().test_and_snapshot(args);
