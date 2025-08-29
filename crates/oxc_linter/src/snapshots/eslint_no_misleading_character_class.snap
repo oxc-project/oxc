@@ -837,3 +837,66 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[Á]/
+   ·  ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\\̶]/
+   ·  ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\n̅]/
+   ·  ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\👍]/
+   ·  ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\è]')
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\👍]')
+   ·         ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\\👍]')
+   ·         ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\❇️]')
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
+   ·         ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
