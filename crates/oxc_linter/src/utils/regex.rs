@@ -1,5 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_regular_expression::{ConstructorParser, Options, ast::Pattern};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
@@ -16,9 +19,7 @@ where
                 cb(pat, reg.span);
             }
         }
-        AstKind::NewExpression(expr)
-            if expr.callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) =>
-        {
+        AstKind::NewExpression(expr) if is_regexp_callee(&expr.callee, ctx) => {
             // note: improvements required for strings used via identifier references
             // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
             match (&expr.arguments.first(), &expr.arguments.get(1)) {
@@ -40,9 +41,7 @@ where
         }
 
         // RegExp()
-        AstKind::CallExpression(expr)
-            if expr.callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) =>
-        {
+        AstKind::CallExpression(expr) if is_regexp_callee(&expr.callee, ctx) => {
             // note: improvements required for strings used via identifier references
             // Missing or non-string arguments will be runtime errors, but are not covered by this rule.
             match (&expr.arguments.first(), &expr.arguments.get(1)) {
@@ -64,6 +63,24 @@ where
         }
         _ => {}
     }
+}
+
+// Accepts both RegExp and globalThis.RegExp
+fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) -> bool {
+    if callee.is_global_reference_name("RegExp", ctx.semantic().scoping()) {
+        return true;
+    }
+    // Check for globalThis.RegExp (StaticMemberExpression)
+    if let Expression::StaticMemberExpression(member) = callee {
+        if let Expression::Identifier(obj) = &member.object {
+            if obj.is_global_reference_name("globalThis", ctx.semantic().scoping())
+                && member.property.name == "RegExp"
+            {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn parse_regex<'a>(
