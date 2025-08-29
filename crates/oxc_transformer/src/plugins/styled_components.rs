@@ -1045,6 +1045,12 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                             }
                             // Skip line comments, but be careful not to break URLs like `https://...`
                             b'/' if paren_depth == 0 && (i == 0 || bytes[i - 1] != b':') => {
+                                // Remove trailing space before comment.
+                                // Comment will end with a line break, so space will be added again if required.
+                                if output.last().is_some_and(|&last| last == b' ') {
+                                    output.pop();
+                                }
+
                                 let end_index =
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
