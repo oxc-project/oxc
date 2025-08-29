@@ -1,8 +1,8 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::ast::{ArrowFunctionExpression, FunctionBody, ReturnStatement};
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{ArrowFunctionExpression, FunctionBody, ReturnStatement},
+    ast::{Expression, Statement}
 };
 use oxc_allocator::{Box as OxcBox};
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,14 +29,6 @@ impl Mode {
             "never" => Self::Never,
             _ => Self::AsNeeded,
         }
-    }
-
-    pub fn is_always(&self) -> bool {
-        matches!(self, Self::Always)
-    }
-
-    pub fn is_as_needed(&self) -> bool {
-        matches!(self, Self::AsNeeded)
     }
 }
 
@@ -152,7 +144,6 @@ declare_oxc_lint!(
     ///     return retv;
     /// };
     ///
-    /// /* ✔ Good: */
     /// const foo3 = () => {
     ///     bar();
     /// };
@@ -183,6 +174,13 @@ declare_oxc_lint!(
     pending,
 );
 
+fn diagnostic_expected_block(ctx: &LintContext, span: Span) {
+    ctx.diagnostic(arrow_body_style_diagnostic(
+        span,
+        "Expected block statement surrounding arrow body.",
+    ));
+}
+
 impl ArrowBodyStyle {
     fn run_for_arrow_expression(
         &self,
@@ -190,25 +188,10 @@ impl ArrowBodyStyle {
         ctx: &LintContext,
     ) {
         let body = &arrow_func_expr.body;
-        if self.mode.is_always() {
-            ctx.diagnostic(arrow_body_style_diagnostic(
-                body.span,
-                "Expected block statement surrounding arrow body.",
-            ));
-            return;
-        }
-        if !self.mode.is_as_needed() || !self.require_return_for_object_literal {
-            return;
-        }
-
-        if matches!(
-            arrow_func_expr.get_expression().map(Expression::get_inner_expression),
-            Some(Expression::ObjectExpression(_))
-        ) {
-            ctx.diagnostic(arrow_body_style_diagnostic(
-                body.span,
-                "Expected block statement surrounding arrow body.",
-            ));
+        match (&self.mode, &self.require_return_for_object_literal, arrow_func_expr.get_expression().map(Expression::get_inner_expression)) {
+            (Mode::Always, _, _) => diagnostic_expected_block(ctx, body.span),
+            (Mode::AsNeeded, true, Some(Expression::ObjectExpression(_))) => diagnostic_expected_block(ctx, body.span),
+            _ => {}
         }
     }
 
