@@ -19,7 +19,5 @@ jobs:
     uses: ./.github/workflows/reusable_release_napi.yml
     with:
       name: minify
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:
       id-token: write # for `pnpm publish --provenance`

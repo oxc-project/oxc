@@ -9,9 +9,6 @@ on:
         required: true
         type: string
         description: "The component name"
-    secrets:
-      NPM_TOKEN:
-        required: true
 
 jobs:
   check:
@@ -250,12 +247,9 @@ jobs:
           done
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
 
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Trusted Publish
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS}

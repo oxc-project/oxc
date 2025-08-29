@@ -52,8 +52,7 @@ jobs:
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
-      - name: Publish
+      # Trusted publishing is configured, publish token is not required.
+      - name: Trusted Publish
         working-directory: npm/oxc-types
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks
