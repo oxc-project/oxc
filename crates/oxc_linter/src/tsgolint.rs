@@ -11,12 +11,13 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use crate::fixer::{CompositeFix, Message, PossibleFixes};
-
 use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
 
 #[cfg(feature = "language_server")]
-use crate::lsp::{MessageWithPosition, message_to_message_with_position};
+use crate::{
+    fixer::{CompositeFix, Message, PossibleFixes},
+    lsp::{MessageWithPosition, message_to_message_with_position},
+};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -564,6 +565,7 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
     }
 }
 
+#[cfg(feature = "language_server")]
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
