@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 47/47 (100.00%)
-Positive Passed: 47/47 (100.00%)
-Negative Passed: 77/77 (100.00%)
+AST Parsed     : 48/48 (100.00%)
+Positive Passed: 48/48 (100.00%)
+Negative Passed: 78/78 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -444,6 +444,46 @@ Negative Passed: 77/77 (100.00%)
    ·         ─────
  6 │       },
    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:3:5]
+ 2 │   foo: function() {
+ 3 │     super.foo;
+   ·     ─────
+ 4 │   },
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:8:7]
+ 7 │     return function() {
+ 8 │       super.bar;
+   ·       ─────
+ 9 │     };
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:12:18]
+ 11 │ 
+ 12 │   [ function() { super.qux; } ]() {},
+    ·                  ─────
+ 13 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:14:22]
+ 13 │ 
+ 14 │   get [ function() { super.bing; } ]() {},
+    ·                      ─────
+ 15 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:16:22]
+ 15 │ 
+ 16 │   set [ function() { super.bong; } ](v) {},
+    ·                      ─────
+ 17 │ };
+    ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]

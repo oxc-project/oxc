@@ -3,7 +3,7 @@ commit: 41d96516
 parser_babel Summary:
 AST Parsed     : 2407/2423 (99.34%)
 Positive Passed: 2385/2423 (98.43%)
-Negative Passed: 1645/1755 (93.73%)
+Negative Passed: 1646/1755 (93.79%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -19,8 +19,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/co
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-false/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 
@@ -2961,6 +2959,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/class/invalid-escape-static/input.js:1:11]
  1 │ class X { st\u0061tic y() {} }
    ·           ───────────
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js:4:14]
+ 3 │     get: function(){
+ 4 │       return super.foo;
+   ·              ─────
+ 5 │     }
    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
