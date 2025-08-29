@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 185/308
+Passed: 186/309
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1612,7 +1612,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (23/38)
+# plugin-styled-components (24/39)
 * minify-comments/input.js
 Unresolved references mismatch:
 after transform: ["x", "y", "z"]

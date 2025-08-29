@@ -989,9 +989,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 continue;
                             }
                             b'n' | b'r' if string_quote == NOT_IN_STRING => {
-                                if output.last().is_some_and(|&last| last != b' ') {
-                                    output.push(b' ');
-                                }
+                                insert_space_if_required(&mut output, quasi_index);
                                 i += 2;
                                 continue;
                             }
