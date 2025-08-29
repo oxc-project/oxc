@@ -44,30 +44,6 @@ pub fn is_meaningful_jsx_text(text: &str) -> bool {
     !has_newline
 }
 
-/// Tests if a JSX element has a suppression comment or not.
-///
-/// Suppression for JSX elements differs from regular nodes if they are inside of a JSXFragment or JSXElement children
-/// because they can then not be preceded by a comment.
-///
-/// A JSX element inside of a JSX children list is suppressed if its first preceding sibling (that contains meaningful text)
-/// is a JSXExpressionContainer, not containing any expression, with a dangling suppression comment.
-///
-/// ```javascript
-/// <div>
-///   {/* oxc-formatter-ignore */}
-///   <div a={  some} />
-///   </div>
-/// ```
-pub fn is_jsx_suppressed<'a>(
-    element: &AstNode<'a, JSXElement<'a>>,
-    comments: &crate::formatter::comments::Comments<'a>,
-) -> bool {
-    // TODO: Implement suppression logic for OXC
-    // This is a placeholder - need to implement proper suppression detection
-    // based on OXC's comment system
-    false
-}
-
 /// Indicates that an element should always be wrapped in parentheses, should be wrapped
 /// only when it's line broken, or should not be wrapped at all.
 #[derive(Copy, Clone, Debug)]

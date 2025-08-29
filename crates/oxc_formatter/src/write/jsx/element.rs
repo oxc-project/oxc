@@ -9,7 +9,10 @@ use crate::{
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
-    utils::jsx::{WrapState, get_wrap_state, is_meaningful_jsx_text},
+    utils::{
+        jsx::{WrapState, get_wrap_state, is_meaningful_jsx_text},
+        suppressed::FormatSuppressedNode,
+    },
     write,
     write::{
         FormatWrite,
@@ -27,6 +30,13 @@ pub enum AnyJsxTagWithChildren<'a, 'b> {
 }
 
 impl<'a> AnyJsxTagWithChildren<'a, '_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Element(element) => element.span(),
+            Self::Fragment(fragment) => fragment.span(),
+        }
+    }
+
     fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
             Self::Element(element) => element.format_leading_comments(f),
@@ -51,7 +61,13 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
 
 impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+
         let format_tag = format_once(|f| {
+            if is_suppressed {
+                return FormatSuppressedNode(self.span()).fmt(f);
+            }
+
             let format_opening = format_with(|f| self.fmt_opening(f));
             let format_closing = format_with(|f| self.fmt_closing(f));
 

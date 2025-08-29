@@ -1,4 +1,4 @@
-ts compatibility: 330/573 (57.59%)
+ts compatibility: 331/573 (57.77%)
 
 # Failed
 
@@ -6,7 +6,6 @@ ts compatibility: 330/573 (57.59%)
 | :-------- | :--------------: | :---------: |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
@@ -152,7 +151,7 @@ ts compatibility: 330/573 (57.59%)
 | typescript/infer-extends/basic.ts | 💥 | 66.67% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/generic.ts | 💥💥 | 75.00% |
-| typescript/interface/ignore.ts | 💥💥 | 83.57% |
+| typescript/interface/ignore.ts | 💥💥 | 94.84% |
 | typescript/interface/long-extends.ts | 💥💥 | 72.22% |
 | typescript/interface/separator.ts | 💥✨ | 36.11% |
 | typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 41.46% |
@@ -191,8 +190,8 @@ ts compatibility: 330/573 (57.59%)
 | typescript/optional-variance/with-jsx.tsx | 💥 | 59.02% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/predicate-types/predicate-types.ts | 💥 | 50.00% |
-| typescript/prettier-ignore/mapped-types.ts | 💥 | 58.49% |
-| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 5.56% |
+| typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
+| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 15.79% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
 | typescript/readonly/array.ts | 💥 | 0.00% |
@@ -241,7 +240,7 @@ ts compatibility: 330/573 (57.59%)
 | typescript/union/union-parens.ts | 💥 | 54.00% |
 | typescript/union/with-type-params.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 0.00% |
-| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 10.00% |
+| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 19.05% |
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 3.39% |
 | typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 16.51% |
 | typescript/union/single-type/single-type.ts | 💥 | 33.33% |

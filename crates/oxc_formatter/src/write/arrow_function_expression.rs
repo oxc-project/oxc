@@ -309,10 +309,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                         if matches!(
                             options.call_arg_layout,
                             None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        )
-                        // TODO: Unsupported yet
-                        //  && !comments.is_suppressed(next.span())
-                        {
+                        ) {
                             should_break = should_break || Self::should_break_chain(current);
 
                             should_break = should_break || Self::should_break_chain(next);

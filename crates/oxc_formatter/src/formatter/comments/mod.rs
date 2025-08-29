@@ -326,6 +326,12 @@ impl<'a> Comments<'a> {
         self.printed_count += 1;
     }
 
+    /// Increases the printed count by the given amount.
+    #[inline]
+    pub fn increase_printed_count_by(&mut self, count: usize) {
+        self.printed_count += count;
+    }
+
     pub fn get_trailing_comments(
         &self,
         enclosing_node: &SiblingNode<'a>,
@@ -475,6 +481,14 @@ impl<'a> Comments<'a> {
         }
 
         &[]
+    }
+
+    /// Check whether the node has an ignore comment.
+    pub fn is_suppressed(&self, start: u32) -> bool {
+        self.comments_before(start).iter().any(|comment| {
+            // TODO: should replace `prettier-ignore` with `oxc-formatter-ignore` or something else later.
+            comment.content_span().source_text(self.source_text).trim() == "prettier-ignore"
+        })
     }
 }
 

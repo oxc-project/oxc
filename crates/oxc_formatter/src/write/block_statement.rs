@@ -63,13 +63,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
 }
 
 pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
-    block.is_empty()
-        || block.iter().all(|s| {
-            matches!(s, Statement::EmptyStatement(_))
-            // TODO: it seems removing `has_comments` doesn't break anything, needs to check further
-            // && !f.comments().has_comments(s.span())
-            // && !f.comments().is_suppressed(s.span())
-        })
+    block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
 }
 
 /// Formatting of curly braces for an:

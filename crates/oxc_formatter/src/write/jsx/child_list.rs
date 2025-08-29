@@ -1,5 +1,6 @@
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     FormatResult, format_args,
@@ -8,9 +9,12 @@ use crate::{
         prelude::{tag::GroupMode, *},
     },
     generated::ast_nodes::AstNode,
-    utils::jsx::{
-        JsxChild, JsxChildrenIterator, JsxRawSpace, JsxSpace, is_meaningful_jsx_text,
-        is_whitespace_jsx_expression, jsx_split_children,
+    utils::{
+        jsx::{
+            JsxChild, JsxChildrenIterator, JsxRawSpace, JsxSpace, is_meaningful_jsx_text,
+            is_whitespace_jsx_expression, jsx_split_children,
+        },
+        suppressed::FormatSuppressedNode,
     },
     write,
 };
@@ -54,6 +58,7 @@ impl FormatJsxChildList {
             children.pop();
         }
 
+        let mut is_next_child_suppressed = false;
         let mut last: Option<&JsxChild> = None;
         let mut children_iter = JsxChildrenIterator::new(children.iter());
 
@@ -230,6 +235,7 @@ impl FormatJsxChildList {
 
                 // Any child that isn't text
                 JsxChild::NonText(non_text) => {
+                    let mut is_non_text_node_next = false;
                     let line_mode = match children_iter.peek() {
                         Some(JsxChild::Word(word)) => {
                             // Break if the current or next element is a self closing element
@@ -251,7 +257,10 @@ impl FormatJsxChildList {
                         }
 
                         // Add a hard line break if what comes after the element is not a text or is all whitespace
-                        Some(JsxChild::NonText(_)) => Some(LineMode::Hard),
+                        Some(JsxChild::NonText(_)) => {
+                            is_non_text_node_next = true;
+                            Some(LineMode::Hard)
+                        }
 
                         Some(JsxChild::Newline | JsxChild::Whitespace | JsxChild::EmptyLine) => {
                             None
@@ -262,16 +271,47 @@ impl FormatJsxChildList {
 
                     child_breaks = line_mode.is_some_and(LineMode::is_hard);
 
+                    let mut child_should_be_suppressed = is_next_child_suppressed;
+                    let format_child = format_once(|f| {
+                        if child_should_be_suppressed {
+                            FormatSuppressedNode(non_text.span()).fmt(f)
+                        } else {
+                            non_text.fmt(f)
+                        }
+                    });
+
+                    // Tests if a JSX element has a suppression comment or not.
+                    //
+                    // Suppression for JSX elements differs from regular nodes if they are inside of a JSXFragment or JSXElement children
+                    // because they can then not be preceded by a comment.
+                    //
+                    // A JSX element inside of a JSX children list is suppressed if its first preceding sibling (that contains meaningful text)
+                    // is a JSXExpressionContainer, not containing any expression, with a dangling suppression comment.
+                    //
+                    // ```javascript
+                    // <div>
+                    //   {/* prettier-ignore */}
+                    //   <div a={  some} />
+                    //   </div>
+                    // ```
+                    //
+                    is_next_child_suppressed = child_breaks
+                        && is_non_text_node_next
+                        && matches!(non_text.as_ref(), JSXChild::ExpressionContainer(element) if
+                            matches!(&element.expression, JSXExpression::EmptyExpression(_) if
+                            f.context().comments().is_suppressed(element.span.end)
+                        ));
+
                     let format_separator = line_mode.map(|mode| {
                         format_with(move |f| f.write_element(FormatElement::Line(mode)))
                     });
 
                     if force_multiline {
                         if let Some(format_separator) = format_separator {
-                            multiline.write_with_separator(&non_text, &format_separator, f);
+                            multiline.write_with_separator(&format_child, &format_separator, f);
                         } else {
                             // it's safe to write without a separator because None means that next element is a separator or end of the iterator
-                            multiline.write_content(&non_text, f);
+                            multiline.write_content(&format_child, f);
                         }
                     } else {
                         let mut memoized = non_text.memoized();

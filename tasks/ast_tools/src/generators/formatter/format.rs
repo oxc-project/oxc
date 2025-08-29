@@ -72,6 +72,7 @@ impl Generator for FormatterFormatGenerator {
         let output = quote! {
             #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
+            use oxc_span::GetSpan;
 
             ///@@line_break
             use crate::{
@@ -81,6 +82,7 @@ impl Generator for FormatterFormatGenerator {
                 },
                 parentheses::NeedsParentheses,
                 generated::ast_nodes::{AstNode, AstNodes, transmute_self},
+                utils::suppressed::FormatSuppressedNode,
                 write::{FormatWrite #(#options)*},
             };
 
@@ -128,7 +130,6 @@ fn generate_struct_implementation(
             if needs_parentheses {
                 "(".fmt(f)?;
             }
-
         }
     } else {
         quote! {}
@@ -139,14 +140,13 @@ fn generate_struct_implementation(
             if needs_parentheses {
                 ")".fmt(f)?;
             }
-
         }
     } else {
         quote! {}
     };
 
     let generate_fmt_implementation = |has_options: bool| {
-        let write_implementation = if has_options {
+        let write_call = if has_options {
             quote! {
                 self.write_with_options(options, f)
             }
@@ -155,12 +155,47 @@ fn generate_struct_implementation(
                 self.write(f)
             }
         };
+
+        // `Program` can't be suppressed.
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
+        let suppressed_check = if matches!(struct_name, "Program" | "JSXElement" | "JSXFragment") {
+            quote! {}
+        } else {
+            quote! {
+                let is_suppressed = f.comments().is_suppressed(self.span().start);
+            }
+        };
+
+        let write_implementation = if suppressed_check.is_empty() {
+            write_call
+        } else if trailing_comments.is_empty() {
+            quote! {
+                if is_suppressed {
+                     self.format_leading_comments(f)?;
+                    FormatSuppressedNode(self.span()).fmt(f)?;
+                     self.format_trailing_comments(f)
+                } else {
+                    #write_call
+                }
+            }
+        } else {
+            quote! {
+                if is_suppressed {
+                    FormatSuppressedNode(self.span()).fmt(f)
+                } else {
+                    #write_call
+                }
+            }
+        };
+
         if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
             quote! {
+                #suppressed_check
                 #write_implementation
             }
         } else {
             quote! {
+                #suppressed_check
                 #leading_comments
                 #needs_parentheses_before
                 let result = #write_implementation;
