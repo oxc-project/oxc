@@ -104,7 +104,7 @@ impl PrintStringState<'_> {
     /// Peek next byte in `bytes` iterator.
     #[inline]
     fn peek(&self) -> Option<u8> {
-        self.bytes.clone().next().copied()
+        self.bytes.peek_copy()
     }
 
     /// Advance the `bytes` iterator by 1 byte.
@@ -235,7 +235,7 @@ impl PrintStringState<'_> {
                 b'"' => double_cost += 1,
                 b'`' => backtick_cost += 1,
                 b'$' => {
-                    if bytes.clone().next() == Some(&b'{') {
+                    if bytes.peek() == Some(&b'{') {
                         backtick_cost += 1;
                     }
                 }
