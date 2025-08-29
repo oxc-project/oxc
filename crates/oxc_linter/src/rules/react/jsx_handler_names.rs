@@ -205,15 +205,13 @@ impl Rule for JsxHandlerNames {
                     event_handler_prop_prefixes = s;
                 }
             }
-            if let Some(raw) = options.get("checkInlineFunction") {
-                if let Some(v) = raw.as_bool() {
-                    check_inline_functions = v;
-                }
+            if let Some(v) = options.get("checkInlineFunction").and_then(serde_json::Value::as_bool)
+            {
+                check_inline_functions = v;
             }
-            if let Some(raw) = options.get("checkLocalVariables") {
-                if let Some(v) = raw.as_bool() {
-                    check_local_variables = v;
-                }
+            if let Some(v) = options.get("checkLocalVariables").and_then(serde_json::Value::as_bool)
+            {
+                check_local_variables = v;
             }
             if let Some(names) = options.get("ignoreComponentNames") {
                 if let Some(arr) = names.as_array() {
