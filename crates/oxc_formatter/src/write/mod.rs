@@ -17,6 +17,7 @@ mod member_expression;
 mod object_like;
 mod object_pattern_like;
 mod parameter_list;
+mod program;
 mod return_or_throw_statement;
 mod semicolon;
 mod sequence_expression;
@@ -38,8 +39,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Address, Box, FromIn, StringBuilder, Vec};
 use oxc_ast::{AstKind, ast::*};
-use oxc_span::{GetSpan, SPAN};
-use oxc_syntax::identifier::{ZWNBSP, is_identifier_name, is_line_terminator};
+use oxc_span::GetSpan;
 
 use crate::{
     format_args,
@@ -86,83 +86,6 @@ pub trait FormatWrite<'ast, T = ()> {
     fn write(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
     fn write_with_options(&self, options: T, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
         unreachable!("Please implement it first.");
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // Print BOM
-        if f.source_text().chars().next().is_some_and(|c| c == ZWNBSP) {
-            write!(f, "\u{feff}");
-        }
-
-        let format_trailing_comments = format_once(|f| {
-            let comments = f.context().comments().comments_before(self.span.end);
-            FormatTrailingComments::Comments(comments).fmt(f)
-        });
-        write!(
-            f,
-            [
-                self.hashbang(),
-                self.directives(),
-                self.body(),
-                format_trailing_comments,
-                hard_line_break()
-            ]
-        )
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.is_empty() {
-            return Ok(());
-        }
-        let source_text = f.context().source_text();
-        f.join_nodes_with_hardline().entries(self).finish()?;
-        // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
-        // JsDirectiveList, for example:
-        //```js
-        // "use strict"; <- first leading new_line
-        //  			 <- second leading new_line
-        // function foo() {
-
-        // }
-        //```
-        // so we should keep an extra empty line after JsDirectiveList
-        let mut chars = f.source_text()[self.last().unwrap().span().end as usize..].chars();
-        let mut count = 0;
-        for c in chars.by_ref() {
-            if is_line_terminator(c) {
-                count += 1;
-            } else {
-                break;
-            }
-        }
-        // Skip printing newlines if the file has only directives.
-        if chars.next().is_none() {
-            return Ok(());
-        }
-        let need_extra_empty_line = count > 1;
-        write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() })
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(
-            f,
-            [
-                FormatLiteralStringToken::new(
-                    self.expression().span().source_text(f.source_text()),
-                    self.expression().span(),
-                    /* jsx */
-                    false,
-                    StringLiteralParentKind::Directive,
-                ),
-                OptionalSemicolon
-            ]
-        )
     }
 }
 
@@ -514,60 +437,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.expression().fmt(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let mut join = f.join_nodes_with_hardline();
-        for stmt in
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)))
-        {
-            let span = match stmt.as_ref() {
-                // `@decorator export class A {}`
-                // Get the span of the decorator.
-                Statement::ExportNamedDeclaration(export) => {
-                    if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
-                }
-                // `@decorator export default class A {}`
-                // Get the span of the decorator.
-                Statement::ExportDefaultDeclaration(export) => {
-                    if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
-                        &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
-                }
-                _ => stmt.span(),
-            };
-
-            join.entry(span, stmt);
-        }
-        join.finish()
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
-
-        if get_lines_after(self.span.end, f.source_text()) > 1 {
-            write!(f, [empty_line()])
-        } else {
-            write!(f, [hard_line_break()])
-        }
+        unreachable!("No `ParenthesizedExpression` as we disabled `preserve_parens` in the parser")
     }
 }
 

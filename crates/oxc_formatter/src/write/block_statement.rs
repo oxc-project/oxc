@@ -1,4 +1,4 @@
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::Vec;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
@@ -14,6 +14,16 @@ use crate::{
     write,
 };
 
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.join_nodes_with_hardline()
+            .entries(
+                self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
+            )
+            .finish()
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
@@ -23,6 +33,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
         } else {
             None
         };
+
         let has_comments_before_catch_clause = comments_before_catch_clause.is_some();
         // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
         let formatted_comments_before_catch_clause = format_once(|f| {
