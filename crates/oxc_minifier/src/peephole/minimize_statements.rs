@@ -4,7 +4,7 @@ use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, ValueType},
+    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeId;
@@ -1618,8 +1618,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         // We can always reorder past primitive values
-        // TODO(sapphi-red): we may use is_literal_value after I checked if it handles edge cases properly
-        if replacement.is_literal() || target_expr.is_literal() {
+        if replacement.is_literal_value(false, ctx) || target_expr.is_literal_value(false, ctx) {
             return None;
         }
 

@@ -132,6 +132,10 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { return (arg0(), 1);}",
     );
     test_same("function wrapper(arg0, arg1) { let x = arg0; return (foo(), x(), 1);}");
+    test(
+        "function wrapper() { let x = [0, 1, 2]; return foo.bar(x);}",
+        "function wrapper() { return foo.bar([0, 1, 2]);}",
+    );
 }
 
 #[test]
