@@ -739,6 +739,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "language_server")]
 mod test {
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::{GetSpan, Span};
