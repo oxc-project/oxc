@@ -190,12 +190,9 @@ jobs:
           cat npm/oxlint/package.json
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 
-      - name: wait 3 minutes for packages to sync on npm
-        run: sleep 180s
+      - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Publish npm packages as latest
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxlint*
