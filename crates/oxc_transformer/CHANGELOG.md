@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 🐛 Bug Fixes
+
+- c900b3e transformer/styled-components: Remove more escaped line breaks in CSS minification (#13380) (overlookmotel)
+- 6dc5b70 transformer/styled-components: Remove unnecessary whitespace around block comments in CSS minification (#13379) (overlookmotel)
+- 5a25c06 transformer/legacy-decorator: Simplify enum type inference (#13357) (overlookmotel)
+- 1fca9b8 transformer/styled-components: Remove trailing whitespace in CSS minification (#13376) (overlookmotel)
+- df38b2c transformer/styled-components: Remove space before line comment in CSS minification (#13371) (overlookmotel)
+- a7a06b7 transformer/styled-components: Fix block comment containing expression in CSS minification (#13370) (overlookmotel)
+- 35d83ca transformer/styled-components: Remove repeat whitespace in CSS minification (#13369) (overlookmotel)
+- 7aff3b6 transformer/styled-components: Preserve spaces between consecutive interpolations in CSS minification (#13346) (Dunqing)
+- 24fee15 transformer/legacy-decorator: Emit correct metadata types for enum (#13327) (Dunqing)
+
+### 🚜 Refactor
+
+- be6677e transformer/styled-components: Clarify whitespace removal logic in CSS minification (#13375) (overlookmotel)
+- e7a49ed transformer/legacy-decorator: Eliminate unreliable identification of metadata (#13227) (Dunqing)
+- 66a5673 ecmascript: Add `ToUint32` trait (#13272) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

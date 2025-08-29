@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 53f55a4 minifier: Remove unnecessary parenthesis from nested optional chaining (#13268) (sapphi-red)
+
+
 
 ## [0.82.2] - 2025-08-17
 

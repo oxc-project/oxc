@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 903a150 parser: Report more invalid modifier locations (#13368) (Ulrich Stark)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

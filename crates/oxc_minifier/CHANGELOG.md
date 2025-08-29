@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- e459866 ecmascript: [**BREAKING**] Remove `PropertyReadSideEffects::OnlyMemberPropertyAccess` (#13348) (sapphi-red)
+
+### 🚀 Features
+
+- a40140a minifier: Use `is_literal_value` in `substitute_single_use_symbol_in_expression` (#13364) (sapphi-red)
+- ac2067b ecmascript: Examine and improve `is_literal_value` (#13363) (sapphi-red)
+- 56d2da3 minifier: Inline top-level variables for module scripts (#13361) (sapphi-red)
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a08dd5a minifier: Merge assignments in sequence exprs to variable declaration (#13270) (sapphi-red)
+- a19e84f minifier: Merge assignment to variable declaration (#13269) (sapphi-red)
+- 07afa70 minifier: Support remaining expressions for single use variable inlining (#13280) (sapphi-red)
+- 8e34656 ecmascript: Implement MayHaveSideEffects for AssignmentTarget (#13279) (sapphi-red)
+- a951eee minifier: Support more statements for single use variable inlining (#13277) (sapphi-red)
+- dcda3a2 minifier: Support more expressions for single use variable inlining (#13276) (sapphi-red)
+- 66d6005 minifier: Implement basic single use variable inlining (#13275) (sapphi-red)
+- 53f55a4 minifier: Remove unnecessary parenthesis from nested optional chaining (#13268) (sapphi-red)
+- 8ca9909 minifier: Remove unused assignments for vars (#13231) (sapphi-red)
+- cae222c minifier: Compress `return void foo()` => `foo(); return` (#13271) (sapphi-red)
+- a1b6ad4 minifier: Implement known methods `Math.clz32` and `Math.imul` (#12405) (Ethan Wu)
+
+### 🐛 Bug Fixes
+
+- 72468f9 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (2) (#13362) (sapphi-red)
+- 5d898e8 ecmascript: Treat shadowed global calls correctly (#13292) (sapphi-red)
+- 87e68b5 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (#13290) (sapphi-red)
+- 0e804aa minifier: Keep variables that are modified by combined assignments made by minification (#13267) (sapphi-red)
+- 6003285 minifier: Keep property access before call expressions as-is to preserve `this` value (#13278) (sapphi-red)
+
+### ⚡ Performance
+
+- d7c9169 minifier: Exit early in `is_closest_function_scope_an_async_generator` (#13273) (sapphi-red)
+
+### 🧪 Testing
+
+- d0f1d63 minifier: Share test helper functions between unit tests and integration tests (#13360) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

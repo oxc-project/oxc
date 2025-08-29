@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 🐛 Bug Fixes
+
+- b53a294 codegen: Add end sourcemaps for arguments (#13355) (sapphi-red)
+- 45e0cd9 oxc_transformer_plugins: Replace_global_define plugin `postfix_wildcard` should only match one property (#13307) (IWANABETHATGUY)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

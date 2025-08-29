@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- e459866 ecmascript: [**BREAKING**] Remove `PropertyReadSideEffects::OnlyMemberPropertyAccess` (#13348) (sapphi-red)
+
+### 🚀 Features
+
+- ac2067b ecmascript: Examine and improve `is_literal_value` (#13363) (sapphi-red)
+- 8e34656 ecmascript: Implement MayHaveSideEffects for AssignmentTarget (#13279) (sapphi-red)
+- a1b6ad4 minifier: Implement known methods `Math.clz32` and `Math.imul` (#12405) (Ethan Wu)
+
+### 🐛 Bug Fixes
+
+- 5d898e8 ecmascript: Treat shadowed global calls correctly (#13292) (sapphi-red)
+
+### 🚜 Refactor
+
+- 66a5673 ecmascript: Add `ToUint32` trait (#13272) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes
