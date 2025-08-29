@@ -928,6 +928,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     pos += 2;
                     if pos == bytes.len() {
                         // Comment ends at end of quasi
+                        comment_type = None;
                         continue;
                     }
 
