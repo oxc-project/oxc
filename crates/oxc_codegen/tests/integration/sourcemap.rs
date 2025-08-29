@@ -32,6 +32,7 @@ fn incorrect_ast() {
 }
 
 #[test]
+#[cfg(not(target_endian = "big"))] // we run big endian tests on docker that does not have node installed
 fn stacktrace_is_correct() {
     let cases = &[
         "\
