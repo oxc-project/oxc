@@ -62,7 +62,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
         ) -> FormatResult<()> {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
                 write!(f, comment)?;
 
                 match comment.kind {
@@ -137,7 +137,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             let mut previous_comment: Option<&Comment> = None;
 
             for comment in comments {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
 
                 let lines_before = get_lines_before(comment.span, f);
                 total_lines_before += lines_before;
@@ -310,7 +310,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 let mut previous_comment: Option<&Comment> = None;
 
                 for comment in comments {
-                    f.context_mut().increment_printed_count();
+                    f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
                         should_nestle_adjacent_doc_comments(

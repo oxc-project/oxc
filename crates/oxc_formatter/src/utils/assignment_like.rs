@@ -284,11 +284,6 @@ impl<'a> AssignmentLike<'a, '_> {
             return AssignmentLikeLayout::OnlyLeft;
         }
 
-        // if let RightAssignmentLike::JsInitializerClause(initializer) = &right {
-        //     if f.context().comments().is_suppressed(initializer.syntax()) {
-        //         return Ok(AssignmentLikeLayout::SuppressedInitializer);
-        //     }
-        // }
         let right_expression = self.get_right_expression();
 
         if let Some(layout) = right_expression.and_then(|expr| self.chain_formatting_layout(expr)) {

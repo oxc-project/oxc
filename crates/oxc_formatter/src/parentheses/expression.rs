@@ -19,16 +19,16 @@ use super::NeedsParentheses;
 impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.as_ast_nodes() {
-            // AstNodes::BooleanLiteral(it) => it.needs_parentheses(f),
-            // AstNodes::NullLiteral(it) => it.needs_parentheses(f),
+            AstNodes::BooleanLiteral(it) => it.needs_parentheses(f),
+            AstNodes::NullLiteral(it) => it.needs_parentheses(f),
             AstNodes::NumericLiteral(it) => it.needs_parentheses(f),
-            // AstNodes::BigIntLiteral(it) => it.needs_parentheses(f),
-            // AstNodes::RegExpLiteral(it) => it.needs_parentheses(f),
+            AstNodes::BigIntLiteral(it) => it.needs_parentheses(f),
+            AstNodes::RegExpLiteral(it) => it.needs_parentheses(f),
             AstNodes::StringLiteral(it) => it.needs_parentheses(f),
-            // AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
+            AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
             AstNodes::IdentifierReference(it) => it.needs_parentheses(f),
-            // AstNodes::MetaProperty(it) => it.needs_parentheses(f),
-            // AstNodes::Super(it) => it.needs_parentheses(f),
+            AstNodes::MetaProperty(it) => it.needs_parentheses(f),
+            AstNodes::Super(it) => it.needs_parentheses(f),
             AstNodes::ArrayExpression(it) => it.needs_parentheses(f),
             AstNodes::ArrowFunctionExpression(it) => it.needs_parentheses(f),
             AstNodes::AssignmentExpression(it) => it.needs_parentheses(f),
@@ -94,6 +94,55 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
     }
 }
 
+impl<'a> NeedsParentheses<'a> for AstNode<'a, BooleanLiteral> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, NullLiteral> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, BigIntLiteral<'a>> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, RegExpLiteral<'a>> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, TemplateLiteral<'a>> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, MetaProperty<'a>> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, Super> {
+    #[inline]
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        false
+    }
+}
+
 impl<'a> NeedsParentheses<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         if let AstNodes::StaticMemberExpression(member) = self.parent {
@@ -123,12 +172,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, StringLiteral<'a>> {
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ThisExpression> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrayExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
@@ -147,12 +198,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
@@ -177,6 +230,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, StaticMemberExpression<'a>> {
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
@@ -311,6 +365,7 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
@@ -507,24 +562,28 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ImportExpression<'a>> {
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, JSXMemberExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, JSXExpression<'a>> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, JSXEmptyExpression> {
+    #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }

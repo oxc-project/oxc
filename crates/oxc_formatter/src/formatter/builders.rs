@@ -384,6 +384,7 @@ impl std::fmt::Debug for LocatedTokenText {
     }
 }
 
+#[track_caller]
 fn debug_assert_no_newlines(text: &str) {
     debug_assert!(
         !text.contains('\r'),

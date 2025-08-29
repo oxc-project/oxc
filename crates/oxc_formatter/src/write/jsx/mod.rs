@@ -137,6 +137,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let has_comment = |f: &mut Formatter<'_, '_>| {
+            let expression_span = self.expression.span();
+            f.comments().has_comments_before(expression_span.start)
+                || f.comments().has_comments_between(expression_span.end, self.span.end)
+        };
+
         // Expression child
         if matches!(self.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             if let JSXExpression::EmptyExpression(_) = self.expression {
@@ -177,8 +183,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                         | JSXExpression::BinaryExpression(_)
                 );
 
-                let should_inline =
-                    (is_conditional_or_binary || should_inline_jsx_expression(self, f.comments()));
+                let should_inline = !has_comment(f)
+                    && (is_conditional_or_binary
+                        || should_inline_jsx_expression(self, f.comments()));
 
                 if should_inline {
                     write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -195,7 +202,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 }
             }
         } else {
-            let should_inline = should_inline_jsx_expression(self, f.comments());
+            let should_inline = !has_comment(f) && should_inline_jsx_expression(self, f.comments());
 
             if should_inline {
                 write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
@@ -244,14 +251,7 @@ pub fn should_inline_jsx_expression(
     container: &JSXExpressionContainer<'_>,
     comments: &Comments<'_>,
 ) -> bool {
-    let expression = &container.expression;
-    let span = expression.span();
-    if comments.has_comments_before(span.start)
-        || comments.has_comments_between(span.end, container.span().end)
-    {
-        return false;
-    }
-    match &expression {
+    match &container.expression {
         JSXExpression::ArrayExpression(_)
         | JSXExpression::ObjectExpression(_)
         | JSXExpression::ArrowFunctionExpression(_)
@@ -318,19 +318,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
         let has_comment = comments.has_comments_before(self.argument.span().start)
             || comments.has_comments_between(self.argument.span().end, self.span.end);
         let format_inner = format_with(|f| {
-            // if f.comments().is_suppressed(argument.syntax()) {
-            //     write!(f, ["...", self.argument(), line_suffix_boundary()])
-            // } else {
-            // }
             write!(f, [format_leading_comments(self.argument.span()), "..."])?;
             self.argument().fmt(f)
         });
 
         write!(f, ["{"])?;
 
-        if has_comment
-        // && !f.comments().is_suppressed(argument.syntax())
-        {
+        if has_comment {
             write!(f, [soft_block_indent(&format_inner)])?;
         } else {
             write!(f, [format_inner])?;
@@ -352,19 +346,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
         let has_comment = comments.has_comments_before(self.expression.span().start)
             || comments.has_comments_between(self.expression.span().end, self.span.end);
         let format_inner = format_with(|f| {
-            // if f.comments().is_suppressed(argument.syntax()) {
-            //     write!(f, ["...", self.argument(), line_suffix_boundary()])
-            // } else {
-            // }
             write!(f, [format_leading_comments(self.expression.span()), "..."])?;
             self.expression().fmt(f)
         });
 
         write!(f, "{")?;
 
-        if has_comment
-        // && !f.comments().is_suppressed(argument.syntax())
-        {
+        if has_comment {
             write!(f, [soft_block_indent(&format_inner)])?;
         } else {
             write!(f, [format_inner])?;

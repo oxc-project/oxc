@@ -897,6 +897,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
     };
 
     let Some(class_id) = ctx.class_table_builder.current_class_id else {
+        // Not in a class. `super` only valid in an object method.
         for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
             let flags = ctx.scoping.scope_flags(scope_id);
             if flags.is_function()
@@ -916,12 +917,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
         // * It is a Syntax Error if ModuleItemList Contains super.
         // ScriptBody : StatementList
         // * It is a Syntax Error if StatementList Contains super
-        return super_call_span.map_or_else(
-            || ctx.error(unexpected_super_reference(sup.span)),
-            |super_call_span| ctx.error(unexpected_super_call(super_call_span)),
-        );
+        if let Some(super_call_span) = super_call_span {
+            ctx.error(unexpected_super_call(super_call_span));
+        } else {
+            ctx.error(unexpected_super_reference(sup.span));
+        }
+        return;
     };
 
+    // In a class
     let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
     let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
     let class_scope_id = class.scope_id();
