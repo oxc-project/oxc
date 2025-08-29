@@ -72,11 +72,15 @@ impl<'a> ParserImpl<'a> {
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
+            let mut allowed_modifiers = ModifierFlags::READONLY;
+            if func_kind == FunctionKind::Constructor {
+                allowed_modifiers = allowed_modifiers
+                    .union(ModifierFlags::ACCESSIBILITY)
+                    .union(ModifierFlags::OVERRIDE);
+            }
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ACCESSIBILITY
-                    .union(ModifierFlags::READONLY)
-                    .union(ModifierFlags::OVERRIDE),
+                allowed_modifiers,
                 diagnostics::cannot_appear_on_a_parameter,
             );
         } else {
@@ -87,7 +91,10 @@ impl<'a> ParserImpl<'a> {
             );
         }
         let pattern = self.parse_binding_pattern_with_initializer();
-        if func_kind != FunctionKind::ClassMethod || !self.is_ts {
+        let are_decorators_allowed =
+            matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+                && self.is_ts;
+        if !are_decorators_allowed {
             for decorator in &decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
@@ -131,7 +138,10 @@ impl<'a> ParserImpl<'a> {
                     FunctionType::FunctionDeclaration
                 }
             }
-            FunctionKind::Expression | FunctionKind::ClassMethod | FunctionKind::ObjectMethod => {
+            FunctionKind::Expression
+            | FunctionKind::ClassMethod
+            | FunctionKind::Constructor
+            | FunctionKind::ObjectMethod => {
                 if body.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
