@@ -1,4 +1,4 @@
-use super::test;
+use crate::test;
 
 /// Esbuild minfication tests
 ///

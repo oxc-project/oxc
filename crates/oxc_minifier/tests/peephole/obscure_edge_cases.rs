@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 /// Tests for edge cases that should reveal minification problems
 /// Focus on cases where optimizations might be unsafe or incorrect

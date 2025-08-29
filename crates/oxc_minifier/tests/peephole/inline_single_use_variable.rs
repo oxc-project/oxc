@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 #[test]
 fn test_inline_single_use_variable() {
