@@ -1061,7 +1061,16 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 }
                 // Skip and compress whitespace.
                 _ if cur_byte.is_ascii_whitespace() => {
-                    i += 1;
+                    // Consume any following whitespace
+                    let mut next_byte;
+                    loop {
+                        i += 1;
+                        next_byte = bytes.get(i);
+                        if next_byte.is_none_or(|&b| !b.is_ascii_whitespace()) {
+                            break;
+                        }
+                    }
+
                     // Decide whether to preserve this whitespace character.
                     // CSS allows removing spaces around certain delimiters without changing meaning:
                     // - `color: red` -> `color:red` (spaces around colons)
@@ -1085,7 +1094,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     //   are significant in CSS. ` :hover` (descendant pseudo-selector) is different
                     //   from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
                     //   hovered descendant, while `.parent:hover` selects the parent when hovered.
-                    && bytes.get(i).is_none_or(|&next| !matches!(next, b'{' | b'}' | b',' | b';'))
+                    && next_byte.is_none_or(|&next| !matches!(next, b'{' | b'}' | b',' | b';'))
                     {
                         // Preserve this space character.
                         // Examples:

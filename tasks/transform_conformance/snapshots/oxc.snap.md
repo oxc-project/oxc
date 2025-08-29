@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 183/306
+Passed: 184/307
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1612,7 +1612,7 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (21/36)
+# plugin-styled-components (22/37)
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 
