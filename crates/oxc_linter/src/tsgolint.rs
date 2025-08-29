@@ -1,3 +1,5 @@
+#![allow(clippy::dbg_macro)]
+
 use std::{
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
@@ -37,7 +39,8 @@ impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
         TsGoLintState {
             config_store,
-            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
+            executable_path: dbg!(try_find_tsgolint_executable(cwd))
+                .unwrap_or(PathBuf::from("tsgolint")),
             cwd: cwd.to_path_buf(),
             silent: false,
         }
@@ -708,9 +711,9 @@ fn parse_single_message(
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
 pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
     // Check the environment variable first
-    if let Ok(path) = std::env::var("OXLINT_TSGOLINT_PATH") {
+    if let Ok(path) = dbg!(std::env::var("OXLINT_TSGOLINT_PATH")) {
         let path = PathBuf::from(path);
-        if path.is_dir() {
+        if dbg!(path.is_dir()) {
             return Some(path.join("tsgolint"));
         } else if path.is_file() {
             return Some(path);

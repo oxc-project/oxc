@@ -60,7 +60,6 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -77,6 +76,33 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+
+
+      - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+
+      - name: Hack around with tsgolint
+        shell: bash
+        run: |
+          # clone tsgolint@8d45fd20507266c2dced0645bdd28b53285f7776
+          git clone https://github.com/oxc-project/tsgolint.git
+          cd tsgolint
+          git checkout 57d8a49235b5947c8ceaccb22b3efc250433c9f6
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions"
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: ./tsgolint/go.mod
+      - name: Hack around with tsgolint
+        shell: bash
+        run: |
+          cd tsgolint
+          just init
+          just build
+          mv tsgolint tsgolint.exe
+          # export the full path to the executable
+          echo "OXLINT_TSGOLINT_PATH=$(pwd)/tsgolint.exe" >> $GITHUB_ENV
 
       - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -98,8 +124,11 @@ jobs:
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
 
-      - run: cargo test --all-features # cargo ck # no need to `cargo ck` because it's already checked in linux
+      - run: cargo test --all-features -p oxlint # cargo ck # no need to `cargo ck` because it's already checked in linux
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          OXLINT_TSGOLINT_PATH: ${{ env.OXLINT_TSGOLINT_PATH }}
+          OXC_LOG: debug
         shell: bash
 
   test-big-endian:
