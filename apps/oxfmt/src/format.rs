@@ -2,8 +2,11 @@ use std::{env, ffi::OsStr, io::Write, path::PathBuf, sync::Arc};
 
 use ignore::overrides::OverrideBuilder;
 
+use oxc_diagnostics::DiagnosticService;
+
 use crate::{
     cli::{CliRunResult, FormatCommand},
+    reporter,
     service::FormatService,
     walk::Walk,
 };
@@ -38,7 +41,7 @@ impl FormatRunner {
         // Build exclude patterns if any exist
         let override_builder = (!exclude_patterns.is_empty())
             .then(|| {
-                let mut builder = OverrideBuilder::new(cwd);
+                let mut builder = OverrideBuilder::new(&cwd);
                 for pattern in exclude_patterns {
                     builder.add(&pattern.to_string_lossy()).ok()?;
                 }
@@ -59,16 +62,18 @@ impl FormatRunner {
             return CliRunResult::FormatNoFilesFound;
         }
 
-        // let (mut diagnostic_service, tx_error) =
-        //     Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+        let reporter = Box::new(reporter::DefaultReporter);
+        let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
 
-        // rayon::spawn(move || {
-        let mut format_service = FormatService::new();
-        format_service.with_paths(files_to_format);
-        format_service.run();
-        // });
+        rayon::spawn(move || {
+            let mut format_service = FormatService::new(cwd);
+            format_service.with_paths(files_to_format);
+            format_service.run(&tx_error);
+        });
+        // NOTE: This is a blocking
+        let res = diagnostic_service.run(stdout);
 
-        // let diagnostic_result = diagnostic_service.run(stdout);
+        print_and_flush_stdout(stdout, &format!("{res:?}"));
 
         CliRunResult::FormatSucceeded
     }
