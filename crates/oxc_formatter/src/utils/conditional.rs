@@ -362,7 +362,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         false
     }
 
-    /// Checks if the parent is a static member expression
+    /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].
     #[inline]
     fn is_parent_static_member_expression(&self, layout: ConditionalLayout) -> bool {
         layout.is_root()
@@ -401,8 +401,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         });
 
         if layout.is_nested_alternate() {
-            // Align with parent's colon
-            write!(f, [indent(&format_inner)])
+            write!(f, [align(2, &format_inner)])
         } else {
             format_inner.fmt(f)
         }
@@ -437,6 +436,14 @@ impl<'a> FormatConditionalLike<'a, '_> {
                     )
                 });
 
+                let format_consequent = format_with(|f| {
+                    if f.options().indent_style.is_space() {
+                        write!(f, [align(2, &format_consequent)])
+                    } else {
+                        write!(f, [indent(&format_consequent)])
+                    }
+                });
+
                 if is_consequent_nested {
                     // Add parentheses around the consequent if it is a conditional expression and fits on the same line
                     // so that it's easier to identify the parts that belong to a conditional expression.
@@ -458,21 +465,23 @@ impl<'a> FormatConditionalLike<'a, '_> {
             }
         });
 
-        write!(
-            f,
-            [
-                indent(&format_consequent),
-                soft_line_break_or_space(),
-                ":",
-                space(),
-                indent(&format_with(|f| match self.conditional {
-                    ConditionalLike::ConditionalExpression(conditional) =>
-                        write!(f, [conditional.alternate()]),
-                    ConditionalLike::TSConditionalType(conditional) =>
-                        write!(f, [conditional.false_type()]),
-                }))
-            ]
-        )
+        let format_alternative = format_with(|f| match self.conditional {
+            ConditionalLike::ConditionalExpression(conditional) => {
+                write!(f, [conditional.alternate()])
+            }
+            ConditionalLike::TSConditionalType(conditional) => {
+                write!(f, [conditional.false_type()])
+            }
+        });
+        let format_alternative = format_with(|f| {
+            if f.options().indent_style.is_space() {
+                write!(f, [align(2, &format_alternative)])
+            } else {
+                write!(f, [indent(&format_alternative)])
+            }
+        });
+
+        write!(f, [format_consequent, soft_line_break_or_space(), ":", space(), format_alternative])
     }
 }
 
@@ -515,48 +524,58 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
         let has_multiline_comment = self.has_multiline_comment(f);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
 
-        let format_tail_with_indent = format_with(|f| {
+        let format_inner = format_with(|f| {
             self.format_test(f, layout)?;
 
-            if is_jsx_chain
-                && let ConditionalLike::ConditionalExpression(conditional) = self.conditional
-            {
-                write!(
-                    f,
-                    [
-                        space(),
-                        "?",
-                        space(),
-                        format_jsx_chain_consequent(conditional.consequent()),
-                        space(),
-                        ":",
-                        space(),
-                        format_jsx_chain_alternate(conditional.alternate())
-                    ]
-                )?;
-            } else {
-                match &layout {
-                    ConditionalLayout::Root { .. } | ConditionalLayout::NestedTest => {
-                        write!(
-                            f,
-                            [indent(&format_with(|f| {
-                                self.format_consequent_and_alternate(f, layout)
-                            }))]
-                        )
-                    }
-                    ConditionalLayout::NestedConsequent => {
-                        write!(
-                            f,
-                            [dedent(&indent(&format_with(|f| {
-                                self.format_consequent_and_alternate(f, layout)
-                            })))]
-                        )
-                    }
-                    ConditionalLayout::NestedAlternate => {
-                        self.format_consequent_and_alternate(f, layout)
-                    }
-                }?;
-            }
+            let format_tail_with_indent = format_once(|f| {
+                if is_jsx_chain
+                    && let ConditionalLike::ConditionalExpression(conditional) = self.conditional
+                {
+                    write!(
+                        f,
+                        [
+                            space(),
+                            "?",
+                            space(),
+                            format_jsx_chain_consequent(conditional.consequent()),
+                            space(),
+                            ":",
+                            space(),
+                            format_jsx_chain_alternate(conditional.alternate())
+                        ]
+                    )?;
+                } else {
+                    match &layout {
+                        ConditionalLayout::Root { .. } | ConditionalLayout::NestedTest => {
+                            write!(
+                                f,
+                                [indent(&format_with(|f| {
+                                    self.format_consequent_and_alternate(f, layout)
+                                }))]
+                            )
+                        }
+                        // This may look silly but the `dedent` is to remove the outer `align` added by the parent's formatting of the consequent.
+                        // The `indent` is necessary to indent the content by one level with a tab.
+                        // Adding an `indent` without the `dedent` would result in the `outer` align being converted
+                        // into a `indent` + the `indent` added here, ultimately resulting in a two-level indention.
+                        ConditionalLayout::NestedConsequent => {
+                            write!(
+                                f,
+                                [dedent(&indent(&format_with(|f| {
+                                    self.format_consequent_and_alternate(f, layout)
+                                })))]
+                            )
+                        }
+                        ConditionalLayout::NestedAlternate => {
+                            self.format_consequent_and_alternate(f, layout)
+                        }
+                    }?;
+                }
+
+                Ok(())
+            });
+
+            format_tail_with_indent.fmt(f)?;
 
             // Add a soft line break in front of the closing `)` in case the parent is a static member expression
             // ```
@@ -565,9 +584,9 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
             //      : b // <- enforce line break here if the conditional breaks
             // ).more
             // ```
-            if self.is_parent_static_member_expression(layout)
-                && !should_extra_indent
+            if !should_extra_indent
                 && !is_jsx_chain
+                && self.is_parent_static_member_expression(layout)
             {
                 write!(f, [soft_line_break()])?;
             }
@@ -576,11 +595,7 @@ impl<'a> Format<'a> for FormatConditionalLike<'a, '_> {
         });
 
         let grouped = format_with(|f| {
-            if layout.is_root() {
-                write!(f, [group(&format_tail_with_indent)])
-            } else {
-                format_tail_with_indent.fmt(f)
-            }
+            if layout.is_root() { write!(f, [group(&format_inner)]) } else { format_inner.fmt(f) }
         });
 
         if layout.is_nested_test() || should_extra_indent {

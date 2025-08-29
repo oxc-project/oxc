@@ -26,7 +26,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             // AstNodes::RegExpLiteral(it) => it.needs_parentheses(f),
             AstNodes::StringLiteral(it) => it.needs_parentheses(f),
             // AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
-            // AstNodes::Identifier(it) => it.needs_parentheses(f),
+            AstNodes::IdentifierReference(it) => it.needs_parentheses(f),
             // AstNodes::MetaProperty(it) => it.needs_parentheses(f),
             // AstNodes::Super(it) => it.needs_parentheses(f),
             AstNodes::ArrayExpression(it) => it.needs_parentheses(f),
@@ -66,6 +66,30 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
                 // TODO: incomplete
                 false
             }
+        }
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        match self.name.as_str() {
+            "async" => {
+                matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
+            }
+            "let" => {
+                let mut parent = self.parent;
+                loop {
+                    match parent {
+                        AstNodes::Program(_) | AstNodes::ExpressionStatement(_) => return false,
+                        AstNodes::ForOfStatement(stmt) => {
+                            return stmt.left.span().contains_inclusive(self.span);
+                        }
+                        _ => parent = parent.parent(),
+                    }
+                }
+                unreachable!()
+            }
+            _ => false,
         }
     }
 }
@@ -142,7 +166,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        matches!(self.parent, AstNodes::NewExpression(_)) && {
+            ExpressionLeftSide::Expression(self.object()).iter().any(|expr| {
+                matches!(expr, ExpressionLeftSide::Expression(e) if
+                    matches!(e.as_ref(), Expression::CallExpression(_))
+                )
+            })
+        }
     }
 }
 
@@ -334,7 +364,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Function<'a>> {
         let parent = self.parent;
         matches!(
             parent,
-            AstNodes::CallExpression(_) | AstNodes::NewExpression(_) | AstNodes::TemplateLiteral(_)
+            AstNodes::CallExpression(_)
+                | AstNodes::NewExpression(_)
+                | AstNodes::TaggedTemplateExpression(_)
         ) || is_first_in_statement(
             self.span,
             parent,
@@ -345,7 +377,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Function<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // TODO
         match self.parent {
             AstNodes::ExpressionStatement(parent) => {
                 let parent_parent = parent.parent;
@@ -359,6 +390,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
                         FirstInStatementMode::ExpressionStatementOrArrow,
                     ) && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
                 }
+            }
+            AstNodes::SequenceExpression(sequence) => {
+                !matches!(sequence.parent, AstNodes::ForStatement(_))
             }
             AstNodes::AssignmentExpression(_) | AstNodes::ComputedMemberExpression(_) => false,
             AstNodes::ForStatement(stmt)
@@ -376,9 +410,12 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, SequenceExpression<'a>> {
         !matches!(
             self.parent,
             AstNodes::ReturnStatement(_)
-                | AstNodes::ForStatement(_)
-                | AstNodes::ExpressionStatement(_)
-                | AstNodes::SequenceExpression(_)
+            // There's a precedence for writing `x++, y++`
+            | AstNodes::ForStatement(_)
+            | AstNodes::ExpressionStatement(_)
+            | AstNodes::SequenceExpression(_)
+            // Handled as part of the arrow function formatting
+            | AstNodes::ArrowFunctionExpression(_)
         )
     }
 }
@@ -392,11 +429,12 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AwaitExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
-            AstNodes::CallExpression(_)
-            | AstNodes::NewExpression(_)
-            | AstNodes::StaticMemberExpression(_)
-            | AstNodes::Decorator(_) => true,
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            AstNodes::NewExpression(_) | AstNodes::Decorator(_) => true,
+            AstNodes::CallExpression(call) => !call.optional,
+            AstNodes::StaticMemberExpression(member) => !member.optional,
+            AstNodes::ComputedMemberExpression(member) => {
+                !member.optional && member.object.span() == self.span()
+            }
             _ => false,
         }
     }
@@ -427,7 +465,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Class<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        unreachable!("Already disabled `preserveParens` option in the parser")
     }
 }
 
@@ -552,9 +590,12 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::CallExpression(_)
         | AstNodes::NewExpression(_)
+        | AstNodes::ChainExpression(_)
         | AstNodes::StaticMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
-
+        AstNodes::ComputedMemberExpression(computed) => {
+            return computed.object.span() == binary_like.span();
+        }
         AstNodes::Class(class) => {
             return class.super_class.as_ref().is_some_and(|super_class| {
                 super_class.span().contains_inclusive(binary_like.span())
@@ -708,6 +749,7 @@ fn is_first_in_statement(
             AstNodes::StaticMemberExpression(_)
             | AstNodes::TemplateLiteral(_)
             | AstNodes::TaggedTemplateExpression(_)
+            | AstNodes::ChainExpression(_)
             | AstNodes::CallExpression(_)
             | AstNodes::NewExpression(_)
             | AstNodes::TSAsExpression(_)

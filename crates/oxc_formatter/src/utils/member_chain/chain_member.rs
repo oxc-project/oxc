@@ -1,5 +1,12 @@
+use std::ops::Deref;
+
 use crate::{
-    formatter::{Format, FormatResult, Formatter, prelude::*, trivia::FormatLeadingComments},
+    format_args,
+    formatter::{
+        Format, FormatResult, Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     generated::ast_nodes::AstNode,
     write,
 };
@@ -57,19 +64,20 @@ impl ChainMember<'_, '_> {
 impl<'a> Format<'a> for ChainMember<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::StaticMember(e) => {
+            Self::StaticMember(member) => {
                 write!(
                     f,
                     [
+                        line_suffix_boundary(),
                         FormatLeadingComments::Comments(
-                            f.context().comments().comments_before(e.property().span().start)
+                            f.context().comments().comments_before(member.property().span().start)
                         ),
-                        e.optional().then_some("?"),
+                        member.optional().then_some("?"),
                         ".",
-                        e.property()
+                        member.property()
                     ]
                 )?;
-                e.format_trailing_comments(f)
+                member.format_trailing_comments(f)
             }
 
             Self::TSNonNullExpression(e) => {
@@ -103,12 +111,48 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                     )
                 }
             },
-            Self::ComputedMember(e) => {
-                e.format_leading_comments(f)?;
-                write!(f, [e.optional().then_some("?."), "[", e.expression(), "]"])?;
-                e.format_trailing_comments(f)
+            Self::ComputedMember(member) => {
+                write!(f, line_suffix_boundary())?;
+                member.format_leading_comments(f)?;
+                FormatComputedMemberExpressionWithoutObject(member).fmt(f);
+                member.format_trailing_comments(f)
             }
             Self::Node(node) => write!(f, node),
+        }
+    }
+}
+
+pub struct FormatComputedMemberExpressionWithoutObject<'a, 'b>(
+    pub &'b AstNode<'a, ComputedMemberExpression<'a>>,
+);
+
+impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
+    type Target = AstNode<'a, ComputedMemberExpression<'a>>;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
+impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let comments = f.context().comments().comments_before_character(self.span.start, b'[');
+        if !comments.is_empty() {
+            write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)])?;
+        }
+
+        if matches!(self.expression, Expression::NumericLiteral(_)) {
+            write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"])
+        } else {
+            write!(
+                f,
+                group(&format_args!(
+                    self.optional().then_some("?."),
+                    "[",
+                    soft_block_indent(self.expression()),
+                    "]"
+                ))
+            )
         }
     }
 }
