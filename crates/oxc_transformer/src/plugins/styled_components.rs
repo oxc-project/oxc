@@ -1100,16 +1100,24 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
 
                     // Check what comes after this whitespace.
-                    // - If we're at the end of the quasi (`next_byte == None`), preserve the space
-                    //   to avoid joining with the next interpolation.
+                    // - If we're at the end of the quasi (`next_byte == None`), and it's not the last,
+                    //   preserve the space to avoid joining with the next interpolation.
                     // - Remove whitespace before `{`, `}`, `,`, and `;`.
                     //   Note: We intentionally DON'T include ':' here because spaces before colons
                     //   are significant in CSS. ` :hover` (descendant pseudo-selector) is different
                     //   from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
                     //   hovered descendant, while `.parent:hover` selects the parent when hovered.
-                    if matches!(next_byte, Some(&b'{' | &b'}' | &b',' | &b';')) {
-                        // Always safe to remove whitespace before these characters
+                    if let Some(&next) = next_byte {
+                        if matches!(next, b'{' | b'}' | b',' | b';') {
+                            // Always safe to remove whitespace before these characters
+                            continue;
+                        }
+                    } else if quasi_index == quasis.len() - 1 {
+                        // We're at the end of the last quasi, so can trim trailing whitespace
                         continue;
+                    } else {
+                        // We're at end of a quasi which isn't the last one.
+                        // Preserve space to avoid joining with next interpolation.
                     }
 
                     // Preserve this space character.
