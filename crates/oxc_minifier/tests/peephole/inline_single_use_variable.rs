@@ -167,15 +167,14 @@ fn integration() {
         }
     ",
     );
-    // FIXME
-    // test(
-    //     "
-    //     var bar = foo.bar;
-    //     if (typeof bar !== 'object' || bar === null) console.log('foo')
-    //     ",
-    //     "
-    //     var bar = foo.bar;
-    //     (typeof bar != 'object' || !bar) && console.log('foo')
-    //     ",
-    // );
+    test(
+        "
+        var bar = foo.bar;
+        if (typeof bar !== 'object' || bar === null) console.log('foo')
+        ",
+        "
+        var bar = foo.bar;
+        (typeof bar != 'object' || !bar) && console.log('foo')
+        ",
+    );
 }
