@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - npm/runtime/package.json
+      - .github/workflows/release_runtime.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,6 +52,8 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+
+      - run: npm install -g npm@latest # For trusted publishing support
 
       # Trusted publishing is configured, publish token is not required.
       - name: Trusted Publish

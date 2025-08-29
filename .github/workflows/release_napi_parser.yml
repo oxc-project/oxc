@@ -7,7 +7,9 @@ on:
     branches:
       - main
     paths:
-      - napi/parser/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+      - napi/parser/package.json
+      - .github/workflows/release_napi_parser.yml
+      - .github/workflows/reusable_release_napi.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
