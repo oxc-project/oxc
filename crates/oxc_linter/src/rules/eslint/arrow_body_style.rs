@@ -1,10 +1,10 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
+use oxc_allocator::Box as OxcBox;
 use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, FunctionBody, ReturnStatement},
-    ast::{Expression, Statement}
+    ast::{Expression, Statement},
 };
-use oxc_allocator::{Box as OxcBox};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -188,9 +188,16 @@ impl ArrowBodyStyle {
         ctx: &LintContext,
     ) {
         let body = &arrow_func_expr.body;
-        match (&self.mode, &self.require_return_for_object_literal, arrow_func_expr.get_expression().map(Expression::get_inner_expression)) {
+
+        match (
+            &self.mode,
+            &self.require_return_for_object_literal,
+            arrow_func_expr.get_expression().map(Expression::get_inner_expression),
+        ) {
             (Mode::Always, _, _) => diagnostic_expected_block(ctx, body.span),
-            (Mode::AsNeeded, true, Some(Expression::ObjectExpression(_))) => diagnostic_expected_block(ctx, body.span),
+            (Mode::AsNeeded, true, Some(Expression::ObjectExpression(_))) => {
+                diagnostic_expected_block(ctx, body.span)
+            }
             _ => {}
         }
     }
@@ -202,7 +209,8 @@ impl ArrowBodyStyle {
         ctx: &LintContext,
     ) {
         if self.require_return_for_object_literal
-            && matches!(return_statement.argument, Some(Expression::ObjectExpression(_))) {
+            && matches!(return_statement.argument, Some(Expression::ObjectExpression(_)))
+        {
             return;
         }
 
@@ -234,11 +242,7 @@ impl ArrowBodyStyle {
 
 impl Rule for ArrowBodyStyle {
     fn from_configuration(value: Value) -> Self {
-        let mode = value
-            .get(0)
-            .and_then(Value::as_str)
-            .map(Mode::from)
-            .unwrap_or_default();
+        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
 
         let require_return_for_object_literal = value
             .get(1)
@@ -246,10 +250,7 @@ impl Rule for ArrowBodyStyle {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        Self {
-            mode,
-            require_return_for_object_literal,
-        }
+        Self { mode, require_return_for_object_literal }
     }
 
     fn run(&self, node: &AstNode, ctx: &LintContext) {
