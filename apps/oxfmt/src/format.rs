@@ -6,7 +6,7 @@ use oxc_diagnostics::DiagnosticService;
 
 use crate::{
     cli::{CliRunResult, FormatCommand},
-    reporter,
+    reporter::DefaultReporter,
     service::FormatService,
     walk::Walk,
 };
@@ -62,7 +62,7 @@ impl FormatRunner {
             return CliRunResult::FormatNoFilesFound;
         }
 
-        let reporter = Box::new(reporter::DefaultReporter);
+        let reporter = Box::new(DefaultReporter::default());
         let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
 
         rayon::spawn(move || {
