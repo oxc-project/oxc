@@ -567,8 +567,8 @@ fn js_parser_test() {
     test("a = b === c ? true : false", "a = b === c;");
     test("a = b !== c ? true : false", "a = b !== c;");
     test("a ? b(c) : b(d)", "a ? b(c) : b(d);");
-    test("let a = foo(); a ? b(c) : b(d)", "let a = foo(); a ? b(c) : b(d);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(), b = bar();b(a ? c : d);");
+    test("let a = foo(); a ? b(c) : b(d)", "foo() ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(); bar()(a ? c : d);");
     test(
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d);",
@@ -581,10 +581,7 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)",
-        "let a = foo(), b = bar();b(a ? c : d, 0);",
-    );
+    test("let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)", "let a = foo(); bar()(a ? c : d, 0);");
     test(
         "let a = foo(), b = bar(); a ? b(...c) : b(d)",
         "let a = foo(), b = bar(); a ? b(...c) : b(d);",
@@ -593,21 +590,12 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c) : b(...d)",
         "let a = foo(), b = bar(); a ? b(c) : b(...d);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...d)",
-        "let a = foo(), b = bar();b(...a ? c : d);",
-    );
-    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(), b = bar();b(a || c);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(), b = bar();b(a && c);");
-    test(
-        "let a = foo(), b = bar(); a ? b(...a) : b(...c)",
-        "let a = foo(), b = bar();b(...a || c);",
-    );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...a)",
-        "let a = foo(), b = bar();b(...a && c);",
-    );
-    test("let a = foo(); a.x ? b(c) : b(d)", "let a = foo(); a.x ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...d)", "let a = foo(); bar()(...a ? c : d);");
+    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(); bar()(a || c);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(); bar()(a && c);");
+    test("let a = foo(), b = bar(); a ? b(...a) : b(...c)", "let a = foo(); bar()(...a || c);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...a)", "let a = foo(); bar()(...a && c);");
+    test("let a = foo(); a.x ? b(c) : b(d)", "foo().x ? b(c) : b(d);");
     test(
         "let a = foo(), b = bar(); a.x ? b(c) : b(d)",
         "let a = foo(), b = bar(); a.x ? b(c) : b(d);",
@@ -634,12 +622,12 @@ fn js_parser_test() {
     test("a ? c : b || c", "a ? c : b || c;");
     test("a = b == null ? c : b", "a = b == null ? c : b;");
     test("a = b != null ? b : c", "a = b == null ? c : b;");
-    test("let b = foo(); a = b == null ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b != null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = b == null ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b != null ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = b == null ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b != null ? c : b", "let b = foo(); a = b == null ? b : c;");
-    test("let b = foo(); a = null == b ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = null != b ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null == b ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = null != b ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = null == b ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = null != b ? c : b", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b.x == null ? c : b.x", "let b = foo(); a = b.x == null ? c : b.x;");
@@ -650,8 +638,8 @@ fn js_parser_test() {
     test("let b = foo(); a = b !== null ? b : c", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null === b ? c : b", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null !== b ? b : c", "let b = foo(); a = b === null ? c : b;");
-    test("let b = foo(); a = null === b || b === undefined ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null === b || b === undefined ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "a = foo() ?? c;");
     test("a(b ? 0 : 0)", "a((b, 0));");
     test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
     test("a(b ? +0 : 0)", "a((b, 0));");
@@ -2354,9 +2342,10 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { y(x); var x = 2; y(x) }",
         "try { throw 1;} catch (x) { y(x); var x = 2; y(x);}",
     );
+    test("try { throw 1 } catch (x) { var x = 2; y(x) }", "try { throw 1;} catch { y(2);}");
     test(
-        "try { throw 1 } catch (x) { var x = 2; y(x) }",
-        "try { throw 1;} catch (x) { var x = 2; y(x);}",
+        "try { throw 1 } catch (x) { var x = 2; y(x) } console.log(x)",
+        "try { throw 1;} catch (x) { var x = 2; y(x);} console.log(x)",
     );
     test(
         "try { throw 1 } catch (x) { var x = 2 }; y(x)",

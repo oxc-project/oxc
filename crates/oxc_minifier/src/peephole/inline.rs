@@ -95,7 +95,7 @@ mod test {
             var frag = `<p autocapitalize="${`w${o}r${d}s`}" contenteditable="${boolean}"/>`;
             console.log(frag);
             "#,
-            r#"var frag = '<p autocapitalize="words" contenteditable="false"/>';console.log(frag)"#,
+            r#"console.log('<p autocapitalize="words" contenteditable="false"/>');"#,
             &options,
         );
     }

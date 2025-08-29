@@ -1036,7 +1036,7 @@ impl<'a> PeepholeOptimizations {
         // TODO: we should skip this compression when direct eval exists
         //       because the code inside eval may reference the variable
 
-        if ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id() {
+        if Self::keep_top_level_var_in_script_mode(ctx) {
             return false;
         }
         let Some(Statement::VariableDeclaration(prev_var_decl)) = stmts.last_mut() else {

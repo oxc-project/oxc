@@ -10,6 +10,8 @@ mod peephole;
 use oxc_minifier::{CompressOptions, CompressOptionsUnused, Compressor};
 use oxc_span::SourceType;
 
+pub(crate) use tester::default_options;
+
 #[track_caller]
 pub(crate) fn test_same(source_text: &str) {
     test(source_text, source_text);
