@@ -16,6 +16,8 @@
 //!
 //! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
 //!
+//! * `pool` - Enables [`AllocatorPool`].
+//!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
@@ -67,15 +69,19 @@ pub use vec::Vec;
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present
 
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 mod pool;
 
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -83,6 +89,7 @@ mod pool;
 ))]
 mod pool_fixed_size;
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -94,6 +101,7 @@ use pool_fixed_size as pool;
 // so this is required to avoid unused vars lint warning in release mode.
 #[cfg(all(
     debug_assertions,
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -102,6 +110,7 @@ use pool_fixed_size as pool;
 use pool_fixed_size::FixedSizeAllocatorMetadata;
 // Export so can be used in `napi/oxlint2`
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -109,16 +118,20 @@ use pool_fixed_size::FixedSizeAllocatorMetadata;
 ))]
 pub use pool_fixed_size::free_fixed_size_allocator;
 
+#[cfg(feature = "pool")]
 pub use pool::{AllocatorGuard, AllocatorPool};
 
 // Dummy implementations of interfaces from `pool_fixed_size`, just to stop clippy complaining.
 // Seems to be necessary due to feature unification.
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 #[allow(missing_docs, clippy::missing_safety_doc, clippy::unused_self, clippy::allow_attributes)]
 mod dummies {
     use std::{ptr::NonNull, sync::atomic::AtomicBool};
@@ -144,15 +157,19 @@ mod dummies {
         }
     }
 }
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 pub use dummies::*;
 
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -164,6 +181,7 @@ mod generated {
     pub mod fixed_size_constants;
 }
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",

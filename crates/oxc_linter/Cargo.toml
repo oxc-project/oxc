@@ -28,7 +28,7 @@ workspace = true
 doctest = true
 
 [dependencies]
-oxc_allocator = { workspace = true }
+oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_ast = { workspace = true }
 oxc_ast_macros = { workspace = true, optional = true }
 oxc_ast_visit = { workspace = true }

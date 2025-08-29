@@ -36,9 +36,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-fixed_size = ["from_raw_parts", "dep:oxc_ast_macros"]
+fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros"]
 disable_fixed_size = []
 from_raw_parts = []
+pool = []
 serialize = ["dep:serde", "oxc_estree/serialize"]
 track_allocations = []
 disable_track_allocations = []
