@@ -1,13 +1,14 @@
+use crate::{AstNode, context::LintContext, rule::Rule};
+use oxc_ast::ast::{ArrowFunctionExpression, FunctionBody, ReturnStatement};
 use oxc_ast::{
     AstKind,
     ast::{Expression, Statement},
 };
+use oxc_allocator::{Box as OxcBox};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
-
-use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg.to_string()).with_label(span)
@@ -34,10 +35,6 @@ impl Mode {
         matches!(self, Self::Always)
     }
 
-    pub fn is_never(&self) -> bool {
-        matches!(self, Self::Never)
-    }
-
     pub fn is_as_needed(&self) -> bool {
         matches!(self, Self::AsNeeded)
     }
@@ -53,60 +50,50 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule can enforce or disallow the use of braces around arrow function body.
+    /// Arrow functions can use either:
+    /// - a block body `() => { ... }`
+    /// - or a concise body `() => expression` with an implicit return.
     ///
     /// ### Why is this bad?
     ///
-    /// Arrow functions have two syntactic forms for their function bodies.
-    /// They may be defined with a block body (denoted by curly braces) () => { ... }
-    /// or with a single expression () => ..., whose value is implicitly returned.
+    /// Inconsistent use of block vs. concise bodies makes code harder to read.
+    /// Concise bodies are limited to a single expression, whose value is implicitly returned.
+    ///
+    /// ### Options
+    ///
+    /// First option:
+    /// - Type: `string`
+    /// - Enum: `"always"`, `"as-needed"`, `"never"`
+    /// - Default: `"never"`
+    ///
+    /// Possible values:
+    /// * `never` enforces no braces where they can be omitted (default)
+    /// * `always` enforces braces around the function body
+    /// * `as-needed` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
+    ///
+    /// Second option:
+    /// - Type: `object`
+    /// - Properties:
+    ///     - `requireReturnForObjectLiteral`: `boolean` (default: `false`) - requires braces and an explicit return for object literals.
+    ///
+    /// Note: This option only applies when the first option is `"as-needed"`.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
+    /// }
+    /// ```
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the `always` option:
-    /// ```js
-    /// const foo = () => 0;
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `always` option:
-    /// ```js
-    /// const foo = () => {
-    ///     return 0;
-    /// };
-    /// ```
-    ///
-    /// Examples of **incorrect** code for this rule with the `as-needed` option:
-    /// ```js
-    /// const foo = () => {
-    ///     return 0;
-    /// };
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `as-needed` option:
-    /// ```js
-    /// const foo1 = () => 0;
-    ///
-    /// const foo2 = (retv, name) => {
-    ///     retv[name] = true;
-    ///     return retv;
-    /// };
-    /// ```
-    ///
-    /// Examples of **incorrect** code for this rule with the { "requireReturnForObjectLiteral": true } option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
-    /// const foo = () => ({});
-    /// const bar = () => ({ bar: 0 });
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the { "requireReturnForObjectLiteral": true } option:
-    /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
-    /// const foo = () => {};
-    /// const bar = () => { return { bar: 0 }; };
-    /// ```
+    /// #### `"never"` (default)
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
+    /// /* arrow-body-style: ["error", "never"] */
+    ///
+    /// /* ✘ Bad: */
     /// const foo = () => {
     ///     return 0;
     /// };
@@ -114,27 +101,81 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `never` option:
     /// ```js
+    /// /* arrow-body-style: ["error", "never"] */
+    ///
+    /// /* ✔ Good: */
     /// const foo = () => 0;
     /// const bar = () => ({ foo: 0 });
     /// ```
     ///
-    /// ### Options
+    /// #### `"always"`
     ///
-    /// The rule takes one or two options. The first is a string, which can be:
+    /// Examples of **incorrect** code for this rule with the `always` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "always"] */
     ///
-    /// * `always` enforces braces around the function body
-    /// * `never` enforces no braces where they can be omitted (default)
-    /// * `as-needed` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
+    /// /* ✘ Bad: */
+    /// const foo = () => 0;
+    /// ```
     ///
-    /// The second one is an object for more fine-grained configuration
-    /// when the first option is "as-needed". Currently,
-    /// the only available option is requireReturnForObjectLiteral, a boolean property.
-    /// It’s false by default. If set to true, it requires braces and an explicit return for object literals.
+    /// Examples of **correct** code for this rule with the `always` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "always"] */
     ///
-    /// ```json
-    /// {
-    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
-    /// }
+    /// /* ✔ Good: */
+    /// const foo = () => {
+    ///     return 0;
+    /// };
+    /// ```
+    ///
+    /// #### `"as-needed"`
+    ///
+    /// Examples of **incorrect** code for this rule with the `as-needed` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "as-needed"] */
+    ///
+    /// /* ✘ Bad: */
+    /// const foo = () => {
+    ///     return 0;
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `as-needed` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "as-needed"] */
+    ///
+    /// /* ✔ Good: */
+    /// const foo1 = () => 0;
+    ///
+    /// const foo2 = (retv, name) => {
+    ///     retv[name] = true;
+    ///     return retv;
+    /// };
+    ///
+    /// /* ✔ Good: */
+    /// const foo3 = () => {
+    ///     bar();
+    /// };
+    /// ```
+    ///
+    /// #### `"as-needed"` with `requireReturnForObjectLiteral`
+    ///
+    /// Examples of **incorrect** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    ///
+    /// /* ✘ Bad: */
+    /// const foo = () => ({});
+    /// const bar = () => ({ bar: 0 });
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
+    /// ```js
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    ///
+    /// /* ✔ Good: */
+    /// const foo = () => {};
+    /// const bar = () => { return { bar: 0 }; };
     /// ```
     ArrowBodyStyle,
     eslint,
@@ -142,71 +183,101 @@ declare_oxc_lint!(
     pending,
 );
 
-impl Rule for ArrowBodyStyle {
-    fn from_configuration(value: Value) -> Self {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
+impl ArrowBodyStyle {
+    fn run_for_arrow_expression(
+        &self,
+        arrow_func_expr: &ArrowFunctionExpression,
+        ctx: &LintContext,
+    ) {
+        let body = &arrow_func_expr.body;
+        if self.mode.is_always() {
+            ctx.diagnostic(arrow_body_style_diagnostic(
+                body.span,
+                "Expected block statement surrounding arrow body.",
+            ));
+            return;
+        }
+        if !self.mode.is_as_needed() || !self.require_return_for_object_literal {
+            return;
+        }
 
-        Self {
-            mode: obj1.and_then(Value::as_str).map(Mode::from).unwrap_or_default(),
-            require_return_for_object_literal: obj2
-                .and_then(|v| v.get("requireReturnForObjectLiteral"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
+        if matches!(
+            arrow_func_expr.get_expression().map(Expression::get_inner_expression),
+            Some(Expression::ObjectExpression(_))
+        ) {
+            ctx.diagnostic(arrow_body_style_diagnostic(
+                body.span,
+                "Expected block statement surrounding arrow body.",
+            ));
         }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() else {
-            return;
-        };
-        let body = &arrow_func_expr.body;
-        let statements = &body.statements;
 
-        if arrow_func_expr.expression {
-            if self.mode.is_always() {
-                ctx.diagnostic(arrow_body_style_diagnostic(
-                    body.span,
-                    "Expected block statement surrounding arrow body.",
-                ));
-            }
-            if self.mode.is_as_needed() && self.require_return_for_object_literal {
-                if let Some(Expression::ObjectExpression(_)) =
-                    arrow_func_expr.get_expression().map(Expression::get_inner_expression)
-                {
-                    ctx.diagnostic(arrow_body_style_diagnostic(
-                        body.span,
-                        "Expected block statement surrounding arrow body.",
-                    ));
-                }
-            }
-        } else {
-            if self.mode.is_never() {
-                let msg = if statements.is_empty() {
+    fn run_for_arrow_block_return_statement(
+        &self,
+        return_statement: &OxcBox<ReturnStatement>,
+        body: &FunctionBody,
+        ctx: &LintContext,
+    ) {
+        if self.require_return_for_object_literal
+            && matches!(return_statement.argument, Some(Expression::ObjectExpression(_))) {
+            return;
+        }
+
+        ctx.diagnostic(arrow_body_style_diagnostic(
+            body.span,
+            "Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`.",
+        ));
+    }
+
+    fn run_for_arrow_block(&self, body: &FunctionBody, ctx: &LintContext) {
+        match self.mode {
+            Mode::Never => {
+                let msg = if body.statements.is_empty() {
                     "Unexpected block statement surrounding arrow body; put a value of `undefined` immediately after the `=>`."
                 } else {
                     "Unexpected block statement surrounding arrow body."
                 };
                 ctx.diagnostic(arrow_body_style_diagnostic(body.span, msg));
             }
-            if self.mode.is_as_needed() {
-                // check is there only one `ReturnStatement`
-                if statements.len() != 1 {
-                    return;
-                }
-                let inner_statement = &statements[0];
-
-                if let Statement::ReturnStatement(return_statement) = inner_statement {
-                    let return_val = &return_statement.argument;
-                    if self.require_return_for_object_literal
-                        && return_val
-                            .as_ref()
-                            .is_some_and(|v| matches!(v, Expression::ObjectExpression(_)))
-                    {
-                        return;
-                    }
-                    ctx.diagnostic(arrow_body_style_diagnostic(body.span, "Unexpected block statement surrounding arrow body; move the returned value immediately after the `=>`."));
+            Mode::AsNeeded if body.statements.len() == 1 => {
+                if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
+                    self.run_for_arrow_block_return_statement(return_statement, body, ctx);
                 }
             }
+            _ => {}
+        }
+    }
+}
+
+impl Rule for ArrowBodyStyle {
+    fn from_configuration(value: Value) -> Self {
+        let mode = value
+            .get(0)
+            .and_then(Value::as_str)
+            .map(Mode::from)
+            .unwrap_or_default();
+
+        let require_return_for_object_literal = value
+            .get(1)
+            .and_then(|v| v.get("requireReturnForObjectLiteral"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+
+        Self {
+            mode,
+            require_return_for_object_literal,
+        }
+    }
+
+    fn run(&self, node: &AstNode, ctx: &LintContext) {
+        let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() else {
+            return;
+        };
+
+        if arrow_func_expr.expression {
+            self.run_for_arrow_expression(arrow_func_expr, ctx);
+        } else {
+            self.run_for_arrow_block(&arrow_func_expr.body, ctx);
         }
     }
 }
