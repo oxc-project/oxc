@@ -430,6 +430,28 @@ fn test() {
             "array.map((node) => { if (isTaskNode(node)) { return someObj; } else if (isOtherNode(node)) { return otherObj; } else { throw new Error('Unsupported'); } })",
             None,
         ),
+        // Test cases from GitHub issue #12176 - throw statements should be considered valid returns
+        (
+            "[1, 2].map((x) => { if (x % 2) { return x * 2; } else { throw new Error('x is even'); } })",
+            None,
+        ),
+        (
+            "[1, 2].map((x) => { if (x % 2) { return x * 2; } else { return x + 1; } })",
+            None,
+        ),
+        // Additional edge cases with throw statements
+        (
+            "arr.filter(x => { if (x > 0) { return true; } throw new Error('negative'); })",
+            None,
+        ),
+        (
+            "arr.map(x => { switch (x) { case 1: return 'one'; case 2: return 'two'; default: throw new Error('unknown'); } })",
+            None,
+        ),
+        (
+            "arr.every(x => { try { return processItem(x); } catch (e) { throw new Error('failed'); } })",
+            None,
+        ),
     ];
 
     let fail = vec![
