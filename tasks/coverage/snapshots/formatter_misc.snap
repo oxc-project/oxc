@@ -1,0 +1,9 @@
+formatter_misc Summary:
+AST Parsed     : 47/47 (100.00%)
+Positive Passed: 44/47 (93.62%)
+Expect to Parse: tasks/coverage/misc/pass/oxc-12612.ts
+
+Expect to Parse: tasks/coverage/misc/pass/oxc-2592.ts
+
+Expect to Parse: tasks/coverage/misc/pass/oxc-4449.ts
+
