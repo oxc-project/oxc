@@ -24,7 +24,7 @@ impl FormatRunner {
 
     pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let cwd = self.cwd;
-        let FormatCommand { paths, basic_options: _, .. } = self.options;
+        let FormatCommand { paths, output_options, .. } = self.options;
 
         let (exclude_patterns, regular_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
@@ -66,7 +66,7 @@ impl FormatRunner {
         let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
 
         rayon::spawn(move || {
-            let mut format_service = FormatService::new(cwd);
+            let mut format_service = FormatService::new(cwd, &output_options);
             format_service.with_paths(files_to_format);
             format_service.run(&tx_error);
         });

@@ -1,27 +1,34 @@
-use std::{ffi::OsStr, fs, path::Path, sync::Arc};
+use std::{ffi::OsStr, fs, path::Path, sync::Arc, time::Instant};
 
 use indexmap::IndexSet;
 use rayon::prelude::*;
 use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
+use crate::command::OutputOptions;
+
 pub struct FormatService {
     cwd: Box<Path>,
+    output_options: OutputOptions,
     // TODO: Just use `Vec`?
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T) -> Self
+    pub fn new<T>(cwd: T, output_options: &OutputOptions) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher) }
+        Self {
+            cwd: cwd.into(),
+            output_options: output_options.clone(),
+            paths: IndexSet::with_capacity_and_hasher(0, FxBuildHasher),
+        }
     }
 
     pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
@@ -29,9 +36,10 @@ impl FormatService {
         self
     }
 
-    // TODO: This should be check(), format(), write() ?
     pub fn run(&self, tx_error: &DiagnosticSender) {
         self.paths.iter().par_bridge().for_each(|path| {
+            let start_time = Instant::now();
+
             let path = Path::new(path);
             let source_type =
                 SourceType::from_path(path).expect("`path` should be valid SourceType");
@@ -67,24 +75,40 @@ impl FormatService {
             };
             let code = Formatter::new(&allocator, options).build(&ret.program);
 
+            let elapsed = start_time.elapsed();
             let is_changed = source_text != code;
 
-            // If --write
-            // TODO: Report
-            // src/lib/highlight.ts 8ms
-            // src/lib/index.ts 0ms (unchanged)
-            fs::write(path, code)
-                .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
-                .unwrap();
+            match self.output_options {
+                OutputOptions::Write => {
+                    if is_changed {
+                        fs::write(path, code)
+                            .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
+                            .unwrap();
+                    }
 
-            // NOTE: `path` is needed as string since we do not pass `source_code` and `labels`
-            let message = format!(
-                "{} {}",
-                path.to_string_lossy(),
-                if is_changed { "" } else { "(unchanged)" }
-            );
-            let diagnostics = vec![OxcDiagnostic::warn(message).into()];
-            tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+                    let diagnostic = if is_changed {
+                        OxcDiagnostic::warn(format!(
+                            "{} {}ms",
+                            path.to_string_lossy(),
+                            elapsed.as_millis()
+                        ))
+                    } else {
+                        OxcDiagnostic::warn(format!(
+                            "{} {}ms (unchanged)",
+                            path.to_string_lossy(),
+                            elapsed.as_millis()
+                        ))
+                        .with_severity(Severity::Advice)
+                    };
+                    tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
+                }
+                OutputOptions::Default => {
+                    if is_changed {
+                        let diagnostic = OxcDiagnostic::warn(format!("{}", path.to_string_lossy()));
+                        tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
+                    }
+                }
+            }
         });
     }
 }
