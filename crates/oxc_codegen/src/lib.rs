@@ -648,6 +648,7 @@ impl<'a> Codegen<'a> {
             self.print_list(arguments, ctx);
         }
         self.print_ascii_byte(b')');
+        self.add_source_mapping_end(span);
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {

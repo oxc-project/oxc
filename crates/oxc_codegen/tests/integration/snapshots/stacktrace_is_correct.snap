@@ -114,7 +114,7 @@ obj.fn()();
 
 Error
     at fn2 (/project/input.js:5:19)
-    at <anonymous> (/project/input.js:9:5)
+    at <anonymous> (/project/input.js:9:9)
 
 ------------------------------------------------------
 ## Input
@@ -146,7 +146,7 @@ obj.fn([1])();
 
 Error
     at <anonymous> (/project/input.js:5:19)
-    at <anonymous> (/project/input.js:9:11)
+    at <anonymous> (/project/input.js:9:12)
 
 ------------------------------------------------------
 ## Input
@@ -180,7 +180,7 @@ obj.fn({ a })();
 
 Error
     at <anonymous> (/project/input.js:6:19)
-    at <anonymous> (/project/input.js:10:11)
+    at <anonymous> (/project/input.js:10:12)
 
 ------------------------------------------------------
 ## Input
