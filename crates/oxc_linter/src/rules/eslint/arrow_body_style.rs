@@ -1,4 +1,5 @@
-use crate::{AstNode, context::LintContext, rule::Rule};
+use serde_json::Value;
+
 use oxc_allocator::Box as OxcBox;
 use oxc_ast::{
     AstKind,
@@ -8,10 +9,18 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use serde_json::Value;
+
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn arrow_body_style_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(msg.to_string()).with_label(span)
+}
+
+fn diagnostic_expected_block(ctx: &LintContext, span: Span) {
+    ctx.diagnostic(arrow_body_style_diagnostic(
+        span,
+        "Expected block statement surrounding arrow body.",
+    ));
 }
 
 #[derive(Debug, Default, PartialEq, Clone)]
@@ -174,11 +183,30 @@ declare_oxc_lint!(
     pending,
 );
 
-fn diagnostic_expected_block(ctx: &LintContext, span: Span) {
-    ctx.diagnostic(arrow_body_style_diagnostic(
-        span,
-        "Expected block statement surrounding arrow body.",
-    ));
+impl Rule for ArrowBodyStyle {
+    fn from_configuration(value: Value) -> Self {
+        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
+
+        let require_return_for_object_literal = value
+            .get(1)
+            .and_then(|v| v.get("requireReturnForObjectLiteral"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+
+        Self { mode, require_return_for_object_literal }
+    }
+
+    fn run(&self, node: &AstNode, ctx: &LintContext) {
+        let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() else {
+            return;
+        };
+
+        if arrow_func_expr.expression {
+            self.run_for_arrow_expression(arrow_func_expr, ctx);
+        } else {
+            self.run_for_arrow_block(&arrow_func_expr.body, ctx);
+        }
+    }
 }
 
 impl ArrowBodyStyle {
@@ -196,7 +224,7 @@ impl ArrowBodyStyle {
         ) {
             (Mode::Always, _, _) => diagnostic_expected_block(ctx, body.span),
             (Mode::AsNeeded, true, Some(Expression::ObjectExpression(_))) => {
-                diagnostic_expected_block(ctx, body.span)
+                diagnostic_expected_block(ctx, body.span);
             }
             _ => {}
         }
@@ -240,32 +268,6 @@ impl ArrowBodyStyle {
     }
 }
 
-impl Rule for ArrowBodyStyle {
-    fn from_configuration(value: Value) -> Self {
-        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
-
-        let require_return_for_object_literal = value
-            .get(1)
-            .and_then(|v| v.get("requireReturnForObjectLiteral"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-
-        Self { mode, require_return_for_object_literal }
-    }
-
-    fn run(&self, node: &AstNode, ctx: &LintContext) {
-        let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() else {
-            return;
-        };
-
-        if arrow_func_expr.expression {
-            self.run_for_arrow_expression(arrow_func_expr, ctx);
-        } else {
-            self.run_for_arrow_block(&arrow_func_expr.body, ctx);
-        }
-    }
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -277,7 +279,7 @@ fn test() {
         ("var foo = () => { /* do nothing */ };", None),
         (
             "var foo = () => {
-			 /* do nothing */ 
+			 /* do nothing */
 			};",
             None,
         ),
@@ -315,7 +317,7 @@ fn test() {
         ),
         (
             "var foo = () => {
-			 /* do nothing */ 
+			 /* do nothing */
 			};",
             Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
         ),
