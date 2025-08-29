@@ -13202,6 +13202,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:17:9]
+ 16 │     p1: function () {
+ 17 │         super.method();
+    ·         ─────
+ 18 │     },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:20:9]
+ 19 │     p2: function f() {
+ 20 │         super.method();
+    ·         ─────
+ 21 │     },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:23:9]
+ 22 │     p3: () => {
+ 23 │         super.method();
+    ·         ─────
+ 24 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:39:17]
  38 │             method() {
  39 │                 super.method();
@@ -13239,6 +13263,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  52 │                 super.method();
     ·                 ─────
  53 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:17:9]
+ 16 │     p1: function () {
+ 17 │         super.method();
+    ·         ─────
+ 18 │     },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:20:9]
+ 19 │     p2: function f() {
+ 20 │         super.method();
+    ·         ─────
+ 21 │     },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:23:9]
+ 22 │     p3: () => {
+ 23 │         super.method();
+    ·         ─────
+ 24 │     }
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
@@ -13307,6 +13355,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:11:20]
+ 10 │         test: function () {
+ 11 │             return super._foo;
+    ·                    ─────
+ 12 │         }
+    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:21:24]

@@ -3,6 +3,7 @@ use std::ptr;
 use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
@@ -900,16 +901,24 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
         // Not in a class. `super` only valid in an object method.
         for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
             let flags = ctx.scoping.scope_flags(scope_id);
-            if flags.is_function()
-                && matches!(
-                    ctx.nodes.parent_kind(ctx.scoping.get_node_id(scope_id)),
-                    AstKind::ObjectProperty(_)
-                )
-            {
-                if let Some(super_call_span) = super_call_span {
-                    ctx.error(unexpected_super_call(super_call_span));
+            if flags.is_function() && !flags.is_arrow() {
+                let func_node_id = ctx.scoping.get_node_id(scope_id);
+                if let AstKind::ObjectProperty(prop) = ctx.nodes.parent_kind(func_node_id) {
+                    if prop.method || prop.kind != PropertyKind::Init {
+                        // Function's parent is an `ObjectProperty` representing a method/getter/setter.
+                        // Check the function is the value of the property, not computed key.
+                        // Valid: `obj = { method() { super.foo } }`
+                        // Invalid: `obj = { [ function() { super.foo } ]() {} }`
+                        let func_kind = ctx.nodes.kind(func_node_id);
+                        if func_kind.address() == prop.value.address() {
+                            if let Some(super_call_span) = super_call_span {
+                                ctx.error(unexpected_super_call(super_call_span));
+                            }
+                            return;
+                        }
+                    }
                 }
-                return;
+                break;
             }
         }
 
