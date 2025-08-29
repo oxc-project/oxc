@@ -1,4 +1,16 @@
-use super::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{default_options, test, test_options_source_type, test_same};
+
+#[track_caller]
+fn test_script_same(source_text: &str) {
+    test_script(source_text, source_text);
+}
+
+#[track_caller]
+fn test_script(source_text: &str, expected: &str) {
+    test_options_source_type(source_text, expected, SourceType::cjs(), &default_options());
+}
 
 #[test]
 fn test_inline_single_use_variable() {
@@ -120,6 +132,18 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { return (arg0(), 1);}",
     );
     test_same("function wrapper(arg0, arg1) { let x = arg0; return (foo(), x(), 1);}");
+    test(
+        "function wrapper() { let x = [0, 1, 2]; return foo.bar(x);}",
+        "function wrapper() { return foo.bar([0, 1, 2]);}",
+    );
+}
+
+#[test]
+fn keep_exposed_variables() {
+    test_same("var x = foo; x(); export { x }");
+    test("var x = foo; x()", "foo()");
+    test_script_same("var x = foo; x()");
+    test_script("{ let x = foo; x() }", "foo()");
 }
 
 #[test]

@@ -6,7 +6,7 @@ use oxc_span::{SourceType, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    QuoteProperties, QuoteStyle,
+    FormatOptions, QuoteProperties, QuoteStyle,
     formatter::{
         Format, FormatResult, Formatter, prelude::*, token::string::normalize_string,
         trivia::format_replaced,
@@ -50,9 +50,11 @@ impl<'a> FormatLiteralStringToken<'a> {
         Self { string, span, jsx, parent_kind }
     }
 
-    pub fn clean_text(&self, f: &mut Formatter<'_, 'a>) -> CleanedStringLiteralText<'a> {
-        let source_type = f.context().source_type();
-        let options = f.options();
+    pub fn clean_text(
+        &self,
+        source_type: SourceType,
+        options: &FormatOptions,
+    ) -> CleanedStringLiteralText<'a> {
         let chosen_quote_style =
             if self.jsx { options.jsx_quote_style } else { options.quote_style };
         let chosen_quote_properties = options.quote_properties;
@@ -93,7 +95,7 @@ impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f).fmt(f)
+        self.clean_text(f.context().source_type(), f.options()).fmt(f)
     }
 }
 

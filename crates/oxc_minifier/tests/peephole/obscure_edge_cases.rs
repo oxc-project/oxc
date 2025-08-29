@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 /// Tests for edge cases that should reveal minification problems
 /// Focus on cases where optimizations might be unsafe or incorrect
@@ -260,7 +260,7 @@ fn test_variable_elimination_edge_cases() {
     test("const unused = true", "const unused = !0"); // boolean gets optimized
 
     // Test used variables that should not be eliminated - but inlining happens
-    test_same("var used = 5; console.log(used);");
+    test("var used = 5; console.log(used);", "console.log(5);");
     test("let used = 'hello'; return used;", "let used = 'hello';\nreturn 'hello';"); // variable gets inlined
     test("const used = true; if (used) foo();", "const used = !0;\nfoo();"); // constant inlined and optimized
 

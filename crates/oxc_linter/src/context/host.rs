@@ -1,4 +1,10 @@
-use std::{borrow::Cow, cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use std::{
+    borrow::Cow,
+    cell::{Cell, RefCell},
+    path::Path,
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
@@ -19,9 +25,9 @@ use super::{LintContext, plugin_name_to_prefix};
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
-    /// Shared semantic information about the file being linted, which includes scopes, symbols
-    /// and AST nodes. See [`Semantic`].
-    pub(super) semantic: Rc<Semantic<'a>>,
+    /// Semantic information about the file being linted, which includes scopes, symbols and AST nodes.
+    /// See [`Semantic`].
+    pub(super) semantic: Semantic<'a>,
     /// Cross module information.
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
@@ -35,7 +41,7 @@ pub struct ContextSubHost<'a> {
 
 impl<'a> ContextSubHost<'a> {
     pub fn new(
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
     ) -> Self {
@@ -50,7 +56,7 @@ impl<'a> ContextSubHost<'a> {
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new_with_framework_options(
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         source_text_offset: u32,
         frameworks_options: FrameworkOptions,
@@ -76,7 +82,7 @@ impl<'a> ContextSubHost<'a> {
 
     /// Shared reference to the [`Semantic`] analysis
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+    pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
     }
 
@@ -117,7 +123,7 @@ pub struct ContextHost<'a> {
     /// Some rules (like vue) need the information of the other entries.
     pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
     /// The current index which will be linted.
-    current_sub_host_index: RefCell<usize>,
+    current_sub_host_index: Cell<usize>,
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across a single file.
@@ -157,7 +163,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             sub_hosts,
-            current_sub_host_index: RefCell::new(0),
+            current_sub_host_index: Cell::new(0),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
@@ -169,13 +175,24 @@ impl<'a> ContextHost<'a> {
 
     /// The current [`ContextSubHost`]
     fn current_sub_host(&self) -> &ContextSubHost<'a> {
-        &self.sub_hosts[*self.current_sub_host_index.borrow()]
+        &self.sub_hosts[self.current_sub_host_index.get()]
+    }
+
+    /// Get mutable reference to the current [`ContextSubHost`]
+    fn current_sub_host_mut(&mut self) -> &mut ContextSubHost<'a> {
+        &mut self.sub_hosts[self.current_sub_host_index.get()]
     }
 
     /// Shared reference to the [`Semantic`] analysis of current script block.
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+    pub fn semantic(&self) -> &Semantic<'a> {
         &self.current_sub_host().semantic
+    }
+
+    /// Mutable reference to the [`Semantic`] analysis of current script block.
+    #[inline]
+    pub fn semantic_mut(&mut self) -> &mut Semantic<'a> {
+        &mut self.current_sub_host_mut().semantic
     }
 
     /// Shared reference to the [`ModuleRecord`] of the current script block.
@@ -233,8 +250,13 @@ impl<'a> ContextHost<'a> {
 
     // move the context to the next sub host
     pub fn next_sub_host(&self) -> bool {
-        *self.current_sub_host_index.borrow_mut() += 1;
-        self.sub_hosts.get(*self.current_sub_host_index.borrow()).is_some()
+        let next_index = self.current_sub_host_index.get() + 1;
+        if next_index < self.sub_hosts.len() {
+            self.current_sub_host_index.set(next_index);
+            true
+        } else {
+            false
+        }
     }
 
     /// report unused enable/disable directives, add these as Messages to diagnostics
@@ -387,7 +409,7 @@ impl<'a> ContextHost<'a> {
         self.sub_hosts
             .iter()
             .enumerate()
-            .filter(|(index, _)| *index != *self.current_sub_host_index.borrow())
+            .filter(|&(index, _)| index != self.current_sub_host_index.get())
             .map(|(_, sub_host)| sub_host)
             .collect()
     }

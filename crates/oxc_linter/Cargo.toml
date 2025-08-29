@@ -17,7 +17,7 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
-oxlint2 = ["dep:oxc_ast_macros", "tokio/rt-multi-thread"]
+oxlint2 = ["dep:oxc_ast_macros", "oxc_ast_visit/serialize", "tokio/rt-multi-thread"]
 disable_oxlint2 = []
 force_test_reporter = []
 

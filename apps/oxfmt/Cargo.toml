@@ -28,6 +28,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
+oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
@@ -35,6 +36,7 @@ oxc_span = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 ignore = { workspace = true, features = ["simd-accel"] }
 indexmap = { workspace = true }
+miette = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature

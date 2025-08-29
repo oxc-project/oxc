@@ -731,14 +731,18 @@ mod test {
         test_options("var foo = function () {}; foo()", "", &options);
 
         test_same_options("function foo({}) {} foo()", &options);
-        test_same_options("var foo = ({}) => {}; foo()", &options);
-        test_same_options("var foo = function ({}) {}; foo()", &options);
+        test_options("var foo = ({}) => {}; foo()", "(({}) => {})()", &options);
+        test_options("var foo = function ({}) {}; foo()", "(function ({}) {})()", &options);
 
         test_same_options("async function foo({}) {} foo()", &options);
-        test_same_options("var foo = async ({}) => {}; foo()", &options);
-        test_same_options("var foo = async function ({}) {}; foo()", &options);
+        test_options("var foo = async ({}) => {}; foo()", "(async ({}) => {})()", &options);
+        test_options(
+            "var foo = async function ({}) {}; foo()",
+            "(async function ({}) {})()",
+            &options,
+        );
 
         test_same_options("function* foo({}) {} foo()", &options);
-        test_same_options("var foo = function*({}) {}; foo()", &options);
+        test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
     }
 }

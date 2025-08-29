@@ -110,9 +110,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if let Some(body) = &value.body() {
             // Handle block comments between method signature and body
             // Example: method() /* comment */ {}
-            let comments = f.context().comments().block_comments_before(body.span.start);
+            let comments = f.context().comments().comments_before(body.span.start);
             if !comments.is_empty() {
-                write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
+                write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
             }
             write!(f, [space(), body])?;
         }

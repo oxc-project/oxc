@@ -147,7 +147,7 @@ fn dce_logical_expression() {
     test("false && bar()", "");
     test("true && bar()", "bar()");
 
-    test("var foo = false && bar(); baz(foo)", "var foo = false; baz(foo)");
+    test("var foo = false && bar(); baz(foo)", "baz(false)");
     test("var foo = true && bar(); baz(foo)", "var foo = bar(); baz(foo)");
 
     test("foo = false && bar()", "foo = false");

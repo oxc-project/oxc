@@ -8,7 +8,8 @@ on:
     branches:
       - main
     paths:
-      - npm/oxc-types/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
+      - npm/oxc-types/package.json
+      - .github/workflows/release_types.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -52,8 +53,9 @@ jobs:
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
-      - name: Publish
+      - run: npm install -g npm@latest # For trusted publishing support
+
+      # Trusted publishing is configured, publish token is not required.
+      - name: Trusted Publish
         working-directory: npm/oxc-types
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks

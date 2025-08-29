@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import oxc from '../index';
+import { isolatedDeclaration } from '../index';
 
 describe('isolated declaration', () => {
   const code = `
@@ -18,7 +18,7 @@ describe('isolated declaration', () => {
   `;
 
   it('matches output', () => {
-    const ret = oxc.isolatedDeclaration('test.ts', code, { sourcemap: true });
+    const ret = isolatedDeclaration('test.ts', code, { sourcemap: true });
     expect(ret).toMatchObject({
       code: '/**\n' +
         '* jsdoc 1\n' +

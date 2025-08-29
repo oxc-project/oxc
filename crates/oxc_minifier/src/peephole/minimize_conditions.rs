@@ -1119,64 +1119,64 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_disabled() {
-        test_same("var x = {}; if (x != null) throw 'a';");
-        test("var x = {}; var y = x != null;", "var x = {}, y = x != null;");
+        test("var x = {}; if (x != null) throw 'a';", "throw 'a';");
+        test("var x = {}; var y = x != null;", "var y = !0;");
 
-        test_same("var x = 1; if (x != 0) throw 'a';");
-        test("var x = 1; var y = x != 0;", "var x = 1, y = x != 0;");
+        test("var x = 1; if (x != 0) throw 'a';", "throw 'a';");
+        test("var x = 1; var y = x != 0;", "var y = !0;");
     }
 
     #[test]
     fn test_coercion_substitution_boolean_result0() {
-        test("var x = {}; var y = x != null;", "var x = {}, y = x != null");
+        test_same("var x = {}, y = x != null;");
     }
 
     #[test]
     fn test_coercion_substitution_boolean_result1() {
-        test("var x = {}; var y = x == null;", "var x = {}, y = x == null;");
-        test("var x = {}; var y = x !== null;", "var x = {}, y = x !== null;");
-        test("var x = undefined; var y = x !== null;", "var x = void 0, y = x !== null;");
-        test("var x = {}; var y = x === null;", "var x = {}, y = x === null;");
-        test("var x = undefined; var y = x === null;", "var x = void 0, y = x === null;");
+        test_same("export var x = {}, y = x == null;");
+        test_same("export var x = {}, y = x !== null;");
+        test("export var x = undefined, y = x !== null;", "export var x = void 0, y = x !== null;");
+        test_same("export var x = {}, y = x === null;");
+        test("export var x = undefined, y = x === null;", "export var x = void 0, y = x === null;");
 
-        test("var x = 1; var y = x != 0;", "var x = 1, y = x != 0;");
-        test("var x = 1; var y = x == 0;", "var x = 1, y = x == 0;");
-        test("var x = 1; var y = x !== 0;", "var x = 1, y = x !== 0;");
-        test("var x = 1; var y = x === 0;", "var x = 1, y = x === 0;");
+        test_same("export var x = 1, y = x != 0;");
+        test_same("export var x = 1, y = x == 0;");
+        test_same("export var x = 1, y = x !== 0;");
+        test_same("export var x = 1, y = x === 0;");
     }
 
     #[test]
     fn test_coercion_substitution_if() {
-        test("var x = {};\nif (x != null) throw 'a';\n", "var x={}; if (x!=null) throw 'a'");
-        test_same("var x = {};\nif (x == null) throw 'a';\n");
-        test_same("var x = {};\nif (x != null) throw 'a';\n");
-        test_same("var x = {};\nif (x !== null) throw 'a';\n");
-        test_same("var x = {};\nif (x === null) throw 'a';\n");
+        test("var x = {};\nif (x != null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x == null) throw 'a';\n", "");
+        test("var x = {};\nif (x != null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x !== null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x === null) throw 'a';\n", "");
 
-        test_same("var x = 1;\nif (x != 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x != 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x == 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x !== 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x === 0) throw 'a';\n");
-        test_same("var x = NaN;\nif (x === 0) throw 'a';\n");
+        test("var x = 1;\nif (x != 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x != 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x == 0) throw 'a';\n", "");
+        test("var x = 1;\nif (x !== 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x === 0) throw 'a';\n", "");
+        test("var x = NaN;\nif (x === 0) throw 'a';\n", "");
     }
 
     #[test]
     fn test_coercion_substitution_expression() {
-        test_same("var x = {}; x != null && alert('b');");
-        test_same("var x = 1; x != 0 && alert('b');");
+        test("var x = {}; x != null && alert('b');", "alert('b');");
+        test("var x = 1; x != 0 && alert('b');", "alert('b');");
     }
 
     #[test]
     fn test_coercion_substitution_hook() {
-        test("var x = {}; var y = x != null ? 1 : 2;", "var x = {}, y = x == null ? 2 : 1;");
-        test("var x = 1; var y = x != 0 ? 1 : 2;", "var x = 1, y = x == 0 ? 2 : 1;");
+        test("var x = {}; var y = x != null ? 1 : 2;", "var y = 1;");
+        test("var x = 1; var y = x != 0 ? 1 : 2;", "var y = 1;");
     }
 
     #[test]
     fn test_coercion_substitution_not() {
-        test("var x = {}; var y = !(x != null) ? 1 : 2;", "var x = {}, y = x == null ? 1 : 2;");
-        test("var x = 1; var y = !(x != 0) ? 1 : 2; ", "var x = 1, y = x == 0 ? 1 : 2; ");
+        test("var x = {}; var y = !(x != null) ? 1 : 2;", "var y = 2;");
+        test("var x = 1; var y = !(x != 0) ? 1 : 2; ", "var y = 2; ");
     }
 
     #[test]
@@ -1187,40 +1187,52 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_unknown_type() {
-        test_same("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n");
-        test_same("var x = /** @type {?} */ (1);\nif (x != 0) throw 'a';\n");
+        test("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = /** @type {?} */ (1);\nif (x != 0) throw 'a';\n", "throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_all_type() {
-        test_same("var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
-        test_same("var x = /** @type {*} */ (1);\nif (x != 0) throw 'a';\n");
+        test_same("export var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
+        test_same("export var x = /** @type {*} */ (1);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_primitives_vs_null() {
-        test_same("var x = 0;\nif (x != null) throw 'a';\n");
-        test_same("var x = '';\nif (x != null) throw 'a';\n");
-        test_same("var x = !1;\nif (x != null) throw 'a';\n");
+        test("var x = 0;\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = '';\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = !1;\nif (x != null) throw 'a';\n", "throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_non_number_vs_zero() {
-        test_same("var x = {};\nif (x != 0) throw 'a';\n");
-        test_same("var x = '';\nif (x != 0) throw 'a';\n");
-        test_same("var x = !1;\nif (x != 0) throw 'a';\n");
+        test("var x = {};\nif (x != 0) throw 'a';\n", "if ({} != 0) throw 'a';");
+        test("var x = '';\nif (x != 0) throw 'a';\n", "");
+        test("var x = !1;\nif (x != 0) throw 'a';\n", "");
     }
 
     #[test]
     fn test_coercion_substitution_boxed_number_vs_zero() {
-        test_same("var x = /* @__PURE__ */ new Number(0);\nif (x != 0) throw 'a';\n");
+        test(
+            "var x = /* @__PURE__ */ new Number(0);\nif (x != 0) throw 'a';\n",
+            "if (/* @__PURE__ */ new Number(0) != 0) throw 'a';\n",
+        );
     }
 
     #[test]
     fn test_coercion_substitution_boxed_primitives() {
-        test_same("var x = /* @__PURE__ */ new Number(); if (x != null) throw 'a';");
-        test_same("var x = /* @__PURE__ */ new String(); if (x != null) throw 'a';");
-        test_same("var x = /* @__PURE__ */ new Boolean();\nif (x != null) throw 'a';");
+        test(
+            "var x = /* @__PURE__ */ new Number(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new Number() != null) throw 'a';",
+        );
+        test(
+            "var x = /* @__PURE__ */ new String(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new String() != null) throw 'a';",
+        );
+        test(
+            "var x = /* @__PURE__ */ new Boolean(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new Boolean() != null) throw 'a';",
+        );
     }
 
     #[test]
@@ -1327,7 +1339,10 @@ mod test {
         test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
         test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
         test_same("v = foo === void 0 || bar === null");
-        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test(
+            "var undefined = 1; v = foo === null || foo === undefined",
+            "v = foo === null || foo === 1",
+        );
         test_same("v = foo !== 1 && foo === void 0 || foo === null");
         test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 

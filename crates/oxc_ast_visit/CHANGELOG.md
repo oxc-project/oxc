@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- bb10c88 ast_visit: Add `Utf8ToUtf16Converter::convert_program` method (#13341) (overlookmotel)
+- 59d2c08 ast_visit: `Utf8ToUtf16` translate back from UTF-16 to UTF-8 (#13340) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1cdc420 ast_visit: Correct and expand comments in `Utf8ToUtf16Converter` (#13310) (overlookmotel)
+
+### 🚜 Refactor
+
+- cd5a9ca ast_visit: `Utf8ToUtf16` record end offset of multi-byte chars (#13339) (overlookmotel)
+
+
 
 
 

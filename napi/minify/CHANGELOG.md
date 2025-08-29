@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
 ## [0.82.3] - 2025-08-20
 
 ### 🐛 Bug Fixes

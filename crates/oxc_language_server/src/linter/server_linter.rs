@@ -19,16 +19,24 @@ use crate::linter::{
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
     tsgo_linter::TsgoLinter,
 };
-use crate::options::UnusedDisableDirectives;
+use crate::options::{Run, UnusedDisableDirectives};
 use crate::{ConcurrentHashMap, OXC_CONFIG_FILE, Options};
 
 use super::config_walker::ConfigWalker;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ServerLinterRun {
+    OnType,
+    OnSave,
+    Always,
+}
 
 pub struct ServerLinter {
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
     tsgo_linter: Arc<Option<TsgoLinter>>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
+    lint_on_run: Run,
     pub extended_paths: Vec<PathBuf>,
 }
 
@@ -125,6 +133,7 @@ impl ServerLinter {
             ),
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
+            lint_on_run: options.run,
             tsgo_linter: if options.type_aware {
                 Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
             } else {
@@ -243,14 +252,42 @@ impl ServerLinter {
         &self,
         uri: &Uri,
         content: Option<String>,
+        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
+        let (oxlint, tsgolint) = match (run_type, self.lint_on_run) {
+            // run everything on save, or when it is forced
+            (ServerLinterRun::Always, _) | (ServerLinterRun::OnSave, Run::OnSave) => (true, true),
+            // run only oxlint on type
+            // tsgolint does not support memory source_text
+            (ServerLinterRun::OnType, Run::OnType) => (true, false),
+            // it does not match, run nothing
+            (ServerLinterRun::OnType, Run::OnSave) => (false, false),
+            // run only tsglint on save, even if the user wants it with type
+            // tsgolint only supports the OS file system.
+            (ServerLinterRun::OnSave, Run::OnType) => (false, true),
+        };
+
+        // return `None` when both tools do not want to be used
+        if !oxlint && !tsgolint {
+            return None;
+        }
+
         if self.is_ignored(uri) {
             return None;
         }
 
-        // when `IsolatedLintHandler` returns `None`, it means it does not want to lint.
-        // Do not try `tsgolint` because it could be ignored or is not supported.
-        let mut reports = self.isolated_linter.lock().await.run_single(uri, content.clone())?;
+        let mut reports = Vec::with_capacity(0);
+
+        if oxlint
+            && let Some(oxlint_reports) =
+                self.isolated_linter.lock().await.run_single(uri, content.clone())
+        {
+            reports.extend(oxlint_reports);
+        }
+
+        if !tsgolint {
+            return Some(reports);
+        }
 
         let Some(tsgo_linter) = &*self.tsgo_linter else {
             return Some(reports);
@@ -296,6 +333,7 @@ mod test {
     use crate::{
         Options,
         linter::server_linter::{ServerLinter, normalize_path},
+        options::Run,
         tester::{Tester, get_file_path},
     };
     use rustc_hash::FxHashMap;
@@ -340,6 +378,46 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_type_on_type() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_type",
+            Some(Options { type_aware: true, run: Run::OnType, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_type_on_save() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_save",
+            Some(Options { type_aware: true, run: Run::OnType, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_save_on_type() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_save",
+            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_save_on_save() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_type",
+            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
     }
 
     #[test]
@@ -460,7 +538,7 @@ mod test {
     fn test_tsgo_lint() {
         let tester = Tester::new(
             "fixtures/linter/tsgolint",
-            Some(Options { type_aware: true, ..Default::default() }),
+            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
     }

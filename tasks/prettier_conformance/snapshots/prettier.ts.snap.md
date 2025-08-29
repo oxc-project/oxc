@@ -1,4 +1,4 @@
-ts compatibility: 329/573 (57.42%)
+ts compatibility: 330/573 (57.59%)
 
 # Failed
 
@@ -67,11 +67,11 @@ ts compatibility: 329/573 (57.42%)
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 59.46% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
-| typescript/conditional-types/comments.ts | 💥💥 | 62.45% |
+| typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
 | typescript/conditional-types/conditonal-types.ts | 💥💥 | 53.24% |
 | typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 52.63% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 19.38% |
 | typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 53.85% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
@@ -79,7 +79,6 @@ ts compatibility: 329/573 (57.42%)
 | typescript/conformance/classes/mixinClassesMembers.ts | 💥 | 95.05% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 96.77% |
-| typescript/conformance/comments/comments.ts | 💥 | 0.00% |
 | typescript/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts | 💥 | 90.00% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 66.67% |
 | typescript/conformance/expressions/functionCalls/callWithSpreadES6.ts | 💥 | 97.96% |
@@ -92,7 +91,7 @@ ts compatibility: 329/573 (57.42%)
 | typescript/conformance/types/constKeyword/constKeyword.ts | 💥 | 40.00% |
 | typescript/conformance/types/enumDeclaration/enumDeclaration.ts | 💥 | 40.00% |
 | typescript/conformance/types/firstTypeNode/firstTypeNode.ts | 💥 | 51.61% |
-| typescript/conformance/types/functions/functionImplementations.ts | 💥 | 97.75% |
+| typescript/conformance/types/functions/functionImplementations.ts | 💥 | 99.44% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 75.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 75.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts | 💥 | 75.00% |
@@ -103,12 +102,12 @@ ts compatibility: 329/573 (57.42%)
 | typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameter/typeParameter.ts | 💥 | 66.67% |
 | typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts | 💥 | 93.33% |
-| typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 61.22% |
+| typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 63.27% |
 | typescript/conformance/types/union/unionTypeCallSignatures3.ts | 💥 | 68.97% |
-| typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 61.29% |
+| typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 63.44% |
 | typescript/conformance/types/union/unionTypeEquivalence.ts | 💥 | 90.00% |
 | typescript/conformance/types/union/unionTypeFromArrayLiteral.ts | 💥 | 93.55% |
-| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 56.67% |
+| typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 63.33% |
 | typescript/const/initializer-ambient-context.ts | 💥 | 93.33% |
 | typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
@@ -184,7 +183,7 @@ ts compatibility: 329/573 (57.42%)
 | typescript/new/new-signature.ts | 💥 | 93.85% |
 | typescript/no-semi/non-null.ts | 💥💥 | 66.67% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
-| typescript/non-null/parens.ts | 💥 | 80.00% |
+| typescript/non-null/parens.ts | 💥 | 96.00% |
 | typescript/nosemi/type.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥💥 | 58.83% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |
@@ -223,7 +222,7 @@ ts compatibility: 329/573 (57.42%)
 | typescript/tuple/trailing-comma-trailing-rest.ts | 💥💥💥 | 0.00% |
 | typescript/tuple/trailing-comma.ts | 💥💥💥 | 15.38% |
 | typescript/tuple/tuple.ts | 💥💥💥 | 0.00% |
-| typescript/type-alias/conditional.ts | 💥 | 26.67% |
+| typescript/type-alias/conditional.ts | 💥 | 23.33% |
 | typescript/type-alias/issue-100857.ts | 💥 | 25.35% |
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/1.ts | 💥 | 0.00% |

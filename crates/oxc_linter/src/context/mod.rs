@@ -105,7 +105,7 @@ impl<'a> LintContext<'a> {
     ///
     /// Refer to [`Semantic`]'s documentation for more information.
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
+    pub fn semantic(&self) -> &Semantic<'a> {
         self.parent.semantic()
     }
 

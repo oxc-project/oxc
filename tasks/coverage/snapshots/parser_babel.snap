@@ -3,7 +3,7 @@ commit: 41d96516
 parser_babel Summary:
 AST Parsed     : 2407/2423 (99.34%)
 Positive Passed: 2385/2423 (98.43%)
-Negative Passed: 1642/1755 (93.56%)
+Negative Passed: 1645/1755 (93.73%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -159,12 +159,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
@@ -12820,6 +12814,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  9 │   readonly *[e?.e]?() { }
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:4:9]
+ 3 │         readonly r,
+ 4 │         public pu: number,
+   ·         ──────
+ 5 │         protected po?,
+   ╰────
+
+  × TS(1090): 'protected' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:5:9]
+ 4 │         public pu: number,
+ 5 │         protected po?,
+   ·         ─────────
+ 6 │         private pi?: number,
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:6:9]
+ 5 │         protected po?,
+ 6 │         private pi?: number,
+   ·         ───────
+ 7 │         public readonly pur,
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ──────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:9]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·         ──────
+ 11 │ }
+    ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:3:9]
  2 │     not_constructor(
@@ -13068,6 +13102,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ──
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:3:3]
+ 2 │   readonly r,
+ 3 │   public pu: number,
+   ·   ──────
+ 4 │   protected po?,
+   ╰────
+
+  × TS(1090): 'protected' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:4:3]
+ 3 │   public pu: number,
+ 4 │   protected po?,
+   ·   ─────────
+ 5 │   private pi?: number,
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:5:3]
+ 4 │   protected po?,
+ 5 │   private pi?: number,
+   ·   ───────
+ 6 │   public readonly pur,
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·   ──────
+ 7 │   readonly x = 0,
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:3]
+ 7 │   readonly x = 0,
+ 8 │   public y?: number = 0
+   ·   ──────
+ 9 │ ) {}
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:2:3]
  1 │ function foo(
@@ -13303,6 +13377,150 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ┬
    ·          ╰── `(` expected
  3 │ }
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:2:3]
+ 1 │ interface Foo {
+ 2 │   private a();
+   ·   ───────
+ 3 │   public b();
+   ╰────
+
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:3:3]
+ 2 │   private a();
+ 3 │   public b();
+   ·   ──────
+ 4 │   protected c();
+   ╰────
+
+  × TS(1070): 'protected' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:4:3]
+ 3 │   public b();
+ 4 │   protected c();
+   ·   ─────────
+ 5 │   static d();
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:5:3]
+ 4 │   protected c();
+ 5 │   static d();
+   ·   ──────
+ 6 │   declare e();
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:6:3]
+ 5 │   static d();
+ 6 │   declare e();
+   ·   ───────
+ 7 │   abstract f();
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:7:3]
+ 6 │   declare e();
+ 7 │   abstract f();
+   ·   ────────
+ 8 │   readonly g();
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:2:3]
+ 1 │ interface Foo {
+ 2 │   private a();
+   ·   ───────
+ 3 │   public b();
+   ╰────
+
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:3:3]
+ 2 │   private a();
+ 3 │   public b();
+   ·   ──────
+ 4 │   protected c();
+   ╰────
+
+  × TS(1070): 'protected' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:4:3]
+ 3 │   public b();
+ 4 │   protected c();
+   ·   ─────────
+ 5 │   static d();
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:5:3]
+ 4 │   protected c();
+ 5 │   static d();
+   ·   ──────
+ 6 │   declare e();
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:6:3]
+ 5 │   static d();
+ 6 │   declare e();
+   ·   ───────
+ 7 │   abstract f();
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:7:3]
+ 6 │   declare e();
+ 7 │   abstract f();
+   ·   ────────
+ 8 │   readonly g();
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:2:3]
+ 1 │ interface Foo {
+ 2 │   private a;
+   ·   ───────
+ 3 │   public b;
+   ╰────
+
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:3:3]
+ 2 │   private a;
+ 3 │   public b;
+   ·   ──────
+ 4 │   protected c;
+   ╰────
+
+  × TS(1070): 'protected' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:4:3]
+ 3 │   public b;
+ 4 │   protected c;
+   ·   ─────────
+ 5 │   static d;
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:5:3]
+ 4 │   protected c;
+ 5 │   static d;
+   ·   ──────
+ 6 │   declare e;
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:6:3]
+ 5 │   static d;
+ 6 │   declare e;
+   ·   ───────
+ 7 │   abstract f;
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts:7:3]
+ 6 │   declare e;
+ 7 │   abstract f;
+   ·   ────────
+ 8 │ }
    ╰────
 
   × Expected `(` but found `:`

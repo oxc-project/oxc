@@ -1,7 +1,6 @@
 use std::{
     cell::Cell,
     path::{Path, PathBuf},
-    rc::Rc,
     sync::Arc,
 };
 
@@ -295,7 +294,7 @@ impl Oxc {
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
             let external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
-            let semantic = Rc::new(semantic_ret.semantic);
+            let semantic = semantic_ret.semantic;
             let lint_config = if linter_options.config.is_some() {
                 let oxlintrc =
                     Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().to_string())
@@ -319,7 +318,7 @@ impl Oxc {
             )
             .run(
                 path,
-                vec![ContextSubHost::new(Rc::clone(&semantic), Arc::clone(module_record), 0)],
+                vec![ContextSubHost::new(semantic, Arc::clone(module_record), 0)],
                 allocator,
             );
             self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));

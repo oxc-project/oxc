@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 #[test]
 fn merge_assignments_to_declarations_var() {

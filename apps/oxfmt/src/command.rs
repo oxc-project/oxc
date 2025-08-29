@@ -21,8 +21,8 @@ const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options, version(VERSION))]
 pub struct FormatCommand {
-    #[bpaf(external)]
-    pub basic_options: BasicOptions,
+    #[bpaf(external, fallback(OutputOptions::Default))]
+    pub output_options: OutputOptions,
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
@@ -32,12 +32,14 @@ pub struct FormatCommand {
     pub paths: Vec<PathBuf>,
 }
 
-/// Basic Configuration
+/// Output Options
 #[derive(Debug, Clone, Bpaf)]
-pub struct BasicOptions {
-    /// TODO: docs
-    #[bpaf(switch)]
-    pub check: bool,
+pub enum OutputOptions {
+    #[bpaf(hide)]
+    Default,
+    /// Write mode - write formatted code back
+    #[bpaf(long, short)]
+    Write,
 }
 
 /// Miscellaneous

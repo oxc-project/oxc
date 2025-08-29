@@ -1,0 +1,2 @@
+const [index: string]: number
+}

@@ -544,10 +544,28 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
 }
 
 #[cold]
+pub fn export_modifier_must_precede_declare(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1029", "'export' modifier must precede 'declare' modifier.").with_label(modifier.span)
+}
+
+#[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")
+}
+
+pub fn cannot_appear_on_class_elements(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error(
+        "1031",
+        format!("'{}' modifier cannot appear on class elements of this kind.", modifier.kind),
+    )
+    .with_label(modifier.span)
+}
+
+pub fn cannot_appear_on_a_type_member(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1070", format!("'{}' modifier cannot appear on a type member.", modifier.kind))
+        .with_label(modifier.span)
 }
 
 #[cold]

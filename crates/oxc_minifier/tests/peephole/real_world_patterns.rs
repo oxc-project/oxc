@@ -1,4 +1,4 @@
-use super::{test, test_same};
+use crate::{test, test_same};
 
 /// Focused minification tests for specific patterns and edge cases
 /// Tests demonstrate actual oxc minifier capabilities

@@ -10,7 +10,7 @@ const Test6 = styled.div.withConfig({ displayName: "input__Test6", componentId: 
   'green',
 );
 const Test7 = styled.div.withConfig({ displayName: "input__Test7", componentId: "sc-lh68ek-6" })(
-  ["background:url(\"https://google.com\");width:", ";", "height:", ";"],
+  ["background:url(\"https://google.com\");width:", ";", " height:", ";"],
   p => p.props.width,
   'green',
   p => p.props.height,

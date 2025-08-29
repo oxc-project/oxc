@@ -928,6 +928,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     pos += 2;
                     if pos == bytes.len() {
                         // Comment ends at end of quasi
+                        comment_type = None;
                         continue;
                     }
 
@@ -988,9 +989,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 continue;
                             }
                             b'n' | b'r' if string_quote == NOT_IN_STRING => {
-                                if output.last().is_some_and(|&last| last != b' ') {
-                                    output.push(b' ');
-                                }
+                                insert_space_if_required(&mut output, quasi_index);
                                 i += 2;
                                 continue;
                             }
@@ -1060,25 +1059,36 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
                 }
                 // Skip and compress whitespace.
+                //
+                // CSS allows removing spaces around certain delimiters without changing meaning:
+                // - `color: red` -> `color:red` (spaces after colons)
+                // - `.a { }` -> `.a{}` (spaces around braces)
+                // - `margin: 1px , 2px` -> `margin:1px,2px` (spaces around commas)
+                //
+                // But spaces are significant in other contexts:
+                // - `.a .b` - space between selectors preserved
+                // - `padding: 0 ${VALUE}px` - space before interpolation preserved
+                // - `${A} ${B}` - space between interpolations preserved
+                // - `.class :hover` - space before pseudo-selector preserved
                 _ if cur_byte.is_ascii_whitespace() => {
+                    // Preserve this space if it's not following a character which doesn't require one.
+                    // Note: If a space is inserted, it may be removed again if it's followed
+                    // by `{`, `}`, `,`, or `;`.
+                    insert_space_if_required(&mut output, quasi_index);
+
                     i += 1;
-                    // Compress symbols, remove spaces around these symbols,
-                    // but preserve whitespace preceding colon, to avoid joining selectors.
-                    if output.last().is_some_and(|&last| {
-                        !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';')
-                    }) && (i == bytes.len() || !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
-                    {
-                        // `i == bytes.len()` means we're at the end of the quasi that has an
-                        // interpolation after it. Preserve trailing whitespace to avoid joining
-                        // with the interpolation.
-                        //
-                        // For example:
-                        // `padding: 0 ${PADDING}px`
-                        //            ^ this space should be preserved to avoid it becomes
-                        //              `padding:0${PADDING}px`
-                        output.push(b' ');
-                    }
                     continue;
+                }
+                // Remove whitespace before `{`, `}`, `,`, and `;`.
+                //
+                // Note: We intentionally DON'T include ':' here because spaces before colons
+                // are significant in CSS. ` :hover` (descendant pseudo-selector) is different
+                // from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
+                // hovered descendant, while `.parent:hover` selects the parent when hovered.
+                b'{' | b'}' | b',' | b';' => {
+                    if output.last() == Some(&b' ') {
+                        output.pop();
+                    }
                 }
                 _ => {}
             }
@@ -1086,6 +1096,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             output.push(cur_byte);
             i += 1;
         }
+    }
+
+    // Remove trailing space from last quasi
+    if output.last() == Some(&b' ') {
+        output.pop();
     }
 
     // Update last quasi.
@@ -1113,6 +1128,26 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
         lit.quasis.retain(|quasi| quasi.span != REMOVE_SENTINEL);
     }
+}
+
+/// Insert a space, unless preceding character makes it possible to skip.
+///
+/// See comments above about whitespace removal.
+fn insert_space_if_required(output: &mut Vec<u8>, quasi_index: usize) {
+    if let Some(&last) = output.last() {
+        // Always safe to remove whitespace after these characters
+        if matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';') {
+            return;
+        }
+    } else {
+        // We're at start of a quasi. If it's the first, trim leading space.
+        // Otherwise, preserve space to avoid joining with previous interpolation.
+        if quasi_index == 0 {
+            return;
+        }
+    }
+
+    output.push(b' ');
 }
 
 #[cfg(test)]

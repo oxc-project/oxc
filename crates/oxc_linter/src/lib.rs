@@ -9,7 +9,7 @@ use oxc_semantic::AstNode;
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 use oxc_ast_macros::ast;
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-use oxc_semantic::Semantic;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 
 #[cfg(test)]
 mod tester;
@@ -131,11 +131,11 @@ impl Linter {
         &self,
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
-        allocator: &Allocator,
+        allocator: &'a Allocator,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
         loop {
             let rules = rules
@@ -214,11 +214,11 @@ impl Linter {
             }
 
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-            self.run_external_rules(&external_rules, path, semantic, &ctx_host, allocator);
+            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
             // Stop clippy complaining about unused vars
             #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
-            let (_, _) = (&external_rules, allocator);
+            let (_, _, _) = (&external_rules, &mut ctx_host, allocator);
 
             if let Some(severity) = self.options.report_unused_directive {
                 if severity.is_warn_deny() {
@@ -236,16 +236,19 @@ impl Linter {
     }
 
     #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-    fn run_external_rules(
+    fn run_external_rules<'a>(
         &self,
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
         path: &Path,
-        semantic: &Semantic<'_>,
-        ctx_host: &ContextHost,
-        allocator: &Allocator,
+        ctx_host: &mut Rc<ContextHost<'a>>,
+        allocator: &'a Allocator,
     ) {
-        use std::ptr;
+        use std::{
+            mem,
+            ptr::{self, NonNull},
+        };
 
+        use oxc_ast::ast::Program;
         use oxc_diagnostics::OxcDiagnostic;
         use oxc_span::Span;
 
@@ -258,10 +261,51 @@ impl Linter {
         // `external_linter` always exists when `oxlint2` feature is enabled
         let external_linter = self.external_linter.as_ref().unwrap();
 
-        // Write offset of `Program` in metadata at end of buffer
-        let program = semantic.nodes().program();
-        let program_offset = ptr::from_ref(program) as u32;
+        let (program_offset, span_converter) = {
+            // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
+            //
+            // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
+            // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
+            // an immutable `&` ref to an AST node.
+            // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
+            //
+            // So instead we get a pointer to `Program`.
+            // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
+            // has no provenance for mutation, so can't be converted to `&mut Program`.
+            // So create a new pointer to `Program` which inherits `data_end_ptr`'s provenance,
+            // which does allow mutation.
+            //
+            // We then drop `Semantic`, after which no references to any AST nodes remain.
+            // We can then safety convert the pointer to `&mut Program`.
+            //
+            // `Program` was created in `allocator`, and that allocator is a `FixedSizeAllocator`,
+            // so only has 1 chunk. So `data_end_ptr` and `Program` are within the same allocation.
+            // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
+            // which ensure they are in same allocation.
+            // However, we have no static guarantee of this, so strictly speaking it's unsound.
+            // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
+            // sketchy behavior.
+            let ctx_host = Rc::get_mut(ctx_host).unwrap();
+            let semantic = mem::take(ctx_host.semantic_mut());
+            let program_addr = NonNull::from(semantic.nodes().program()).addr();
+            let mut program_ptr =
+                allocator.data_end_ptr().cast::<Program>().with_addr(program_addr);
+            drop(semantic);
+            // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
+            // so can get a mutable reference to `Program` without aliasing violations.
+            let program = unsafe { program_ptr.as_mut() };
 
+            // Convert spans to UTF-16
+            let span_converter = Utf8ToUtf16::new(program.source_text);
+            span_converter.convert_program(program);
+
+            // Get offset of `Program` within buffer (bottom 32 bits of pointer)
+            let program_offset = ptr::from_ref(program) as u32;
+
+            (program_offset, span_converter)
+        };
+
+        // Write offset of `Program` in metadata at end of buffer
         let metadata = RawTransferMetadata::new(program_offset);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
@@ -277,6 +321,10 @@ impl Linter {
         match result {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
+                    // Convert UTF-16 offsets back to UTF-8
+                    let mut span = Span::new(diagnostic.loc.start, diagnostic.loc.end);
+                    span_converter.convert_span_back(&mut span);
+
                     let (external_rule_id, severity) =
                         external_rules[diagnostic.rule_index as usize];
                     let (plugin_name, rule_name) =
@@ -284,7 +332,7 @@ impl Linter {
 
                     ctx_host.push_diagnostic(Message::new(
                         OxcDiagnostic::error(diagnostic.message)
-                            .with_label(Span::new(diagnostic.loc.start, diagnostic.loc.end))
+                            .with_label(span)
                             .with_error_code(plugin_name.to_string(), rule_name.to_string())
                             .with_severity(severity.into()),
                         PossibleFixes::None,

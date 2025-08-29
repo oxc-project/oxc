@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - npm/runtime/package.json
+      - .github/workflows/release_runtime.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -52,8 +53,9 @@ jobs:
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
-      - name: Publish
+      - run: npm install -g npm@latest # For trusted publishing support
+
+      # Trusted publishing is configured, publish token is not required.
+      - name: Trusted Publish
         working-directory: npm/runtime
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks

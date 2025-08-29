@@ -3,7 +3,7 @@ commit: 261630d6
 parser_typescript Summary:
 AST Parsed     : 8814/8816 (99.98%)
 Positive Passed: 8803/8816 (99.85%)
-Negative Passed: 1429/3535 (40.42%)
+Negative Passed: 1435/3535 (40.59%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -2298,10 +2298,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/p
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum4.ts
@@ -3126,8 +3122,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interface
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/implementingAnInterfaceExtendingClassWithPrivates2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/ClassAndModuleThatMergeWithModulesExportedGenericFunctionAndGenericClassStaticFunctionOfTheSameName.ts
@@ -3502,8 +3496,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override11.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override9.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/overrideKeywordOrder.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js3.ts
@@ -3559,8 +3551,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserCommaInTypeMemberList2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnPropertySignature1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts
 
@@ -3995,8 +3985,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/mem
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithProtectedConstructor.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithPublicConstructor.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/nonPrimitive/nonPrimitiveAccessProperty.ts
 
@@ -4483,6 +4471,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
+ 1 │ var v = (public x: string) => { };
+   ·          ──────
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
@@ -4634,11 +4628,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/MemberAccessorDeclaration15.ts:2:12]
+ 1 │ class C {
+ 2 │    set Foo(public a: number) { }
+   ·            ──────
+ 3 │ }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/MemberAccessorDeclaration15.ts:2:12]
  1 │ class C {
  2 │    set Foo(public a: number) { }
    ·            ────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/ParameterList13.ts:2:10]
+ 1 │ interface I {
+ 2 │     new (public x);
+   ·          ──────
  3 │ }
    ╰────
 
@@ -4650,10 +4660,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/ParameterList4.ts:1:12]
+ 1 │ function F(public A) {
+   ·            ──────
+ 2 │ }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ParameterList4.ts:1:12]
  1 │ function F(public A) {
    ·            ────────
+ 2 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/ParameterList5.ts:1:16]
+ 1 │ function A(): (public B) => C {
+   ·                ──────
  2 │ }
    ╰────
 
@@ -4662,6 +4686,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ function A(): (public B) => C {
    ·                ────────
  2 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/ParameterList6.ts:2:19]
+ 1 │ class C {
+ 2 │   constructor(C: (public A) => any) {
+   ·                   ──────
+ 3 │   }
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -4742,6 +4774,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │     get foo() { return 0 }
    ·               ─
  3 │ };
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:2:11]
+ 1 │ class C {
+ 2 │     set X(public v) { }
+   ·           ──────
+ 3 │     static set X(public v2) { }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:3:18]
+ 2 │     set X(public v) { }
+ 3 │     static set X(public v2) { }
+   ·                  ──────
+ 4 │ }
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -5707,12 +5755,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     constructor() {
    ╰────
 
-  × Expected `;` but found `Identifier`
-   ╭─[typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts:3:12]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/compiler/classExpressionPropertyModifiers.ts:3:5]
  2 │     declare [Symbol.toStringTag] = "uh";
  3 │     export foo = 1;
-   ·            ─┬─
-   ·             ╰── `;` expected
+   ·     ──────
  4 │ }
    ╰────
 
@@ -6717,7 +6764,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × Identifier expected. 'export' is a reserved word that cannot be used here.
+  × TS(1090): 'export' modifier cannot appear on a parameter.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
  2 │     constructor (export a: number) {
@@ -6972,11 +7019,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │ 
    ╰────
 
-  × Unexpected token
+  × 'default' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/defaultKeywordWithoutExport1.ts:4:1]
  3 │ @decorator
  4 │ default class {}
    · ───────
+   ╰────
+
+  × A class name is required.
+   ╭─[typescript/tests/cases/compiler/defaultKeywordWithoutExport1.ts:3:1]
+ 2 │ 
+ 3 │ @decorator
+   · ─────
+ 4 │ default class {}
    ╰────
 
   × Unexpected token
@@ -7942,13 +7997,165 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ────────────────
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ module M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
    ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
+ 1 │ module M {
+ 2 │     export export var x = 1;
+   ·            ──────
+ 3 │     export export function f() { }
+   ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
+ 2 │     export export var x = 1;
+ 3 │     export export function f() { }
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
+ 2 │     export export var x = 1;
+ 3 │     export export function f() { }
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
+ 4 │ 
+ 5 │     export export module N {
+   ·            ──────
+ 6 │         export export class C { }
+   ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
+ 5 │     export export module N {
+ 6 │         export export class C { }
+   ·                ──────
+ 7 │         export export interface I { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
+ 5 │     export export module N {
+ 6 │         export export class C { }
+   ·                ──────
+ 7 │         export export interface I { }
+   ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
+ 6 │         export export class C { }
+ 7 │         export export interface I { }
+   ·                ──────
+ 8 │     }  
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
+ 6 │         export export class C { }
+ 7 │         export export interface I { }
+   ·                ──────
+ 8 │     }  
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
+ 4 │ 
+ 5 │     export export module N {
+   ·            ──────
+ 6 │         export export class C { }
+   ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
+ 11 │ declare module A {
+ 12 │     export export var x;
+    ·            ──────
+ 13 │     export export function f()
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
+ 11 │ declare module A {
+ 12 │     export export var x;
+    ·            ──────
+ 13 │     export export function f()
+    ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
+ 12 │     export export var x;
+ 13 │     export export function f()
+    ·            ──────
+ 14 │ 
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
+ 12 │     export export var x;
+ 13 │     export export function f()
+    ·            ──────
+ 14 │ 
+    ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
+ 14 │ 
+ 15 │     export export module N {
+    ·            ──────
+ 16 │         export export class C { }
+    ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
+ 15 │     export export module N {
+ 16 │         export export class C { }
+    ·                ──────
+ 17 │         export export interface I { }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
+ 15 │     export export module N {
+ 16 │         export export class C { }
+    ·                ──────
+ 17 │         export export interface I { }
+    ╰────
+
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
+ 16 │         export export class C { }
+ 17 │         export export interface I { }
+    ·                ──────
+ 18 │     }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
+ 16 │         export export class C { }
+ 17 │         export export interface I { }
+    ·                ──────
+ 18 │     }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
+ 14 │ 
+ 15 │     export export module N {
+    ·            ──────
+ 16 │         export export class C { }
+    ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
@@ -8287,7 +8494,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │    export function f() { }
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:12]
+ 3 │    export function f() { }
+ 4 │    declare export function f() { }
+   ·            ──────
+ 5 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:32]
+ 3 │    export function f() { }
+ 4 │    declare export function f() { }
+   ·                                ▲
+ 5 │ }
+   ╰────
+
+  × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:12]
  3 │    export function f() { }
  4 │    declare export function f() { }
@@ -8353,12 +8576,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ 
    ╰────
 
-  × Expected `;` but found `Identifier`
-   ╭─[typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts:3:12]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/compiler/illegalModifiersOnClassElements.ts:3:5]
  2 │     declare foo = 1;
  3 │     export bar = 1;
-   ·            ─┬─
-   ·             ╰── `;` expected
+   ·     ──────
  4 │ }
    ╰────
 
@@ -8419,7 +8641,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ 
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
  4 │ }
  5 │ declare export import a = x.c;
@@ -8427,7 +8649,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ var b: a;
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:13]
  5 │     }
  6 │     declare export import a = x.c;
@@ -9750,6 +9972,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ };
    ╰────
 
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
+ 1 │ interface I {
+ 2 │   public [a: string]: number;
+   ·   ──────
+ 3 │ }
+   ╰────
+
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
  1 │ interface I {
@@ -10718,6 +10948,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     constructor(public names: string, public ages: number) {
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyOutsideConstructor.ts:2:9]
+ 1 │ class C {
+ 2 │     foo(public x) {
+   ·         ──────
+ 3 │     }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/parameterPropertyOutsideConstructor.ts:2:9]
  1 │ class C {
@@ -11259,7 +11497,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
@@ -16150,6 +16388,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  17 │ }
     ╰────
 
+  × TS(1070): 'accessor' modifier cannot appear on a type member.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:24:5]
+ 23 │ interface I1 {
+ 24 │     accessor a: number;
+    ·     ────────
+ 25 │ }
+    ╰────
+
   × 'accessor' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:27:1]
  26 │ 
@@ -16376,6 +16622,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │     static set x(v) {  } // error
    ·                ┬
    ·                ╰── It can not be redeclared here
+ 9 │ }
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:12:5]
+ 11 │ interface IB {
+ 12 │     static [s: string]: number;
+    ·     ──────
+ 13 │     static [s: number]: 42 | 233;
+    ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
+ 12 │     static [s: string]: number;
+ 13 │     static [s: number]: 42 | 233;
+    ·     ──────
+ 14 │ }
+    ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
+ 6 │ interface I {
+ 7 │     static readonly [s: string]: number;
+   ·     ──────
+ 8 │     static readonly [s: number]: 42 | 233
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
+ 7 │     static readonly [s: string]: number;
+ 8 │     static readonly [s: number]: 42 | 233
+   ·     ──────
  9 │ }
    ╰────
 
@@ -19792,20 +20070,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │ }
     ╰────
 
-  × Expected `{` but found `class`
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:21]
+  × 'default' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:13]
  1 │ // error
  2 │ export @dec default class C3 {}
-   ·                     ──┬──
-   ·                       ╰── `{` expected
+   ·             ───────
    ╰────
 
-  × Expected `{` but found `class`
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:21]
+  × 'default' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:13]
  1 │ // error
  2 │ export @dec default class C3 {}
-   ·                     ──┬──
-   ·                       ╰── `{` expected
+   ·             ───────
    ╰────
 
   × TS(1249): A decorator can only decorate a method implementation, not an overload.
@@ -20819,11 +21095,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·               ╰── `,` expected
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:8]
  2 │ export var p;
  3 │ static export as namespace oo1;
    ·        ──────
+ 4 │ declare export as namespace oo2;
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:15]
+ 2 │ export var p;
+ 3 │ static export as namespace oo1;
+   ·               ──
  4 │ declare export as namespace oo2;
    ╰────
 
@@ -21068,6 +21352,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ──────────
  11 │ }
     ╰────
+
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts:3:5]
+ 2 │ interface Foo {
+ 3 │     public a: any;
+   ·     ──────
+ 4 │     private b: any;
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts:4:5]
+ 3 │     public a: any;
+ 4 │     private b: any;
+   ·     ───────
+ 5 │     protected c: any;
+   ╰────
+
+  × TS(1070): 'protected' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts:5:5]
+ 4 │     private b: any;
+ 5 │     protected c: any;
+   ·     ─────────
+ 6 │ }
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
@@ -21786,6 +22094,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1070): 'override' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/override/override9.ts:8:5]
+ 7 │     foo (): void;
+ 8 │     override bar(): void;
+   ·     ────────
+ 9 │     baz(): void;
+   ╰────
+
+  × TS(1070): 'override' modifier cannot appear on a type member.
+    ╭─[typescript/tests/cases/conformance/override/override9.ts:10:5]
+  9 │     baz(): void;
+ 10 │     override bazz(): void;
+    ·     ────────
+ 11 │ }
+    ╰────
+
+  × TS(1090): 'override' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/override/overrideParameterProperty.ts:25:5]
+ 24 │ 
+ 25 │   m(override p1: "hello") {}
+    ·     ────────
+ 26 │ }
+    ╰────
+
   × A parameter property is only allowed in a constructor implementation.
     ╭─[typescript/tests/cases/conformance/override/overrideParameterProperty.ts:25:5]
  24 │ 
@@ -21919,6 +22251,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors9.ts:1:18]
  1 │ var v = { set foo(a, b) { } }
    ·                  ──────
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:10]
+ 1 │ var v = (public x: string) => { };
+   ·          ──────
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -22152,12 +22490,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `;` but found `constructor`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:10]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:3]
  1 │ class C {
  2 │   export constructor() { }
-   ·          ─────┬─────
-   ·               ╰── `;` expected
+   ·   ──────
  3 │ }
    ╰────
 
@@ -22711,6 +23048,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
    ╰────
 
+  × TS(1070): 'public' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnPropertySignature1.ts:2:5]
+ 1 │ interface Foo{
+ 2 │     public biz;
+   ·     ──────
+ 3 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
  1 │ public break;
@@ -22977,12 +23322,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `;` but found `[`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:11]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·           ┬
-   ·           ╰── `;` expected
+   ·    ──────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'export' modifier cannot appear on an index signature.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:4]
+ 1 │ class C {
+ 2 │    export [x: string]: string;
+   ·    ──────
  3 │ }
    ╰────
 
@@ -23093,7 +23445,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
+ 1 │ export export interface I {
+   ·        ──────
+ 2 │ }
+   ╰────
+
+  × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
@@ -23107,12 +23466,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × Expected `;` but found `get`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:12]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:5]
  1 │ class C {
  2 │     export get Foo() { }
-   ·            ─┬─
-   ·             ╰── `;` expected
+   ·     ──────
  3 │ }
    ╰────
 
@@ -23145,6 +23503,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ class C {
  2 │    set Foo(a: number, b: number) { }
    ·           ──────────────────────
+ 3 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration15.ts:2:12]
+ 1 │ class C {
+ 2 │    set Foo(public a: number) { }
+   ·            ──────
  3 │ }
    ╰────
 
@@ -23208,12 +23574,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `;` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:12]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:5]
  1 │ class C {
  2 │     export Foo() { }
-   ·            ─┬─
-   ·             ╰── `;` expected
+   ·     ──────
  3 │ }
    ╰────
 
@@ -23291,12 +23656,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Expected `;` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:10]
+  × TS(1031): 'export' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:3]
  1 │ class C {
  2 │   export Foo;
-   ·          ─┬─
-   ·           ╰── `;` expected
+   ·   ──────
  3 │ }
    ╰────
 
@@ -23357,6 +23721,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ─
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts:2:10]
+ 1 │ interface I {
+ 2 │     new (public x);
+   ·          ──────
+ 3 │ }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts:2:10]
  1 │ interface I {
@@ -23373,10 +23745,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts:1:12]
+ 1 │ function F(public A) {
+   ·            ──────
+ 2 │ }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts:1:12]
  1 │ function F(public A) {
    ·            ────────
+ 2 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:16]
+ 1 │ function A(): (public B) => C {
+   ·                ──────
  2 │ }
    ╰────
 
@@ -23385,6 +23771,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ function A(): (public B) => C {
    ·                ────────
  2 │ }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:19]
+ 1 │ class C {
+ 2 │   constructor(C: (public A) => any) {
+   ·                   ──────
+ 3 │   }
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -23579,7 +23973,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1029): 'export' modifier must precede 'declare' modifier.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
+ 1 │ export export class Foo {
+   ·        ──────
+ 2 │   public Bar() {
+   ╰────
+
+  × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
  1 │ export export class Foo {
    ·        ──────
@@ -25870,6 +26271,350 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ }
    ╰────
 
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts:4:5]
+ 3 │ interface I {
+ 4 │     private x: string;
+   ·     ───────
+ 5 │ }
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+   ╭─[typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts:8:5]
+ 7 │ interface I2<T> {
+ 8 │     private y: T;
+   ·     ───────
+ 9 │ }
+   ╰────
+
+  × TS(1070): 'private' modifier cannot appear on a type member.
+    ╭─[typescript/tests/cases/conformance/types/namedTypes/interfaceWithPrivateMember.ts:12:5]
+ 11 │ var x: {
+ 12 │     private y: string;
+    ·     ───────
+ 13 │ }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
+ 2 │ 
+ 3 │ function foo(public x, private y) { }
+   ·              ──────
+ 4 │ var f = function foo(public x, private y) { }
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:24]
+ 2 │ 
+ 3 │ function foo(public x, private y) { }
+   ·                        ───────
+ 4 │ var f = function foo(public x, private y) { }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:22]
+ 3 │ function foo(public x, private y) { }
+ 4 │ var f = function foo(public x, private y) { }
+   ·                      ──────
+ 5 │ var f2 = function (public x, private y) { }
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:32]
+ 3 │ function foo(public x, private y) { }
+ 4 │ var f = function foo(public x, private y) { }
+   ·                                ───────
+ 5 │ var f2 = function (public x, private y) { }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:20]
+ 4 │ var f = function foo(public x, private y) { }
+ 5 │ var f2 = function (public x, private y) { }
+   ·                    ──────
+ 6 │ var f3 = (x, private y) => { }
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:30]
+ 4 │ var f = function foo(public x, private y) { }
+ 5 │ var f2 = function (public x, private y) { }
+   ·                              ───────
+ 6 │ var f3 = (x, private y) => { }
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:6:14]
+ 5 │ var f2 = function (public x, private y) { }
+ 6 │ var f3 = (x, private y) => { }
+   ·              ───────
+ 7 │ var f4 = <T>(public x: T, y: T) => { }
+   ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:7:14]
+ 6 │ var f3 = (x, private y) => { }
+ 7 │ var f4 = <T>(public x: T, y: T) => { }
+   ·              ──────
+ 8 │ 
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:15]
+  8 │ 
+  9 │ function foo2(private x: string, public y: number) { }
+    ·               ───────
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:34]
+  8 │ 
+  9 │ function foo2(private x: string, public y: number) { }
+    ·                                  ──────
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:23]
+  9 │ function foo2(private x: string, public y: number) { }
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ·                       ───────
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:42]
+  9 │ function foo2(private x: string, public y: number) { }
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ·                                          ──────
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:20]
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ·                    ───────
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:39]
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ·                                       ──────
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:11]
+ 11 │ var f6 = function (private x: string, public y: number) { }
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ·           ───────
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:30]
+ 11 │ var f6 = function (private x: string, public y: number) { }
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ·                              ──────
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:14]
+ 12 │ var f7 = (private x: string, public y: number) => { }
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ·              ───────
+ 14 │ 
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:28]
+ 12 │ var f7 = (private x: string, public y: number) => { }
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ·                            ──────
+ 14 │ 
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:9]
+ 15 │ class C {
+ 16 │     foo(public x, private y) { }
+    ·         ──────
+ 17 │     foo2(public x: number, private y: string) { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:19]
+ 15 │ class C {
+ 16 │     foo(public x, private y) { }
+    ·                   ───────
+ 17 │     foo2(public x: number, private y: string) { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:10]
+ 16 │     foo(public x, private y) { }
+ 17 │     foo2(public x: number, private y: string) { }
+    ·          ──────
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:28]
+ 16 │     foo(public x, private y) { }
+ 17 │     foo2(public x: number, private y: string) { }
+    ·                            ───────
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:13]
+ 17 │     foo2(public x: number, private y: string) { }
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ·             ──────
+ 19 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:26]
+ 17 │     foo2(public x: number, private y: string) { }
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ·                          ───────
+ 19 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:6]
+ 21 │ interface I {
+ 22 │     (private x, public y);
+    ·      ───────
+ 23 │     (private x: string, public y: number);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:17]
+ 21 │ interface I {
+ 22 │     (private x, public y);
+    ·                 ──────
+ 23 │     (private x: string, public y: number);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:6]
+ 22 │     (private x, public y);
+ 23 │     (private x: string, public y: number);
+    ·      ───────
+ 24 │     foo(private x, public y);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:25]
+ 22 │     (private x, public y);
+ 23 │     (private x: string, public y: number);
+    ·                         ──────
+ 24 │     foo(private x, public y);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:9]
+ 23 │     (private x: string, public y: number);
+ 24 │     foo(private x, public y);
+    ·         ───────
+ 25 │     foo(public x: number, y: string);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:20]
+ 23 │     (private x: string, public y: number);
+ 24 │     foo(private x, public y);
+    ·                    ──────
+ 25 │     foo(public x: number, y: string);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:25:9]
+ 24 │     foo(private x, public y);
+ 25 │     foo(public x: number, y: string);
+    ·         ──────
+ 26 │     foo3<T>(x: T, private y: T);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:26:19]
+ 25 │     foo(public x: number, y: string);
+ 26 │     foo3<T>(x: T, private y: T);
+    ·                   ───────
+ 27 │ }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:9]
+ 29 │ var a: {
+ 30 │     foo(public x, private y);
+    ·         ──────
+ 31 │     foo2(private x: number, public y: string);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:19]
+ 29 │ var a: {
+ 30 │     foo(public x, private y);
+    ·                   ───────
+ 31 │     foo2(private x: number, public y: string);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:10]
+ 30 │     foo(public x, private y);
+ 31 │     foo2(private x: number, public y: string);
+    ·          ───────
+ 32 │ };
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:29]
+ 30 │     foo(public x, private y);
+ 31 │     foo2(private x: number, public y: string);
+    ·                             ──────
+ 32 │ };
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:35:9]
+ 34 │ var b = {
+ 35 │     foo(public x, y) { },
+    ·         ──────
+ 36 │     a: function foo(x: number, private y: string) { },
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:36:32]
+ 35 │     foo(public x, y) { },
+ 36 │     a: function foo(x: number, private y: string) { },
+    ·                                ───────
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:12]
+ 36 │     a: function foo(x: number, private y: string) { },
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ·            ──────
+ 38 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:25]
+ 36 │     a: function foo(x: number, private y: string) { },
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ·                         ───────
+ 38 │ }
+    ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
  2 │ 
@@ -26349,6 +27094,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Try insert a semicolon here
 
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:16:10]
+ 15 │ interface I {
+ 16 │     new (public x);
+    ·          ──────
+ 17 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:20:10]
+ 19 │ interface I2 {
+ 20 │     new (private x);
+    ·          ───────
+ 21 │ }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:24:10]
+ 23 │ var a: {
+ 24 │     new (public x);
+    ·          ──────
+ 25 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:28:10]
+ 27 │ var b: {
+ 28 │     new (private x);
+    ·          ───────
+ 29 │ }
+    ╰────
+
   × A parameter property is only allowed in a constructor implementation.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:16:10]
  15 │ interface I {
@@ -26379,6 +27156,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  28 │     new (private x);
     ·          ─────────
  29 │ }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:19:10]
+ 18 │ interface I {
+ 19 │     new (public x);
+    ·          ──────
+ 20 │     new (public x);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:20:10]
+ 19 │     new (public x);
+ 20 │     new (public x);
+    ·          ──────
+ 21 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:24:10]
+ 23 │ interface I2 {
+ 24 │     new (private x);
+    ·          ───────
+ 25 │     new (private x);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:25:10]
+ 24 │     new (private x);
+ 25 │     new (private x);
+    ·          ───────
+ 26 │ }
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:29:10]
+ 28 │ var a: {
+ 29 │     new (public x);
+    ·          ──────
+ 30 │     new (public y);
+    ╰────
+
+  × TS(1090): 'public' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:30:10]
+ 29 │     new (public x);
+ 30 │     new (public y);
+    ·          ──────
+ 31 │ }
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:34:10]
+ 33 │ var b: {
+ 34 │     new (private x);
+    ·          ───────
+ 35 │     new (private y);
+    ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:35:10]
+ 34 │     new (private x);
+ 35 │     new (private y);
+    ·          ───────
+ 36 │ }
     ╰────
 
   × TS(2369): A parameter property is only allowed in a constructor implementation.

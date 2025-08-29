@@ -106,8 +106,19 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         }
     }
 
+    /// To keep the formatting order consistent, we need to inspect all member chain groups in order.
+    fn inspect_member_chain_groups(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.head.inspect(false, f)?;
+
+        for member in self.tail.iter() {
+            member.inspect(true, f)?;
+        }
+
+        Ok(())
+    }
+
     /// It tells if the groups should break on multiple lines
-    fn groups_should_break(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    fn groups_should_break(&self, f: &mut Formatter<'_, 'a>) -> bool {
         let mut call_expressions = self
             .members()
             .filter_map(|member| match member {
@@ -131,34 +142,30 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             has_complex_args = has_complex_args || !has_simple_arguments(call);
 
             if calls_count > 2 && has_complex_args {
-                return Ok(true);
+                return true;
             }
         }
 
-        if self.last_call_breaks(f)? && has_function_like_argument {
-            return Ok(true);
+        if !self.tail.is_empty() && self.head.will_break(f) {
+            return true;
         }
 
-        if !self.tail.is_empty() && self.head.will_break(f)? {
-            return Ok(true);
+        if self.last_call_breaks(f) && has_function_like_argument {
+            return true;
         }
 
-        if self.tail.any_except_last_will_break(f)? {
-            return Ok(true);
-        }
-
-        Ok(self.tail.iter().skip(1).any(|group| group.needs_empty_line_before(f)))
+        self.tail.any_except_last_will_break(f)
     }
 
     /// We retrieve all the call expressions inside the group and we check if
     /// their arguments are not simple.
-    fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
+    fn last_call_breaks(&self, f: &mut Formatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
         if matches!(last_group.members().last(), Some(ChainMember::CallExpression { .. })) {
             last_group.will_break(f)
         } else {
-            Ok(false)
+            false
         }
     }
 
@@ -191,12 +198,16 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 impl<'a> Format<'a> for MemberChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let has_comments = self.has_comments(f);
-
         let format_one_line = format_with(|f| {
             f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
         });
 
-        if self.tail.len() <= 1 && !has_comments {
+        self.inspect_member_chain_groups(f)?;
+
+        let has_new_line_or_comment_between =
+            self.tail.iter().any(MemberChainGroup::needs_empty_line);
+
+        if self.tail.len() <= 1 && !has_comments && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line])
             } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
@@ -208,7 +219,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
 
         let format_tail = format_with(|f| {
             for group in self.tail.iter() {
-                if group.needs_empty_line_before(f) {
+                if group.needs_empty_line() {
                     write!(f, [empty_line()])?;
                 } else {
                     write!(f, [hard_line_break()])?;
@@ -221,16 +232,9 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         let format_expanded = format_with(|f| write!(f, [self.head, indent(&group(&format_tail))]));
 
         let format_content = format_with(|f| {
-            if has_comments || self.groups_should_break(f)? {
+            if has_comments || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)])
             } else {
-                // TODO: Comment out the following code without any effect in Biome.
-                let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(|group| group.needs_empty_line_before(f));
-                if has_empty_line_before_tail || self.last_group().will_break(f)? {
-                    write!(f, [expand_parent()])?;
-                }
-
                 write!(f, [best_fitting!(format_one_line, format_expanded)])
             }
         });
