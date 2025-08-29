@@ -6,9 +6,9 @@ use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
-    generators::define_generator,
+    generators::{define_generator, formatter::ast_nodes::get_node_type},
     output::{Output, output_path},
-    schema::{Def, Schema, TypeDef},
+    schema::{Def, EnumDef, Schema, StructDef, TypeDef},
 };
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
@@ -57,14 +57,17 @@ impl Generator for FormatterFormatGenerator {
         let impls = schema
             .types
             .iter()
-            .filter(|type_def| match type_def {
-                TypeDef::Struct(struct_def) => {
-                    struct_def.visit.has_visitor() && !struct_def.builder.skip
+            .filter_map(|type_def| match type_def {
+                TypeDef::Struct(struct_def)
+                    if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
+                {
+                    Some(generate_struct_implementation(struct_def, schema))
                 }
-                TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
-                _ => false,
+                TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
+                    Some(generate_enum_implementation(enum_def, schema))
+                }
+                _ => None,
             })
-            .map(|type_def| implementation(type_def, schema))
             .collect::<TokenStream>();
 
         let options = NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.values().map(|o| {
@@ -73,6 +76,7 @@ impl Generator for FormatterFormatGenerator {
         });
 
         let output = quote! {
+            #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
 
             ///@@line_break
@@ -82,7 +86,7 @@ impl Generator for FormatterFormatGenerator {
                     trivia::FormatTrailingComments,
                 },
                 parentheses::NeedsParentheses,
-                generated::ast_nodes::{AstNode, SiblingNode},
+                generated::ast_nodes::{AstNode, AstNodes, transmute_self},
                 write::{FormatWrite #(#options)*},
             };
 
@@ -93,32 +97,16 @@ impl Generator for FormatterFormatGenerator {
     }
 }
 
-fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
-    let type_ty = type_def.ty(schema);
+fn generate_struct_implementation(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+    let type_ty = struct_def.ty(schema);
     let type_ty = quote! {
         AstNode::<'a, #type_ty>
     };
 
-    let has_kind = match type_def {
-        TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
-        TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
-        _ => unreachable!(),
-    };
+    let struct_name = struct_def.name();
+    let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&struct_name);
 
-    if !has_kind {
-        return quote! {
-            ///@@line_break
-            impl<'a> Format<'a> for #type_ty {
-                fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-                    self.write(f)
-                }
-            }
-        };
-    }
-
-    let do_not_print_comment = AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST.contains(&type_def.name());
-
-    let leading_comments = if type_def.is_enum() || do_not_print_comment {
+    let leading_comments = if do_not_print_comment {
         quote! {}
     } else {
         quote! {
@@ -126,7 +114,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    let trailing_comments = if type_def.is_enum() || do_not_print_comment {
+    let trailing_comments = if do_not_print_comment {
         quote! {}
     } else {
         quote! {
@@ -134,10 +122,8 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    let type_def_name = type_def.name();
-    let needs_parentheses = matches!(type_def_name, "JSXElement" | "JSXFragment")
-        || type_def_name.ends_with("Expression")
-        || NEEDS_PARENTHESES.contains(&type_def_name);
+    let needs_parentheses =
+        struct_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&struct_name);
     let needs_parentheses_before = if needs_parentheses {
         quote! {
             let needs_parentheses = self.needs_parentheses(f);
@@ -189,7 +175,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let fmt_implementation = generate_fmt_implementation(false);
     let fmt_options =
-        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(type_def_name).map(|str| format_ident!("{}", str));
+        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
     let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
         let implementation = generate_fmt_implementation(true);
         quote! {
@@ -212,6 +198,78 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
             }
 
             #fmt_with_options_implementation
+        }
+    }
+}
+
+fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let enum_ident = enum_def.ident();
+    let enum_ty = enum_def.ty(schema);
+
+    let variant_match_arms = enum_def.variants.iter().map(|variant| {
+        let variant_name = &variant.ident();
+        let field_type = variant.field_type(schema).unwrap();
+        let node_type =
+            field_type.maybe_inner_type(schema).map_or_else(|| field_type.ident(), TypeDef::ident);
+
+        Some(quote! {
+            #enum_ident::#variant_name(inner) => {
+                allocator.alloc(AstNode::<#node_type> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                }).fmt(f)
+            },
+        })
+    });
+
+    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
+        let inherits_type = inherits_type.as_enum().unwrap();
+        let inherits_inner_type = inherits_type
+            .maybe_inner_type(schema)
+            .map_or_else(|| inherits_type.ident(), TypeDef::ident);
+
+        let inherits_snake_name = inherits_type.snake_name();
+        let match_ident = format_ident!("match_{inherits_snake_name}");
+
+        let to_fn_ident = format_ident!("to_{inherits_snake_name}");
+        let match_arm = quote! {
+            it @ #match_ident!(#enum_ident) => {
+                let inner = it.#to_fn_ident();
+                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_node: self.following_node,
+                }).fmt(f)
+            },
+        };
+
+        match_arm
+    });
+
+    let parent = if enum_def.kind.has_kind {
+        quote! {
+            let parent = allocator.alloc(AstNodes::#enum_ident(transmute_self(self)))
+        }
+    } else {
+        quote! { let parent = self.parent }
+    };
+    let node_type = get_node_type(&enum_ty);
+
+    quote! {
+        ///@@line_break
+        impl<'a> Format<'a> for #node_type {
+            #[inline]
+            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+                let allocator = self.allocator;
+                #parent;
+                match self.inner {
+                    #(#variant_match_arms)*
+                    #(#inherits_match_arms)*
+                }
+            }
         }
     }
 }
