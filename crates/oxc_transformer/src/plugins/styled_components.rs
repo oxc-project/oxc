@@ -920,26 +920,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
                 // Find end of comment
                 let start_index = if is_block_comment {
-                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    let Some(pos) = bytes.windows(2).position(|q| q == b"*/") else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-
-                    pos += 2;
-                    if pos == bytes.len() {
-                        // Comment ends at end of quasi
-                        comment_type = None;
-                        continue;
-                    }
-
-                    // Add a space when this is a own line block comment
-                    if !bytes[pos].is_ascii_whitespace()
-                        && output.last().is_some_and(|&last| last != b' ')
-                    {
-                        output.push(b' ');
-                    }
-
-                    pos
+                    pos + 2
                 } else {
                     let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
                         // Comment contains whole of this quasi
@@ -1019,18 +1004,6 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                             bytes[i + 2..].windows(2).position(|q| q == b"*/");
                                         if let Some(end_index) = end_index {
                                             i += end_index + 4; // After `*/`
-
-                                            if i == bytes.len() {
-                                                // Comment ends at end of quasi
-                                                break;
-                                            }
-
-                                            // Add a space when this is a own line block comment
-                                            if !bytes[i].is_ascii_whitespace()
-                                                && output.last().is_some_and(|&last| last != b' ')
-                                            {
-                                                output.push(b' ');
-                                            }
                                             continue;
                                         }
 
@@ -1215,7 +1188,7 @@ mod tests {
         #[test]
         fn removes_multi_line_comments() {
             let input = "this is a/* ignore me please */test";
-            let expected = "this is a test";
+            let expected = "this is atest";
             let actual = minify_raw(input);
             debug_assert_eq!(actual, expected);
         }
