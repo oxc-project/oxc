@@ -843,6 +843,14 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    fn add_source_mapping_end(&mut self, span: Span) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            if !span.is_empty() {
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            }
+        }
+    }
+
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             if !span.is_empty() {
