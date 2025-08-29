@@ -13,15 +13,18 @@ enum NumberEnum {
   b = 2
 }
 
-enum BigIntEnum {
-  big = 100n,
-  bigger = 200n
-}
-
 enum UnaryEnum {
   negative = -1,
   positive = +2,
   bitwise = ~3
+}
+
+function getString() { return 'string'; }
+
+enum UnaryOtherEnum {
+  negative = -getString(),
+  positive = +getString(),
+  bitwise = ~getString(),
 }
 
 enum AutoIncrementEnum {
@@ -45,25 +48,25 @@ function decorate(target: any, property: string) {}
 export class Foo {
   @decorate
   stringProp: StringEnum;
-  
+
   @decorate
   templateProp: TemplateStringEnum;
-  
+
   @decorate
   numberProp: NumberEnum;
-  
-  @decorate
-  bigintProp: BigIntEnum;
-  
+
   @decorate
   unaryProp: UnaryEnum;
-  
+
+  @decorate
+  unaryOtherProp: UnaryOtherEnum;
+
   @decorate
   autoProp: AutoIncrementEnum;
-  
+
   @decorate
   mixedProp: MixedEnum;
-  
+
   @decorate
   computedProp: ComputedEnum;
 

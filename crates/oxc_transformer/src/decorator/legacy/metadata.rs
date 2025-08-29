@@ -245,18 +245,6 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         }
     }
 
-    /// Check if an expression is a numeric expression (including unary expressions)
-    fn is_numeric_expression(expr: &Expression<'a>) -> bool {
-        expr.is_number_literal()
-            || matches!(
-                expr, Expression::UnaryExpression(unary) if
-                matches!(
-                    // These operators still produce numeric results.
-                    unary.operator, UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus | UnaryOperator::BitwiseNot
-                ) && unary.argument.is_number_literal()
-            )
-    }
-
     /// Infer the type of an enum based on its members
     fn infer_enum_type(members: &[TSEnumMember<'a>]) -> EnumType {
         let mut enum_type = EnumType::Object;
@@ -269,7 +257,13 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     {
                         enum_type = EnumType::String;
                     }
-                    expr if Self::is_numeric_expression(expr) && enum_type != EnumType::String => {
+                    // TS considers `+x`, `-x`, `~x` to be `Number` type, no matter what `x` is.
+                    // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
+                    // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
+                    // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
+                    Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+                        if enum_type != EnumType::String =>
+                    {
                         enum_type = EnumType::Number;
                     }
                     // For other expressions, we can't determine the type statically
