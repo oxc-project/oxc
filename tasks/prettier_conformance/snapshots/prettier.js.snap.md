@@ -1,4 +1,4 @@
-js compatibility: 634/699 (90.70%)
+js compatibility: 639/699 (91.42%)
 
 # Failed
 
@@ -58,14 +58,9 @@ js compatibility: 634/699 (90.70%)
 | js/ternaries/test.js | 💥💥💥💥✨✨✨✨ | 22.40% |
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
-| jsx/binary-expressions/relational-operators.js | 💥 | 78.95% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/fragment/fragment.js | 💥 | 94.44% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
-| jsx/jsx/await.js | 💥💥💥💥 | 95.92% |
-| jsx/jsx/parens.js | 💥💥💥💥 | 89.47% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

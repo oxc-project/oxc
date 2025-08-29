@@ -1,18 +1,13 @@
-ts compatibility: 324/573 (56.54%)
+ts compatibility: 330/573 (57.59%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| jsx/binary-expressions/relational-operators.js | 💥 | 78.95% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/fragment/fragment.js | 💥 | 94.44% |
 | jsx/ignore/jsx_ignore.js | 💥 | 82.57% |
-| jsx/jsx/await.js | 💥💥💥💥 | 95.92% |
-| jsx/jsx/parens.js | 💥💥💥💥 | 89.47% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
@@ -221,7 +216,6 @@ ts compatibility: 324/573 (56.54%)
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 87.66% |
 | typescript/trailing-comma/type-arguments.ts | 💥💥💥 | 10.53% |
 | typescript/trailing-comma/type-parameters-vs-arguments.ts | 💥💥💥 | 66.67% |
-| typescript/tsx/member-expression.tsx | 💥 | 54.55% |
 | typescript/tsx/type-parameters.tsx | 💥 | 90.48% |
 | typescript/tuple/dangling-comments.ts | 💥💥💥 | 21.28% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |

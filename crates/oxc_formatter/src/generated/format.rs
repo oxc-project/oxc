@@ -570,7 +570,14 @@ impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -715,7 +722,14 @@ impl<'a> Format<'a> for AstNode<'a, NewExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, MetaProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -1118,7 +1132,14 @@ impl<'a> Format<'a> for AstNode<'a, SequenceExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Super> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2372,7 +2393,14 @@ impl<'a> Format<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, BooleanLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2381,7 +2409,14 @@ impl<'a> Format<'a> for AstNode<'a, BooleanLiteral> {
 impl<'a> Format<'a> for AstNode<'a, NullLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2422,7 +2457,14 @@ impl<'a> Format<'a> for AstNode<'a, StringLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2431,7 +2473,14 @@ impl<'a> Format<'a> for AstNode<'a, BigIntLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2439,7 +2488,15 @@ impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        result
     }
 }
 
@@ -2463,7 +2520,15 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        result
     }
 }
 
@@ -2547,14 +2612,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXNamespacedName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXMemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
         let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -2635,14 +2693,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXEmptyExpression> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
         let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
         self.format_trailing_comments(f)?;
         result
     }

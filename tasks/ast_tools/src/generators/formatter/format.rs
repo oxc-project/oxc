@@ -8,7 +8,7 @@ use crate::{
     Codegen, Generator,
     generators::{define_generator, formatter::ast_nodes::get_node_type},
     output::{Output, output_path},
-    schema::{Def, EnumDef, Schema, StructDef, TypeDef},
+    schema::{Def, EnumDef, Schema, StructDef, TypeDef, TypeId},
 };
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
@@ -33,15 +33,7 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "TemplateElement",
 ];
 
-const NEEDS_PARENTHESES: &[&str] = &[
-    "Class",
-    "Function",
-    "NumericLiteral",
-    "SimpleAssignmentTarget",
-    "StringLiteral",
-    "TSTypeAssertion",
-    "IdentifierReference",
-];
+const AST_NODE_NEEDS_PARENTHESES: &[&str] = &["TSTypeAssertion"];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
@@ -54,6 +46,8 @@ define_generator!(FormatterFormatGenerator);
 
 impl Generator for FormatterFormatGenerator {
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+        let parenthesis_type_ids = get_needs_parentheses_type_ids(schema);
+
         let impls = schema
             .types
             .iter()
@@ -61,7 +55,7 @@ impl Generator for FormatterFormatGenerator {
                 TypeDef::Struct(struct_def)
                     if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
                 {
-                    Some(generate_struct_implementation(struct_def, schema))
+                    Some(generate_struct_implementation(struct_def, &parenthesis_type_ids, schema))
                 }
                 TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
                     Some(generate_enum_implementation(enum_def, schema))
@@ -97,7 +91,11 @@ impl Generator for FormatterFormatGenerator {
     }
 }
 
-fn generate_struct_implementation(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+fn generate_struct_implementation(
+    struct_def: &StructDef,
+    parenthesis_type_ids: &[TypeId],
+    schema: &Schema,
+) -> TokenStream {
     let type_ty = struct_def.ty(schema);
     let type_ty = quote! {
         AstNode::<'a, #type_ty>
@@ -122,8 +120,8 @@ fn generate_struct_implementation(struct_def: &StructDef, schema: &Schema) -> To
         }
     };
 
-    let needs_parentheses =
-        struct_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&struct_name);
+    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
+
     let needs_parentheses_before = if needs_parentheses {
         quote! {
             let needs_parentheses = self.needs_parentheses(f);
@@ -272,4 +270,20 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
             }
         }
     }
+}
+
+/// Get [`TypeId`]s of types which do not have a following node.
+fn get_needs_parentheses_type_ids(schema: &Schema) -> Vec<TypeId> {
+    let mut type_ids =
+        AST_NODE_NEEDS_PARENTHESES.iter().map(|&name| schema.type_names[name]).collect::<Vec<_>>();
+
+    let expression_enum = schema.type_by_name("Expression").as_enum().unwrap();
+    type_ids.extend(
+        expression_enum
+            .all_variants(schema)
+            .filter_map(|variant| variant.field_type(schema))
+            .map(|variant_type| variant_type.innermost_type(schema).id()),
+    );
+
+    type_ids
 }
