@@ -1068,7 +1068,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 }
                 // Skip and compress whitespace.
                 _ if cur_byte.is_ascii_whitespace() => {
-                    // Consume any following whitespace
+                    // Consume this whitespace and any further whitespace characters
                     let mut next_byte;
                     loop {
                         i += 1;
@@ -1083,33 +1083,41 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     // - `color: red` -> `color:red` (spaces around colons)
                     // - `.a { }` -> `.a{}` (spaces around braces)
                     // - `margin: 1px , 2px` -> `margin:1px,2px` (spaces around commas)
-                    // But spaces are significant in other contexts like selectors: `.a .b` != `.a.b`
-                    if output.last().map_or(
-                        // Case 1: If output is empty (no last char), preserve space only if we're
-                        // in a non-first quasi to avoid joining with the previous interpolation.
-                        // Example: `${A} ${B}` - the space between interpolations must be preserved
-                        quasi_index != 0,
-                        // Case 2: If we have a last char, preserve space unless it's a CSS delimiter
-                        // that can safely have adjacent spaces removed (space, colon, braces, comma, semicolon)
-                        |&last| !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';'),
-                    )
-                    // AND check what comes after this whitespace:
-                    // - If we're at the end of the quasi (i == bytes.len()), preserve the space
-                    //   to avoid joining with the next interpolation
-                    // - Otherwise, only preserve if the next char is NOT one of: { } , ;
+                    // But spaces are significant in other contexts like selectors: `.a .b` != `.a.b`.
+
+                    // Check what comes before this whitespace
+                    if let Some(&last) = output.last() {
+                        if matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';') {
+                            // Always safe to remove whitespace after these characters
+                            continue;
+                        }
+                    } else if quasi_index == 0 {
+                        // We're at the start of the first quasi, so can trim leading whitespace
+                        continue;
+                    } else {
+                        // We're at start of a later quasi.
+                        // Preserve space to avoid joining with previous interpolation.
+                    }
+
+                    // Check what comes after this whitespace.
+                    // - If we're at the end of the quasi (`next_byte == None`), preserve the space
+                    //   to avoid joining with the next interpolation.
+                    // - Remove whitespace before `{`, `}`, `,`, and `;`.
                     //   Note: We intentionally DON'T include ':' here because spaces before colons
                     //   are significant in CSS. ` :hover` (descendant pseudo-selector) is different
                     //   from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
                     //   hovered descendant, while `.parent:hover` selects the parent when hovered.
-                    && next_byte.is_none_or(|&next| !matches!(next, b'{' | b'}' | b',' | b';'))
-                    {
-                        // Preserve this space character.
-                        // Examples:
-                        // - `padding: 0 ${VALUE}px` - space before interpolation preserved
-                        // - `${A} ${B}` - space between interpolations preserved
-                        // - `.class :hover` - space before pseudo-selector preserved
-                        output.push(b' ');
+                    if matches!(next_byte, Some(&b'{' | &b'}' | &b',' | &b';')) {
+                        // Always safe to remove whitespace before these characters
+                        continue;
                     }
+
+                    // Preserve this space character.
+                    // Examples:
+                    // - `padding: 0 ${VALUE}px` - space before interpolation preserved
+                    // - `${A} ${B}` - space between interpolations preserved
+                    // - `.class :hover` - space before pseudo-selector preserved
+                    output.push(b' ');
                     continue;
                 }
                 _ => {}
