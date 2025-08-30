@@ -5,28 +5,7 @@ use crate::{
     to_primitive::ToPrimitive,
 };
 
-use super::{PropertyReadSideEffects, context::MayHaveSideEffectsContext};
-
-/// Returns true if subtree changes application state.
-///
-/// This trait assumes the following:
-/// - `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` are side-effect free.
-///   - This is mainly to assume `ToPrimitive` is side-effect free.
-///   - Note that the builtin `Array::toString` has a side-effect when a value contains a Symbol as `ToString(Symbol)` throws an error. Maybe we should revisit this assumption and remove it.
-///     - For example, `"" == [Symbol()]` returns an error, but this trait returns `false`.
-/// - Errors thrown when creating a String or an Array that exceeds the maximum length does not happen.
-/// - TDZ errors does not happen.
-///
-/// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects<'a> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool;
-}
-
-impl<'a, T: MayHaveSideEffects<'a>> MayHaveSideEffects<'a> for Option<T> {
-    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        self.as_ref().is_some_and(|t| t.may_have_side_effects(ctx))
-    }
-}
+use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
@@ -433,8 +412,9 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
 impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            // TODO: check side effects inside the block
-            ClassElement::StaticBlock(block) => !block.body.is_empty(),
+            ClassElement::StaticBlock(block) => {
+                block.body.iter().any(|stmt| stmt.may_have_side_effects(ctx))
+            }
             ClassElement::MethodDefinition(e) => {
                 !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
             }
@@ -577,7 +557,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
 
-        let (ident, name) = match &self.callee {
+        let (object, name) = match &self.callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.object.get_identifier_reference(), member.property.name.as_str())
             }
@@ -592,10 +572,13 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             _ => return true,
         };
 
-        let Some(object) = ident.map(|ident| ident.name.as_str()) else { return true };
+        let Some(object) = object else { return true };
+        if !ctx.is_global_reference(object) {
+            return true;
+        }
 
         #[rustfmt::skip]
-        let is_global = match object {
+        let is_global = match object.name.as_str() {
             "Array" => matches!(name, "isArray" | "of"),
             "ArrayBuffer" => name == "isView",
             "Date" => matches!(name, "now" | "parse" | "UTC"),
@@ -658,6 +641,41 @@ impl<'a> MayHaveSideEffects<'a> for Argument<'a> {
                 _ => true,
             },
             match_expression!(Argument) => self.to_expression().may_have_side_effects(ctx),
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for AssignmentTarget<'a> {
+    /// This only checks the `Evaluation of <AssignmentTarget>`.
+    /// The sideeffect of `PutValue(<AssignmentTarget>)` is not considered here.
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        match self {
+            match_simple_assignment_target!(AssignmentTarget) => {
+                self.to_simple_assignment_target().may_have_side_effects(ctx)
+            }
+            match_assignment_target_pattern!(AssignmentTarget) => true,
+        }
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for SimpleAssignmentTarget<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        match self {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
+            SimpleAssignmentTarget::StaticMemberExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+                    || member_expr.expression.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(member_expr) => {
+                member_expr.object.may_have_side_effects(ctx)
+            }
+            SimpleAssignmentTarget::TSAsExpression(_)
+            | SimpleAssignmentTarget::TSNonNullExpression(_)
+            | SimpleAssignmentTarget::TSSatisfiesExpression(_)
+            | SimpleAssignmentTarget::TSTypeAssertion(_) => true,
         }
     }
 }

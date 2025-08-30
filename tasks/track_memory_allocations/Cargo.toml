@@ -19,6 +19,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["track_allocations"] }
+oxc_minifier = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_tasks_common = { workspace = true }
 

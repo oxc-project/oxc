@@ -1,5 +1,12 @@
+use oxc_minifier::CompressOptions;
+
 /// Oxc Integration Tests
-use super::{test, test_same};
+use crate::{test, test_options, test_same};
+
+#[track_caller]
+fn test_unused(source_text: &str, expected: &str) {
+    test_options(source_text, expected, &CompressOptions::default());
+}
 
 #[test]
 fn integration() {
@@ -103,4 +110,72 @@ fn eval() {
     test_same("eval?.(x)");
     test_same("eval?.(x, y)");
     test_same("eval?.(x,y)");
+}
+
+#[test]
+fn unused() {
+    test_unused(
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v ?? (v = bar());
+          }
+        })()
+        ",
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v ??= bar();
+          }
+        })()
+        ",
+    );
+    test_unused(
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v ?? (console.log(), v = bar());
+          }
+        })()
+        ",
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v ??= (console.log(), bar());
+          }
+        })()
+        ",
+    );
+    test_unused(
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v = v || bar();
+          }
+        })()
+        ",
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v ||= bar();
+          }
+        })()
+        ",
+    );
+    test_unused(
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v = v + bar();
+          }
+        })()
+        ",
+        "(function() {
+          let v;
+          window.foo = function() {
+            return v += bar();
+          }
+        })()
+        ",
+    );
 }

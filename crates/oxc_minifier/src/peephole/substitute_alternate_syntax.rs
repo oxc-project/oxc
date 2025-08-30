@@ -138,6 +138,12 @@ impl<'a> PeepholeOptimizations {
         Self::try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
+    pub fn substitute_chain_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ChainExpression(e) = expr else { return };
+        Self::try_flatten_nested_chain_expression(e, ctx);
+        Self::substitute_chain_call_expression(e, ctx);
+    }
+
     pub fn substitute_swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
             && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
@@ -425,7 +431,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.ast.allocator);
+        let mut new_left_expr = typeof_binary_expr.clone_in_with_semantic_ids(ctx.ast.allocator);
         if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
             new_left_expr_binary.operator =
                 if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
@@ -433,21 +439,19 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         }
 
+        let is_null_id_ref = ctx.ast.expression_identifier_with_reference_id(
+            is_null_id_ref.span,
+            is_null_id_ref.name,
+            is_null_id_ref.reference_id(),
+        );
+
         let new_right_expr = if inversed {
-            ctx.ast.expression_unary(
-                SPAN,
-                UnaryOperator::LogicalNot,
-                ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
-            )
+            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref)
         } else {
             ctx.ast.expression_unary(
                 SPAN,
                 UnaryOperator::LogicalNot,
-                ctx.ast.expression_unary(
-                    SPAN,
-                    UnaryOperator::LogicalNot,
-                    ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
-                ),
+                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, is_null_id_ref),
             )
         };
         Some(ctx.ast.expression_logical(
@@ -530,15 +534,19 @@ impl<'a> PeepholeOptimizations {
 
         // Parse statement: `r[a - offset] = arguments[a];`
         let body_assign_expr = {
-            let assign = match &for_stmt.body {
+            let assign = match &mut for_stmt.body {
                 Statement::ExpressionStatement(expr_stmt) => expr_stmt,
-                Statement::BlockStatement(block) if block.body.len() == 1 => match &block.body[0] {
-                    Statement::ExpressionStatement(expr_stmt) => expr_stmt,
-                    _ => return,
-                },
+                Statement::BlockStatement(block) if block.body.len() == 1 => {
+                    match &mut block.body[0] {
+                        Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+                        _ => return,
+                    }
+                }
                 _ => return,
             };
-            let Expression::AssignmentExpression(assign_expr) = &assign.expression else { return };
+            let Expression::AssignmentExpression(assign_expr) = &mut assign.expression else {
+                return;
+            };
             if !assign_expr.operator.is_assign() {
                 return;
             }
@@ -572,12 +580,13 @@ impl<'a> PeepholeOptimizations {
             (lhs_member_expr_obj.name, base_name, offset)
         };
 
-        {
-            let Expression::ComputedMemberExpression(rhs_member_expr) = &body_assign_expr.right
+        let arguments_id = {
+            let Expression::ComputedMemberExpression(rhs_member_expr) = &mut body_assign_expr.right
             else {
                 return;
             };
-            let Expression::Identifier(rhs_member_expr_obj) = &rhs_member_expr.object else {
+            let ComputedMemberExpression { object, expression, .. } = rhs_member_expr.as_mut();
+            let Expression::Identifier(rhs_member_expr_obj) = object else {
                 return;
             };
             if rhs_member_expr_obj.name != "arguments"
@@ -585,13 +594,13 @@ impl<'a> PeepholeOptimizations {
             {
                 return;
             }
-            let Expression::Identifier(rhs_member_expr_expr_id) = &rhs_member_expr.expression
-            else {
+            let Expression::Identifier(rhs_member_expr_expr_id) = expression else {
                 return;
             };
             if rhs_member_expr_expr_id.name != a_id_name {
                 return;
             }
+            rhs_member_expr_obj
         };
 
         // Parse update: `a++`
@@ -731,7 +740,7 @@ impl<'a> PeepholeOptimizations {
             SPAN,
             ctx.ast.vec1(ctx.ast.array_expression_element_spread_element(
                 SPAN,
-                ctx.ast.expression_identifier(SPAN, "arguments"),
+                Expression::Identifier(arguments_id.take_in_box(ctx.ast)),
             )),
         );
         // wrap with `.slice(offset)`
@@ -790,12 +799,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         // `return undefined` has a different semantic in async generator function.
-        for ancestor in ctx.ancestors() {
-            if let Ancestor::FunctionBody(func) = ancestor {
-                if *func.r#async() && *func.generator() {
-                    return;
-                }
-            }
+        if ctx.is_closest_function_scope_an_async_generator() {
+            return;
         }
         stmt.argument = None;
         ctx.state.changed = true;
@@ -1074,9 +1079,8 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    pub fn substitute_chain_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
-        let Expression::ChainExpression(e) = expr else { return };
-        if let ChainElement::CallExpression(call_expr) = &mut e.expression {
+    pub fn substitute_chain_call_expression(expr: &mut ChainExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        if let ChainElement::CallExpression(call_expr) = &mut expr.expression {
             // `window.Object?.()` -> `Object?.()`
             if call_expr.arguments.is_empty()
                 && call_expr
@@ -1195,6 +1199,43 @@ impl<'a> PeepholeOptimizations {
             }
         }
         ctx.state.changed = true;
+    }
+
+    /// Flatten nested chain expressions
+    /// `(foo?.bar)?.baz` -> `foo?.bar?.baz`
+    fn try_flatten_nested_chain_expression(expr: &mut ChainExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+        match &mut expr.expression {
+            ChainElement::StaticMemberExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::ComputedMemberExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::PrivateFieldExpression(member) => {
+                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
+                {
+                    member.object = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::CallExpression(call) => {
+                if let Expression::ChainExpression(chain) = call.callee.without_parentheses_mut() {
+                    call.callee = Expression::from(chain.expression.take_in(ctx.ast));
+                    ctx.state.changed = true;
+                }
+            }
+            ChainElement::TSNonNullExpression(_) => {
+                // noop
+            }
+        }
     }
 
     /// `Object(expr)(args)` -> `(0, expr)(args)`
@@ -1482,7 +1523,7 @@ mod test {
         test("function f(){return !1;}", "function f(){return !1}");
         test("function f(){return null;}", "function f(){return null}");
         test("function f(){return void 0;}", "function f(){}");
-        test("function f(){return void foo();}", "function f(){return void foo()}");
+        test("function f(){return void foo();}", "function f(){foo()}");
         test("function f(){return undefined;}", "function f(){}");
         test("function f(){if(a()){return undefined;}}", "function f(){a()}");
         test_same("function a(undefined) { return undefined; }");
@@ -1494,6 +1535,14 @@ mod test {
         test("async function foo() { return undefined }", "async function foo() { }");
         test_same("async function* foo() { return void 0 }");
         test_same("class Foo { async * foo() { return void 0 } }");
+        test(
+            "async function* foo() { function bar () { return void 0 } return bar }",
+            "async function* foo() { function bar () {} return bar }",
+        );
+        test(
+            "async function* foo() { let bar = () => { return void 0 }; return bar }",
+            "async function* foo() { return () => {} }",
+        );
     }
 
     #[test]
@@ -2136,7 +2185,7 @@ mod test {
         test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
-        test_same("try { foo } catch(e) { var e = 2; bar(e) }");
+        test_same("try { foo } catch(e) { var e = baz; bar(e) }");
         test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
         test_same("try { foo } catch(e) { var e = 2 } bar(e)");
 
@@ -2284,5 +2333,22 @@ mod test {
         test_same(
             "for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
         );
+    }
+
+    #[test]
+    fn test_flatten_nested_chain_expression() {
+        test("(a.b)?.c", "a.b?.c");
+
+        test("(a?.b)?.c", "a?.b?.c");
+        test("(a?.b?.c)?.d", "a?.b?.c?.d");
+        test("(((a?.b)?.c)?.d)?.e", "a?.b?.c?.d?.e");
+        test("(a?.b)?.()", "a?.b?.()");
+        test("(a?.b)?.(arg)", "a?.b?.(arg)");
+        test("(a?.b)?.[0]", "a?.b?.[0]");
+        test("(a?.b)?.[key]", "a?.b?.[key]");
+        test("(a?.#b)?.c", "a?.#b?.c");
+        test_same("a.b?.c");
+        test_same("a?.b?.c");
+        test_same("(a?.b).c");
     }
 }

@@ -32,7 +32,7 @@ impl Quote {
 ///
 /// - escaping `preferred_quote`
 /// - unescape alternate quotes of `preferred_quote` if `quotes_will_change`
-/// - normalise the new lines by replacing `\r\n` with `\n`.
+/// - normalize the new lines by replacing `\r\n` with `\n` and '\r' with '\n'.
 ///
 /// The function allocates a new string only if at least one change is performed.
 ///
@@ -52,7 +52,14 @@ pub fn normalize_string(
 ) -> Cow<'_, str> {
     let alternate_quote = preferred_quote.other().as_byte();
     let preferred_quote = preferred_quote.as_byte();
-    let mut reduced_string = String::new();
+    let capacity = if quotes_will_change {
+        // If quotes change, we might need to escape some quotes, so preallocate enough space for the `\` character.
+        raw_content.len() + raw_content.bytes().filter(|&b| b == preferred_quote).count()
+    } else {
+        // If quotes are not changing, then no `\` will be added, so the original length is sufficient.
+        raw_content.len()
+    };
+    let mut reduced_string = String::with_capacity(capacity);
     let mut copy_start = 0;
     let mut bytes = raw_content.bytes().enumerate();
     while let Some((byte_index, byte)) = bytes.next() {
@@ -61,10 +68,10 @@ pub fn normalize_string(
             b'\\' => {
                 if let Some((escaped_index, escaped)) = bytes.next() {
                     if escaped == b'\r' {
-                        // If we encounter the sequence "\r\n", then skip '\r'
-                        if let Some((next_byte_index, b'\n')) = bytes.next() {
-                            reduced_string.push_str(&raw_content[copy_start..escaped_index]);
-                            copy_start = next_byte_index;
+                        reduced_string.push_str(&raw_content[copy_start..escaped_index]);
+                        copy_start = escaped_index + 1;
+                        if !matches!(bytes.next(), Some((_, b'\n'))) {
+                            reduced_string.push('\n');
                         }
                     } else if quotes_will_change && escaped == alternate_quote {
                         // Unescape alternate quotes if quotes are changing
@@ -73,11 +80,11 @@ pub fn normalize_string(
                     }
                 }
             }
-            // If we encounter the sequence "\r\n", then skip '\r'
             b'\r' => {
-                if let Some((next_byte_index, b'\n')) = bytes.next() {
-                    reduced_string.push_str(&raw_content[copy_start..byte_index]);
-                    copy_start = next_byte_index;
+                reduced_string.push_str(&raw_content[copy_start..byte_index]);
+                copy_start = byte_index + 1;
+                if !matches!(bytes.next(), Some((_, b'\n'))) {
+                    reduced_string.push('\n');
                 }
             }
             _ => {
@@ -93,11 +100,16 @@ pub fn normalize_string(
             }
         }
     }
+
     if copy_start == 0 && reduced_string.is_empty() {
         Cow::Borrowed(raw_content)
     } else {
         // Copy the remaining characters
         reduced_string.push_str(&raw_content[copy_start..]);
+        debug_assert!(
+            reduced_string.len() <= capacity,
+            "Something went wrong with the capacity calculation"
+        );
         Cow::Owned(reduced_string)
     }
 }

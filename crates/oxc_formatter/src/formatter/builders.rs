@@ -19,8 +19,9 @@ use super::{
         tag::{DedentMode, GroupMode, LabelId},
         *,
     },
+    separated::FormatSeparatedIter,
 };
-use crate::write;
+use crate::{TrailingSeparator, write};
 
 /// A line break that only gets printed if the enclosing `Group` doesn't fit on a single line.
 ///
@@ -383,6 +384,7 @@ impl std::fmt::Debug for LocatedTokenText {
     }
 }
 
+#[track_caller]
 fn debug_assert_no_newlines(text: &str) {
     debug_assert!(
         !text.contains('\r'),
@@ -2390,6 +2392,26 @@ where
         self
     }
 
+    pub fn entries_with_trailing_separator<F, I>(
+        &mut self,
+        entries: I,
+        separator: &'static str,
+        trailing_separator: TrailingSeparator,
+    ) -> &mut Self
+    where
+        F: Format<'ast> + GetSpan,
+        I: IntoIterator<Item = F>,
+    {
+        let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
+            .with_trailing_separator(trailing_separator);
+
+        for entry in iter {
+            self.entry(&entry);
+        }
+
+        self
+    }
+
     /// Finishes the output and returns any error encountered.
     pub fn finish(&mut self) -> FormatResult<()> {
         self.result
@@ -2443,9 +2465,28 @@ where
     pub fn entries<'a, F, I>(&mut self, entries: I) -> &mut Self
     where
         F: Format<'ast> + GetSpan + 'a,
-        I: IntoIterator<Item = &'a F>,
+        I: IntoIterator<Item = F>,
     {
         for content in entries {
+            self.entry(content.span(), &content);
+        }
+        self
+    }
+
+    pub fn entries_with_trailing_separator<'a, F, I>(
+        &mut self,
+        entries: I,
+        separator: &'static str,
+        trailing_separator: TrailingSeparator,
+    ) -> &mut Self
+    where
+        F: Format<'ast> + GetSpan + 'a,
+        I: IntoIterator<Item = F>,
+    {
+        let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
+            .with_trailing_separator(trailing_separator);
+
+        for content in iter {
             self.entry(content.span(), &content);
         }
         self

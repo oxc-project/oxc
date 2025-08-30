@@ -467,7 +467,8 @@ mod test {
 
     #[test]
     fn drop_debugger() {
-        test("debugger", "");
+        let options = CompressOptions { drop_debugger: true, ..default_options() };
+        test_options("debugger", "", &options);
     }
 
     #[test]

@@ -3,7 +3,10 @@ use std::{iter, ops::ControlFlow};
 use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
@@ -371,11 +374,21 @@ impl<'a> PeepholeOptimizations {
     /// * remove the variable declarator if it is unused
     /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
-        var_decl: Box<'a, VariableDeclaration<'a>>,
+        mut var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(first_decl) = var_decl.declarations.first_mut()
+            && let Some(first_decl_init) = first_decl.init.as_mut()
+        {
+            let changed =
+                Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx);
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
             && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
@@ -418,6 +431,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut expr_stmt.expression, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
@@ -427,7 +446,103 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
         }
+        // "var a; a = b();" => "var a = b();"
+        match &mut expr_stmt.expression {
+            Expression::AssignmentExpression(assign_expr) => {
+                let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
+                if merged {
+                    ctx.state.changed = true;
+                    return;
+                }
+            }
+            Expression::SequenceExpression(sequence_expr) => {
+                if result
+                    .last()
+                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_)))
+                {
+                    let first_non_merged_index =
+                        sequence_expr.expressions.iter_mut().position(|expr| {
+                            if let Expression::AssignmentExpression(assign_expr) = expr {
+                                !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                            } else {
+                                true
+                            }
+                        });
+                    let sequence_len = sequence_expr.expressions.len();
+                    match first_non_merged_index {
+                        None => {
+                            // all elements are merged
+                            ctx.state.changed = true;
+                            return;
+                        }
+                        Some(val) if val == sequence_len - 1 => {
+                            // all elements are merged except for the last expression
+                            let last_expr = sequence_expr.expressions.pop().unwrap();
+                            result.push(ctx.ast.statement_expression(last_expr.span(), last_expr));
+                            ctx.state.changed = true;
+                            return;
+                        }
+                        Some(0) => {
+                            // no elements are merged
+                        }
+                        Some(val) => {
+                            sequence_expr.expressions.drain(0..val);
+                            ctx.state.changed = true;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+
         result.push(Statement::ExpressionStatement(expr_stmt));
+    }
+
+    fn merge_assignment_to_declaration(
+        assign_expr: &mut AssignmentExpression<'a>,
+        result: &mut Vec<'a, Statement<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        if assign_expr.operator != AssignmentOperator::Assign {
+            return false;
+        }
+        let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
+            return false;
+        };
+        let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
+            return false;
+        };
+        if !matches!(&var_decl.kind, VariableDeclarationKind::Var | VariableDeclarationKind::Let) {
+            return false;
+        }
+        for decl in var_decl.declarations.iter_mut().rev() {
+            let BindingPatternKind::BindingIdentifier(kind) = &decl.id.kind else {
+                break;
+            };
+            if kind.name == id.name {
+                if decl.init.is_none() {
+                    // "var a; a = b();" => "var a = b();"
+                    decl.init = Some(assign_expr.right.take_in(ctx.ast));
+                    return true;
+                }
+                // Note it is not possible to compress like:
+                // - "var a = b(); a = c();" => "var a = (b(), c());"
+                //   This is not possible as we need to consider cases when `c()` accesses `a`
+                // - "var a = 1; a = b();" => "var a = b();"
+                //   This is not possible as we need to consider cases when `b()` accesses `a`
+                break;
+            }
+            // should not move assignment above variables with initializer to keep the execution order
+            if decl.init.is_some() {
+                break;
+            }
+            // should not move assignment above other variables for let
+            // this could cause TDZ errors (e.g. `let a, b; b = a;`)
+            if decl.kind == VariableDeclarationKind::Let {
+                break;
+            }
+        }
+        false
     }
 
     fn handle_switch_statement(
@@ -436,6 +551,15 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut switch_stmt.discriminant,
+            result,
+            ctx,
+        );
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
@@ -457,6 +581,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         // Absorb a previous expression statement
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -610,6 +740,38 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(ret_argument_expr) = &mut ret_stmt.argument {
+            let changed =
+                Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx);
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
+        if let Some(argument) = &mut ret_stmt.argument
+            && argument.value_type(ctx) == ValueType::Undefined
+            // `return undefined` has a different semantic in async generator function.
+            && !ctx.is_closest_function_scope_an_async_generator()
+        {
+            ctx.state.changed = true;
+            if argument.may_have_side_effects(ctx) {
+                if ctx.options().sequences
+                    && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+                {
+                    let a = &mut prev_expr_stmt.expression;
+                    prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
+                } else {
+                    result.push(
+                        ctx.ast.statement_expression(argument.span(), argument.take_in(ctx.ast)),
+                    );
+                }
+            }
+            ret_stmt.argument = None;
+            result.push(Statement::ReturnStatement(ret_stmt));
+            *is_control_flow_dead = true;
+            return;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 if let Some(argument) = &mut ret_stmt.argument {
@@ -631,6 +793,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut throw_stmt.argument, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         if ctx.options().sequences {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
@@ -846,5 +1014,618 @@ impl<'a> PeepholeOptimizations {
             Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }
+    }
+
+    /// Inline single-use variable declarations where possible:
+    /// ```js
+    /// // before
+    /// let x = fn();
+    /// return x.y();
+    ///
+    /// // after
+    /// return fn().y();
+    /// ```
+    ///
+    /// part of `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9111-L9189>
+    /// `substituteSingleUseSymbolInStmt`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9583>
+    fn substitute_single_use_symbol_in_statement(
+        expr_in_stmt: &mut Expression<'a>,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        // TODO: we should skip this compression when direct eval exists
+        //       because the code inside eval may reference the variable
+
+        if Self::keep_top_level_var_in_script_mode(ctx) {
+            return false;
+        }
+        let Some(Statement::VariableDeclaration(prev_var_decl)) = stmts.last_mut() else {
+            return false;
+        };
+        if prev_var_decl.kind.is_using() {
+            return false;
+        }
+
+        let last_non_inlined_index = prev_var_decl.declarations.iter_mut().rposition(|prev_decl| {
+            let Some(prev_decl_init) = &mut prev_decl.init else {
+                return true;
+            };
+            let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
+                return true;
+            };
+            if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
+                return true;
+            }
+            let Some(symbol_value) =
+                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
+            else {
+                return true;
+            };
+            // we should check whether it's exported by `symbol_value.exported`
+            // because the variable might be exported with `export { foo }` rather than `export var foo`
+            if symbol_value.exported
+                || symbol_value.read_references_count > 1
+                || symbol_value.write_references_count > 0
+            {
+                return true;
+            }
+            let replaced = Self::substitute_single_use_symbol_in_expression(
+                expr_in_stmt,
+                &prev_decl_id.name,
+                prev_decl_init,
+                prev_decl_init.may_have_side_effects(ctx),
+                ctx,
+            );
+            if replaced != Some(true) {
+                return true;
+            }
+            false
+        });
+        match last_non_inlined_index {
+            None => {
+                // all inlined
+                stmts.pop();
+                true
+            }
+            Some(last_non_inlined_index)
+                if last_non_inlined_index + 1 == prev_var_decl.declarations.len() =>
+            {
+                // no change
+                false
+            }
+            Some(last_non_inlined_index) => {
+                prev_var_decl.declarations.truncate(last_non_inlined_index + 1);
+                true
+            }
+        }
+    }
+
+    /// Returns Some(true) when the expression is successfully replaced.
+    /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
+    /// Return None when the expression is not replaced, and can try the subsequent expressions.
+    ///
+    /// `substituteSingleUseSymbolInExpr`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9642>
+    fn substitute_single_use_symbol_in_expression(
+        target_expr: &mut Expression<'a>,
+        search_for: &str,
+        replacement: &mut Expression<'a>,
+        replacement_has_side_effect: bool,
+        ctx: &Ctx<'a, '_>,
+    ) -> Option<bool> {
+        match target_expr {
+            Expression::Identifier(id) => {
+                if id.name == search_for {
+                    *target_expr = replacement.take_in(ctx.ast);
+                    return Some(true);
+                }
+            }
+            Expression::AwaitExpression(await_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut await_expr.argument,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::YieldExpression(yield_expr) => {
+                if let Some(argument) = &mut yield_expr.argument
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        argument,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            Expression::ImportExpression(import_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut import_expr.source,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+
+                // The "import()" expression has side effects but the side effects are
+                // always asynchronous so there is no way for the side effects to modify
+                // the replacement value. So it's ok to reorder the replacement value
+                // past the "import()" expression assuming everything else checks out.
+                if !replacement_has_side_effect && !import_expr.source.may_have_side_effects(ctx) {
+                    return None;
+                }
+            }
+            Expression::UnaryExpression(unary_expr) => {
+                if unary_expr.operator != UnaryOperator::Delete
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut unary_expr.argument,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            Expression::StaticMemberExpression(member_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut member_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::BinaryExpression(binary_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut binary_expr.left,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut binary_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::AssignmentExpression(assign_expr) => {
+                if assign_expr.left.may_have_side_effects(ctx) {
+                    // Do not reorder past a side effect in an assignment target, as that may
+                    // change the replacement value. For example, "fn()" may change "a" here:
+                    // ```js
+                    // let a = 1;
+                    // foo[fn()] = a;
+                    // ```
+                    return Some(false);
+                }
+                if assign_expr.operator != AssignmentOperator::Assign && replacement_has_side_effect
+                {
+                    // If this is a read-modify-write assignment and the replacement has side
+                    // effects, don't reorder it past the assignment target. The assignment
+                    // target is being read so it may be changed by the side effect. For
+                    // example, "fn()" may change "foo" here:
+                    // ```js
+                    // let a = fn();
+                    // foo += a;
+                    // ```
+                    return Some(false);
+                }
+                // If we get here then it should be safe to attempt to substitute the
+                // replacement past the left operand into the right operand.
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut assign_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::LogicalExpression(logical_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut logical_expr.left,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut logical_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::PrivateInExpression(private_in_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut private_in_expr.right,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::ConditionalExpression(cond_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut cond_expr.test,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if !replacement_has_side_effect {
+                    // Unlike other branches in this function such as "a && b" or "a?.[b]",
+                    // the "a ? b : c" form has potential code evaluation along both control
+                    // flow paths. Handle this by allowing substitution into either branch.
+                    // Side effects in one branch should not prevent the substitution into
+                    // the other branch.
+
+                    let consequent_changed = Self::substitute_single_use_symbol_in_expression(
+                        &mut cond_expr.consequent,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    );
+                    if consequent_changed == Some(true) {
+                        return consequent_changed;
+                    }
+                    let alternate_changed = Self::substitute_single_use_symbol_in_expression(
+                        &mut cond_expr.alternate,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    );
+                    if alternate_changed == Some(true) {
+                        return alternate_changed;
+                    }
+                    // Side effects in either branch should stop us from continuing to try to
+                    // substitute the replacement after the control flow branches merge again.
+                    if consequent_changed == Some(false) || alternate_changed == Some(false) {
+                        return Some(false);
+                    }
+                }
+            }
+            Expression::ComputedMemberExpression(member_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut member_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if (!replacement_has_side_effect || !member_expr.optional)
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut member_expr.expression,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
+                    return Some(changed);
+                }
+            }
+            Expression::PrivateFieldExpression(private_field_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut private_field_expr.object,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+            }
+            Expression::CallExpression(call_expr) => {
+                // Don't substitute something into a call target that could change "this"
+                if !((replacement.is_member_expression()
+                    || matches!(replacement, Expression::ChainExpression(_)))
+                    && call_expr.callee.is_identifier_reference())
+                {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut call_expr.callee,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+
+                    // Do not substitute our unconditionally-executed value into a branch
+                    // unless the value itself has no side effects
+                    if !replacement_has_side_effect || !call_expr.optional {
+                        for arg in &mut call_expr.arguments {
+                            match arg {
+                                Argument::SpreadElement(spread_elem) => {
+                                    if let Some(changed) =
+                                        Self::substitute_single_use_symbol_in_expression(
+                                            &mut spread_elem.argument,
+                                            search_for,
+                                            replacement,
+                                            replacement_has_side_effect,
+                                            ctx,
+                                        )
+                                    {
+                                        return Some(changed);
+                                    }
+                                    // spread element may have sideeffects
+                                    return Some(false);
+                                }
+                                match_expression!(Argument) => {
+                                    if let Some(changed) =
+                                        Self::substitute_single_use_symbol_in_expression(
+                                            arg.to_expression_mut(),
+                                            search_for,
+                                            replacement,
+                                            replacement_has_side_effect,
+                                            ctx,
+                                        )
+                                    {
+                                        return Some(changed);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Expression::NewExpression(new_expr) => {
+                // Don't substitute something into a call target that could change "this"
+                if !((replacement.is_member_expression()
+                    || matches!(replacement, Expression::ChainExpression(_)))
+                    && new_expr.callee.is_identifier_reference())
+                {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut new_expr.callee,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+
+                    for arg in &mut new_expr.arguments {
+                        match arg {
+                            Argument::SpreadElement(spread_elem) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        &mut spread_elem.argument,
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // spread element may have sideeffects
+                                return Some(false);
+                            }
+                            match_expression!(Argument) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        arg.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Expression::ArrayExpression(array_expr) => {
+                for elem in &mut array_expr.elements {
+                    match elem {
+                        ArrayExpressionElement::SpreadElement(spread_elem) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut spread_elem.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                            // spread element may have sideeffects
+                            return Some(false);
+                        }
+                        ArrayExpressionElement::Elision(_) => {}
+                        match_expression!(ArrayExpressionElement) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                elem.to_expression_mut(),
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                        }
+                    }
+                }
+            }
+            Expression::ObjectExpression(obj_expr) => {
+                for prop in &mut obj_expr.properties {
+                    match prop {
+                        ObjectPropertyKind::ObjectProperty(prop) => match prop.key {
+                            PropertyKey::StaticIdentifier(_)
+                            | PropertyKey::PrivateIdentifier(_) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        &mut prop.value,
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                            }
+                            match_expression!(PropertyKey) => {
+                                if let Some(changed) =
+                                    Self::substitute_single_use_symbol_in_expression(
+                                        prop.key.to_expression_mut(),
+                                        search_for,
+                                        replacement,
+                                        replacement_has_side_effect,
+                                        ctx,
+                                    )
+                                {
+                                    return Some(changed);
+                                }
+                                // Stop now because computed keys have side effects
+                                return Some(false);
+                            }
+                        },
+                        ObjectPropertyKind::SpreadProperty(prop) => {
+                            if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                                &mut prop.argument,
+                                search_for,
+                                replacement,
+                                replacement_has_side_effect,
+                                ctx,
+                            ) {
+                                return Some(changed);
+                            }
+                            // Stop now because spread properties have side effects
+                            return Some(false);
+                        }
+                    }
+                }
+            }
+            Expression::TaggedTemplateExpression(tagged_expr) => {
+                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                    &mut tagged_expr.tag,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                ) {
+                    return Some(changed);
+                }
+                for elem in &mut tagged_expr.quasi.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        elem,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
+            }
+            Expression::TemplateLiteral(template_literal) => {
+                for elem in &mut template_literal.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        elem,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
+            }
+            Expression::ChainExpression(chain_expr) => {
+                let mut expr = Expression::from(chain_expr.expression.take_in(ctx.ast));
+                let changed = Self::substitute_single_use_symbol_in_expression(
+                    &mut expr,
+                    search_for,
+                    replacement,
+                    replacement_has_side_effect,
+                    ctx,
+                );
+                chain_expr.expression = expr.into_chain_element().expect("should be chain element");
+                return changed;
+            }
+            Expression::SequenceExpression(sequence_expr) => {
+                for expr in &mut sequence_expr.expressions {
+                    if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        expr,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    ) {
+                        return Some(changed);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        // If both the replacement and this expression have no observable side
+        // effects, then we can reorder the replacement past this expression
+        //
+        // ```js
+        // // Substitution is ok
+        // let replacement = 123;
+        // return x + replacement;
+        //
+        // // Substitution is not ok because "fn()" may change "x"
+        // let replacement = fn();
+        // return x + replacement;
+        //
+        // // Substitution is not ok because "x == x" may change "x" due to "valueOf()" evaluation
+        // let replacement = [x];
+        // return (x == x) + replacement;
+        // ```
+        if !replacement_has_side_effect && !target_expr.may_have_side_effects(ctx) {
+            return None;
+        }
+
+        // We can always reorder past literal values
+        if replacement.is_literal_value(true, ctx) || target_expr.is_literal_value(true, ctx) {
+            return None;
+        }
+
+        // Otherwise we should stop trying to substitute past this point
+        Some(false)
     }
 }

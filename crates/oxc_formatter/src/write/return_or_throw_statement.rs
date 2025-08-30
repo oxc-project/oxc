@@ -6,7 +6,10 @@ use crate::{
     Format, FormatResult, format_args,
     formatter::{
         Formatter,
-        comments::{Comments, is_new_line},
+        comments::{
+            Comments, has_new_line_forward, is_end_of_line_comment, is_new_line,
+            is_own_line_comment,
+        },
         prelude::*,
     },
     generated::ast_nodes::AstNode,
@@ -94,8 +97,8 @@ impl<'a> Format<'a> for FormatReturnOrThrowArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let argument = self.0;
 
-        if has_argument_leading_comments(argument, f)
-            && !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+        if !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+            && has_argument_leading_comments(argument, f)
         {
             write!(f, [text("("), &block_indent(&argument), text(")")])
         } else if is_binary_or_sequence_argument(argument) {
@@ -119,19 +122,22 @@ impl<'a> Format<'a> for FormatReturnOrThrowArgument<'a, '_> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: &Expression, f: &Formatter<'_, '_>) -> bool {
+fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'_, '_>) -> bool {
     let source_text = f.source_text();
 
     let mut current = Some(ExpressionLeftSide::from(argument));
 
     while let Some(left_side) = current {
-        let comments = f.comments().comments_before(left_side.span().start);
+        let start = left_side.span().start;
+        let comments = f.comments().comments_before(start);
 
         let is_line_comment_or_multi_line_comment = |comments: &[Comment]| {
             comments.iter().any(|comment| {
                 comment.is_line()
                     || comment.span.source_text(source_text).chars().any(is_line_terminator)
-            })
+            }) || comments
+                .last()
+                .is_some_and(|comment| is_end_of_line_comment(comment, source_text))
         };
 
         if is_line_comment_or_multi_line_comment(comments) {
@@ -141,7 +147,7 @@ fn has_argument_leading_comments(argument: &Expression, f: &Formatter<'_, '_>) -
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
         if let ExpressionLeftSide::Expression(left_side) = left_side {
-            let has_leading_own_line_comment = match left_side {
+            let has_leading_own_line_comment = match left_side.as_ref() {
                 Expression::ChainExpression(chain) => {
                     if let ChainElement::StaticMemberExpression(member) = &chain.expression {
                         is_line_comment_or_multi_line_comment(

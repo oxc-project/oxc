@@ -405,6 +405,7 @@ impl Kind {
             self,
             Abstract | Accessor | Async | Const | Declare
             | In | Out | Public | Private | Protected | Readonly | Static | Override
+            | Default | Export
         )
     }
 

@@ -11,10 +11,6 @@ use crate::Linter;
 mod runtime;
 use runtime::Runtime;
 pub use runtime::RuntimeFileSystem;
-
-#[cfg(feature = "language_server")]
-pub mod offset_to_position;
-
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
@@ -95,11 +91,6 @@ impl LintService {
         allocator: &'a mut oxc_allocator::Allocator,
     ) -> Vec<crate::MessageWithPosition<'a>> {
         self.runtime.run_source(allocator)
-    }
-
-    #[cfg(feature = "language_server")]
-    pub fn should_ignore(&self, path: &Path) -> bool {
-        self.runtime.linter.config.should_ignore(path)
     }
 
     /// For tests

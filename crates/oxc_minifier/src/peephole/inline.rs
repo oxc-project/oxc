@@ -10,12 +10,12 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
-        // Skip for `var` declarations, due to TDZ problems.
-        if decl.kind.is_var() {
-            return;
-        }
-        let value =
-            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx));
+        let value = if decl.kind.is_var() {
+            // Skip constant value inlining for `var` declarations, due to TDZ problems.
+            None
+        } else {
+            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
+        };
         ctx.init_value(symbol_id, value);
     }
 
@@ -95,7 +95,7 @@ mod test {
             var frag = `<p autocapitalize="${`w${o}r${d}s`}" contenteditable="${boolean}"/>`;
             console.log(frag);
             "#,
-            r#"var frag = '<p autocapitalize="words" contenteditable="false"/>';console.log(frag)"#,
+            r#"console.log('<p autocapitalize="words" contenteditable="false"/>');"#,
             &options,
         );
     }

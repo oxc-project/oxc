@@ -241,8 +241,13 @@ impl<'a> ParserImpl<'a> {
         }
 
         let modifiers = self.parse_modifiers(
-            /* permit_const_as_modifier */ false,
+            /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ false,
+        );
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::READONLY,
+            diagnostics::cannot_appear_on_a_type_member,
         );
 
         if self.parse_contextual_modifier(Kind::Get) {

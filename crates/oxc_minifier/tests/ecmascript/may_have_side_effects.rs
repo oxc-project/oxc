@@ -1,5 +1,3 @@
-use std::iter;
-
 use javascript_globals::GLOBALS;
 
 use rustc_hash::FxHashSet;
@@ -27,7 +25,7 @@ impl Default for Ctx {
             global_variable_names: GLOBALS["builtin"]
                 .keys()
                 .copied()
-                .chain(iter::once("arguments"))
+                .chain(["arguments", "URL"])
                 .collect::<FxHashSet<_>>(),
             annotation: true,
             pure_function_names: vec![],
@@ -115,6 +113,37 @@ fn test_in_function(source_text: &str, expected: bool) {
     };
 
     assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
+}
+
+#[track_caller]
+fn test_assign_target(source_text: &str, expected: bool) {
+    test_assign_target_with_global_variables(source_text, &[], expected);
+}
+
+#[track_caller]
+fn test_assign_target_with_global_variables(
+    source_text: &str,
+    global_variable_names: &[&'static str],
+    expected: bool,
+) {
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    let Expression::AssignmentExpression(assign_expr) = &stmt.expression.without_parentheses()
+    else {
+        panic!("should have a assignment expression: {source_text}");
+    };
+
+    assert_eq!(assign_expr.left.may_have_side_effects(&ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -358,14 +387,14 @@ fn closure_compiler_tests() {
 
     // CLASS_STATIC_BLOCK
     test("(class C { static {} })", false);
-    // test("(class C { static { [1]; } })", false);
-    test("(class C { static { let x; } })", true);
-    test("(class C { static { const x =1 ; } })", true);
-    test("(class C { static { var x; } })", true);
+    test("(class C { static { [1]; } })", false);
+    test("(class C { static { let x; } })", false);
+    test("(class C { static { const x =1 ; } })", false);
+    test("(class C { static { var x; } })", false);
     test("(class C { static { this.x = 1; } })", true);
-    test("(class C { static { function f() { } } })", true);
-    // test("(class C { static { (function () {} )} })", false);
-    // test("(class C { static { ()=>{} } })", false);
+    test("(class C { static { function f() { } } })", false);
+    test("(class C { static { (function () {} )} })", false);
+    test("(class C { static { ()=>{} } })", false);
 
     // SUPER calls
     test("super()", true);
@@ -686,6 +715,7 @@ fn test_class_expression() {
     test("(class extends foo() {})", true);
     test("(class extends (() => {}) {})", true);
     test("(class { static {} })", false);
+    test("(class { static { 1; } })", false);
     test("(class { static { foo(); } })", true);
     test("(class { a() {} })", false);
     test("(class { [1]() {} })", false);
@@ -896,6 +926,10 @@ fn test_call_expressions() {
     test("Uint32Array.of()", false);
     test("Uint8Array.of()", false);
     test("Uint8ClampedArray.of()", false);
+
+    // may have side effects if shadowed
+    test_with_global_variables("Date()", &[], true);
+    test_with_global_variables("Object.create()", &[], true);
 }
 
 #[test]
@@ -959,24 +993,17 @@ fn test_is_pure_call_support() {
 fn test_property_read_side_effects_support() {
     let all_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::All, ..Default::default() };
-    let only_member_ctx = Ctx {
-        property_read_side_effects: PropertyReadSideEffects::OnlyMemberPropertyAccess,
-        ..Default::default()
-    };
     let none_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Default::default() };
 
     test_with_ctx("foo.bar", &all_ctx, true);
-    test_with_ctx("foo.bar", &only_member_ctx, true);
     test_with_ctx("foo.bar", &none_ctx, false);
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
     test_with_ctx("foo.#bar", &all_ctx, true);
-    test_with_ctx("foo.#bar", &only_member_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
-    // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 }
 
@@ -1069,4 +1096,21 @@ fn test_typeof_guard_patterns() {
         &["x", "y"],
         true, // This can be improved
     );
+}
+
+#[test]
+fn test_assignment_targets() {
+    test_assign_target("a = 1", false);
+    test_assign_target("String = 1", false);
+    test_assign_target("({ a } = 1)", true); // this can be improved
+    test_assign_target("([a] = 1)", true); // this can be improved
+    test_assign_target("a.b = 1", false); // the side effect of the setter of `a.b` happens in `PutValue`
+    test_assign_target_with_global_variables("a.b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).b = 1", true); // `foo()` may have sideeffect
+    test_assign_target("a['b'] = 1", false);
+    test_assign_target("a[foo()] = 1", true); // `foo()` may have sideeffect
+    test_assign_target_with_global_variables("a['b'] = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("a.#b = 1", false);
+    test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
 }

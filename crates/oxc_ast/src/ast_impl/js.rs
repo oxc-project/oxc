@@ -315,7 +315,7 @@ impl<'a> Expression<'a> {
     /// Note that this includes [`Class`]s.
     /// <https://262.ecma-international.org/15.0/#sec-isanonymousfunctiondefinition>
     pub fn is_anonymous_function_definition(&self) -> bool {
-        match self {
+        match self.without_parentheses() {
             Self::ArrowFunctionExpression(_) => true,
             Self::FunctionExpression(func) => func.name().is_none(),
             Self::ClassExpression(class) => class.name().is_none(),
@@ -730,6 +730,18 @@ impl<'a> ChainElement<'a> {
                 _ => None,
             },
             _ => self.as_member_expression(),
+        }
+    }
+}
+
+impl<'a> From<ChainElement<'a>> for Expression<'a> {
+    fn from(value: ChainElement<'a>) -> Self {
+        match value {
+            ChainElement::CallExpression(e) => Expression::CallExpression(e),
+            ChainElement::TSNonNullExpression(e) => Expression::TSNonNullExpression(e),
+            match_member_expression!(ChainElement) => {
+                Expression::from(value.into_member_expression())
+            }
         }
     }
 }

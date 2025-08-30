@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::ToInt32;
+use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
@@ -204,16 +204,15 @@ impl<'a> IsolatedDeclarations<'a> {
             ConstantValue::String(_) => return None,
         };
 
-        #[expect(clippy::cast_sign_loss)]
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
-                left.to_int_32().wrapping_shr(right.to_int_32() as u32),
+                left.to_int_32().wrapping_shr(right.to_uint_32()),
             ))),
             BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
-                (left.to_int_32() as u32).wrapping_shr(right.to_int_32() as u32),
+                (left.to_uint_32()).wrapping_shr(right.to_uint_32()),
             ))),
             BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
-                left.to_int_32().wrapping_shl(right.to_int_32() as u32),
+                left.to_int_32().wrapping_shl(right.to_uint_32()),
             ))),
             BinaryOperator::BitwiseXOR => {
                 Some(ConstantValue::Number(f64::from(left.to_int_32() ^ right.to_int_32())))

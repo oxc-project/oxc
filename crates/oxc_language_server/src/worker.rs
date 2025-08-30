@@ -12,14 +12,14 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap, Options, Run,
+    ConcurrentHashMap, Options,
     code_actions::{
         apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
     linter::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
-        server_linter::{ServerLinter, normalize_path},
+        server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
 };
 
@@ -129,20 +129,17 @@ impl WorkspaceWorker {
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind() != new_options.fix_kind()
             || old_options.unused_disable_directives != new_options.unused_disable_directives
-    }
-
-    pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let run_level = { self.options.lock().await.run };
-
-        run_level == current_run
+            // TODO: only the TsgoLinter needs to be dropped or created
+            || old_options.type_aware != new_options.type_aware
     }
 
     pub async fn lint_file(
         &self,
         uri: &Uri,
         content: Option<String>,
+        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
-        let diagnostics = self.lint_file_internal(uri, content).await;
+        let diagnostics = self.lint_file_internal(uri, content, run_type).await;
 
         if let Some(diagnostics) = &diagnostics {
             self.update_diagnostics(uri, diagnostics);
@@ -155,12 +152,13 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<String>,
+        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
 
-        server_linter.run_single(uri, content).await
+        server_linter.run_single(uri, content, run_type).await
     }
 
     fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
@@ -179,8 +177,9 @@ impl WorkspaceWorker {
         };
 
         for uri in self.diagnostics_report_map.pin_owned().keys() {
-            if let Some(diagnostics) =
-                server_linter.run_single(&Uri::from_str(uri).unwrap(), None).await
+            if let Some(diagnostics) = server_linter
+                .run_single(&Uri::from_str(uri).unwrap(), None, ServerLinterRun::Always)
+                .await
             {
                 self.diagnostics_report_map.pin().insert(uri.clone(), diagnostics.clone());
                 diagnostics_map.pin().insert(uri.clone(), diagnostics);
@@ -211,7 +210,10 @@ impl WorkspaceWorker {
             Some(value) => value,
             // code actions / commands can be requested without opening the file
             // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+            None => &self
+                .lint_file_internal(uri, None, ServerLinterRun::Always)
+                .await
+                .unwrap_or_default(),
         };
 
         if value.is_empty() {
@@ -267,7 +269,10 @@ impl WorkspaceWorker {
             Some(value) => value,
             // code actions / commands can be requested without opening the file
             // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+            None => &self
+                .lint_file_internal(uri, None, ServerLinterRun::Always)
+                .await
+                .unwrap_or_default(),
         };
 
         if value.is_empty() {

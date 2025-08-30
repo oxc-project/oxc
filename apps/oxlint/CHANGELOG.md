@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 📚 Documentation
+
+- 51d3840 linter: Update oxlint CLI help message on `.oxlintrc.json` config file (#13334) (0xCLARITY)
+
+### 🧪 Testing
+
+- 6eeeb67 oxlint: Add test for ignore patterns referenced by symlink file (#13356) (Sysix)
+
+
+## [1.13.0] - 2025-08-26
+
+### 💥 BREAKING CHANGES
+
+- 63abd7c oxlint: [**BREAKING**] Do not ignore hidden dot directories by default (#13194) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 648e939 linter: Parse `ignorePatterns` with gitignore syntax (#13221) (Sysix)
+
+### 🚜 Refactor
+
+- c138fad linter: Avoid fs reads in `TsGoLintState` when `--silent` is used (#13199) (Sysix)
+
+
 ## [1.12.0] - 2025-08-17
 
 ### 🚀 Features

@@ -7,8 +7,9 @@ use oxc_ast::ast::{
 };
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
-    ArrowParentheses, BracketSpacing, FormatOptions, IndentWidth, LineEnding, LineWidth,
-    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, IndentStyle, IndentWidth,
+    LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
+    TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -125,11 +126,29 @@ impl VisitMut<'_> for SpecParser {
                                 }
                             } else if name == "bracketSpacing" {
                                 options.bracket_spacing = BracketSpacing::from(literal.value);
+                            } else if matches!(
+                                name.as_ref(),
+                                "jsxBracketSameLine" | "bracketSameLine"
+                            ) && literal.value
+                            {
+                                options.bracket_same_line = BracketSameLine::from(literal.value);
                             } else if name == "singleQuote" {
                                 options.quote_style = if literal.value {
                                     QuoteStyle::Single
                                 } else {
                                     QuoteStyle::Double
+                                };
+                            } else if name == "jsxSingleQuote" {
+                                options.jsx_quote_style = if literal.value {
+                                    QuoteStyle::Single
+                                } else {
+                                    QuoteStyle::Double
+                                };
+                            } else if name == "useTabs" {
+                                options.indent_style = if literal.value {
+                                    IndentStyle::Tab
+                                } else {
+                                    IndentStyle::Space
                                 };
                             }
                         }

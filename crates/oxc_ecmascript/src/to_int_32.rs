@@ -7,6 +7,13 @@ pub trait ToInt32 {
     fn to_int_32(&self) -> i32;
 }
 
+pub trait ToUint32: ToInt32 {
+    fn to_uint_32(&self) -> u32 {
+        self.to_int_32().cast_unsigned()
+    }
+}
+impl<T> ToUint32 for T where T: ToInt32 {}
+
 impl ToInt32 for f64 {
     fn to_int_32(&self) -> i32 {
         #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
@@ -190,5 +197,21 @@ mod test {
                 assert_eq!(f64_to_int32_arm64(f64::NAN), 0);
             }
         }
+    }
+
+    #[test]
+    #[expect(clippy::cast_precision_loss)]
+    fn f64_to_uint32_conversion() {
+        assert_eq!(0.0_f64.to_uint_32(), 0);
+        assert_eq!((-0.0_f64).to_uint_32(), 0);
+        assert_eq!(f64::NAN.to_uint_32(), 0);
+        assert_eq!(f64::INFINITY.to_uint_32(), 0);
+        assert_eq!(f64::NEG_INFINITY.to_uint_32(), 0);
+        assert_eq!(((i64::from(u32::MAX) + 1) as f64).to_uint_32(), u32::MIN);
+        assert_eq!(((i64::from(u32::MIN) - 1) as f64).to_uint_32(), u32::MAX);
+
+        // Test edge cases with maximum safe integers
+        assert_eq!((9_007_199_254_740_992.0_f64).to_uint_32(), 0); // 2^53
+        assert_eq!((-9_007_199_254_740_992.0_f64).to_uint_32(), 0); // -2^53
     }
 }

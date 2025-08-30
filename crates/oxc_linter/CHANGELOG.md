@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 💥 BREAKING CHANGES
+
+- df8e639 allocator: [**BREAKING**] Put `AllocatorPool` behind `pool` feature (#13373) (overlookmotel)
+
+### 🚀 Features
+
+- d1c9db5 linter: Convert spans to UTF-16 in JS plugins (#13344) (overlookmotel)
+- 9c9f80d linter/grouped-accessor-pairs: Add `enforceForTSTypes` option (#13296) (Copilot)
+- 5b91f3c linter: Add `vue/valid-define-emits` (#12545) (Sysix)
+
+### 🐛 Bug Fixes
+
+- c215619 linter: Parse `globalThis.RegExp` for regexp rules (#13395) (Sysix)
+- 3c34767 linter: Handle errors from tsgolint (#13252) (camc314)
+
+### 🚜 Refactor
+
+- d499400 linter/jsx-handler-names: Simplify option checks for inline functions and local variables (#13405) (camc314)
+- 62da550 linter/no-done-callback: Remove nested if-let stmts (#13400) (camc314)
+- c9cb2a4 eslint/arrow-body-style: Clean up implementation and improve documentation (#13389) (Antoine Zanardi)
+- 53de36e linter: `ContextSubHost` hold owned `Semantic` (#13338) (overlookmotel)
+- e871dab linter: Run linter with `ContextSubHost` (#12769) (Sysix)
+- 077abdf linter: Introduce `ContextSubHost` for cross script block analyse (#12724) (Sysix)
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### ⚡ Performance
+
+- 827fe1c linter: Use `Cell` instead of `RefCell` (#13330) (overlookmotel)
+
+### 🧪 Testing
+
+- 13470b2 oxc_linter: Run `from_tsgo_lint_diagnostic` tests only with lsp feature flag (#13396) (Sysix)
+
+
+## [1.13.0] - 2025-08-26
+
+### 🚀 Features
+
+- 70f0143 linter: Add jest/padding-around-test-blocks rule (#12985) (Peter Cardenas)
+- a56f0da linter: Add profiling support for tsgolint via environment variables (#13238) (no-yan)
+- cc7f088 linter: Add react/jsx-handler-names rule (#13079) (Takuji Shimokawa)
+- c6c5075 linter/always-return: Implement promise rule always-return (#13178) (Li Wei)
+
+### 🐛 Bug Fixes
+
+- fd14b39 linter/array-callback-return: False postive with throw stmt in callback (#13264) (camc314)
+- 648e939 linter: Parse `ignorePatterns` with gitignore syntax (#13221) (Sysix)
+- a1b52c8 linter/no-unused-private-class-members: Fix false positive with await expression (#13249) (camc314)
+- d80c07c linter/explicit-module-boundary-types: False positve with arrow fn in exported fn body (#13232) (camc314)
+- 06ec43c linter: Enhance handling of disable directives for next-line and line spans (#13157) (camc314)
+- 163dbea linter/prefer-for-of: False positive with diff member expression (#13201) (camc314)
+- ada4e84 linter/prefer-await-to-then: False positive with Promise call as return arg (#13189) (camc314)
+- 63d12d3 linter: Handle arrow function expressions in static blocks for no-unused-private-class-members (#13181) (camc314)
+
+### 🚜 Refactor
+
+- 2761300 linter: Include `tsgolint` suggestion for `Message::from_tsgo_lint_diagnostic` (#13255) (Sysix)
+- c138fad linter: Avoid fs reads in `TsGoLintState` when `--silent` is used (#13199) (Sysix)
+- 845c6de linter: Store `source_text` of already opened files for `TsGoLintState` (#13197) (Sysix)
+
+### 📚 Documentation
+
+- 7fcc51e linter: Fix doc code block in `eslint/func-style` rule (#13171) (leaysgur)
+- deddc8c linter/no-console: Correct typo in correct code example (#13182) (camc314)
+
+### 🧪 Testing
+
+- 30c54a3 linter: Add test for `Message::from_tsgo_lint_diagnostic` (#13254) (Sysix)
+
+
 ## [1.12.0] - 2025-08-17
 
 ### 🚀 Features

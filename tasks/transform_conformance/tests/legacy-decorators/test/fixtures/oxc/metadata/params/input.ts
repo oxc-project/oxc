@@ -14,6 +14,10 @@ export class Foo {
     return !!param
   }
 
+  constructor(@paramDecorator param: number) {
+
+  }
+
   method3(@paramDecorator param: string): boolean {
     return !!param
   }

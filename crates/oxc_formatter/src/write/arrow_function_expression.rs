@@ -1,3 +1,5 @@
+use std::iter;
+
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -307,10 +309,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                         if matches!(
                             options.call_arg_layout,
                             None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        )
-                        // TODO: Unsupported yet
-                        //  && !comments.is_suppressed(next.span())
-                        {
+                        ) {
                             should_break = should_break || Self::should_break_chain(current);
 
                             should_break = should_break || Self::should_break_chain(next);
@@ -685,33 +684,33 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ExpressionLeftSide<'a, 'b> {
-    Expression(&'b Expression<'a>),
-    AssignmentTarget(&'b AssignmentTarget<'a>),
-    SimpleAssignmentTarget(&'b SimpleAssignmentTarget<'a>),
+    Expression(&'b AstNode<'a, Expression<'a>>),
+    AssignmentTarget(&'b AstNode<'a, AssignmentTarget<'a>>),
+    SimpleAssignmentTarget(&'b AstNode<'a, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'a, 'b> From<&'b Expression<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b Expression<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'a, 'b> From<&'b AssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AssignmentTarget<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'a, 'b> From<&'b SimpleAssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b SimpleAssignmentTarget<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
 impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
-    pub fn leftmost(expression: &'b Expression<'a>) -> Self {
+    pub fn leftmost(expression: &'b AstNode<'a, Expression<'a>>) -> Self {
         let mut current: Self = expression.into();
         loop {
             match current.left_expression() {
@@ -729,61 +728,63 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     /// if the expression has no left side.
     pub fn left_expression(&self) -> Option<Self> {
         match self {
-            Self::Expression(expression) => match expression {
-                Expression::SequenceExpression(expr) => expr.expressions.first().map(Into::into),
-                Expression::StaticMemberExpression(expr) => Some((&expr.object).into()),
-                Expression::ComputedMemberExpression(expr) => Some((&expr.object).into()),
-                Expression::PrivateFieldExpression(expr) => Some((&expr.object).into()),
-                Expression::TaggedTemplateExpression(expr) => Some((&expr.tag).into()),
-                Expression::NewExpression(expr) => Some((&expr.callee).into()),
-                Expression::CallExpression(expr) => Some((&expr.callee).into()),
-                Expression::ConditionalExpression(expr) => Some((&expr.test).into()),
-                Expression::TSAsExpression(expr) => Some((&expr.expression).into()),
-                Expression::TSSatisfiesExpression(expr) => Some((&expr.expression).into()),
-                Expression::TSNonNullExpression(expr) => Some((&expr.expression).into()),
-                Expression::AssignmentExpression(expr) => Some(Self::AssignmentTarget(&expr.left)),
-                Expression::UpdateExpression(expr) => {
+            Self::Expression(expression) => match expression.as_ast_nodes() {
+                AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
+                AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+                AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+                AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+                AstNodes::TaggedTemplateExpression(expr) => Some(expr.tag().into()),
+                AstNodes::NewExpression(expr) => Some(expr.callee().into()),
+                AstNodes::CallExpression(expr) => Some(expr.callee().into()),
+                AstNodes::ConditionalExpression(expr) => Some(expr.test().into()),
+                AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
+                AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
+                AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+                AstNodes::AssignmentExpression(expr) => Some(Self::AssignmentTarget(expr.left())),
+                AstNodes::UpdateExpression(expr) => {
                     if expr.prefix {
                         None
                     } else {
-                        Some(Self::SimpleAssignmentTarget(&expr.argument))
+                        Some(Self::SimpleAssignmentTarget(expr.argument()))
                     }
                 }
-                Expression::BinaryExpression(binary) => Some((&binary.left).into()),
-                Expression::LogicalExpression(logical) => Some((&logical.left).into()),
-                Expression::ChainExpression(chain) => match &chain.expression {
-                    ChainElement::CallExpression(expr) => Some((&expr.callee).into()),
-                    ChainElement::TSNonNullExpression(expr) => Some((&expr.expression).into()),
-                    ChainElement::ComputedMemberExpression(expr) => Some((&expr.object).into()),
-                    ChainElement::StaticMemberExpression(expr) => Some((&expr.object).into()),
-                    ChainElement::PrivateFieldExpression(expr) => Some((&expr.object).into()),
+                AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
+                AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
+                AstNodes::ChainExpression(chain) => match &chain.expression().as_ast_nodes() {
+                    AstNodes::CallExpression(expr) => Some(expr.callee().into()),
+                    AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+                    AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+                    AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+                    AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+                    _ => {
+                        unreachable!()
+                    }
                 },
                 _ => None,
             },
-            Self::AssignmentTarget(target) => match target {
-                match_simple_assignment_target!(AssignmentTarget) => {
-                    Self::SimpleAssignmentTarget(target.to_simple_assignment_target())
-                        .left_expression()
-                }
-                _ => None,
-            },
-            Self::SimpleAssignmentTarget(target) => match target {
-                SimpleAssignmentTarget::TSAsExpression(expr) => Some((&expr.expression).into()),
-                SimpleAssignmentTarget::TSSatisfiesExpression(expr) => {
-                    Some((&expr.expression).into())
-                }
-                SimpleAssignmentTarget::TSNonNullExpression(expr) => {
-                    Some((&expr.expression).into())
-                }
-                SimpleAssignmentTarget::TSTypeAssertion(expr) => Some((&expr.expression).into()),
-                SimpleAssignmentTarget::ComputedMemberExpression(expr) => {
-                    Some((&expr.object).into())
-                }
-                SimpleAssignmentTarget::StaticMemberExpression(expr) => Some((&expr.object).into()),
-                SimpleAssignmentTarget::PrivateFieldExpression(expr) => Some((&expr.object).into()),
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier_reference) => None,
-            },
+            Self::AssignmentTarget(target) => {
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
+            }
+            Self::SimpleAssignmentTarget(target) => {
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
+            }
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'a, 'b>> {
+        iter::successors(Some(*self), |f| match f {
+            ExpressionLeftSide::Expression(expression) => {
+                Self::Expression(expression).left_expression()
+            }
+            _ => None,
+        })
+    }
+
+    pub fn iter_expression(&self) -> impl Iterator<Item = &AstNode<'_, Expression<'_>>> {
+        self.iter().filter_map(|left| match left {
+            ExpressionLeftSide::Expression(expression) => Some(expression),
+            _ => None,
+        })
     }
 
     pub fn span(&self) -> Span {
@@ -793,10 +794,24 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
             ExpressionLeftSide::SimpleAssignmentTarget(target) => target.span(),
         }
     }
+
+    fn get_left_side_of_assignment(node: &'b AstNodes<'a>) -> Option<ExpressionLeftSide<'a, 'b>> {
+        match node {
+            AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSTypeAssertion(expr) => Some(expr.expression().into()),
+            AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+            AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+            AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+            _ => None,
+        }
+    }
 }
 
-fn should_add_parens(body: &FunctionBody) -> bool {
-    let Statement::ExpressionStatement(stmt) = body.statements.first().unwrap() else {
+fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
+    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
+    else {
         unreachable!()
     };
 
@@ -805,11 +820,13 @@ fn should_add_parens(body: &FunctionBody) -> bool {
     // case and added by the object expression itself
     if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(&stmt.expression),
+            ExpressionLeftSide::leftmost(stmt.expression()),
             ExpressionLeftSide::Expression(
+                e
+            ) if matches!(e.as_ref(),
                 Expression::ObjectExpression(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::ClassExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::ClassExpression(_)
             )
         )
     } else {

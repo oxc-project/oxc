@@ -90,67 +90,64 @@ impl Rule for NoDoneCallback {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) {
-            let kind = jest_fn_call.kind;
-            if !matches!(
-                kind,
-                JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::Hook)
-            ) {
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+        return;
+    };
+
+    let kind = jest_fn_call.kind;
+    if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::Hook)) {
+        return;
+    }
+
+    let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
+
+    if is_jest_each && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_)) {
+        // isJestEach but not a TaggedTemplateExpression, so this must be
+        // the `jest.each([])()` syntax which this rule doesn't support due
+        // to its complexity (see jest-community/eslint-plugin-jest#710)
+        return;
+    }
+
+    let Some(arg) = find_argument_of_callback(call_expr, is_jest_each, kind) else {
+        return;
+    };
+
+    let callback_arg_index = usize::from(is_jest_each);
+
+    match arg {
+        Argument::FunctionExpression(func_expr) => {
+            if func_expr.params.parameters_count() != 1 + callback_arg_index {
                 return;
             }
-
-            let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
-
-            if is_jest_each && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_))
-            {
-                // isJestEach but not a TaggedTemplateExpression, so this must be
-                // the `jest.each([])()` syntax which this rule doesn't support due
-                // to its complexity (see jest-community/eslint-plugin-jest#710)
-                return;
-            }
-
-            let Some(arg) = find_argument_of_callback(call_expr, is_jest_each, kind) else {
+            let Some(span) = get_span_of_first_parameter(&func_expr.params) else {
                 return;
             };
 
-            let callback_arg_index = usize::from(is_jest_each);
-
-            match arg {
-                Argument::FunctionExpression(func_expr) => {
-                    if func_expr.params.parameters_count() != 1 + callback_arg_index {
-                        return;
-                    }
-                    let Some(span) = get_span_of_first_parameter(&func_expr.params) else {
-                        return;
-                    };
-
-                    if func_expr.r#async {
-                        ctx.diagnostic(use_await_instead_of_callback(span));
-                        return;
-                    }
-
-                    ctx.diagnostic(no_done_callback(span));
-                }
-                Argument::ArrowFunctionExpression(arrow_expr) => {
-                    if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
-                        return;
-                    }
-
-                    let Some(span) = get_span_of_first_parameter(&arrow_expr.params) else {
-                        return;
-                    };
-
-                    if arrow_expr.r#async {
-                        ctx.diagnostic(use_await_instead_of_callback(span));
-                        return;
-                    }
-
-                    ctx.diagnostic(no_done_callback(span));
-                }
-                _ => {}
+            if func_expr.r#async {
+                ctx.diagnostic(use_await_instead_of_callback(span));
+                return;
             }
+
+            ctx.diagnostic(no_done_callback(span));
         }
+        Argument::ArrowFunctionExpression(arrow_expr) => {
+            if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
+                return;
+            }
+
+            let Some(span) = get_span_of_first_parameter(&arrow_expr.params) else {
+                return;
+            };
+
+            if arrow_expr.r#async {
+                ctx.diagnostic(use_await_instead_of_callback(span));
+                return;
+            }
+
+            ctx.diagnostic(no_done_callback(span));
+        }
+        _ => {}
     }
 }
 

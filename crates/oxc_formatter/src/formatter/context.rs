@@ -91,10 +91,6 @@ impl<'ast> FormatContext<'ast> {
         self.cached_elements.insert(key.span(), formatted);
     }
 
-    pub(crate) fn increment_printed_count(&mut self) {
-        self.comments.increment_printed_count();
-    }
-
     pub fn allocator(&self) -> &'ast Allocator {
         self.allocator
     }

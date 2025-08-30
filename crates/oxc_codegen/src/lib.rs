@@ -648,6 +648,7 @@ impl<'a> Codegen<'a> {
             self.print_list(arguments, ctx);
         }
         self.print_ascii_byte(b')');
+        self.add_source_mapping_end(span);
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
@@ -839,6 +840,14 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             if !span.is_empty() {
                 sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
+            }
+        }
+    }
+
+    fn add_source_mapping_end(&mut self, span: Span) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            if !span.is_empty() {
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
             }
         }
     }

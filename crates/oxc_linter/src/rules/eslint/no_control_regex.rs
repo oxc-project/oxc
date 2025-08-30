@@ -359,6 +359,9 @@ mod tests {
                 r"/\x1f\2/",
                 r"/\x1f\0/",
                 r"/\x1f\0\2/",
+                // globalThis
+                "var regex = new globalThis.RegExp('\\x1f\\x1e')",
+                "var regex = globalThis.RegExp('\\x1f')",
             ],
         )
         .test_and_snapshot();

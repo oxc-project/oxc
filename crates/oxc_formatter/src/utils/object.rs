@@ -39,7 +39,7 @@ pub fn write_member_name<'a>(
             false,
             StringLiteralParentKind::Member,
         )
-        .clean_text(f);
+        .clean_text(f.context().source_type(), f.options());
 
         string.format_leading_comments(f)?;
         write!(f, format)?;

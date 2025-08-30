@@ -521,7 +521,19 @@ impl<'a> PeepholeOptimizations {
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
-        if call_expr.pure && ctx.annotations() {
+        let is_pure = {
+            (call_expr.pure && ctx.annotations())
+                || (if let Expression::Identifier(id) = &call_expr.callee
+                    && let Some(symbol_id) =
+                        ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                {
+                    ctx.state.pure_functions.contains_key(&symbol_id)
+                } else {
+                    false
+                })
+        };
+
+        if is_pure {
             let mut exprs =
                 Self::fold_arguments_into_needed_expressions(&mut call_expr.arguments, ctx);
             if exprs.is_empty() {
@@ -580,9 +592,8 @@ impl<'a> PeepholeOptimizations {
         !call_expr.may_have_side_effects(ctx)
     }
 
-    fn fold_arguments_into_needed_expressions(
+    pub fn fold_arguments_into_needed_expressions(
         args: &mut Vec<'a, Argument<'a>>,
-
         ctx: &mut Ctx<'a, '_>,
     ) -> Vec<'a, Expression<'a>> {
         ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
@@ -733,8 +744,8 @@ mod test {
     use crate::{
         CompressOptions, TreeShakeOptions,
         tester::{
-            default_options, test, test_options, test_same, test_same_options,
-            test_same_options_source_type,
+            default_options, test, test_options, test_options_source_type, test_same,
+            test_same_options, test_same_options_source_type,
         },
     };
 
@@ -955,6 +966,9 @@ mod test {
         test("/* @__PURE__ */ new Foo(a)", "a");
         test("true && /* @__PURE__ */ noEffect()", "");
         test("false || /* @__PURE__ */ noEffect()", "");
+
+        test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
+        test_same("var foo = () => { bar() }; foo(), foo()");
     }
 
     #[test]
@@ -1040,13 +1054,16 @@ mod test {
     fn remove_unused_assignment_expression() {
         use oxc_span::SourceType;
         let options = CompressOptions::smallest();
-        // Vars are not handled yet due to TDZ.
-        test_same_options("var x = 1; x = 2;", &options);
-        test_same_options("var x = 1; x = foo();", &options);
+        test_options("var x = 1; x = 2;", "", &options);
+        test_options("var x = 1; x = foo();", "foo()", &options);
         test_same_options("export var foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
         test_same_options("function foo() { return t = x(); } foo();", &options);
-        test_same_options("function foo() { var t; return t = x(); } foo();", &options);
+        test_options(
+            "function foo() { var t; return t = x(); } foo();",
+            "function foo() { return x(); } foo();",
+            &options,
+        );
         test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         test_options("let x = 1; x = 2;", "", &options);
@@ -1081,8 +1098,9 @@ mod test {
         let source_type = SourceType::cjs();
         test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
         test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
-        test_same_options_source_type(
+        test_options_source_type(
             "function foo() { var x = 1; x = 2, bar() } foo()",
+            "function foo() { bar() } foo()",
             source_type,
             &options,
         );

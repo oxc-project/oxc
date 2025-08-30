@@ -1,4 +1,4 @@
-use super::test;
+use crate::test;
 
 /// Esbuild minfication tests
 ///
@@ -144,6 +144,12 @@ fn js_parser_test() {
     // test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
     test("(() => {}) ? a : b", "a;");
     test("x = `a${1 + `b${2}c` + 3}d`", "x = 'a1b2c3d';");
+    test("x = `${1}`", "x = '1';");
+    test("x = `${1n}`", "x = '1';");
+    test("x = `${null}`", "x = 'null';");
+    test("x = `${undefined}`", "x = 'undefined';");
+    test("x = `${false}`", "x = 'false';");
+    test("x = `${true}`", "x = 'true';");
     test("x = 1 ? a : b", "x = a;");
     test("x = 0 ? a : b", "x = b;");
     test("x; 1 ? 0 : ()=>{}; (()=>{})()", "x;");
@@ -561,8 +567,8 @@ fn js_parser_test() {
     test("a = b === c ? true : false", "a = b === c;");
     test("a = b !== c ? true : false", "a = b !== c;");
     test("a ? b(c) : b(d)", "a ? b(c) : b(d);");
-    test("let a = foo(); a ? b(c) : b(d)", "let a = foo(); a ? b(c) : b(d);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(), b = bar();b(a ? c : d);");
+    test("let a = foo(); a ? b(c) : b(d)", "foo() ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(d)", "let a = foo(); bar()(a ? c : d);");
     test(
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d);",
@@ -575,10 +581,7 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1)",
         "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 1);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)",
-        "let a = foo(), b = bar();b(a ? c : d, 0);",
-    );
+    test("let a = foo(), b = bar(); a ? b(c, 0) : b(d, 0)", "let a = foo(); bar()(a ? c : d, 0);");
     test(
         "let a = foo(), b = bar(); a ? b(...c) : b(d)",
         "let a = foo(), b = bar(); a ? b(...c) : b(d);",
@@ -587,21 +590,12 @@ fn js_parser_test() {
         "let a = foo(), b = bar(); a ? b(c) : b(...d)",
         "let a = foo(), b = bar(); a ? b(c) : b(...d);",
     );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...d)",
-        "let a = foo(), b = bar();b(...a ? c : d);",
-    );
-    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(), b = bar();b(a || c);");
-    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(), b = bar();b(a && c);");
-    test(
-        "let a = foo(), b = bar(); a ? b(...a) : b(...c)",
-        "let a = foo(), b = bar();b(...a || c);",
-    );
-    test(
-        "let a = foo(), b = bar(); a ? b(...c) : b(...a)",
-        "let a = foo(), b = bar();b(...a && c);",
-    );
-    test("let a = foo(); a.x ? b(c) : b(d)", "let a = foo(); a.x ? b(c) : b(d);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...d)", "let a = foo(); bar()(...a ? c : d);");
+    test("let a = foo(), b = bar(); a ? b(a) : b(c)", "let a = foo(); bar()(a || c);");
+    test("let a = foo(), b = bar(); a ? b(c) : b(a)", "let a = foo(); bar()(a && c);");
+    test("let a = foo(), b = bar(); a ? b(...a) : b(...c)", "let a = foo(); bar()(...a || c);");
+    test("let a = foo(), b = bar(); a ? b(...c) : b(...a)", "let a = foo(); bar()(...a && c);");
+    test("let a = foo(); a.x ? b(c) : b(d)", "foo().x ? b(c) : b(d);");
     test(
         "let a = foo(), b = bar(); a.x ? b(c) : b(d)",
         "let a = foo(), b = bar(); a.x ? b(c) : b(d);",
@@ -628,12 +622,12 @@ fn js_parser_test() {
     test("a ? c : b || c", "a ? c : b || c;");
     test("a = b == null ? c : b", "a = b == null ? c : b;");
     test("a = b != null ? b : c", "a = b == null ? c : b;");
-    test("let b = foo(); a = b == null ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b != null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = b == null ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b != null ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = b == null ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b != null ? c : b", "let b = foo(); a = b == null ? b : c;");
-    test("let b = foo(); a = null == b ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = null != b ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null == b ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = null != b ? b : c", "a = foo() ?? c;");
     test("let b = foo(); a = null == b ? b : c", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = null != b ? c : b", "let b = foo(); a = b == null ? b : c;");
     test("let b = foo(); a = b.x == null ? c : b.x", "let b = foo(); a = b.x == null ? c : b.x;");
@@ -644,8 +638,8 @@ fn js_parser_test() {
     test("let b = foo(); a = b !== null ? b : c", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null === b ? c : b", "let b = foo(); a = b === null ? c : b;");
     test("let b = foo(); a = null !== b ? b : c", "let b = foo(); a = b === null ? c : b;");
-    test("let b = foo(); a = null === b || b === undefined ? c : b", "let b = foo(); a = b ?? c;");
-    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "let b = foo(); a = b ?? c;");
+    test("let b = foo(); a = null === b || b === undefined ? c : b", "a = foo() ?? c;");
+    test("let b = foo(); a = b !== undefined && b !== null ? b : c", "a = foo() ?? c;");
     test("a(b ? 0 : 0)", "a((b, 0));");
     test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
     test("a(b ? +0 : 0)", "a((b, 0));");
@@ -826,51 +820,51 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a[b] : undefined }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a(b) : undefined }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a.b }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a[b] }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return a == null ? undefined : a(b) }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a[b] : undefined }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return null != a ? a(b) : undefined }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a.b }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a[b] }",
-        "function _() { let a = foo(); return a?.[b]; }",
+        "function _() { return foo()?.[b]; }",
     );
     test(
         "function _() { let a = foo(); return null == a ? undefined : a(b) }",
-        "function _() { let a = foo(); return a?.(b); }",
+        "function _() { return foo()?.(b); }",
     );
     test(
         "function _() { return a != null ? a.b : undefined }",
@@ -882,7 +876,7 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != null ? b.a : undefined }",
-        "function _() { let a = foo(); return a == null ? void 0 : b.a; }",
+        "function _() { return foo() == null ? void 0 : b.a; }",
     );
     test(
         "function _() { let a = foo(); return a != 0 ? a.b : undefined }",
@@ -894,27 +888,27 @@ fn js_parser_test() {
     );
     test(
         "function _() { let a = foo(); return a != undefined ? a.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b : undefined }",
-        "function _() { let a = foo(); return a?.b; }",
+        "function _() { return foo()?.b; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b.c[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c[d](e); }",
+        "function _() { return foo()?.b.c[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b.c[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c[d](e); }",
+        "function _() { return foo()?.b.c[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b.c?.[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c?.[d](e); }",
+        "function _() { return foo()?.b.c?.[d](e); }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a?.b.c?.[d](e) : undefined }",
-        "function _() { let a = foo(); return a?.b.c?.[d](e); }",
+        "function _() { return foo()?.b.c?.[d](e); }",
     );
 }
 
@@ -1638,111 +1632,90 @@ fn test_remove_dead_expr() {
 }
 
 #[test]
-#[ignore]
 fn test_inline_single_use_variable() {
     test(
-        "function wrapper(arg0, arg1) {var x = 1; return x}",
-        "function wrapper(arg0, arg1) { var x = 1; return x;}",
+        "var foo; function wrapper(arg0, arg1) {var x = foo; return x}",
+        "var foo; function wrapper(arg0, arg1) { return foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return x}",
-        "function wrapper(arg0, arg1) { return 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x}",
+        "var foo; function wrapper(arg0, arg1) { return foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) {const x = 1; return x}",
-        "function wrapper(arg0, arg1) { return 1;}",
+        "var foo; function wrapper(arg0, arg1) {const x = foo; return x}",
+        "var foo; function wrapper(arg0, arg1) { return foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; if (false) x++; return x}",
-        "function wrapper(arg0, arg1) { return 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; if (false) x++; return x}",
+        "var foo; function wrapper(arg0, arg1) { return foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; if (true) x++; return x}",
-        "function wrapper(arg0, arg1) { let x = 1; return x++, x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; if (true) x++; return x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x++, x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return x + x}",
-        "function wrapper(arg0, arg1) { let x = 1; return x + x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return +x}",
-        "function wrapper(arg0, arg1) { return +1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return +x}",
+        "var foo; function wrapper(arg0, arg1) { return +foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return -x}",
-        "function wrapper(arg0, arg1) { return -1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return -x}",
+        "var foo; function wrapper(arg0, arg1) { return -foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return !x}",
-        "function wrapper(arg0, arg1) { return !1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return !x}",
+        "var foo; function wrapper(arg0, arg1) { return !foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return ~x}",
-        "function wrapper(arg0, arg1) { return ~1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return ~x}",
+        "var foo; function wrapper(arg0, arg1) { return ~foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return void x}",
-        "function wrapper(arg0, arg1) { let x = 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return void x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return typeof x}",
-        "function wrapper(arg0, arg1) { return typeof 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return typeof x}",
+        "var foo; function wrapper(arg0, arg1) { return typeof foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<1>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return `<${x}>`}",
+        "var foo; function wrapper(arg0, arg1) { return `<${foo}>`;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1n; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<1>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + 2}",
+        "var foo; function wrapper(arg0, arg1) { return foo + 2;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = null; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<null>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return 2 + x}",
+        "var foo; function wrapper(arg0, arg1) { return 2 + foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = undefined; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<undefined>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + arg0}",
+        "var foo; function wrapper(arg0, arg1) { return foo + arg0;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = false; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<false>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return arg0 + x}",
+        "var foo; function wrapper(arg0, arg1) { return arg0 + foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = true; return `<${x}>`}",
-        "function wrapper(arg0, arg1) { return `<true>`;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + fn()}",
+        "var foo; function wrapper(arg0, arg1) { return foo + fn();}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return x + 2}",
-        "function wrapper(arg0, arg1) { return 1 + 2;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return fn() + x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return fn() + x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return 2 + x}",
-        "function wrapper(arg0, arg1) { return 2 + 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + undef}",
+        "var foo; function wrapper(arg0, arg1) { return foo + undef;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; return x + arg0}",
-        "function wrapper(arg0, arg1) { return 1 + arg0;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = 1; return arg0 + x}",
-        "function wrapper(arg0, arg1) { return arg0 + 1;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = 1; return x + fn()}",
-        "function wrapper(arg0, arg1) { return 1 + fn();}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = 1; return fn() + x}",
-        "function wrapper(arg0, arg1) { return fn() + 1;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = 1; return x + undef}",
-        "function wrapper(arg0, arg1) { return 1 + undef;}",
-    );
-    test(
-        "function wrapper(arg0, arg1) { let x = 1; return undef + x}",
-        "function wrapper(arg0, arg1) { return undef + 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return undef + x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return undef + x;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); return x + 2}",
@@ -1777,48 +1750,48 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = fn(); return undef + x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; ++x}",
-        "function wrapper(arg0, arg1) { let x = 1; ++x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; ++x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; ++x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; --x}",
-        "function wrapper(arg0, arg1) { let x = 1; --x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; --x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; --x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; x++}",
-        "function wrapper(arg0, arg1) { let x = 1; x++;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x++}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x++;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; x--}",
-        "function wrapper(arg0, arg1) { let x = 1; x--;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x--}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x--;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; delete x}",
-        "function wrapper(arg0, arg1) { let x = 1; delete x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; delete x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; delete x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; x = 2}",
-        "function wrapper(arg0, arg1) { let x = 1; x = 2;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x = 2}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x = 2;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; x += 2}",
-        "function wrapper(arg0, arg1) { let x = 1; x += 2;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x += 2}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x += 2;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; x ||= 2}",
-        "function wrapper(arg0, arg1) { let x = 1; x ||= 2;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; x ||= 2;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; arg0 = x}",
-        "function wrapper(arg0, arg1) { arg0 = 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 = x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 = foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; arg0 += x}",
-        "function wrapper(arg0, arg1) { arg0 += 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 += x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 += foo;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; arg0 ||= x}",
-        "function wrapper(arg0, arg1) { arg0 ||= 1;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; arg0 ||= x}",
+        "var foo; function wrapper(arg0, arg1) { arg0 ||= foo;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); arg0 = x}",
@@ -1833,16 +1806,16 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { let x = fn(); arg0 ||= x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; y.z = x}",
-        "function wrapper(arg0, arg1) { let x = 1; y.z = x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z = x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; y.z += x}",
-        "function wrapper(arg0, arg1) { let x = 1; y.z += x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z += x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 1; y.z ||= x}",
-        "function wrapper(arg0, arg1) { let x = 1; y.z ||= x;}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; y.z ||= x;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); y.z = x}",
@@ -1981,20 +1954,29 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { throw fn()[prop].val;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 0; let y = ++x; return y}",
-        "function wrapper(arg0, arg1) { let x = 0; return ++x;}",
+        "function wrapper(arg0, arg1) { let x = fn(); let y = x[prop]; let z = y.val; return z}",
+        "function wrapper(arg0, arg1) { return fn()[prop].val;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 0; let y = x; return [x, y]}",
-        "function wrapper(arg0, arg1) { let x = 0; return [x, x];}",
+        "function wrapper(arg0, arg1) { let x = fn(), y = x[prop], z = y.val; return z}",
+        "function wrapper(arg0, arg1) { return fn()[prop].val;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 0; let y = ++x; return [x, y]}",
-        "function wrapper(arg0, arg1) { let x = 0, y = ++x; return [x, y];}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; let y = ++x; return y}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return ++x;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 0; let y = {valueOf() { x = 1 }}; let z = x; return [y == 1, z]}",
-        "function wrapper(arg0, arg1) { let x = 0, y = { valueOf() { x = 1; } }, z = x; return [y == 1, z];}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; let y = x; return [x, y]}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return [x, x];}",
+    );
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; let y = ++x; return [x, y]}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo, y = ++x; return [x, y];}",
+    );
+    // NOTE: differently from esbuild, we assume `valueOf` does not have a sideeffect
+    test(
+        "var foo; function wrapper(arg0, arg1) { let x = foo; let y = {valueOf() { x = 1 }}; let z = x; return [y == 1, z]}",
+        "var foo; function wrapper(arg0, arg1) { let x = foo; return [{ valueOf() { x = 1; } } == 1, x];}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return [...x];}",
@@ -2181,10 +2163,6 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { return arg1`a${arg0}b`;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = 'x'; return `a${x}b`;}",
-        "function wrapper(arg0, arg1) { return `axb`;}",
-    );
-    test(
         "function wrapper(arg0, arg1) { let x = arg0; return import(x);}",
         "function wrapper(arg0, arg1) { return import(arg0);}",
     );
@@ -2364,9 +2342,10 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { y(x); var x = 2; y(x) }",
         "try { throw 1;} catch (x) { y(x); var x = 2; y(x);}",
     );
+    test("try { throw 1 } catch (x) { var x = 2; y(x) }", "try { throw 1;} catch { y(2);}");
     test(
-        "try { throw 1 } catch (x) { var x = 2; y(x) }",
-        "try { throw 1;} catch (x) { var x = 2; y(x);}",
+        "try { throw 1 } catch (x) { var x = 2; y(x) } console.log(x)",
+        "try { throw 1;} catch (x) { var x = 2; y(x);} console.log(x)",
     );
     test(
         "try { throw 1 } catch (x) { var x = 2 }; y(x)",

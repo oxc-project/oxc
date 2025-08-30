@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "1.12.0",
+  "version": "1.14.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -140,6 +140,12 @@
           ],
           "default": "allow",
           "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
+        },
+        "oxc.typeAware": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Enable type-aware linting."
         },
         "oxc.flags": {
           "type": "object",

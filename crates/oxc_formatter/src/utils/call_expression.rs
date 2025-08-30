@@ -78,7 +78,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                 _ => return false,
             };
 
-            parameter_count == 2 || (parameter_count <= 1 && has_block_body)
+            arguments.len() == 2 || (parameter_count <= 1 && has_block_body)
         }
         _ => false,
     }
@@ -123,7 +123,7 @@ fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
 /// Same as <https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/expr_ext.rs#L1402-L1438>.
 pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> impl Iterator<Item = &'b str> {
     let mut current = Some(expr);
-    std::iter::from_fn(move || match current {
+    let mut names = std::iter::from_fn(move || match current {
         Some(Expression::Identifier(ident)) => {
             current = None;
             Some(ident.name.as_str())
@@ -133,7 +133,12 @@ pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> impl Iterator<Item 
             Some(static_member.property.name.as_str())
         }
         _ => None,
-    })
+    });
+
+    [names.next(), names.next(), names.next(), names.next(), names.next()]
+        .into_iter()
+        .rev()
+        .flatten()
 }
 
 /// This function checks if a call expressions has one of the following members:
@@ -190,6 +195,44 @@ pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
             _ => false,
         },
         Some("skip" | "xit" | "xdescribe" | "xtest" | "fit" | "fdescribe" | "ftest") => true,
+        _ => false,
+    }
+}
+
+pub fn is_test_each_pattern(expr: &Expression<'_>) -> bool {
+    let mut names = callee_name_iterator(expr);
+
+    let first = names.next();
+    let second = names.next();
+    let third = names.next();
+    let fourth = names.next();
+    let fifth = names.next();
+
+    match first {
+        Some("describe" | "xdescribe" | "fdescribe") => match second {
+            Some("each") => third.is_none(),
+            Some("skip" | "only") => match third {
+                Some("each") => fourth.is_none(),
+                _ => false,
+            },
+            _ => false,
+        },
+        Some("test" | "xtest" | "ftest" | "it" | "xit" | "fit") => match second {
+            Some("each") => third.is_none(),
+            Some("skip" | "only" | "failing") => match third {
+                Some("each") => fourth.is_none(),
+                _ => false,
+            },
+            Some("concurrent") => match third {
+                Some("each") => fourth.is_none(),
+                Some("only" | "skip") => match fourth {
+                    Some("each") => fifth.is_none(),
+                    _ => false,
+                },
+                _ => false,
+            },
+            _ => false,
+        },
         _ => false,
     }
 }

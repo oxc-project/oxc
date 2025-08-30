@@ -63,6 +63,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         })
     }
 }

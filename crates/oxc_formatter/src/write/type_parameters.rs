@@ -32,10 +32,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
         };
 
         f.join_with(soft_line_break_or_space())
-            .entries(
-                FormatSeparatedIter::new(self.iter(), ",")
-                    .with_trailing_separator(trailing_separator),
-            )
+            .entries_with_trailing_separator(self.iter(), ",", trailing_separator)
             .finish()
     }
 }

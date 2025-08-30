@@ -1,8 +1,6 @@
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/CollapseVariableDeclarationsTest.java>
-use super::{test, test_same};
-
 mod join_vars {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_collapsing() {
@@ -53,7 +51,7 @@ mod join_vars {
 
     #[test]
     fn test_issue397() {
-        test_same("var x; x = 5; var z = 7;");
+        test("var x; x = 5; var z = 7;", "var x = 5, z = 7");
         test("var x; var y = 3; x = 5;", "var x, y = 3; x = 5;");
         test("var a = 1; var x; var y = 3; x = 5;", "var a = 1, x, y = 3; x = 5;");
         test("var x; var y = 3; x = 5; var z = 7;", "var x, y = 3; x = 5; var z = 7;");
@@ -148,7 +146,7 @@ mod join_vars {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/DenormalizeTest.java>
 #[cfg(test)]
 mod collapse_for {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_for() {

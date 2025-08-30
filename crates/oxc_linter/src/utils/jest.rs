@@ -311,22 +311,20 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::{ContextHost, ModuleRecord, options::LintOptions};
+    use crate::{ContextHost, ModuleRecord, context::ContextSubHost, options::LintOptions};
 
     #[test]
     fn test_is_jest_file() {
         let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let parser_ret = Parser::new(&allocator, "", source_type).parse();
-        let semantic_ret =
-            SemanticBuilder::new().with_cfg(true).build(&parser_ret.program).semantic;
-        let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {
+            let source_type = SourceType::default();
+            let parser_ret = Parser::new(&allocator, "", source_type).parse();
+            let program = allocator.alloc(parser_ret.program);
+            let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
             Rc::new(ContextHost::new(
                 path,
-                Rc::clone(&semantic_ret),
-                Arc::new(ModuleRecord::default()),
+                vec![ContextSubHost::new(semantic, Arc::new(ModuleRecord::default()), 0)],
                 LintOptions::default(),
                 Arc::default(),
             ))

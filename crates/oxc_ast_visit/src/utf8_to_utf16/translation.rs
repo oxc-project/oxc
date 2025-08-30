@@ -82,17 +82,17 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
     // Closure that processes a slice of bytes
     let mut process_slice = |slice: &[u8], start_offset: usize| {
         for (index, &byte) in slice.iter().enumerate() {
-            #[expect(clippy::cast_possible_truncation)]
             if byte >= 0xC0 {
                 let difference_for_this_byte = u32::from(byte >= 0xE0) + 1;
                 utf16_difference += difference_for_this_byte;
-                // Record `offset + 1` not `offset`, because it's only offsets *after* this
-                // Unicode character that need to be shifted.
-                // `offset + 1` cannot overflow, because source is limited to `u32::MAX` bytes,
-                // so a multi-byte Unicode character can't start at offset `u32::MAX`, because there
-                // isn't space to complete the multi-byte sequence, which would not be a valid `&str`.
-                let offset = start_offset + index;
-                let utf8_offset = (offset + 1) as u32;
+
+                // Record the index of the end of this Unicode character, because it's only offsets
+                // *after* this Unicode character that need to be shifted.
+                // Addition cannot overflow because length of source text is max `u32::MAX`.
+                let bytes_in_char =
+                    difference_for_this_byte as usize + usize::from(byte >= 0xF0) + 1;
+                #[expect(clippy::cast_possible_truncation)]
+                let utf8_offset = (start_offset + index + bytes_in_char) as u32;
                 translations.push(Translation { utf8_offset, utf16_difference });
             }
         }

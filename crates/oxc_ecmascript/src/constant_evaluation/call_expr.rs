@@ -16,7 +16,7 @@ use cow_utils::CowUtils;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait,
+    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, ToUint32,
     constant_evaluation::url_encoding::{
         decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
     },
@@ -89,10 +89,10 @@ pub fn try_fold_known_global_methods<'a>(
             try_fold_number_methods(arguments, object, name, ctx)
         }
         "sqrt" | "cbrt" => try_fold_roots(arguments, name, object, ctx),
-        "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
+        "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" | "clz32" => {
             try_fold_math_unary(arguments, name, object, ctx)
         }
-        "min" | "max" => try_fold_math_variadic(arguments, name, object, ctx),
+        "imul" | "min" | "max" => try_fold_math_variadic(arguments, name, object, ctx),
         _ => None,
     }
 }
@@ -478,6 +478,7 @@ fn try_fold_math_unary<'a>(
         "sign" if arg_val.to_bits() == 0f64.to_bits() => 0f64,
         "sign" if arg_val.to_bits() == (-0f64).to_bits() => -0f64,
         "sign" => arg_val.signum(),
+        "clz32" => f64::from(arg_val.to_uint_32().leading_zeros()),
         _ => unreachable!(),
     };
     // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
@@ -499,28 +500,38 @@ fn try_fold_math_variadic<'a>(
         let value = expr.get_side_free_number_value(ctx)?;
         numbers.push(value);
     }
-    let result = if numbers.iter().any(|n: &f64| n.is_nan()) {
-        f64::NAN
-    } else {
-        match name {
-            // TODO
-            // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
-            "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
-                if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
-                    a
-                } else {
-                    b
+    let result = match name {
+        "min" | "max" => {
+            if numbers.iter().any(|n: &f64| n.is_nan()) {
+                f64::NAN
+            } else {
+                match name {
+                    // TODO
+                    // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
+                    "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
+                        if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
+                            a
+                        } else {
+                            b
+                        }
+                    }),
+                    "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
+                        if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
+                            a
+                        } else {
+                            b
+                        }
+                    }),
+                    _ => return None,
                 }
-            }),
-            "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
-                if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
-                    a
-                } else {
-                    b
-                }
-            }),
-            _ => return None,
+            }
         }
+        "imul" => {
+            let a = numbers.first().copied().unwrap_or(f64::NAN).to_uint_32();
+            let b = numbers.get(1).copied().unwrap_or(f64::NAN).to_uint_32();
+            f64::from(a.wrapping_mul(b).cast_signed())
+        }
+        _ => return None,
     };
     Some(ConstantValue::Number(result))
 }

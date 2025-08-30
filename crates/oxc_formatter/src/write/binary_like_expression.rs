@@ -147,7 +147,9 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
-            // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
+            AstNodes::JSXExpressionContainer(container) => {
+                matches!(container.parent, AstNodes::JSXAttribute(_))
+            }
             AstNodes::ExpressionStatement(statement) => {
                 if let AstNodes::FunctionBody(arrow) = statement.parent {
                     arrow.span == self.span()
@@ -155,16 +157,14 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     false
                 }
             }
-            AstNodes::ConditionalExpression(conditional) => {
-                matches!(
-                    parent.parent(),
-                    AstNodes::ReturnStatement(_)
-                        | AstNodes::ThrowStatement(_)
-                        | AstNodes::CallExpression(_)
-                        | AstNodes::ImportExpression(_)
-                        | AstNodes::MetaProperty(_)
-                )
-            }
+            AstNodes::ConditionalExpression(conditional) => !matches!(
+                conditional.parent(),
+                AstNodes::ReturnStatement(_)
+                    | AstNodes::ThrowStatement(_)
+                    | AstNodes::CallExpression(_)
+                    | AstNodes::ImportExpression(_)
+                    | AstNodes::MetaProperty(_)
+            ),
             _ => false,
         }
     }
@@ -231,15 +231,13 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
             );
         }
 
-        let inline_logical_expression = self.should_inline_logical_expression();
-        let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
-        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
-
-        let flattened = parts.len() > 2;
-        if should_not_indent
-            || (inline_logical_expression && !flattened)
-            || (!inline_logical_expression && should_indent_if_inlines)
-        {
+        if self.should_not_indent_if_parent_indents(self.parent()) || {
+            let flattened = parts.len() > 2;
+            let inline_logical_expression = self.should_inline_logical_expression();
+            let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
+            (inline_logical_expression && !flattened)
+                || (!inline_logical_expression && should_indent_if_inlines)
+        } {
             return write!(f, [group(&format_once(|f| { f.join().entries(parts).finish() }))]);
         }
 
