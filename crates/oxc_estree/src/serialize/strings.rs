@@ -1,6 +1,6 @@
 use std::{num::NonZeroU64, slice};
 
-use oxc_data_structures::{code_buffer::CodeBuffer, slice_iter_ext::SliceIterExt};
+use oxc_data_structures::{code_buffer::CodeBuffer, slice_iter::SliceIter};
 
 use super::{ESTree, Serializer};
 

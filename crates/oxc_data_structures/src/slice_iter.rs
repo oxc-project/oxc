@@ -2,7 +2,7 @@
 //!
 //! Provides additional methods to inspect and advance iterators.
 //!
-//! See [`SliceIterExt`] and [`SliceIterMutExt`].
+//! See [`SliceIter`] and [`SliceIterMut`].
 
 // All methods boil down to just a few instructions.
 // https://godbolt.org/z/KrsTz9478
@@ -17,7 +17,7 @@ use crate::assert_unchecked;
 
 /// Extension trait for slice iterators.
 #[expect(private_bounds)]
-pub trait SliceIterExt<'slice, T>: ExactSizeIterator + AsRef<[T]> + Sealed {
+pub trait SliceIter<'slice, T>: ExactSizeIterator + AsRef<[T]> + Sealed {
     /// The type returned by `peek` method.
     type Peeked<'iter>
     where
@@ -83,7 +83,7 @@ pub trait SliceIterExt<'slice, T>: ExactSizeIterator + AsRef<[T]> + Sealed {
     }
 }
 
-impl<'slice, T: 'slice> SliceIterExt<'slice, T> for Iter<'slice, T> {
+impl<'slice, T: 'slice> SliceIter<'slice, T> for Iter<'slice, T> {
     // `peek` method returns a reference which borrows the slice, not the iterator
     type Peeked<'iter>
         = &'slice T
@@ -141,7 +141,7 @@ impl<'slice, T: 'slice> SliceIterExt<'slice, T> for Iter<'slice, T> {
     }
 }
 
-impl<'slice, T: 'slice> SliceIterExt<'slice, T> for IterMut<'slice, T> {
+impl<'slice, T: 'slice> SliceIter<'slice, T> for IterMut<'slice, T> {
     // `peek` method returns a reference which borrows the iterator
     type Peeked<'iter>
         = &'iter T
@@ -207,12 +207,12 @@ impl<'slice, T: 'slice> SliceIterExt<'slice, T> for IterMut<'slice, T> {
 }
 
 /// Extension trait for [`IterMut`] slice iterator.
-pub trait SliceIterMutExt<'slice, T>: SliceIterExt<'slice, T> {
+pub trait SliceIterMut<'slice, T>: SliceIter<'slice, T> {
     /// Get the remaining items in the iterator as a mutable slice.
     fn as_mut_slice(&mut self) -> &mut [T];
 }
 
-impl<'slice, T: 'slice> SliceIterMutExt<'slice, T> for IterMut<'slice, T> {
+impl<'slice, T: 'slice> SliceIterMut<'slice, T> for IterMut<'slice, T> {
     /// Get the remaining items in the iterator as a mutable slice.
     ///
     /// This method is present in standard library, but requires nightly Rust.
@@ -234,8 +234,8 @@ impl<'slice, T: 'slice> SliceIterMutExt<'slice, T> for IterMut<'slice, T> {
 }
 
 /// Private trait.
-/// [`SliceIterExt`] extends `Sealed`, which prevents code outside this file implementing
-/// `SliceIterExt` on other types.
+/// [`SliceIter`] extends `Sealed`, which prevents code outside this file implementing
+/// `SliceIter` on other types.
 trait Sealed {}
 
 impl<'slice, T: 'slice> Sealed for Iter<'slice, T> {}

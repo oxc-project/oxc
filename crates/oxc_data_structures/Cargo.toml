@@ -26,10 +26,10 @@ ropey = { workspace = true, optional = true }
 
 [features]
 default = []
-all = ["assert_unchecked", "code_buffer", "inline_string", "rope", "slice_iter_ext", "stack"]
+all = ["assert_unchecked", "code_buffer", "inline_string", "rope", "slice_iter", "stack"]
 assert_unchecked = []
 code_buffer = ["assert_unchecked"]
 inline_string = ["assert_unchecked"]
 rope = ["dep:ropey"]
-slice_iter_ext = ["assert_unchecked"]
+slice_iter = ["assert_unchecked"]
 stack = []

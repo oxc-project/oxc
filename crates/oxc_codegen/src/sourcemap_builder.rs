@@ -2,7 +2,7 @@ use std::path::Path;
 
 use nonmax::NonMaxU32;
 
-use oxc_data_structures::slice_iter_ext::SliceIterExt;
+use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};

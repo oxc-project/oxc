@@ -65,7 +65,7 @@ use serde::Deserialize;
 
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_data_structures::{inline_string::InlineString, slice_iter_ext::SliceIterExt};
+use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};

@@ -1,7 +1,7 @@
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
-use oxc_data_structures::{assert_unchecked, slice_iter_ext::SliceIterExt};
+use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
 use oxc_syntax::identifier::{LS, NBSP, PS};
 
 use crate::Codegen;
