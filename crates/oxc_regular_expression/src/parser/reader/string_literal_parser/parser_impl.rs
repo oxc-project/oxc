@@ -173,8 +173,10 @@ impl Parser {
             }
             self.rewind(checkpoint);
         }
-        if let Some(cp) = self.parse_line_terminator_sequence() {
-            return Ok(Some(((offset_start, self.offset()), cp)));
+
+        if self.parse_line_terminator_sequence() {
+            // LineContinuation: skip and continue parsing next character
+            return self.parse_string_character(single_or_double_quote);
         }
 
         Ok(None)
@@ -373,38 +375,39 @@ impl Parser {
     //   <PS>
     //   <CR> <LF>
     // ```
-    fn parse_line_terminator_sequence(&mut self) -> Option<u32> {
+    //
+    // According to ECMAScript 2024 § 12.9.4 Note 2,
+    // a LineContinuation (backslash + line terminator sequence) produces an empty code-point sequence
+    // and contributes zero code points to the resulting string. (i.e., it is effectively omitted)
+    fn parse_line_terminator_sequence(&mut self) -> bool {
         let checkpoint = self.checkpoint();
 
         if self.eat('\\') {
             if self.peek() == Some(LF) {
                 self.advance();
-                return Some(LF as u32);
+                return true;
             }
             if self.peek() == Some(CR) && self.peek2() != Some(LF) {
                 self.advance();
-                return Some(CR as u32);
+                return true;
             }
             if self.peek() == Some(LS) {
                 self.advance();
-                return Some(LS as u32);
+                return true;
             }
             if self.peek() == Some(PS) {
                 self.advance();
-                return Some(PS as u32);
+                return true;
             }
-            // NOTE: CR+LF can not represent as a single code point.
-            // I don't know the best way to handle this.
-            // To distinguish this from CR and LF, structural change is needed...
             if self.peek() == Some(CR) && self.peek2() == Some(LF) {
                 self.advance();
                 self.advance();
-                return Some(LF as u32);
+                return true;
             }
         }
 
         self.rewind(checkpoint);
-        None
+        false
     }
 
     // ---
