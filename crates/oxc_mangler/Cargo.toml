@@ -21,13 +21,13 @@ test = true
 doctest = false
 
 [dependencies]
+itertools = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["inline_string"] }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
-itertools = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
