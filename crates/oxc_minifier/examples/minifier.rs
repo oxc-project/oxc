@@ -28,8 +28,10 @@ use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn, CommentOptions};
 use oxc_mangler::MangleOptions;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
+use oxc_transformer::{TransformOptions, Transformer};
 
 // Instruction:
 // create a `test.js`,
@@ -92,6 +94,15 @@ fn minify(
 ) -> CodegenReturn {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
+
+    // Transform TypeScript to ESNext before minification (minifier only works on esnext)
+    if source_type.is_typescript() {
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let _ = Transformer::new(allocator, std::path::Path::new("input"), &transform_options)
+            .build_with_scoping(scoping, &mut program);
+    }
+
     let options = MinifierOptions {
         mangle: mangle.then(MangleOptions::default),
         compress: Some(CompressOptions { max_iterations, ..CompressOptions::smallest() }),
