@@ -39,6 +39,12 @@ fn test(source_text: &str, expected: bool) {
 }
 
 #[track_caller]
+fn test_include_functions(source_text: &str, expected: bool) {
+    let ctx = Ctx::default();
+    test_with_ctx_and_functions_option(source_text, true, &ctx, expected);
+}
+
+#[track_caller]
 fn test_with_global_variables(
     source_text: &str,
     global_variable_names: &[&'static str],
@@ -89,6 +95,10 @@ fn test_simple_expressions() {
     test("0n", true);
     test("this", false);
     test("import.meta", false);
+    test("(() => {})", false);
+    test("(function(){})", false);
+    test_include_functions("(() => {})", true);
+    test_include_functions("(function(){})", true);
 }
 
 #[test]
@@ -122,6 +132,10 @@ fn test_unary_expressions() {
     test("+/foo/", false); // RegExp::[Symbol.toPrimitive] might be overridden
     test("+[]", false); // Array::[Symbol.toPrimitive] might be overridden
 
+    test("+(() => {})", false);
+    test("+(function () {})", false);
+    test_include_functions("+(() => {})", true);
+    test_include_functions("+(function () {})", true);
     test("+(void 1)", true);
     test("+(void a)", false);
     test("+(!1)", true);
@@ -237,6 +251,10 @@ fn test_object_expression() {
     test("({[a]: 1})", false);
     test("({[[]]: 1})", false); // Array::[Symbol.toPrimitive] might be overridden
 
+    test("({[()=>{}]: 1})", false);
+    test("({[function(){}]: 1})", false);
+    test_include_functions("({[()=>{}]: 1})", true);
+    test_include_functions("({[function(){}]: 1})", true);
     test("({[void 0]: 1})", true);
     test("({[void a]: 1})", false);
     test("({[!0]: 1})", true);
