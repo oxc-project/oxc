@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 📚 Documentation
+
+- 51d3840 linter: Update oxlint CLI help message on `.oxlintrc.json` config file (#13334) (0xCLARITY)
+
+### 🧪 Testing
+
+- 6eeeb67 oxlint: Add test for ignore patterns referenced by symlink file (#13356) (Sysix)
+
+
 ## [1.13.0] - 2025-08-26
 
 ### 💥 BREAKING CHANGES

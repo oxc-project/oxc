@@ -220,6 +220,9 @@ fn can_convert_to_number_transparently<'a>(
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
                 && ctx.is_global_reference(ident)
         }
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+            include_functions
+        }
         Expression::UnaryExpression(e) => match e.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot | UnaryOperator::Typeof => {
                 e.argument.is_literal_value(include_functions, ctx)
@@ -319,6 +322,9 @@ fn can_convert_to_string_transparently<'a>(
         Expression::Identifier(ident) => {
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
                 && ctx.is_global_reference(ident)
+        }
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
+            include_functions
         }
         Expression::UnaryExpression(e) => e.is_literal_value(include_functions, ctx),
         Expression::BinaryExpression(e) => e.is_literal_value(include_functions, ctx),

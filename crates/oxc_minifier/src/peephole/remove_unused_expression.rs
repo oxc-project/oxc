@@ -521,7 +521,19 @@ impl<'a> PeepholeOptimizations {
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
-        if call_expr.pure && ctx.annotations() {
+        let is_pure = {
+            (call_expr.pure && ctx.annotations())
+                || (if let Expression::Identifier(id) = &call_expr.callee
+                    && let Some(symbol_id) =
+                        ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                {
+                    ctx.state.pure_functions.contains_key(&symbol_id)
+                } else {
+                    false
+                })
+        };
+
+        if is_pure {
             let mut exprs =
                 Self::fold_arguments_into_needed_expressions(&mut call_expr.arguments, ctx);
             if exprs.is_empty() {
@@ -580,9 +592,8 @@ impl<'a> PeepholeOptimizations {
         !call_expr.may_have_side_effects(ctx)
     }
 
-    fn fold_arguments_into_needed_expressions(
+    pub fn fold_arguments_into_needed_expressions(
         args: &mut Vec<'a, Argument<'a>>,
-
         ctx: &mut Ctx<'a, '_>,
     ) -> Vec<'a, Expression<'a>> {
         ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
@@ -955,6 +966,9 @@ mod test {
         test("/* @__PURE__ */ new Foo(a)", "a");
         test("true && /* @__PURE__ */ noEffect()", "");
         test("false || /* @__PURE__ */ noEffect()", "");
+
+        test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
+        test_same("var foo = () => { bar() }; foo(), foo()");
     }
 
     #[test]

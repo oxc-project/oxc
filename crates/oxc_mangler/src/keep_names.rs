@@ -240,7 +240,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             return true;
         }
 
-        let is_class = matches!(expr, Expression::ClassExpression(_));
+        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
         (self.options.class && is_class) || (self.options.function && !is_class)
     }
 }
@@ -291,8 +291,11 @@ mod test {
     #[test]
     fn test_simple_declare_init() {
         assert_eq!(collect(function_only(), "var foo = function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (function() {})"), data("foo"));
         assert_eq!(collect(function_only(), "var foo = () => {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (() => {})"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
+        assert_eq!(collect(class_only(), "var Foo = (class {})"), data("Foo"));
     }
 
     #[test]

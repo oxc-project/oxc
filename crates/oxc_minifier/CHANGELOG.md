@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.84.0] - 2025-08-30
+
+### 🚀 Features
+
+- 95d4311 ecmascript: Check side effects inside static blocks (#13404) (sapphi-red)
+- 2d0414d minifier: Remove pure function calls when the return value is not used (#13403) (sapphi-red)
+- c557854 ecmascript: Support MayHaveSideEffects for Statements (#13402) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3e902a0 minifier: Keep argument spread side effects against empty functions (#13401) (sapphi-red)
+
+
 ## [0.83.0] - 2025-08-29
 
 ### 💥 BREAKING CHANGES

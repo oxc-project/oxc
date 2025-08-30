@@ -2,6 +2,7 @@ mod array_join;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod may_have_side_effects;
+mod may_have_side_effects_statements;
 mod prop_name;
 mod to_boolean;
 mod to_number;

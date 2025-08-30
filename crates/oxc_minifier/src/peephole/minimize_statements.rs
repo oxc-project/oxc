@@ -1053,6 +1053,9 @@ impl<'a> PeepholeOptimizations {
             let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
                 return true;
             };
+            if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
+                return true;
+            }
             let Some(symbol_value) =
                 ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
             else {
@@ -1617,8 +1620,8 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        // We can always reorder past primitive values
-        if replacement.is_literal_value(false, ctx) || target_expr.is_literal_value(false, ctx) {
+        // We can always reorder past literal values
+        if replacement.is_literal_value(true, ctx) || target_expr.is_literal_value(true, ctx) {
             return None;
         }
 
