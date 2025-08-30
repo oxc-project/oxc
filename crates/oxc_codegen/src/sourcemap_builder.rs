@@ -282,7 +282,7 @@ impl<'a> SourcemapBuilder<'a> {
 
             // Line break found.
             // `iter` is now positioned after line break.
-            line_start_ptr = iter.as_slice().as_ptr();
+            line_start_ptr = iter.ptr();
             self.generated_line += 1;
             self.generated_column = 0;
             last_line_is_ascii = true;
@@ -290,8 +290,8 @@ impl<'a> SourcemapBuilder<'a> {
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            // `iter` is now exhausted, so `iter.as_slice().as_ptr()` is pointer to end of `output`
-            (iter.as_slice().as_ptr() as usize - line_start_ptr as usize) as u32
+            // `iter` is now exhausted, so `iter.ptr()` is pointer to end of `output`
+            (iter.ptr() as usize - line_start_ptr as usize) as u32
         } else {
             let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this

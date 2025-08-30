@@ -1,6 +1,6 @@
 //! Extension trait for slice iterators.
 //!
-//! Provides additional methods to advance iterators.
+//! Provides additional methods to inspect and advance iterators.
 //!
 //! See [`SliceIterExt`].
 
@@ -14,7 +14,7 @@ use crate::assert_unchecked;
 
 /// Extension trait for slice iterators.
 #[expect(private_bounds)]
-pub trait SliceIterExt<'slice, T>: ExactSizeIterator + Sealed {
+pub trait SliceIterExt<'slice, T>: ExactSizeIterator + AsRef<[T]> + Sealed {
     /// The type returned by `peek` method.
     type Peeked<'iter>
     where
@@ -60,6 +60,24 @@ pub trait SliceIterExt<'slice, T>: ExactSizeIterator + Sealed {
     /// # SAFETY
     /// Iterator must contain at least `count` more items.
     unsafe fn advance_unchecked(&mut self, count: usize);
+
+    /// Get pointer to next item in the iterator.
+    ///
+    /// Pointer is only valid to read an item from if iterator is not empty.
+    #[inline]
+    fn ptr(&self) -> *const T {
+        let slice = self.as_ref();
+        slice.as_ptr()
+    }
+
+    /// Get pointer to after last item in the iterator.
+    ///
+    /// Pointer is the end bound of the slice, so is not valid for reads.
+    #[inline]
+    fn end_ptr(&self) -> *const T {
+        let slice = self.as_ref();
+        slice.as_ptr_range().end
+    }
 }
 
 impl<'slice, T: 'slice> SliceIterExt<'slice, T> for Iter<'slice, T> {
@@ -300,6 +318,48 @@ mod test_iter {
             assert_eq!(iter.next(), None);
         }
     }
+
+    #[test]
+    fn ptr() {
+        let slice = [11u32, 22, 33];
+        let start_addr = slice.as_ptr() as usize;
+
+        let mut iter = slice.iter();
+        assert_eq!(iter.ptr() as usize, start_addr);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>());
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 2);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 3);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 3);
+    }
+
+    #[test]
+    fn end_ptr() {
+        let slice = [11u32, 22, 33];
+        let end_addr = slice.as_ptr() as usize + size_of::<u32>() * 3;
+
+        let mut iter = slice.iter();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+    }
 }
 
 #[cfg(test)]
@@ -415,5 +475,47 @@ mod test_iter_mut {
             iter.advance_unchecked(3);
             assert_eq!(iter.next(), None);
         }
+    }
+
+    #[test]
+    fn ptr() {
+        let mut slice = [11u32, 22, 33];
+        let start_addr = slice.as_ptr() as usize;
+
+        let mut iter = slice.iter_mut();
+        assert_eq!(iter.ptr() as usize, start_addr);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>());
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 2);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 3);
+
+        iter.next();
+        assert_eq!(iter.ptr() as usize, start_addr + size_of::<u32>() * 3);
+    }
+
+    #[test]
+    fn end_ptr() {
+        let mut slice = [11u32, 22, 33];
+        let end_addr = slice.as_ptr() as usize + size_of::<u32>() * 3;
+
+        let mut iter = slice.iter_mut();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
+
+        iter.next();
+        assert_eq!(iter.end_ptr() as usize, end_addr);
     }
 }
