@@ -1,7 +1,7 @@
 //! Provides builders for comments and skipped token trivia.
 
 use oxc_ast::{
-    Comment, CommentKind,
+    Comment, CommentContent, CommentKind,
     ast::{CallExpression, NewExpression},
 };
 use oxc_span::{GetSpan, Span};
@@ -28,16 +28,18 @@ use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-fn should_nestle_adjacent_doc_comments(first_comment: &Comment, second_comment: &Comment) -> bool {
-    false
-    // let first = first_comment.piece();
-    // let second = second_comment.piece();
-
-    // first.has_newline()
-    // && second.has_newline()
-    // && (second.text_range().start()).sub(first.text_range().end()) == TextSize::from(0)
-    // && is_doc_comment(first)
-    // && is_doc_comment(second)
+#[expect(clippy::suspicious_operation_groupings)]
+// `current.span.end == next.span.start` is correct, which checks whether the next comment starts exactly where the current comment ends.
+fn should_nestle_adjacent_doc_comments(
+    current: &Comment,
+    next: &Comment,
+    source_text: &str,
+) -> bool {
+    matches!(current.content, CommentContent::Jsdoc)
+        && matches!(next.content, CommentContent::Jsdoc)
+        && current.span.end == next.span.start
+        && current.span.source_text(source_text).contains('\n')
+        && next.span.source_text(source_text).contains('\n')
 }
 
 /// Formats the leading comments of `node`
@@ -60,7 +62,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
         ) -> FormatResult<()> {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
                 write!(f, comment)?;
 
                 match comment.kind {
@@ -69,8 +71,11 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                             0 => {
                                 let should_nestle =
                                     leading_comments_iter.peek().is_some_and(|next_comment| {
-                                        // should_nestle_adjacent_doc_comments(comment, next_comment)
-                                        false
+                                        should_nestle_adjacent_doc_comments(
+                                            comment,
+                                            next_comment,
+                                            f.source_text(),
+                                        )
                                     });
 
                                 write!(f, [maybe_space(!should_nestle)])?;
@@ -97,12 +102,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let leading_comments = f
-                    .context()
-                    .comments()
-                    .unprinted_comments()
-                    .iter()
-                    .take_while(|comment| comment.span.end <= span.start);
+                let leading_comments = f.context().comments().comments_before(span.start);
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -137,14 +137,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             let mut previous_comment: Option<&Comment> = None;
 
             for comment in comments {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
 
                 let lines_before = get_lines_before(comment.span, f);
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                    // should_nestle_adjacent_doc_comments(previous_comment, comment)
-                    false
+                    should_nestle_adjacent_doc_comments(previous_comment, comment, f.source_text())
                 });
 
                 // This allows comments at the end of nested structures:
@@ -208,14 +207,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
-                format_trailing_comments_impl(
-                    f.context().comments().get_trailing_comments(
-                        enclosing_node,
-                        preceding_node,
-                        *following_node,
-                    ),
-                    f,
-                )
+                let comments = f.context().comments().get_trailing_comments(
+                    enclosing_node,
+                    preceding_node,
+                    *following_node,
+                );
+
+                format_trailing_comments_impl(comments, f)
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }
@@ -312,11 +310,14 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 let mut previous_comment: Option<&Comment> = None;
 
                 for comment in comments {
-                    f.context_mut().increment_printed_count();
+                    f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                        // should_nestle_adjacent_doc_comments(previous_comment, comment)
-                        false
+                        should_nestle_adjacent_doc_comments(
+                            previous_comment,
+                            comment,
+                            f.source_text(),
+                        )
                     });
 
                     write!(
@@ -357,11 +358,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
             FormatDanglingComments::Node { span, indent } => {
                 let source_text = f.context().source_text();
                 format_dangling_comments_impl(
-                    f.context()
-                        .comments()
-                        .unprinted_comments()
-                        .iter()
-                        .take_while(|comment| span.contains_inclusive(comment.span)),
+                    f.context().comments().comments_before(span.end),
                     *indent,
                     f,
                 )
@@ -377,7 +374,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 ///
 /// ## Warning
 /// It's your responsibility to format any skipped trivia.
-pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken {
+pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken<'_> {
     FormatTrimmedToken { token }
 }
 
@@ -630,7 +627,7 @@ impl Format<'_> for FormatSkippedTokenTrivia {
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = self.span.source_text(f.source_text());
+        let source_text = self.span.source_text(f.source_text()).trim_end();
         if is_alignable_comment(source_text) {
             let mut source_offset = self.span.start;
 

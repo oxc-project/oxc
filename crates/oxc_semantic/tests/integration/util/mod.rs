@@ -1,16 +1,18 @@
-mod class_tester;
-mod expect;
-mod symbol_tester;
 use std::sync::Arc;
 
-pub use class_tester::ClassTester;
-pub use expect::Expect;
 use itertools::Itertools;
+
 use oxc_allocator::Allocator;
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn, dot::DebugDot};
 use oxc_span::SourceType;
+
+mod class_tester;
+mod expect;
+mod symbol_tester;
+pub use class_tester::ClassTester;
+pub use expect::Expect;
 pub use symbol_tester::SymbolTester;
 
 #[must_use]
@@ -206,7 +208,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// ## Fails
     /// If no symbol with the given name exists at the top-level scope.
-    pub fn has_root_symbol(&self, name: &str) -> SymbolTester {
+    pub fn has_root_symbol(&self, name: &str) -> SymbolTester<'_> {
         SymbolTester::new_at_root(self, self.build(), name)
     }
 
@@ -214,7 +216,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// ## Fails
     /// 1. No symbol with the given name exists,
-    pub fn has_symbol(&self, name: &str) -> SymbolTester {
+    pub fn has_symbol(&self, name: &str) -> SymbolTester<'_> {
         SymbolTester::new_first_binding(self, self.build(), name)
     }
 
@@ -222,7 +224,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// ## Fails
     /// If no class with the given name exists.
-    pub fn has_class(&self, name: &str) -> ClassTester {
+    pub fn has_class(&self, name: &str) -> ClassTester<'_> {
         ClassTester::has_class(self.build(), name)
     }
 
@@ -261,7 +263,7 @@ impl<'a> SemanticTester<'a> {
     /// 1. No symbol with the given name exists,
     /// 2. More than one symbol with the given name exists, so a symbol cannot
     ///    be uniquely obtained.
-    pub fn has_some_symbol(&self, name: &str) -> SymbolTester {
+    pub fn has_some_symbol(&self, name: &str) -> SymbolTester<'_> {
         SymbolTester::new_unique(self, self.build(), name)
     }
 

@@ -323,7 +323,7 @@ function deserializeAssignmentExpression(pos) {
 
 function deserializeArrayAssignmentTarget(pos) {
   const elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) elements.push(rest);
   return {
     type: 'ArrayPattern',
@@ -335,7 +335,7 @@ function deserializeArrayAssignmentTarget(pos) {
 
 function deserializeObjectAssignmentTarget(pos) {
   const properties = deserializeVecAssignmentTargetProperty(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) properties.push(rest);
   return {
     type: 'ObjectPattern',
@@ -957,7 +957,7 @@ function deserializeImportNamespaceSpecifier(pos) {
 
 function deserializeWithClause(pos) {
   return {
-    attributes: deserializeVecImportAttribute(pos + 32),
+    attributes: deserializeVecImportAttribute(pos + 8),
   };
 }
 
@@ -987,7 +987,7 @@ function deserializeExportNamedDeclaration(pos) {
 function deserializeExportDefaultDeclaration(pos) {
   return {
     type: 'ExportDefaultDeclaration',
-    declaration: deserializeExportDefaultDeclarationKind(pos + 64),
+    declaration: deserializeExportDefaultDeclarationKind(pos + 8),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -1878,8 +1878,18 @@ function deserializeTSImportType(pos) {
     type: 'TSImportType',
     argument: deserializeTSType(pos + 8),
     options: deserializeOptionBoxObjectExpression(pos + 24),
-    qualifier: deserializeOptionTSTypeName(pos + 32),
+    qualifier: deserializeOptionTSImportTypeQualifier(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+  };
+}
+
+function deserializeTSImportTypeQualifiedName(pos) {
+  return {
+    type: 'TSQualifiedName',
+    left: deserializeTSImportTypeQualifier(pos + 8),
+    right: deserializeIdentifierName(pos + 24),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3750,6 +3760,17 @@ function deserializeTSTypeQueryExprName(pos) {
   }
 }
 
+function deserializeTSImportTypeQualifier(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return deserializeBoxIdentifierName(pos + 8);
+    case 1:
+      return deserializeBoxTSImportTypeQualifiedName(pos + 8);
+    default:
+      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSImportTypeQualifier`);
+  }
+}
+
 function deserializeTSMappedTypeModifierOperator(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -4389,9 +4410,13 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   return arr;
 }
 
-function deserializeOptionAssignmentTargetRest(pos) {
-  if (uint8[pos + 8] === 51) return null;
-  return deserializeAssignmentTargetRest(pos);
+function deserializeBoxAssignmentTargetRest(pos) {
+  return deserializeAssignmentTargetRest(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxAssignmentTargetRest(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxAssignmentTargetRest(pos);
 }
 
 function deserializeVecAssignmentTargetProperty(pos) {
@@ -5224,9 +5249,13 @@ function deserializeOptionBoxObjectExpression(pos) {
   return deserializeBoxObjectExpression(pos);
 }
 
-function deserializeOptionTSTypeName(pos) {
-  if (uint8[pos] === 3) return null;
-  return deserializeTSTypeName(pos);
+function deserializeOptionTSImportTypeQualifier(pos) {
+  if (uint8[pos] === 2) return null;
+  return deserializeTSImportTypeQualifier(pos);
+}
+
+function deserializeBoxTSImportTypeQualifiedName(pos) {
+  return deserializeTSImportTypeQualifiedName(uint32[pos >> 2]);
 }
 
 function deserializeOptionTSMappedTypeModifierOperator(pos) {

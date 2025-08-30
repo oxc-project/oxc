@@ -7,13 +7,14 @@ use oxc_span::Span;
 use super::kind::Kind;
 
 // Bit layout for `u128`:
-// - Bits 0-31 (32 bits): `start`
-// - Bits 32-63 (32 bits): `end`
-// - Bits 64-71 (8 bits): `kind` (as u8)
-// - Bit 72 (1 bit): `is_on_new_line`
-// - Bit 73 (1 bit): `escaped`
-// - Bit 74 (1 bit): `lone_surrogates`
-// - Bit 75 (1 bit): `has_separator`
+// - Bits 0-31 (32 bits): `start` (`u32`)
+// - Bits 32-63 (32 bits): `end` (`u32`)
+// - Bits 64-71 (8 bits): `kind` (`Kind`)
+// - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
+// - Bits 80-87 (8 bits): `escaped` (`bool`)
+// - Bits 88-95 (8 bits): `lone_surrogates` (`bool`)
+// - Bits 96-103 (8 bits): `has_separator` (`bool`)
+// - Bits 104-127 (24 bits): unused
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;

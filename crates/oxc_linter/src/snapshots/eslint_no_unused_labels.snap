@@ -63,3 +63,24 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A /* comment */: foo` with `foo`.
+
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:21]
+ 1 │ A: { function f() { B: { } } break A; }
+   ·                     ─
+   ╰────
+  help: Replace `B: { }` with `{ }`.
+
+  ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:32]
+ 1 │ label: while (true) { (() => { label: while (false) {} })(); }
+   ·                                ─────
+   ╰────
+  help: Replace `label: while (false) {}` with `while (false) {}`.
+
+  ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ label: while (true) { (() => { label: while (false) {} })(); }
+   · ─────
+   ╰────
+  help: Replace `label: while (true) { (() => { label: while (false) {} })(); }` with `while (true) { (() => { label: while (false) {} })(); }`.

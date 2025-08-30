@@ -1,12 +1,7 @@
-use oxc_ast::ast::{
-    AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, LogicalOperator, StaticMemberExpression, UnaryExpression,
-};
+use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{
-    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
-};
+use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
 
 /// JavaScript Language Type
 ///
@@ -64,11 +59,11 @@ impl ValueType {
 /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
 /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects`].
 pub trait DetermineValueType<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType;
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType;
 }
 
 impl<'a> DetermineValueType<'a> for Expression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self {
             Expression::BigIntLiteral(_) => ValueType::BigInt,
             Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
@@ -90,7 +85,7 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                 }
             }
             Expression::Identifier(ident) => {
-                if is_global_reference.is_global_reference(ident) == Some(true) {
+                if ctx.is_global_reference(ident) {
                     match ident.name.as_str() {
                         "undefined" => ValueType::Undefined,
                         "NaN" | "Infinity" => ValueType::Number,
@@ -100,33 +95,33 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                     ValueType::Undetermined
                 }
             }
-            Expression::UnaryExpression(e) => e.value_type(is_global_reference),
-            Expression::BinaryExpression(e) => e.value_type(is_global_reference),
-            Expression::SequenceExpression(e) => e
-                .expressions
-                .last()
-                .map_or(ValueType::Undetermined, |e| e.value_type(is_global_reference)),
-            Expression::AssignmentExpression(e) => e.value_type(is_global_reference),
-            Expression::ConditionalExpression(e) => e.value_type(is_global_reference),
-            Expression::LogicalExpression(e) => e.value_type(is_global_reference),
-            Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
-            Expression::StaticMemberExpression(e) => e.value_type(is_global_reference),
+            Expression::UnaryExpression(e) => e.value_type(ctx),
+            Expression::BinaryExpression(e) => e.value_type(ctx),
+            Expression::SequenceExpression(e) => {
+                e.expressions.last().map_or(ValueType::Undetermined, |e| e.value_type(ctx))
+            }
+            Expression::AssignmentExpression(e) => e.value_type(ctx),
+            Expression::ConditionalExpression(e) => e.value_type(ctx),
+            Expression::LogicalExpression(e) => e.value_type(ctx),
+            Expression::ParenthesizedExpression(e) => e.expression.value_type(ctx),
+            Expression::StaticMemberExpression(e) => e.value_type(ctx),
+            Expression::NewExpression(e) => e.value_type(ctx),
             _ => ValueType::Undetermined,
         }
     }
 }
 
 impl<'a> DetermineValueType<'a> for BinaryExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self.operator {
             BinaryOperator::Addition => {
-                let left = self.left.to_primitive(is_global_reference);
-                let right = self.right.to_primitive(is_global_reference);
+                let left = self.left.to_primitive(ctx);
+                let right = self.right.to_primitive(ctx);
                 if left.is_string() == Some(true) || right.is_string() == Some(true) {
                     return ValueType::String;
                 }
-                let left_to_numeric_type = left.to_numeric(is_global_reference);
-                let right_to_numeric_type = right.to_numeric(is_global_reference);
+                let left_to_numeric_type = left.to_numeric(ctx);
+                let right_to_numeric_type = right.to_numeric(ctx);
                 // we need to check both operands because the other operand might be undetermined and maybe a string
                 if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
                     return ValueType::Number;
@@ -146,8 +141,8 @@ impl<'a> DetermineValueType<'a> for BinaryExpression<'a> {
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential => {
-                let left_to_numeric_type = self.left.to_numeric(is_global_reference);
-                let right_to_numeric_type = self.right.to_numeric(is_global_reference);
+                let left_to_numeric_type = self.left.to_numeric(ctx);
+                let right_to_numeric_type = self.right.to_numeric(ctx);
                 // if either operand is a number, the result is always a number
                 // because if the other operand is a bigint, an error is thrown
                 if left_to_numeric_type.is_number() || right_to_numeric_type.is_number() {
@@ -174,11 +169,11 @@ impl<'a> DetermineValueType<'a> for BinaryExpression<'a> {
 }
 
 impl<'a> DetermineValueType<'a> for UnaryExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self.operator {
             UnaryOperator::Void => ValueType::Undefined,
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                let argument_ty = self.argument.value_type(is_global_reference);
+                let argument_ty = self.argument.value_type(ctx);
                 match argument_ty {
                     ValueType::BigInt => ValueType::BigInt,
                     // non-object values other than BigInt are converted to number by `ToNumber`
@@ -198,11 +193,11 @@ impl<'a> DetermineValueType<'a> for UnaryExpression<'a> {
 }
 
 impl<'a> DetermineValueType<'a> for AssignmentExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self.operator {
-            AssignmentOperator::Assign => self.right.value_type(is_global_reference),
+            AssignmentOperator::Assign => self.right.value_type(ctx),
             AssignmentOperator::Addition => {
-                let right = self.right.value_type(is_global_reference);
+                let right = self.right.value_type(ctx);
                 if right.is_string() { ValueType::String } else { ValueType::Undetermined }
             }
             AssignmentOperator::Subtraction
@@ -215,7 +210,7 @@ impl<'a> DetermineValueType<'a> for AssignmentExpression<'a> {
             | AssignmentOperator::BitwiseXOR
             | AssignmentOperator::BitwiseAnd
             | AssignmentOperator::Exponential => {
-                let right = self.right.value_type(is_global_reference);
+                let right = self.right.value_type(ctx);
                 if right.is_bigint() {
                     ValueType::BigInt
                 } else if !(right.is_object() || right.is_undetermined()) {
@@ -233,12 +228,12 @@ impl<'a> DetermineValueType<'a> for AssignmentExpression<'a> {
 }
 
 impl<'a> DetermineValueType<'a> for ConditionalExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
-        let left = self.consequent.value_type(is_global_reference);
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
+        let left = self.consequent.value_type(ctx);
         if left.is_undetermined() {
             return ValueType::Undetermined;
         }
-        let right = self.alternate.value_type(is_global_reference);
+        let right = self.alternate.value_type(ctx);
         if left == right {
             return left;
         }
@@ -247,25 +242,23 @@ impl<'a> DetermineValueType<'a> for ConditionalExpression<'a> {
 }
 
 impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         match self.operator {
             LogicalOperator::And | LogicalOperator::Or => {
-                let left = self.left.value_type(is_global_reference);
+                let left = self.left.value_type(ctx);
                 if left.is_undetermined() {
                     return ValueType::Undetermined;
                 }
-                let right = self.right.value_type(is_global_reference);
+                let right = self.right.value_type(ctx);
                 if left == right {
                     return left;
                 }
                 ValueType::Undetermined
             }
             LogicalOperator::Coalesce => {
-                let left = self.left.value_type(is_global_reference);
+                let left = self.left.value_type(ctx);
                 match left {
-                    ValueType::Undefined | ValueType::Null => {
-                        self.right.value_type(is_global_reference)
-                    }
+                    ValueType::Undefined | ValueType::Null => self.right.value_type(ctx),
                     ValueType::Undetermined => ValueType::Undetermined,
                     _ => left,
                 }
@@ -275,15 +268,20 @@ impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
 }
 
 impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
-    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
-        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY") {
-            if let Some(ident) = self.object.get_identifier_reference() {
-                if ident.name.as_str() == "Number"
-                    && is_global_reference.is_global_reference(ident) == Some(true)
-                {
-                    return ValueType::Number;
-                }
-            }
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
+        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY")
+            && ctx.is_global_expr("Number", &self.object)
+        {
+            return ValueType::Number;
+        }
+        ValueType::Undetermined
+    }
+}
+
+impl<'a> DetermineValueType<'a> for NewExpression<'a> {
+    fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
+        if ctx.is_global_expr("Date", &self.callee) {
+            return ValueType::Object;
         }
         ValueType::Undetermined
     }

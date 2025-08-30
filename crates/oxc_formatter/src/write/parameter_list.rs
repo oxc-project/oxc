@@ -116,24 +116,26 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
 
                 let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
                 let source_text = f.source_text();
+
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                let entries = FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
-                    .with_trailing_separator(trailing_separator)
-                    .zip(FormalParametersIter::from(self.list));
-                for (formatted, param) in entries {
-                    joiner.entry(param.span(), &formatted);
-                }
-                joiner.finish()
+                joiner
+                    .entries_with_trailing_separator(
+                        FormalParametersIter::from(self.list),
+                        ",",
+                        trailing_separator,
+                    )
+                    .finish()
             }
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
-                join.entries(
-                    FormatSeparatedIter::new(self.list.items().iter(), ",")
-                        .with_trailing_separator(TrailingSeparator::Omit),
+                join.entries_with_trailing_separator(
+                    self.list.items().iter(),
+                    ",",
+                    TrailingSeparator::Omit,
                 );
                 join.finish()
             }

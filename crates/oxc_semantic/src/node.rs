@@ -98,7 +98,6 @@ impl GetAddress for AstNode<'_> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
-    program: Option<&'a Program<'a>>,
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
@@ -185,12 +184,15 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the [`Program`] that's also the root of the AST.
-    ///
-    /// Returns [`None`] if root node isn't set. This will never happen if you
-    /// are obtaining an [`AstNodes`] that has already been constructed.
     #[inline]
-    pub fn program(&self) -> Option<&'a Program<'a>> {
-        self.program
+    pub fn program(&self) -> &'a Program<'a> {
+        if let Some(node) = self.nodes.first() {
+            if let AstKind::Program(program) = node.kind {
+                return program;
+            }
+        }
+
+        unreachable!();
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
@@ -217,7 +219,7 @@ impl<'a> AstNodes<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if this is not the first node being added to the AST
+    /// Panics if this is not the first node being added to the AST.
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -226,14 +228,13 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
-        let AstKind::Program(program) = kind else {
-            panic!("Program node must be of kind `AstKind::Program`.");
-        };
-        self.program = Some(program);
-        let node_id = self.parent_ids.push(NodeId::ROOT);
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
-        self.nodes.push(node);
-        node_id
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.nodes.push(AstNode::new(kind, scope_id, cfg_id, flags, NodeId::ROOT));
+        NodeId::ROOT
     }
 
     /// Reserve space for at least `additional` more nodes.

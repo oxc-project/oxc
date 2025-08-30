@@ -114,11 +114,10 @@ pub struct StyledComponentsOptions {
     /// Transpiles styled-components tagged template literals to a smaller representation
     /// than what Babel normally creates, helping to reduce bundle size.
     ///
-    /// Converts `styled.div\`width: 100%;\`` to `styled.div(['width: 100%;'])`, which is
+    /// Converts `` styled.div`width: 100%;` `` to `styled.div(['width: 100%;'])`, which is
     /// more compact than the standard Babel template literal transformation.
     ///
     /// Default: `true`
-    #[expect(clippy::doc_link_with_quotes)]
     #[serde(default = "default_as_true")]
     pub transpile_template_literals: bool,
 
@@ -408,7 +407,7 @@ impl<'a> StyledComponents<'a, '_> {
             tag,
             quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
             type_arguments,
-        } = expr.take_in(ctx.ast.allocator);
+        } = expr.take_in(ctx.ast);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {
             ArrayExpressionElement::from(ctx.ast.expression_string_literal(
@@ -887,6 +886,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut paren_depth: isize = 0;
     // `true` if some quasis and expressions need to be deleted.
     let mut delete_some = false;
+    // `true` if in first output quasi.
+    // Equivalent to `quasi_index == 0`, except when merging quasis e.g. `x /* ${1} */ y`.
+    // In that case, when processing `y`, `quasi_index == 1` but `is_first_output == true`.
+    let mut is_first_output = true;
 
     // Current minified quasi being built
     let mut output = Vec::new();
@@ -921,32 +924,23 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
                 // Find end of comment
                 let start_index = if is_block_comment {
-                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    let Some(pos) = bytes.windows(2).position(|q| q == b"*/") else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-
-                    pos += 2;
-                    if pos == bytes.len() {
-                        // Comment ends at end of quasi
-                        continue;
-                    }
-
-                    // Add a space when this is a own line block comment
-                    if !bytes[pos].is_ascii_whitespace()
-                        && output.last().is_some_and(|&last| last != b' ')
-                    {
-                        output.push(b' ');
-                    }
-
-                    pos
+                    pos + 2 // After `*/`
                 } else {
                     let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-                    pos
+                    pos + 1 // After `\n` or `\r`
                 };
+
+                // Comments behave like whitespace.
+                // Block comments: `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                // Line comments: End with a newline (whitespace).
+                insert_space_if_required(&mut output, is_first_output);
 
                 // Trim off to end of comment
                 bytes = &bytes[start_index..];
@@ -960,6 +954,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
                 quasis[quasi_index - 1].value.raw = ast.atom(output_str);
                 output.clear();
+                is_first_output = false;
             }
         }
 
@@ -989,9 +984,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 continue;
                             }
                             b'n' | b'r' if string_quote == NOT_IN_STRING => {
-                                if output.last().is_some_and(|&last| last != b' ') {
-                                    output.push(b' ');
-                                }
+                                insert_space_if_required(&mut output, is_first_output);
                                 i += 2;
                                 continue;
                             }
@@ -1020,19 +1013,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         let end_index =
                                             bytes[i + 2..].windows(2).position(|q| q == b"*/");
                                         if let Some(end_index) = end_index {
+                                            // Block comments behave like whitespace.
+                                            // `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                                            insert_space_if_required(&mut output, is_first_output);
+
                                             i += end_index + 4; // After `*/`
-
-                                            if i == bytes.len() {
-                                                // Comment ends at end of quasi
-                                                break;
-                                            }
-
-                                            // Add a space when this is a own line block comment
-                                            if !bytes[i].is_ascii_whitespace()
-                                                && output.last().is_some_and(|&last| last != b' ')
-                                            {
-                                                output.push(b' ');
-                                            }
                                             continue;
                                         }
 
@@ -1048,7 +1033,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 let end_index =
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
-                                    i += end_index + 2; // On `\n` or `\r`
+                                    // Insert space in place of `\n` / `\r`
+                                    insert_space_if_required(&mut output, is_first_output);
+
+                                    i += end_index + 3; // After `\n` or `\r`
                                     continue;
                                 }
 
@@ -1061,17 +1049,36 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     }
                 }
                 // Skip and compress whitespace.
+                //
+                // CSS allows removing spaces around certain delimiters without changing meaning:
+                // - `color: red` -> `color:red` (spaces after colons)
+                // - `.a { }` -> `.a{}` (spaces around braces)
+                // - `margin: 1px , 2px` -> `margin:1px,2px` (spaces around commas)
+                //
+                // But spaces are significant in other contexts:
+                // - `.a .b` - space between selectors preserved
+                // - `padding: 0 ${VALUE}px` - space before interpolation preserved
+                // - `${A} ${B}` - space between interpolations preserved
+                // - `.class :hover` - space before pseudo-selector preserved
                 _ if cur_byte.is_ascii_whitespace() => {
+                    // Preserve this space if it's not following a character which doesn't require one.
+                    // Note: If a space is inserted, it may be removed again if it's followed
+                    // by `{`, `}`, `,`, or `;`.
+                    insert_space_if_required(&mut output, is_first_output);
+
                     i += 1;
-                    // Compress symbols, remove spaces around these symbols,
-                    // but preserve whitespace preceding colon, to avoid joining selectors.
-                    if output.last().is_some_and(|&last| {
-                        !matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';')
-                    }) && (i < bytes.len() && !matches!(bytes[i], b'{' | b'}' | b',' | b';'))
-                    {
-                        output.push(b' ');
-                    }
                     continue;
+                }
+                // Remove whitespace before `{`, `}`, `,`, and `;`.
+                //
+                // Note: We intentionally DON'T include ':' here because spaces before colons
+                // are significant in CSS. ` :hover` (descendant pseudo-selector) is different
+                // from `:hover` (direct pseudo-selector). Example: `.parent :hover` selects any
+                // hovered descendant, while `.parent:hover` selects the parent when hovered.
+                b'{' | b'}' | b',' | b';' => {
+                    if output.last() == Some(&b' ') {
+                        output.pop();
+                    }
                 }
                 _ => {}
             }
@@ -1079,6 +1086,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
             output.push(cur_byte);
             i += 1;
         }
+    }
+
+    // Remove trailing space from last quasi
+    if output.last() == Some(&b' ') {
+        output.pop();
     }
 
     // Update last quasi.
@@ -1106,6 +1118,26 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
         lit.quasis.retain(|quasi| quasi.span != REMOVE_SENTINEL);
     }
+}
+
+/// Insert a space, unless preceding character makes it possible to skip.
+///
+/// See comments above about whitespace removal.
+fn insert_space_if_required(output: &mut Vec<u8>, is_first_output: bool) {
+    if let Some(&last) = output.last() {
+        // Always safe to remove whitespace after these characters
+        if matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';') {
+            return;
+        }
+    } else {
+        // We're at start of a quasi. If it's the first output quasi, trim leading space.
+        // Otherwise, preserve space to avoid joining with previous interpolation.
+        if is_first_output {
+            return;
+        }
+    }
+
+    output.push(b' ');
 }
 
 #[cfg(test)]

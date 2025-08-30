@@ -4,6 +4,119 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- 34d0a01 napi/minify,transform: [**BREAKING**] Change module type to ESM (#13349) (Boshen)
+
+### 🚀 Features
+
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a0e0a91 oxc_minify_napi: Expose `CodeGenOptions` (#13288) (sapphi-red)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- 5223562 codegen: Adjust some source mappings (#13084) (Boshen)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- 5223562 codegen: Adjust some source mappings (#13084) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+
+
+
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- 2093f65 napi/minify: Make `MinifyOptions` pub (#12753) (Boshen)
+
+### 🧪 Testing
+
+- 0ec214b napi: Compile tests in debug mode (#12750) (overlookmotel)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 75cf797 napi/minify: Publish crate (#12611) (Boshen)
+
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

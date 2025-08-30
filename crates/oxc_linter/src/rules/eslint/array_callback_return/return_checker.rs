@@ -1,5 +1,5 @@
 use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of
@@ -156,17 +156,25 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
         // 2. There is a default case that returns
         Statement::SwitchStatement(stmt) => {
             let mut case_statuses = vec![];
+            // The default case maybe is not the last case and fallthrough
+            let mut default_case_fallthrough_continue = false;
             let mut default_case_status = StatementReturnStatus::NotReturn;
 
             let mut current_case_status = StatementReturnStatus::NotReturn;
             for case in &stmt.cases {
                 let branch_terminated = check_switch_case(case, &mut current_case_status);
-
                 if case.is_default_case() {
-                    default_case_status = current_case_status;
-                    // Cases below the default case are not considered.
-                    break;
+                    if branch_terminated {
+                        default_case_status = current_case_status;
+                        // Cases below the default case are not considered.
+                        break;
+                    }
+                    default_case_fallthrough_continue = true;
                 } else if branch_terminated {
+                    if default_case_fallthrough_continue {
+                        default_case_status = current_case_status;
+                        break;
+                    }
                     case_statuses.push(current_case_status);
                     current_case_status = StatementReturnStatus::NotReturn;
                 } // Falls through to next case, accumulating lattice
@@ -191,6 +199,8 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
             }
             status
         }
+
+        Statement::ThrowStatement(_) => StatementReturnStatus::AlwaysExplicit,
 
         _ => StatementReturnStatus::NotReturn,
     }
@@ -439,5 +449,31 @@ mod tests {
         }
       ";
         parse_statement_and_test(source, StatementReturnStatus::AlwaysImplicit);
+    }
+
+    #[test]
+    fn test_throw_statement() {
+        let source = "
+        function foo() {
+          throw new Error('test');
+        }
+      ";
+        parse_statement_and_test(source, StatementReturnStatus::AlwaysExplicit);
+    }
+
+    #[test]
+    fn test_if_with_throw() {
+        let source = "
+        function foo() {
+          if (a) {
+            return 1;
+          } else if (b) {
+            return 2;
+          } else {
+            throw new Error('test');
+          }
+        }
+      ";
+        parse_statement_and_test(source, StatementReturnStatus::AlwaysExplicit);
     }
 }

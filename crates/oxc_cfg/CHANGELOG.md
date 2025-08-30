@@ -10,6 +10,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+## [0.82.0] - 2025-08-12
+
+### 🚜 Refactor
+
+- 1cb8e1b cfg, formatter: Remove unnecessary `return` statements (#12896) (overlookmotel)
+
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
+
+
+
+
+
+
 
 
 

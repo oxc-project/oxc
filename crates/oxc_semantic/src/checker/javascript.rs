@@ -3,6 +3,7 @@ use std::ptr;
 use phf::{Set, phf_set};
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
@@ -187,13 +188,27 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
         for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
             match node_kind {
-                AstKind::SimpleAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
+                // Only check for actual assignment contexts, not member expression access
+                AstKind::ObjectAssignmentTarget(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::UpdateExpression(_)
                 | AstKind::ArrayAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                m if m.is_member_expression_kind() => break,
+                AstKind::AssignmentExpression(assign_expr) => {
+                    // only throw error if arguments or eval are being assigned to
+                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
+                        &assign_expr.left
+                    {
+                        if target_ident.name == ident.name {
+                            return ctx
+                                .error(unexpected_identifier_assign(&ident.name, ident.span));
+                        }
+                    }
+                }
+                m if m.is_member_expression_kind() => {
+                    break;
+                }
                 _ => {}
             }
         }
@@ -476,7 +491,6 @@ pub fn check_function_declaration<'a>(
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
 pub fn check_function_declaration_in_labeled_statement<'a>(
     body: &Statement<'a>,
-
     ctx: &SemanticBuilder<'a>,
 ) {
     if let Statement::FunctionDeclaration(decl) = body {
@@ -495,7 +509,6 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
                     | AstKind::DoWhileStatement(_)
                     | AstKind::WithStatement(_)
                     | AstKind::IfStatement(_) => break,
-
                     _ => return,
                 }
             }
@@ -753,7 +766,9 @@ pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             // label cannot cross boundary on function or static block
-            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => break,
             // check label name redeclaration
             AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
                 return ctx.error(label_redeclaration(
@@ -883,18 +898,27 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
     };
 
     let Some(class_id) = ctx.class_table_builder.current_class_id else {
+        // Not in a class. `super` only valid in an object method.
         for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
             let flags = ctx.scoping.scope_flags(scope_id);
-            if flags.is_function()
-                && matches!(
-                    ctx.nodes.parent_kind(ctx.scoping.get_node_id(scope_id)),
-                    AstKind::ObjectProperty(_)
-                )
-            {
-                if let Some(super_call_span) = super_call_span {
-                    ctx.error(unexpected_super_call(super_call_span));
+            if flags.is_function() && !flags.is_arrow() {
+                let func_node_id = ctx.scoping.get_node_id(scope_id);
+                if let AstKind::ObjectProperty(prop) = ctx.nodes.parent_kind(func_node_id) {
+                    if prop.method || prop.kind != PropertyKind::Init {
+                        // Function's parent is an `ObjectProperty` representing a method/getter/setter.
+                        // Check the function is the value of the property, not computed key.
+                        // Valid: `obj = { method() { super.foo } }`
+                        // Invalid: `obj = { [ function() { super.foo } ]() {} }`
+                        let func_kind = ctx.nodes.kind(func_node_id);
+                        if func_kind.address() == prop.value.address() {
+                            if let Some(super_call_span) = super_call_span {
+                                ctx.error(unexpected_super_call(super_call_span));
+                            }
+                            return;
+                        }
+                    }
                 }
-                return;
+                break;
             }
         }
 
@@ -902,12 +926,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
         // * It is a Syntax Error if ModuleItemList Contains super.
         // ScriptBody : StatementList
         // * It is a Syntax Error if StatementList Contains super
-        return super_call_span.map_or_else(
-            || ctx.error(unexpected_super_reference(sup.span)),
-            |super_call_span| ctx.error(unexpected_super_call(super_call_span)),
-        );
+        if let Some(super_call_span) = super_call_span {
+            ctx.error(unexpected_super_call(super_call_span));
+        } else {
+            ctx.error(unexpected_super_reference(sup.span));
+        }
+        return;
     };
 
+    // In a class
     let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
     let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
     let class_scope_id = class.scope_id();
@@ -954,11 +981,15 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
 
         if flags.is_function() && !flags.is_arrow() {
             // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
-            // Check this function if is a class method, if it isn't, then it a plain function
+            // Check this function if is a class or object method, if it isn't, then it a plain function
             let function_node_id = ctx.scoping.get_node_id(scope_id);
-            let is_class_method =
-                matches!(ctx.nodes.parent_kind(function_node_id), AstKind::MethodDefinition(_));
-            if !is_class_method {
+            let parent_kind = ctx.nodes.parent_kind(function_node_id);
+            let is_class_method = matches!(parent_kind, AstKind::MethodDefinition(_));
+            // For `class C { foo() { return { bar() { super.bar(); } }; } }`
+            // TypeScript reports the error but not in ECMA262.
+            let is_object_method = !ctx.source_type.is_typescript()
+                && matches!(parent_kind, AstKind::ObjectProperty(_));
+            if !is_class_method && !is_object_method {
                 ctx.error(unexpected_super_reference(sup.span));
             }
             return;

@@ -34,9 +34,7 @@ use serde::Deserialize;
 use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{
-    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
-};
+use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
@@ -326,6 +324,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<SpreadPair<'a>> {
         let rest = object_assignment_target.rest.take()?;
+        let rest_target = rest.unbox().target;
         let mut all_primitives = true;
         let keys =
             ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
@@ -347,7 +346,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 }
             }));
         Some(SpreadPair {
-            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest.target),
+            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest_target),
             keys,
             has_no_properties: object_assignment_target.is_empty(),
             all_primitives,

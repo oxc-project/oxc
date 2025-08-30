@@ -50,10 +50,41 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
 
-/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
-unsafe impl<K, V> Send for HashMap<'_, K, V> {}
-/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
-unsafe impl<K, V> Sync for HashMap<'_, K, V> {}
+/// SAFETY: Even though `Bump` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
+/// are `Sync` because:
+///
+/// 1. No public methods allow access to the `&Bump` that `HashMap` contains (in `hashbrown::HashMap`),
+///    so user cannot illegally obtain 2 `&Bump`s on different threads via `HashMap`.
+///
+/// 2. All internal methods which access the `&Bump` take a `&mut self`.
+///    `&mut HashMap` cannot be transferred across threads, and nor can an owned `HashMap`
+///    (`HashMap` is not `Send`).
+///    Therefore these methods taking `&mut self` can be sure they're not operating on a `HashMap`
+///    which has been moved across threads.
+///
+/// Note: `HashMap` CANNOT be `Send`, even if `K` and `V` are `Send`, because that would allow 2 `HashMap`s
+/// on different threads to both allocate into same arena simultaneously. `Bump` is not thread-safe,
+/// and this would be undefined behavior.
+///
+/// ### Soundness holes
+///
+/// This is not actually fully sound. There are 2 holes I (@overlookmotel) am aware of:
+///
+/// 1. `allocator` method, which does allow access to the `&Bump` that `HashMap` contains.
+/// 2. `Clone` impl on `hashbrown::HashMap`, which may perform allocations in the arena, given only a
+///    `&self` reference.
+///
+/// [`HashMap::allocator`] prevents accidental access to the underlying method of `hashbrown::HashMap`,
+/// and `clone` called on a `&HashMap` clones the `&HashMap` reference, not the `HashMap` itself (harmless).
+/// But both can be accessed via explicit `Deref` (`hash_map.deref().allocator()` or `hash_map.deref().clone()`),
+/// so we don't have complete soundness.
+///
+/// To close these holes we need to remove `Deref` and `DerefMut` impls on `HashMap`, and instead add
+/// methods to `HashMap` itself which pass on calls to the inner `hashbrown::HashMap`.
+///
+/// TODO: Fix these holes.
+/// TODO: Remove any other methods that currently allow performing allocations with only a `&self` reference.
+unsafe impl<K: Sync, V: Sync> Sync for HashMap<'_, K, V> {}
 
 // TODO: `IntoIter`, `Drain`, and other consuming iterators provided by `hashbrown` are `Drop`.
 // Wrap them in `ManuallyDrop` to prevent that.
@@ -113,6 +144,23 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     pub fn into_values(self) -> IntoValues<K, V, &'alloc Bump> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_values()
+    }
+
+    /// Calling this method produces a compile-time panic.
+    ///
+    /// This method would be unsound, because [`HashMap`] is `Sync`, and the underlying allocator
+    /// (`bumpalo::Bump`) is not `Sync`.
+    ///
+    /// This method exists only to block access as much as possible to the underlying
+    /// `hashbrown::HashMap::allocator` method. That method can still be accessed via explicit `Deref`
+    /// (`hash_map.deref().allocator()`), but that's unsound.
+    ///
+    /// We'll prevent access to it completely and remove this method as soon as we can.
+    // TODO: Do that!
+    #[expect(clippy::unused_self)]
+    pub fn allocator(&self) -> &'alloc Bump {
+        const { panic!("This method cannot be called") };
+        unreachable!();
     }
 }
 

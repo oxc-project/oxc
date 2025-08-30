@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -46,7 +46,7 @@ declare_oxc_lint!(
     TabindexNoPositive,
     jsx_a11y,
     correctness,
-    pending
+    dangerous_suggestion
 );
 
 impl Rule for TabindexNoPositive {
@@ -65,7 +65,10 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
         JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
             if let Ok(parsed_value) = parse_jsx_value(value) {
                 if parsed_value > 0.0 {
-                    ctx.diagnostic(tabindex_no_positive_diagnostic(attr.span));
+                    ctx.diagnostic_with_dangerous_suggestion(
+                        tabindex_no_positive_diagnostic(attr.span),
+                        |fixer| fixer.replace(value.span(), r#""0""#),
+                    );
                 }
             }
         }),
@@ -78,34 +81,43 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"<div />;", None),
-        (r"<div {...props} />", None),
-        (r#"<div id="main" />"#, None),
-        (r"<div tabIndex={undefined} />", None),
-        (r"<div tabIndex={`${undefined}`} />", None),
-        (r"<div tabIndex={`${undefined}${undefined}`} />", None),
-        (r"<div tabIndex={0} />", None),
-        (r"<div tabIndex={-1} />", None),
-        (r"<div tabIndex={null} />", None),
-        (r"<div tabIndex={bar()} />", None),
-        (r"<div tabIndex={bar} />", None),
-        (r#"<div tabIndex={"foobar"} />"#, None),
-        (r#"<div tabIndex="0" />"#, None),
-        (r#"<div tabIndex="-1" />"#, None),
-        (r#"<div tabIndex="-5" />"#, None),
-        (r#"<div tabIndex="-5.5" />"#, None),
-        (r"<div tabIndex={-5.5} />", None),
-        (r"<div tabIndex={-5} />", None),
+        r"<div />;",
+        r"<div {...props} />",
+        r#"<div id="main" />"#,
+        r"<div tabIndex={undefined} />",
+        r"<div tabIndex={`${undefined}`} />",
+        r"<div tabIndex={`${undefined}${undefined}`} />",
+        r"<div tabIndex={0} />",
+        r"<div tabIndex={-1} />",
+        r"<div tabIndex={null} />",
+        r"<div tabIndex={bar()} />",
+        r"<div tabIndex={bar} />",
+        r#"<div tabIndex={"foobar"} />"#,
+        r#"<div tabIndex="0" />"#,
+        r#"<div tabIndex="-1" />"#,
+        r#"<div tabIndex="-5" />"#,
+        r#"<div tabIndex="-5.5" />"#,
+        r"<div tabIndex={-5.5} />",
+        r"<div tabIndex={-5} />",
     ];
 
     let fail = vec![
-        (r#"<div tabIndex="1" />"#, None),
-        (r"<div tabIndex={1} />", None),
-        (r#"<div tabIndex={"1"} />"#, None),
-        (r"<div tabIndex={`1`} />", None),
-        (r"<div tabIndex={1.589} />", None),
+        r#"<div tabIndex="1" />"#,
+        r"<div tabIndex={1} />",
+        r#"<div tabIndex={"1"} />"#,
+        r"<div tabIndex={`1`} />",
+        r"<div tabIndex={1.589} />",
+    ];
+
+    let fix = vec![
+        (r#"<div tabIndex="1" />"#, r#"<div tabIndex="0" />"#),
+        (r"<div tabIndex={1} />", r#"<div tabIndex="0" />"#),
+        (r#"<div tabIndex={"1"} />"#, r#"<div tabIndex="0" />"#),
+        (r"<div tabIndex={`1`} />", r#"<div tabIndex="0" />"#),
+        (r"<div tabIndex={1.589} />", r#"<div tabIndex="0" />"#),
     ];
 
     Tester::new(TabindexNoPositive::NAME, TabindexNoPositive::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -63,7 +63,7 @@ impl Rule for NoProcessExit {
 }
 
 fn has_hashbang(ctx: &LintContext) -> bool {
-    ctx.nodes().program().unwrap().hashbang.is_some()
+    ctx.nodes().program().hashbang.is_some()
 }
 
 fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {

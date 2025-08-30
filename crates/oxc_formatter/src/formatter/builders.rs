@@ -10,14 +10,18 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::{
-    Argument, Arguments, Buffer, GroupId, TextSize, TokenText, VecBuffer, format_element,
-    format_element::tag::{Condition, Tag},
+    Argument, Arguments, Buffer, Comments, GroupId, TextSize, TokenText, VecBuffer,
+    format_element::{
+        self,
+        tag::{Condition, Tag},
+    },
     prelude::{
         tag::{DedentMode, GroupMode, LabelId},
         *,
     },
+    separated::FormatSeparatedIter,
 };
-use crate::write;
+use crate::{TrailingSeparator, write};
 
 /// A line break that only gets printed if the enclosing `Group` doesn't fit on a single line.
 ///
@@ -146,7 +150,7 @@ pub const fn empty_line() -> Line {
 ///
 /// # Examples
 ///
-/// The line breaks are emitted as spaces if the enclosing `Group` fits on a a single line:
+/// The line breaks are emitted as spaces if the enclosing `Group` fits on a single line:
 /// ```
 /// use biome_formatter::{format, format_args};
 /// use biome_formatter::prelude::*;
@@ -380,6 +384,7 @@ impl std::fmt::Debug for LocatedTokenText {
     }
 }
 
+#[track_caller]
 fn debug_assert_no_newlines(text: &str) {
     debug_assert!(
         !text.contains('\r'),
@@ -863,7 +868,7 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///                         text("Aligned, and indented"),
 ///                         dedent(&format_args![
 ///                             hard_line_break(),
-///                             text("aligned, not Intended"),
+///                             text("aligned, not indented"),
 ///                         ]),
 ///                     ])
 ///                 ]
@@ -872,7 +877,7 @@ impl std::fmt::Debug for Indent<'_, '_> {
 ///         ]
 ///     )?;
 ///     assert_eq!(
-///      "root\n        Indented\n          Indented and aligned\n        Indented, not aligned\n  Aligned\n          Aligned, and indented\n  aligned, not Intended\nroot level",
+///      "root\n        Indented\n          Indented and aligned\n        Indented, not aligned\n  Aligned\n          Aligned, and indented\n  aligned, not indented\nroot level",
 ///      elements.print()?.as_code()
 ///  );
 /// #    Ok(())
@@ -2387,6 +2392,26 @@ where
         self
     }
 
+    pub fn entries_with_trailing_separator<F, I>(
+        &mut self,
+        entries: I,
+        separator: &'static str,
+        trailing_separator: TrailingSeparator,
+    ) -> &mut Self
+    where
+        F: Format<'ast> + GetSpan,
+        I: IntoIterator<Item = F>,
+    {
+        let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
+            .with_trailing_separator(trailing_separator);
+
+        for entry in iter {
+            self.entry(&entry);
+        }
+
+        self
+    }
+
     /// Finishes the output and returns any error encountered.
     pub fn finish(&mut self) -> FormatResult<()> {
         self.result
@@ -2436,17 +2461,36 @@ where
         });
     }
 
-    // /// Adds an iterator of entries to the output. Each entry is a `(node, content)` tuple.
-    // pub fn entries<F, I>(&mut self, entries: I) -> &mut Self
-    // where
-    // F: Format,
-    // I: IntoIterator<Item = ((), F)>,
-    // {
-    // for (node, content) in entries {
-    // self.entry(node, &content)
-    // }
-    // self
-    // }
+    /// Adds an iterator of entries to the output. Each entry is a `(node, content)` tuple.
+    pub fn entries<'a, F, I>(&mut self, entries: I) -> &mut Self
+    where
+        F: Format<'ast> + GetSpan + 'a,
+        I: IntoIterator<Item = F>,
+    {
+        for content in entries {
+            self.entry(content.span(), &content);
+        }
+        self
+    }
+
+    pub fn entries_with_trailing_separator<'a, F, I>(
+        &mut self,
+        entries: I,
+        separator: &'static str,
+        trailing_separator: TrailingSeparator,
+    ) -> &mut Self
+    where
+        F: Format<'ast> + GetSpan + 'a,
+        I: IntoIterator<Item = F>,
+    {
+        let iter = FormatSeparatedIter::new(entries.into_iter(), separator)
+            .with_trailing_separator(trailing_separator);
+
+        for content in iter {
+            self.entry(content.span(), &content);
+        }
+        self
+    }
 
     pub fn finish(&mut self) -> FormatResult<()> {
         self.result

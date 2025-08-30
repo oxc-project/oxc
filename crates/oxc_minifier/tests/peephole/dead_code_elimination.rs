@@ -107,6 +107,18 @@ fn dce_if_statement() {
     test("if (typeof 1 !== 'number') { REMOVE; }", "");
     test("if (typeof false !== 'boolean') { REMOVE; }", "");
     test("if (typeof 1 === 'string') { REMOVE; }", "");
+
+    // Complicated
+    test(
+        "if (unknown)
+            for (var x = 1; x-- > 0; )
+                if (foo++, false) foo++;
+                else 'Side effect free code to be dropped';
+            else throw new Error();",
+        "if (unknown) {
+            for (var x = 1; x-- > 0;) if (foo++, false);
+           } else throw new Error();",
+    );
 }
 
 #[test]
@@ -135,11 +147,16 @@ fn dce_logical_expression() {
     test("false && bar()", "");
     test("true && bar()", "bar()");
 
-    test("var foo = false && bar(); baz(foo)", "var foo = false; baz(foo)");
+    test("var foo = false && bar(); baz(foo)", "baz(false)");
     test("var foo = true && bar(); baz(foo)", "var foo = bar(); baz(foo)");
 
     test("foo = false && bar()", "foo = false");
     test("foo = true && bar()", "foo = bar()");
+
+    test(
+        "const x = 'keep'; const y = 'remove'; foo(x || y), foo(y && x)",
+        "const x = 'keep'; foo(x), foo(x);",
+    );
 }
 
 #[test]

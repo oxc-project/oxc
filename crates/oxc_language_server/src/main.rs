@@ -1,9 +1,9 @@
+use std::{str::FromStr, sync::Arc};
+
 use futures::future::join_all;
 use log::{debug, info, warn};
-use options::{Options, Run, WorkspaceOption};
 use rustc_hash::FxBuildHasher;
 use serde_json::json;
-use std::{str::FromStr, sync::Arc};
 use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
@@ -17,11 +17,6 @@ use tower_lsp_server::{
         ServerInfo, Unregistration, Uri, WorkspaceEdit,
     },
 };
-// #
-use capabilities::Capabilities;
-use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
-use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
-use worker::WorkspaceWorker;
 
 mod capabilities;
 mod code_actions;
@@ -31,6 +26,13 @@ mod options;
 #[cfg(test)]
 mod tester;
 mod worker;
+
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
+use linter::server_linter::ServerLinterRun;
+use options::{Options, WorkspaceOption};
+use worker::WorkspaceWorker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
@@ -440,10 +442,7 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        if !worker.should_lint_on_run_type(Run::OnSave).await {
-            return;
-        }
-        if let Some(diagnostics) = worker.lint_file(uri, None).await {
+        if let Some(diagnostics) = worker.lint_file(uri, None, ServerLinterRun::OnSave).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -462,11 +461,8 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        if !worker.should_lint_on_run_type(Run::OnType).await {
-            return;
-        }
         let content = params.content_changes.first().map(|c| c.text.clone());
-        if let Some(diagnostics) = worker.lint_file(uri, content).await {
+        if let Some(diagnostics) = worker.lint_file(uri, content, ServerLinterRun::OnType).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -485,7 +481,9 @@ impl LanguageServer for Backend {
         };
 
         let content = params.text_document.text;
-        if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
+        if let Some(diagnostics) =
+            worker.lint_file(uri, Some(content), ServerLinterRun::Always).await
+        {
             self.client
                 .publish_diagnostics(
                     uri.clone(),

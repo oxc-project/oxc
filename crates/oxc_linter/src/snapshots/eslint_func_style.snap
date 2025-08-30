@@ -43,13 +43,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
-  ⚠ eslint(func-style): Expected a function declaration.
-   ╭─[func_style.tsx:1:14]
- 1 │ export const foo = () => {}
-   ·              ──────────────
-   ╰────
-  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
-
   ⚠ eslint(func-style): Expected a function expression.
    ╭─[func_style.tsx:1:8]
  1 │ export function foo() {};
@@ -129,35 +122,223 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:7]
- 1 │ const arrow: Fn = () => {}
-   ·       ────────────────────
+ 1 │ const foo = function() {};
+   ·       ───────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:5]
+ 1 │ $1: function $2() { }
+   ·     ─────────────────
    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:7]
- 1 │ const foo = function() {}
-   ·       ───────────────────
+ 1 │ const foo = () => {};
+   ·       ──────────────
    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:14]
- 1 │ export const foo = function() {}
+ 1 │ export const foo = function() {};
    ·              ───────────────────
    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:14]
- 1 │ export const foo = () => {}
+ 1 │ export const foo = () => {};
    ·              ──────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:10]
+ 1 │ if (foo) function bar() {}
+   ·          ─────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => void = function(): void {};
+   ·       ─────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => void = (): void => {};
+   ·       ────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => void = (): void => { function foo(): void { this; } };
+   ·       ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => { bar(): void } = (): { bar(): void } => ({ bar(): void { super.baz(); } });
+   ·       ──────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:1]
+ 1 │ function foo(): void {}
+   · ───────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:8]
+ 1 │ export function foo(): void {}
+   ·        ───────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:8]
+ 1 │ export function foo(): void {};
+   ·        ───────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:8]
+ 1 │ export function foo(): void {};
+   ·        ───────────────────────
    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
 
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:14]
- 1 │ export const foo: () => void = function () {}
+ 1 │ export const foo: () => void = function(): void {};
+   ·              ─────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:14]
+ 1 │ export const foo: () => void = function(): void {};
+   ·              ─────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:14]
+ 1 │ export const foo: () => void = function(): void {};
+   ·              ─────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:14]
+ 1 │ export const foo: () => void = (): void => {};
    ·              ────────────────────────────────
    ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:14]
+ 1 │ export const b: () => void = (): void => {};
+   ·              ──────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:14]
+ 1 │ export const c: () => void = (): void => {};
+   ·              ──────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:1]
+ 1 │ function foo(): void {};
+   · ───────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => void = function(): void {};
+   ·       ─────────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function declaration.
+   ╭─[func_style.tsx:1:7]
+ 1 │ const foo: () => void = (): void => {};
+   ·       ────────────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:5]
+ 1 │ $1: function $2(): void { }
+   ·     ───────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:1:10]
+ 1 │ if (foo) function bar(): string {}
+   ·          ─────────────────────────
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:4:7]
+ 3 │                             function test2(a: number): number;
+ 4 │ ╭─▶                         function test3(a: unknown) {
+ 5 │ │                             return a;
+ 6 │ ╰─▶                         }
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:4:14]
+ 3 │                             export function test2(a: number): number;
+ 4 │ ╭─▶                         export function test3(a: unknown) {
+ 5 │ │                             return a;
+ 6 │ ╰─▶                         }
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:4:17]
+ 3 │                             export function test2(a: number): number;
+ 4 │ ╭─▶                         export function test3(a: unknown) {
+ 5 │ │                             return a;
+ 6 │ ╰─▶                         }
+ 7 │                             
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+   ╭─[func_style.tsx:6:8]
+ 5 │                                 function test2(a: number): number;
+ 6 │ ╭─▶                             function test3(a: unknown) {
+ 7 │ │                                   return a;
+ 8 │ ╰─▶                             }
+ 9 │                             }
+   ╰────
+  help: Enforce the consistent use of either `function` declarations or expressions assigned to variables
+
+  ⚠ eslint(func-style): Expected a function expression.
+    ╭─[func_style.tsx:7:8]
+  6 │                                 case $2:
+  7 │ ╭─▶                             function test2(a: unknown) {
+  8 │ │                               return a;
+  9 │ ╰─▶                             }
+ 10 │                             }
+    ╰────
   help: Enforce the consistent use of either `function` declarations or expressions assigned to variables

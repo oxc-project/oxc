@@ -42,23 +42,36 @@ impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
     fn needs_semicolon(&self) -> bool {
         let Self { element, next_element, .. } = self;
 
-        if let ClassElement::PropertyDefinition(def) = element.as_ref() {
-            if def.value.is_none()
-                && def.type_annotation.is_none()
-                && matches!(&def.key, PropertyKey::StaticIdentifier(ident) if matches!(ident.name.as_str(), "static" | "get" | "set") )
-            {
-                return true;
-            }
+        if let ClassElement::PropertyDefinition(def) = element.as_ref()
+            && def.value.is_none()
+            && def.type_annotation.is_none()
+            && matches!(&def.key, PropertyKey::StaticIdentifier(ident) if matches!(ident.name.as_str(), "static" | "get" | "set") )
+        {
+            return true;
         }
 
         let Some(next_element) = next_element else { return false };
-        // TODO
-        // `needs_semicolon` in crates/biome_js_formatter/src/js/classes/property_class_member.rs
 
         match next_element.as_ref() {
             // When the name starts with the generator token or `[`
-            ClassElement::MethodDefinition(def) => {
-                !def.value.r#async && (def.computed || def.value.generator)
+            ClassElement::MethodDefinition(def) if !def.value.r#async => {
+                (def.computed
+                    && !(def.kind.is_accessor()
+                        || def.r#static
+                        || def.accessibility.is_some()
+                        || def.r#override))
+                    || def.value.generator
+            }
+            ClassElement::PropertyDefinition(def) => {
+                def.computed
+                    && !(def.accessibility.is_some()
+                        || def.r#static
+                        || def.declare
+                        || def.r#override
+                        || def.readonly)
+            }
+            ClassElement::AccessorProperty(def) => {
+                def.computed && !(def.accessibility.is_some() || def.r#static || def.r#override)
             }
             _ => false,
         }

@@ -8,13 +8,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `slider` role.
 
-  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='slider' />
-   ·      ─────────────
-   ╰────
-  help: Add missing aria props `aria-valuenow` to the element with `slider` role.
-
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuemin`.
    ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' />
@@ -24,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='slider' aria-valuemax />
+ 1 │ <div role='slider' />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `slider` role.
@@ -35,6 +28,13 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `slider` role.
+
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='slider' aria-valuemax />
+   ·      ─────────────
+   ╰────
+  help: Add missing aria props `aria-valuenow` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
    ╭─[role_has_required_aria_props.tsx:1:6]
@@ -113,34 +113,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
 
-  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' />
-   ·      ────────────────
-   ╰────
-  help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
-
-  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' />
-   ·      ────────────────
-   ╰────
-  help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
-
-  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' />
-   ·      ────────────────
-   ╰────
-  help: Add missing aria props `aria-valuemin` to the element with `scrollbar` role.
-
-  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' />
-   ·      ────────────────
-   ╰────
-  help: Add missing aria props `aria-valuenow` to the element with `scrollbar` role.
-
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemax`.
    ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
@@ -148,16 +120,30 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `scrollbar` role.
 
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemin`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='scrollbar' />
+   ·      ────────────────
+   ╰────
+  help: Add missing aria props `aria-valuemin` to the element with `scrollbar` role.
+
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuenow`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='scrollbar' />
+   ·      ────────────────
+   ╰────
+  help: Add missing aria props `aria-valuenow` to the element with `scrollbar` role.
+
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax />
+ 1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax />
+ 1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
@@ -178,14 +164,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
+ 1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
+ 1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
@@ -199,14 +185,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
+ 1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
+ 1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
@@ -220,14 +206,14 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
+ 1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
    ╭─[role_has_required_aria_props.tsx:1:6]
- 1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
+ 1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
@@ -238,6 +224,20 @@ source: crates/oxc_linter/src/tester.rs
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `scrollbar` role.
+
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
+   ·      ────────────────
+   ╰────
+  help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
+
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
+   ·      ────────────────
+   ╰────
+  help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `heading` role is missing required aria props `aria-level`.
    ╭─[role_has_required_aria_props.tsx:1:6]

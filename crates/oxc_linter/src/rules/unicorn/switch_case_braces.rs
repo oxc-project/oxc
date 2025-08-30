@@ -23,9 +23,15 @@ fn switch_case_braces_diagnostic_unnecessary_braces(span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct SwitchCaseBraces {
     always_braces: bool,
+}
+
+impl Default for SwitchCaseBraces {
+    fn default() -> Self {
+        Self { always_braces: true }
+    }
 }
 
 declare_oxc_lint!(

@@ -122,9 +122,10 @@ fn dot_with_postfix_mixed() {
         ("import.meta", "1"),
     ]);
     test("foo(import.meta.env.result)", "foo(void 0)", &config);
-    test("foo(import.meta.env.result.many.nested)", "foo(void 0)", &config);
+    test("foo(import.meta.env.result.many.nested)", "foo((void 0).many.nested)", &config);
     test("foo(import.meta.env)", "foo(env)", &config);
     test("foo(import.meta.somethingelse)", "foo(metaProperty)", &config);
+    test("foo(import.meta.somethingelse.nested.one)", "foo(metaProperty.nested.one)", &config);
     test("foo(import.meta)", "foo(1)", &config);
 }
 
@@ -274,6 +275,6 @@ log(__MEMBER__);
     let output = result.code;
     let output_map = result.map.unwrap();
     let visualizer = SourcemapVisualizer::new(&output, &output_map);
-    let snapshot = visualizer.into_visualizer_text();
+    let snapshot = visualizer.get_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }

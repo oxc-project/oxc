@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- 902b39b language_server: Split run logic for `oxlint` and `tsgolint` (#13332) (Sysix)
+- 2a910c5 language_server: Disable tsgolint test on big endian (#13313) (camc314)
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 🧪 Testing
+
+- 33e0e8b language_server: Dont run tsgolint related test on big-edian (#13342) (Sysix)
+
+
+## [1.13.0] - 2025-08-26
+
+### 🐛 Bug Fixes
+
+- 648e939 linter: Parse `ignorePatterns` with gitignore syntax (#13221) (Sysix)
+
+
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+
+### 🐛 Bug Fixes
+
+- b0558a4 linter: Prevent unsound use of `Allocator` across threads (#13032) (overlookmotel)
+
+### 🚜 Refactor
+
+- b638371 language_server: Do not check twice for supported extension (#13130) (Sysix)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+
+
+
+
+## [1.11.0] - 2025-08-07
+
+### 🚜 Refactor
+
+- 9b9249d oxc_language_server: Remove unnecessary globset (#12861) (shulaoda)
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 5475075 vscode/language_server: Add `tsConfigPath` option (#12484) (Sysix)
+
+### 🚜 Refactor
+
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+
+
 
 ## [1.7.0] - 2025-07-16
 

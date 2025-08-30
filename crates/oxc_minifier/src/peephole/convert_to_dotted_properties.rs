@@ -1,12 +1,11 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_syntax::identifier::is_identifier_name;
 
 use crate::ctx::Ctx;
 
-use super::LatePeepholeOptimizations;
+use super::PeepholeOptimizations;
 
-impl<'a> LatePeepholeOptimizations {
+impl<'a> PeepholeOptimizations {
     /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
     /// syntax, where possible. Dot syntax is more compact.
     ///
@@ -14,10 +13,10 @@ impl<'a> LatePeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
-        if is_identifier_name(&s.value) {
+        if Ctx::is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
@@ -130,6 +129,7 @@ mod test {
         test("a?.['default']", "a?.default");
     }
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     #[test]
     fn test_convert_to_dotted_properties_computed_property_or_field() {
         test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");

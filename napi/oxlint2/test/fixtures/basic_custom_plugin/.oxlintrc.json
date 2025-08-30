@@ -3,5 +3,5 @@
     "rules": {
         "basic-custom-plugin/no-debugger": "error"
     },
-    "ignorePatterns": ["test_plugin"]
+    "ignorePatterns": ["test_plugin/**"]
 }

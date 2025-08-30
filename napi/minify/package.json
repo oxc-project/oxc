@@ -1,11 +1,12 @@
 {
   "name": "oxc-minify",
-  "version": "0.78.0",
+  "version": "0.85.0",
+  "type": "module",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi build --platform",
-    "build-test": "pnpm run build",
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "test": "tsc && vitest run --dir ./test"
@@ -24,7 +25,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/minify"
   },
   "funding": {

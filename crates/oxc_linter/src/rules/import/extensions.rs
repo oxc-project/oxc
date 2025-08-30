@@ -52,7 +52,7 @@ impl FileExtensionConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ExtensionsConfig {
     ignore_packages: bool,
     require_extension: Option<FileExtensionConfig>,
@@ -84,6 +84,21 @@ impl ExtensionsConfig {
             "tsx" => matches!(self.tsx, FileExtensionConfig::Never),
             "json" => matches!(self.json, FileExtensionConfig::Never),
             _ => false,
+        }
+    }
+}
+
+impl Default for ExtensionsConfig {
+    fn default() -> Self {
+        Self {
+            ignore_packages: true,
+            require_extension: None,
+            check_type_imports: false,
+            js: FileExtensionConfig::Never,
+            jsx: FileExtensionConfig::Never,
+            ts: FileExtensionConfig::Never,
+            tsx: FileExtensionConfig::Never,
+            json: FileExtensionConfig::Never,
         }
     }
 }

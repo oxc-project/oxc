@@ -18,8 +18,6 @@ pub fn write_array_node<'a, 'b, N>(
 where
     N: Format<'a> + GetSpan + std::fmt::Debug + 'a,
 {
-    let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
-
     // Specifically do not use format_separated as arrays need separators
     // inserted after holes regardless of the formatting since this makes a
     // semantic difference

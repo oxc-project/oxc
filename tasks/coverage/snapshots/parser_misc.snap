@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 44/44 (100.00%)
-Positive Passed: 44/44 (100.00%)
-Negative Passed: 48/48 (100.00%)
+AST Parsed     : 48/48 (100.00%)
+Positive Passed: 48/48 (100.00%)
+Negative Passed: 78/78 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -165,6 +165,216 @@ Negative Passed: 48/48 (100.00%)
    ·            ╰── `{` expected
    ╰────
 
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-1.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'async' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-10.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     async property;
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'const' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-11.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     const method();
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'const' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-12.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     const property;
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × Missing initializer in destructuring declaration
+   ╭─[misc/fail/oxc-11713-13.ts:1:7]
+ 1 │ const [index: string]: number
+   ·       ───────────────────────
+ 2 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11713-13.ts:2:1]
+ 1 │ const [index: string]: number
+ 2 │ }
+   · ─
+   ╰────
+
+  × TS(1070): 'const' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-14.ts:2:2]
+ 1 │ const foo: {
+ 2 │     const [index: string] : string
+   ·     ─────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1071): 'const' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-14.ts:2:2]
+ 1 │ const foo: {
+ 2 │     const [index: string] : string
+   ·     ─────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-15.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     declare method();
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-16.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     declare property;
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-17.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default method();
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-18.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default property;
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-19.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default [index: string]: number
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'default' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-19.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default [index: string]: number
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-2.ts:2:2]
+ 1 │ type Foo = {
+ 2 │     static bar;
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-20.ts:2:2]
+ 1 │ const foo: {
+ 2 │     default [index: string] : string
+   ·     ───────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1071): 'default' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-20.ts:2:2]
+ 1 │ const foo: {
+ 2 │     default [index: string] : string
+   ·     ───────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1070): 'export' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-21.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     export method();
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'export' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-22.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     export property;
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[misc/fail/oxc-11713-3.ts:1:14]
+ 1 │ function foo(private parameter) {}
+   ·              ───────
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[misc/fail/oxc-11713-3.ts:1:14]
+ 1 │ function foo(private parameter) {}
+   ·              ─────────────────
+   ╰────
+
+  × 'declare' modifier cannot be used here.
+   ╭─[misc/fail/oxc-11713-4.ts:2:2]
+ 1 │ class Foo {
+ 2 │     declare get getter() {}
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-5.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-6.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract property;
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'accessor' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-7.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     accessor method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'accessor' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-8.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     accessor property;
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'async' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-9.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     async method();
+   ·     ─────
+ 3 │ }
+   ╰────
+
   × TS(1098): Type parameter list cannot be empty.
    ╭─[misc/fail/oxc-11789-1.ts:1:12]
  1 │ interface i<>implements 
@@ -187,6 +397,93 @@ Negative Passed: 48/48 (100.00%)
  1 │ interface i<>implements K {}
    ·              ──────────
    ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-1.ts:1:25]
+ 1 │ interface Props extends /MenuProps {
+   ·                         ─────────────
+ 2 │   collapse?: boolean;
+ 3 │   menus: MenuRecordRaw[];
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-2.ts:1:21]
+ 1 │ class Props extends /MenuProps {
+   ·                     ─────────────
+ 2 │ }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-1.ts:1:2]
+ 1 │ (foo() as bar) = 123;
+   ·  ────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-2.ts:1:2]
+ 1 │ (<any>foo()) = 123;
+   ·  ──────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-3.ts:1:2]
+ 1 │ (foo() satisfies any) = 123;
+   ·  ───────────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-4.ts:1:2]
+ 1 │ (foo() as number as any) = 123;
+   ·  ──────────────────────
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284.ts:5:9]
+ 4 │       bar() {
+ 5 │         super.bar();
+   ·         ─────
+ 6 │       },
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:3:5]
+ 2 │   foo: function() {
+ 3 │     super.foo;
+   ·     ─────
+ 4 │   },
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:8:7]
+ 7 │     return function() {
+ 8 │       super.bar;
+   ·       ─────
+ 9 │     };
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:12:18]
+ 11 │ 
+ 12 │   [ function() { super.qux; } ]() {},
+    ·                  ─────
+ 13 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:14:22]
+ 13 │ 
+ 14 │   get [ function() { super.bing; } ]() {},
+    ·                      ─────
+ 15 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:16:22]
+ 15 │ 
+ 16 │   set [ function() { super.bong; } ](v) {},
+    ·                      ─────
+ 17 │ };
+    ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]

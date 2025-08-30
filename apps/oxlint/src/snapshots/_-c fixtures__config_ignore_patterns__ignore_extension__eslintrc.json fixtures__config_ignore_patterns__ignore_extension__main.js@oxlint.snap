@@ -5,7 +5,8 @@ source: apps/oxlint/src/tester.rs
 arguments: -c fixtures/config_ignore_patterns/ignore_extension/eslintrc.json fixtures/config_ignore_patterns/ignore_extension/main.js
 working directory: 
 ----------
-Finished in <variable>ms on 0 files using 1 threads.
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files with 88 rules using 1 threads.
 ----------
-CLI result: LintNoFilesFound
+CLI result: LintSucceeded
 ----------

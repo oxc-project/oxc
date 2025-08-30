@@ -1,8 +1,6 @@
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/CollapseVariableDeclarationsTest.java>
-use super::{test, test_same};
-
 mod join_vars {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_collapsing() {
@@ -53,7 +51,7 @@ mod join_vars {
 
     #[test]
     fn test_issue397() {
-        test_same("var x; x = 5; var z = 7;");
+        test("var x; x = 5; var z = 7;", "var x = 5, z = 7");
         test("var x; var y = 3; x = 5;", "var x, y = 3; x = 5;");
         test("var a = 1; var x; var y = 3; x = 5;", "var a = 1, x, y = 3; x = 5;");
         test("var x; var y = 3; x = 5; var z = 7;", "var x, y = 3; x = 5; var z = 7;");
@@ -105,30 +103,30 @@ mod join_vars {
     fn test_redeclaration_let_in_function() {
         test(
             "function f() { let x = 1; let y = 2; let z = 3; x + y + z; }",
-            "function f() { let x = 1, y = 2, z = 3; x + y + z; } ",
+            "function f() { let x = 1, y = 2, z = 3; } ",
         );
 
         // recognize local scope version of x
         test(
             "var x = 1; function f() { let x = 1; let y = 2; x + y; }",
-            "var x = 1; function f() { let x = 1, y = 2; x + y } ",
+            "var x = 1; function f() { let x = 1, y = 2; } ",
         );
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("function f(x) { let y = 3; x = 4, x + y; }");
+        test(
+            "function f(x) { let y = 3; x = 4, x + y; }",
+            "function f(x) { let y = 3; x = 4, x + 3 }",
+        );
     }
 
     #[test]
     fn test_arrow_function() {
-        test(
-            "(() => { let x = 1; let y = 2; x + y; })()",
-            "(() => { let x = 1, y = 2; x + y; })()",
-        );
+        test("(() => { let x = 1; let y = 2; x + y; })()", "(() => { let x = 1, y = 2; })()");
 
         // do not redeclare function parameters
         // incompatible with strict mode
-        test_same("((x) => { x = 4; let y = 2; x + y; })()");
+        test("((x) => { x = 4; let y = 2; x + y; })()", "((x) => { x = 4; let y = 2; x + 2; })()");
     }
 
     #[test]
@@ -148,7 +146,7 @@ mod join_vars {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/DenormalizeTest.java>
 #[cfg(test)]
 mod collapse_for {
-    use super::{test, test_same};
+    use crate::{test, test_same};
 
     #[test]
     fn test_for() {

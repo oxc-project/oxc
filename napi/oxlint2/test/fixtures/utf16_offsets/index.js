@@ -1,0 +1,7 @@
+debugger;
+// £
+debugger;
+// 🤨
+{
+  debugger;
+}

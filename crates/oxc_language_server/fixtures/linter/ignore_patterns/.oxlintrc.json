@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "no-debugger": "error"
+  },
+  "ignorePatterns": [
+    "**/*.ts"
+  ]
+}

@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/ignore_patterns_symlink
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: .
+working directory: fixtures/ignore_patterns_symlink
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 0 files using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

@@ -127,6 +127,8 @@ impl<'a> IsolatedDeclarations<'a> {
             return decl.clone_in(self.ast.allocator);
         };
 
+        // Follows https://github.com/microsoft/TypeScript/pull/54134
+        let kind = TSModuleDeclarationKind::Namespace;
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
@@ -134,7 +136,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     decl.span,
                     decl.id.clone_in(self.ast.allocator),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
-                    decl.kind,
+                    kind,
                     self.is_declare(),
                 )
             }
@@ -144,7 +146,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     decl.span,
                     decl.id.clone_in(self.ast.allocator),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
-                    decl.kind,
+                    kind,
                     self.is_declare(),
                 )
             }

@@ -41,13 +41,19 @@ pub struct PreferToBe;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// When asserting against primitive literals such as numbers and strings, the
-    /// equality matchers all operate the same, but read slightly differently in code.
+    /// Recommends using `toBe` matcher for primitive literals and specific
+    /// matchers for `null`, `undefined`, and `NaN`.
     ///
-    /// This rule recommends using the `toBe` matcher in these situations, as it forms
-    /// the most grammatically natural sentence. For `null`, `undefined`, and `NaN` this
-    /// rule recommends using their specific `toBe` matchers, as they give better error
-    /// messages as well.
+    /// ### Why is this bad?
+    ///
+    /// When asserting against primitive literals such as numbers and strings,
+    /// the equality matchers all operate the same, but read slightly
+    /// differently in code.
+    ///
+    /// This rule recommends using the `toBe` matcher in these situations, as
+    /// it forms the most grammatically natural sentence. For `null`,
+    /// `undefined`, and `NaN` this rule recommends using their specific `toBe`
+    /// matchers, as they give better error messages as well.
     ///
     /// ### Examples
     ///

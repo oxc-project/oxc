@@ -1,11 +1,10 @@
 use std::{
     borrow::Cow,
     ops::{Deref, DerefMut},
-    path::Path,
 };
 
 use schemars::{JsonSchema, r#gen, schema::Schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
@@ -97,74 +96,38 @@ pub struct OxlintOverride {
     pub rules: OxlintRules,
 }
 
-/// A glob pattern.
-///
-/// Thin wrapper around [`globset::GlobSet`] because that struct doesn't implement Serialize or schemars
-/// traits.
-#[derive(Clone, Default)]
-pub struct GlobSet {
-    /// Raw patterns from the config. Inefficient, but required for [serialization](Serialize),
-    /// which in turn is required for `--print-config`.
-    raw: Vec<String>,
-    globs: globset::GlobSet,
-}
-
-impl GlobSet {
-    pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(
-        patterns: I,
-    ) -> Result<Self, globset::Error> {
-        let patterns = patterns.into_iter();
-        let size_hint = patterns.size_hint();
-
-        let mut builder = globset::GlobSetBuilder::new();
-        let mut raw = Vec::with_capacity(size_hint.1.unwrap_or(size_hint.0));
-
-        for pattern in patterns {
-            let pattern = pattern.as_ref();
-            let glob = globset::Glob::new(pattern)?;
-            builder.add(glob);
-            raw.push(pattern.to_string());
-        }
-
-        let globs = builder.build()?;
-        Ok(Self { raw, globs })
-    }
-
-    pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.globs.is_match(path)
-    }
-}
-
-impl std::fmt::Debug for GlobSet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("GlobSet").field(&self.raw).finish()
-    }
-}
-
-impl Serialize for GlobSet {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.raw.serialize(serializer)
-    }
-}
+/// A set of glob patterns.
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+pub struct GlobSet(Vec<String>);
 
 impl<'de> Deserialize<'de> for GlobSet {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let globs = Vec::<String>::deserialize(deserializer)?;
-        Self::new(globs).map_err(de::Error::custom)
+        Ok(Self::new(Vec::<String>::deserialize(deserializer)?))
     }
 }
 
-impl JsonSchema for GlobSet {
-    fn schema_name() -> String {
-        Self::schema_id().into()
+impl GlobSet {
+    pub fn new<S: AsRef<str>, I: IntoIterator<Item = S>>(patterns: I) -> Self {
+        Self(
+            patterns
+                .into_iter()
+                .map(|pat| {
+                    let pattern = pat.as_ref();
+                    if pattern.contains('/') {
+                        pattern.to_owned()
+                    } else {
+                        let mut s = String::with_capacity(pattern.len() + 3);
+                        s.push_str("**/");
+                        s.push_str(pattern);
+                        s
+                    }
+                })
+                .collect::<Vec<_>>(),
+        )
     }
 
-    fn schema_id() -> Cow<'static, str> {
-        Cow::Borrowed("GlobSet")
-    }
-
-    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
-        r#gen.subschema_for::<Vec<String>>()
+    pub fn is_match(&self, path: &str) -> bool {
+        self.0.iter().any(|glob| fast_glob::glob_match(glob, path))
     }
 }
 
@@ -182,15 +145,15 @@ mod test {
             "files": ["*.tsx",],
         }))
         .unwrap();
-        assert!(config.files.globs.is_match("/some/path/foo.tsx"));
-        assert!(!config.files.globs.is_match("/some/path/foo.ts"));
+        assert!(config.files.is_match("/some/path/foo.tsx"));
+        assert!(!config.files.is_match("/some/path/foo.ts"));
 
         let config: OxlintOverride = from_value(json!({
             "files": ["lib/*.ts",],
         }))
         .unwrap();
-        assert!(config.files.globs.is_match("lib/foo.ts"));
-        assert!(!config.files.globs.is_match("src/foo.ts"));
+        assert!(config.files.is_match("lib/foo.ts"));
+        assert!(!config.files.is_match("src/foo.ts"));
     }
 
     #[test]

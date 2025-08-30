@@ -277,6 +277,13 @@ fn test_vars_discarded_reads() {
                 return (yield fn(), 1);
             }
         }",
+        // https://github.com/oxc-project/oxc/issues/12592
+        "export const Foo = ({ onDismiss }) => {
+            const { remove } = useToaster();
+            return (
+                <button onClick={() => (onDismiss?.(), remove())}>x</button>
+            );
+        };",
     ];
 
     let fail = vec![
@@ -1051,6 +1058,11 @@ fn test_classes() {
         }
         new Bar();
         ",
+        // Variables used in class property initializers should not be marked as unused
+        "let a = 0; class A { c = a++ } new A()",
+        "let a = 0; class A { c = a } new A()",
+        "let a = 0; class A { c = a + 1 } new A()",
+        "let a = 0, b = 1; class A { c = a; d = b++ } new A()",
     ];
 
     let fail = vec![

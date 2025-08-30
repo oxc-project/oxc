@@ -20,8 +20,8 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
-        is_long_curried_call, member_chain::simple_argument::SimpleArgument,
-        write_arguments_multi_line,
+        call_expression::is_test_call_expression, is_long_curried_call,
+        member_chain::simple_argument::SimpleArgument,
     },
     write,
     write::{
@@ -44,39 +44,41 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
+        let call_like_span = self.parent.span();
+
         if self.is_empty() {
             return write!(
                 f,
                 [
                     l_paren_token,
                     // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(self.parent.span()).with_soft_block_indent(),
+                    format_dangling_comments(call_like_span).with_soft_block_indent(),
                     r_paren_token
                 ]
             );
         }
 
-        let (is_commonjs_or_amd_call, is_test_call) =
-            if let AstNodes::CallExpression(call) = self.parent {
-                (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
-            } else {
-                (false, false)
-            };
+        let call_expression =
+            if let AstNodes::CallExpression(call) = self.parent { Some(call) } else { None };
 
-        let is_first_arg_string_literal_or_template = self.len() != 2
-            || matches!(
-                self.as_ref().first(),
-                Some(
-                    Argument::StringLiteral(_)
-                        | Argument::TemplateLiteral(_)
-                        | Argument::TaggedTemplateExpression(_)
-                )
-            );
+        let (is_commonjs_or_amd_call, is_test_call) = call_expression
+            .map(|call| (is_commonjs_or_amd_call(self, call), is_test_call_expression(call)))
+            .unwrap_or_default();
 
         if is_commonjs_or_amd_call
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || (is_test_call && is_first_arg_string_literal_or_template)
+            || (is_test_call && {
+                self.len() != 2
+                    || matches!(
+                        self.as_ref().first(),
+                        Some(
+                            Argument::StringLiteral(_)
+                                | Argument::TemplateLiteral(_)
+                                | Argument::TaggedTemplateExpression(_)
+                        )
+                    )
+            })
         {
             return write!(
                 f,
@@ -84,9 +86,10 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                     l_paren_token,
                     format_with(|f| {
                         f.join_with(space())
-                            .entries(
-                                FormatSeparatedIter::new(self.iter(), ",")
-                                    .with_trailing_separator(TrailingSeparator::Omit),
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Omit,
                             )
                             .finish()
                     }),
@@ -95,27 +98,26 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let mut has_empty_line = false;
-
         let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
-
         if has_empty_line || is_function_composition_args(self) {
             return format_all_args_broken_out(self, true, f);
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f) {
+        if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
             write_grouped_arguments(self, group_layout, f)
-        } else if is_long_curried_call(self.parent) {
+        } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             write!(
                 f,
                 [
                     l_paren_token,
                     soft_block_indent(&format_once(|f| {
-                        write_arguments_multi_line(
-                            FormatSeparatedIter::new(self.iter(), ",")
-                                .with_trailing_separator(TrailingSeparator::Omit),
-                            f,
-                        )
+                        f.join_with(soft_line_break_or_space())
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Allowed,
+                            )
+                            .finish()
                     })),
                     r_paren_token,
                 ]
@@ -139,6 +141,11 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     }
 
     let mut has_seen_function_like = false;
+    let is_call_expression_with_arrow_or_function = |call: &CallExpression| {
+        call.arguments.iter().any(|arg| {
+            matches!(arg, Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+        })
+    };
 
     for arg in args {
         match arg {
@@ -148,15 +155,15 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
                 }
                 has_seen_function_like = true;
             }
+            Argument::ChainExpression(chain) => {
+                return if let ChainElement::CallExpression(call) = &chain.expression {
+                    is_call_expression_with_arrow_or_function(call)
+                } else {
+                    false
+                };
+            }
             Argument::CallExpression(call) => {
-                if call.arguments.iter().any(|arg| {
-                    matches!(
-                        arg,
-                        Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_)
-                    )
-                }) {
-                    return true;
-                }
+                return is_call_expression_with_arrow_or_function(call);
             }
             _ => {}
         }
@@ -167,11 +174,9 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 
 fn format_all_elements_broken_out<'a, 'b>(
     elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
 ) -> FormatResult<()> {
-    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
     write!(
         buffer,
         [group(&format_args!(
@@ -190,7 +195,7 @@ fn format_all_elements_broken_out<'a, 'b>(
                     }
                 }
 
-                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+                write!(f, FormatTrailingCommas::All)
             })),
             ")",
         ))
@@ -203,7 +208,6 @@ fn format_all_args_broken_out<'a, 'b>(
     expand: bool,
     mut buffer: impl Buffer<'a>,
 ) -> FormatResult<()> {
-    let is_inside_import = matches!(node.parent, AstNodes::ImportExpression(_));
     let last_index = node.len() - 1;
     write!(
         buffer,
@@ -221,7 +225,7 @@ fn format_all_args_broken_out<'a, 'b>(
                     write!(f, [argument, (index != last_index).then_some(",")])?;
                 }
 
-                write!(f, [(!is_inside_import).then_some(FormatTrailingCommas::All)])
+                write!(f, FormatTrailingCommas::All)
             })),
             ")",
         ))
@@ -230,12 +234,13 @@ fn format_all_args_broken_out<'a, 'b>(
 }
 
 pub fn arguments_grouped_layout(
-    args: &AstNode<ArenaVec<Argument>>,
+    call_like_span: Span,
+    args: &[Argument],
     f: &Formatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
-    if should_group_first_argument(args, f) {
+    if should_group_first_argument(call_like_span, args, f) {
         Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-    } else if should_group_last_argument(args, f) {
+    } else if should_group_last_argument(call_like_span, args, f) {
         Some(GroupedCallArgumentLayout::GroupedLastArgument)
     } else {
         None
@@ -243,7 +248,11 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+fn should_group_first_argument(
+    call_like_span: Span,
+    args: &[Argument],
+    f: &Formatter<'_, '_>,
+) -> bool {
     let mut iter = args.iter();
     match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
     {
@@ -271,7 +280,6 @@ fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter
                 return false;
             }
 
-            let call_like_span = args.parent.span();
             !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
                 && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
@@ -281,8 +289,12 @@ fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
-    let mut iter = args.as_ref().iter();
+fn should_group_last_argument(
+    call_like_span: Span,
+    args: &[Argument],
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let mut iter = args.iter();
     let last = iter.next_back();
 
     match last.and_then(|arg| arg.as_expression()) {
@@ -295,7 +307,6 @@ fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<
                 // }
             }
 
-            let call_like_span = args.parent.span();
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
             if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
                 return false;
@@ -522,6 +533,9 @@ fn can_group_arrow_function_expression_argument(
         Expression::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
         }
+        Expression::ChainExpression(chain) => {
+            matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
+        }
         Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
         _ => false,
     })
@@ -584,13 +598,10 @@ fn write_grouped_arguments<'a>(
             // which would lead to a wrong line count.
             let lines_before = get_lines_before(argument.span(), f);
 
-            let interned = f.intern(
-                &format_once(|f| {
-                    format_argument.fmt(f)?;
-                    write!(f, (last_index != index).then_some(","))
-                })
-                .memoized(),
-            );
+            let interned = f.intern(&format_once(|f| {
+                format_argument.fmt(f)?;
+                write!(f, (last_index != index).then_some(","))
+            }));
 
             let break_type =
                 if is_grouped_argument { &mut grouped_breaks } else { &mut non_grouped_breaks };
@@ -607,7 +618,7 @@ fn write_grouped_arguments<'a>(
     // If any of the not grouped elements break, then fall back to the variant where
     // all arguments are printed in expanded mode.
     if non_grouped_breaks {
-        return format_all_elements_broken_out(elements.into_iter(), node, true, f);
+        return format_all_elements_broken_out(elements.into_iter(), true, f);
     }
 
     // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
@@ -620,7 +631,7 @@ fn write_grouped_arguments<'a>(
         let mut buffer = VecBuffer::new(f.state_mut());
         buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-        format_all_elements_broken_out(elements.iter().cloned(), node, true, &mut buffer);
+        format_all_elements_broken_out(elements.iter().cloned(), true, &mut buffer);
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 
@@ -978,193 +989,6 @@ fn is_react_hook_with_deps_array(
                     && !deps.span.contains_inclusive(comment.span)
             })
         }
-        _ => false,
-    }
-}
-
-/// This is a specialized function that checks if the current [call expression]
-/// resembles a call expression usually used by a testing frameworks.
-///
-/// If the [call expression] matches the criteria, a different formatting is applied.
-///
-/// To evaluate the eligibility of a  [call expression] to be a test framework like,
-/// we need to check its [callee] and its [arguments].
-///
-/// 1. The [callee] must contain a name or a chain of names that belongs to the
-///    test frameworks, for example: `test()`, `test.only()`, etc.
-/// 2. The [arguments] should be at the least 2
-/// 3. The first argument has to be a string literal
-/// 4. The third argument, if present, has to be a number literal
-/// 5. The second argument has to be an [arrow function expression] or [function expression]
-/// 6. Both function must have zero or one parameters
-///
-/// [call expression]: CallExpression
-/// [callee]: Expression
-/// [arguments]: CallExpression::arguments
-/// [arrow function expression]: ArrowFunctionExpression
-/// [function expression]: Function
-pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
-    let callee = &call.callee;
-    let arguments = &call.arguments;
-
-    let mut args = arguments.iter();
-
-    match (args.next(), args.next(), args.next()) {
-        (Some(argument), None, None) if arguments.len() == 1 => {
-            if is_angular_test_wrapper(call) && {
-                if let AstNodes::CallExpression(call) = call.parent.parent() {
-                    is_test_call_expression(call)
-                } else {
-                    false
-                }
-            } {
-                return matches!(
-                    argument,
-                    Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
-                );
-            }
-
-            if is_unit_test_set_up_callee(callee) {
-                return argument.as_expression().is_some_and(is_angular_test_wrapper_expression);
-            }
-
-            false
-        }
-
-        // it("description", ..)
-        // it(Test.name, ..)
-        (_, Some(second), third) if arguments.len() <= 3 && contains_a_test_pattern(callee) => {
-            // it('name', callback, duration)
-            if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
-                return false;
-            }
-
-            if second.as_expression().is_some_and(is_angular_test_wrapper_expression) {
-                return true;
-            }
-
-            let (parameter_count, has_block_body) = match second {
-                Argument::FunctionExpression(function) => {
-                    (function.params.parameters_count(), true)
-                }
-                Argument::ArrowFunctionExpression(arrow) => {
-                    (arrow.params.parameters_count(), !arrow.expression)
-                }
-                _ => return false,
-            };
-
-            parameter_count == 2 || (parameter_count <= 1 && has_block_body)
-        }
-        _ => false,
-    }
-}
-
-/// Note: `inject` is used in AngularJS 1.x, `async` and `fakeAsync` in
-/// Angular 2+, although `async` is deprecated and replaced by `waitForAsync`
-/// since Angular 12.
-///
-/// example: <https://docs.angularjs.org/guide/unit-testing#using-beforeall->
-///
-/// @param {CallExpression} node
-/// @returns {boolean}
-///
-fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
-    matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
-}
-
-fn is_angular_test_wrapper(call: &CallExpression) -> bool {
-    matches!(&call.callee,
-        Expression::Identifier(ident) if
-        matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")
-    )
-}
-
-/// Tests if the callee is a `beforeEach`, `beforeAll`, `afterEach` or `afterAll` identifier
-/// that is commonly used in test frameworks.
-fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
-    matches!(callee, Expression::Identifier(ident) if {
-        matches!(ident.name.as_str(), "beforeEach" | "beforeAll" | "afterEach" | "afterAll")
-    })
-}
-
-/// Iterator that returns the callee names in "top down order".
-///
-/// # Examples
-///
-/// ```javascript
-/// it.only() -> [`only`, `it`]
-/// ```
-///
-/// Same as <https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/expr_ext.rs#L1402-L1438>.
-pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> impl Iterator<Item = &'b str> {
-    let mut current = Some(expr);
-    std::iter::from_fn(move || match current {
-        Some(Expression::Identifier(ident)) => {
-            current = None;
-            Some(ident.name.as_str())
-        }
-        Some(Expression::StaticMemberExpression(static_member)) => {
-            current = Some(&static_member.object);
-            Some(static_member.property.name.as_str())
-        }
-        _ => None,
-    })
-}
-
-/// This function checks if a call expressions has one of the following members:
-/// - `it`
-/// - `it.only`
-/// - `it.skip`
-/// - `describe`
-/// - `describe.only`
-/// - `describe.skip`
-/// - `test`
-/// - `test.only`
-/// - `test.skip`
-/// - `test.step`
-/// - `test.describe`
-/// - `test.describe.only`
-/// - `test.describe.parallel`
-/// - `test.describe.parallel.only`
-/// - `test.describe.serial`
-/// - `test.describe.serial.only`
-/// - `skip`
-/// - `xit`
-/// - `xdescribe`
-/// - `xtest`
-/// - `fit`
-/// - `fdescribe`
-/// - `ftest`
-/// - `Deno.test`
-///
-/// Based on this [article]
-///
-/// [article]: https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines
-pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
-    let mut names = callee_name_iterator(expr);
-
-    match names.next() {
-        Some("it" | "describe" | "Deno") => match names.next() {
-            None => true,
-            Some("only" | "skip" | "test") => names.next().is_none(),
-            _ => false,
-        },
-        Some("test") => match names.next() {
-            None => true,
-            Some("only" | "skip" | "step") => names.next().is_none(),
-            Some("describe") => match names.next() {
-                None => true,
-                Some("only") => names.next().is_none(),
-                Some("parallel" | "serial") => match names.next() {
-                    None => true,
-                    Some("only") => names.next().is_none(),
-                    _ => false,
-                },
-                _ => false,
-            },
-            _ => false,
-        },
-        Some("skip" | "xit" | "xdescribe" | "xtest" | "fit" | "fdescribe" | "ftest") => true,
         _ => false,
     }
 }

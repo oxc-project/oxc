@@ -1,0 +1,342 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = array[0];
+   ·           ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = array[0];
+   · ──────────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (a, b).foo;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:14]
+ 1 │ var length = (() => {}).length;
+   ·              ─────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (a = b).foo;
+   ·           ───────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (a || b).foo;
+   ·           ────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (f()).foo;
+   ·           ─────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.bar.foo;
+   ·           ──────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:14]
+ 1 │ var foobar = object.bar;
+   ·              ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:14]
+ 1 │ var foobar = object.bar;
+   ·              ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object[bar];
+   ·           ───────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object[bar];
+   ·           ───────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object[foo];
+   ·           ───────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object['foo'];
+   ·           ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = object.foo;
+   · ────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = object['foo'];
+   · ───────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = array[0];
+   ·           ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = array[0];
+   · ──────────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = array[0];
+   ·           ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = array[0];
+   ·           ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = array[0];
+   · ──────────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:1]
+ 1 │ foo = object.foo;
+   · ────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:49]
+ 1 │ class Foo extends Bar { static foo() {var bar = super.foo.bar} }
+   ·                                                 ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:25]
+ 1 │ var /* comment */ foo = object.foo;
+   ·                         ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:27]
+ 1 │ var a, /* comment */foo = object.foo;
+   ·                           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:25]
+ 1 │ var foo /* comment */ = object.foo;
+   ·                         ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:28]
+ 1 │ var a, foo /* comment */ = object.foo;
+   ·                            ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:25]
+ 1 │ var foo /* comment */ = object.foo, a;
+   ·                         ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:2:7]
+ 1 │ var foo // comment
+ 2 │              = object.foo;
+   ·                ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:25]
+ 1 │ var foo = /* comment */ object.foo;
+   ·                         ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:2:5]
+ 1 │ var foo = // comment
+ 2 │              object.foo;
+   ·              ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (/* comment */ object).foo;
+   ·           ──────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (object /* comment */).foo;
+   ·           ──────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = bar(/* comment */).foo;
+   ·           ──────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = bar/* comment */.baz.foo;
+   ·           ────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ ╭─▶ var foo = bar[// comment
+ 2 │ ╰─▶             baz].foo;
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:2:7]
+ 1 │ var foo // comment
+ 2 │              = bar(/* comment */).foo;
+   ·                ──────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = bar/* comment */.baz/* comment */.foo;
+   ·           ─────────────────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ ╭─▶ var foo = object// comment
+ 2 │ ╰─▶             .foo;
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object./* comment */foo;
+   ·           ───────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (/* comment */ object.foo);
+   ·           ──────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = (object.foo /* comment */);
+   ·           ──────────────────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo/* comment */;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo// comment
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo/* comment */, a;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo// comment
+   ·           ──────────
+ 2 │             , a;
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:11]
+ 1 │ var foo = object.foo, /* comment */ a;
+   ·           ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.

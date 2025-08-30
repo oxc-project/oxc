@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "foo",
-            "node_id": 19
+            "node_id": 18
           }
         ]
       },
@@ -47,13 +47,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "a",
-            "node_id": 15
+            "node_id": 14
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "a",
-            "node_id": 21
+            "node_id": 19
           }
         ]
       }

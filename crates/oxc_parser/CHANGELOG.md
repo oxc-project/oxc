@@ -4,6 +4,104 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 903a150 parser: Report more invalid modifier locations (#13368) (Ulrich Stark)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- ade2ccb parser: Produce syntax error for `export enum` and similar ts syntaxes (#13208) (Boshen)
+
+### 🚜 Refactor
+
+- b2d59a2 parser: Improve safety of char to bytes conversions (#13193) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- fdfec21 lexer: Simplify byte handler macros (#13057) (overlookmotel)
+
+### 📚 Documentation
+
+- 56ae824 lexer: Update comment to match code (#13103) (overlookmotel)
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- 51aaafd rust: Enable `unnecessary_unwrap` lint (#12908) (camc314)
+
+### ⚡ Performance
+
+- 47a565f lexer: Only check for hashbang at start of file (#12521) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🚜 Refactor
+
+- febb4fa parser: Add `StatementContext::TopLevelStatementList` (#12806) (overlookmotel)
+
+### ⚡ Performance
+
+- 373b5b7 lexer: Add `#[cold]` to unicode path (#12768) (copilot-swe-agent)
+- ae0137c lexer: Improve byte_handlers for `!` and `?` (#12831) (Boshen)
+- 5d96425 parser: Register `import` / `export` statements in module record directly (#12807) (overlookmotel)
+- 00bdfc0 parser: Remove a bound check in `match_keyword` (#12778) (Boshen)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- e836e55 parser: Prevent panic when parsing invalid extends clause (#12551) (Cameron)
+- ce5876d parser: Validate inner expression of type assertions in assignment targets (#12614) (camc314)
+
+### 🚜 Refactor
+
+- 4fc0868 parser: Reduce unnecessary backtracking in hot paths (#12708) (Copilot)
+- 8a27974 parser: Shorten `AstBuilder` calls (#12716) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🎨 Styling
+
+- 977d3ba lexer: Reformat `Kind` matchers (#12520) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

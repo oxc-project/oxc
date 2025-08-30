@@ -4,6 +4,15 @@ use oxc_span::Span;
 
 use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 
+/// Minimal context tracking for argument formatting
+#[derive(Copy, Clone, Default, Debug)]
+struct ArgumentContext {
+    /// 0 = not in arguments, >0 = nesting level
+    depth: u8,
+    /// Reference to current call expression span for additional context
+    current_call: Option<Span>,
+}
+
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
@@ -12,6 +21,7 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
+    argument_context: ArgumentContext,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -20,7 +30,10 @@ pub struct FormatState<'ast> {
 
 impl std::fmt::Debug for FormatState<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("FormatState").field("context", &self.context).finish()
+        f.debug_struct("FormatState")
+            .field("context", &self.context)
+            .field("argument_context", &self.argument_context)
+            .finish()
     }
 }
 
@@ -30,6 +43,7 @@ impl<'ast> FormatState<'ast> {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
+            argument_context: ArgumentContext::default(),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }
@@ -54,6 +68,36 @@ impl<'ast> FormatState<'ast> {
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.group_id_builder.group_id(debug_name)
+    }
+
+    /// Returns true if currently formatting inside call arguments
+    #[inline]
+    pub fn is_in_arguments(&self) -> bool {
+        self.argument_context.depth > 0
+    }
+
+    /// Returns the current argument nesting depth
+    #[inline]
+    pub fn argument_depth(&self) -> u8 {
+        self.argument_context.depth
+    }
+
+    /// Enter argument context for the given call expression
+    pub fn enter_arguments(&mut self, call_span: Span) {
+        self.argument_context = ArgumentContext {
+            depth: self.argument_context.depth.saturating_add(1),
+            current_call: Some(call_span),
+        };
+    }
+
+    /// Exit argument context
+    pub fn exit_arguments(&mut self) {
+        if self.argument_context.depth > 0 {
+            self.argument_context.depth = self.argument_context.depth.saturating_sub(1);
+            if self.argument_context.depth == 0 {
+                self.argument_context.current_call = None;
+            }
+        }
     }
 
     #[cfg(not(debug_assertions))]

@@ -1,23 +1,32 @@
+use javascript_globals::GLOBALS;
+
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
-    is_global_reference::IsGlobalReference,
+    GlobalContext,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 struct Ctx {
-    global_variable_names: Vec<String>,
+    global_variable_names: FxHashSet<&'static str>,
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
     unknown_global_side_effects: bool,
 }
+
 impl Default for Ctx {
     fn default() -> Self {
         Self {
-            global_variable_names: vec![],
+            global_variable_names: GLOBALS["builtin"]
+                .keys()
+                .copied()
+                .chain(["arguments", "URL"])
+                .collect::<FxHashSet<_>>(),
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
@@ -25,11 +34,13 @@ impl Default for Ctx {
         }
     }
 }
-impl<'a> IsGlobalReference<'a> for Ctx {
-    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
-        Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
+
+impl<'a> GlobalContext<'a> for Ctx {
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
+        self.global_variable_names.contains(ident.name.as_str())
     }
 }
+
 impl MayHaveSideEffectsContext<'_> for Ctx {
     fn annotations(&self) -> bool {
         self.annotation
@@ -52,20 +63,26 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
     }
 }
 
+#[track_caller]
 fn test(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     test_with_ctx(source_text, &ctx, expected);
 }
 
+#[track_caller]
 fn test_with_global_variables(
     source_text: &str,
-    global_variable_names: Vec<String>,
+    global_variable_names: &[&'static str],
     expected: bool,
 ) {
-    let ctx = Ctx { global_variable_names, ..Default::default() };
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
     test_with_ctx(source_text, &ctx, expected);
 }
 
+#[track_caller]
 fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
@@ -76,6 +93,57 @@ fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
         panic!("should have a expression statement body: {source_text}");
     };
     assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{source_text}");
+}
+
+#[track_caller]
+fn test_in_function(source_text: &str, expected: bool) {
+    let ctx = Ctx::default();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::FunctionDeclaration(stmt)) = &ret.program.body.first() else {
+        panic!("should have a function declaration: {source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) =
+        &stmt.body.as_ref().expect("should have a body").statements.first()
+    else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+
+    assert_eq!(stmt.expression.may_have_side_effects(&ctx), expected, "{source_text}");
+}
+
+#[track_caller]
+fn test_assign_target(source_text: &str, expected: bool) {
+    test_assign_target_with_global_variables(source_text, &[], expected);
+}
+
+#[track_caller]
+fn test_assign_target_with_global_variables(
+    source_text: &str,
+    global_variable_names: &[&'static str],
+    expected: bool,
+) {
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    let Expression::AssignmentExpression(assign_expr) = &stmt.expression.without_parentheses()
+    else {
+        panic!("should have a assignment expression: {source_text}");
+    };
+
+    assert_eq!(assign_expr.left.may_have_side_effects(&ctx), expected, "{source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -141,7 +209,8 @@ fn closure_compiler_tests() {
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
     test("tempFunc = templateFunction`template`", true);
-    // test("new RegExp('foobar', 'i')", false);
+    test("new RegExp('foobar', 'i')", false);
+    test("new RegExp('foobar', 2)", true);
     test("new RegExp(SomethingWacky(), 'i')", true);
     // test("new Array()", false);
     // test("new Array", false);
@@ -159,15 +228,15 @@ fn closure_compiler_tests() {
     test("undefined", false);
     test("void 0", false);
     test("void foo()", true);
-    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
+    test("-Infinity", false);
+    test("Infinity", false);
+    test("NaN", false);
     // test("({}||[]).foo = 2;", false);
     // test("(true ? {} : []).foo = 2;", false);
     // test("({},[]).foo = 2;", false);
     test("delete a.b", true);
-    // test("Math.random();", false);
-    test("Math.random(seed);", true);
+    test("Math.random();", false);
+    test("Math.random(Math);", true);
     // test("[1, 1].foo;", false);
     // test("export var x = 0;", true);
     // test("export let x = 0;", true);
@@ -318,14 +387,14 @@ fn closure_compiler_tests() {
 
     // CLASS_STATIC_BLOCK
     test("(class C { static {} })", false);
-    // test("(class C { static { [1]; } })", false);
-    test("(class C { static { let x; } })", true);
-    test("(class C { static { const x =1 ; } })", true);
-    test("(class C { static { var x; } })", true);
+    test("(class C { static { [1]; } })", false);
+    test("(class C { static { let x; } })", false);
+    test("(class C { static { const x =1 ; } })", false);
+    test("(class C { static { var x; } })", false);
     test("(class C { static { this.x = 1; } })", true);
-    test("(class C { static { function f() { } } })", true);
-    // test("(class C { static { (function () {} )} })", false);
-    // test("(class C { static { ()=>{} } })", false);
+    test("(class C { static { function f() { } } })", false);
+    test("(class C { static { (function () {} )} })", false);
+    test("(class C { static { ()=>{} } })", false);
 
     // SUPER calls
     test("super()", true);
@@ -367,9 +436,9 @@ fn closure_compiler_tests() {
 #[test]
 fn test_identifier_reference() {
     // accessing global variables may have a side effect
-    test_with_global_variables("a", vec!["a".to_string()], true);
+    test_with_global_variables("a", &["a"], true);
     // accessing known globals are side-effect free
-    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
+    test("NaN", false);
 }
 
 #[test]
@@ -407,8 +476,8 @@ fn test_unary_expressions() {
     test("!foo()", true);
 
     test("typeof 'foo'", false);
-    test_with_global_variables("typeof a", vec!["a".to_string()], false);
-    test_with_global_variables("typeof (0, a)", vec!["a".to_string()], true);
+    test_with_global_variables("typeof a", &["a"], false);
+    test_with_global_variables("typeof (0, a)", &["a"], true);
     test("typeof foo()", true);
 
     test("+0", false);
@@ -418,9 +487,9 @@ fn test_unary_expressions() {
     test("+'foo'", false); // NaN
     test("+`foo`", false); // NaN
     test("+/foo/", false); // NaN
-    test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
+    test("+Infinity", false);
+    test("+NaN", false);
+    test("+undefined", false); // NaN
     test("+[]", false); // 0
     test("+[foo()]", true);
     test("+foo()", true);
@@ -436,9 +505,9 @@ fn test_unary_expressions() {
     test("-'foo'", false); // -NaN
     test("-`foo`", false); // NaN
     test("-/foo/", false); // NaN
-    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
+    test("-Infinity", false);
+    test("-NaN", false);
+    test("-undefined", false); // NaN
     test("-[]", false); // -0
     test("-[foo()]", true);
     test("-foo()", true);
@@ -516,9 +585,9 @@ fn test_binary_expressions() {
     test("'' + []", false);
     test("'' + [foo()]", true);
     test("'' + Symbol()", true);
-    test_with_global_variables("'' + Infinity", vec!["Infinity".to_string()], false);
-    test_with_global_variables("'' + NaN", vec!["NaN".to_string()], false);
-    test_with_global_variables("'' + undefined", vec!["undefined".to_string()], false);
+    test("'' + Infinity", false);
+    test("'' + NaN", false);
+    test("'' + undefined", false);
     test("'' + s", true); // assuming s is Symbol
     test("Symbol() + ''", true);
     test("'' + {}", false);
@@ -549,10 +618,10 @@ fn test_binary_expressions() {
     test("0 - /a/", false); // NaN
     test("0 - []", false); // 0
     test("0 - [foo()]", true);
-    test_with_global_variables("0 - Infinity", vec!["Infinity".to_string()], false); // -Infinity
-    test_with_global_variables("0 - NaN", vec!["NaN".to_string()], false); // NaN
-    test_with_global_variables("0 - undefined", vec!["undefined".to_string()], false); // NaN
-    test_with_global_variables("null - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test("0 - Infinity", false); // -Infinity
+    test("0 - NaN", false); // NaN
+    test("0 - undefined", false); // NaN
+    test("null - Infinity", false); // -Infinity
     test("0 - {}", false); // NaN
     test("'' - { toString() { return Symbol() } }", true);
     test("'' - { valueOf() { return Symbol() } }", true);
@@ -583,8 +652,8 @@ fn test_binary_expressions() {
 
     test("[] instanceof 1", true); // throws an error
     test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
-    test_with_global_variables("[] instanceof Object", vec!["Object".to_string()], false);
-    test_with_global_variables("a instanceof Object", vec!["Object".to_string()], true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
+    test("[] instanceof Object", false);
+    test("a instanceof Object", true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
 
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
@@ -634,6 +703,8 @@ fn test_array_expression() {
     test("[...`foo${foo}`]", true);
     test("[...`foo${foo()}`]", true);
     test("[...foo()]", true);
+    // test_in_function("[...arguments]", true);
+    test_in_function("function foo() { [...arguments] }", false);
 }
 
 #[test]
@@ -642,7 +713,9 @@ fn test_class_expression() {
     test("(@foo class {})", true);
     test("(class extends a {})", false); // this may have a side effect, but ignored by the assumption
     test("(class extends foo() {})", true);
+    test("(class extends (() => {}) {})", true);
     test("(class { static {} })", false);
+    test("(class { static { 1; } })", false);
     test("(class { static { foo(); } })", true);
     test("(class { a() {} })", false);
     test("(class { [1]() {} })", false);
@@ -709,6 +782,156 @@ fn test_property_access() {
     test("[...a, 1][0]", true); // "...a" may have a sideeffect
 }
 
+// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
+#[test]
+fn test_new_expressions() {
+    test("new AggregateError", true);
+    test("new DataView", true);
+    test("new Set", false);
+    test("new Map", false);
+    test("new WeakSet", false);
+    test("new WeakMap", false);
+    test("new ArrayBuffer", false);
+    test("new Date", false);
+    test("new Boolean", false);
+    test("new Error", false);
+    test("new EvalError", false);
+    test("new RangeError", false);
+    test("new ReferenceError", false);
+    test("new RegExp", false);
+    test("new SyntaxError", false);
+    test("new TypeError", false);
+    test("new URIError", false);
+    test("new Number", false);
+    test("new Object", false);
+    test("new String", false);
+    test("new Symbol", false);
+}
+
+// `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
+#[test]
+fn test_call_expressions() {
+    test("AggregateError()", true);
+    test("DataView()", true);
+    test("Set()", true);
+    test("Map()", true);
+    test("WeakSet()", true);
+    test("WeakMap()", true);
+    test("ArrayBuffer()", true);
+    test("Date()", false);
+    test("Boolean()", false);
+    test("Error()", false);
+    test("EvalError()", false);
+    test("RangeError()", false);
+    test("ReferenceError()", false);
+    test("RegExp()", false);
+    test("SyntaxError()", false);
+    test("TypeError()", false);
+    test("URIError()", false);
+    test("Number()", false);
+    test("Object()", false);
+    test("String()", false);
+    test("Symbol()", false);
+
+    test("decodeURI()", false);
+    test("decodeURIComponent()", false);
+    test("encodeURI()", false);
+    test("encodeURIComponent()", false);
+    test("escape()", false);
+    test("isFinite()", false);
+    test("isNaN()", false);
+    test("parseFloat()", false);
+    test("parseInt()", false);
+
+    test("Array.isArray()", false);
+    test("Array.of()", false);
+
+    test("ArrayBuffer.isView()", false);
+
+    test("Date.now()", false);
+    test("Date.parse()", false);
+    test("Date.UTC()", false);
+
+    test("Math.abs()", false);
+    test("Math.acos()", false);
+    test("Math.acosh()", false);
+    test("Math.asin()", false);
+    test("Math.asinh()", false);
+    test("Math.atan()", false);
+    test("Math.atan2()", false);
+    test("Math.atanh()", false);
+    test("Math.cbrt()", false);
+    test("Math.ceil()", false);
+    test("Math.clz32()", false);
+    test("Math.cos()", false);
+    test("Math.cosh()", false);
+    test("Math.exp()", false);
+    test("Math.expm1()", false);
+    test("Math.floor()", false);
+    test("Math.fround()", false);
+    test("Math.hypot()", false);
+    test("Math.imul()", false);
+    test("Math.log()", false);
+    test("Math.log10()", false);
+    test("Math.log1p()", false);
+    test("Math.log2()", false);
+    test("Math.max()", false);
+    test("Math.min()", false);
+    test("Math.pow()", false);
+    test("Math.random()", false);
+    test("Math.round()", false);
+    test("Math.sign()", false);
+    test("Math.sin()", false);
+    test("Math.sinh()", false);
+    test("Math.sqrt()", false);
+    test("Math.tan()", false);
+    test("Math.tanh()", false);
+    test("Math.trunc()", false);
+
+    test("Number.isFinite()", false);
+    test("Number.isInteger()", false);
+    test("Number.isNaN()", false);
+    test("Number.isSafeInteger()", false);
+    test("Number.parseFloat()", false);
+    test("Number.parseInt()", false);
+
+    test("Object.create()", false);
+    test("Object.getOwnPropertyDescriptor()", false);
+    test("Object.getOwnPropertyDescriptors()", false);
+    test("Object.getOwnPropertyNames()", false);
+    test("Object.getOwnPropertySymbols()", false);
+    test("Object.getPrototypeOf()", false);
+    test("Object.hasOwn()", false);
+    test("Object.is()", false);
+    test("Object.isExtensible()", false);
+    test("Object.isFrozen()", false);
+    test("Object.isSealed()", false);
+    test("Object.keys()", false);
+
+    test("String.fromCharCode()", false);
+    test("String.fromCodePoint()", false);
+    test("String.raw()", false);
+
+    test("Symbol.for()", false);
+    test("Symbol.keyFor()", false);
+
+    test("URL.canParse()", false);
+
+    test("Float32Array.of()", false);
+    test("Float64Array.of()", false);
+    test("Int16Array.of()", false);
+    test("Int32Array.of()", false);
+    test("Int8Array.of()", false);
+    test("Uint16Array.of()", false);
+    test("Uint32Array.of()", false);
+    test("Uint8Array.of()", false);
+    test("Uint8ClampedArray.of()", false);
+
+    // may have side effects if shadowed
+    test_with_global_variables("Date()", &[], true);
+    test_with_global_variables("Object.create()", &[], true);
+}
+
 #[test]
 fn test_call_like_expressions() {
     test("foo()", true);
@@ -770,24 +993,17 @@ fn test_is_pure_call_support() {
 fn test_property_read_side_effects_support() {
     let all_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::All, ..Default::default() };
-    let only_member_ctx = Ctx {
-        property_read_side_effects: PropertyReadSideEffects::OnlyMemberPropertyAccess,
-        ..Default::default()
-    };
     let none_ctx =
         Ctx { property_read_side_effects: PropertyReadSideEffects::None, ..Default::default() };
 
     test_with_ctx("foo.bar", &all_ctx, true);
-    test_with_ctx("foo.bar", &only_member_ctx, true);
     test_with_ctx("foo.bar", &none_ctx, false);
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
     test_with_ctx("foo.#bar", &all_ctx, true);
-    test_with_ctx("foo.#bar", &only_member_ctx, true);
     test_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
-    // test_with_ctx("({ bar } = foo)", &only_member_ctx, false);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 }
 
@@ -795,12 +1011,12 @@ fn test_property_read_side_effects_support() {
 fn test_unknown_global_side_effects_support() {
     let true_ctx = Ctx {
         unknown_global_side_effects: true,
-        global_variable_names: vec!["foo".to_string()],
+        global_variable_names: FxHashSet::from_iter(["foo"]),
         ..Default::default()
     };
     let false_ctx = Ctx {
         unknown_global_side_effects: false,
-        global_variable_names: vec!["foo".to_string()],
+        global_variable_names: FxHashSet::from_iter(["foo"]),
         ..Default::default()
     };
     test_with_ctx("foo", &true_ctx, true);
@@ -830,4 +1046,71 @@ fn test_object_with_to_primitive_related_properties_overridden() {
     test("+{ ...{ toString() { return Symbol() } } }", true);
     test("+{ ...{ valueOf() { return Symbol() } } }", true);
     test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);
+}
+
+#[test]
+fn test_typeof_guard_patterns() {
+    test_with_global_variables("typeof x !== 'undefined' && x", &["x"], false);
+    test_with_global_variables("typeof x != 'undefined' && x", &["x"], false);
+    test_with_global_variables("'undefined' !== typeof x && x", &["x"], false);
+    test_with_global_variables("'undefined' != typeof x && x", &["x"], false);
+    test_with_global_variables("typeof x === 'undefined' || x", &["x"], false);
+    test_with_global_variables("typeof x == 'undefined' || x", &["x"], false);
+    test_with_global_variables("'undefined' === typeof x || x", &["x"], false);
+    test_with_global_variables("'undefined' == typeof x || x", &["x"], false);
+    test_with_global_variables("typeof x < 'u' && x", &["x"], false);
+    test_with_global_variables("typeof x <= 'u' && x", &["x"], false);
+    test_with_global_variables("'u' > typeof x && x", &["x"], false);
+    test_with_global_variables("'u' >= typeof x && x", &["x"], false);
+    test_with_global_variables("typeof x > 'u' || x", &["x"], false);
+    test_with_global_variables("typeof x >= 'u' || x", &["x"], false);
+    test_with_global_variables("'u' < typeof x || x", &["x"], false);
+    test_with_global_variables("'u' <= typeof x || x", &["x"], false);
+
+    test_with_global_variables("typeof x === 'undefined' ? 0 : x", &["x"], false);
+    test_with_global_variables("typeof x == 'undefined' ? 0 : x", &["x"], false);
+    test_with_global_variables("'undefined' === typeof x ? 0 : x", &["x"], false);
+    test_with_global_variables("'undefined' == typeof x ? 0 : x", &["x"], false);
+    test_with_global_variables("typeof x !== 'undefined' ? x : 0", &["x"], false);
+    test_with_global_variables("typeof x != 'undefined' ? x : 0", &["x"], false);
+    test_with_global_variables("'undefined' !== typeof x ? x : 0", &["x"], false);
+    test_with_global_variables("'undefined' != typeof x ? x : 0", &["x"], false);
+
+    test_with_global_variables("typeof x !== 'undefined' && (x + foo())", &["x"], true);
+    test_with_global_variables("typeof x === 'undefined' || (x + foo())", &["x"], true);
+    test_with_global_variables("typeof x === 'undefined' ? foo() : x", &["x"], true);
+    test_with_global_variables("typeof x !== 'undefined' ? x : foo()", &["x"], true);
+    test_with_global_variables("typeof foo() !== 'undefined' && x", &["x"], true);
+    test_with_global_variables("typeof foo() === 'undefined' || x", &["x"], true);
+    test_with_global_variables("typeof foo() === 'undefined' ? 0 : x", &["x"], true);
+    test_with_global_variables("typeof y !== 'undefined' && x", &["x", "y"], true);
+    test_with_global_variables("typeof y === 'undefined' || x", &["x", "y"], true);
+    test_with_global_variables("typeof y === 'undefined' ? 0 : x", &["x", "y"], true);
+
+    test("typeof localVar !== 'undefined' && localVar", false);
+    test("typeof localVar === 'undefined' || localVar", false);
+    test("typeof localVar === 'undefined' ? 0 : localVar", false);
+
+    test_with_global_variables(
+        "typeof x !== 'undefined' && typeof y !== 'undefined' && x && y",
+        &["x", "y"],
+        true, // This can be improved
+    );
+}
+
+#[test]
+fn test_assignment_targets() {
+    test_assign_target("a = 1", false);
+    test_assign_target("String = 1", false);
+    test_assign_target("({ a } = 1)", true); // this can be improved
+    test_assign_target("([a] = 1)", true); // this can be improved
+    test_assign_target("a.b = 1", false); // the side effect of the setter of `a.b` happens in `PutValue`
+    test_assign_target_with_global_variables("a.b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).b = 1", true); // `foo()` may have sideeffect
+    test_assign_target("a['b'] = 1", false);
+    test_assign_target("a[foo()] = 1", true); // `foo()` may have sideeffect
+    test_assign_target_with_global_variables("a['b'] = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("a.#b = 1", false);
+    test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
 }

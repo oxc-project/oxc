@@ -220,6 +220,11 @@ impl<'a> ParserImpl<'a> {
             /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ true,
         );
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::all() - ModifierFlags::EXPORT,
+            diagnostics::cannot_appear_on_class_elements,
+        );
 
         // static { block }
         if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
@@ -415,7 +420,7 @@ impl<'a> ParserImpl<'a> {
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             false,
-            FunctionKind::ClassMethod,
+            FunctionKind::Constructor,
         );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
