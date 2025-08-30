@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Debug, Display},
-    iter,
+    ptr,
 };
 
 use crate::{Allocator, CloneIn, Vec};
@@ -16,12 +16,22 @@ pub struct BitSet<'alloc> {
 impl<'alloc> BitSet<'alloc> {
     /// Create new [`BitSet`] with size `max_bit_count`, in the specified allocator.
     pub fn new_in(max_bit_count: usize, allocator: &'alloc Allocator) -> Self {
-        Self {
-            entries: Vec::from_iter_in(
-                iter::repeat_n(0, max_bit_count.div_ceil(USIZE_BITS)),
-                allocator,
-            ),
-        }
+        let capacity = max_bit_count.div_ceil(USIZE_BITS);
+        let mut entries = Vec::<usize>::with_capacity_in(capacity, allocator);
+
+        // Fill `entries` with zeros.
+        // This is faster than `Vec::from_iter_in(iter::repeat_n(0, capacity), allocator)`,
+        // due to an unfortunate shortcoming in the implementation of `Vec`, due to missing
+        // specialization in stable Rust.
+        // SAFETY: We created `Vec` with space for `capacity` x `usize`s, so writing `capacity * 8` `u8`s
+        // fills the `Vec`'s buffer. Once `capacity` items are initialized, we can safely set the length.
+        unsafe {
+            let ptr = entries.as_mut_ptr().cast::<u8>();
+            ptr::write_bytes(ptr, 0, capacity * size_of::<usize>());
+            entries.set_len(capacity);
+        };
+
+        Self { entries }
     }
 
     /// Returns `true` if the bit at the given position is set.
