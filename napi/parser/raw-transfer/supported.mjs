@@ -1,8 +1,4 @@
-'use strict';
-
-const rawTransferSupportedBinding = require('../bindings.js').rawTransferSupported;
-
-module.exports = rawTransferSupported;
+import { rawTransferSupported as rawTransferSupportedBinding } from '../bindings.mjs';
 
 let rawTransferIsSupported = null;
 
@@ -21,7 +17,7 @@ let rawTransferIsSupported = null;
  *
  * @returns {boolean} - `true` if raw transfer is supported on this platform
  */
-function rawTransferSupported() {
+export function rawTransferSupported() {
   if (rawTransferIsSupported === null) {
     rawTransferIsSupported = rawTransferRuntimeSupported() && rawTransferSupportedBinding();
   }
