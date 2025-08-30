@@ -2375,6 +2375,7 @@ dependencies = [
  "humansize",
  "mimalloc-safe",
  "oxc_allocator",
+ "oxc_minifier",
  "oxc_parser",
  "oxc_tasks_common",
 ]

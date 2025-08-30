@@ -1,5 +1,3 @@
-#![expect(clippy::print_stdout)]
-
 use std::{
     fs::File,
     io::{self, Write},
@@ -9,6 +7,7 @@ use humansize::{DECIMAL, format_size};
 use mimalloc_safe::MiMalloc;
 
 use oxc_allocator::Allocator;
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_tasks_common::{TestFiles, project_root};
 
@@ -128,24 +127,36 @@ pub fn run() -> Result<(), io::Error> {
     // Table header, which should be same for each file
     let table_header = format_table_header(fixture_width, width);
 
-    let mut parser_out = table_header;
+    let mut parser_out = table_header.clone();
+    let mut minifier_out = table_header;
 
     let mut allocator = Allocator::default();
 
-    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+    let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+    let minifier_options = MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: Some(CompressOptions::smallest()),
+    };
 
     // Warm-up by parsing each file first, and then measuring the actual allocations. This reduces variance
     // in the number of allocations, because we ensure that the bump allocator has already requested all
     // of the space it will need from the system allocator to parse the largest file in the set.
     for file in files.files() {
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
+        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+            .with_options(parse_options)
+            .parse();
+        Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
     }
 
     for file in files.files() {
+        let minifier_options = minifier_options.clone();
+
         allocator.reset();
         reset_global_allocs();
 
-        Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
+        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+            .with_options(parse_options)
+            .parse();
 
         let parser_stats = record_stats(&allocator);
 
@@ -156,14 +167,24 @@ pub fn run() -> Result<(), io::Error> {
             fixture_width,
             width,
         ));
+
+        let before_minify_stats = record_stats(&allocator);
+
+        Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
+
+        let minifier_stats = record_stats_diff(&allocator, &before_minify_stats);
+
+        minifier_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &minifier_stats,
+            fixture_width,
+            width,
+        ));
     }
 
-    println!("{parser_out}");
-
-    let mut snapshot =
-        File::create(project_root().join("tasks/track_memory_allocations/allocs_parser.snap"))?;
-    snapshot.write_all(parser_out.as_bytes())?;
-    snapshot.flush()?;
+    write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
 
     Ok(())
 }
@@ -179,6 +200,19 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let arena_bytes = allocator.used_bytes();
 
     AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs, arena_bytes }
+}
+
+/// Record current allocation stats since the last recorded stats in `prev`. This is useful
+/// for measuring allocations made during a specific operation without needing to reset the stats.
+fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorStats {
+    let stats = record_stats(allocator);
+    AllocatorStats {
+        sys_allocs: stats.sys_allocs.saturating_sub(prev.sys_allocs),
+        sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
+        arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
+        arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
+        arena_bytes: stats.arena_bytes.saturating_sub(prev.arena_bytes),
+    }
 }
 
 /// Formats a single row of the allocator stats table
@@ -219,4 +253,11 @@ fn format_table_header(fixture_width: usize, width: usize) -> String {
     out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
     out.push('\n');
     out
+}
+
+fn write_snapshot(file_path: &str, contents: &str) -> Result<(), io::Error> {
+    let mut snapshot = File::create(project_root().join(file_path))?;
+    snapshot.write_all(contents.as_bytes())?;
+    snapshot.flush()?;
+    Ok(())
 }
