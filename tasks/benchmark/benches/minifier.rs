@@ -52,12 +52,28 @@ fn bench_minifier(criterion: &mut Criterion) {
 
 fn bench_mangler(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("mangler");
-    for file in TestFiles::minimal().files() {
+
+    let files = TestFiles::minimal();
+    let mut allocator = Allocator::default();
+    let mut temp_allocator = Allocator::default();
+
+    // Do a warmup run to ensure that allocators have requested enough memory from the system
+    for file in files.files() {
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
+        let source_text = file.source_text.as_str();
+
+        let program = Parser::new(&allocator, source_text, source_type).parse().program;
+        let mut semantic =
+            SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
+        Mangler::new_with_temp_allocator(&temp_allocator)
+            .build_with_semantic(&mut semantic, &program);
+    }
+
+    for file in files.files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         let source_text = file.source_text.as_str();
-        let mut allocator = Allocator::default();
-        let mut temp_allocator = Allocator::default();
+
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
