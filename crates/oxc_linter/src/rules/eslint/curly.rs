@@ -1,5 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{AstKind, ast::Statement, CommentKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -327,18 +327,7 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         u32::try_from(node_string.trim_end_matches(|c: char| c.is_whitespace() || c == ';').len())
             .expect("Failed to convert to u32");
 
-    let before_node_span = get_token_before(node, ctx).map_or_else(
-        || {
-            let parent = ctx.nodes().parent_node(node.id());
-
-            if parent.span().start < span.start {
-                Span::empty(parent.span().start)
-            } else {
-                Span::empty(0)
-            }
-        },
-        oxc_span::GetSpan::span,
-    );
+    let before_node_span = get_token_before_span(node, ctx);
 
     let Some(next_char_offset) = get_next_char_offset(before_node_span, ctx) else {
         return true;
@@ -362,10 +351,43 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     !trimmed.contains('\n')
 }
 
-fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
+fn get_token_before_span(node: &AstNode, ctx: &LintContext) -> Span {
     let span_start = node.span().start;
-    ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
+    
+    if let Some(token) = ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end) {
+        let token_span = token.span();
+        
+        // Check if there are any line comments between this token and the current node
+        let line_comments_between: Vec<_> = ctx.comments()
+            .iter()
+            .filter(|comment| {
+                comment.kind == CommentKind::Line 
+                    && comment.span.start >= token_span.end 
+                    && comment.span.end < span_start
+            })
+            .collect();
+        
+        if !line_comments_between.is_empty() {
+            // Find the last line comment before the current node
+            if let Some(last_comment) = line_comments_between.iter().max_by_key(|comment| comment.span.end) {
+                // Return a span that ends at the end of the last comment
+                // This way, get_next_char_offset will start from after the comment
+                return Span::new(last_comment.span.start, last_comment.span.end);
+            }
+        }
+        
+        token_span
+    } else {
+        // Fallback logic from the original code
+        let parent = ctx.nodes().parent_node(node.id());
+        if parent.span().start < span_start {
+            Span::empty(parent.span().start)
+        } else {
+            Span::empty(0)
+        }
+    }
 }
+
 
 pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
     let Statement::BlockStatement(block) = node else {
@@ -827,6 +849,15 @@ fn test() {
                 else return typeof value[Symbol.iterator] === 'function';
             };",
             Some(serde_json::json!(["multi"])),
+        ),
+        // Test cases for inline comment issue - should NOT trigger curly error with multi-line setting
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root);\nelse text = extractTextFromDraftJS(rt);",
+            Some(serde_json::json!(["multi-line"])),
         ),
     ];
 
@@ -1915,3 +1946,5 @@ fn test() {
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
+
+
