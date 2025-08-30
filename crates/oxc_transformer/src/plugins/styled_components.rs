@@ -886,6 +886,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
     let mut paren_depth: isize = 0;
     // `true` if some quasis and expressions need to be deleted.
     let mut delete_some = false;
+    // `true` if in first output quasi.
+    // Equivalent to `quasi_index == 0`, except when merging quasis e.g. `x /* ${1} */ y`.
+    // In that case, when processing `y`, `quasi_index == 1` but `is_first_output == true`.
+    let mut is_first_output = true;
 
     // Current minified quasi being built
     let mut output = Vec::new();
@@ -936,7 +940,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 // Comments behave like whitespace.
                 // Block comments: `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
                 // Line comments: End with a newline (whitespace).
-                insert_space_if_required(&mut output, quasi_index);
+                insert_space_if_required(&mut output, is_first_output);
 
                 // Trim off to end of comment
                 bytes = &bytes[start_index..];
@@ -950,6 +954,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                 let output_str = unsafe { std::str::from_utf8_unchecked(&output) };
                 quasis[quasi_index - 1].value.raw = ast.atom(output_str);
                 output.clear();
+                is_first_output = false;
             }
         }
 
@@ -979,7 +984,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 continue;
                             }
                             b'n' | b'r' if string_quote == NOT_IN_STRING => {
-                                insert_space_if_required(&mut output, quasi_index);
+                                insert_space_if_required(&mut output, is_first_output);
                                 i += 2;
                                 continue;
                             }
@@ -1010,7 +1015,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         if let Some(end_index) = end_index {
                                             // Block comments behave like whitespace.
                                             // `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
-                                            insert_space_if_required(&mut output, quasi_index);
+                                            insert_space_if_required(&mut output, is_first_output);
 
                                             i += end_index + 4; // After `*/`
                                             continue;
@@ -1029,7 +1034,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
                                     // Insert space in place of `\n` / `\r`
-                                    insert_space_if_required(&mut output, quasi_index);
+                                    insert_space_if_required(&mut output, is_first_output);
 
                                     i += end_index + 3; // After `\n` or `\r`
                                     continue;
@@ -1059,7 +1064,7 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                     // Preserve this space if it's not following a character which doesn't require one.
                     // Note: If a space is inserted, it may be removed again if it's followed
                     // by `{`, `}`, `,`, or `;`.
-                    insert_space_if_required(&mut output, quasi_index);
+                    insert_space_if_required(&mut output, is_first_output);
 
                     i += 1;
                     continue;
@@ -1118,16 +1123,16 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 /// Insert a space, unless preceding character makes it possible to skip.
 ///
 /// See comments above about whitespace removal.
-fn insert_space_if_required(output: &mut Vec<u8>, quasi_index: usize) {
+fn insert_space_if_required(output: &mut Vec<u8>, is_first_output: bool) {
     if let Some(&last) = output.last() {
         // Always safe to remove whitespace after these characters
         if matches!(last, b' ' | b':' | b'{' | b'}' | b',' | b';') {
             return;
         }
     } else {
-        // We're at start of a quasi. If it's the first, trim leading space.
+        // We're at start of a quasi. If it's the first output quasi, trim leading space.
         // Otherwise, preserve space to avoid joining with previous interpolation.
-        if quasi_index == 0 {
+        if is_first_output {
             return;
         }
     }

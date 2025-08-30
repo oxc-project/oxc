@@ -23,3 +23,7 @@ const Bing = styled.div`
   .a /* ${123} */ { color: blue; }
   .b {/* ${123} */color: green; }
 `;
+
+const Bong = styled.div`/* ${123} */color: red;`;
+
+const Doom = styled.div` /* ${123} */ color: red; `;
