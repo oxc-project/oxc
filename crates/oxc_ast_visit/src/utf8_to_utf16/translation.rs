@@ -21,9 +21,7 @@ pub struct LineTranslation {
     /// UTF-8 byte offset of the start of the line.
     pub utf8_offset: u32,
     /// UTF-16 offset difference at the start of this line.
-    /// This is needed to convert column offsets from UTF-8 to UTF-16.
-    #[expect(dead_code)]
-    pub utf16_difference: u32,
+    // (Field removed: was unused)
 }
 
 const CHUNK_SIZE: usize = 32;
