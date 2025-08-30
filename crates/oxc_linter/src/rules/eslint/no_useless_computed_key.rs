@@ -13,9 +13,17 @@ fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoUselessComputedKey {
     enforce_for_class_members: bool,
+}
+
+impl Default for NoUselessComputedKey {
+    fn default() -> Self {
+        Self {
+            enforce_for_class_members: true,
+        }
+    }
 }
 
 declare_oxc_lint!(
