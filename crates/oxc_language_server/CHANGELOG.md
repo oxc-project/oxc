@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- 902b39b language_server: Split run logic for `oxlint` and `tsgolint` (#13332) (Sysix)
+- 2a910c5 language_server: Disable tsgolint test on big endian (#13313) (camc314)
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 🧪 Testing
+
+- 33e0e8b language_server: Dont run tsgolint related test on big-edian (#13342) (Sysix)
+
+
 ## [1.13.0] - 2025-08-26
 
 ### 🐛 Bug Fixes
