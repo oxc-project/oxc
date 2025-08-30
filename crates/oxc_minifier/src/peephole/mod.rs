@@ -17,7 +17,7 @@ mod replace_known_methods;
 mod substitute_alternate_syntax;
 
 use oxc_ast_visit::Visit;
-use oxc_semantic::ReferenceId;
+use oxc_semantic::{ReferenceId, ScopeFlags};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -108,12 +108,10 @@ impl<'a> PeepholeOptimizations {
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
-        ctx.state.read_references.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        assert!(ctx.state.inline_function_declarations.is_empty());
         self.changed = ctx.state.changed;
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
@@ -121,9 +119,15 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
             let mut counter = ReferencesCounter::default();
             counter.visit_program(program);
+            for inline_func in ctx.state.inline_function_declarations.values() {
+                counter.visit_function(inline_func, ScopeFlags::Function);
+            }
             for reference_id_to_remove in refs_before.difference(&counter.refs) {
                 ctx.scoping_mut().delete_reference(*reference_id_to_remove);
             }
+        }
+        if !ctx.state.inline_function_declarations.is_empty() {
+            self.changed = true;
         }
     }
 

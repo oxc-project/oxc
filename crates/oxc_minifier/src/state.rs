@@ -1,6 +1,6 @@
 use oxc_ast::ast::Function;
 use oxc_ecmascript::constant_evaluation::ConstantValue;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use oxc_span::SourceType;
 use oxc_syntax::symbol::SymbolId;
@@ -19,8 +19,6 @@ pub struct MinifierState<'a> {
 
     pub inline_function_declarations: FxHashMap<SymbolId, Function<'a>>,
 
-    pub read_references: FxHashSet<SymbolId>,
-
     pub changed: bool,
 }
 
@@ -32,7 +30,6 @@ impl MinifierState<'_> {
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             inline_function_declarations: FxHashMap::default(),
-            read_references: FxHashSet::default(),
             changed: false,
         }
     }

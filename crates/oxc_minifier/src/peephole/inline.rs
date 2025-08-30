@@ -26,10 +26,6 @@ impl<'a> PeepholeOptimizations {
         let Statement::FunctionDeclaration(func) = stmt else { return };
         let Some(id) = &func.id else { return };
         let symbol_id = id.symbol_id();
-        if ctx.state.read_references.contains(&symbol_id) {
-            // Already read in traverse, cannot inline
-            return;
-        }
 
         let exported = ctx.current_scope_id() == ctx.scoping().root_scope_id()
             && (ctx.source_type().is_script() || {
@@ -106,7 +102,6 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         let Some(mut func_decl) = ctx.state.inline_function_declarations.remove(&symbol_id) else {
-            ctx.state.read_references.insert(symbol_id);
             return;
         };
         let current_scope_id = ctx.current_scope_id();
