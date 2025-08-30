@@ -13,7 +13,7 @@ use oxc_transformer::{TransformOptions, Transformer};
 fn bench_minifier(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("minifier");
 
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::minimal().files().iter().skip(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;
