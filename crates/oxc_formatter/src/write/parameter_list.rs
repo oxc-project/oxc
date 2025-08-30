@@ -116,7 +116,6 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
 
                 let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
                 let source_text = f.source_text();
-
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
                 } else {
