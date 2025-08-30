@@ -1,6 +1,5 @@
 use std::iter::{self, repeat_with};
 
-use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use rustc_hash::FxHashSet;
@@ -305,7 +304,7 @@ impl<'t> Mangler<'t> {
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
-        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
+        let mut slot_liveness: Vec<'_, Vec<'_, bool>> = Vec::new_in(temp_allocator);
         let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
 
         let mut reusable_slots = Vec::new_in(temp_allocator);
@@ -335,7 +334,9 @@ impl<'t> Mangler<'t> {
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
+                    .filter(|(_, slot_liveness)| {
+                        !slot_liveness.get(scope_id.index()).is_some_and(|b| *b)
+                    })
                     .map(|(slot, _)| slot)
                     .take(tmp_bindings.len()),
             );
@@ -346,8 +347,32 @@ impl<'t> Mangler<'t> {
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
-                slot_liveness
-                    .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
+                // pub fn resize_with<F>(&mut self, new_len: usize, f: F)
+                // where
+                //     F: FnMut() -> T,
+                // {
+                //     let len = self.len();
+                //     if new_len > len {
+                //         self.extend_trusted(iter::repeat_with(f).take(new_len - len));
+                //     } else {
+                //         self.truncate(new_len);
+                //     }
+                // }
+                let new_len = slot;
+                let len = slot_liveness.len();
+                if new_len > len {
+                    slot_liveness.extend(
+                        std::iter::repeat_with(|| {
+                            Vec::from_iter_in(
+                                std::iter::repeat_n(false, scoping.scopes_len()),
+                                temp_allocator,
+                            )
+                        })
+                        .take(new_len - len),
+                    );
+                } else {
+                    slot_liveness.truncate(new_len);
+                }
             }
 
             for (&symbol_id, assigned_slot) in
@@ -379,7 +404,9 @@ impl<'t> Mangler<'t> {
                     });
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
-                slot_liveness[assigned_slot].extend(lived_scope_ids.map(oxc_index::Idx::index));
+                for j in lived_scope_ids.map(oxc_index::Idx::index) {
+                    slot_liveness[assigned_slot][j] = true;
+                }
             }
         }
 
