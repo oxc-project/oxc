@@ -5,6 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware --silent no-floating-promises
 working directory: fixtures/tsgolint
 ----------
-Error running tsgolint: "Failed to spawn tsgolint from path `tsgolint`, with error: No such file or directory (os error 2)"----------
-CLI result: TsGoLintError
+
+Found 5 warnings and 11 errors.
+Finished in <variable>ms on 3 files using 1 threads.
+----------
+CLI result: LintFoundErrors
 ----------
