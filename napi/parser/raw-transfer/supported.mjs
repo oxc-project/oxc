@@ -1,6 +1,4 @@
-'use strict';
-
-import {rawTransferSupportedBinding} from 'bindings.mjs';
+import { rawTransferSupported as rawTransferSupportedBinding } from '../bindings.mjs';
 
 let rawTransferIsSupported = null;
 

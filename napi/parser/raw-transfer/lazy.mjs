@@ -1,11 +1,10 @@
-import { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } from './common.mjs';
-  import { TOKEN } from './lazy-common.mjs';
-  import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../generated/constants.mjs'
-  import { RawTransferData } from '../generated/lazy/constructors.mjs'
-  import {walkProgram} from '../generated/lazy/walk.mjs'
-  import { getVisitorsArr } from './visitor.mjs';
-  export { Visitor } from './visitor.mjs';
-
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../generated/constants.mjs';
+import { RawTransferData } from '../generated/lazy/constructors.mjs';
+import { walkProgram } from '../generated/lazy/walk.mjs';
+import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
+import { TOKEN } from './lazy-common.mjs';
+import { getVisitorsArr } from './visitor.mjs';
+export { Visitor } from './visitor.mjs';
 
 /**
  * Parse JS/TS source synchronously on current thread.

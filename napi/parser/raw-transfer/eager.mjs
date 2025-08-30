@@ -1,4 +1,4 @@
-import { parseSyncRawImpl, parseAsyncRawImpl, isJsAst, returnBufferToCache } from './common.mjs' ;
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
 
 /**
  * Parse JS/TS source synchronously on current thread, using raw transfer to speed up deserialization.

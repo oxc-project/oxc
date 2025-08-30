@@ -1,6 +1,4 @@
-'use strict';
-
-import { TOKEN, constructorError } from './lazy-common.mjs';
+import { constructorError, TOKEN } from './lazy-common.mjs';
 
 // Internal symbol to get `NodeArray` from a proxy wrapping a `NodeArray`.
 //

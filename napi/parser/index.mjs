@@ -8,8 +8,8 @@ export {
   ImportNameKind,
   ParseResult,
   Severity,
-} from './bindings.js';
-export { rawTransferSupported } from './raw-transfer/supported.js';
+} from './bindings.mjs';
+export { rawTransferSupported } from './raw-transfer/supported.mjs';
 
 // Lazily loaded as needed
 let parseSyncRaw = null,
