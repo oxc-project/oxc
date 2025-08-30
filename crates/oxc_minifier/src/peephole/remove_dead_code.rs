@@ -1,7 +1,10 @@
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
@@ -340,11 +343,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn keep_track_of_empty_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn keep_track_of_pure_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         match stmt {
             Statement::FunctionDeclaration(f) => {
                 if let Some(body) = &f.body {
-                    Self::try_save_empty_function(
+                    Self::try_save_pure_function(
                         f.id.as_ref(),
                         &f.params,
                         body,
@@ -359,7 +362,7 @@ impl<'a> PeepholeOptimizations {
                     if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
                         match &d.init {
                             Some(Expression::ArrowFunctionExpression(a)) => {
-                                Self::try_save_empty_function(
+                                Self::try_save_pure_function(
                                     Some(id),
                                     &a.params,
                                     &a.body,
@@ -370,7 +373,7 @@ impl<'a> PeepholeOptimizations {
                             }
                             Some(Expression::FunctionExpression(f)) => {
                                 if let Some(body) = &f.body {
-                                    Self::try_save_empty_function(
+                                    Self::try_save_pure_function(
                                         Some(id),
                                         &f.params,
                                         body,
@@ -389,7 +392,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_save_empty_function(
+    fn try_save_pure_function(
         id: Option<&BindingIdentifier<'a>>,
         params: &FormalParameters<'a>,
         body: &FunctionBody<'a>,
@@ -397,16 +400,22 @@ impl<'a> PeepholeOptimizations {
         generator: bool,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if !body.is_empty() || r#async || generator {
+        if r#async || generator {
             return;
         }
         // `function foo({}) {} foo(null)` is runtime type error.
         if !params.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) {
             return;
         }
+        if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
+            return;
+        }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-            ctx.state.empty_functions.insert(symbol_id);
+            ctx.state.pure_functions.insert(
+                symbol_id,
+                if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
+            );
         }
     }
 
@@ -415,7 +424,10 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = &e.callee {
             if let Some(reference_id) = ident.reference_id.get() {
                 if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                    if ctx.state.empty_functions.contains(&symbol_id) {
+                    if matches!(
+                        ctx.state.pure_functions.get(&symbol_id),
+                        Some(Some(ConstantValue::Undefined))
+                    ) {
                         let mut exprs =
                             Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                         if exprs.is_empty() {
