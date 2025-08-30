@@ -1620,8 +1620,8 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        // We can always reorder past primitive values
-        if replacement.is_literal_value(false, ctx) || target_expr.is_literal_value(false, ctx) {
+        // We can always reorder past literal values
+        if replacement.is_literal_value(true, ctx) || target_expr.is_literal_value(true, ctx) {
             return None;
         }
 

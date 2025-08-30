@@ -146,6 +146,14 @@ fn test_inline_single_use_variable() {
         "function wrapper() { let x = [0, 1, 2]; return foo.bar(x);}",
         "function wrapper() { return foo.bar([0, 1, 2]);}",
     );
+    test(
+        "function wrapper() { let x = () => { console.log() }; foo(x) }",
+        "function wrapper() { foo(() => { console.log() }) }",
+    );
+    test(
+        "function wrapper() { let x = function () { console.log() }; foo(x) }",
+        "function wrapper() { foo(function() { console.log() }) }",
+    );
 }
 
 #[test]
@@ -160,7 +168,7 @@ fn keep_exposed_variables() {
 fn keep_names() {
     test(
         "var x = function() {}; var y = x; console.log(y.name)",
-        "var y = function() {}; console.log(y.name)",
+        "console.log(function() {}.name)",
     );
     test_keep_names(
         "var x = function() {}; var y = x; console.log(y.name)",
@@ -172,7 +180,7 @@ fn keep_names() {
     );
     test_keep_names(
         "var x = function foo() {}; var y = x; console.log(y.name)",
-        "var y = function foo() {}; console.log(y.name)",
+        "console.log(function foo() {}.name)",
     );
 
     test(
