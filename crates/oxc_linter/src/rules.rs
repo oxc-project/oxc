@@ -114,6 +114,7 @@ mod eslint {
     pub mod no_lonely_if;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
+    pub mod no_misleading_character_class;
     pub mod no_multi_assign;
     pub mod no_multi_str;
     pub mod no_negated_condition;
@@ -710,6 +711,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_label_var,
     eslint::no_loss_of_precision,
     eslint::no_magic_numbers,
+    eslint::no_misleading_character_class,
     eslint::no_negated_condition,
     eslint::no_multi_str,
     eslint::no_new_func,

@@ -1,0 +1,902 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC4D]/
+   ·          ──────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC4D-\uffff]/
+   ·          ─────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /before[\uD83D\uDC4D]after/
+   ·          ─────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[before\uD83D\uDC4Dafter]/
+   ·          ─────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /\uDC4D[\uD83D\uDC4D]/
+   ·          ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]\a/
+   ·          ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /\a[👍]\a/
+   ·          ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /(?<=[👍])/
+   ·          ─────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /(?<=[👍])/
+   ·          ─────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[Á]/
+   ·          ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[Á]/u
+   ·          ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u0041\u0301]/
+   ·          ──────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u0041\u0301]/u
+   ·          ──────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{41}\u{301}]/u
+   ·          ───────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[❇️]/
+   ·          ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[❇️]/u
+   ·          ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u2747\uFE0F]/
+   ·          ──────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u2747\uFE0F]/u
+   ·          ──────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{2747}\u{FE0F}]/u
+   ·          ──────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👶🏻]/
+   ·          ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👶🏻]/u
+   ·          ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[a\uD83C\uDFFB]/u
+   ·          ───────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC76\uD83C\uDFFB]/u
+   ·          ──────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F476}\u{1F3FB}]/u
+   ·          ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/i
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/u
+   ·          ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83C\uDDEF\uD83C\uDDF5]/u
+   ·          ──────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F1EF}\u{1F1F5}]/u
+   ·          ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·          ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·          ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/u
+   ·          ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👩‍👦]/u
+   ·          ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👩‍👦][👩‍👦]/u
+   ·          ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·          ───────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·          ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
+   ·          ──────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·          ─────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69]/u
+   ·          ────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}]/u
+   ·          ────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·          ─────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[👍]", "")
+   ·                 ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp('[👍]', ``)
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶                             [👍]`)
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶                             [❇️]`)
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶             [❇️]`)
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:39]
+ 1 │ const flags = ""; var r = new RegExp("[👍]", flags)
+   ·                                       ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
+   ·                 ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
+   ·                 ───────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
+   ·                 ───────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("\t\t\t👍[👍]")
+   ·                 ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
+   ·                     ──────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\\u1234\\u5678👎[👍]")
+   ·                     ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\\u1234\\u5678👍[👍]")
+   ·                     ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]\\a", "")
+   ·                     ───────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                     ──────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                     ──────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[Á]", "")
+   ·                     ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[Á]", "u")
+   ·                     ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "")
+   ·                     ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "u")
+   ·                     ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{41}\\u{301}]", "u")
+   ·                     ─────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[❇️]", "")
+   ·                     ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[❇️]", "u")
+   ·                     ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f]", "")
+   ·             ──────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f]", "u")
+   ·             ──────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
+   ·             ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
+   ·                     ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "u")
+   ·                     ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{2747}\\u{FE0F}]", "u")
+   ·                     ────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👶🏻]", "")
+   ·                     ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👶🏻]", "u")
+   ·                     ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC76\\uD83C\\uDFFB]", "u")
+   ·                     ──────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F476}\\u{1F3FB}]", "u")
+   ·                     ──────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp(`            👍[👍]`)
+   ·                 ──────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp(`\t\t\t👍[👍]`)
+   ·                 ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "i")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp('[🇯🇵]', `i`)
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]",)
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "u")
+   ·                     ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83C\\uDDEF\\uD83C\\uDDF5]", "u")
+   ·                     ──────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u")
+   ·                     ──────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                     ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                     ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
+   ·                     ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👩‍👦]", "u")
+   ·                     ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
+   ·                     ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                     ───────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                     ────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
+   ·                     ──────────────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                     ──────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[❇️]", "")
+   ·                                ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[👶🏻]", "u")
+   ·                                ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
+   ·                                ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                ──────────────────────────────────────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\ud83d\u{dc4d}]/u
+   ·  ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\u{d83d}\udc4d]/u
+   ·  ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\u{d83d}\u{dc4d}]/u
+   ·  ──────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\uD83D\u{DC4d}]/u
+   ·  ────────────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/)
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/, 'i');
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/, 'g');
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  × Invalid Unicode escape sequence
+   ╭─[no_misleading_character_class.tsx:1:4]
+ 1 │ r#\"
+   ·    ─
+ 2 │ 
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ r#\"
+   ·  ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
+
+  × Invalid Unicode escape sequence
+   ╭─[no_misleading_character_class.tsx:1:4]
+ 1 │ r#\"
+   ·    ─
+ 2 │ 
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ r#\"
+   ·  ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
+
+  × Invalid Unicode escape sequence
+   ╭─[no_misleading_character_class.tsx:1:4]
+ 1 │ r#\"
+   ·    ─
+ 2 │ 
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ r#\"
+   ·  ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
+
+  × Invalid Unicode escape sequence
+   ╭─[no_misleading_character_class.tsx:1:4]
+ 1 │ r#\"
+   ·    ─
+ 2 │ 
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ r#\"
+   ·  ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[[👶🏻]]/v
+   ·          ────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[Á]/
+   ·  ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\\̶]/
+   ·  ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\n̅]/
+   ·  ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\👍]/
+   ·  ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\è]')
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\👍]')
+   ·         ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\\👍]')
+   ·         ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\❇️]')
+   ·         ────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-misleading-character-class): Should be an imperative statement about what is wrong
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
+   ·         ─────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
