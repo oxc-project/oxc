@@ -14,7 +14,27 @@ use crate::assert_unchecked;
 
 /// Extension trait for slice iterators.
 #[expect(private_bounds)]
-pub trait SliceIterExt: ExactSizeIterator + Sealed {
+pub trait SliceIterExt<'slice, T>: ExactSizeIterator + Sealed {
+    /// The type returned by `peek` method.
+    type Peeked<'iter>
+    where
+        'slice: 'iter,
+        Self: 'iter;
+
+    /// Peek the next item in the iterator, without advancing it.
+    fn peek(&self) -> Option<Self::Peeked<'_>>;
+
+    /// Get the next item in the iterator, without advancing it.
+    ///
+    /// If testing for a specific value, `peek` is more efficient.
+    /// `iter.peek() == Some(&b' ')` is less instructions than `iter.peek_copy() == Some(b' ')`.
+    /// <https://godbolt.org/z/a4TzsdY95>
+    ///
+    /// Only available when `T` is `Copy`.
+    fn peek_copy(&self) -> Option<T>
+    where
+        T: Copy;
+
     /// Get next item without checking that iterator is not empty.
     ///
     /// Equivalent to [`Iterator::next`] but does not check that iterator is not exhausted,
@@ -42,7 +62,34 @@ pub trait SliceIterExt: ExactSizeIterator + Sealed {
     unsafe fn advance_unchecked(&mut self, count: usize);
 }
 
-impl<'slice, T: 'slice> SliceIterExt for Iter<'slice, T> {
+impl<'slice, T: 'slice> SliceIterExt<'slice, T> for Iter<'slice, T> {
+    // `peek` method returns a reference which borrows the slice, not the iterator
+    type Peeked<'iter>
+        = &'slice T
+    where
+        'slice: 'iter;
+
+    /// Peek the next item in the iterator, without advancing it.
+    #[inline(always)]
+    fn peek(&self) -> Option<&'slice T> {
+        self.clone().next()
+    }
+
+    /// Get the next item in the iterator, without advancing it.
+    ///
+    /// If testing for a specific value, `peek` is more efficient.
+    /// `iter.peek() == Some(&b' ')` is less instructions than `iter.peek_copy() == Some(b' ')`.
+    /// <https://godbolt.org/z/a4TzsdY95>
+    ///
+    /// Only available when `T` is `Copy`.
+    #[inline]
+    fn peek_copy(&self) -> Option<T>
+    where
+        T: Copy,
+    {
+        self.peek().copied()
+    }
+
     /// Get next item without checking that iterator is not empty.
     ///
     /// Equivalent to [`Iterator::next`] but does not check that iterator is not exhausted,
@@ -71,7 +118,34 @@ impl<'slice, T: 'slice> SliceIterExt for Iter<'slice, T> {
     }
 }
 
-impl<'slice, T: 'slice> SliceIterExt for IterMut<'slice, T> {
+impl<'slice, T: 'slice> SliceIterExt<'slice, T> for IterMut<'slice, T> {
+    // `peek` method returns a reference which borrows the iterator
+    type Peeked<'iter>
+        = &'iter T
+    where
+        'slice: 'iter;
+
+    /// Peek the next item in the iterator, without advancing it.
+    #[inline(always)]
+    fn peek(&self) -> Option<&T> {
+        self.as_slice().first()
+    }
+
+    /// Get the next item in the iterator, without advancing it.
+    ///
+    /// If testing for a specific value, `peek` is more efficient.
+    /// `iter.peek() == Some(&b' ')` is less instructions than `iter.peek_copy() == Some(b' ')`.
+    /// <https://godbolt.org/z/a4TzsdY95>
+    ///
+    /// Only available when `T` is `Copy`.
+    #[inline]
+    fn peek_copy(&self) -> Option<T>
+    where
+        T: Copy,
+    {
+        self.peek().copied()
+    }
+
     /// Get next item without checking that iterator is not empty.
     ///
     /// Equivalent to [`Iterator::next`] but does not check that iterator is not exhausted,
@@ -117,6 +191,46 @@ impl<'slice, T: 'slice> Sealed for IterMut<'slice, T> {}
 #[cfg(test)]
 mod test_iter {
     use super::*;
+
+    #[test]
+    fn peek() {
+        let mut iter = [11, 22, 33].iter();
+        assert_eq!(iter.peek(), Some(&11));
+        assert_eq!(iter.peek(), Some(&11));
+        let first = iter.peek();
+
+        iter.next();
+        assert_eq!(iter.peek(), Some(&22));
+        let second = iter.peek();
+
+        iter.next();
+        assert_eq!(iter.peek(), Some(&33));
+        let third = iter.peek();
+
+        iter.next();
+        assert_eq!(iter.peek(), None);
+
+        // Check peeked values don't borrow iterator
+        assert_eq!(first, Some(&11));
+        assert_eq!(second, Some(&22));
+        assert_eq!(third, Some(&33));
+    }
+
+    #[test]
+    fn peek_copy() {
+        let mut iter = [11, 22, 33].iter();
+        assert_eq!(iter.peek_copy(), Some(11));
+        assert_eq!(iter.peek_copy(), Some(11));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), Some(22));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), Some(33));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), None);
+    }
 
     #[test]
     fn next_unchecked() {
@@ -191,6 +305,42 @@ mod test_iter {
 #[cfg(test)]
 mod test_iter_mut {
     use super::*;
+
+    #[test]
+    fn peek() {
+        let mut arr = [11, 22, 33];
+        let mut iter = arr.iter_mut();
+
+        assert_eq!(iter.peek(), Some(&11));
+        assert_eq!(iter.peek(), Some(&11));
+
+        iter.next();
+        assert_eq!(iter.peek(), Some(&22));
+
+        iter.next();
+        assert_eq!(iter.peek(), Some(&33));
+
+        iter.next();
+        assert_eq!(iter.peek(), None);
+    }
+
+    #[test]
+    fn peek_copy() {
+        let mut arr = [11, 22, 33];
+        let mut iter = arr.iter_mut();
+
+        assert_eq!(iter.peek_copy(), Some(11));
+        assert_eq!(iter.peek_copy(), Some(11));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), Some(22));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), Some(33));
+
+        iter.next();
+        assert_eq!(iter.peek_copy(), None);
+    }
 
     #[test]
     fn next_unchecked() {
