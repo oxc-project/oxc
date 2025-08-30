@@ -163,8 +163,17 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         if self.serializer.ranges() {
             self.serialize_field("range", &range);
         }
-        // TODO: Implement loc serialization when translation table is available
-        // This will be implemented when we update the Program serializer
+        if self.serializer.loc() {
+            // Since we don't have line/column info here, use a placeholder SourceLocation.
+            // Consumers should use serialize_span_with_loc when loc info is available.
+            self.serialize_field(
+                "loc",
+                &SourceLocation {
+                    start: (0, 0),
+                    end: (0, 0),
+                },
+            );
+        }
     }
 
     /// Serialize `Span` with line/column information.
