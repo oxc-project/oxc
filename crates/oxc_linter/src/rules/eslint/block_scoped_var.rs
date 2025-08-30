@@ -1,15 +1,16 @@
-use oxc_ast::{AstKind, ast::VariableDeclarationKind};
+use crate::{AstNode, context::LintContext, rule::Rule};
+use oxc_ast::{AstKind, ast::BindingPattern, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::scope::ScopeId;
+use oxc_syntax::symbol::SymbolId;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
-
-fn redeclaration_diagnostic(decl_span: Span, redecl_span: Span, name: &str) -> OxcDiagnostic {
+fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is used outside of binding context."))
         .with_help(format!("Variable '{name}' is used outside its declaration block. Declare it outside the block or use 'let'/'const'."))
         .with_labels([
-            redecl_span.label("it is redeclared here"),
+            redeclare_span.label("it is redeclared here"),
             decl_span.label(format!("'{name}' is first declared here")),
         ])
 }
@@ -28,41 +29,180 @@ pub struct BlockScopedVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Generates warnings when variables are used outside of the block in which they were defined.
-    /// This emulates C-style block scope.
+    /// Enforces that variables are both **declared** and **used** within the same block scope.
+    /// This rule prevents accidental use of variables outside their intended block, mimicking C-style block scoping in JavaScript.
     ///
     /// ### Why is this bad?
     ///
-    /// This rule aims to reduce the usage of variables outside of their binding context
-    /// and emulate traditional block scope from other languages.
-    /// This is to help newcomers to the language avoid difficult bugs with variable hoisting.
+    /// JavaScript’s `var` declarations are hoisted to the top of their enclosing function, which can cause variables declared in a block (e.g., inside an `if` or `for`) to be accessible outside of it.
+    /// This can lead to hard-to-find bugs.
+    /// By enforcing block scoping, this rule helps avoid hoisting issues and aligns more closely with how other languages treat block variables.
+    ///
+    /// ### Options
+    ///
+    /// No options available for this rule.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
+    /// /* block-scoped-var: "error" */
+    ///
+    /// /* ✘ Bad: */
     /// function doIf() {
     ///     if (true) {
     ///         var build = true;
     ///     }
     ///     console.log(build);
     /// }
+    ///
+    /// /* ✘ Bad: */
+    /// function doLoop() {
+    ///     for (var i = 0; i < 10; i++) {
+    ///         // do something
+    ///     }
+    ///     console.log(i); // i is accessible here
+    /// }
+    ///
+    /// /* ✘ Bad: */
+    /// function doSomething() {
+    ///     if (true) {
+    ///         var foo = 1;
+    ///     }
+    ///     if (false) {
+    ///         foo = 2;
+    ///     }
+    /// }
+    ///
+    /// /* ✘ Bad: */
+    /// function doTry() {
+    ///     try {
+    ///         var foo = 1;
+    ///     } catch (e) {
+    ///         console.log(foo);
+    ///     }
+    /// }
+    ///
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
+    /// /* block-scoped-var: "error" */
+    ///
+    /// /* ✔ Good: */
     /// function doIf() {
     ///     var build;
     ///     if (true) {
     ///         build = true;
-    ///    }
+    ///     }
     ///     console.log(build);
+    /// }
+    ///
+    /// /* ✔ Good: */
+    /// function doLoop() {
+    ///     var i;
+    ///     for (i = 0; i < 10; i++) {
+    ///         // do something
+    ///     }
+    ///     console.log(i);
+    /// }
+    ///
+    /// /* ✔ Good: */
+    /// function doSomething() {
+    ///     var foo;
+    ///     if (true) {
+    ///         foo = 1;
+    ///     }
+    ///     if (false) {
+    ///         foo = 2;
+    ///     }
+    /// }
+    ///
+    /// /* ✔ Good: */
+    /// function doTry() {
+    ///     var foo;
+    ///     try {
+    ///         foo = 1;
+    ///     } catch (e) {
+    ///         console.log(foo);
+    ///     }
     /// }
     /// ```
     BlockScopedVar,
     eslint,
     suspicious,
 );
+
+impl BlockScopedVar {
+    fn run_for_all_references(
+        &self,
+        (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+        scope_ids: &[ScopeId],
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        ctx.scoping()
+            .get_resolved_references(*symbol)
+            .filter(|reference| {
+                let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
+
+                reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
+            })
+            .for_each(|reference| {
+                ctx.diagnostic(use_outside_scope_diagnostic(
+                    pattern.span(),
+                    ctx.reference_span(reference),
+                    name,
+                ));
+            });
+    }
+
+    fn run_for_all_redeclarations(
+        &self,
+        (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+        scope_ids: &[ScopeId],
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        ctx.scoping()
+            .symbol_redeclarations(*symbol)
+            .iter()
+            .filter(|redeclaration| {
+                let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
+
+                redeclare_scope_id != node.scope_id() && !scope_ids.contains(&redeclare_scope_id)
+            })
+            .for_each(|redeclaration| {
+                ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
+            });
+    }
+
+    fn run_for_declaration(
+        &self,
+        pattern: &BindingPattern,
+        scope_ids: &[ScopeId],
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        // e.g. "var [a, b] = [1, 2]"
+        for ident in pattern.get_binding_identifiers() {
+            let name = ident.name.as_str();
+            let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
+                continue;
+            };
+
+            let binding = (pattern, name, &symbol);
+
+            // e.g. "if (true) { var a = 4; } else { var a = 4; }"
+            // in this case we can't find the reference of 'a' by call `get_resolved_references`
+            // so I use `symbol_redeclarations` to find all the redeclarations
+            self.run_for_all_redeclarations(binding, scope_ids, node, ctx);
+
+            // e.g. "var a = 4; console.log(a);"
+            self.run_for_all_references(binding, scope_ids, node, ctx);
+        }
+    }
+}
 
 impl Rule for BlockScopedVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -72,50 +212,16 @@ impl Rule for BlockScopedVar {
         if decl.kind != VariableDeclarationKind::Var {
             return;
         }
-        let cur_node_scope_id = node.scope_id();
-        if !ctx.scoping().scope_flags(cur_node_scope_id).is_strict_mode() {
+        let scope_id = node.scope_id();
+        if !ctx.scoping().scope_flags(scope_id).is_strict_mode() {
             return;
         }
-        // `scope_arr` contains all the scopes that are children of the current scope
+        // `scope_ids` contains all the scopes that are children of the current scope
         // we should eliminate all of them
-        let scope_arr = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
+        let scope_ids = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
 
-        let declarations = &decl.declarations;
-        for item in declarations {
-            let id = &item.id;
-            // e.g. "var [a, b] = [1, 2]"
-            for ident in id.get_binding_identifiers() {
-                let name = ident.name.as_str();
-                let Some(symbol_id) = ctx.scoping().find_binding(node.scope_id(), name) else {
-                    continue;
-                };
-                // e.g. "if (true} { var a = 4; } else { var a = 4; }"
-                // in this case we can't find the reference of 'a' by call `get_resolved_references`
-                // so i use `symbol_redeclarations` to find all the redeclarations
-                for redeclaration in ctx.scoping().symbol_redeclarations(symbol_id) {
-                    let re_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
-                    if !scope_arr.contains(&re_scope_id) && re_scope_id != cur_node_scope_id {
-                        ctx.diagnostic(redeclaration_diagnostic(
-                            item.id.span(),
-                            redeclaration.span,
-                            name,
-                        ));
-                    }
-                }
-                // e.g. "var a = 4; console.log(a);"
-                for reference in ctx.scoping().get_resolved_references(symbol_id) {
-                    let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
-                    if !scope_arr.contains(&reference_scope_id)
-                        && reference_scope_id != cur_node_scope_id
-                    {
-                        ctx.diagnostic(use_outside_scope_diagnostic(
-                            item.id.span(),
-                            ctx.reference_span(reference),
-                            name,
-                        ));
-                    }
-                }
-            }
+        for item in &decl.declarations {
+            self.run_for_declaration(&item.id, &scope_ids, node, ctx);
         }
     }
 }
