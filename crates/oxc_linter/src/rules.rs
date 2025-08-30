@@ -159,6 +159,7 @@ mod eslint {
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
+    pub mod no_useless_computed_key;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
     pub mod no_useless_escape;
@@ -650,6 +651,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
     eslint::no_alert,
