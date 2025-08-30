@@ -311,12 +311,12 @@ fn test() {
         ("foo.every(() => { return true; })", None),
         ("foo.every(function() { if (a) return true; else return false; })", None),
         ("foo.every(function() { switch (a) { case 0: bar(); default: return true; } })", None),
-        ("foo.every(function() { switch (a) { default: case0: return true; } })", None),
         (
             "foo.every(function() { try { bar(); return true; } catch (err) { return false; } })",
             None,
         ),
         ("foo.every(function() { try { bar(); } finally { return true; } })", None),
+        ("foo.every(function() { switch (a) { default: case0: return true; } })", None),
         (
             "Array.from(x, function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true}])),
