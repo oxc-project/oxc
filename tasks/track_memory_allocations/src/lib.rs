@@ -1,7 +1,6 @@
 #![expect(clippy::print_stdout)]
 
 use std::{
-    fmt::Write as _,
     fs::File,
     io::{self, Write},
 };
@@ -96,6 +95,21 @@ unsafe impl GlobalAlloc for TrackedAllocator {
     }
 }
 
+/// Stores all of the memory allocation stats that will be printed for each file.
+#[derive(Debug)]
+struct AllocatorStats {
+    /// Number of allocations made by system allocator
+    sys_allocs: usize,
+    /// Number of reallocations made by system allocator
+    sys_reallocs: usize,
+    /// Number of allocations made by arena/bump allocator
+    arena_allocs: usize,
+    /// Number of reallocations made by arena/bump allocator
+    arena_reallocs: usize,
+    /// Number of bytes used in the arena/bump allocator
+    arena_bytes: usize,
+}
+
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
@@ -106,27 +120,15 @@ fn test() {
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
     let files = TestFiles::complicated();
-    let snap_path = project_root().join("tasks/track_memory_allocations/allocs_parser.snap");
-
-    let mut out = String::new();
-
+    // Width of each column in the output table
     let width = 14;
+    // Width of the longest file name, used for formatting the first column
     let fixture_width = files.files().iter().map(|file| file.file_name.len()).max().unwrap();
-    writeln!(
-        out,
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} ",
-        "File",
-        "File size",
-        "Sys allocs",
-        "Sys reallocs",
-        "Arena allocs",
-        "Arena reallocs",
-        "Arena bytes",
-        width = width,
-    )
-    .unwrap();
-    out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
-    out.push('\n');
+
+    // Table header, which should be same for each file
+    let table_header = format_table_header(fixture_width, width);
+
+    let mut parser_out = table_header;
 
     let mut allocator = Allocator::default();
 
@@ -145,34 +147,76 @@ pub fn run() -> Result<(), io::Error> {
 
         Parser::new(&allocator, &file.source_text, file.source_type).with_options(options).parse();
 
-        let sys_allocs = NUM_ALLOC.get();
-        let sys_reallocs = NUM_REALLOC.get();
-        #[cfg(not(feature = "is_all_features"))]
-        let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
-        #[cfg(feature = "is_all_features")]
-        let (arena_allocs, arena_reallocs) = (0, 0);
-        let arena_bytes = allocator.used_bytes();
+        let parser_stats = record_stats(&allocator);
 
-        let s = format!(
-            // Using two newlines at the end makes it easier to diff
-            "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$}\n\n",
+        parser_out.push_str(&format_table_row(
             file.file_name.as_str(),
-            format_size(file.source_text.len(), DECIMAL),
-            sys_allocs,
-            sys_reallocs,
-            arena_allocs,
-            arena_reallocs,
-            format_size(arena_bytes, DECIMAL.decimal_places(3)),
-            width = width
-        );
-        out.push_str(&s);
+            file.source_text.len(),
+            &parser_stats,
+            fixture_width,
+            width,
+        ));
     }
 
-    println!("{out}");
+    println!("{parser_out}");
 
-    let mut snapshot = File::create(snap_path)?;
-    snapshot.write_all(out.as_bytes())?;
+    let mut snapshot =
+        File::create(project_root().join("tasks/track_memory_allocations/allocs_parser.snap"))?;
+    snapshot.write_all(parser_out.as_bytes())?;
     snapshot.flush()?;
 
     Ok(())
+}
+
+/// Record current allocation stats from both system allocator and arena allocator.
+fn record_stats(allocator: &Allocator) -> AllocatorStats {
+    let sys_allocs = NUM_ALLOC.get();
+    let sys_reallocs = NUM_REALLOC.get();
+    #[cfg(not(feature = "is_all_features"))]
+    let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
+    #[cfg(feature = "is_all_features")]
+    let (arena_allocs, arena_reallocs) = (0, 0);
+    let arena_bytes = allocator.used_bytes();
+
+    AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs, arena_bytes }
+}
+
+/// Formats a single row of the allocator stats table
+fn format_table_row(
+    file_name: &str,
+    file_size: usize,
+    stats: &AllocatorStats,
+    fixture_width: usize,
+    width: usize,
+) -> String {
+    format!(
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$}\n\n",
+        file_name,
+        format_size(file_size, DECIMAL),
+        stats.sys_allocs,
+        stats.sys_reallocs,
+        stats.arena_allocs,
+        stats.arena_reallocs,
+        format_size(stats.arena_bytes, DECIMAL.decimal_places(3)),
+        fixture_width = fixture_width,
+        width = width
+    )
+}
+
+fn format_table_header(fixture_width: usize, width: usize) -> String {
+    let mut out = format!(
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$} \n",
+        "File",
+        "File size",
+        "Sys allocs",
+        "Sys reallocs",
+        "Arena allocs",
+        "Arena reallocs",
+        "Arena bytes",
+        fixture_width = fixture_width,
+        width = width
+    );
+    out.push_str(&str::repeat("-", width * 7 + fixture_width + 15));
+    out.push('\n');
+    out
 }
