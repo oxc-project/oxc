@@ -754,7 +754,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     }
 }
 
-
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     let parent = match binary_like.parent() {
         // Fast path: these parent types always require parentheses
