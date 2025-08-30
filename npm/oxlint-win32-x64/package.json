@@ -1,0 +1,1 @@
+{"name":"@oxlint/win32-x64","version":"1.13.0","author":"Boshen and oxc contributors","license":"MIT","homepage":"https://oxc.rs","bugs":"https://github.com/oxc-project/oxc/issues","repository":{"type":"git","url":"git+https://github.com/oxc-project/oxc","directory":"npm/oxlint"},"os":["win32"],"cpu":["x64"],"publishConfig":{"executableFiles":["oxlint","oxc_language_server"]}}
