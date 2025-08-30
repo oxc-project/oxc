@@ -46,7 +46,7 @@ impl Codegen<'_> {
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
         let mut state = PrintStringState {
-            chunk_start: bytes.as_slice().as_ptr(),
+            chunk_start: bytes.ptr(),
             bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
@@ -139,7 +139,7 @@ impl PrintStringState<'_> {
     /// Set the start of next chunk to be current position of `bytes` iterator.
     #[inline]
     fn start_chunk(&mut self) {
-        self.chunk_start = self.bytes.as_slice().as_ptr();
+        self.chunk_start = self.bytes.ptr();
     }
 
     /// Flush current chunk to buffer, consume 1 byte, and start next chunk after that byte.
@@ -183,7 +183,7 @@ impl PrintStringState<'_> {
         // SAFETY: `chunk_start` is pointer to current position of `bytes` iterator at some point,
         // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
         let len = unsafe {
-            let bytes_ptr = self.bytes.as_slice().as_ptr();
+            let bytes_ptr = self.bytes.ptr();
             bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
