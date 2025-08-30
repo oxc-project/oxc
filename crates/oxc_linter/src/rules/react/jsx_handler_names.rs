@@ -12,13 +12,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
-fn bad_handler_name_diagnostic(
-    span: Span,
-    prop_key: &str,
-    handler_name: &str,
-    handler_prefix: &str,
-) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Invalid handler name: {handler_name}"))
+fn bad_handler_name_diagnostic(span: Span, prop_key: &str, handler_prefix: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Bad handler name")
         .with_help(format!(
             "Handler function for {prop_key} prop key must be a camelCase name beginning with \'{handler_prefix}\' only"
         ))
@@ -27,11 +22,10 @@ fn bad_handler_name_diagnostic(
 
 fn bad_handler_prop_name_diagnostic(
     span: Span,
-    prop_key: &str,
     prop_value: &str,
     handler_prop_prefix: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Invalid handler prop name: {prop_key}"))
+    OxcDiagnostic::warn("Bad handler prop name")
         .with_help(format!("Prop key for {prop_value} must begin with \'{handler_prop_prefix}\'"))
         .with_label(span)
 }
@@ -302,19 +296,17 @@ impl Rule for JsxHandlerNames {
             .map_or(Some(false), |v| self.event_handler_regex.as_ref().map(|r| r.is_match(v)));
 
         match (prop_value, prop_is_event_handler, is_handler_name_correct) {
-            (Some(value), Some(true), Some(false)) => {
+            (_, Some(true), Some(false)) => {
                 ctx.diagnostic(bad_handler_name_diagnostic(
                     expression_container.span,
                     prop_key,
-                    &value,
                     &self.event_handler_prefixes,
                 ));
             }
             (Some(value), Some(false), Some(true)) => {
                 ctx.diagnostic(bad_handler_prop_name_diagnostic(
                     prop_span,
-                    prop_key,
-                    &value,
+                    value.as_str(),
                     &self.event_handler_prop_prefixes,
                 ));
             }
@@ -396,6 +388,9 @@ fn test_normalize_handler_name() {
 fn extract_callee_name_from_arrow_function<'a>(
     arrow_function: &'a ArrowFunctionExpression<'a>,
 ) -> Option<&'a str> {
+    if !arrow_function.expression {
+        return None;
+    }
     let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
         return None;
     };
@@ -453,6 +448,12 @@ fn test() {
         (
             "<TestComponent onChange={() => handleChange()} />",
             Some(serde_json::json!([{ "checkInlineFunction": true, "checkLocalVariables": true }])),
+        ),
+        (
+            "<TestComponent onChange={() => { handleChange() }} />",
+            Some(
+                serde_json::json!([{ "checkInlineFunction": true, "checkLocalVariables": false }]),
+            ),
         ),
         (
             "<TestComponent onChange={() => this.handleChange()} />",
@@ -563,6 +564,10 @@ fn test() {
         ),
         (
             "<TestComponent whenChange={() => handleChange()} />",
+            Some(serde_json::json!([{ "checkInlineFunction": true, "checkLocalVariables": true }])),
+        ),
+        (
+            "<TestComponent onChange={() => { handleChange() }} />",
             Some(serde_json::json!([{ "checkInlineFunction": true, "checkLocalVariables": true }])),
         ),
         (
