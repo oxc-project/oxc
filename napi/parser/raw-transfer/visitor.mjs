@@ -1,10 +1,10 @@
 'use strict';
 
-const {
+import {
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
   LEAF_NODE_TYPES_COUNT,
-} = require('../generated/lazy/types.js');
+} from '../generated/lazy/types.mjs';
 
 // Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
 let getVisitorsArr;

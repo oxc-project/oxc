@@ -1,13 +1,11 @@
-'use strict';
+import { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } from './common.mjs';
+  import { TOKEN } from './lazy-common.mjs';
+  import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../generated/constants.mjs'
+  import { RawTransferData } from '../generated/lazy/constructors.mjs'
+  import {walkProgram} from '../generated/lazy/walk.mjs'
+  import { getVisitorsArr } from './visitor.mjs';
+  export { Visitor } from './visitor.mjs';
 
-const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./common.js'),
-  { TOKEN } = require('./lazy-common.js'),
-  { DATA_POINTER_POS_32, PROGRAM_OFFSET } = require('../generated/constants.js'),
-  { RawTransferData } = require('../generated/lazy/constructors.js'),
-  walkProgram = require('../generated/lazy/walk.js'),
-  { Visitor, getVisitorsArr } = require('./visitor.js');
-
-module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
 
 /**
  * Parse JS/TS source synchronously on current thread.
@@ -32,7 +30,7 @@ module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-function parseSyncLazy(filename, sourceText, options) {
+export function parseSyncLazy(filename, sourceText, options) {
   let _;
   ({ experimentalLazy: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, construct);
@@ -65,7 +63,7 @@ function parseSyncLazy(filename, sourceText, options) {
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-function parseAsyncLazy(filename, sourceText, options) {
+export function parseAsyncLazy(filename, sourceText, options) {
   let _;
   ({ experimentalLazy: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, construct);

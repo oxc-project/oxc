@@ -1,15 +1,13 @@
-'use strict';
-
-const os = require('node:os');
-const rawTransferSupported = require('./supported.js');
-const {
-  parseSyncRaw: parseSyncRawBinding,
-  parseAsyncRaw: parseAsyncRawBinding,
+import os from 'node:os';
+import { rawTransferSupported } from './supported.mjs';
+import {
+  parseSyncRaw as parseSyncRawBinding,
+  parseAsyncRaw as parseAsyncRawBinding,
   getBufferOffset,
-} = require('../bindings.js');
-const { BUFFER_SIZE, BUFFER_ALIGN, IS_TS_FLAG_POS } = require('../generated/constants.js');
+} from '../bindings.mjs';
+import { BUFFER_SIZE, BUFFER_ALIGN, IS_TS_FLAG_POS } from '../generated/constants.js';
 
-module.exports = {
+export {
   parseSyncRawImpl,
   parseAsyncRawImpl,
   prepareRaw,
