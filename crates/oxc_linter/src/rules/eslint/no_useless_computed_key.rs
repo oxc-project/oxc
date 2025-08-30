@@ -20,9 +20,7 @@ pub struct NoUselessComputedKey {
 
 impl Default for NoUselessComputedKey {
     fn default() -> Self {
-        Self {
-            enforce_for_class_members: true,
-        }
+        Self { enforce_for_class_members: true }
     }
 }
 
