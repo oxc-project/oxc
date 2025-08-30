@@ -42,7 +42,7 @@ pub trait SliceIterExt: ExactSizeIterator + Sealed {
     unsafe fn advance_unchecked(&mut self, count: usize);
 }
 
-impl<'a, T: 'a> SliceIterExt for Iter<'a, T> {
+impl<'slice, T: 'slice> SliceIterExt for Iter<'slice, T> {
     /// Get next item without checking that iterator is not empty.
     ///
     /// Equivalent to [`Iterator::next`] but does not check that iterator is not exhausted,
@@ -51,7 +51,7 @@ impl<'a, T: 'a> SliceIterExt for Iter<'a, T> {
     /// # SAFETY
     /// Iterator must not be empty.
     #[inline(always)]
-    unsafe fn next_unchecked(&mut self) -> &'a T {
+    unsafe fn next_unchecked(&mut self) -> &'slice T {
         // Unchecked assertion removes the bounds check in `unwrap`.
         // SAFETY: Caller guarantees iterator is not empty.
         unsafe { assert_unchecked!(self.len() != 0) };
@@ -71,7 +71,7 @@ impl<'a, T: 'a> SliceIterExt for Iter<'a, T> {
     }
 }
 
-impl<'a, T: 'a> SliceIterExt for IterMut<'a, T> {
+impl<'slice, T: 'slice> SliceIterExt for IterMut<'slice, T> {
     /// Get next item without checking that iterator is not empty.
     ///
     /// Equivalent to [`Iterator::next`] but does not check that iterator is not exhausted,
@@ -80,7 +80,7 @@ impl<'a, T: 'a> SliceIterExt for IterMut<'a, T> {
     /// # SAFETY
     /// Iterator must not be empty.
     #[inline(always)]
-    unsafe fn next_unchecked(&mut self) -> &'a mut T {
+    unsafe fn next_unchecked(&mut self) -> &'slice mut T {
         // Unchecked assertion removes the bounds check in `unwrap`.
         // SAFETY: Caller guarantees iterator is not empty.
         unsafe { assert_unchecked!(self.len() != 0) };
@@ -110,9 +110,9 @@ impl<'a, T: 'a> SliceIterExt for IterMut<'a, T> {
 /// `SliceIterExt` on other types.
 trait Sealed {}
 
-impl<'a, T: 'a> Sealed for Iter<'a, T> {}
+impl<'slice, T: 'slice> Sealed for Iter<'slice, T> {}
 
-impl<'a, T: 'a> Sealed for IterMut<'a, T> {}
+impl<'slice, T: 'slice> Sealed for IterMut<'slice, T> {}
 
 #[cfg(test)]
 mod test_iter {
