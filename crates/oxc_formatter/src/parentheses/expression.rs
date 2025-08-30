@@ -121,6 +121,28 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
+                // Check if this identifier is in a member expression context first
+                match self.parent {
+                    AstNodes::ComputedMemberExpression(member) => {
+                        // If 'let' is the object of a computed member expression, don't add parentheses
+                        return member.object.span() == self.span();
+                    }
+                    AstNodes::StaticMemberExpression(member) => {
+                        // If 'let' is the object of a static member expression, don't add parentheses
+                        return member.object.span() == self.span();
+                    }
+                    AstNodes::AssignmentExpression(assignment) => {
+                        // If 'let' is the left side of an assignment, don't add parentheses
+                        return assignment.left.span() == self.span();
+                    }
+                    AstNodes::VariableDeclarator(declarator) => {
+                        // If 'let' is the binding in a variable declarator, don't add parentheses
+                        return declarator.id.span() == self.span();
+                    }
+                    _ => {}
+                }
+
+                // Check the for-of context
                 let mut parent = self.parent;
                 loop {
                     match parent {
@@ -131,7 +153,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                         _ => parent = parent.parent(),
                     }
                 }
-                unreachable!()
             }
             _ => false,
         }
@@ -733,36 +754,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        // Keywords like 'let' should not get parentheses in member expressions
-        // This prevents cases like `(let)[a]` when it should be `let[a]`
-        if self.name == "let" {
-            // Check if this identifier is in a member expression context
-            match self.parent {
-                AstNodes::ComputedMemberExpression(member) => {
-                    // If 'let' is the object of a computed member expression, don't add parentheses
-                    member.object.span() == self.span()
-                }
-                AstNodes::StaticMemberExpression(member) => {
-                    // If 'let' is the object of a static member expression, don't add parentheses
-                    member.object.span() == self.span()
-                }
-                AstNodes::AssignmentExpression(assignment) => {
-                    // If 'let' is the left side of an assignment, don't add parentheses
-                    assignment.left.span() == self.span()
-                }
-                AstNodes::VariableDeclarator(declarator) => {
-                    // If 'let' is the binding in a variable declarator, don't add parentheses
-                    declarator.id.span() == self.span()
-                }
-                _ => false,
-            }
-        } else {
-            false
-        }
-    }
-}
 
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     let parent = match binary_like.parent() {
@@ -1027,7 +1018,7 @@ fn is_class_extends(parent: &AstNodes<'_>, span: Span) -> bool {
 }
 
 fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_>) -> bool {
-    if is_class_extends(span, parent) {
+    if is_class_extends(parent, span) {
         return true;
     }
 

@@ -158,7 +158,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                 }
             }
             AstNodes::ConditionalExpression(conditional) => !matches!(
-                conditional.parent(),
+                conditional.parent,
                 AstNodes::ReturnStatement(_)
                     | AstNodes::ThrowStatement(_)
                     | AstNodes::CallExpression(_)
