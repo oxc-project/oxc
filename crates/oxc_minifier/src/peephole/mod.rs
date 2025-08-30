@@ -125,6 +125,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         }
     }
 
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = &mut Ctx::new(ctx);
+        Self::inline_function_declarations(stmts, ctx);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
         Self::minimize_statements(stmts, ctx);

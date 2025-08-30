@@ -219,10 +219,9 @@ fn integration() {
     ",
         "
         export function foo() {
-                return bar([...arguments]);
-        }
-        function bar(args) {
+            return function(args) {
                 return args.concat(0);
+            }([...arguments]);
         }
     ",
     );
