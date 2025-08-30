@@ -248,16 +248,16 @@ impl PrintStringState<'_> {
         // 2. Double quote
         // 3. Single quote
         #[rustfmt::skip]
-        let quote = if double_cost >= backtick_cost {
-            if backtick_cost > single_cost {
-                Quote::Single
-            } else {
+        let quote = if backtick_cost <= double_cost {
+            if backtick_cost <= single_cost {
                 Quote::Backtick
+            } else {
+                Quote::Single
             }
-        } else if double_cost > single_cost {
-            Quote::Single
-        } else {
+        } else if double_cost <= single_cost {
             Quote::Double
+        } else {
+            Quote::Single
         };
         quote
     }
