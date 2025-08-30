@@ -18,6 +18,8 @@
 //!
 //! * `pool` - Enables [`AllocatorPool`].
 //!
+//! * `bitset` - Enables [`BitSet`].
+//!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
@@ -43,6 +45,8 @@ mod address;
 mod alloc;
 mod allocator;
 mod allocator_api2;
+#[cfg(feature = "bitset")]
+mod bitset;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -59,6 +63,8 @@ mod vec2;
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress};
 pub use allocator::Allocator;
+#[cfg(feature = "bitset")]
+pub use bitset::BitSet;
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};

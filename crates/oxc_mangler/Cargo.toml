@@ -21,7 +21,7 @@ test = true
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
+oxc_allocator = { workspace = true, features = ["bitset"] }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["inline_string"] }
 oxc_index = { workspace = true }
