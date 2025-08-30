@@ -22,7 +22,7 @@ use crate::{Allocator, Box, Vec};
 /// Implementations of this trait on non-allocated items usually short-circuit to `Clone::clone`;
 /// However, it **isn't** guaranteed.
 ///
-pub trait CloneIn<'new_alloc>: Sized {
+pub trait CloneIn<'new_alloc> {
     /// The type of the cloned object.
     ///
     /// This should always be `Self` with a different lifetime.
