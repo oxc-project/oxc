@@ -306,6 +306,8 @@ jobs:
               - 'crates/oxc_ast/**'
               - 'crates/oxc_data_structures/**'
               - 'crates/oxc_parser/**'
+              - 'crates/oxc_minifier/**'
+              - 'crates/oxc_mangler/**'
               - 'crates/oxc_allocator/**'
               - 'tasks/allocs/**'
 
