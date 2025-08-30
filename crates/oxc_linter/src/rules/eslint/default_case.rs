@@ -87,7 +87,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// #### commentPattern
+    /// #### `commentPattern`
     ///
     /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
