@@ -5,7 +5,7 @@
 //! See [`SliceIterExt`] and [`SliceIterMutExt`].
 
 // All methods boil down to just a few instructions.
-// https://godbolt.org/z/779nYjq9d
+// https://godbolt.org/z/KrsTz9478
 #![expect(clippy::inline_always)]
 
 use std::{
@@ -133,6 +133,8 @@ impl<'slice, T: 'slice> SliceIterExt<'slice, T> for Iter<'slice, T> {
     #[inline(always)]
     unsafe fn advance_unchecked(&mut self, count: usize) {
         // This function boils down to just adding `count` to the current pointer (1 instruction).
+        // https://godbolt.org/z/hPT7T6YjY
+
         // SAFETY: Caller guarantees there are at least `count` items remaining in the iterator
         let slice = unsafe { self.as_slice().get_unchecked(count..) };
         *self = slice.iter();
@@ -188,15 +190,19 @@ impl<'slice, T: 'slice> SliceIterExt<'slice, T> for IterMut<'slice, T> {
     /// Iterator must contain at least `count` more items.
     #[inline(always)]
     unsafe fn advance_unchecked(&mut self, count: usize) {
-        // This function boils down to 3 instructions including 1 branch, or 1 instruction
-        // if `count` is statically known.
-        // Unfortunately can't make this quite as efficient as `Iter::advance_unchecked` when `count`
-        // is not statically known, because `IterMut::as_mut_slice` is not available on stable Rust.
-        if count > 0 {
-            // SAFETY: Caller guarantees there are at least `count` items remaining in the iterator
-            unsafe { assert_unchecked!(self.len() >= count) };
-            self.nth(count - 1);
-        }
+        // This function boils down to just adding `count` to the current pointer (1 instruction).
+        // https://godbolt.org/z/hPT7T6YjY
+
+        // SAFETY: Caller guarantees there are at least `count` items remaining in the iterator
+        #[expect(unstable_name_collisions)]
+        let slice = unsafe { self.as_mut_slice().get_unchecked_mut(count..) };
+        // Extend the lifetime of the slice to `'slice`.
+        // SAFETY: This method takes `&mut self`, so no other references to remaining items
+        // in the iterator can exist, so no aliasing violations are possible.
+        // We immediately use this slice to create a new iterator, and the lifetime-extended slice
+        // does not escape this method.
+        let slice = unsafe { NonNull::from(slice).as_mut() };
+        *self = slice.iter_mut();
     }
 }
 
