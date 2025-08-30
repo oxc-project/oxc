@@ -265,4 +265,17 @@ impl<'a> Ctx<'a, '_> {
             })
             .unwrap_or_default()
     }
+
+    /// Whether the assignment expression needs to be kept to preserve the name
+    pub fn is_expression_whose_name_needs_to_be_kept(&self, expr: &Expression) -> bool {
+        let options = &self.options().keep_names;
+        if !options.class && !options.function {
+            return false;
+        }
+        if !expr.is_anonymous_function_definition() {
+            return false;
+        }
+        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        (options.class && is_class) || (options.function && !is_class)
+    }
 }
