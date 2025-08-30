@@ -1,10 +1,12 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::BindingPattern, ast::VariableDeclarationKind};
+use oxc_ast::{
+    AstKind,
+    ast::{BindingPattern, VariableDeclarationKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::scope::ScopeId;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is used outside of binding context."))
@@ -133,77 +135,6 @@ declare_oxc_lint!(
     suspicious,
 );
 
-impl BlockScopedVar {
-    fn run_for_all_references(
-        &self,
-        (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-        scope_ids: &[ScopeId],
-        node: &AstNode,
-        ctx: &LintContext,
-    ) {
-        ctx.scoping()
-            .get_resolved_references(*symbol)
-            .filter(|reference| {
-                let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
-
-                reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
-            })
-            .for_each(|reference| {
-                ctx.diagnostic(use_outside_scope_diagnostic(
-                    pattern.span(),
-                    ctx.reference_span(reference),
-                    name,
-                ));
-            });
-    }
-
-    fn run_for_all_redeclarations(
-        &self,
-        (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-        scope_ids: &[ScopeId],
-        node: &AstNode,
-        ctx: &LintContext,
-    ) {
-        ctx.scoping()
-            .symbol_redeclarations(*symbol)
-            .iter()
-            .filter(|redeclaration| {
-                let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
-
-                redeclare_scope_id != node.scope_id() && !scope_ids.contains(&redeclare_scope_id)
-            })
-            .for_each(|redeclaration| {
-                ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
-            });
-    }
-
-    fn run_for_declaration(
-        &self,
-        pattern: &BindingPattern,
-        scope_ids: &[ScopeId],
-        node: &AstNode,
-        ctx: &LintContext,
-    ) {
-        // e.g. "var [a, b] = [1, 2]"
-        for ident in pattern.get_binding_identifiers() {
-            let name = ident.name.as_str();
-            let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
-                continue;
-            };
-
-            let binding = (pattern, name, &symbol);
-
-            // e.g. "if (true) { var a = 4; } else { var a = 4; }"
-            // in this case we can't find the reference of 'a' by call `get_resolved_references`
-            // so I use `symbol_redeclarations` to find all the redeclarations
-            self.run_for_all_redeclarations(binding, scope_ids, node, ctx);
-
-            // e.g. "var a = 4; console.log(a);"
-            self.run_for_all_references(binding, scope_ids, node, ctx);
-        }
-    }
-}
-
 impl Rule for BlockScopedVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::VariableDeclaration(decl) = node.kind() else {
@@ -221,8 +152,74 @@ impl Rule for BlockScopedVar {
         let scope_ids = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
 
         for item in &decl.declarations {
-            self.run_for_declaration(&item.id, &scope_ids, node, ctx);
+            run_for_declaration(&item.id, &scope_ids, node, ctx);
         }
+    }
+}
+
+fn run_for_all_references(
+    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    scope_ids: &[ScopeId],
+    node: &AstNode,
+    ctx: &LintContext,
+) {
+    ctx.scoping()
+        .get_resolved_references(*symbol)
+        .filter(|reference| {
+            let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
+
+            reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
+        })
+        .for_each(|reference| {
+            ctx.diagnostic(use_outside_scope_diagnostic(
+                pattern.span(),
+                ctx.reference_span(reference),
+                name,
+            ));
+        });
+}
+
+fn run_for_all_redeclarations(
+    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    scope_ids: &[ScopeId],
+    node: &AstNode,
+    ctx: &LintContext,
+) {
+    ctx.scoping()
+        .symbol_redeclarations(*symbol)
+        .iter()
+        .filter(|redeclaration| {
+            let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
+
+            redeclare_scope_id != node.scope_id() && !scope_ids.contains(&redeclare_scope_id)
+        })
+        .for_each(|redeclaration| {
+            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
+        });
+}
+
+fn run_for_declaration(
+    pattern: &BindingPattern,
+    scope_ids: &[ScopeId],
+    node: &AstNode,
+    ctx: &LintContext,
+) {
+    // e.g. "var [a, b] = [1, 2]"
+    for ident in pattern.get_binding_identifiers() {
+        let name = ident.name.as_str();
+        let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
+            continue;
+        };
+
+        let binding = (pattern, name, &symbol);
+
+        // e.g. "if (true) { var a = 4; } else { var a = 4; }"
+        // in this case we can't find the reference of 'a' by call `get_resolved_references`
+        // so I use `symbol_redeclarations` to find all the redeclarations
+        run_for_all_redeclarations(binding, scope_ids, node, ctx);
+
+        // e.g. "var a = 4; console.log(a);"
+        run_for_all_references(binding, scope_ids, node, ctx);
     }
 }
 
