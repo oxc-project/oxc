@@ -1,6 +1,5 @@
 use std::iter::{self, repeat_with};
 
-use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use rustc_hash::FxHashSet;
@@ -14,9 +13,12 @@ use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::Atom;
 
 pub(crate) mod base54;
+mod bitset;
 mod keep_names;
 
 pub use keep_names::MangleOptionsKeepNames;
+
+use crate::bitset::BitSet;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
@@ -305,7 +307,7 @@ impl<'t> Mangler<'t> {
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
-        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
+        let mut slot_liveness: Vec<BitSet> = Vec::new_in(temp_allocator);
         let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
 
         let mut reusable_slots = Vec::new_in(temp_allocator);
@@ -335,7 +337,7 @@ impl<'t> Mangler<'t> {
                 slot_liveness
                     .iter()
                     .enumerate()
-                    .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
+                    .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
                     .map(|(slot, _)| slot)
                     .take(tmp_bindings.len()),
             );
@@ -346,8 +348,10 @@ impl<'t> Mangler<'t> {
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
-                slot_liveness
-                    .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
+                slot_liveness.extend(
+                    iter::repeat_with(|| BitSet::new_in(scoping.scopes_len(), temp_allocator))
+                        .take(remaining_count),
+                );
             }
 
             for (&symbol_id, assigned_slot) in
@@ -379,7 +383,9 @@ impl<'t> Mangler<'t> {
                     });
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
-                slot_liveness[assigned_slot].extend(lived_scope_ids.map(oxc_index::Idx::index));
+                for scope_id in lived_scope_ids {
+                    slot_liveness[assigned_slot].set_bit(scope_id.index());
+                }
             }
         }
 
