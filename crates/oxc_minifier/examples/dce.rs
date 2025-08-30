@@ -8,13 +8,14 @@
 //!
 //! Create a `test.js` file and run:
 //! ```bash
-//! cargo run -p oxc_minifier --example dce [filename] [--nospace] [--twice]
+//! cargo run -p oxc_minifier --example dce [filename] [--nospace] [--twice] [--max-iterations <u8>]
 //! ```
 //!
 //! ## Options
 //!
 //! - `--nospace`: Remove extra whitespace
 //! - `--twice`: Test idempotency by running twice
+//! - `--max-iterations <u8>`: Set the maximum number of compress pass iterations
 
 use std::path::Path;
 
@@ -34,6 +35,9 @@ fn main() -> std::io::Result<()> {
 
     let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
+    let max_iterations = args
+        .opt_value_from_str::<&str, u8>("--max-iterations")
+        .expect("Invalid number for --max-iterations");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
@@ -41,12 +45,12 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
 
     let mut allocator = Allocator::default();
-    let printed = dce(&allocator, &source_text, source_type, nospace);
+    let printed = dce(&allocator, &source_text, source_type, nospace, max_iterations);
     println!("{printed}");
 
     if twice {
         allocator.reset();
-        let printed2 = dce(&allocator, &printed, source_type, nospace);
+        let printed2 = dce(&allocator, &printed, source_type, nospace, max_iterations);
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -54,10 +58,11 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn dce(allocator: &Allocator, source_text: &str, source_type: SourceType, nospace: bool) -> String {
+fn dce(allocator: &Allocator, source_text: &str, source_type: SourceType, nospace: bool, max_iterations: Option<u8>) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    Compressor::new(allocator).dead_code_elimination(&mut program, CompressOptions::dce());
+    let options = CompressOptions { max_iterations, ..CompressOptions::dce() };
+    Compressor::new(allocator).dead_code_elimination(&mut program, options);
     Codegen::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
         .build(&program)
