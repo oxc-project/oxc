@@ -145,7 +145,10 @@ pub fn run() -> Result<(), io::Error> {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
             .with_options(parse_options)
             .parse();
-        Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
+        // Minifier cannot process TypeScript
+        if file.source_type.is_javascript() {
+            Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
+        }
     }
 
     for file in files.files() {
@@ -169,6 +172,11 @@ pub fn run() -> Result<(), io::Error> {
         ));
 
         let before_minify_stats = record_stats(&allocator);
+
+        // Minifier cannot process TypeScript
+        if !file.source_type.is_javascript() {
+            continue;
+        }
 
         Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
 
