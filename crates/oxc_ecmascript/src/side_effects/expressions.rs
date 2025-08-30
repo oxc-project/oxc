@@ -412,8 +412,9 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
 impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
-            // TODO: check side effects inside the block
-            ClassElement::StaticBlock(block) => !block.body.is_empty(),
+            ClassElement::StaticBlock(block) => {
+                block.body.iter().any(|stmt| stmt.may_have_side_effects(ctx))
+            }
             ClassElement::MethodDefinition(e) => {
                 !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
             }

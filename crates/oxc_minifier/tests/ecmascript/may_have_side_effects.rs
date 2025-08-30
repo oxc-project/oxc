@@ -387,14 +387,14 @@ fn closure_compiler_tests() {
 
     // CLASS_STATIC_BLOCK
     test("(class C { static {} })", false);
-    // test("(class C { static { [1]; } })", false);
-    test("(class C { static { let x; } })", true);
-    test("(class C { static { const x =1 ; } })", true);
-    test("(class C { static { var x; } })", true);
+    test("(class C { static { [1]; } })", false);
+    test("(class C { static { let x; } })", false);
+    test("(class C { static { const x =1 ; } })", false);
+    test("(class C { static { var x; } })", false);
     test("(class C { static { this.x = 1; } })", true);
-    test("(class C { static { function f() { } } })", true);
-    // test("(class C { static { (function () {} )} })", false);
-    // test("(class C { static { ()=>{} } })", false);
+    test("(class C { static { function f() { } } })", false);
+    test("(class C { static { (function () {} )} })", false);
+    test("(class C { static { ()=>{} } })", false);
 
     // SUPER calls
     test("super()", true);
@@ -715,6 +715,7 @@ fn test_class_expression() {
     test("(class extends foo() {})", true);
     test("(class extends (() => {}) {})", true);
     test("(class { static {} })", false);
+    test("(class { static { 1; } })", false);
     test("(class { static { foo(); } })", true);
     test("(class { a() {} })", false);
     test("(class { [1]() {} })", false);
