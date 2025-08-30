@@ -416,21 +416,12 @@ impl<'a> PeepholeOptimizations {
             if let Some(reference_id) = ident.reference_id.get() {
                 if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
                     if ctx.state.empty_functions.contains(&symbol_id) {
-                        if e.arguments.is_empty() {
+                        let mut exprs =
+                            Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+                        if exprs.is_empty() {
                             *expr = ctx.ast.void_0(e.span);
                             ctx.state.changed = true;
                             return;
-                        }
-                        let mut exprs = ctx.ast.vec();
-                        for arg in e.arguments.drain(..) {
-                            match arg {
-                                Argument::SpreadElement(e) => {
-                                    exprs.push(e.unbox().argument);
-                                }
-                                match_expression!(Argument) => {
-                                    exprs.push(arg.into_expression());
-                                }
-                            }
                         }
                         exprs.push(ctx.ast.void_0(e.span));
                         *expr = ctx.ast.expression_sequence(e.span, exprs);
@@ -724,8 +715,8 @@ mod test {
         test_options("var foo = () => {}; foo()", "", &options);
         test_options("var foo = () => {}; foo(a)", "a", &options);
         test_options("var foo = () => {}; foo(a, b)", "a, b", &options);
-        test_options("var foo = () => {}; foo(...a, b)", "a, b", &options);
-        test_options("var foo = () => {}; foo(...a, ...b)", "a, b", &options);
+        test_options("var foo = () => {}; foo(...a, b)", "[...a], b", &options);
+        test_options("var foo = () => {}; foo(...a, ...b)", "[...a], [...b]", &options);
         test_options("var foo = () => {}; x = foo()", "x = void 0", &options);
         test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
         test_options("var foo = function () {}; foo()", "", &options);

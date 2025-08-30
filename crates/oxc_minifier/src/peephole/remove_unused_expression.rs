@@ -580,9 +580,8 @@ impl<'a> PeepholeOptimizations {
         !call_expr.may_have_side_effects(ctx)
     }
 
-    fn fold_arguments_into_needed_expressions(
+    pub fn fold_arguments_into_needed_expressions(
         args: &mut Vec<'a, Argument<'a>>,
-
         ctx: &mut Ctx<'a, '_>,
     ) -> Vec<'a, Expression<'a>> {
         ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
