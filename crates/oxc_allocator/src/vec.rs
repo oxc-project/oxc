@@ -10,6 +10,7 @@ use std::{
     fmt::{self, Debug},
     hash::{Hash, Hasher},
     ops,
+    ptr::NonNull,
     slice::SliceIndex,
 };
 
@@ -178,6 +179,22 @@ impl<'alloc, T> Vec<'alloc, T> {
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
         Self(vec)
     }
+
+    /// Convert [`Vec<T>`] into [`Box<[T]>`].
+    ///
+    /// Any spare capacity in the `Vec` is lost.
+    ///
+    /// [`Box<[T]>`]: Box
+    #[inline]
+    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
+        let slice = self.0.into_bump_slice_mut();
+        let ptr = NonNull::from(slice);
+        // SAFETY: `ptr` points to a valid `[T]`.
+        // Contents of the `Vec` are in an arena.
+        // The returned `Box` has same lifetime as the `Vec`.
+        // `Vec` is not `Drop`, so we don't need to free any unused capacity in the `Vec`.
+        unsafe { Box::from_non_null(ptr) }
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
@@ -248,6 +265,13 @@ where
     }
 }
 
+impl<'a, T: 'a> From<Vec<'a, T>> for Box<'a, [T]> {
+    #[inline(always)]
+    fn from(v: Vec<'a, T>) -> Box<'a, [T]> {
+        v.into_boxed_slice()
+    }
+}
+
 #[cfg(any(feature = "serialize", test))]
 impl<T: Serialize> Serialize for Vec<'_, T> {
     fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -303,6 +327,16 @@ mod test {
         v.push("x");
         let v = format!("{v:?}");
         assert_eq!(v, "Vec([\"x\"])");
+    }
+
+    #[test]
+    fn vec_into_boxed_slice() {
+        let allocator = Allocator::default();
+        let mut v = Vec::with_capacity_in(4, &allocator);
+        v.push("x");
+        v.push("y");
+        let boxed_slice = v.into_boxed_slice();
+        assert_eq!(boxed_slice.as_ref(), &["x", "y"]);
     }
 
     #[test]
