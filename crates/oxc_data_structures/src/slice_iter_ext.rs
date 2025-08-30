@@ -2,13 +2,16 @@
 //!
 //! Provides additional methods to inspect and advance iterators.
 //!
-//! See [`SliceIterExt`].
+//! See [`SliceIterExt`] and [`SliceIterMutExt`].
 
 // All methods boil down to just a few instructions.
 // https://godbolt.org/z/779nYjq9d
 #![expect(clippy::inline_always)]
 
-use std::slice::{Iter, IterMut};
+use std::{
+    ptr::NonNull,
+    slice::{Iter, IterMut},
+};
 
 use crate::assert_unchecked;
 
@@ -193,6 +196,33 @@ impl<'slice, T: 'slice> SliceIterExt<'slice, T> for IterMut<'slice, T> {
             // SAFETY: Caller guarantees there are at least `count` items remaining in the iterator
             unsafe { assert_unchecked!(self.len() >= count) };
             self.nth(count - 1);
+        }
+    }
+}
+
+/// Extension trait for [`IterMut`] slice iterator.
+pub trait SliceIterMutExt<'slice, T>: SliceIterExt<'slice, T> {
+    /// Get the remaining items in the iterator as a mutable slice.
+    fn as_mut_slice(&mut self) -> &mut [T];
+}
+
+impl<'slice, T: 'slice> SliceIterMutExt<'slice, T> for IterMut<'slice, T> {
+    /// Get the remaining items in the iterator as a mutable slice.
+    ///
+    /// This method is present in standard library, but requires nightly Rust.
+    #[inline]
+    fn as_mut_slice(&mut self) -> &mut [T] {
+        // SAFETY: We create a temporary copy of the iterator, and convert it to a `&mut [T]` slice,
+        // but we don't hold a slice from the original iterator at the same time, and this method takes
+        // `&mut self`, so no other references to iterator's remaining items can exist.
+        // The returned slice borrows the iterator, so the iterator cannot be used to create any other
+        // references to items while the slice exists. Therefore, no aliasing violations are possible.
+        //
+        // `IterMut::into_slice` consumes and drops the copy of the iterator, but `IterMut` does not
+        // implement `Drop`, so that's not a problem.
+        unsafe {
+            let iter_copy = NonNull::from(self).read();
+            iter_copy.into_slice()
         }
     }
 }
@@ -517,5 +547,29 @@ mod test_iter_mut {
 
         iter.next();
         assert_eq!(iter.end_ptr() as usize, end_addr);
+    }
+
+    #[test]
+    #[expect(unstable_name_collisions)]
+    fn as_mut_slice() {
+        let mut slice = [11u32, 22, 33];
+        let mut iter = slice.iter_mut();
+
+        assert_eq!(iter.as_mut_slice(), &mut [11, 22, 33]);
+
+        assert_eq!(iter.next(), Some(&mut 11));
+        assert_eq!(iter.as_mut_slice(), &mut [22, 33]);
+
+        iter.as_mut_slice()[0] = 222;
+        iter.as_mut_slice()[1] = 333;
+        assert_eq!(iter.as_mut_slice(), &mut [222, 333]);
+
+        assert_eq!(iter.next(), Some(&mut 222));
+        assert_eq!(iter.as_mut_slice(), &mut [333]);
+
+        assert_eq!(iter.next(), Some(&mut 333));
+        assert_eq!(iter.as_mut_slice(), &mut []);
+
+        assert_eq!(iter.next(), None);
     }
 }
