@@ -920,33 +920,23 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
 
                 // Find end of comment
                 let start_index = if is_block_comment {
-                    let Some(mut pos) = bytes.windows(2).position(|q| q == b"*/") else {
+                    let Some(pos) = bytes.windows(2).position(|q| q == b"*/") else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-
-                    pos += 2;
-                    if pos == bytes.len() {
-                        // Comment ends at end of quasi
-                        comment_type = None;
-                        continue;
-                    }
-
-                    // Add a space when this is a own line block comment
-                    if !bytes[pos].is_ascii_whitespace()
-                        && output.last().is_some_and(|&last| last != b' ')
-                    {
-                        output.push(b' ');
-                    }
-
-                    pos
+                    pos + 2 // After `*/`
                 } else {
                     let Some(pos) = bytes.iter().position(|&b| matches!(b, b'\n' | b'\r')) else {
                         // Comment contains whole of this quasi
                         continue;
                     };
-                    pos
+                    pos + 1 // After `\n` or `\r`
                 };
+
+                // Comments behave like whitespace.
+                // Block comments: `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                // Line comments: End with a newline (whitespace).
+                insert_space_if_required(&mut output, quasi_index);
 
                 // Trim off to end of comment
                 bytes = &bytes[start_index..];
@@ -1018,19 +1008,11 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                         let end_index =
                                             bytes[i + 2..].windows(2).position(|q| q == b"*/");
                                         if let Some(end_index) = end_index {
+                                            // Block comments behave like whitespace.
+                                            // `padding: 10/* */0` is equivalent to `padding: 10 0`, not `padding: 100`.
+                                            insert_space_if_required(&mut output, quasi_index);
+
                                             i += end_index + 4; // After `*/`
-
-                                            if i == bytes.len() {
-                                                // Comment ends at end of quasi
-                                                break;
-                                            }
-
-                                            // Add a space when this is a own line block comment
-                                            if !bytes[i].is_ascii_whitespace()
-                                                && output.last().is_some_and(|&last| last != b' ')
-                                            {
-                                                output.push(b' ');
-                                            }
                                             continue;
                                         }
 
@@ -1046,7 +1028,10 @@ fn minify_template_literal<'a>(lit: &mut TemplateLiteral<'a>, ast: AstBuilder<'a
                                 let end_index =
                                     bytes[i + 2..].iter().position(|&b| matches!(b, b'\n' | b'\r'));
                                 if let Some(end_index) = end_index {
-                                    i += end_index + 2; // On `\n` or `\r`
+                                    // Insert space in place of `\n` / `\r`
+                                    insert_space_if_required(&mut output, quasi_index);
+
+                                    i += end_index + 3; // After `\n` or `\r`
                                     continue;
                                 }
 
