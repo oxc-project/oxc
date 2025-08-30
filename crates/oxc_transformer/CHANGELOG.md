@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.84.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- 7ee19e2 transformer/styled-components: Remove leading whitespace when literal starts with block comment containing interpolation in CSS minification (#13391) (overlookmotel)
+- cf5175c transformer/styled-components: Remove unnecessary whitespace when removing block comments in CSS minification (#13390) (overlookmotel)
+
+
 ## [0.83.0] - 2025-08-29
 
 ### 🐛 Bug Fixes

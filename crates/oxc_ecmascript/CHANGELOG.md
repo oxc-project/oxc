@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.84.0] - 2025-08-30
+
+### 🚀 Features
+
+- 95d4311 ecmascript: Check side effects inside static blocks (#13404) (sapphi-red)
+- c557854 ecmascript: Support MayHaveSideEffects for Statements (#13402) (sapphi-red)
+
+
 ## [0.83.0] - 2025-08-29
 
 ### 💥 BREAKING CHANGES
