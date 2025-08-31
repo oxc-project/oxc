@@ -66,11 +66,10 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
-    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
-
-        Self(NonNull::dangling(), PhantomData)
+        // SAFETY: None of `from_non_null`'s invariants are satisfied, but caller promises
+        // never to dereference the `Box`
+        unsafe { Self::from_non_null(ptr::NonNull::dangling()) }
     }
 
     /// Take ownership of the value stored in this [`Box`], consuming the box in
@@ -109,6 +108,19 @@ impl<T: ?Sized> Box<'_, T> {
     #[inline(always)]
     pub fn into_non_null(boxed: Self) -> NonNull<T> {
         boxed.0
+    }
+
+    /// Create a [`Box`] from a [`NonNull`] pointer.
+    ///
+    /// # SAFETY
+    ///
+    /// * Pointer must point to a valid `T`.
+    /// * Pointer must point to within an `Allocator`.
+    /// * Caller must ensure that the pointer is valid for the lifetime of the `Box`.
+    pub const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(ptr, PhantomData)
     }
 }
 
