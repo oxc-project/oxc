@@ -1,13 +1,15 @@
 use std::fmt::{Debug, Display};
 
-use oxc_allocator::{Allocator, CloneIn, Vec};
+use crate::{Allocator, CloneIn, Vec};
 
+/// A bitset allocated in an arena.
 #[derive(PartialEq, Eq, Hash)]
 pub struct BitSet<'alloc> {
     entries: Vec<'alloc, u8>,
 }
 
 impl<'alloc> BitSet<'alloc> {
+    /// Create new [`BitSet`] with size `max_bit_count`, in the specified allocator.
     pub fn new_in(max_bit_count: usize, allocator: &'alloc Allocator) -> Self {
         Self {
             entries: Vec::from_iter_in(
@@ -17,10 +19,12 @@ impl<'alloc> BitSet<'alloc> {
         }
     }
 
+    /// Returns `true` if the bit at the given position is set.
     pub fn has_bit(&self, bit: usize) -> bool {
         (self.entries[bit / 8] & (1 << (bit & 7))) != 0
     }
 
+    /// Set the bit at the given position.
     pub fn set_bit(&mut self, bit: usize) {
         self.entries[bit / 8] |= 1 << (bit & 7);
     }
