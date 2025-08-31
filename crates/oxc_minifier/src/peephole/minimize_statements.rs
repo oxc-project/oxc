@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_semantic::ScopeId;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
@@ -572,7 +572,6 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
-    #[expect(clippy::cast_possible_truncation)]
     fn handle_if_statement(
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
@@ -691,7 +690,7 @@ impl<'a> PeepholeOptimizations {
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {
-                            let scope_id = ScopeId::new(ctx.scoping().scopes_len() as u32);
+                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
                             let block_stmt =
                                 ctx.ast.block_statement_with_scope_id(span, body, scope_id);
                             Statement::BlockStatement(ctx.ast.alloc(block_stmt))
