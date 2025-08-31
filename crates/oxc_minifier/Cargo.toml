@@ -28,6 +28,7 @@ oxc_codegen = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_regular_expression = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
