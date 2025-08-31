@@ -374,13 +374,14 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 }
 
 pub struct DeadCodeElimination {
+    max_iterations: Option<u8>,
     iteration: u8,
     changed: bool,
 }
 
 impl<'a> DeadCodeElimination {
-    pub fn new() -> Self {
-        Self { iteration: 0, changed: false }
+    pub fn new(max_iterations: Option<u8>) -> Self {
+        Self { max_iterations, iteration: 0, changed: false }
     }
 
     fn run_once(
@@ -402,7 +403,11 @@ impl<'a> DeadCodeElimination {
             if !self.changed {
                 break;
             }
-            if self.iteration > 10 {
+            if let Some(max_iterations) = self.max_iterations {
+                if self.iteration >= max_iterations {
+                    break;
+                }
+            } else if self.iteration > 10 {
                 debug_assert!(false, "Ran loop more than 10 times.");
                 break;
             }
