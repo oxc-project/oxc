@@ -45,7 +45,6 @@
 //! (actually these would be improvements on ESBuild, not Babel)
 
 use oxc_ast::{NONE, ast::*};
-use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
 };
@@ -145,21 +144,7 @@ impl<'a> RegExp<'a, '_> {
             let pattern = if let Some(pattern) = &regexp.regex.pattern.pattern {
                 pattern
             } else {
-                #[expect(clippy::cast_possible_truncation)]
-                let pattern_len = pattern_text.len() as u32;
-                let literal_span = regexp.span;
-                let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
-                let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
-                let flags_text =
-                    Span::new(flags_span_start, literal_span.end).source_text(self.ctx.source_text);
-                // Try to parse pattern
-                match try_parse_pattern(
-                    pattern_text.as_str(),
-                    pattern_span_start,
-                    flags_text,
-                    flags_span_start,
-                    ctx,
-                ) {
+                match regexp.parse_pattern(ctx.ast.allocator) {
                     Ok(pattern) => {
                         owned_pattern = Some(pattern);
                         owned_pattern.as_ref().unwrap()
@@ -235,17 +220,4 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
         }
         _ => false,
     })
-}
-
-fn try_parse_pattern<'a>(
-    raw: &'a str,
-    pattern_span_offset: u32,
-    flags_text: &'a str,
-    flags_span_offset: u32,
-    ctx: &TraverseCtx<'a>,
-) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{LiteralParser, Options};
-
-    let options = Options { pattern_span_offset, flags_span_offset };
-    LiteralParser::new(ctx.ast.allocator, raw, Some(flags_text), options).parse()
 }
