@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- e3b6dc0 allocator: Add `Box::from_non_null` method (#13454) (overlookmotel)
+- afa0877 allocator: Introduce `BitSet` type (#13449) (overlookmotel)
+
+### 🚜 Refactor
+
+- e6cdaa6 allocator: Add `#[repr(transparent)]` to `Vec` and `Box` (#13457) (overlookmotel)
+
+### ⚡ Performance
+
+- b92fa4f allocator/bitset: Store bits in `Box<[usize]>` (#13455) (overlookmotel)
+- f5a742f allocator/bitset: Initialize `BitSet` with `memset` (#13451) (overlookmotel)
+- cdfa48d allocator/bitset: Store bits as `usize`s (#13450) (overlookmotel)
+
+
 
 ## [0.84.0] - 2025-08-30
 
