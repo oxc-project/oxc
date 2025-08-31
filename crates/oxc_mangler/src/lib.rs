@@ -34,7 +34,7 @@ pub struct MangleOptions {
     pub debug: bool,
 }
 
-type Slot = usize;
+type Slot = u32;
 
 /// Enum to handle both owned and borrowed allocators. This is not `Cow` because that type
 /// requires `ToOwned`/`Clone`, which is not implemented for `Allocator`. Although this does
@@ -335,13 +335,20 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .enumerate()
                     .filter(|(_, slot_liveness)| !slot_liveness.has_bit(scope_id.index()))
-                    .map(|(slot, _)| slot)
+                    .map(
+                        // `slot_liveness` is an arena `Vec`, so its indexes cannot exceed `u32::MAX`
+                        #[expect(clippy::cast_possible_truncation)]
+                        |(slot, _)| slot as Slot,
+                    )
                     .take(tmp_bindings.len()),
             );
 
             // The number of new slots that needs to be allocated.
             let remaining_count = tmp_bindings.len() - reusable_slots.len();
-            reusable_slots.extend(slot..slot + remaining_count);
+            // There cannot be more slots than there are symbols, and `SymbolId` is a `u32`,
+            // so truncation is not possible here
+            #[expect(clippy::cast_possible_truncation)]
+            reusable_slots.extend((slot as Slot)..(slot + remaining_count) as Slot);
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
@@ -351,9 +358,7 @@ impl<'t> Mangler<'t> {
                 );
             }
 
-            for (&symbol_id, assigned_slot) in
-                tmp_bindings.iter().zip(reusable_slots.iter().copied())
-            {
+            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 slots[symbol_id.index()] = assigned_slot;
 
                 // If the symbol is declared by `var`, then it can be hoisted to
@@ -381,7 +386,7 @@ impl<'t> Mangler<'t> {
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
                 for scope_id in lived_scope_ids {
-                    slot_liveness[assigned_slot].set_bit(scope_id.index());
+                    slot_liveness[assigned_slot as usize].set_bit(scope_id.index());
                 }
             }
         }
@@ -501,7 +506,7 @@ impl<'t> Mangler<'t> {
             if keep_name_symbols.contains(&symbol_id) {
                 continue;
             }
-            let index = slot;
+            let index = slot as usize;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
