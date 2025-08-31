@@ -18,7 +18,6 @@ mod specialized_configs;
 mod strings;
 mod structs;
 use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
-use specialized_configs::{ConfigJSWithLoc, ConfigTSWithLoc};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
