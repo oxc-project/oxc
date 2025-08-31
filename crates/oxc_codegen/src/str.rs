@@ -223,10 +223,13 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is an option.
     fn calculate_quote_maybe_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so use `i64` to make overflow impossible
-        let mut single_cost: i64 = 0;
-        let mut double_cost: i64 = 0;
-        let mut backtick_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
+        let mut double_cost: isize = 0;
+        let mut backtick_cost: isize = 0;
         let mut bytes = self.bytes.clone();
         while let Some(b) = bytes.next() {
             match b {
@@ -264,8 +267,11 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is not an option.
     fn calculate_quote_no_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so `i64` cannot overflow
-        let mut single_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
         for &b in self.bytes.clone() {
             match b {
                 b'\'' => single_cost += 1,
