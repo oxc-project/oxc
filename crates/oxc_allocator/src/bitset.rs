@@ -1,35 +1,39 @@
 use std::{
+    alloc::Layout,
     fmt::{self, Debug, Display},
-    ptr,
+    mem,
+    ptr::{self, NonNull},
+    slice,
 };
 
-use crate::{Allocator, CloneIn, Vec};
+use crate::{Allocator, Box, CloneIn};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
 /// A bitset allocated in an arena.
-#[derive(PartialEq, Eq, Hash)]
 pub struct BitSet<'alloc> {
-    entries: Vec<'alloc, usize>,
+    entries: Box<'alloc, [usize]>,
 }
 
 impl<'alloc> BitSet<'alloc> {
     /// Create new [`BitSet`] with size `max_bit_count`, in the specified allocator.
+    ///
+    /// # Panics
+    /// Panics if `max_bit_count` is too large.
     pub fn new_in(max_bit_count: usize, allocator: &'alloc Allocator) -> Self {
         let capacity = max_bit_count.div_ceil(USIZE_BITS);
-        let mut entries = Vec::<usize>::with_capacity_in(capacity, allocator);
 
-        // Fill `entries` with zeros.
-        // This is faster than `Vec::from_iter_in(iter::repeat_n(0, capacity), allocator)`,
-        // due to an unfortunate shortcoming in the implementation of `Vec`, due to missing
-        // specialization in stable Rust.
-        // SAFETY: We created `Vec` with space for `capacity` x `usize`s, so writing `capacity * 8` `u8`s
-        // fills the `Vec`'s buffer. Once `capacity` items are initialized, we can safely set the length.
-        unsafe {
-            let ptr = entries.as_mut_ptr().cast::<u8>();
-            ptr::write_bytes(ptr, 0, capacity * size_of::<usize>());
-            entries.set_len(capacity);
-        };
+        let layout = Layout::array::<usize>(capacity).unwrap();
+        let ptr = allocator.alloc_layout(layout).cast::<usize>();
+
+        // SAFETY: We just allocated space for `capacity` x `usize`s.
+        // All zeros is a valid bit pattern for `usize`.
+        unsafe { ptr::write_bytes(ptr.as_ptr(), 0, capacity) };
+        // SAFETY: We just initialized `capacity` x `usize`s, starting at `ptr`
+        let slice = unsafe { slice::from_raw_parts_mut(ptr.as_ptr(), capacity) };
+        // SAFETY: `NonNull::from(slice)` produces a valid pointer. The data in the arena.
+        // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
+        let entries = unsafe { Box::from_non_null(NonNull::from(slice)) };
 
         Self { entries }
     }
@@ -111,11 +115,27 @@ impl Debug for BitSet<'_> {
     }
 }
 
-impl<'allocator> CloneIn<'allocator> for BitSet<'allocator> {
-    type Cloned = Self;
+impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
+    type Cloned = BitSet<'new_alloc>;
 
-    fn clone_in(&self, allocator: &'allocator Allocator) -> Self {
-        Self { entries: self.entries.clone_in(allocator) }
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> BitSet<'new_alloc> {
+        let slice = self.entries.as_ref();
+
+        // SAFETY: `slice` already exists, so its layout must be valid
+        let layout = unsafe {
+            Layout::from_size_align_unchecked(mem::size_of_val(slice), align_of::<usize>())
+        };
+        let dst_ptr = allocator.alloc_layout(layout).cast::<usize>();
+
+        // SAFETY: We just allocated space for `slice.len()` x `usize`s, starting at `dst_ptr`
+        unsafe { ptr::copy_nonoverlapping(slice.as_ptr(), dst_ptr.as_ptr(), slice.len()) };
+        // SAFETY: We just initialized `slice.len()` x `usize`s, starting at `dst_ptr`
+        let new_slice = unsafe { slice::from_raw_parts_mut(dst_ptr.as_ptr(), slice.len()) };
+        // SAFETY: `NonNull::from(new_slice)` produces a valid pointer. The data is in the arena.
+        // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
+        let entries = unsafe { Box::from_non_null(NonNull::from(new_slice)) };
+
+        BitSet { entries }
     }
 }
 
@@ -167,13 +187,15 @@ mod tests {
         let allocator = Allocator::default();
         let mut bs = BitSet::new_in(16, &allocator);
         assert_eq!(bs.to_string(), "00000000");
-        let mut bs2 = bs.clone_in(&allocator);
         bs.set_bit(0);
         bs.set_bit(1);
         bs.set_bit(7);
         assert_eq!(bs.to_string(), "10000011");
-        bs2.set_bit(8);
+        bs.set_bit(8);
+        assert_eq!(bs.to_string(), "00000001_10000011");
+
+        let mut bs2 = bs.clone_in(&allocator);
         bs2.set_bit(15);
-        assert_eq!(bs2.to_string(), "10000001_00000000");
+        assert_eq!(bs2.to_string(), "10000001_10000011");
     }
 }
