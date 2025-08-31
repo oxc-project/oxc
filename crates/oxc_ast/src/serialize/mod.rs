@@ -59,6 +59,7 @@ impl Program<'_> {
         serializer.into_string()
     }
 
+
     /// Serialize AST to ESTree JSON, without TypeScript fields.
     pub fn to_estree_js_json(&self, ranges: bool) -> String {
         self.to_estree_js_json_with_loc(ranges, false)
@@ -146,6 +147,7 @@ impl Program<'_> {
         serializer.serialize_with_fixes(self)
     }
 }
+
 
 /// Serializer for `Program`.
 ///

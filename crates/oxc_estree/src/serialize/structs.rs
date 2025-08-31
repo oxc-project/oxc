@@ -156,6 +156,8 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
     /// * If `serializer.loc() == true`, outputs `loc` field with line/column information.
     /// * Otherwise, outputs only `start` and `end`.
+    /// 
+    /// * Now automatically uses translation table if available via LocProvider
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
         let range = span.range();
         self.serialize_field("start", &range[0]);
@@ -164,15 +166,24 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
             self.serialize_field("range", &range);
         }
         if self.serializer.loc() {
-            // Since we don't have line/column info here, use a placeholder SourceLocation.
-            // Consumers should use serialize_span_with_loc when loc info is available.
-            self.serialize_field(
-                "loc",
-                &SourceLocation {
-                    start: (0, 0),
-                    end: (0, 0),
-                },
-            );
+            // Try to get real location info from provider
+            let loc_provider = self.serializer.config.loc_provider();
+            if let (Some(start_loc), Some(end_loc)) = (
+                loc_provider.offset_to_line_column(range[0]),
+                loc_provider.offset_to_line_column(range[1]),
+            ) {
+                // Use real location information! 🎉
+                self.serialize_field("loc", &SourceLocation { start: start_loc, end: end_loc });
+            } else {
+                // Fallback to placeholder (backward compatibility)
+                self.serialize_field(
+                    "loc",
+                    &SourceLocation {
+                        start: (0, 0),
+                        end: (0, 0),
+                    },
+                );
+            }
         }
     }
 
@@ -413,6 +424,23 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
 /// so we can't import `Span` directly from `oxc_span` here.
 pub trait ESTreeSpan: Copy {
     fn range(self) -> [u32; 2];
+}
+
+/// Trait for providing location information (line/column) from offsets.
+/// This allows serializers to optionally access translation tables without circular dependencies.
+pub trait LocProvider {
+    /// Convert UTF-8 offset to (line, column) where both are 0-based.
+    /// Returns None if no translation is available.
+    fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)>;
+}
+
+/// Dummy implementation for when no translation is needed
+pub struct NoLocProvider;
+
+impl LocProvider for NoLocProvider {
+    fn offset_to_line_column(&self, _utf8_offset: u32) -> Option<(u32, u32)> {
+        None
+    }
 }
 
 /// Source location information for ESTree loc field.

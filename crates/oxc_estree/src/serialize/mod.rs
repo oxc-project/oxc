@@ -10,20 +10,25 @@ use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 mod blanket;
 mod concat;
 mod config;
+mod dynamic_loc_provider;
 mod formatter;
 mod primitives;
 mod sequences;
+mod specialized_configs;
 mod strings;
 mod structs;
 use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+use specialized_configs::{ConfigJSWithLoc, ConfigTSWithLoc};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
+pub use dynamic_loc_provider::DynamicLocProvider;
 pub use sequences::SequenceSerializer;
+pub use specialized_configs::{ConfigJSWithLoc, ConfigTSWithLoc, JSSerializerWithFn, TSSerializerWithFn};
 pub use strings::{JsonSafeString, LoneSurrogatesString};
-pub use structs::{ESTreeSpan, FlatStructSerializer, Position, SourceLocation, StructSerializer};
+pub use structs::{ESTreeSpan, FlatStructSerializer, LocProvider, NoLocProvider, Position, SourceLocation, StructSerializer};
 
 /// Trait for types which can be serialized to ESTree.
 pub trait ESTree {
@@ -123,6 +128,17 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
             config: C::new_with_loc(ranges, loc),
+        }
+    }
+    
+    /// Create new [`ESTreeSerializer`] with custom config.
+    pub fn new_with_config(capacity: usize, config: C) -> Self {
+        Self {
+            buffer: CodeBuffer::with_capacity(capacity),
+            formatter: F::new(),
+            trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
+            fixes_buffer: CodeBuffer::new(),
+            config,
         }
     }
 
