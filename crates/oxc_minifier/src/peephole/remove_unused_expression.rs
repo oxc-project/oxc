@@ -624,7 +624,7 @@ impl<'a> PeepholeOptimizations {
         if Self::keep_top_level_var_in_script_mode(ctx) {
             return false;
         }
-        let Some(reference_id) = ident.reference_id.get() else { return false };
+        let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
             return false;
         };

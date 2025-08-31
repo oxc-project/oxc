@@ -512,8 +512,7 @@ struct ReferencesCounter {
 
 impl<'a> Visit<'a> for ReferencesCounter {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
-        if let Some(reference_id) = it.reference_id.get() {
-            self.refs.insert(reference_id);
-        }
+        let reference_id = it.reference_id();
+        self.refs.insert(reference_id);
     }
 }

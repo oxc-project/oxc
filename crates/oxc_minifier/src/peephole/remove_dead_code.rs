@@ -422,23 +422,22 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
-            if let Some(reference_id) = ident.reference_id.get() {
-                if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                    if matches!(
-                        ctx.state.pure_functions.get(&symbol_id),
-                        Some(Some(ConstantValue::Undefined))
-                    ) {
-                        let mut exprs =
-                            Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
-                        if exprs.is_empty() {
-                            *expr = ctx.ast.void_0(e.span);
-                            ctx.state.changed = true;
-                            return;
-                        }
-                        exprs.push(ctx.ast.void_0(e.span));
-                        *expr = ctx.ast.expression_sequence(e.span, exprs);
+            let reference_id = ident.reference_id();
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
+                if matches!(
+                    ctx.state.pure_functions.get(&symbol_id),
+                    Some(Some(ConstantValue::Undefined))
+                ) {
+                    let mut exprs =
+                        Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+                    if exprs.is_empty() {
+                        *expr = ctx.ast.void_0(e.span);
                         ctx.state.changed = true;
+                        return;
                     }
+                    exprs.push(ctx.ast.void_0(e.span));
+                    *expr = ctx.ast.expression_sequence(e.span, exprs);
+                    ctx.state.changed = true;
                 }
             }
         }
