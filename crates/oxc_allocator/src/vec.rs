@@ -37,6 +37,7 @@ type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
+#[repr(transparent)]
 pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
 /// SAFETY: Even though `Bump` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:

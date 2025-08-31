@@ -30,6 +30,7 @@ use crate::Allocator;
 ///
 /// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
 /// with a [`Drop`] type.
+#[repr(transparent)]
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<T: ?Sized> Box<'_, T> {
