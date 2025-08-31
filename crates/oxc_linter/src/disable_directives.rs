@@ -109,6 +109,7 @@ pub struct DisableRuleComment<'a> {
     pub r#type: RuleCommentType<'a>,
 }
 
+#[derive(Debug)]
 pub struct DisableDirectives<'a> {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
