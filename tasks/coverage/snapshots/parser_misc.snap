@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 48/48 (100.00%)
-Positive Passed: 48/48 (100.00%)
-Negative Passed: 78/78 (100.00%)
+AST Parsed     : 49/49 (100.00%)
+Positive Passed: 49/49 (100.00%)
+Negative Passed: 77/77 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -435,14 +435,6 @@ Negative Passed: 78/78 (100.00%)
    ╭─[misc/fail/oxc-12612-4.ts:1:2]
  1 │ (foo() as number as any) = 123;
    ·  ──────────────────────
-   ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-   ╭─[misc/fail/oxc-13284.ts:5:9]
- 4 │       bar() {
- 5 │         super.bar();
-   ·         ─────
- 6 │       },
    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.

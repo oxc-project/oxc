@@ -986,9 +986,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
             let parent_kind = ctx.nodes.parent_kind(function_node_id);
             let is_class_method = matches!(parent_kind, AstKind::MethodDefinition(_));
             // For `class C { foo() { return { bar() { super.bar(); } }; } }`
-            // TypeScript reports the error but not in ECMA262.
-            let is_object_method = !ctx.source_type.is_typescript()
-                && matches!(parent_kind, AstKind::ObjectProperty(_));
+            let is_object_method = matches!(parent_kind, AstKind::ObjectProperty(_));
             if !is_class_method && !is_object_method {
                 ctx.error(unexpected_super_reference(sup.span));
             }
