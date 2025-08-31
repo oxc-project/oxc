@@ -232,6 +232,7 @@ website path:
 
 minsize:
     cargo minsize
+    just allocs
 
 minifier-diff:
   #!/usr/bin/env bash

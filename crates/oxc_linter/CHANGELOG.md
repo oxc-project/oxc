@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.14.0] - 2025-08-30
+
+### 💥 BREAKING CHANGES
+
+- df8e639 allocator: [**BREAKING**] Put `AllocatorPool` behind `pool` feature (#13373) (overlookmotel)
+
+### 🚀 Features
+
+- d1c9db5 linter: Convert spans to UTF-16 in JS plugins (#13344) (overlookmotel)
+- 9c9f80d linter/grouped-accessor-pairs: Add `enforceForTSTypes` option (#13296) (Copilot)
+- 5b91f3c linter: Add `vue/valid-define-emits` (#12545) (Sysix)
+
+### 🐛 Bug Fixes
+
+- c215619 linter: Parse `globalThis.RegExp` for regexp rules (#13395) (Sysix)
+- 3c34767 linter: Handle errors from tsgolint (#13252) (camc314)
+
+### 🚜 Refactor
+
+- d499400 linter/jsx-handler-names: Simplify option checks for inline functions and local variables (#13405) (camc314)
+- 62da550 linter/no-done-callback: Remove nested if-let stmts (#13400) (camc314)
+- c9cb2a4 eslint/arrow-body-style: Clean up implementation and improve documentation (#13389) (Antoine Zanardi)
+- 53de36e linter: `ContextSubHost` hold owned `Semantic` (#13338) (overlookmotel)
+- e871dab linter: Run linter with `ContextSubHost` (#12769) (Sysix)
+- 077abdf linter: Introduce `ContextSubHost` for cross script block analyse (#12724) (Sysix)
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### ⚡ Performance
+
+- 827fe1c linter: Use `Cell` instead of `RefCell` (#13330) (overlookmotel)
+
+### 🧪 Testing
+
+- 13470b2 oxc_linter: Run `from_tsgo_lint_diagnostic` tests only with lsp feature flag (#13396) (Sysix)
+
+
 ## [1.13.0] - 2025-08-26
 
 ### 🚀 Features

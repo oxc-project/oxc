@@ -130,6 +130,33 @@ impl Display for BigIntLiteral<'_> {
     }
 }
 
+impl<'a> RegExpLiteral<'a> {
+    /// Parse the pattern string.
+    ///
+    /// # Errors
+    /// Returns an error if the pattern is invalid.
+    pub fn parse_pattern(
+        &self,
+        allocator: &'a Allocator,
+    ) -> oxc_diagnostics::Result<oxc_regular_expression::ast::Pattern<'a>> {
+        let pattern_text = self.regex.pattern.text.as_str();
+        #[expect(clippy::cast_possible_truncation)]
+        let pattern_len = pattern_text.len() as u32;
+        let literal_span = self.span;
+        let pattern_span_offset = literal_span.start + 1; // +1 to skip the opening `/`
+        let flags_span_offset = pattern_span_offset + pattern_len + 1; // +1 to skip the closing `/`
+        let flags_text = &self.regex.flags.to_inline_string();
+
+        oxc_regular_expression::LiteralParser::new(
+            allocator,
+            pattern_text,
+            Some(flags_text),
+            oxc_regular_expression::Options { pattern_span_offset, flags_span_offset },
+        )
+        .parse()
+    }
+}
+
 impl Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern.text, self.flags)
