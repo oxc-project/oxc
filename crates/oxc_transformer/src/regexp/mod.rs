@@ -45,8 +45,8 @@
 //! (actually these would be improvements on ESBuild, not Babel)
 
 use oxc_ast::{NONE, ast::*};
-use oxc_regular_expression::ast::{
-    CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
+use oxc_regular_expression::{
+    RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
@@ -65,9 +65,7 @@ pub struct RegExp<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
-    look_behind_assertions: bool,
-    named_capture_groups: bool,
-    unicode_property_escapes: bool,
+    unsupported_patterns: RegexUnsupportedPatterns,
 }
 
 impl<'a, 'ctx> RegExp<'a, 'ctx> {
@@ -105,9 +103,11 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
             ctx,
             unsupported_flags,
             some_unsupported_patterns,
-            look_behind_assertions,
-            named_capture_groups,
-            unicode_property_escapes,
+            unsupported_patterns: RegexUnsupportedPatterns {
+                look_behind_assertions,
+                named_capture_groups,
+                unicode_property_escapes,
+            },
         }
     }
 }
@@ -156,7 +156,7 @@ impl<'a> RegExp<'a, '_> {
                 }
             };
 
-            if !self.has_unsupported_regular_expression_pattern(pattern) {
+            if !has_unsupported_regular_expression_pattern(pattern, &self.unsupported_patterns) {
                 return;
             }
         }
@@ -177,47 +177,4 @@ impl<'a> RegExp<'a, '_> {
 
         *expr = ctx.ast.expression_new(regexp.span, callee, NONE, arguments);
     }
-
-    /// Check if the regular expression contains any unsupported syntax.
-    ///
-    /// Based on parsed regular expression pattern.
-    fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
-        pattern.body.body.iter().any(|alternative| {
-            alternative.body.iter().any(|term| self.term_contains_unsupported(term))
-        })
-    }
-
-    fn term_contains_unsupported(&self, mut term: &Term) -> bool {
-        // Loop because `Term::Quantifier` contains a nested `Term`
-        loop {
-            match term {
-                Term::CapturingGroup(_) => return self.named_capture_groups,
-                Term::UnicodePropertyEscape(_) => return self.unicode_property_escapes,
-                Term::CharacterClass(character_class) => {
-                    return self.unicode_property_escapes
-                        && character_class_has_unicode_property_escape(character_class);
-                }
-                Term::LookAroundAssertion(assertion) => {
-                    return self.look_behind_assertions
-                        && matches!(
-                            assertion.kind,
-                            LookAroundAssertionKind::Lookbehind
-                                | LookAroundAssertionKind::NegativeLookbehind
-                        );
-                }
-                Term::Quantifier(quantifier) => term = &quantifier.body,
-                _ => return false,
-            }
-        }
-    }
-}
-
-fn character_class_has_unicode_property_escape(character_class: &CharacterClass) -> bool {
-    character_class.body.iter().any(|element| match element {
-        CharacterClassContents::UnicodePropertyEscape(_) => true,
-        CharacterClassContents::NestedCharacterClass(character_class) => {
-            character_class_has_unicode_property_escape(character_class)
-        }
-        _ => false,
-    })
 }
