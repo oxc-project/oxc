@@ -1,6 +1,9 @@
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
+use rustc_hash::FxHashSet;
 
 use crate::ctx::Ctx;
 
@@ -17,6 +20,55 @@ impl<'a> PeepholeOptimizations {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
         };
         ctx.init_value(symbol_id, value);
+    }
+
+    pub fn take_inlineable_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::FunctionDeclaration(func) = stmt else { return };
+        let Some(id) = &func.id else { return };
+        let symbol_id = id.symbol_id();
+        if ctx.state.read_references.contains(&symbol_id) {
+            // Already read in traverse, cannot inline
+            return;
+        }
+
+        let exported = ctx.current_scope_id() == ctx.scoping().root_scope_id()
+            && (ctx.source_type().is_script() || {
+                ctx.ancestors().any(|ancestor| {
+                    ancestor.is_export_named_declaration()
+                        || ancestor.is_export_all_declaration()
+                        || ancestor.is_export_default_declaration()
+                })
+            });
+        if exported {
+            return;
+        }
+
+        let mut is_read_symbol_once = false;
+        for r in ctx.scoping().get_resolved_references(symbol_id) {
+            if r.is_read() {
+                if is_read_symbol_once {
+                    // Read more than once, cannot inline
+                    return;
+                }
+                is_read_symbol_once = true;
+            }
+            if r.is_write() {
+                // Function is reassigned, cannot inline
+                return;
+            }
+        }
+        if !is_read_symbol_once {
+            // Never read, will be removed by dead code elimination
+            return;
+        }
+
+        if !Self::can_safely_inline_function(func, ctx) {
+            return;
+        }
+
+        let func = func.take_in(ctx.ast.allocator);
+        *stmt = ctx.ast.statement_empty(func.span);
+        ctx.state.inline_function_declarations.insert(symbol_id, func);
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
@@ -45,6 +97,79 @@ impl<'a> PeepholeOptimizations {
             *expr = ctx.value_to_expr(expr.span(), cv.clone());
             ctx.state.changed = true;
         }
+    }
+
+    pub fn inline_function_declaration_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::Identifier(ident) = expr else { return };
+        let Some(reference_id) = ident.reference_id.get() else { return };
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
+            return;
+        };
+        let Some(mut func_decl) = ctx.state.inline_function_declarations.remove(&symbol_id) else {
+            ctx.state.read_references.insert(symbol_id);
+            return;
+        };
+        let current_scope_id = ctx.current_scope_id();
+        ctx.scoping_mut().change_scope_parent_id(func_decl.scope_id(), Some(current_scope_id));
+        func_decl.r#type = FunctionType::FunctionExpression;
+        if !ctx.options().keep_names.function {
+            func_decl.id = None;
+        }
+        *expr = Expression::FunctionExpression(ctx.alloc(func_decl));
+        ctx.state.changed = true;
+    }
+
+    /// Check if a function can be safely inlined without variable name conflicts
+    fn can_safely_inline_function(function_decl: &Function<'a>, ctx: &Ctx<'a, '_>) -> bool {
+        struct VariableCollector<'a, 'ctx> {
+            ctx: &'ctx Ctx<'a, 'ctx>,
+            external_variables: FxHashSet<String>,
+            function_scope_id: oxc_semantic::ScopeId,
+        }
+
+        impl<'a> Visit<'a> for VariableCollector<'a, '_> {
+            fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+                // Check references inside the function
+                if let Some(reference_id) = ident.reference_id.get() {
+                    if let Some(symbol_id) =
+                        self.ctx.scoping().get_reference(reference_id).symbol_id()
+                    {
+                        let symbol_scope_id = self.ctx.scoping().symbol_scope_id(symbol_id);
+
+                        // If this reference is to a variable from outside the function
+                        if self.is_external_scope(symbol_scope_id) {
+                            self.external_variables.insert(ident.name.to_string());
+                        }
+                    }
+                }
+            }
+        }
+
+        impl VariableCollector<'_, '_> {
+            fn is_external_scope(&self, scope_id: oxc_semantic::ScopeId) -> bool {
+                // Check if this scope is outside the function being inlined
+                // For now, we consider any scope that's not the target scope as external
+                self.ctx
+                    .scoping()
+                    .scope_ancestors(self.function_scope_id)
+                    .skip(1)
+                    .any(|ancestor_id| ancestor_id == scope_id)
+            }
+        }
+
+        // For now, we'll be conservative and only allow inlining of simple functions
+        // that don't reference external variables, to avoid complex scope analysis
+        let mut collector = VariableCollector {
+            ctx,
+            external_variables: FxHashSet::default(),
+            function_scope_id: function_decl.scope_id(),
+        };
+
+        collector.visit_function(function_decl, oxc_syntax::scope::ScopeFlags::empty());
+
+        // For now, allow inlining if no external variables are referenced
+        // This is conservative but safe
+        collector.external_variables.is_empty()
     }
 }
 
@@ -96,6 +221,33 @@ mod test {
             console.log(frag);
             "#,
             r#"console.log('<p autocapitalize="words" contenteditable="false"/>');"#,
+            &options,
+        );
+    }
+
+    #[test]
+    fn function_inlining() {
+        let options = CompressOptions::smallest();
+        test_options(
+            "function foo(a,b,c) { return a + b + c; } console.log(foo(1,2,3))",
+            "console.log(function(a,b,c){return a + b + c}(1,2,3))",
+            &options,
+        );
+        test_same_options(
+            "function foo(a,b,c) { return a + b + c; } console.log(foo(1,2,3)), console.log(foo(4,5,6))",
+            &options,
+        );
+        test_same_options(
+            "function foo(a,b,c) { return a + b + c; } foo = bar, console.log(foo(1,2,3))",
+            &options,
+        );
+        test_options(
+            "var a = 1; function foo(a) { return a + 1; } console.log(foo(2))",
+            "console.log(function(a){ return a + 1 }(2))",
+            &options,
+        );
+        test_same_options(
+            "var x = 1; function foo(y) { return x + y; } console.log(foo(2))",
             &options,
         );
     }

@@ -1167,10 +1167,7 @@ fn test_minimize_exit_statements() {
         "function foo(x) { if (!x.y) return undefined; return x }",
         "function foo(x) { if (x.y) return x;}",
     );
-    test(
-        "function x() { if (y) return; function y() {} }",
-        "function x() { if (y) return; function y() { }}",
-    );
+    test("function x() { if (y) return; function y() {} }", "function x() {}");
     test("function x() { if (y) return; let y }", "function x() { if (y) return; let y;}");
     test("function x() { if (y) return; var y }", "function x() { if (!y) var y;}");
     test(

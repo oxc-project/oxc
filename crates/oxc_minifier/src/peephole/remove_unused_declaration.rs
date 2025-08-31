@@ -109,7 +109,7 @@ mod test {
     fn remove_unused_function_declaration() {
         let options = CompressOptions::smallest();
         test_options("function foo() {}", "", &options);
-        test_same_options("function foo() { bar } foo()", &options);
+        test_options("function foo() { bar } foo()", "(function() { bar; })()", &options);
         test_same_options("export function foo() {} foo()", &options);
     }
 
