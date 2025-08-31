@@ -15,6 +15,7 @@ use crate::{
 pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
     pub convert_const_to_let: bool,
+    pub hoist_function_declarations: bool,
 }
 
 /// Normalize AST
@@ -64,6 +65,21 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
                 || Self::drop_debugger(stmt, ctx)
                 || Self::drop_console(stmt, ctx))
         });
+        if self.options.hoist_function_declarations {
+            stmts.sort_by(|a, b| {
+                if matches!(a, Statement::FunctionDeclaration(_)) {
+                    if matches!(b, Statement::FunctionDeclaration(_)) {
+                        std::cmp::Ordering::Equal
+                    } else {
+                        std::cmp::Ordering::Less
+                    }
+                } else if matches!(b, Statement::FunctionDeclaration(_)) {
+                    std::cmp::Ordering::Greater
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            });
+        }
     }
 
     fn exit_variable_declaration(

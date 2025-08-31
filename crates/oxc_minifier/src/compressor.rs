@@ -34,7 +34,7 @@ impl<'a> Compressor<'a> {
         let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
-            NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
+            NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true, hoist_function_declarations: true };
         Normalize::new(normalize_options).build(program, &mut ctx);
         PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
@@ -55,7 +55,7 @@ impl<'a> Compressor<'a> {
         let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
-            NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false };
+            NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false, hoist_function_declarations: false };
         Normalize::new(normalize_options).build(program, &mut ctx);
         DeadCodeElimination::new(max_iterations).run_in_loop(program, &mut ctx)
     }
