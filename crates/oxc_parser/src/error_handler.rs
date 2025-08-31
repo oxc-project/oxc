@@ -19,8 +19,8 @@ impl<'a> ParserImpl<'a> {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined) {
-            if let Some(error) = self.lexer.errors.pop() {
-                self.set_fatal_error(error);
+            if let Some(error) = self.lexer.errors.last() {
+                self.set_fatal_error(error.clone());
                 return;
             }
         }

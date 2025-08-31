@@ -1867,6 +1867,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──
    ╰────
 
+  × Unterminated string
+   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/381/input.js:1:9]
+ 1 │ var x = "
+   ·         ──
+   ╰────
+
   × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/382/input.js:1:5]
  1 │ var if = 42
@@ -4663,6 +4669,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Invalid Character `𫠞`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/327/input.js:1:5]
+ 1 │ var 𫠞_ = 12;
+   ·     ──
+   ╰────
 
   × Invalid Character `𫠞`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/327/input.js:1:5]
@@ -9669,6 +9681,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ─
    ╰────
 
+  × Invalid Character `🀒`
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_id_smp/input.js:1:5]
+ 1 │ var 🀒
+   ·     ─
+   ╰────
+
   × Invalid Unicode escape sequence
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_lone_surrogate/input.js:1:2]
  1 │ \uD800!
@@ -10680,6 +10698,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0062/input.js:1:9]
  1 │ ╭─▶ var x = /
  2 │ ╰─▶ /
+   ╰────
+
+  × Unterminated string
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0063/input.js:1:9]
+ 1 │ var x = "
+   ·         ──
    ╰────
 
   × Unterminated string

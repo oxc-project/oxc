@@ -12941,6 +12941,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ var es2 = 'line 1
    ╰────
 
+  × Unterminated string
+   ╭─[typescript/tests/cases/compiler/stringLiteralsErrors.ts:2:11]
+ 1 │ // Srtings missing line terminator
+ 2 │ var es1 = "line 1
+   ·           ────────
+ 3 │ ";
+ 4 │ var es2 = 'line 1
+   ╰────
+
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superAccess2.ts:7:10]
  6 │ class Q extends P {
@@ -18335,6 +18344,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24.ts:1:9]
  1 │ var x = "\u{00000000000067
    ·         ──────────────────
+   ╰────
+
+  × Unterminated string
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24.ts:1:9]
+ 1 │ var x = "\u{00000000000067
+   ·         ──────────────────
+   ╰────
+
+  × Unterminated string
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings25.ts:1:9]
+ 1 │ var x = "\u{00000000000067}
+   ·         ───────────────────
    ╰────
 
   × Unterminated string
@@ -24214,11 +24235,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ foo(a, \
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:7]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens18.ts:1:8]
  1 │ foo(a \
-   ·       ┬
-   ·       ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence
@@ -24239,11 +24258,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·  ─
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:12]
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens20.ts:1:13]
  1 │ var v: X<T \
-   ·            ┬
-   ·            ╰── `,` expected
    ╰────
 
   × Invalid Unicode escape sequence

@@ -2754,37 +2754,33 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·   ──
     ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
+ 1 │ #\041
+   ·   ─
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
+ 1 │ #\u0021
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Character `!`
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
+ 1 │ #\u{21}
+   ·        ▲
+ 2 │ 
+   ╰────
 
-  × Expected `in` but found `throw`
-    ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
- 19 │ 
- 20 │ throw "Test262: This statement should not be evaluated.";
-    · ──┬──
-    ·   ╰── `in` expected
-    ╰────
+  × Invalid Unicode escape sequence
+   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
+ 1 │ #\x21
+   ·   ─
+ 2 │ 
+   ╰────
 
   × Invalid Unicode escape sequence
    ╭─[test262/test/language/comments/hashbang/escaped-hash-043.js:1:2]
@@ -21095,6 +21091,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·     ─
     ╰────
 
+  × Invalid Character `ⸯ`
+    ╭─[test262/test/language/identifiers/vertical-tilde-start.js:17:5]
+ 16 │ 
+ 17 │ var ⸯ; // U+2E2F
+    ·     ─
+    ╰────
+
   × Identifier `x` has already been declared
     ╭─[test262/test/language/import/dup-bound-names.js:16:10]
  15 │ 
@@ -39185,6 +39188,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·           ───
     ╰────
 
+  × Unterminated string
+    ╭─[test262/test/language/types/string/S8.4_A13_T2.js:16:11]
+ 15 │ 
+ 16 │ var str = ';
+    ·           ───
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/types/string/S8.4_A13_T3.js:16:13]
  15 │ 
@@ -39192,6 +39202,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ·             ▲
     ╰────
   help: Try insert a semicolon here
+
+  × Unterminated string
+    ╭─[test262/test/language/types/string/S8.4_A14_T1.js:16:11]
+ 15 │ 
+ 16 │ var str = ";
+    ·           ───
+    ╰────
 
   × Unterminated string
     ╭─[test262/test/language/types/string/S8.4_A14_T1.js:16:11]
@@ -39256,6 +39273,13 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  17 │ 
  18 │ var\u00A0x;
     ·          ▲
+    ╰────
+
+  × Invalid Character `᠎`
+    ╭─[test262/test/language/white-space/mongolian-vowel-separator.js:33:4]
+ 32 │ // U+180E between "var" and "foo"; UTF8(0x180E) = 0xE1 0xA0 0x8E
+ 33 │ var᠎foo;
+    ·    ─
     ╰────
 
   × Invalid Character `᠎`
