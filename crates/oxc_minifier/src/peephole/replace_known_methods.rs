@@ -1677,16 +1677,22 @@ mod test {
         test("v = [1, ...[1,2]][0]", "v = 1");
 
         // property access should be kept to keep `this` value
-        test_same(
+        test(
             "
             function f(){ console.log(this[0]) }
             ['PASS',f][1]()
         ",
+            "
+            ['PASS', function (){ console.log(this[0]) }][1]()
+        ",
         );
-        test_same(
+        test(
             "
             function f(){ console.log(this[0]) }
             ['PASS',f][1]``
+        ",
+            "
+            ['PASS', function (){ console.log(this[0]) }][1]``
         ",
         );
     }

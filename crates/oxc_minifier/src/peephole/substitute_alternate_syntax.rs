@@ -1543,7 +1543,7 @@ mod test {
         test_same("class Foo { async * foo() { return void 0 } }");
         test(
             "async function* foo() { function bar () { return void 0 } return bar }",
-            "async function* foo() { function bar () {} return bar }",
+            "async function* foo() { return function () {} }",
         );
         test(
             "async function* foo() { let bar = () => { return void 0 }; return bar }",
@@ -1674,7 +1674,10 @@ mod test {
         test("x = new Object()", "x = ({})");
         test("x = Object()", "x = ({})");
 
-        test_same("x = (function (){function Object(){this.x=4}return new Object();})();");
+        test(
+            "x = (function (){function Object(){this.x=4}return new Object();})();",
+            "x = (function (){return new function(){this.x=4}})()",
+        );
 
         test("x = new window.Object", "x = ({})");
         test("x = new window.Object()", "x = ({})");
@@ -2248,7 +2251,7 @@ mod test {
         test("(Object(g))(a)", "g(a)");
         test("Object(a.b)(x)", "(0, a.b)(x)");
         test_same("Object?.(f)(1)");
-        test_same("function Object(x){return x} Object(f)(1)");
+        test("function Object(x){return x} Object(f)(1)", "(function (x) { return x })(f)(1)");
         test_same("Object(...a)(1)");
     }
 

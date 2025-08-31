@@ -1015,7 +1015,8 @@ mod test {
             // let input = format!("{source_text}; html``");
             // test(&input, source_text);
         }
-        check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
+        test("/* @__NO_SIDE_EFFECTS__ */ function f() {}; f()", "");
+        test("/* @__NO_SIDE_EFFECTS__ */ function f() {}; new f()", "");
         check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
         check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
         check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
@@ -1035,19 +1036,23 @@ mod test {
             treeshake: TreeShakeOptions { annotations: false, ..TreeShakeOptions::default() },
             ..default_options()
         };
-        test_same_options("function test() { bar } /* @__PURE__ */ test()", &options);
-        test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
+        test_options(
+            "function test() { bar } /* @__PURE__ */ test()",
+            "/* @__PURE__ */ (function () { bar })()",
+            &options,
+        );
+        test_options(
+            "function test() {} /* @__PURE__ */ new test()",
+            "/* @__PURE__ */ new function () {}()",
+            &options,
+        );
 
         let options = CompressOptions {
             treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },
             ..default_options()
         };
-        test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
-        test_options(
-            "function test() {} /* @__PURE__ */ new test()",
-            "function test() {}",
-            &options,
-        );
+        test_options("function test() {} /* @__PURE__ */ test()", "", &options);
+        test_options("function test() {} /* @__PURE__ */ new test()", "", &options);
     }
 
     #[test]
@@ -1058,25 +1063,31 @@ mod test {
         test_options("var x = 1; x = foo();", "foo()", &options);
         test_same_options("export var foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
-        test_same_options("function foo() { return t = x(); } foo();", &options);
         test_options(
-            "function foo() { var t; return t = x(); } foo();",
-            "function foo() { return x(); } foo();",
+            "function foo() { return t = x(); } foo();",
+            "(function () { return t = x() })()",
             &options,
         );
-        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+        test_options(
+            "function foo() { var t; return t = x(); } foo();",
+            "(function () { return x(); })();",
+            &options,
+        );
+        test_options(
+            "function foo(t) { return t = x(); } foo();",
+            "(function (t) { return t = x(); })()",
+            &options,
+        );
 
         test_options("let x = 1; x = 2;", "", &options);
         test_options("let x = 1; x = foo();", "foo()", &options);
         test_same_options("export let foo; foo = 0;", &options);
         test_same_options("let x = 1; x = 2, foo(x)", &options);
-        test_same_options("function foo() { return t = x(); } foo();", &options);
         test_options(
             "function foo() { let t; return t = x(); } foo();",
-            "function foo() { return x() } foo()",
+            "(function () { return x() })()",
             &options,
         );
-        test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         // For loops
         test_same_options("for (let i;;) foo(i)", &options);
