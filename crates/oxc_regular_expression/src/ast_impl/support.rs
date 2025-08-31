@@ -7,6 +7,7 @@ pub struct RegexUnsupportedPatterns {
     pub named_capture_groups: bool,
     pub unicode_property_escapes: bool,
     pub look_behind_assertions: bool,
+    pub pattern_modifiers: bool,
 }
 
 /// Check if the regular expression contains any unsupported syntax.
@@ -62,7 +63,12 @@ fn term_contains_unsupported(term: &Term, unsupported: &RegexUnsupportedPatterns
             }
             disjunction_contains_unsupported(&group.body, unsupported)
         }
-        Term::IgnoreGroup(group) => disjunction_contains_unsupported(&group.body, unsupported),
+        Term::IgnoreGroup(group) => {
+            if group.modifiers.is_some() && unsupported.pattern_modifiers {
+                return true;
+            }
+            disjunction_contains_unsupported(&group.body, unsupported)
+        }
         _ => false,
     }
 }

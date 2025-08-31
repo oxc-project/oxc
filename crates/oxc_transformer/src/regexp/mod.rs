@@ -107,6 +107,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
                 look_behind_assertions,
                 named_capture_groups,
                 unicode_property_escapes,
+                pattern_modifiers: false,
             },
         }
     }
