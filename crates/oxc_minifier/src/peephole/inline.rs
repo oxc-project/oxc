@@ -1,9 +1,9 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_semantic::{ScopeId, SymbolId};
 use oxc_span::GetSpan;
-use rustc_hash::FxHashSet;
 
 use crate::ctx::Ctx;
 
@@ -22,7 +22,7 @@ impl<'a> PeepholeOptimizations {
         ctx.init_value(symbol_id, value);
     }
 
-    pub fn take_inlineable_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn init_inlineable_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::FunctionDeclaration(func) = stmt else { return };
         let Some(id) = &func.id else { return };
         let symbol_id = id.symbol_id();
@@ -58,13 +58,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if !Self::can_safely_inline_function(func, ctx) {
-            return;
-        }
-
-        let func = func.take_in(ctx.ast.allocator);
-        *stmt = ctx.ast.statement_empty(func.span);
-        ctx.state.inline_function_declarations.insert(symbol_id, func);
+        let func = func.clone_in_with_semantic_ids(ctx.ast.allocator);
+        ctx.state.inline_function_declarations.insert(symbol_id, func.unbox());
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
@@ -105,6 +100,10 @@ impl<'a> PeepholeOptimizations {
             return;
         };
         let current_scope_id = ctx.current_scope_id();
+        if !Self::can_safely_inline_function(&func_decl, current_scope_id, ctx) {
+            return;
+        }
+
         ctx.scoping_mut().change_scope_parent_id(func_decl.scope_id(), Some(current_scope_id));
         func_decl.r#type = FunctionType::FunctionExpression;
         if !ctx.options().keep_names.function {
@@ -112,59 +111,82 @@ impl<'a> PeepholeOptimizations {
         }
         *expr = Expression::FunctionExpression(ctx.alloc(func_decl));
         ctx.state.changed = true;
+        ctx.state.inlined_function_declarations.insert(symbol_id);
     }
 
     /// Check if a function can be safely inlined without variable name conflicts
-    fn can_safely_inline_function(function_decl: &Function<'a>, ctx: &Ctx<'a, '_>) -> bool {
-        struct VariableCollector<'a, 'ctx> {
-            ctx: &'ctx Ctx<'a, 'ctx>,
-            external_variables: FxHashSet<String>,
-            function_scope_id: oxc_semantic::ScopeId,
+    fn can_safely_inline_function(
+        function_decl: &'_ Function<'a>,
+        target_scope_id: ScopeId,
+        ctx: &'_ mut Ctx<'a, '_>,
+    ) -> bool {
+        struct AdvancedScopeAnalyzer<'a, 'b, 'c> {
+            ctx: &'b mut Ctx<'a, 'c>,
+            function_scope_id: ScopeId,
+            target_scope_id: ScopeId,
+            has_unsafe_reference: bool,
         }
 
-        impl<'a> Visit<'a> for VariableCollector<'a, '_> {
+        impl<'a> Visit<'a> for AdvancedScopeAnalyzer<'a, '_, '_> {
             fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-                // Check references inside the function
-                if let Some(reference_id) = ident.reference_id.get() {
-                    if let Some(symbol_id) =
-                        self.ctx.scoping().get_reference(reference_id).symbol_id()
-                    {
-                        let symbol_scope_id = self.ctx.scoping().symbol_scope_id(symbol_id);
+                let symbol_id = self.ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+                let symbol_scope_id =
+                    symbol_id.map(|symbol_id| self.ctx.scoping().symbol_scope_id(symbol_id));
 
-                        // If this reference is to a variable from outside the function
-                        if self.is_external_scope(symbol_scope_id) {
-                            self.external_variables.insert(ident.name.to_string());
-                        }
-                    }
+                // Check if this is a reference to an external variable
+                if symbol_scope_id
+                    .is_some_and(|symbol_scope_id| self.is_scope_within_function(symbol_scope_id))
+                {
+                    return;
+                }
+
+                // Check if this external reference would be safe when inlined
+                if !self.is_external_reference_safe(ident.name.as_str(), symbol_id) {
+                    let s_id = symbol_id.unwrap_or_else(|| {
+                        self.ctx
+                            .scoping()
+                            .find_binding(self.target_scope_id, ident.name.as_str())
+                            .unwrap()
+                    });
+                    let new_name = self.ctx.generate_uid_name(&ident.name);
+                    self.ctx.state.rename_symbols.insert(s_id, new_name);
+                    self.has_unsafe_reference = true;
                 }
             }
         }
 
-        impl VariableCollector<'_, '_> {
-            fn is_external_scope(&self, scope_id: oxc_semantic::ScopeId) -> bool {
-                // Check if this scope is outside the function being inlined
-                // For now, we consider any scope that's not the target scope as external
+        impl AdvancedScopeAnalyzer<'_, '_, '_> {
+            /// Check if a scope is within the function (function scope or its descendants)
+            fn is_scope_within_function(&self, scope_id: ScopeId) -> bool {
                 self.ctx
                     .scoping()
-                    .scope_ancestors(self.function_scope_id)
-                    .skip(1)
-                    .any(|ancestor_id| ancestor_id == scope_id)
+                    .scope_ancestors(scope_id)
+                    .any(|ancestor| ancestor == self.function_scope_id)
+            }
+
+            /// Check if an external reference would be safe when the function is inlined
+            fn is_external_reference_safe(
+                &self,
+                var_name: &str,
+                symbol_id_from_function_scope: Option<SymbolId>,
+            ) -> bool {
+                let symbol_id_from_target_scope =
+                    self.ctx.scoping().find_binding(self.target_scope_id, var_name);
+                symbol_id_from_target_scope == symbol_id_from_function_scope
             }
         }
 
-        // For now, we'll be conservative and only allow inlining of simple functions
-        // that don't reference external variables, to avoid complex scope analysis
-        let mut collector = VariableCollector {
+        let mut analyzer = AdvancedScopeAnalyzer {
             ctx,
-            external_variables: FxHashSet::default(),
             function_scope_id: function_decl.scope_id(),
+            target_scope_id,
+            has_unsafe_reference: false,
         };
 
-        collector.visit_function(function_decl, oxc_syntax::scope::ScopeFlags::empty());
+        analyzer.visit_function_body(function_decl.body.as_ref().unwrap());
 
-        // For now, allow inlining if no external variables are referenced
-        // This is conservative but safe
-        collector.external_variables.is_empty()
+        // Allow inlining if there are no unsafe external references
+        !analyzer.has_unsafe_reference
     }
 }
 
@@ -252,9 +274,24 @@ mod test {
             &options,
         );
 
-        // Function accessing outer scope variable (no parameter shadowing) should not be inlined for safety
-        test_same_options(
+        // Function accessing outer scope variable (safe reference) can now be inlined
+        test_options(
             "var x = 1; function foo(y) { return x + y; } console.log(foo(2))",
+            "var x = 1;console.log(function(y){return x + y}(2))",
+            &options,
+        );
+
+        // Function with multiple external references
+        test_options(
+            "var x = 1, z = 3; function foo(y) { return x + y + z; } console.log(foo(2))",
+            "var x = 1,z = 3;console.log(function(y){return x + y + z}(2))",
+            &options,
+        );
+
+        // Function accessing global variables
+        test_options(
+            "function foo(x) { console.log(x); } foo(42)",
+            "(function(x){console.log(x)})(42)",
             &options,
         );
     }

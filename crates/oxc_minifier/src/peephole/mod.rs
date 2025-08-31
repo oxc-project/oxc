@@ -16,9 +16,9 @@ mod remove_unused_expression;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::Visit;
-use oxc_semantic::{ReferenceId, ScopeFlags};
-use rustc_hash::FxHashSet;
+use oxc_ast_visit::VisitMut;
+use oxc_semantic::{ReferenceId, SymbolId};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -108,26 +108,37 @@ impl<'a> PeepholeOptimizations {
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
+        ctx.state.inline_function_declarations.clear();
         ctx.state.changed = false;
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
-        if self.changed {
+        if self.changed
+            || !ctx.state.inlined_function_declarations.is_empty()
+            || !ctx.state.rename_symbols.is_empty()
+        {
             // Remove unused references by visiting the AST again and diff the collected references.
             let refs_before =
                 ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
+            let mut counter = ReferencesCounter::new(
+                ctx,
+                &ctx.state.rename_symbols,
+                &ctx.state.inlined_function_declarations,
+            );
             counter.visit_program(program);
-            for inline_func in ctx.state.inline_function_declarations.values() {
-                counter.visit_function(inline_func, ScopeFlags::Function);
-            }
             for reference_id_to_remove in refs_before.difference(&counter.refs) {
                 ctx.scoping_mut().delete_reference(*reference_id_to_remove);
             }
-        }
-        if !ctx.state.inline_function_declarations.is_empty() {
-            self.changed = true;
+            let mut rename_symbols = std::mem::take(&mut ctx.state.rename_symbols);
+            for (symbol_id, new_name) in rename_symbols.drain() {
+                let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+                ctx.scoping_mut().rename_symbol(symbol_id, scope_id, new_name.as_str());
+            }
+            if !rename_symbols.is_empty() {
+                ctx.state.changed = true;
+            }
+            ctx.state.inlined_function_declarations.clear();
         }
     }
 
@@ -171,7 +182,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
             Statement::FunctionDeclaration(_) => {
                 Self::remove_unused_function_declaration(stmt, ctx);
-                Self::take_inlineable_function_declaration(stmt, ctx);
+                Self::init_inlineable_function_declaration(stmt, ctx);
             }
             Statement::ClassDeclaration(_) => Self::remove_unused_class_declaration(stmt, ctx),
             _ => {}
@@ -439,7 +450,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             // Remove unused references by visiting the AST again and diff the collected references.
             let refs_before =
                 ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
+            let mut counter = ReferencesCounter::new(
+                ctx,
+                &ctx.state.rename_symbols,
+                &ctx.state.inlined_function_declarations,
+            );
             counter.visit_program(program);
             for reference_id_to_remove in refs_before.difference(&counter.refs) {
                 ctx.scoping_mut().delete_reference(*reference_id_to_remove);
@@ -520,14 +535,53 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 }
 
-#[derive(Default)]
-struct ReferencesCounter {
+struct ReferencesCounter<'a, 'b> {
     refs: FxHashSet<ReferenceId>,
+    ctx: &'b TraverseCtx<'a>,
+    rename_symbols: &'b FxHashMap<SymbolId, Atom<'a>>,
+    inlined_function_declarations: &'b FxHashSet<SymbolId>,
 }
 
-impl<'a> Visit<'a> for ReferencesCounter {
-    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+impl<'a, 'b> ReferencesCounter<'a, 'b> {
+    fn new(
+        ctx: &'b TraverseCtx<'a>,
+        rename_symbols: &'b FxHashMap<SymbolId, Atom<'a>>,
+        inlined_function_declarations: &'b FxHashSet<SymbolId>,
+    ) -> Self {
+        Self { refs: FxHashSet::default(), ctx, rename_symbols, inlined_function_declarations }
+    }
+}
+
+impl<'a> VisitMut<'a> for ReferencesCounter<'a, '_> {
+    fn visit_identifier_reference(&mut self, it: &mut IdentifierReference<'a>) {
         let reference_id = it.reference_id();
         self.refs.insert(reference_id);
+
+        if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id()
+            && let Some(new_name) = self.rename_symbols.get(&symbol_id)
+        {
+            it.name = *new_name;
+        }
+    }
+
+    fn visit_binding_identifier(&mut self, it: &mut BindingIdentifier<'a>) {
+        let symbol_id = it.symbol_id();
+        if let Some(new_name) = self.rename_symbols.get(&symbol_id) {
+            it.name = *new_name;
+        }
+    }
+
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        stmts.retain_mut(|stmt| {
+            self.visit_statement(stmt);
+            if let Statement::FunctionDeclaration(func) = stmt {
+                let id = func.id.as_ref().expect("FunctionDeclaration should have id");
+                let symbol_id = id.symbol_id();
+                if self.inlined_function_declarations.contains(&symbol_id) {
+                    return false;
+                }
+            }
+            true
+        });
     }
 }
