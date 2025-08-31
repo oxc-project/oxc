@@ -9,11 +9,11 @@ a1 = /a.b/s
 // RegExpLookbehindAssertions
 b1 = /(?<!x)/
 b2 = /(?<=x)/
-b3 = /((?<!x)){2}/ // FIXME(sapphi-red): will be fixed in the next PR
-b4 = /((?<=x)){3}/ // FIXME(sapphi-red): will be fixed in the next PR
+b3 = /((?<!x)){2}/
+b4 = /((?<=x)){3}/
 // RegExpNamedCaptureGroups
 c1 = /(?<a>b)/
-c2 = /((?<c>d)){4}/; // FIXME(sapphi-red): will be fixed in the next PR
+c2 = /((?<c>d)){4}/
 // RegExpUnicodePropertyEscapes
 d1 = /\p{Emoji}/u
 // ES2022
@@ -22,3 +22,6 @@ f1 = /y/d
 // ES2024
 // RegExpSetNotation
 g1 = /[\p{White_Space}&&\p{ASCII}]/v
+
+// Nested cases
+nested1 = /(?:(?<!x))/

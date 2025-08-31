@@ -1,4 +1,6 @@
 c1 = /(?<a>b)/
-c2 = /((?<a>b)){2}/ // FIXME(sapphi-red): will be fixed in the next PR
+c2 = /((?<a>b)){2}/
 
-n1 = /(a)/
+nested1 = /(?<!(?<a>b))/
+nested2 = /((?<a>b))/
+nested3 = /(?:(?<a>b))/

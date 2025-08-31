@@ -1,4 +1,6 @@
 c1 = new RegExp("(?<a>b)", "");
-c2 = /((?<a>b)){2}/;
+c2 = new RegExp("((?<a>b)){2}", "");
 
-n1 = /(a)/;
+nested1 = new RegExp("(?<!(?<a>b))", "");
+nested2 = new RegExp("((?<a>b))", "");
+nested3 = new RegExp("(?:(?<a>b))", "");
