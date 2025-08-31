@@ -22,7 +22,9 @@ fn term_contains_unsupported(mut term: &Term, unsupported: &RegexUnsupportedPatt
     // Loop because `Term::Quantifier` contains a nested `Term`
     loop {
         match term {
-            Term::CapturingGroup(_) => return unsupported.named_capture_groups,
+            Term::CapturingGroup(group) => {
+                return group.name.is_some() && unsupported.named_capture_groups;
+            }
             Term::UnicodePropertyEscape(_) => return unsupported.unicode_property_escapes,
             Term::CharacterClass(character_class) => {
                 return unsupported.unicode_property_escapes
