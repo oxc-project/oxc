@@ -39,6 +39,7 @@ rustc-hash = { workspace = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true }
+oxc_transformer = { workspace = true }
 
 insta = { workspace = true }
 javascript-globals = { workspace = true }

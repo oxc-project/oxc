@@ -22,7 +22,9 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_transformer::{TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
@@ -57,6 +59,15 @@ fn main() -> std::io::Result<()> {
 fn dce(allocator: &Allocator, source_text: &str, source_type: SourceType, nospace: bool) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
+
+    // Transform TypeScript to ESNext before minification (minifier only works on esnext)
+    if source_type.is_typescript() {
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let _ = Transformer::new(allocator, std::path::Path::new("input"), &transform_options)
+            .build_with_scoping(scoping, &mut program);
+    }
+
     Compressor::new(allocator).dead_code_elimination(&mut program, CompressOptions::dce());
     Codegen::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })

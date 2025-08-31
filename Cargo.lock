@@ -2094,6 +2094,7 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
+ "oxc_transformer",
  "oxc_traverse",
  "pico-args",
  "rustc-hash",
@@ -2377,7 +2378,9 @@ dependencies = [
  "oxc_allocator",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_tasks_common",
+ "oxc_transformer",
 ]
 
 [[package]]
