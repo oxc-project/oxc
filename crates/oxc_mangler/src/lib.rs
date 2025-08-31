@@ -321,10 +321,10 @@ impl<'t> Mangler<'t> {
             tmp_bindings.extend(
                 bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
             );
-            tmp_bindings.sort_unstable();
             if tmp_bindings.is_empty() {
                 continue;
             }
+            tmp_bindings.sort_unstable();
 
             let mut slot = slot_liveness.len();
 
