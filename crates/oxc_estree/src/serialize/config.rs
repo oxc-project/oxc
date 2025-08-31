@@ -12,7 +12,7 @@ pub trait Config {
 
     fn new(ranges: bool) -> Self;
     fn new_with_loc(ranges: bool, loc: bool) -> Self;
-    
+
     /// Create a new config with location provider for accurate loc fields
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self;
 
@@ -21,7 +21,7 @@ pub trait Config {
 
     /// Get whether output should contain `loc` fields.
     fn loc(&self) -> bool;
-    
+
     /// Get the location provider for translating offsets to line/column
     fn loc_provider(&self) -> &Self::LocProvider;
 }
@@ -36,7 +36,7 @@ pub struct ConfigTS {
 impl Config for ConfigTS {
     const INCLUDE_TS_FIELDS: bool = true;
     const FIXES: bool = false;
-    
+
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
@@ -48,7 +48,7 @@ impl Config for ConfigTS {
     fn new_with_loc(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
-    
+
     #[inline(always)]
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
@@ -63,7 +63,7 @@ impl Config for ConfigTS {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     #[inline(always)]
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider
@@ -80,7 +80,7 @@ pub struct ConfigJS {
 impl Config for ConfigJS {
     const INCLUDE_TS_FIELDS: bool = false;
     const FIXES: bool = false;
-    
+
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
@@ -92,7 +92,7 @@ impl Config for ConfigJS {
     fn new_with_loc(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
-    
+
     #[inline(always)]
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
@@ -107,7 +107,7 @@ impl Config for ConfigJS {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     #[inline(always)]
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider
@@ -124,7 +124,7 @@ pub struct ConfigFixesTS {
 impl Config for ConfigFixesTS {
     const INCLUDE_TS_FIELDS: bool = true;
     const FIXES: bool = true;
-    
+
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
@@ -136,7 +136,7 @@ impl Config for ConfigFixesTS {
     fn new_with_loc(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
-    
+
     #[inline(always)]
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
@@ -151,7 +151,7 @@ impl Config for ConfigFixesTS {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     #[inline(always)]
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider
@@ -168,7 +168,7 @@ pub struct ConfigFixesJS {
 impl Config for ConfigFixesJS {
     const INCLUDE_TS_FIELDS: bool = false;
     const FIXES: bool = true;
-    
+
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
@@ -180,7 +180,7 @@ impl Config for ConfigFixesJS {
     fn new_with_loc(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
-    
+
     #[inline(always)]
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
@@ -195,7 +195,7 @@ impl Config for ConfigFixesJS {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     #[inline(always)]
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider

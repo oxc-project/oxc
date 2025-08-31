@@ -25,9 +25,14 @@ use structs::ESTreeStructSerializer;
 pub use concat::{Concat2, Concat3, ConcatElement};
 pub use dynamic_loc_provider::DynamicLocProvider;
 pub use sequences::SequenceSerializer;
-pub use specialized_configs::{ConfigJSWithLoc, ConfigTSWithLoc, JSSerializerWithFn, TSSerializerWithFn};
+pub use specialized_configs::{
+    ConfigJSWithLoc, ConfigTSWithLoc, JSSerializerWithFn, TSSerializerWithFn,
+};
 pub use strings::{JsonSafeString, LoneSurrogatesString};
-pub use structs::{ESTreeSpan, FlatStructSerializer, LocProvider, NoLocProvider, Position, SourceLocation, StructSerializer};
+pub use structs::{
+    ESTreeSpan, FlatStructSerializer, LocProvider, NoLocProvider, Position, SourceLocation,
+    StructSerializer,
+};
 
 /// Trait for types which can be serialized to ESTree.
 pub trait ESTree {
@@ -129,7 +134,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             config: C::new_with_loc(ranges, loc),
         }
     }
-    
+
     /// Create new [`ESTreeSerializer`] with custom config.
     pub fn new_with_config(capacity: usize, config: C) -> Self {
         Self {

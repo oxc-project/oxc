@@ -156,7 +156,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
     /// * If `serializer.loc() == true`, outputs `loc` field with line/column information.
     /// * Otherwise, outputs only `start` and `end`.
-    /// 
+    ///
     /// * Now automatically uses translation table if available via LocProvider
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
         let range = span.range();
@@ -176,13 +176,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
                 self.serialize_field("loc", &SourceLocation { start: start_loc, end: end_loc });
             } else {
                 // Fallback to placeholder (backward compatibility)
-                self.serialize_field(
-                    "loc",
-                    &SourceLocation {
-                        start: (0, 0),
-                        end: (0, 0),
-                    },
-                );
+                self.serialize_field("loc", &SourceLocation { start: (0, 0), end: (0, 0) });
             }
         }
     }

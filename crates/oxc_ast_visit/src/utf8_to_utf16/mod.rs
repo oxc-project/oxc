@@ -113,7 +113,7 @@ impl Utf8ToUtf16 {
     }
 
     /// Convert a single UTF-16 offset back to UTF-8.
-    /// 
+    ///
     /// Note: This is a simplified implementation for basic linter compatibility.
     /// Full back-conversion requires complex edge case handling.
     pub fn convert_offset_back(&self, utf16_offset: &mut u32) {
@@ -126,7 +126,7 @@ impl Utf8ToUtf16 {
         // This handles the linter use case where exact precision isn't critical
         let offset = *utf16_offset;
         let mut result = offset;
-        
+
         for translation in &self.translations {
             let utf16_pos = translation.utf8_offset.wrapping_sub(translation.utf16_difference);
             if offset >= utf16_pos {
@@ -135,7 +135,7 @@ impl Utf8ToUtf16 {
                 break;
             }
         }
-        
+
         *utf16_offset = result;
     }
 

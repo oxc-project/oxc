@@ -21,7 +21,8 @@ pub struct LineTranslation {
     /// UTF-8 byte offset of the start of the line.
     pub utf8_offset: u32,
     /// UTF-16 offset difference at the start of this line.
-    /// Note: Field was unused and removed - keeping field for struct layout compatibility
+    /// Note: Currently unused but kept for potential future use and struct layout compatibility
+    #[expect(dead_code)]
     pub utf16_difference: u32,
 }
 
@@ -134,11 +135,7 @@ pub fn build_translations_and_lines(
                     b'\n' => 1,
                     b'\r' => {
                         // Check for \r\n
-                        if index + 1 < slice.len() && slice[index + 1] == b'\n' {
-                            2
-                        } else {
-                            1
-                        }
+                        if index + 1 < slice.len() && slice[index + 1] == b'\n' { 2 } else { 1 }
                     }
                     _ => 0,
                 };
@@ -159,22 +156,19 @@ pub fn build_translations_and_lines(
             }
 
             // Handle Unicode line separators LS (\u2028) and PS (\u2029) if tracking lines
-            if track_lines && byte == 0xE2 {
-                if index + 2 < slice.len()
-                    && slice[index + 1] == 0x80
-                    && (slice[index + 2] == 0xA8 || slice[index + 2] == 0xA9)
-                {
-                    let line_end_offset = start_offset + index + 3;
-                    if line_end_offset < source_text.len() {
-                        #[expect(clippy::cast_possible_truncation)]
-                        let utf8_offset = line_end_offset as u32;
-                        lines
-                            .as_mut()
-                            .unwrap()
-                            .push(LineTranslation { utf8_offset, utf16_difference });
-                    }
-                    // Don't skip - continue processing for unicode translation
+            if track_lines
+                && byte == 0xE2
+                && index + 2 < slice.len()
+                && slice[index + 1] == 0x80
+                && (slice[index + 2] == 0xA8 || slice[index + 2] == 0xA9)
+            {
+                let line_end_offset = start_offset + index + 3;
+                if line_end_offset < source_text.len() {
+                    #[expect(clippy::cast_possible_truncation)]
+                    let utf8_offset = line_end_offset as u32;
+                    lines.as_mut().unwrap().push(LineTranslation { utf8_offset, utf16_difference });
                 }
+                // Don't skip - continue processing for unicode translation
             }
 
             // Handle Unicode characters
@@ -248,11 +242,11 @@ pub fn build_translations_and_lines(
         // `ptr < body_end_ptr` check ensures it's valid to read `CHUNK_SIZE` bytes starting at `ptr`.
         #[expect(clippy::cast_ptr_alignment)]
         let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref().unwrap_unchecked() };
-        
+
         // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
         // `ptr` is derived from `start_ptr`.
         let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
-        
+
         // Process chunk if it contains unicode characters or line breaks
         if chunk.contains_unicode() || (track_lines && chunk.contains_line_breaks()) {
             process_slice(chunk.as_slice(), offset);

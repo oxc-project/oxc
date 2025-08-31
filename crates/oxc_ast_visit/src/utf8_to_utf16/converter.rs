@@ -1,10 +1,7 @@
 use std::cmp::min;
 
-use oxc_ast::ast::Program;
 use oxc_span::Span;
 use oxc_syntax::module_record::VisitMutModuleRecord;
-
-use crate::VisitMut;
 
 use super::{Translation, Utf8ToUtf16};
 

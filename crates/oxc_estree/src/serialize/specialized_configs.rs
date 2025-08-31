@@ -1,8 +1,4 @@
-use super::{
-    config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS},
-    dynamic_loc_provider::DynamicLocProvider,
-    structs::{LocProvider, NoLocProvider},
-};
+use super::{config::Config, dynamic_loc_provider::DynamicLocProvider, structs::LocProvider};
 
 /// Config for TypeScript serialization with dynamic location provider
 pub struct ConfigTSWithLoc<P: LocProvider> {
@@ -14,19 +10,19 @@ pub struct ConfigTSWithLoc<P: LocProvider> {
 impl<P: LocProvider> Config for ConfigTSWithLoc<P> {
     const INCLUDE_TS_FIELDS: bool = true;
     const FIXES: bool = false;
-    
+
     type LocProvider = P;
 
-    fn new(ranges: bool) -> Self {
+    fn new(_ranges: bool) -> Self {
         // This shouldn't be called for specialized configs, but we need to implement it
         panic!("Use new_with_loc_provider for ConfigTSWithLoc")
     }
 
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
-        // This shouldn't be called for specialized configs, but we need to implement it  
+    fn new_with_loc(_ranges: bool, _loc: bool) -> Self {
+        // This shouldn't be called for specialized configs, but we need to implement it
         panic!("Use new_with_loc_provider for ConfigTSWithLoc")
     }
-    
+
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
     }
@@ -38,7 +34,7 @@ impl<P: LocProvider> Config for ConfigTSWithLoc<P> {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider
     }
@@ -54,17 +50,17 @@ pub struct ConfigJSWithLoc<P: LocProvider> {
 impl<P: LocProvider> Config for ConfigJSWithLoc<P> {
     const INCLUDE_TS_FIELDS: bool = false;
     const FIXES: bool = false;
-    
+
     type LocProvider = P;
 
-    fn new(ranges: bool) -> Self {
+    fn new(_ranges: bool) -> Self {
         panic!("Use new_with_loc_provider for ConfigJSWithLoc")
     }
 
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    fn new_with_loc(_ranges: bool, _loc: bool) -> Self {
         panic!("Use new_with_loc_provider for ConfigJSWithLoc")
     }
-    
+
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
         Self { ranges, loc, loc_provider: provider }
     }
@@ -76,7 +72,7 @@ impl<P: LocProvider> Config for ConfigJSWithLoc<P> {
     fn loc(&self) -> bool {
         self.loc
     }
-    
+
     fn loc_provider(&self) -> &Self::LocProvider {
         &self.loc_provider
     }
