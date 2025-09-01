@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -21,9 +22,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_for_statement_init(ctx: &Ctx<'a, '_>) -> bool {
-        ctx.ancestors().nth(1).is_some_and(|ancestor| {
-            ancestor.is_parent_of_for_statement_init() || ancestor.is_parent_of_for_statement_left()
-        })
+        ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_for_statement_left)
     }
 
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
