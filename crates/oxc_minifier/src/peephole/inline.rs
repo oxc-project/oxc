@@ -5,12 +5,15 @@ use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 use rustc_hash::FxHashSet;
 
-use crate::{ctx::Ctx, symbol_value::SymbolValue};
+use crate::{
+    ctx::Ctx,
+    symbol_value::{SymbolInformation, SymbolValue},
+};
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn init_symbol_values(program: &Program<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn init_symbol_information_map(program: &Program<'a>, ctx: &mut Ctx<'a, '_>) {
         let exported_values = if ctx.source_type().is_script() {
             FxHashSet::default()
         } else {
@@ -81,8 +84,8 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-            let value = SymbolValue {
-                initialized_constant: None,
+            let value = SymbolInformation {
+                value: SymbolValue::default(),
                 exported: exported_values.contains(&symbol_id),
                 read_references_count,
                 write_references_count,
@@ -121,7 +124,7 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.write_references_count > 0 {
             return;
         }
-        let Some(cv) = &symbol_value.initialized_constant else { return };
+        let SymbolValue::Primitive(cv) = &symbol_value.value else { return };
         if symbol_value.read_references_count == 1
             || match cv {
                 ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,

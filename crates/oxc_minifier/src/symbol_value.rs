@@ -3,11 +3,23 @@ use rustc_hash::FxHashMap;
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
+#[derive(Debug, Default)]
+pub enum SymbolValue<'a> {
+    /// Initialized primitive constant value evaluated from expressions.
+    Primitive(ConstantValue<'a>),
+    #[default]
+    Unknown,
+}
+
+impl<'a> SymbolValue<'a> {
+    pub fn to_constant_value(&self) -> Option<ConstantValue<'a>> {
+        if let SymbolValue::Primitive(cv) = self { Some(cv.clone()) } else { None }
+    }
+}
+
 #[derive(Debug)]
-pub struct SymbolValue<'a> {
-    /// Initialized constant value evaluated from expressions.
-    /// `None` when the value is not a constant evaluated value.
-    pub initialized_constant: Option<ConstantValue<'a>>,
+pub struct SymbolInformation<'a> {
+    pub value: SymbolValue<'a>,
 
     /// Symbol is exported.
     pub exported: bool,
@@ -20,16 +32,16 @@ pub struct SymbolValue<'a> {
 }
 
 #[derive(Debug, Default)]
-pub struct SymbolValues<'a> {
-    values: FxHashMap<SymbolId, SymbolValue<'a>>,
+pub struct SymbolInformationMap<'a> {
+    values: FxHashMap<SymbolId, SymbolInformation<'a>>,
 }
 
-impl<'a> SymbolValues<'a> {
+impl<'a> SymbolInformationMap<'a> {
     pub fn clear(&mut self) {
         self.values.clear();
     }
 
-    pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>) {
+    pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolInformation<'a>) {
         self.values.insert(symbol_id, symbol_value);
     }
 
@@ -38,11 +50,13 @@ impl<'a> SymbolValues<'a> {
         symbol_id: SymbolId,
         symbol_value: Option<ConstantValue<'a>>,
     ) {
-        let value = self.values.get_mut(&symbol_id).expect("symbol value must exist");
-        value.initialized_constant = symbol_value;
+        let info = self.values.get_mut(&symbol_id).expect("symbol value must exist");
+        if let Some(constant) = symbol_value {
+            info.value = SymbolValue::Primitive(constant);
+        }
     }
 
-    pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
+    pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolInformation<'a>> {
         self.values.get(&symbol_id)
     }
 }
