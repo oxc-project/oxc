@@ -1061,7 +1061,11 @@ mod test {
             "function foo() { return x(); } foo();",
             &options,
         );
-        test_same_options("function foo(t) { return t = x(); } foo();", &options);
+        test_options(
+            "function foo(t) { return t = x(); } foo();",
+            "function foo(t) { return x(); } foo()",
+            &options,
+        );
 
         test_options("let x = 1; x = 2;", "", &options);
         test_options("let x = 1; x = foo();", "foo()", &options);
@@ -1073,7 +1077,6 @@ mod test {
             "function foo() { return x() } foo()",
             &options,
         );
-        test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         // For loops
         test_options("for (let i;;) i = 0", "for (;;);", &options);

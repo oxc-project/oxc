@@ -106,8 +106,10 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = &mut Ctx::new(ctx);
         ctx.state.symbol_values.clear();
+        Self::init_symbol_values(program, ctx);
         ctx.state.changed = false;
     }
 
@@ -418,8 +420,10 @@ impl<'a> DeadCodeElimination {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
-    fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = &mut Ctx::new(ctx);
         ctx.state.symbol_values.clear();
+        PeepholeOptimizations::init_symbol_values(program, ctx);
         ctx.state.changed = false;
     }
 

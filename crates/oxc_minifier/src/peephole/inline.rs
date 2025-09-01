@@ -1,24 +1,109 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_semantic::SymbolId;
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
+use rustc_hash::FxHashSet;
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, symbol_value::SymbolValue};
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    pub fn init_symbol_values(program: &Program<'a>, ctx: &mut Ctx<'a, '_>) {
+        let exported_values = if ctx.source_type().is_script() {
+            FxHashSet::default()
+        } else {
+            program
+                .body
+                .iter()
+                .flat_map(|stmt| -> Vec<SymbolId> {
+                    match stmt {
+                        Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
+                            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                                func.id.iter().map(BindingIdentifier::symbol_id).collect()
+                            }
+                            ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+                                class.id.iter().map(BindingIdentifier::symbol_id).collect()
+                            }
+                            _ => vec![],
+                        },
+                        Statement::ExportNamedDeclaration(decl) if decl.source.is_none() => {
+                            if let Some(declaration) = &decl.declaration {
+                                return match declaration {
+                                    Declaration::ClassDeclaration(class) => {
+                                        class.id.iter().map(BindingIdentifier::symbol_id).collect()
+                                    }
+                                    Declaration::FunctionDeclaration(func) => {
+                                        func.id.iter().map(BindingIdentifier::symbol_id).collect()
+                                    }
+                                    Declaration::VariableDeclaration(var) => var
+                                        .declarations
+                                        .iter()
+                                        .flat_map(|d| {
+                                            d.id.get_binding_identifiers()
+                                                .into_iter()
+                                                .map(BindingIdentifier::symbol_id)
+                                        })
+                                        .collect(),
+                                    _ => vec![],
+                                };
+                            }
+                            decl.specifiers
+                                .iter()
+                                .filter_map(|spec| {
+                                    if let ModuleExportName::IdentifierReference(id) = &spec.local {
+                                        return ctx
+                                            .scoping()
+                                            .get_reference(id.reference_id())
+                                            .symbol_id();
+                                    }
+                                    None
+                                })
+                                .collect()
+                        }
+                        _ => vec![],
+                    }
+                })
+                .collect()
+        };
+
+        let symbol_ids = ctx.scoping().symbol_ids().collect::<Vec<_>>();
+        for symbol_id in symbol_ids {
+            let mut read_references_count = 0;
+            let mut write_references_count = 0;
+            for r in ctx.scoping().get_resolved_references(symbol_id) {
+                if r.is_read() {
+                    read_references_count += 1;
+                }
+                if r.is_write() {
+                    write_references_count += 1;
+                }
+            }
+            let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+            let value = SymbolValue {
+                initialized_constant: None,
+                exported: exported_values.contains(&symbol_id),
+                read_references_count,
+                write_references_count,
+                scope_id,
+            };
+            ctx.state.symbol_values.init_value(symbol_id, value);
+        }
+    }
+
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
-        let Some(symbol_id) = ident.symbol_id.get() else { return };
-        let value = if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
+        let symbol_id = ident.symbol_id();
+        if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
             // - Skip constant value inlining for `var` declarations, due to TDZ problems.
             // - Set None for for statement initializers as the value of these are set by the for statement.
-            None
-        } else {
-            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
-        };
-        ctx.init_value(symbol_id, value);
+            return;
+        }
+
+        let value =
+            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx));
+        ctx.state.symbol_values.set_constant_value(symbol_id, value);
     }
 
     fn is_for_statement_init(ctx: &Ctx<'a, '_>) -> bool {

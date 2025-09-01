@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     },
     side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
 };
-use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::format_atom;
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_start},
@@ -15,7 +15,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::Ancestor;
 
-use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
+use crate::{options::CompressOptions, state::MinifierState};
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -167,41 +167,6 @@ impl<'a> Ctx<'a, '_> {
             return true;
         }
         false
-    }
-
-    pub fn init_value(&mut self, symbol_id: SymbolId, constant: Option<ConstantValue<'a>>) {
-        let mut exported = false;
-        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
-            for ancestor in self.ancestors() {
-                if ancestor.is_export_named_declaration()
-                    || ancestor.is_export_all_declaration()
-                    || ancestor.is_export_default_declaration()
-                {
-                    exported = true;
-                }
-            }
-        }
-
-        let mut read_references_count = 0;
-        let mut write_references_count = 0;
-        for r in self.scoping().get_resolved_references(symbol_id) {
-            if r.is_read() {
-                read_references_count += 1;
-            }
-            if r.is_write() {
-                write_references_count += 1;
-            }
-        }
-
-        let scope_id = self.scoping.current_scope_id();
-        let symbol_value = SymbolValue {
-            initialized_constant: constant,
-            exported,
-            read_references_count,
-            write_references_count,
-            scope_id,
-        };
-        self.state.symbol_values.init_value(symbol_id, symbol_value);
     }
 
     /// If two expressions are equal.
