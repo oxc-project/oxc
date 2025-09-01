@@ -1,3 +1,4 @@
+use oxc_ast::ast::Function;
 use oxc_ast::{AstKind, ast::FormalParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -17,25 +18,61 @@ pub struct DefaultParamLast;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce default parameters to be last
+    /// Requires default parameters in functions to be the last ones.
     ///
     /// ### Why is this bad?
     ///
-    /// Putting default parameter at last allows function calls to omit optional tail arguments.
+    /// Placing default parameters last allows function calls to omit optional trailing arguments,
+    /// which improves readability and consistency. This rule applies equally to JavaScript and
+    /// TypeScript functions.
+    ///
+    /// ### Options
+    ///
+    /// No options available for this rule
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
-    /// // Incorrect: optional argument can **not** be omitted
+    /// ```js
+    /// /* default-param-last: "error" */
+    ///
+    /// /* ✘ Bad: */
+    /// function f(a = 0, b) {}
+    /// function f(a, b = 0, c) {}
     /// function createUser(isAdmin = false, id) {}
     /// createUser(undefined, "tabby")
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```js
+    /// /* default-param-last: "error" */
+    ///
+    /// /* ✔ Good: */
+    /// function f(a, b = 0) {}
+    /// function f(a = 0, b = 0) {}
     /// function createUser(id, isAdmin = false) {}
     /// createUser("tabby")
+    /// ```
+    ///
+    /// Examples of **incorrect** TypeScript code for this rule:
+    /// ```ts
+    /// /* default-param-last: "error" */
+    ///
+    /// /* ✘ Bad: */
+    /// function greet(message: string = "Hello", name: string) {}
+    /// function combine(a: number = 1, b: number, c: number) {}
+    /// function combine(a: number, b: number = 2, c: number) {}
+    /// function combine(a: number = 1, b?: number, c: number) {}
+    /// ```
+    ///
+    /// Examples of **correct** TypeScript code for this rule:
+    /// ```ts
+    /// /* default-param-last: "error" */
+    ///
+    /// /* ✔ Good: */
+    /// function greet(name: string, message: string = "Hello") {}
+    /// function combine(a: number, b: number = 2, c: number = 3) {}
+    /// function combine(a: number, b?: number, c: number = 3) {}
     /// ```
     DefaultParamLast,
     eslint,
@@ -45,10 +82,7 @@ declare_oxc_lint!(
 impl Rule for DefaultParamLast {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::Function(function) => {
-                if !function.is_declaration() && !function.is_expression() {
-                    return;
-                }
+            AstKind::Function(function) if is_function_decl_or_expr(function) => {
                 check_params(&function.params.items, ctx);
             }
             AstKind::ArrowFunctionExpression(function) => check_params(&function.params.items, ctx),
@@ -57,16 +91,18 @@ impl Rule for DefaultParamLast {
     }
 }
 
-fn check_params<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
-    let mut has_seen_plain_param = false;
-    for param in items.iter().rev() {
-        if !param.pattern.kind.is_assignment_pattern() && !param.pattern.optional {
-            has_seen_plain_param = true;
-            continue;
-        }
-        if has_seen_plain_param
-            && (param.pattern.kind.is_assignment_pattern() || param.pattern.optional)
-        {
+fn is_function_decl_or_expr(function: &Function) -> bool {
+    function.is_declaration() || function.is_expression()
+}
+
+fn check_params<'a>(params: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
+    let mut seen_plain = false;
+    for param in params.iter().rev() {
+        let is_default = param.pattern.kind.is_assignment_pattern() || param.pattern.optional;
+
+        if !is_default {
+            seen_plain = true;
+        } else if seen_plain {
             ctx.diagnostic(default_param_last_diagnostic(param.span));
         }
     }
