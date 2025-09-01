@@ -5,8 +5,11 @@ use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 #[derive(Debug, Default)]
 pub enum SymbolValue<'a> {
-    /// Initialized primitive constant value evaluated from expressions.
+    /// Initialized primitive constant value.
     Primitive(ConstantValue<'a>),
+    /// Initialized primitive value.
+    /// This can be inlined within the same scope after the variable is declared.
+    ScopedPrimitive(ConstantValue<'a>),
     #[default]
     Unknown,
 }
@@ -27,8 +30,7 @@ pub struct SymbolInformation<'a> {
     pub read_references_count: u32,
     pub write_references_count: u32,
 
-    #[expect(unused)]
-    pub scope_id: ScopeId,
+    pub scope_id: Option<ScopeId>,
 }
 
 #[derive(Debug, Default)]
@@ -45,15 +47,10 @@ impl<'a> SymbolInformationMap<'a> {
         self.values.insert(symbol_id, symbol_value);
     }
 
-    pub fn set_constant_value(
-        &mut self,
-        symbol_id: SymbolId,
-        symbol_value: Option<ConstantValue<'a>>,
-    ) {
+    pub fn set_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>, scope_id: ScopeId) {
         let info = self.values.get_mut(&symbol_id).expect("symbol value must exist");
-        if let Some(constant) = symbol_value {
-            info.value = SymbolValue::Primitive(constant);
-        }
+        info.value = symbol_value;
+        info.scope_id = Some(scope_id);
     }
 
     pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolInformation<'a>> {
