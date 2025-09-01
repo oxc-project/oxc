@@ -1251,7 +1251,7 @@ mod test {
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 
-    #[test] 
+    #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_no_typescript_files() {
         // Test that tsgolint doesn't fail when only non-TypeScript files are passed
