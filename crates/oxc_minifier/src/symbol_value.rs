@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
@@ -10,6 +10,9 @@ pub enum SymbolValue<'a> {
     /// Initialized primitive value.
     /// This can be inlined within the same scope after the variable is declared.
     ScopedPrimitive(ConstantValue<'a>),
+    /// Initialized scoped literal value.
+    /// This can be inlined within the same scope after the variable is declared if it's only used once.
+    ScopedLiteral,
     #[default]
     Unknown,
 }
@@ -36,11 +39,13 @@ pub struct SymbolInformation<'a> {
 #[derive(Debug, Default)]
 pub struct SymbolInformationMap<'a> {
     values: FxHashMap<SymbolId, SymbolInformation<'a>>,
+    inlineable_symbols: FxHashSet<SymbolId>,
 }
 
 impl<'a> SymbolInformationMap<'a> {
     pub fn clear(&mut self) {
         self.values.clear();
+        self.inlineable_symbols.clear();
     }
 
     pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolInformation<'a>) {
@@ -55,5 +60,13 @@ impl<'a> SymbolInformationMap<'a> {
 
     pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolInformation<'a>> {
         self.values.get(&symbol_id)
+    }
+
+    pub fn mark_symbol_inlineable(&mut self, symbol_id: SymbolId) {
+        self.inlineable_symbols.insert(symbol_id);
+    }
+
+    pub fn get_inlineable_symbols(&self) -> &FxHashSet<SymbolId> {
+        &self.inlineable_symbols
     }
 }

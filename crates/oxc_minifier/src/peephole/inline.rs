@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, IsLiteralValue};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolId};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
@@ -111,6 +111,8 @@ impl<'a> PeepholeOptimizations {
             } else {
                 SymbolValue::Primitive(value)
             }
+        } else if init.is_some_and(|init| init.is_literal_value(true, ctx)) {
+            SymbolValue::ScopedLiteral
         } else {
             return;
         };
@@ -153,6 +155,15 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 }
             }
+            SymbolValue::ScopedLiteral => {
+                if symbol_value.read_references_count == 1
+                    && symbol_value.scope_id.is_some_and(|declared_scope_id| {
+                        Self::is_referenced_in_same_non_control_scope(declared_scope_id, ctx)
+                    })
+                {
+                    ctx.state.symbol_values.mark_symbol_inlineable(symbol_id);
+                }
+            }
             SymbolValue::Unknown => {}
         }
     }
@@ -177,6 +188,20 @@ impl<'a> PeepholeOptimizations {
                     return Some(false);
                 }
                 None
+            })
+            .unwrap_or_default()
+    }
+
+    fn is_referenced_in_same_non_control_scope(declared_scope_id: ScopeId, ctx: &Ctx<'a, '_>) -> bool {
+        #[expect(clippy::unnecessary_find_map)] // TODO
+        ctx.scoping()
+            .scope_ancestors(ctx.current_scope_id())
+            .find_map(|scope_id| {
+                if declared_scope_id == scope_id {
+                    return Some(true);
+                }
+                // TODO: allow non-control scope
+                Some(false)
             })
             .unwrap_or_default()
     }
