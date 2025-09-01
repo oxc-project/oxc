@@ -10,8 +10,7 @@ pub trait Config {
     /// Type of location provider this config uses
     type LocProvider: LocProvider;
 
-    fn new(ranges: bool) -> Self;
-    fn new_with_loc(ranges: bool, loc: bool) -> Self;
+    fn new(ranges: bool, loc: bool) -> Self;
 
     /// Create a new config with location provider for accurate loc fields
     fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self;
@@ -40,12 +39,7 @@ impl Config for ConfigTS {
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
-    fn new(ranges: bool) -> Self {
-        Self { ranges, loc: false, loc_provider: NoLocProvider }
-    }
-
-    #[inline(always)]
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    fn new(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
 
@@ -84,12 +78,7 @@ impl Config for ConfigJS {
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
-    fn new(ranges: bool) -> Self {
-        Self { ranges, loc: false, loc_provider: NoLocProvider }
-    }
-
-    #[inline(always)]
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    fn new(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
 
@@ -128,12 +117,7 @@ impl Config for ConfigFixesTS {
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
-    fn new(ranges: bool) -> Self {
-        Self { ranges, loc: false, loc_provider: NoLocProvider }
-    }
-
-    #[inline(always)]
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    fn new(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
 
@@ -172,12 +156,7 @@ impl Config for ConfigFixesJS {
     type LocProvider = NoLocProvider;
 
     #[inline(always)]
-    fn new(ranges: bool) -> Self {
-        Self { ranges, loc: false, loc_provider: NoLocProvider }
-    }
-
-    #[inline(always)]
-    fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    fn new(ranges: bool, loc: bool) -> Self {
         Self { ranges, loc, loc_provider: NoLocProvider }
     }
 

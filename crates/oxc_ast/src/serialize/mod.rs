@@ -47,12 +47,7 @@ const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
 
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
-    pub fn to_estree_ts_json(&self, ranges: bool) -> String {
-        self.to_estree_ts_json_with_loc(ranges, false)
-    }
-
-    /// Serialize AST to ESTree JSON, including TypeScript fields, with loc support.
-    pub fn to_estree_ts_json_with_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_estree_ts_json(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let mut serializer = CompactTSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         self.serialize(&mut serializer);
@@ -60,12 +55,7 @@ impl Program<'_> {
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields.
-    pub fn to_estree_js_json(&self, ranges: bool) -> String {
-        self.to_estree_js_json_with_loc(ranges, false)
-    }
-
-    /// Serialize AST to ESTree JSON, without TypeScript fields, with loc support.
-    pub fn to_estree_js_json_with_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_estree_js_json(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let mut serializer = CompactJSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         self.serialize(&mut serializer);
@@ -73,12 +63,7 @@ impl Program<'_> {
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
-    pub fn to_pretty_estree_ts_json(&self, ranges: bool) -> String {
-        self.to_pretty_estree_ts_json_with_loc(ranges, false)
-    }
-
-    /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with loc support.
-    pub fn to_pretty_estree_ts_json_with_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_pretty_estree_ts_json(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let mut serializer = PrettyTSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         self.serialize(&mut serializer);
@@ -86,12 +71,7 @@ impl Program<'_> {
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields.
-    pub fn to_pretty_estree_js_json(&self, ranges: bool) -> String {
-        self.to_pretty_estree_js_json_with_loc(ranges, false)
-    }
-
-    /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with loc support.
-    pub fn to_pretty_estree_js_json_with_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_pretty_estree_js_json(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let mut serializer = PrettyJSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         self.serialize(&mut serializer);
@@ -99,48 +79,28 @@ impl Program<'_> {
     }
 
     /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes.
-    pub fn to_estree_ts_json_with_fixes(&self, ranges: bool) -> String {
-        self.to_estree_ts_json_with_fixes_and_loc(ranges, false)
-    }
-
-    /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes and loc support.
-    pub fn to_estree_ts_json_with_fixes_and_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_estree_ts_json_with_fixes(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let serializer = CompactFixesTSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes.
-    pub fn to_estree_js_json_with_fixes(&self, ranges: bool) -> String {
-        self.to_estree_js_json_with_fixes_and_loc(ranges, false)
-    }
-
-    /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes and loc support.
-    pub fn to_estree_js_json_with_fixes_and_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_estree_js_json_with_fixes(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let serializer = CompactFixesJSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with list of fixes.
-    pub fn to_pretty_estree_ts_json_with_fixes(&self, ranges: bool) -> String {
-        self.to_pretty_estree_ts_json_with_fixes_and_loc(ranges, false)
-    }
-
-    /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with list of fixes and loc support.
-    pub fn to_pretty_estree_ts_json_with_fixes_and_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_pretty_estree_ts_json_with_fixes(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let serializer = PrettyFixesTSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with list of fixes.
-    pub fn to_pretty_estree_js_json_with_fixes(&self, ranges: bool) -> String {
-        self.to_pretty_estree_js_json_with_fixes_and_loc(ranges, false)
-    }
-
-    /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with list of fixes and loc support.
-    pub fn to_pretty_estree_js_json_with_fixes_and_loc(&self, ranges: bool, loc: bool) -> String {
+    pub fn to_pretty_estree_js_json_with_fixes(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let serializer = PrettyFixesJSSerializer::with_capacity_and_loc(capacity, ranges, loc);
         serializer.serialize_with_fixes(self)

@@ -13,12 +13,7 @@ impl<P: LocProvider> Config for ConfigTSWithLoc<P> {
 
     type LocProvider = P;
 
-    fn new(_ranges: bool) -> Self {
-        // This shouldn't be called for specialized configs, but we need to implement it
-        panic!("Use new_with_loc_provider for ConfigTSWithLoc")
-    }
-
-    fn new_with_loc(_ranges: bool, _loc: bool) -> Self {
+    fn new(_ranges: bool, _loc: bool) -> Self {
         // This shouldn't be called for specialized configs, but we need to implement it
         panic!("Use new_with_loc_provider for ConfigTSWithLoc")
     }
@@ -53,11 +48,7 @@ impl<P: LocProvider> Config for ConfigJSWithLoc<P> {
 
     type LocProvider = P;
 
-    fn new(_ranges: bool) -> Self {
-        panic!("Use new_with_loc_provider for ConfigJSWithLoc")
-    }
-
-    fn new_with_loc(_ranges: bool, _loc: bool) -> Self {
+    fn new(_ranges: bool, _loc: bool) -> Self {
         panic!("Use new_with_loc_provider for ConfigJSWithLoc")
     }
 

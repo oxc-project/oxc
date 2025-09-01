@@ -120,18 +120,13 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new(ranges: bool) -> Self {
-        Self::new_with_loc(ranges, false)
-    }
-
-    /// Create new [`ESTreeSerializer`] with loc support.
-    pub fn new_with_loc(ranges: bool, loc: bool) -> Self {
+    pub fn new(ranges: bool, loc: bool) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new_with_loc(ranges, loc),
+            config: C::new(ranges, loc),
         }
     }
 
@@ -147,8 +142,8 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
-        Self::with_capacity_and_loc(capacity, ranges, false)
+    pub fn with_capacity(capacity: usize, ranges: bool, loc: bool) -> Self {
+        Self::with_capacity_and_loc(capacity, ranges, loc)
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity and loc support.
@@ -158,7 +153,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new_with_loc(ranges, loc),
+            config: C::new(ranges, loc),
         }
     }
 
@@ -203,7 +198,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new(false)
+        Self::new(false, false)
     }
 }
 

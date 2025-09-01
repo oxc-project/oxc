@@ -156,19 +156,36 @@ pub fn build_translations_and_lines(
             }
 
             // Handle Unicode line separators LS (\u2028) and PS (\u2029) if tracking lines
-            if track_lines
-                && byte == 0xE2
-                && index + 2 < slice.len()
-                && slice[index + 1] == 0x80
-                && (slice[index + 2] == 0xA8 || slice[index + 2] == 0xA9)
-            {
-                let line_end_offset = start_offset + index + 3;
-                if line_end_offset < source_text.len() {
-                    #[expect(clippy::cast_possible_truncation)]
-                    let utf8_offset = line_end_offset as u32;
-                    lines.as_mut().unwrap().push(LineTranslation { utf8_offset, utf16_difference });
+            // Note: We need to check if we have enough bytes remaining, but also check
+            // against the full source text to handle chunk boundaries correctly
+            if track_lines && byte == 0xE2 {
+                let full_offset = start_offset + index;
+                let has_ls_ps = if index + 2 < slice.len() {
+                    // Can check within this slice
+                    slice[index + 1] == 0x80
+                        && (slice[index + 2] == 0xA8 || slice[index + 2] == 0xA9)
+                } else if full_offset + 2 < source_text.len() {
+                    // Need to check in full source text (boundary case)
+                    let source_bytes = source_text.as_bytes();
+                    source_bytes[full_offset + 1] == 0x80
+                        && (source_bytes[full_offset + 2] == 0xA8
+                            || source_bytes[full_offset + 2] == 0xA9)
+                } else {
+                    false
+                };
+
+                if has_ls_ps {
+                    let line_end_offset = full_offset + 3;
+                    if line_end_offset < source_text.len() {
+                        #[expect(clippy::cast_possible_truncation)]
+                        let utf8_offset = line_end_offset as u32;
+                        lines
+                            .as_mut()
+                            .unwrap()
+                            .push(LineTranslation { utf8_offset, utf16_difference });
+                    }
+                    // Don't skip - continue processing for unicode translation as PS/LS are Unicode chars
                 }
-                // Don't skip - continue processing for unicode translation
             }
 
             // Handle Unicode characters
@@ -247,8 +264,11 @@ pub fn build_translations_and_lines(
         // `ptr` is derived from `start_ptr`.
         let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
 
-        // Process chunk if it contains unicode characters or line breaks
-        if chunk.contains_unicode() || (track_lines && chunk.contains_line_breaks()) {
+        // Process chunk for Unicode characters
+        let has_unicode = chunk.contains_unicode();
+        let has_line_breaks = track_lines && chunk.contains_line_breaks();
+
+        if has_unicode || has_line_breaks {
             process_slice(chunk.as_slice(), offset);
         }
 
