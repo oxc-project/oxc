@@ -6,8 +6,10 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_case_last_diagnostic(span: Span) -> OxcDiagnostic {
+    let default_span = Span::sized(span.start, 7);
+
     OxcDiagnostic::warn("Enforce default clauses in switch statements to be last")
-        .with_label(span.label("Default clause should be the last clause."))
+        .with_label(default_span.label("Default clause should be the last clause."))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -15,55 +17,71 @@ pub struct DefaultCaseLast;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
-    /// Enforce default clauses in switch statements to be last
+    /// Requires the `default` clause in `switch` statements to be the last one.
     ///
     /// ### Why is this bad?
+    /// By convention and for readability, the `default` clause should be the last one in a `switch`.
+    /// While it is legal to place it before or between `case` clauses, doing so is confusing and may
+    /// lead to unexpected "fall-through" behavior.
     ///
-    /// A switch statement can optionally have a default clause.
-    /// If present, it’s usually the last clause, but it doesn’t need to be. It is also allowed to put the default clause before all case clauses, or anywhere between. The behavior is mostly the same as if it was the last clause. The default block will be still executed only if there is no match in the case clauses (including those defined after the default), but there is also the ability to “fall through” from the default clause to the following clause in the list. However, such flow is not common and it would be confusing to the readers.
-    /// Even if there is no “fall through” logic, it’s still unexpected to see the default clause before or between the case clauses. By convention, it is expected to be the last clause.
-    /// If a switch statement should have a default clause, it’s considered a best practice to define it as the last clause.
+    /// ### Options
+    /// No options available for this rule
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
+    /// ```js
+    /// /* default-case-last: "error" */
+    ///
+    /// /* ✘ Bad: */
     /// switch (foo) {
-    ///     default:
-    ///         bar();
-    ///         break;
-    ///     case "a":
-    ///         baz();
-    ///         break;
+    ///   default:
+    ///     bar();
+    ///     break;
+    ///   case "a":
+    ///     baz();
+    ///     break;
     /// }
     ///
     /// switch (foo) {
-    ///     case 1:
-    ///         bar();
-    ///         break;
-    ///     default:
-    ///         baz();
-    ///         break;
-    ///     case 2:
-    ///         qux();
-    ///         break;
+    ///   case 1:
+    ///     bar();
+    ///     break;
+    ///   default:
+    ///     baz();
+    ///     break;
+    ///   case 2:
+    ///     qux();
+    ///     break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```js
+    /// /* default-case-last: "error" */
+    ///
+    /// /* ✔ Good: */
     /// switch (foo) {
-    ///     case 1:
-    ///         bar();
-    ///         break;
-    ///     case 2:
-    ///         qux();
-    ///         break;
-    ///     default:
-    ///         baz();
-    ///         break;
+    ///   case 1:
+    ///     bar();
+    ///     break;
+    ///   case 2:
+    ///     qux();
+    ///     break;
+    ///   default:
+    ///     baz();
+    ///     break;
     /// }
+    ///
+    /// switch (foo) {
+    //    case "x":
+    //      bar();
+    //      break;
+    //    case "y":
+    //    default:
+    //      baz();
+    //      break;
+    // }
     /// ```
     DefaultCaseLast,
     eslint,
@@ -76,15 +94,12 @@ impl Rule for DefaultCaseLast {
             return;
         };
         let cases = &switch.cases;
-        let index_of_default = cases.iter().position(|c| c.test.is_none());
-
-        if let Some(index) = index_of_default {
-            if index != cases.len() - 1 {
-                let default_clause = &cases[index];
-                ctx.diagnostic(default_case_last_diagnostic(Span::sized(
-                    default_clause.span.start,
-                    7,
-                )));
+        if let Some((index, default_clause)) =
+            cases.iter().enumerate().find(|(_, c)| c.test.is_none())
+        {
+            let is_default_clause_last = index == cases.len() - 1;
+            if !is_default_clause_last {
+                ctx.diagnostic(default_case_last_diagnostic(default_clause.span));
             }
         }
     }
