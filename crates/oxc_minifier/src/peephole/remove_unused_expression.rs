@@ -1076,7 +1076,7 @@ mod test {
         test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         // For loops
-        test_options("for (let i;;) i = 0", "for (let i;;);", &options);
+        test_options("for (let i;;) i = 0", "for (;;);", &options);
         test_same_options("for (let i;;) foo(i)", &options);
         test_same_options("for (let i;;) i = 0, foo(i)", &options);
         test_same_options("for (let i in []) foo(i)", &options);

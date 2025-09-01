@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 6.69 MB    | 2.22 MB    | 2.31 MB    | 459.28 kB  | 488.28 kB  |          4 | antd.js    
 
-10.95 MB   | 3.34 MB    | 3.49 MB    | 855.34 kB  | 915.50 kB  |          4 | typescript.js 
+10.95 MB   | 3.34 MB    | 3.49 MB    | 855.24 kB  | 915.50 kB  |          4 | typescript.js 
 

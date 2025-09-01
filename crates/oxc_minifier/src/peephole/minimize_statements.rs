@@ -817,6 +817,20 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
+            let old_len = var_decl.declarations.len();
+            var_decl.declarations.retain(|decl| {
+                !Self::should_remove_unused_declarator(decl, ctx)
+                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
+            });
+            if old_len != var_decl.declarations.len() {
+                if var_decl.declarations.is_empty() {
+                    for_stmt.init = None;
+                }
+                ctx.state.changed = true;
+            }
+        }
+
         if ctx.options().sequences {
             match result.last_mut() {
                 Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
