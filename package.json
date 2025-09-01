@@ -1,7 +1,7 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.15.1",
   "volta": {
     "node": "22.14.0"
   },
@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
-    "emnapi": "1.4.5",
+    "emnapi": "1.5.0",
     "oxlint-tsgolint": "0.1.5",
     "oxlint": "^1.12.0",
     "typescript": "catalog:",
