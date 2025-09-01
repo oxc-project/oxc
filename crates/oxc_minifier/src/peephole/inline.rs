@@ -192,7 +192,10 @@ impl<'a> PeepholeOptimizations {
             .unwrap_or_default()
     }
 
-    fn is_referenced_in_same_non_control_scope(declared_scope_id: ScopeId, ctx: &Ctx<'a, '_>) -> bool {
+    fn is_referenced_in_same_non_control_scope(
+        declared_scope_id: ScopeId,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
         #[expect(clippy::unnecessary_find_map)] // TODO
         ctx.scoping()
             .scope_ancestors(ctx.current_scope_id())

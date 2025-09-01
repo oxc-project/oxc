@@ -52,7 +52,12 @@ impl<'a> SymbolInformationMap<'a> {
         self.values.insert(symbol_id, symbol_value);
     }
 
-    pub fn set_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>, scope_id: ScopeId) {
+    pub fn set_value(
+        &mut self,
+        symbol_id: SymbolId,
+        symbol_value: SymbolValue<'a>,
+        scope_id: ScopeId,
+    ) {
         let info = self.values.get_mut(&symbol_id).expect("symbol value must exist");
         info.value = symbol_value;
         info.scope_id = Some(scope_id);
