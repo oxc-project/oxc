@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
-use oxc_semantic::SymbolId;
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolId};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 use rustc_hash::FxHashSet;
@@ -83,13 +83,12 @@ impl<'a> PeepholeOptimizations {
                     write_references_count += 1;
                 }
             }
-            let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             let value = SymbolInformation {
                 value: SymbolValue::default(),
                 exported: exported_values.contains(&symbol_id),
                 read_references_count,
                 write_references_count,
-                scope_id,
+                scope_id: None,
             };
             ctx.state.symbol_values.init_value(symbol_id, value);
         }
@@ -98,15 +97,25 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let symbol_id = ident.symbol_id();
-        if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
-            // - Skip constant value inlining for `var` declarations, due to TDZ problems.
-            // - Set None for for statement initializers as the value of these are set by the for statement.
+        // Set None for for statement initializers as the value of these are set by the for statement.
+        if Self::is_for_statement_init(ctx) {
             return;
         }
 
-        let value =
-            decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx));
-        ctx.state.symbol_values.set_constant_value(symbol_id, value);
+        let init = decl.init.as_ref();
+        let symbol_value = if let Some(value) =
+            init.map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
+        {
+            if decl.kind.is_var() {
+                SymbolValue::ScopedPrimitive(value)
+            } else {
+                SymbolValue::Primitive(value)
+            }
+        } else {
+            return;
+        };
+        let current_scope_id = ctx.current_scope_id();
+        ctx.state.symbol_values.set_value(symbol_id, symbol_value, current_scope_id);
     }
 
     fn is_for_statement_init(ctx: &Ctx<'a, '_>) -> bool {
@@ -124,18 +133,52 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.write_references_count > 0 {
             return;
         }
-        let SymbolValue::Primitive(cv) = &symbol_value.value else { return };
-        if symbol_value.read_references_count == 1
-            || match cv {
-                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
-                ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
-                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
+        match &symbol_value.value {
+            SymbolValue::Primitive(cv) => {
+                if symbol_value.read_references_count == 1
+                    || Self::can_inline_constant_multiple_times(cv)
+                {
+                    *expr = ctx.value_to_expr(expr.span(), cv.clone());
+                    ctx.state.changed = true;
+                }
             }
-        {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.state.changed = true;
+            SymbolValue::ScopedPrimitive(cv) => {
+                if (symbol_value.read_references_count == 1
+                    || Self::can_inline_constant_multiple_times(cv))
+                    && symbol_value.scope_id.is_some_and(|declared_scope_id| {
+                        Self::is_referenced_in_same_hoist_scope(declared_scope_id, ctx)
+                    })
+                {
+                    *expr = ctx.value_to_expr(expr.span(), cv.clone());
+                    ctx.state.changed = true;
+                }
+            }
+            SymbolValue::Unknown => {}
         }
+    }
+
+    fn can_inline_constant_multiple_times(cv: &ConstantValue<'_>) -> bool {
+        match cv {
+            ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
+            ConstantValue::BigInt(_) => false,
+            ConstantValue::String(s) => s.len() <= 3,
+            ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
+        }
+    }
+
+    fn is_referenced_in_same_hoist_scope(declared_scope_id: ScopeId, ctx: &Ctx<'a, '_>) -> bool {
+        ctx.scoping()
+            .scope_ancestors(ctx.current_scope_id())
+            .find_map(|scope_id| {
+                if declared_scope_id == scope_id {
+                    return Some(true);
+                }
+                if ctx.scoping().scope_flags(scope_id).contains(ScopeFlags::Var) {
+                    return Some(false);
+                }
+                None
+            })
+            .unwrap_or_default()
     }
 }
 
