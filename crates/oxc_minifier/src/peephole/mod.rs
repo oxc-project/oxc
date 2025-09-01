@@ -16,9 +16,9 @@ mod remove_unused_expression;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
-use oxc_ast_visit::Visit;
-use oxc_semantic::ReferenceId;
-use rustc_hash::FxHashSet;
+use oxc_ast_visit::{Visit, VisitMut, walk_mut};
+use oxc_semantic::{ReferenceId, Scoping, SymbolId};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -115,6 +115,12 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
+        let inlineable_symbols = ctx.state.symbol_values.get_inlineable_symbols();
+        if !inlineable_symbols.is_empty() {
+            let mut value_inliner = ValueInliner::new(inlineable_symbols, ctx.scoping());
+            value_inliner.visit_program(program);
+            self.changed = true;
+        }
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
             let refs_before =
@@ -523,5 +529,49 @@ impl<'a> Visit<'a> for ReferencesCounter {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         let reference_id = it.reference_id();
         self.refs.insert(reference_id);
+    }
+}
+
+struct ValueInliner<'a, 'b> {
+    scoping: &'b Scoping,
+    inlineable_symbols: &'b FxHashSet<SymbolId>,
+    values: FxHashMap<SymbolId, Expression<'a>>,
+}
+
+impl<'b> ValueInliner<'_, 'b> {
+    pub fn new(inlineable_symbols: &'b FxHashSet<SymbolId>, scoping: &'b Scoping) -> Self {
+        Self {
+            scoping,
+            inlineable_symbols,
+            values: FxHashMap::with_capacity_and_hasher(inlineable_symbols.len(), FxBuildHasher),
+        }
+    }
+}
+
+impl<'a> VisitMut<'a> for ValueInliner<'a, '_> {
+    fn visit_variable_declarators(&mut self, decls: &mut Vec<'a, VariableDeclarator<'a>>) {
+        walk_mut::walk_variable_declarators(self, decls);
+        for decl in decls {
+            if let BindingPatternKind::BindingIdentifier(id) = &mut decl.id.kind {
+                let symbol_id = id.symbol_id();
+                if self.inlineable_symbols.contains(&symbol_id) {
+                    self.values.insert(
+                        symbol_id,
+                        decl.init.take().expect("Expected initializer for inlineable symbols"),
+                    );
+                }
+            }
+        }
+    }
+
+    fn visit_expression(&mut self, it: &mut Expression<'a>) {
+        walk_mut::walk_expression(self, it);
+        if let Expression::Identifier(id) = it {
+            if let Some(symbol_id) = self.scoping.get_reference(id.reference_id()).symbol_id()
+                && let Some(value) = self.values.remove(&symbol_id)
+            {
+                *it = value;
+            }
+        }
     }
 }
