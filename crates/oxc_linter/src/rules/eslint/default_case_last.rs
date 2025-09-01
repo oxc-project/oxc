@@ -74,14 +74,14 @@ declare_oxc_lint!(
     /// }
     ///
     /// switch (foo) {
-    //    case "x":
-    //      bar();
-    //      break;
-    //    case "y":
-    //    default:
-    //      baz();
-    //      break;
-    // }
+    ///   case "x":
+    ///     bar();
+    ///     break;
+    ///   case "y":
+    ///   default:
+    ///     baz();
+    ///     break;
+    /// }
     /// ```
     DefaultCaseLast,
     eslint,
