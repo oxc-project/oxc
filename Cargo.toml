@@ -187,7 +187,7 @@ fast-glob = "1.0.0"
 flate2 = "1.1.2"
 futures = "0.3.31"
 handlebars = "6.3.2"
-hashbrown = { version = "0.15.4", default-features = false }
+hashbrown = { version = "0.16.0", default-features = false }
 humansize = "2.1.3"
 icu_segmenter = "2.0.0"
 ignore = "0.4.23"
