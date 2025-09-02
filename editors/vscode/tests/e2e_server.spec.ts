@@ -15,11 +15,13 @@ import {
   createOxlintConfiguration,
   fixturesWorkspaceUri,
   getDiagnostics,
+  getDiagnosticsWithoutClose,
   loadFixture,
   sleep,
   testSingleFolderMode,
   waitForDiagnosticChange,
-  WORKSPACE_DIR
+  WORKSPACE_DIR,
+  writeToFixtureFile
 } from './test-helpers';
 import assert = require('assert');
 
@@ -65,6 +67,24 @@ suite('E2E Diagnostics', () => {
       strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
     });
   }
+
+  testSingleFolderMode('detects diagnostics on run', async () =>
+  {
+    await loadFixture('lint_on_run');
+    const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
+    strictEqual(diagnostics.length, 0);
+
+    await writeToFixtureFile('onType.ts', 'debugger;');
+    await waitForDiagnosticChange();
+    const updatedDiagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
+    strictEqual(updatedDiagnostics.length, 1);
+
+    await workspace.saveAll();
+    await sleep(500);
+
+    const sameDiagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
+    strictEqual(updatedDiagnostics.length, sameDiagnostics.length);
+  });
 
   test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');

@@ -37,7 +37,27 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
+    diagnostics: Arc<ServerLinterDiagnostics>,
     pub extended_paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Default)]
+struct ServerLinterDiagnostics {
+    isolated_linter: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+    tsgo_linter: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+}
+
+impl ServerLinterDiagnostics {
+    pub fn all_diagnostics(&self, path: &str) -> Vec<DiagnosticReport> {
+        let mut diagnostics = Vec::new();
+        if let Some(reports) = self.isolated_linter.pin().get(path) {
+            diagnostics.extend_from_slice(reports);
+        }
+        if let Some(reports) = self.tsgo_linter.pin().get(path) {
+            diagnostics.extend_from_slice(reports);
+        }
+        diagnostics
+    }
 }
 
 impl ServerLinter {
@@ -134,6 +154,7 @@ impl ServerLinter {
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
             lint_on_run: options.run,
+            diagnostics: Arc::new(ServerLinterDiagnostics::default()),
             tsgo_linter: if options.type_aware {
                 Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
             } else {
@@ -276,28 +297,26 @@ impl ServerLinter {
             return None;
         }
 
-        let mut reports = Vec::with_capacity(0);
-
         if oxlint
             && let Some(oxlint_reports) =
                 self.isolated_linter.lock().await.run_single(uri, content.clone())
         {
-            reports.extend(oxlint_reports);
+            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), oxlint_reports);
         }
 
         if !tsgolint {
-            return Some(reports);
+            return Some(self.diagnostics.all_diagnostics(&uri.to_string()));
         }
 
         let Some(tsgo_linter) = &*self.tsgo_linter else {
-            return Some(reports);
+            return Some(self.diagnostics.all_diagnostics(&uri.to_string()));
         };
 
         if let Some(tsgo_reports) = tsgo_linter.lint_file(uri, content) {
-            reports.extend(tsgo_reports);
+            self.diagnostics.tsgo_linter.pin().insert(uri.to_string(), tsgo_reports);
         }
 
-        Some(reports)
+        Some(self.diagnostics.all_diagnostics(&uri.to_string()))
     }
 }
 
