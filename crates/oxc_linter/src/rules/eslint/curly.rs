@@ -84,16 +84,17 @@ declare_oxc_lint!(
     ///   - `"multi-or-nest"`: require braces for multi-line blocks or when nested
     ///
     /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///  - `consistent`: `boolean` (default: `false`) - When set to `true`, enforces consistent use of braces in `if-else` chains.
+    /// - Type: `string`
+    /// - Default: `undefined`
+    /// - Possible values:
+    ///  - `"consistent"`: require braces if any other branch in the `if-else` chain has braces
     ///
-    /// Note : The `consistent: true` option can be combined with any of the first option values.
+    /// Note : The second option can only be used in conjunction with the first option.
     ///
     /// Example configuration:
     /// ```json
     /// {
-    ///   "curly": ["error", "multi-or-nest", { "consistent": true }]
+    ///   "curly": ["error", "multi-or-nest", "consistent"]
     /// }
     /// ```
     ///
@@ -105,7 +106,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "all"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) foo++;
     /// while (bar) bar--;
     /// do foo();
@@ -116,7 +116,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "all"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) { foo++; }
     /// while (bar) { bar--; }
     /// do { foo(); } while (bar);
@@ -127,7 +126,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) foo();
     /// else { bar(); baz(); }
     /// ```
@@ -136,7 +134,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) foo();
     /// else bar();
     /// ```
@@ -146,7 +143,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-line"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) foo()
     /// else
     ///   bar();
@@ -159,7 +155,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-line"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) foo();
     /// else bar();
     ///
@@ -176,7 +171,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-or-nest"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo)
     ///   if (bar) bar();
     ///
@@ -188,7 +182,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* curly: ["error", "multi-or-nest"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) {
     ///   if (bar) bar();
     /// }
@@ -205,9 +198,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code with `"multi"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi", { "consistent": true }] */
+    /// /* curly: ["error", "multi", "consistent"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) {
     ///   bar();
     ///   baz();
@@ -222,9 +214,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code with `"multi"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi", { "consistent": true }] */
+    /// /* curly: ["error", "multi", "consistent"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) {
     ///   bar();
     ///   baz();
@@ -242,9 +233,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code with `"multi-line"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi-line", { "consistent": true }] */
+    /// /* curly: ["error", "multi-line", "consistent"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) {
     ///   bar();
     /// } else
@@ -253,9 +243,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code with `"multi-line"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi-line", { "consistent": true }] */
+    /// /* curly: ["error", "multi-line", "consistent"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) {
     ///   bar();
     /// } else {
@@ -265,9 +254,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code with `"multi-or-nest"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi-or-nest", { "consistent": true }] */
+    /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
-    /// /* ✘ Bad: */
     /// if (foo) {
     ///   if (bar) baz();
     /// } else qux();
@@ -275,9 +263,8 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code with `"multi-or-nest"` and `consistent: true`:
     /// ```js
-    /// /* curly: ["error", "multi-or-nest", { "consistent": true }] */
+    /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
-    /// /* ✔ Good: */
     /// if (foo) {
     ///   if (bar) baz();
     /// } else {
@@ -327,8 +314,8 @@ impl Rule for Curly {
 
         let consistent = value
             .get(1)
-            .and_then(|v| v.get("consistent"))
-            .and_then(Value::as_bool)
+            .and_then(Value::as_str)
+            .map(|value| value == "consistent")
             .unwrap_or(false);
 
         Self { config: CurlyConfig { curly_type, consistent } }
@@ -763,13 +750,10 @@ fn test() {
         ("while (foo) { let bar = 'baz'; }", Some(serde_json::json!(["multi"]))), // { "ecmaVersion": 6 },
         ("for(;;) { function foo() {} }", Some(serde_json::json!(["multi"]))),
         ("for (foo in bar) { class Baz {} }", Some(serde_json::json!(["multi"]))), // { "ecmaVersion": 6 },
-        (
-            "if (foo) { let bar; } else { baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
-        ), // { "ecmaVersion": 6 },
+        ("if (foo) { let bar; } else { baz(); }", Some(serde_json::json!(["multi", "consistent"]))), // { "ecmaVersion": 6 },
         (
             "if (foo) { bar(); } else { const baz = 'quux'; }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ), // { "ecmaVersion": 6 },
         (
             "if (foo) {
@@ -912,15 +896,15 @@ fn test() {
         ("if (true) foo(); else { bar(); baz(); }", Some(serde_json::json!(["multi"]))),
         (
             "if (true) { foo(); } else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) { foo(); } else if (true) { faa(); } else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) { foo(); faa(); } else { bar(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) foo()
@@ -935,11 +919,11 @@ fn test() {
         ("if (a) { if (b) foo(); } else bar();", Some(serde_json::json!(["multi-or-nest"]))),
         (
             "if (a) { if (b) foo(); } else { bar(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (a) { if (b) foo(); } else { bar(); }",
-            Some(serde_json::json!(["multi-or-nest", { "consistent": true }])),
+            Some(serde_json::json!(["multi-or-nest", "consistent"])),
         ),
         ("if (a) { if (b) { foo(); bar(); } } else baz();", Some(serde_json::json!(["multi"]))),
         (
@@ -1159,13 +1143,10 @@ fn test() {
             Some(serde_json::json!(["multi-or-nest"])),
         ),
         ("if (foo) { var bar = 'baz'; }", Some(serde_json::json!(["multi"]))),
-        (
-            "if (foo) { let bar; } else baz();",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
-        ), // { "ecmaVersion": 6 },
+        ("if (foo) { let bar; } else baz();", Some(serde_json::json!(["multi", "consistent"]))), // { "ecmaVersion": 6 },
         (
             "if (foo) bar(); else { const baz = 'quux' }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ), // { "ecmaVersion": 6 },
         (
             "if (foo) {
@@ -1215,24 +1196,21 @@ fn test() {
 			 bar();
 			 baz();
 			 }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) { foo(); faa(); }
 			 else bar();",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
-        (
-            "if (true) foo(); else { baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
-        ),
+        ("if (true) foo(); else { baz(); }", Some(serde_json::json!(["multi", "consistent"]))),
         (
             "if (true) foo(); else if (true) faa(); else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) if (true) foo(); else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         ("do{foo();} while (bar)", Some(serde_json::json!(["multi"]))),
         (
@@ -1382,13 +1360,13 @@ fn test() {
         ("if (a) { for (;;); } else bar();", Some(serde_json::json!(["multi"]))),
         (
             "if (a) { while (cond) if (b) foo() } else bar();",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (a)  while (cond) if (b) foo()
 			else
 			 {bar();}",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (a) foo()
@@ -1396,10 +1374,7 @@ fn test() {
 			 bar();",
             None,
         ),
-        (
-            "if (a) { while (cond) if (b) foo() } ",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
-        ),
+        ("if (a) { while (cond) if (b) foo() } ", Some(serde_json::json!(["multi", "consistent"]))),
         (
             "if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1681,12 +1656,12 @@ fn test() {
         (
             "if (foo) { let bar; } else baz();",
             "if (foo) { let bar; } else {baz();}",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (foo) bar(); else { const baz = 'quux' }",
             "if (foo) {bar();} else { const baz = 'quux' }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (foo) {
@@ -1759,29 +1734,29 @@ fn test() {
 			 bar();
 			 baz();
 			 }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) { foo(); faa(); }
 			 else bar();",
             "if (true) { foo(); faa(); }
 			 else {bar();}",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) foo(); else { baz(); }",
             "if (true) foo(); else  baz(); ",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) foo(); else if (true) faa(); else { bar(); baz(); }",
             "if (true) {foo();} else if (true) {faa();} else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (true) if (true) foo(); else { bar(); baz(); }",
             "if (true) if (true) {foo();} else { bar(); baz(); }",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         ("do{foo();} while (bar)", "do foo(); while (bar)", Some(serde_json::json!(["multi"]))),
         (
@@ -1996,7 +1971,7 @@ fn test() {
         (
             "if (a) { while (cond) if (b) foo() } else bar();",
             "if (a) { while (cond) if (b) foo() } else {bar();}",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (a)  while (cond) if (b) foo()
@@ -2005,7 +1980,7 @@ fn test() {
             "if (a)  while (cond) if (b) foo()
 			else
 			 bar();",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if (a) foo()
@@ -2019,7 +1994,7 @@ fn test() {
         (
             "if (a) { while (cond) if (b) foo() } ",
             "if (a)  while (cond) if (b) foo()  ",
-            Some(serde_json::json!(["multi", { "consistent": true }])),
+            Some(serde_json::json!(["multi", "consistent"])),
         ),
         (
             "if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}",
