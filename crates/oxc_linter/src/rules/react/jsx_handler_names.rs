@@ -389,6 +389,9 @@ fn extract_callee_name_from_arrow_function<'a>(
     arrow_function: &'a ArrowFunctionExpression<'a>,
 ) -> Option<&'a str> {
     if !arrow_function.expression {
+        // Ignore arrow functions with block bodies like `() => { this.handleChange() }`.
+        // The event handler name can only be extracted from arrow functions
+        // with a single expression body, such as `() => this.handleChange()`.
         return None;
     }
     let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
