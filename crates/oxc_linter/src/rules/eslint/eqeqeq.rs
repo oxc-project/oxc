@@ -210,14 +210,11 @@ impl Eqeqeq {
             return;
         }
         let operator = binary_expr.operator.as_str();
+        let truncated_operator = &operator[..operator.len() - 1];
         // There are some uncontrolled cases to auto fix.
         // In ESLint, `null >= null` will be auto fixed to `null > null` which is also wrong.
         // So I just report it.
-        ctx.diagnostic(eqeqeq_diagnostic(
-            operator,
-            &operator[0..operator.len() - 1],
-            binary_expr.span,
-        ));
+        ctx.diagnostic(eqeqeq_diagnostic(operator, truncated_operator, binary_expr.span));
     }
 }
 
@@ -241,30 +238,30 @@ impl Rule for Eqeqeq {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };
-        let is_null = is_null_check(binary_expr);
-        let enforce_rule_for_null = matches!(self.null_type, NullType::Always);
+        let is_null_comparison = is_null_check(binary_expr);
+        let must_enforce_null = matches!(self.null_type, NullType::Always);
 
         if !matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-            if is_null {
+            if is_null_comparison {
                 self.report_inverse_null_comparison(binary_expr, ctx);
             }
             return;
         }
 
-        let is_type_of_binary_bool = is_type_of_binary(binary_expr);
-        let are_literals_and_same_type_bool =
+        let is_typeof_check = is_type_of_binary(binary_expr);
+        let is_same_type_literals =
             are_literals_and_same_type(&binary_expr.left, &binary_expr.right);
         // The "smart" option enforces the use of `===` and `!==` except for these cases:
         //  - Comparing two literal values
         //  - Evaluating the value of typeof
         //  - Comparing against null
         if matches!(self.compare_type, CompareType::Smart)
-            && (is_type_of_binary_bool || are_literals_and_same_type_bool || is_null)
+            && (is_typeof_check || is_same_type_literals || is_null_comparison)
         {
             return;
         }
 
-        if !enforce_rule_for_null && is_null {
+        if !must_enforce_null && is_null_comparison {
             return;
         }
 
@@ -274,7 +271,7 @@ impl Rule for Eqeqeq {
 
         let operator_span = get_operator_span(binary_expr, operator, ctx);
 
-        let fix_kind = if is_type_of_binary_bool || are_literals_and_same_type_bool {
+        let fix_kind = if is_typeof_check || is_same_type_literals {
             FixKind::SafeFix
         } else {
             FixKind::DangerousFix
@@ -292,12 +289,12 @@ impl Rule for Eqeqeq {
 fn get_operator_span(binary_expr: &BinaryExpression, operator: &str, ctx: &LintContext) -> Span {
     let left_end = binary_expr.left.span().end;
     let right_start = binary_expr.right.span().start;
-    let offset =
-        Span::new(left_end, right_start).source_text(ctx.source_text()).find(operator).unwrap_or(0)
-            as u32;
+    let between_text = Span::new(left_end, right_start).source_text(ctx.source_text());
+    let offset = between_text.find(operator).unwrap_or(0) as u32;
 
     let operator_start = left_end + offset;
     let operator_end = operator_start + operator.len() as u32;
+
     Span::new(operator_start, operator_end)
 }
 
@@ -306,9 +303,7 @@ fn apply_rule_fix<'a>(
     binary_expr: &BinaryExpression,
     preferred_operator_with_padding: &'a str,
 ) -> RuleFix<'a> {
-    let start = binary_expr.left.span().end;
-    let end = binary_expr.right.span().start;
-    let span = Span::new(start, end);
+    let span = Span::new(binary_expr.left.span().end, binary_expr.right.span().start);
 
     fixer.replace(span, preferred_operator_with_padding)
 }
@@ -317,19 +312,20 @@ fn to_strict_eq_operator_str(operator: BinaryOperator) -> (&'static str, &'stati
     match operator {
         BinaryOperator::Equality => ("===", " === "),
         BinaryOperator::Inequality => ("!==", " !== "),
-        _ => unreachable!(),
+        _ => unreachable!("Unexpected operator passed to to_strict_eq_operator_str"),
     }
 }
 
-/// Checks if either operand of a binary expression is a typeof operation
+fn is_type_of(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::UnaryExpression(unary_expr) if matches!(unary_expr.operator, UnaryOperator::Typeof)
+    )
+}
+
+/// Checks if either operand of a binary expression is a `typeof` operation.
 fn is_type_of_binary(binary_expr: &BinaryExpression) -> bool {
-    match (&binary_expr.left, &binary_expr.right) {
-        (Expression::UnaryExpression(unary_expr), _)
-        | (_, Expression::UnaryExpression(unary_expr)) => {
-            matches!(unary_expr.operator, UnaryOperator::Typeof)
-        }
-        _ => false,
-    }
+    is_type_of(&binary_expr.left) || is_type_of(&binary_expr.right)
 }
 
 /// Checks if operands are literals of the same type
