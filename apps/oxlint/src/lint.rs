@@ -1254,8 +1254,7 @@ mod test {
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_no_typescript_files() {
-        // Test that tsgolint doesn't fail when only non-TypeScript files are passed
-        // This should not crash and should only run regular linting rules
+        // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
