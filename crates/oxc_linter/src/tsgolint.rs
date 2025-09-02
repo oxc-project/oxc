@@ -69,7 +69,6 @@ impl TsGoLintState {
 
         let json_input = self.json_input(paths, &mut resolved_configs);
 
-        // If no TypeScript/JavaScript files were found after filtering, return early
         if json_input.files.is_empty() {
             return Ok(());
         }
