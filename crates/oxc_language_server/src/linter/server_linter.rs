@@ -1,4 +1,5 @@
 use std::path::{Component, Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
@@ -37,26 +38,44 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
-    diagnostics: Arc<ServerLinterDiagnostics>,
+    diagnostics: ServerLinterDiagnostics,
     pub extended_paths: Vec<PathBuf>,
 }
 
 #[derive(Debug, Default)]
 struct ServerLinterDiagnostics {
-    isolated_linter: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
-    tsgo_linter: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+    isolated_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+    tsgo_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
 }
 
 impl ServerLinterDiagnostics {
-    pub fn all_diagnostics(&self, path: &str) -> Vec<DiagnosticReport> {
-        let mut diagnostics = Vec::new();
-        if let Some(reports) = self.isolated_linter.pin().get(path) {
-            diagnostics.extend_from_slice(reports);
+    pub fn get_diagnostics(&self, path: &str) -> Option<Vec<DiagnosticReport>> {
+        let mut reports = Vec::new();
+        let mut found = false;
+        if let Some(Some(diagnostics)) = self.isolated_linter.pin().get(path) {
+            reports.extend(diagnostics.clone());
+            found = true;
         }
-        if let Some(reports) = self.tsgo_linter.pin().get(path) {
-            diagnostics.extend_from_slice(reports);
+        if let Some(Some(diagnostics)) = self.tsgo_linter.pin().get(path) {
+            reports.extend(diagnostics.clone());
+            found = true;
         }
-        diagnostics
+        if found { Some(reports) } else { None }
+    }
+
+    pub fn remove_diagnostics(&self, path: &str) {
+        self.isolated_linter.pin().remove(path);
+        self.tsgo_linter.pin().remove(path);
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
+        let mut files = Vec::new();
+        let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
+        let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
+        files.extend(isolated_files);
+        files.extend(tsgo_files);
+        files.dedup();
+        files
     }
 }
 
@@ -154,7 +173,7 @@ impl ServerLinter {
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
             lint_on_run: options.run,
-            diagnostics: Arc::new(ServerLinterDiagnostics::default()),
+            diagnostics: ServerLinterDiagnostics::default(),
             tsgo_linter: if options.type_aware {
                 Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
             } else {
@@ -247,6 +266,35 @@ impl ServerLinter {
         gitignore_globs
     }
 
+    pub fn remove_diagnostics(&self, uri: &Uri) {
+        self.diagnostics.remove_diagnostics(&uri.to_string());
+    }
+
+    pub fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
+        self.diagnostics.get_diagnostics(&uri.to_string())
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
+        self.diagnostics
+            .get_cached_files_of_diagnostics()
+            .into_iter()
+            .filter_map(|s| Uri::from_str(&s).ok())
+            .collect()
+    }
+
+    pub async fn revalidate_diagnostics(
+        &self,
+        uris: Vec<Uri>,
+    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+        let map = ConcurrentHashMap::default();
+        for uri in uris {
+            if let Some(diagnostics) = self.run_single(&uri, None, ServerLinterRun::Always).await {
+                map.pin().insert(uri.to_string(), diagnostics);
+            }
+        }
+        map
+    }
+
     fn is_ignored(&self, uri: &Uri) -> bool {
         let Some(uri_path) = uri.to_file_path() else {
             return true;
@@ -297,26 +345,22 @@ impl ServerLinter {
             return None;
         }
 
-        if oxlint
-            && let Some(oxlint_reports) =
-                self.isolated_linter.lock().await.run_single(uri, content.clone())
-        {
-            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), oxlint_reports);
+        if oxlint {
+            let diagnostics = {
+                let mut isolated_linter = self.isolated_linter.lock().await;
+                isolated_linter.run_single(uri, content.clone())
+            };
+            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), diagnostics);
         }
 
-        if !tsgolint {
-            return Some(self.diagnostics.all_diagnostics(&uri.to_string()));
+        if tsgolint && let Some(tsgo_linter) = self.tsgo_linter.as_ref() {
+            self.diagnostics
+                .tsgo_linter
+                .pin()
+                .insert(uri.to_string(), tsgo_linter.lint_file(uri, content.clone()));
         }
 
-        let Some(tsgo_linter) = &*self.tsgo_linter else {
-            return Some(self.diagnostics.all_diagnostics(&uri.to_string()));
-        };
-
-        if let Some(tsgo_reports) = tsgo_linter.lint_file(uri, content) {
-            self.diagnostics.tsgo_linter.pin().insert(uri.to_string(), tsgo_reports);
-        }
-
-        Some(self.diagnostics.all_diagnostics(&uri.to_string()))
+        self.diagnostics.get_diagnostics(&uri.to_string())
     }
 }
 
