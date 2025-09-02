@@ -79,6 +79,21 @@ impl TsGoLintState {
                 .stdin(std::process::Stdio::piped())
                 .stdout(std::process::Stdio::piped());
 
+            // Add Node.js path to environment if provided by VS Code extension
+            if let Ok(node_path) = std::env::var("OXC_NODE_PATH") {
+                // Get current PATH and prepend the directory containing Node.js
+                let current_path = std::env::var("PATH").unwrap_or_default();
+                if let Some(node_dir) = std::path::Path::new(&node_path).parent() {
+                    let path_separator = if cfg!(windows) { ";" } else { ":" };
+                    let new_path = if current_path.is_empty() {
+                        node_dir.to_string_lossy().to_string()
+                    } else {
+                        format!("{}{}{}", node_dir.to_string_lossy(), path_separator, current_path)
+                    };
+                    cmd.env("PATH", new_path);
+                }
+            }
+
             if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
                 cmd.arg(format!("-trace={trace_file}"));
             }
@@ -290,11 +305,27 @@ impl TsGoLintState {
         let executable_path = self.executable_path.clone();
 
         let handler = std::thread::spawn(move || {
-            let child = std::process::Command::new(&executable_path)
-                .arg("headless")
+            let mut cmd = std::process::Command::new(&executable_path);
+            cmd.arg("headless")
                 .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn();
+                .stdout(std::process::Stdio::piped());
+
+            // Add Node.js path to environment if provided by VS Code extension
+            if let Ok(node_path) = std::env::var("OXC_NODE_PATH") {
+                // Get current PATH and prepend the directory containing Node.js
+                let current_path = std::env::var("PATH").unwrap_or_default();
+                if let Some(node_dir) = std::path::Path::new(&node_path).parent() {
+                    let path_separator = if cfg!(windows) { ";" } else { ":" };
+                    let new_path = if current_path.is_empty() {
+                        node_dir.to_string_lossy().to_string()
+                    } else {
+                        format!("{}{}{}", node_dir.to_string_lossy(), path_separator, current_path)
+                    };
+                    cmd.env("PATH", new_path);
+                }
+            }
+
+            let child = cmd.spawn();
 
             let mut child = match child {
                 Ok(c) => c,

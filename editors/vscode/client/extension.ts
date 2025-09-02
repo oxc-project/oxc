@@ -155,13 +155,46 @@ export async function activate(context: ExtensionContext) {
     );
   }
 
+  async function findNodePath(): Promise<string | undefined> {
+    try {
+      const { execFile } = await import('child_process');
+      const { promisify } = await import('util');
+      const execFileAsync = promisify(execFile);
+
+      // Try to find node using the shell environment (which loads profile/bashrc)
+      const shellCmd = process.platform === 'win32' ? 'cmd' : '/bin/bash';
+      const shellArgs = process.platform === 'win32' 
+        ? ['/c', 'where node']
+        : ['-l', '-c', 'which node']; // -l loads login shell profile
+
+      const result = await execFileAsync(shellCmd, shellArgs, {
+        timeout: 5000, // 5 second timeout
+        env: process.env,
+      });
+
+      const nodePath = result.stdout.trim();
+      if (nodePath && !nodePath.includes('not found')) {
+        outputChannel.info(`Detected Node.js path: ${nodePath}`);
+        return nodePath;
+      }
+    } catch (error) {
+      outputChannel.info(`Could not detect Node.js path: ${error}`);
+    }
+
+    return undefined;
+  }
+
   const command = await findBinary();
+  const nodePath = await findNodePath();
+  
   const run: Executable = {
     command: command!,
     options: {
       env: {
         ...process.env,
         RUST_LOG: process.env.RUST_LOG || 'info',
+        // Add Node.js path for type-aware linting if detected
+        ...(nodePath && { OXC_NODE_PATH: nodePath }),
       },
     },
   };
