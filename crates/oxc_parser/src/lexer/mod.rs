@@ -44,7 +44,7 @@ use trivia_builder::TriviaBuilder;
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
-    errors: Vec<OxcDiagnostic>,
+    errors: Option<Vec<OxcDiagnostic>>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -140,13 +140,13 @@ impl<'a> Lexer<'a> {
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
-            errors: self.errors.clone(),
+            errors: { if self.errors.is_empty() { None } else { Some(self.errors.clone()) } },
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        self.errors = checkpoint.errors;
+        self.errors = checkpoint.errors.unwrap_or_default();
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
     }
