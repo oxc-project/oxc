@@ -10,6 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
+use crate::fixer::{RuleFix, RuleFixer};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn for_direction_diagnostic(test_span: Span, update_span: Span) -> OxcDiagnostic {
@@ -27,26 +28,26 @@ pub struct ForDirection;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `for` loop update causing the counter to move in the wrong direction.
+    /// Disallow `for` loops where the update clause moves the counter in the wrong
+    /// direction, preventing the loop from reaching its stop condition.
     ///
     /// ### Why is this bad?
     ///
-    /// A `for` loop with a stop condition that can never be reached, such as one
-    /// with a counter that moves in the wrong direction, will run infinitely.
-    /// While there are occasions when an infinite loop is intended, the
-    /// convention is to construct such loops as `while` loops. More typically, an
-    /// infinite `for` loop is a bug.
+    /// A `for` loop with a stop condition that can never be reached will run
+    /// infinitely. While infinite loops can be intentional, they are usually written
+    /// as `while` loops. More often, an infinite `for` loop is a bug.
     ///
-    /// This rule forbids `for` loops where the counter variable changes in such a
-    /// way that the stop condition will never be met. For example, if the
-    /// counter variable is increasing (i.e. `i++`) and the stop condition tests
-    /// that the counter is greater than zero (`i >= 0`) then the loop will never
-    /// exit.
+    /// ### Options
+    ///
+    /// No options available for this rule.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
     /// ```js
+    /// /* eslint for-direction: "error" */
+    ///
     /// for (var i = 0; i < 10; i--) {
     /// }
     ///
@@ -65,7 +66,10 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
+    ///
     /// ```js
+    /// /* eslint for-direction: "error" */
+    ///
     /// for (var i = 0; i < 10; i++) {
     /// }
     ///
@@ -100,59 +104,26 @@ impl Rule for ForDirection {
             _ => return,
         };
 
-        let test_operator = &test.operator;
-        let wrong_direction = match (test_operator, counter_position) {
+        let expected_update_direction = match (&test.operator, counter_position) {
             (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT)
-            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => FORWARD,
+            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => BACKWARD,
             (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT)
-            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => BACKWARD,
+            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => FORWARD,
             _ => return,
         };
 
-        let Some(update) = &for_loop.update else {
+        let Some(update_expr) = &for_loop.update else {
             return;
         };
 
-        let update_direction = get_update_direction(update, counter);
-        if update_direction == wrong_direction {
+        let update_direction = get_update_direction(update_expr, counter);
+        if update_direction == UNKNOWN {
+            return;
+        }
+        if update_direction != expected_update_direction {
             ctx.diagnostic_with_dangerous_fix(
-                for_direction_diagnostic(test.span, get_update_span(update)),
-                |fixer| {
-                    let mut span = Span::new(0, 0);
-
-                    let mut new_operator_str = "";
-
-                    match update {
-                        Expression::UpdateExpression(update) => {
-                            if update.span().start == update.argument.span().start {
-                                span.start = update.argument.span().end;
-                                span.end = update.span().end;
-                            } else {
-                                span.start = update.span().start;
-                                span.end = update.argument.span().start;
-                            }
-
-                            if update.operator == UpdateOperator::Increment {
-                                new_operator_str = "--";
-                            } else if update.operator == UpdateOperator::Decrement {
-                                new_operator_str = "++";
-                            }
-                        }
-                        Expression::AssignmentExpression(update) => {
-                            span.start = update.left.span().end;
-                            span.end = update.right.span().start;
-
-                            if update.operator == AssignmentOperator::Addition {
-                                new_operator_str = "-=";
-                            } else if update.operator == AssignmentOperator::Subtraction {
-                                new_operator_str = "+=";
-                            }
-                        }
-                        _ => {}
-                    }
-
-                    fixer.replace(span, new_operator_str)
-                },
+                for_direction_diagnostic(test.span, get_update_span(update_expr)),
+                |fixer| apply_rule_fix(&fixer, update_expr),
             );
         }
     }
@@ -166,6 +137,44 @@ const UNKNOWN: UpdateDirection = 0;
 type CounterPosition<'a> = &'a str;
 const LEFT: CounterPosition = "left";
 const RIGHT: CounterPosition = "right";
+
+fn get_fixer_replace_operator(update: &Expression) -> &'static str {
+    match update {
+        Expression::UpdateExpression(update) => match update.operator {
+            UpdateOperator::Increment => "--",
+            UpdateOperator::Decrement => "++",
+        },
+        Expression::AssignmentExpression(update) => match update.operator {
+            AssignmentOperator::Addition => "-=",
+            AssignmentOperator::Subtraction => "+=",
+            _ => "",
+        },
+        _ => "",
+    }
+}
+
+fn get_fixer_replace_span(update: &Expression) -> Span {
+    match update {
+        Expression::UpdateExpression(update) => {
+            if update.span().start == update.argument.span().start {
+                Span::new(update.argument.span().end, update.span().end)
+            } else {
+                Span::new(update.span().start, update.argument.span().start)
+            }
+        }
+        Expression::AssignmentExpression(update) => {
+            Span::new(update.left.span().end, update.right.span().start)
+        }
+        _ => Span::new(0, 0),
+    }
+}
+
+fn apply_rule_fix<'a>(fixer: &RuleFixer<'_, 'a>, update: &Expression) -> RuleFix<'a> {
+    let span = get_fixer_replace_span(update);
+    let new_operator_str = get_fixer_replace_operator(update);
+
+    fixer.replace(span, new_operator_str)
+}
 
 fn get_update_direction(update: &Expression, counter: &IdentifierReference) -> UpdateDirection {
     match update {
@@ -203,7 +212,9 @@ fn get_update_span(update: &Expression) -> Span {
     match update {
         Expression::UpdateExpression(update) => update.span,
         Expression::AssignmentExpression(assign) => assign.span,
-        _ => unreachable!(),
+        _ => unreachable!(
+            "get_update_span should only be called with UpdateExpression or AssignmentExpression"
+        ),
     }
 }
 
