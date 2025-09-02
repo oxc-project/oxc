@@ -312,11 +312,8 @@ impl Rule for Curly {
         let curly_type =
             value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
 
-        let consistent = value
-            .get(1)
-            .and_then(Value::as_str)
-            .map(|value| value == "consistent")
-            .unwrap_or(false);
+        let consistent =
+            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
 
         Self { config: CurlyConfig { curly_type, consistent } }
     }
