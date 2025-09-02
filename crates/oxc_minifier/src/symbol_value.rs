@@ -33,6 +33,15 @@ impl<'a> SymbolValues<'a> {
         self.values.insert(symbol_id, symbol_value);
     }
 
+    pub fn set_constant_value(
+        &mut self,
+        symbol_id: SymbolId,
+        symbol_value: Option<ConstantValue<'a>>,
+    ) {
+        let value = self.values.get_mut(&symbol_id).expect("symbol value must exist");
+        value.initialized_constant = symbol_value;
+    }
+
     pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
         self.values.get(&symbol_id)
     }
