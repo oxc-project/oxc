@@ -33,7 +33,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case-last: "error" */
     ///
-    /// /* ✘ Bad: */
     /// switch (foo) {
     ///   default:
     ///     bar();
@@ -60,7 +59,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case-last: "error" */
     ///
-    /// /* ✔ Good: */
     /// switch (foo) {
     ///   case 1:
     ///     bar();
