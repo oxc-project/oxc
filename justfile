@@ -159,9 +159,9 @@ install-wasm:
   rustup target add wasm32-wasip1-threads
 
 watch-playground:
-  just watch 'pnpm --filter oxc-playground dev'
+  just watch 'pnpm --filter oxc-playground build-dev'
 
-build-playground mode="release":
+build-playground:
   pnpm --filter oxc-playground build
 
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
