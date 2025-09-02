@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::Modifier;
+use crate::modifiers::{Modifier, ModifierKind};
 
 #[inline]
 fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
@@ -537,6 +537,20 @@ pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn modifier_only_on_property_declaration_or_index_signature(
+    modifier: &Modifier,
+) -> OxcDiagnostic {
+    ts_error(
+        "1024",
+        format!(
+            "'{}' modifier can only appear on a property declaration or index signature.",
+            modifier.kind
+        ),
+    )
+    .with_label(modifier.span)
+}
+
+#[cold]
 pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1028", "Accessibility modifier already seen.")
         .with_label(modifier.span)
@@ -544,8 +558,15 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
 }
 
 #[cold]
-pub fn export_modifier_must_precede_declare(modifier: &Modifier) -> OxcDiagnostic {
-    ts_error("1029", "'export' modifier must precede 'declare' modifier.").with_label(modifier.span)
+pub fn modifier_must_precede_other_modifier(
+    modifier: &Modifier,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1029",
+        format!("'{}' modifier must precede '{}' modifier.", modifier.kind, other_modifier),
+    )
+    .with_label(modifier.span)
 }
 
 #[cold]

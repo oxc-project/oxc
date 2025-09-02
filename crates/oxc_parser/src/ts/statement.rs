@@ -244,6 +244,18 @@ impl<'a> ParserImpl<'a> {
             /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ false,
         );
+
+        if self.is_index_signature() {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::READONLY,
+                diagnostics::cannot_appear_on_an_index_signature,
+            );
+            return TSSignature::TSIndexSignature(
+                self.parse_index_signature_declaration(span, &modifiers),
+            );
+        }
+
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::READONLY,
@@ -256,12 +268,6 @@ impl<'a> ParserImpl<'a> {
 
         if self.parse_contextual_modifier(Kind::Set) {
             return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set);
-        }
-
-        if self.is_index_signature() {
-            return TSSignature::TSIndexSignature(
-                self.parse_index_signature_declaration(span, &modifiers),
-            );
         }
 
         self.parse_property_or_method_signature(span, &modifiers)

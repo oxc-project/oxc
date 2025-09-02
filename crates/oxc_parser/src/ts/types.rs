@@ -1178,6 +1178,15 @@ impl<'a> ParserImpl<'a> {
         let optional = self.eat(Kind::Question);
 
         if self.at(Kind::LParen) || self.at(Kind::LAngle) {
+            for modifier in modifiers.iter() {
+                if modifier.kind == ModifierKind::Readonly {
+                    self.error(
+                        diagnostics::modifier_only_on_property_declaration_or_index_signature(
+                            modifier,
+                        ),
+                    );
+                }
+            }
             let type_parameters = self.parse_ts_type_parameters();
             let (this_param, params) = self
                 .parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
@@ -1213,11 +1222,6 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSIndexSignature<'a>> {
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::READONLY | ModifierFlags::STATIC,
-            diagnostics::cannot_appear_on_an_index_signature,
-        );
         self.expect(Kind::LBrack);
         let (params, comma_span) = self.parse_delimited_list(
             Kind::RBrack,
