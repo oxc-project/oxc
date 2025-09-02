@@ -50,7 +50,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* block-scoped-var: "error" */
     ///
-    /// /* ✘ Bad: */
     /// function doIf() {
     ///     if (true) {
     ///         var build = true;
@@ -58,7 +57,6 @@ declare_oxc_lint!(
     ///     console.log(build);
     /// }
     ///
-    /// /* ✘ Bad: */
     /// function doLoop() {
     ///     for (var i = 0; i < 10; i++) {
     ///         // do something
@@ -66,7 +64,6 @@ declare_oxc_lint!(
     ///     console.log(i); // i is accessible here
     /// }
     ///
-    /// /* ✘ Bad: */
     /// function doSomething() {
     ///     if (true) {
     ///         var foo = 1;
@@ -76,7 +73,6 @@ declare_oxc_lint!(
     ///     }
     /// }
     ///
-    /// /* ✘ Bad: */
     /// function doTry() {
     ///     try {
     ///         var foo = 1;
@@ -91,7 +87,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* block-scoped-var: "error" */
     ///
-    /// /* ✔ Good: */
     /// function doIf() {
     ///     var build;
     ///     if (true) {
@@ -100,7 +95,6 @@ declare_oxc_lint!(
     ///     console.log(build);
     /// }
     ///
-    /// /* ✔ Good: */
     /// function doLoop() {
     ///     var i;
     ///     for (i = 0; i < 10; i++) {
@@ -109,7 +103,6 @@ declare_oxc_lint!(
     ///     console.log(i);
     /// }
     ///
-    /// /* ✔ Good: */
     /// function doSomething() {
     ///     var foo;
     ///     if (true) {
@@ -120,7 +113,6 @@ declare_oxc_lint!(
     ///     }
     /// }
     ///
-    /// /* ✔ Good: */
     /// function doTry() {
     ///     var foo;
     ///     try {
