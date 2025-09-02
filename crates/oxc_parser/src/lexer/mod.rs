@@ -7,7 +7,7 @@
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
@@ -40,11 +40,11 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
-    errors: Option<Vec<OxcDiagnostic>>,
+    errors: Option<ArenaVec<'a, OxcDiagnostic>>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -64,7 +64,7 @@ pub struct Lexer<'a> {
 
     token: Token,
 
-    pub(crate) errors: Vec<OxcDiagnostic>,
+    pub(crate) errors: ArenaVec<'a, OxcDiagnostic>,
 
     context: LexerContext,
 
@@ -101,7 +101,7 @@ impl<'a> Lexer<'a> {
             source,
             source_type,
             token,
-            errors: vec![],
+            errors: ArenaVec::with_capacity_in(1, allocator),
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
@@ -140,13 +140,23 @@ impl<'a> Lexer<'a> {
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
-            errors: { if self.errors.is_empty() { None } else { Some(self.errors.clone()) } },
+            errors: {
+                if self.errors.is_empty() {
+                    None
+                } else {
+                    Some(ArenaVec::from_iter_in(
+                        self.errors.iter().map(|e| e.clone()),
+                        self.allocator,
+                    ))
+                }
+            },
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        self.errors = checkpoint.errors.unwrap_or_default();
+        self.errors =
+            checkpoint.errors.unwrap_or_else(|| ArenaVec::with_capacity_in(1, self.allocator));
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
     }
