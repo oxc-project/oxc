@@ -61,7 +61,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case: ["error"] */
     ///
-    /// /* ✘ Bad: */
     /// switch (foo) {
     ///   case 1:
     ///     break;
@@ -72,7 +71,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case: ["error"] */
     ///
-    /// /* ✔ Good: */
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -93,7 +91,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
     ///
-    /// /* ✘ Bad: */
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -105,7 +102,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
     ///
-    /// /* ✔ Good: */
     /// switch (a) {
     ///   case 1:
     ///     break;
