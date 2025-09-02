@@ -35,7 +35,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-param-last: "error" */
     ///
-    /// /* ✘ Bad: */
     /// function f(a = 0, b) {}
     /// function f(a, b = 0, c) {}
     /// function createUser(isAdmin = false, id) {}
@@ -46,7 +45,6 @@ declare_oxc_lint!(
     /// ```js
     /// /* default-param-last: "error" */
     ///
-    /// /* ✔ Good: */
     /// function f(a, b = 0) {}
     /// function f(a = 0, b = 0) {}
     /// function createUser(id, isAdmin = false) {}
@@ -57,7 +55,6 @@ declare_oxc_lint!(
     /// ```ts
     /// /* default-param-last: "error" */
     ///
-    /// /* ✘ Bad: */
     /// function greet(message: string = "Hello", name: string) {}
     /// function combine(a: number = 1, b: number, c: number) {}
     /// function combine(a: number, b: number = 2, c: number) {}
@@ -68,7 +65,6 @@ declare_oxc_lint!(
     /// ```ts
     /// /* default-param-last: "error" */
     ///
-    /// /* ✔ Good: */
     /// function greet(name: string, message: string = "Hello") {}
     /// function combine(a: number, b: number = 2, c: number = 3) {}
     /// function combine(a: number, b?: number, c: number = 3) {}
