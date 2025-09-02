@@ -1,7 +1,6 @@
-use std::{str::FromStr, sync::Arc, vec};
+use std::vec;
 
 use log::debug;
-use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
@@ -26,18 +25,12 @@ use crate::{
 pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
-    diagnostics_report_map: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
     options: Mutex<Options>,
 }
 
 impl WorkspaceWorker {
     pub fn new(root_uri: Uri) -> Self {
-        Self {
-            root_uri,
-            server_linter: RwLock::new(None),
-            diagnostics_report_map: Arc::new(ConcurrentHashMap::default()),
-            options: Mutex::new(Options::default()),
-        }
+        Self { root_uri, server_linter: RwLock::new(None), options: Mutex::new(Options::default()) }
     }
 
     pub fn get_root_uri(&self) -> &Uri {
@@ -112,8 +105,12 @@ impl WorkspaceWorker {
         self.server_linter.read().await.is_none()
     }
 
-    pub fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics_report_map.pin().remove(&uri.to_string());
+    pub async fn remove_diagnostics(&self, uri: &Uri) {
+        let server_linter_guard = self.server_linter.read().await;
+        let Some(server_linter) = server_linter_guard.as_ref() else {
+            return;
+        };
+        server_linter.remove_diagnostics(uri);
     }
 
     async fn refresh_server_linter(&self) {
@@ -139,21 +136,6 @@ impl WorkspaceWorker {
         content: Option<String>,
         run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
-        let diagnostics = self.lint_file_internal(uri, content, run_type).await;
-
-        if let Some(diagnostics) = &diagnostics {
-            self.update_diagnostics(uri, diagnostics);
-        }
-
-        diagnostics
-    }
-
-    async fn lint_file_internal(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-        run_type: ServerLinterRun,
-    ) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
@@ -161,42 +143,30 @@ impl WorkspaceWorker {
         server_linter.run_single(uri, content, run_type).await
     }
 
-    fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
-        self.diagnostics_report_map.pin().insert(uri.to_string(), diagnostics.to_owned());
-    }
-
-    async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
-        let diagnostics_map = ConcurrentHashMap::with_capacity_and_hasher(
-            self.diagnostics_report_map.len(),
-            FxBuildHasher,
-        );
-        let server_linter = self.server_linter.read().await;
-        let Some(server_linter) = &*server_linter else {
-            debug!("no server_linter initialized in the worker");
-            return diagnostics_map;
+    async fn revalidate_diagnostics(
+        &self,
+        uris: Vec<Uri>,
+    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return ConcurrentHashMap::default();
         };
 
-        for uri in self.diagnostics_report_map.pin_owned().keys() {
-            if let Some(diagnostics) = server_linter
-                .run_single(&Uri::from_str(uri).unwrap(), None, ServerLinterRun::Always)
-                .await
-            {
-                self.diagnostics_report_map.pin().insert(uri.clone(), diagnostics.clone());
-                diagnostics_map.pin().insert(uri.clone(), diagnostics);
-            } else {
-                self.diagnostics_report_map.pin().remove(uri);
-            }
-        }
-
-        diagnostics_map
+        server_linter.revalidate_diagnostics(uris).await
     }
 
-    pub fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
-        self.diagnostics_report_map
-            .pin()
-            .keys()
-            .map(|uri| (uri.clone(), vec![]))
-            .collect::<Vec<_>>()
+    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
+        self.server_linter
+            .read()
+            .await
+            .as_ref()
+            .map(|server_linter| {
+                server_linter
+                    .get_cached_files_of_diagnostics()
+                    .iter()
+                    .map(|uri| (uri.to_string(), vec![]))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
     }
 
     pub async fn get_code_actions_or_commands(
@@ -205,15 +175,15 @@ impl WorkspaceWorker {
         range: &Range,
         is_source_fix_all_oxc: bool,
     ) -> Vec<CodeActionOrCommand> {
-        let report_map_ref = self.diagnostics_report_map.pin_owned();
-        let value = match report_map_ref.get(&uri.to_string()) {
-            Some(value) => value,
-            // code actions / commands can be requested without opening the file
-            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self
-                .lint_file_internal(uri, None, ServerLinterRun::Always)
-                .await
-                .unwrap_or_default(),
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return vec![];
+        };
+
+        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            diagnostics.unwrap_or_default()
         };
 
         if value.is_empty() {
@@ -264,15 +234,14 @@ impl WorkspaceWorker {
 
     /// This function is used for executing the `oxc.fixAll` command
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let report_map_ref = self.diagnostics_report_map.pin_owned();
-        let value = match report_map_ref.get(&uri.to_string()) {
-            Some(value) => value,
-            // code actions / commands can be requested without opening the file
-            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self
-                .lint_file_internal(uri, None, ServerLinterRun::Always)
-                .await
-                .unwrap_or_default(),
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return vec![];
+        };
+        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            diagnostics.unwrap_or_default()
         };
 
         if value.is_empty() {
@@ -305,16 +274,24 @@ impl WorkspaceWorker {
         &self,
         _file_event: &FileEvent,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+        let files = {
+            let server_linter_guard = self.server_linter.read().await;
+            let server_linter = server_linter_guard.as_ref()?;
+            server_linter.get_cached_files_of_diagnostics()
+        };
         self.refresh_server_linter().await;
-        Some(self.revalidate_diagnostics().await)
+        Some(self.revalidate_diagnostics(files).await)
     }
 
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
     ) -> (Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>, Option<FileSystemWatcher>) {
-        // clone the current options to avoid locking the mutex
-        let current_option = &self.options.lock().await.clone();
+        // Scope the first lock so it is dropped before the second lock
+        let current_option = {
+            let options_guard = self.options.lock().await;
+            options_guard.clone()
+        };
 
         debug!(
             "
@@ -324,14 +301,26 @@ impl WorkspaceWorker {
         "
         );
 
-        *self.options.lock().await = changed_options.clone();
+        {
+            let mut options_guard = self.options.lock().await;
+            *options_guard = changed_options.clone();
+        }
 
-        if Self::needs_linter_restart(current_option, changed_options) {
+        if Self::needs_linter_restart(&current_option, changed_options) {
+            let files = {
+                let server_linter_guard = self.server_linter.read().await;
+                let server_linter = server_linter_guard.as_ref();
+                if let Some(server_linter) = server_linter {
+                    server_linter.get_cached_files_of_diagnostics()
+                } else {
+                    vec![]
+                }
+            };
             self.refresh_server_linter().await;
 
             if current_option.config_path != changed_options.config_path {
                 return (
-                    Some(self.revalidate_diagnostics().await),
+                    Some(self.revalidate_diagnostics(files).await),
                     Some(FileSystemWatcher {
                         glob_pattern: GlobPattern::Relative(RelativePattern {
                             base_uri: OneOf::Right(self.root_uri.clone()),
@@ -346,7 +335,7 @@ impl WorkspaceWorker {
                 );
             }
 
-            return (Some(self.revalidate_diagnostics().await), None);
+            return (Some(self.revalidate_diagnostics(files).await), None);
         }
 
         (None, None)
@@ -359,6 +348,8 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     #[test]

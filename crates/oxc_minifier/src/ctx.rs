@@ -54,7 +54,7 @@ impl<'a> oxc_ecmascript::GlobalContext<'a> for Ctx<'a, '_> {
             .get_reference(reference_id)
             .symbol_id()
             .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0 && !sv.for_statement_init)
+            .filter(|sv| sv.write_references_count == 0)
             .and_then(|sv| sv.initialized_constant.as_ref())
             .cloned()
     }
@@ -182,10 +182,6 @@ impl<'a> Ctx<'a, '_> {
             }
         }
 
-        let for_statement_init = self.ancestors().nth(1).is_some_and(|ancestor| {
-            ancestor.is_parent_of_for_statement_init() || ancestor.is_parent_of_for_statement_left()
-        });
-
         let mut read_references_count = 0;
         let mut write_references_count = 0;
         for r in self.scoping().get_resolved_references(symbol_id) {
@@ -201,7 +197,6 @@ impl<'a> Ctx<'a, '_> {
         let symbol_value = SymbolValue {
             initialized_constant: constant,
             exported,
-            for_statement_init,
             read_references_count,
             write_references_count,
             scope_id,
