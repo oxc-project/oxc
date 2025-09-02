@@ -1,3 +1,5 @@
+#![cfg(all(test, feature = "serialize"))]
+
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 
 #[test]
