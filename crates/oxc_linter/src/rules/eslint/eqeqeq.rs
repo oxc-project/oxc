@@ -27,8 +27,7 @@ pub struct Eqeqeq {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Requires the use of the `===` and `!==` operators.
-    /// This rule disallows `==` and `!=`.
+    /// Requires the use of the `===` and `!==` operators, disallowing the use of `==` and `!=`.
     ///
     /// ### Why is this bad?
     ///
@@ -137,9 +136,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// #### `{"null": "never"}` (with `"always"` first option)
-    ///
-    /// Note: ESLint's official accepted values are `"always"` and `"ignore"`. `"never"` is not an ESLint value;
-    /// the examples below treat `"never"` as a custom extension to illustrate the concept of enforcing `== null` and `!= null`.
     ///
     /// Examples of **incorrect** code for this rule with the `{ "null": "never" }` option:
     /// ```js
@@ -312,7 +308,9 @@ fn to_strict_eq_operator_str(operator: BinaryOperator) -> (&'static str, &'stati
     match operator {
         BinaryOperator::Equality => ("===", " === "),
         BinaryOperator::Inequality => ("!==", " !== "),
-        _ => unreachable!("Unexpected operator passed to to_strict_eq_operator_str"),
+        _ => unreachable!(
+            "Only Equality and Inequality operators are supported in to_strict_eq_operator_str"
+        ),
     }
 }
 
