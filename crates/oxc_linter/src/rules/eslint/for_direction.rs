@@ -118,7 +118,7 @@ impl Rule for ForDirection {
         };
 
         let Some(expected_update_direction) =
-            get_expected_update_direction(&test.operator, counter_position)
+            get_expected_update_direction(test.operator, counter_position)
         else {
             return;
         };
@@ -152,7 +152,7 @@ fn extract_counter<'a>(
 }
 
 fn get_expected_update_direction(
-    operator: &BinaryOperator,
+    operator: BinaryOperator,
     counter_position: CounterPosition,
 ) -> Option<UpdateDirection> {
     match (operator, counter_position) {
