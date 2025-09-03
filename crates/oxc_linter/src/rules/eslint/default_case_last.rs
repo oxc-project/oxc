@@ -91,12 +91,9 @@ impl Rule for DefaultCaseLast {
         let AstKind::SwitchStatement(switch) = node.kind() else {
             return;
         };
-        let cases = &switch.cases;
-        if cases.is_empty() {
-            return;
-        }
 
-        let cases_without_last = &cases[..cases.len() - 1];
+        let cases = &switch.cases;
+        let cases_without_last = &cases[..cases.len().saturating_sub(1)];
         if let Some(default_clause) = cases_without_last.iter().find(|c| c.test.is_none()) {
             ctx.diagnostic(default_case_last_diagnostic(default_clause.span));
         }
