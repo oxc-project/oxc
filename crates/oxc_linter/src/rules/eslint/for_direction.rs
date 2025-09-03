@@ -8,7 +8,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
+use oxc_syntax::{
+    operator::BinaryOperator::{GreaterEqualThan, GreaterThan, LessEqualThan, LessThan},
+    operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator},
+};
 
 use crate::fixer::{RuleFix, RuleFixer};
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -88,6 +91,18 @@ declare_oxc_lint!(
     fix_dangerous
 );
 
+#[derive(Debug, Eq, PartialEq)]
+enum UpdateDirection {
+    Forward,
+    Backward,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum CounterPosition {
+    Left,
+    Right,
+}
+
 impl Rule for ForDirection {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ForStatement(for_loop) = node.kind() else {
@@ -98,28 +113,24 @@ impl Rule for ForDirection {
             return;
         };
 
-        let (counter, counter_position) = match (&test.left, &test.right) {
-            (Expression::Identifier(counter), _) => (counter, LEFT),
-            (_, Expression::Identifier(counter)) => (counter, RIGHT),
-            _ => return,
+        let Some((counter, counter_position)) = extract_counter(&test.left, &test.right) else {
+            return;
         };
 
-        let expected_update_direction = match (&test.operator, counter_position) {
-            (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT)
-            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => BACKWARD,
-            (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT)
-            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => FORWARD,
-            _ => return,
+        let Some(expected_update_direction) =
+            get_expected_update_direction(&test.operator, counter_position)
+        else {
+            return;
         };
 
         let Some(update_expr) = &for_loop.update else {
             return;
         };
 
-        let update_direction = get_update_direction(update_expr, counter);
-        if update_direction == UNKNOWN {
+        let Some(update_direction) = get_update_direction(update_expr, counter) else {
             return;
-        }
+        };
+
         if update_direction != expected_update_direction {
             ctx.diagnostic_with_dangerous_fix(
                 for_direction_diagnostic(test.span, get_update_span(update_expr)),
@@ -129,14 +140,33 @@ impl Rule for ForDirection {
     }
 }
 
-type UpdateDirection = i32;
-const FORWARD: UpdateDirection = 1;
-const BACKWARD: UpdateDirection = -1;
-const UNKNOWN: UpdateDirection = 0;
+fn extract_counter<'a>(
+    left: &'a Expression<'a>,
+    right: &'a Expression<'a>,
+) -> Option<(&'a IdentifierReference<'a>, CounterPosition)> {
+    match (left, right) {
+        (Expression::Identifier(counter), _) => Some((counter, CounterPosition::Left)),
+        (_, Expression::Identifier(counter)) => Some((counter, CounterPosition::Right)),
+        _ => None,
+    }
+}
 
-type CounterPosition<'a> = &'a str;
-const LEFT: CounterPosition = "left";
-const RIGHT: CounterPosition = "right";
+fn get_expected_update_direction(
+    operator: &BinaryOperator,
+    counter_position: CounterPosition,
+) -> Option<UpdateDirection> {
+    match (operator, counter_position) {
+        (LessEqualThan | LessThan, CounterPosition::Right)
+        | (GreaterEqualThan | GreaterThan, CounterPosition::Left) => {
+            Some(UpdateDirection::Backward)
+        }
+        (LessEqualThan | LessThan, CounterPosition::Left)
+        | (GreaterEqualThan | GreaterThan, CounterPosition::Right) => {
+            Some(UpdateDirection::Forward)
+        }
+        _ => None,
+    }
+}
 
 fn get_fixer_replace_operator(update: &Expression) -> &'static str {
     match update {
@@ -156,10 +186,13 @@ fn get_fixer_replace_operator(update: &Expression) -> &'static str {
 fn get_fixer_replace_span(update: &Expression) -> Span {
     match update {
         Expression::UpdateExpression(update) => {
-            if update.span().start == update.argument.span().start {
-                Span::new(update.argument.span().end, update.span().end)
+            let arg_span = update.argument.span();
+            let upd_span = update.span();
+
+            if upd_span.start == arg_span.start {
+                Span::new(arg_span.end, upd_span.end)
             } else {
-                Span::new(update.span().start, update.argument.span().start)
+                Span::new(upd_span.start, arg_span.start)
             }
         }
         Expression::AssignmentExpression(update) => {
@@ -171,40 +204,35 @@ fn get_fixer_replace_span(update: &Expression) -> Span {
 
 fn apply_rule_fix<'a>(fixer: &RuleFixer<'_, 'a>, update: &Expression) -> RuleFix<'a> {
     let span = get_fixer_replace_span(update);
-    let new_operator_str = get_fixer_replace_operator(update);
+    let replacement = get_fixer_replace_operator(update);
 
-    fixer.replace(span, new_operator_str)
+    fixer.replace(span, replacement)
 }
 
-fn get_update_direction(update: &Expression, counter: &IdentifierReference) -> UpdateDirection {
+fn get_update_direction(
+    update: &Expression,
+    counter: &IdentifierReference,
+) -> Option<UpdateDirection> {
     match update {
         // match increment or decrement
-        Expression::UpdateExpression(update) => {
-            if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id) = &update.argument {
-                if id.name != counter.name {
-                    return UNKNOWN;
-                }
-                match update.operator {
-                    UpdateOperator::Increment => FORWARD,
-                    UpdateOperator::Decrement => BACKWARD,
-                }
-            } else {
-                UNKNOWN
+        Expression::UpdateExpression(update) => match &update.argument {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(id) if id.name == counter.name => {
+                Some(match update.operator {
+                    UpdateOperator::Increment => UpdateDirection::Forward,
+                    UpdateOperator::Decrement => UpdateDirection::Backward,
+                })
             }
-        }
+            _ => None,
+        },
         // match add assign or subtract assign
-        Expression::AssignmentExpression(assign) => {
-            if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign.left {
-                if id.name != counter.name {
-                    return UNKNOWN;
-                }
+        Expression::AssignmentExpression(assign) => match &assign.left {
+            AssignmentTarget::AssignmentTargetIdentifier(id) if id.name == counter.name => {
                 get_assignment_direction(assign)
-            } else {
-                UNKNOWN
             }
-        }
+            _ => None,
+        },
         // can't determine other kinds of updates
-        _ => UNKNOWN,
+        _ => None,
     }
 }
 
@@ -218,28 +246,24 @@ fn get_update_span(update: &Expression) -> Span {
     }
 }
 
-fn get_assignment_direction(assign: &AssignmentExpression) -> UpdateDirection {
+fn get_assignment_direction(assign: &AssignmentExpression) -> Option<UpdateDirection> {
     let operator = &assign.operator;
     let right = &assign.right;
-    let positive = match right {
-        Expression::NumericLiteral(r) => match r.value {
-            0.0 => return UNKNOWN,
-            _ => r.value.is_sign_positive(),
-        },
+    let is_positive = match right {
+        Expression::NumericLiteral(r) if r.value != 0.0 => r.value.is_sign_positive(),
         Expression::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
-        _ => return UNKNOWN,
+        _ => return None,
     };
 
-    let mut direction = match operator {
-        AssignmentOperator::Addition => FORWARD,
-        AssignmentOperator::Subtraction => BACKWARD,
-        _ => return UNKNOWN,
-    };
-
-    if !positive {
-        direction = -direction;
+    match operator {
+        AssignmentOperator::Addition => {
+            Some(if is_positive { UpdateDirection::Forward } else { UpdateDirection::Backward })
+        }
+        AssignmentOperator::Subtraction => {
+            Some(if is_positive { UpdateDirection::Backward } else { UpdateDirection::Forward })
+        }
+        _ => None,
     }
-    direction
 }
 
 #[test]
