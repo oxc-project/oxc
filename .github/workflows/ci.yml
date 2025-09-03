@@ -355,3 +355,31 @@ jobs:
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
           (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)
+
+  lintgen:
+    name: Linter changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '.github/workflows/ci.yml'
+              - 'crates/oxc_linter/**'
+              - 'tasks/linter_codegen/**'
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          components: rustfmt
+          cache-key: lintgen
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check linter changes
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          cargo lintgen
+          git diff --exit-code ||
+          (echo 'Linter codegen has changed. Run the `cargo lintgen` command to update the linter code generated and commit it.' && exit 1)
