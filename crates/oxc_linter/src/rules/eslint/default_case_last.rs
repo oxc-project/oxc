@@ -92,13 +92,13 @@ impl Rule for DefaultCaseLast {
             return;
         };
         let cases = &switch.cases;
-        if let Some((index, default_clause)) =
-            cases.iter().enumerate().find(|(_, c)| c.test.is_none())
-        {
-            let is_default_clause_last = index == cases.len() - 1;
-            if !is_default_clause_last {
-                ctx.diagnostic(default_case_last_diagnostic(default_clause.span));
-            }
+        if cases.is_empty() {
+            return;
+        }
+
+        let cases_without_last = &cases[..cases.len() - 1];
+        if let Some(default_clause) = cases_without_last.iter().find(|c| c.test.is_none()) {
+            ctx.diagnostic(default_case_last_diagnostic(default_clause.span));
         }
     }
 }
