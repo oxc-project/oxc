@@ -12588,7 +12588,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:2:10]
  1 │ class Foo {
  2 │   public public a;
@@ -12597,7 +12597,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:3:11]
  2 │   public public a;
  3 │   private public b;
@@ -12606,7 +12606,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:4:13]
  3 │   private public b;
  4 │   protected private c;
@@ -12615,7 +12615,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:5:10]
  4 │   protected private c;
  5 │   public protected d;
@@ -12624,7 +12624,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:10]
  5 │   public protected d;
  6 │   public protected private e;
@@ -12633,7 +12633,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:20]
  5 │   public protected d;
  6 │   public protected private e;

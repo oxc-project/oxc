@@ -89,7 +89,6 @@ impl ModifierFlags {
         if self.contains(Self::PROTECTED) {
             return Some(TSAccessibility::Protected);
         }
-
         if self.contains(Self::PRIVATE) {
             return Some(TSAccessibility::Private);
         }
@@ -106,11 +105,6 @@ pub struct Modifier {
 impl Modifier {
     pub fn new(span: Span, kind: ModifierKind) -> Self {
         Self { span, kind }
-    }
-
-    #[inline]
-    pub fn is_static(&self) -> bool {
-        matches!(self.kind, ModifierKind::Static)
     }
 }
 
@@ -297,22 +291,20 @@ impl std::fmt::Display for ModifierKind {
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
-        let mut flags = ModifierFlags::empty();
         if !self.at_modifier() {
-            return Modifiers::new(None, flags);
+            return Modifiers::empty();
         }
+        let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
-            let span = self.start_span();
-            let modifier_flags = self.cur_kind().into();
             let kind = self.cur_kind();
-            self.bump_any();
-            let modifier = self.modifier(kind, self.end_span(span));
+            let modifier_kind = self.token_kind_into_modifier_kind(kind);
+            let modifier = self.parse_modifier(modifier_kind);
             if modifier.kind == ModifierKind::Export {
                 self.error(diagnostics::export_modifier_must_precede_declare(&modifier));
             }
             self.check_for_duplicate_modifiers(flags, &modifier);
-            flags.set(modifier_flags, true);
+            flags.set(kind.into(), true);
             modifiers.push(modifier);
         }
         Modifiers::new(Some(modifiers), flags)
@@ -322,34 +314,23 @@ impl<'a> ParserImpl<'a> {
         if !self.cur_kind().is_modifier_kind() {
             return false;
         }
-        self.lookahead(Self::at_modifier_worker)
-    }
 
-    fn at_modifier_worker(&mut self) -> bool {
+        let next_token = self.lexer.peek_token();
         match self.cur_kind() {
-            Kind::Const => {
-                self.bump_any();
-                self.at(Kind::Enum)
-            }
+            Kind::Const => next_token.kind() == Kind::Enum,
             Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                // These modifiers can cross line.
-                self.bump_any();
-                self.can_follow_modifier()
+                can_token_follow_modifier(next_token)
             }
             // Rest modifiers cannot cross line
-            _ => {
-                self.bump_any();
-                self.can_follow_modifier() && !self.cur_token().is_on_new_line()
-            }
+            _ => is_token_on_same_line_and_can_follow_modifier(next_token),
         }
     }
 
-    fn modifier(&mut self, kind: Kind, span: Span) -> Modifier {
-        let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
+    fn token_kind_into_modifier_kind(&mut self, kind: Kind) -> ModifierKind {
+        ModifierKind::try_from(kind).unwrap_or_else(|()| {
             self.set_unexpected();
             ModifierKind::Abstract // Dummy value
-        });
-        Modifier { span, kind: modifier_kind }
+        })
     }
 
     pub(crate) fn parse_modifiers(
@@ -367,7 +348,7 @@ impl<'a> ParserImpl<'a> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            if modifier.is_static() {
+            if modifier.kind == ModifierKind::Static {
                 has_seen_static_modifier = true;
             }
             self.check_for_duplicate_modifiers(modifier_flags, &modifier);
@@ -384,98 +365,76 @@ impl<'a> ParserImpl<'a> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
-        let span = self.start_span();
         let kind = self.cur_kind();
 
-        if matches!(self.cur_kind(), Kind::Const) {
-            if !permit_const_as_modifier {
-                return None;
+        let modifier_kind = match kind {
+            Kind::Const => {
+                if !permit_const_as_modifier
+                    || !is_token_on_same_line_and_can_follow_modifier(self.lexer.peek_token())
+                {
+                    return None;
+                }
+                ModifierKind::Const
             }
+            Kind::Static => {
+                if has_seen_static_modifier {
+                    return None;
+                }
+                let next_token = self.lexer.peek_token();
+                if next_token.kind() == Kind::LCurly {
+                    if stop_on_start_of_class_static_block {
+                        return None;
+                    }
+                } else if !can_token_follow_modifier(next_token) {
+                    return None;
+                }
+                ModifierKind::Static
+            }
+            _ => {
+                if !kind.is_modifier_kind()
+                    || !is_token_on_same_line_and_can_follow_modifier(self.lexer.peek_token())
+                {
+                    return None;
+                }
+                self.token_kind_into_modifier_kind(kind)
+            }
+        };
 
-            // We need to ensure that any subsequent modifiers appear on the same line
-            // so that when 'const' is a standalone declaration, we don't issue
-            // an error.
-            self.try_parse(Self::try_next_token_is_on_same_line_and_can_follow_modifier)?;
-        } else if
-        // we're at the start of a static block
-        (stop_on_start_of_class_static_block
-            && matches!(self.cur_kind(), Kind::Static)
-            && self.lexer.peek_token().kind() == Kind::LCurly)
-            // we may be at the start of a static block
-            || (has_seen_static_modifier && matches!(self.cur_kind(), Kind::Static))
-            // next token is not a modifier
-            || (!self.parse_any_contextual_modifier())
-        {
-            return None;
-        }
-        Some(self.modifier(kind, self.end_span(span)))
+        Some(self.parse_modifier(modifier_kind))
+    }
+
+    fn parse_modifier(&mut self, kind: ModifierKind) -> Modifier {
+        let span = self.start_span();
+        self.bump_any();
+        let span = self.end_span(span);
+        Modifier { span, kind }
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
-        self.at(kind) && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+        self.at(kind) && self.try_parse(Self::next_token_can_follow_get_or_set).is_some()
     }
 
-    fn parse_any_contextual_modifier(&mut self) -> bool {
-        self.cur_kind().is_modifier_kind()
-            && self.try_parse(Self::next_token_can_follow_modifier).is_some()
-    }
-
-    pub(crate) fn next_token_can_follow_modifier(&mut self) {
-        let b = match self.cur_kind() {
-            Kind::Const => {
-                self.bump_any();
-                self.at(Kind::Enum)
-            }
-            Kind::Static => {
-                self.bump_any();
-                self.can_follow_modifier()
-            }
-            Kind::Get | Kind::Set => {
-                self.bump_any();
-                self.can_follow_get_or_set_keyword()
-            }
-            _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
-        };
-        if !b {
-            self.set_unexpected();
-        }
-    }
-
-    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) {
-        if !self.next_token_is_on_same_line_and_can_follow_modifier() {
-            self.set_unexpected();
-        }
-    }
-
-    fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
+    fn next_token_can_follow_get_or_set(&mut self) {
         self.bump_any();
-        if self.cur_token().is_on_new_line() {
-            return false;
-        }
-        self.can_follow_modifier()
-    }
-
-    fn can_follow_modifier(&self) -> bool {
-        match self.cur_kind() {
-            Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
-            kind => kind.is_identifier_or_keyword(),
+        if !self.can_follow_get_or_set_keyword() {
+            self.set_unexpected();
         }
     }
 
     fn can_follow_get_or_set_keyword(&self) -> bool {
         let kind = self.cur_kind();
-        kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
+        matches!(kind, Kind::LBrack | Kind::PrivateIdentifier) || kind.is_literal_property_name()
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {
-        if seen_flags.contains(modifier.kind.into())
-            || (matches!(
-                modifier.kind,
-                ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
-            ) && seen_flags.intersects(
-                ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE,
-            ))
+        if matches!(
+            modifier.kind,
+            ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
+        ) && seen_flags
+            .intersects(ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE)
         {
+            self.error(diagnostics::accessibility_modifier_already_seen(modifier));
+        } else if seen_flags.contains(modifier.kind.into()) {
             self.error(diagnostics::modifier_already_seen(modifier));
         }
     }
@@ -494,4 +453,14 @@ impl<'a> ParserImpl<'a> {
             }
         }
     }
+}
+
+fn is_token_on_same_line_and_can_follow_modifier(token: Token) -> bool {
+    !token.is_on_new_line() && can_token_follow_modifier(token)
+}
+
+fn can_token_follow_modifier(token: Token) -> bool {
+    let kind = token.kind();
+    matches!(kind, Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3)
+        || kind.is_identifier_or_keyword()
 }
