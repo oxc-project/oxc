@@ -53,5 +53,5 @@ jobs:
       # https://github.com/oxc-project/oxc/pull/11092
       - name: Test with Miri
         run: |
-          cargo miri test --lib --bins --tests --all-features -p oxc_ast -p oxc_data_structures
+          cargo miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
           cargo miri test --lib --bins --tests -p oxc_parser -p oxc_transformer
