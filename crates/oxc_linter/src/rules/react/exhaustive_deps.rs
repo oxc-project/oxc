@@ -9,8 +9,7 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
-        BindingPatternKind, CallExpression, ChainElement, ChainExpression, Expression,
-        FormalParameter, FormalParameters, Function, FunctionBody, IdentifierReference,
+        BindingPatternKind, CallExpression, ChainElement, ChainExpression, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
         StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference,
         VariableDeclarationKind, VariableDeclarator,
     },
@@ -894,7 +893,6 @@ fn analyze_property_chain<'a, 'b>(
             ChainElement::StaticMemberExpression(expr) => {
                 concat_members(expr, semantic, exclude_current)
             }
-            ChainElement::CallExpression(_) => Err(()),
             ChainElement::ComputedMemberExpression(expr) => {
                 analyze_property_chain(&expr.object, semantic, exclude_current)
             }
@@ -1291,16 +1289,16 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         // be from parameter destructuring, handle them as simple identifiers
 
         // This is a conservative approach - when in doubt, use simple identifier collection
-        let result = self.decl_stack.is_empty()
+        
+
+        self.decl_stack.is_empty()
             || !matches!(
                 self.decl_stack.last(),
                 Some(VariableDeclarator {
                     id: BindingPattern { kind: BindingPatternKind::ObjectPattern(_), .. },
                     ..
                 })
-            );
-
-        result
+            )
     }
 
     fn new(
@@ -1326,7 +1324,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         match &chain_expr.expression {
             ChainElement::StaticMemberExpression(member) => {
                 if member.property.name == "current" {
-                    // Found .current - collect for cleanup warning
+                    // SAFETY: Transmuting lifetime to match visitor lifetime requirements
                     let member_ref = unsafe {
                         std::mem::transmute::<
                             &StaticMemberExpression<'_>,
@@ -1444,6 +1442,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             if let Expression::StaticMemberExpression(inner_member) = &member_expr.object {
                 if inner_member.property.name == "current" {
                     if is_inside_effect_cleanup(&self.stack) {
+                        // SAFETY: Transmuting lifetime to match visitor lifetime requirements
                         let inner_member_ref = unsafe {
                             std::mem::transmute::<
                                 &StaticMemberExpression<'_>,
@@ -1465,8 +1464,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     if let ChainElement::StaticMemberExpression(inner_member) =
                         &inner_chain.expression
                     {
-                        if inner_member.property.name == "current" {
-                            if is_inside_effect_cleanup(&self.stack) {
+                        if inner_member.property.name == "current"
+                            && is_inside_effect_cleanup(&self.stack) {
+                                // SAFETY: Transmuting lifetime to match visitor lifetime requirements
                                 let inner_member_ref = unsafe {
                                     std::mem::transmute::<
                                         &StaticMemberExpression<'_>,
@@ -1475,7 +1475,6 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                                 };
                                 self.refs_inside_cleanups.push(inner_member_ref);
                             }
-                        }
                     }
                 }
             }
@@ -1507,12 +1506,10 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     {
                         self.found_dependencies.insert(obj_dep);
                     }
-                } else {
-                    if let Ok(Some(callee_dep)) =
-                        analyze_property_chain(&call_expr.callee, self.semantic, true)
-                    {
-                        self.found_dependencies.insert(callee_dep);
-                    }
+                } else if let Ok(Some(callee_dep)) =
+                    analyze_property_chain(&call_expr.callee, self.semantic, true)
+                {
+                    self.found_dependencies.insert(callee_dep);
                 }
                 self.visit_call_expression(call_expr);
             }
@@ -1571,8 +1568,8 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 });
             }
 
-            // Handle refs inside effect cleanup
             if is_inside_effect_cleanup(&self.stack) {
+                // SAFETY: Transmuting lifetime to match visitor lifetime requirements
                 let it = unsafe {
                     std::mem::transmute::<&StaticMemberExpression<'_>, &'a StaticMemberExpression<'a>>(
                         it,
