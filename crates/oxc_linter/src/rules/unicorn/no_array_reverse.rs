@@ -29,11 +29,11 @@ impl Default for NoArrayReverse {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefer using Array#toReversed() over Array#reverse().
+    /// Prefer using `Array#toReversed()` over `Array#reverse()`.
     ///
     /// ### Why is this bad?
     ///
-    /// Array#reverse() modifies the original array in place, which can lead to unintended side effects—especially
+    /// `Array#reverse()` modifies the original array in place, which can lead to unintended side effects—especially
     /// when the original array is used elsewhere in the code.
     ///
     /// ### Examples
@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// `{ type: boolean, default: true }`
     ///
     /// This rule allow array.reverse() as an expression statement by default,
-    /// Pass allowExpressionStatement: false to forbid Array#reverse() even it's an expression statement.
+    /// Pass allowExpressionStatement: false to forbid `Array#reverse()` even it's an expression statement.
     ///
     /// Examples of **incorrect** code for this rule with the `{ "allowExpressionStatement": false }` option:
     /// ```js
@@ -69,9 +69,9 @@ declare_oxc_lint!(
 
 impl Rule for NoArrayReverse {
     fn from_configuration(value: Value) -> Self {
-        let obj = value.get(0);
         Self {
-            allow_expression_statement: obj
+            allow_expression_statement: value
+                .get(0)
                 .and_then(|v| v.get("allowExpressionStatement"))
                 .and_then(Value::as_bool)
                 .unwrap_or(true),
@@ -79,44 +79,45 @@ impl Rule for NoArrayReverse {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind()
-            && call_expr.arguments.is_empty()
-            && !call_expr.optional
-        {
-            let Some(member_expr) = call_expr.callee.get_member_expr() else {
-                return;
-            };
-            let Some((span, static_property_name)) = member_expr.static_property_info() else {
-                return;
-            };
-            if static_property_name != "reverse" {
-                return;
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        if !call_expr.arguments.is_empty() || call_expr.optional {
+            return;
+        }
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
+        let Some((span, static_property_name)) = member_expr.static_property_info() else {
+            return;
+        };
+        if static_property_name != "reverse" {
+            return;
+        }
+        let is_spread = match member_expr.object() {
+            Expression::ArrayExpression(array) => {
+                array.elements.len() == 1
+                    && matches!(array.elements[0], ArrayExpressionElement::SpreadElement(_))
             }
-            let is_spread = match member_expr.object() {
-                Expression::ArrayExpression(array) => {
-                    array.elements.len() == 1
-                        && matches!(array.elements[0], ArrayExpressionElement::SpreadElement(_))
+            _ => false,
+        };
+        if self.allow_expression_statement && !is_spread {
+            let parent = ctx.nodes().parent_node(node.id());
+            let parent_is_expression_statement = match parent.kind() {
+                AstKind::ExpressionStatement(_) => true,
+                AstKind::ChainExpression(_) => {
+                    let grand_parent = ctx.nodes().parent_node(parent.id());
+                    matches!(grand_parent.kind(), AstKind::ExpressionStatement(_))
                 }
                 _ => false,
             };
-            if self.allow_expression_statement && !is_spread {
-                let parent = ctx.nodes().parent_node(node.id());
-                let parent_is_expression_statement = match parent.kind() {
-                    AstKind::ExpressionStatement(_) => true,
-                    AstKind::ChainExpression(_) => {
-                        let grand_parent = ctx.nodes().parent_node(parent.id());
-                        matches!(grand_parent.kind(), AstKind::ExpressionStatement(_))
-                    }
-                    _ => false,
-                };
-                if parent_is_expression_statement {
-                    return;
-                }
+            if parent_is_expression_statement {
+                return;
             }
-            ctx.diagnostic_with_fix(no_array_reverse_diagnostic(span), |fixer| {
-                fixer.replace(span, "toReversed")
-            });
         }
+        ctx.diagnostic_with_fix(no_array_reverse_diagnostic(span), |fixer| {
+            fixer.replace(span, "toReversed")
+        });
     }
 }
 
