@@ -460,6 +460,66 @@ Found 2 warnings and 0 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
+exports[`oxlint2 CLI > should respect disable directives for custom plugin rules 1`] = `
+"
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-unused-vars): Variable 'shouldError' is declared but never used. Unused variables should start with a '_'.[0m
+   ╭─[[38;2;92;157;255;1mindex.js[0m:2:5]
+ [2m1[0m │ // This var should trigger an error
+ [2m2[0m │ var shouldError = 1;
+   · [38;2;246;87;248m    ─────┬─────[0m
+   ·          [38;2;246;87;248m╰── [38;2;246;87;248m'shouldError' is declared here[0m[0m
+ [2m3[0m │ 
+   ╰────
+[38;2;106;159;181m  help: [0mConsider removing this declaration.
+
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-unused-vars): Variable 'shouldBeDisabled' is declared but never used. Unused variables should start with a '_'.[0m
+   ╭─[[38;2;92;157;255;1mindex.js[0m:5:5]
+ [2m4[0m │ // oxlint-disable-next-line no-var
+ [2m5[0m │ var shouldBeDisabled = 2;
+   · [38;2;246;87;248m    ────────┬───────[0m
+   ·             [38;2;246;87;248m╰── [38;2;246;87;248m'shouldBeDisabled' is declared here[0m[0m
+ [2m6[0m │ 
+   ╰────
+[38;2;106;159;181m  help: [0mConsider removing this declaration.
+
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-unused-vars): Variable 'anotherDisabled' is declared but never used. Unused variables should start with a '_'.[0m
+    ╭─[[38;2;92;157;255;1mindex.js[0m:11:5]
+ [2m10[0m │ /* oxlint-disable-next-line no-var */
+ [2m11[0m │ var anotherDisabled = 4;
+    · [38;2;246;87;248m    ───────┬───────[0m
+    ·            [38;2;246;87;248m╰── [38;2;246;87;248m'anotherDisabled' is declared here[0m[0m
+ [2m12[0m │ 
+    ╰────
+[38;2;106;159;181m  help: [0mConsider removing this declaration.
+
+  [38;2;244;191;117;1m⚠[0m [38;2;244;191;117;1meslint(no-unused-vars): Variable 'shouldErrorAgain' is declared but never used. Unused variables should start with a '_'.[0m
+    ╭─[[38;2;92;157;255;1mindex.js[0m:14:5]
+ [2m13[0m │ // This var should trigger an error again
+ [2m14[0m │ var shouldErrorAgain = 3;
+    · [38;2;246;87;248m    ────────┬───────[0m
+    ·             [38;2;246;87;248m╰── [38;2;246;87;248m'shouldErrorAgain' is declared here[0m[0m
+    ╰────
+[38;2;106;159;181m  help: [0mConsider removing this declaration.
+
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+   ╭─[[38;2;92;157;255;1mindex.js[0m:2:1]
+ [2m1[0m │ // This var should trigger an error
+ [2m2[0m │ var shouldError = 1;
+   · [38;2;246;87;248m────────────────────[0m
+ [2m3[0m │ 
+   ╰────
+
+  [38;2;225;80;80;1m×[0m [38;2;225;80;80;1mtest-plugin(no-var): Use let or const instead of var[0m
+    ╭─[[38;2;92;157;255;1mindex.js[0m:14:1]
+ [2m13[0m │ // This var should trigger an error again
+ [2m14[0m │ var shouldErrorAgain = 3;
+    · [38;2;246;87;248m─────────────────────────[0m
+    ╰────
+
+Found 4 warnings and 2 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
 exports[`oxlint2 CLI > should work with multiple rules 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement

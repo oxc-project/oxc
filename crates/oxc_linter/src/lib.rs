@@ -330,6 +330,11 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
+                    // Check disable directives for external plugin rules
+                    if ctx_host.disable_directives().contains(rule_name, span) {
+                        continue;
+                    }
+
                     ctx_host.push_diagnostic(Message::new(
                         OxcDiagnostic::error(diagnostic.message)
                             .with_label(span)

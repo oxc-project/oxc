@@ -1,0 +1,7 @@
+{
+    "plugins": ["./test_plugin"],
+    "rules": {
+        "test-plugin/no-var": "error"
+    },
+    "ignorePatterns": ["test_plugin/**"]
+}
