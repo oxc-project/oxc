@@ -29,8 +29,8 @@ impl<'a> TypeScript<'a, '_> {
     /// 2. Convert class fields to `this` assignments in the constructor body.
     ///
     /// > This transformation only works when `set_public_class_fields` is `true`,
-    ///   and the fields have initializers, which is to align with the behavior of TypeScript's
-    ///   `useDefineForClassFields: false` option.
+    /// > and the fields have initializers, which is to align with the behavior of TypeScript's
+    /// > `useDefineForClassFields: false` option.
     ///
     /// Input:
     /// ```ts

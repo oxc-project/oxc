@@ -1097,7 +1097,7 @@ impl<'a> JsxImpl<'a, '_> {
 
     /// Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
     /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
-    /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
+    ///   Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
     ///
     /// If either:
     /// (a) Text contains any HTML entities that need to be decoded, or

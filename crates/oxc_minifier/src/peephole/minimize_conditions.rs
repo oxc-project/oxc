@@ -414,7 +414,7 @@ mod test {
 
     /** Try to minimize assignments */
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Assignment folding optimization not yet implemented"]
     fn test_fold_assignments() {
         test("function f(){if(x)y=3;else y=4;}", "function f(){y=x?3:4}");
         test("function f(){if(x)y=1+a;else y=2+a;}", "function f(){y=x?1+a:2+a}");
@@ -436,7 +436,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Duplicate statement removal not yet implemented"]
     fn test_remove_duplicate_statements() {
         test("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
         test(
@@ -505,7 +505,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Parentheses counting optimization not yet implemented"]
     fn test_and_parentheses_count() {
         test("function f(){if(x||y)a.foo()}", "function f(){(x||y)&&a.foo()}");
         test("function f(){if(x.a)x.a=0}", "function f(){x.a&&(x.a=0)}");
@@ -567,7 +567,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan_remove_leading_not() {
         test("if(!(!a||!b)&&c) foo()", "((a&&b)&&c)&&foo()");
         test("if(!(x&&y)) foo()", "x&&y||foo()");
@@ -575,39 +575,39 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan1() {
         test("if(!a&&!b)foo()", "(a||b)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan2() {
         // Make sure trees with cloned functions are marked as changed
         test("(!(a&&!((function(){})())))||foo()", "!a||(function(){})()||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan2b() {
         // Make sure unchanged trees with functions are not marked as changed
         test_same("!a||(function(){})()||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan3() {
         test("if((!a||!b)&&(c||d)) foo()", "(a&&b||!c&&!d)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan5() {
         test("if((!a||!b)&&c) foo()", "(a&&b||!c)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan11() {
         test(
             "if (x && (y===2 || !f()) && (y===3 || !h())) foo()",
@@ -616,7 +616,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan20a() {
         test(
             "if (0===c && (2===a || 1===a)) f(); else g()",
@@ -625,7 +625,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan20b() {
         test("if (0!==c || 2!==a && 1!==a) g(); else f()", "(0!==c || 2!==a && 1!==a) ? g() : f()");
     }
@@ -676,7 +676,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Expression result minimization not yet implemented"]
     fn test_minimize_expr_result() {
         test("!x||!y", "x&&y");
         test("if(!(x&&!y)) foo()", "(!x||y)&&foo()");
@@ -685,13 +685,13 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan21() {
         test("if (0===c && (2===a || 1===a)) f()", "(0!==c || 2!==a && 1!==a) || f()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: AND/OR minimization not yet implemented"]
     fn test_minimize_and_or1() {
         test("if ((!a || !b) && (d || e)) f()", "(a&&b || !d&&!e) || f()");
     }
@@ -741,7 +741,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Conditional variable declaration folding not yet implemented"]
     fn test_fold_conditional_var_declaration() {
         test("if(x) var y=1;else y=2", "var y=x?1:2");
         test("if(x) y=1;else var y=2", "var y=x?1:2");
@@ -764,7 +764,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Return statement substitution not yet implemented"]
     fn test_substitute_return() {
         test("function f() { while(x) { return }}", "function f() { while(x) { break }}");
 
@@ -861,7 +861,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Break/throw substitution not yet implemented"]
     fn test_substitute_break_for_throw() {
         test_same("function f() { while(x) { throw Error }}");
 
