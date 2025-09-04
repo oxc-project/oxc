@@ -9,9 +9,10 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
-        BindingPatternKind, CallExpression, ChainElement, ChainExpression, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference,
-        VariableDeclarationKind, VariableDeclarator,
+        BindingPatternKind, CallExpression, ChainElement, ChainExpression, Expression,
+        FormalParameters, Function, FunctionBody, IdentifierReference, StaticMemberExpression,
+        TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind,
+        VariableDeclarator,
     },
     match_expression,
 };
@@ -1289,7 +1290,6 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         // be from parameter destructuring, handle them as simple identifiers
 
         // This is a conservative approach - when in doubt, use simple identifier collection
-        
 
         self.decl_stack.is_empty()
             || !matches!(
@@ -1465,16 +1465,17 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         &inner_chain.expression
                     {
                         if inner_member.property.name == "current"
-                            && is_inside_effect_cleanup(&self.stack) {
-                                // SAFETY: Transmuting lifetime to match visitor lifetime requirements
-                                let inner_member_ref = unsafe {
-                                    std::mem::transmute::<
-                                        &StaticMemberExpression<'_>,
-                                        &'a StaticMemberExpression<'a>,
-                                    >(inner_member)
-                                };
-                                self.refs_inside_cleanups.push(inner_member_ref);
-                            }
+                            && is_inside_effect_cleanup(&self.stack)
+                        {
+                            // SAFETY: Transmuting lifetime to match visitor lifetime requirements
+                            let inner_member_ref = unsafe {
+                                std::mem::transmute::<
+                                    &StaticMemberExpression<'_>,
+                                    &'a StaticMemberExpression<'a>,
+                                >(inner_member)
+                            };
+                            self.refs_inside_cleanups.push(inner_member_ref);
+                        }
                     }
                 }
             }
