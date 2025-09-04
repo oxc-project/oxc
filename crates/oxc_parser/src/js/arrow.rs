@@ -342,7 +342,7 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
 
-        let checkpoint = self.checkpoint();
+        let checkpoint = self.checkpoint_with_error_recovery();
 
         let head = self.parse_parenthesized_arrow_function_head();
         if self.has_fatal_error() {

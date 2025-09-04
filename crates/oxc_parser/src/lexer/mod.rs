@@ -44,7 +44,14 @@ use trivia_builder::TriviaBuilder;
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
-    errors: Option<Vec<OxcDiagnostic>>,
+    errors_snapshot: ErrorSnapshot,
+}
+
+#[derive(Debug, Clone)]
+enum ErrorSnapshot {
+    Empty,
+    Count(usize),
+    Full(Vec<OxcDiagnostic>),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -137,16 +144,40 @@ impl<'a> Lexer<'a> {
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
+        let errors_snapshot = if self.errors.is_empty() {
+            ErrorSnapshot::Empty
+        } else {
+            ErrorSnapshot::Count(self.errors.len())
+        };
         LexerCheckpoint {
             source_position: self.source.position(),
             token: self.token,
-            errors: { if self.errors.is_empty() { None } else { Some(self.errors.clone()) } },
+            errors_snapshot,
+        }
+    }
+
+    /// Create a checkpoint that can handle error popping.
+    /// This is more expensive as it clones the errors vector.
+    pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
+        let errors_snapshot = if self.errors.is_empty() {
+            ErrorSnapshot::Empty
+        } else {
+            ErrorSnapshot::Full(self.errors.clone())
+        };
+        LexerCheckpoint {
+            source_position: self.source.position(),
+            token: self.token,
+            errors_snapshot,
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        self.errors = checkpoint.errors.unwrap_or_default();
+        match checkpoint.errors_snapshot {
+            ErrorSnapshot::Empty => self.errors.clear(),
+            ErrorSnapshot::Count(len) => self.errors.truncate(len),
+            ErrorSnapshot::Full(errors) => self.errors = errors,
+        }
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
     }

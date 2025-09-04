@@ -265,6 +265,16 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    pub(crate) fn checkpoint_with_error_recovery(&mut self) -> ParserCheckpoint<'a> {
+        ParserCheckpoint {
+            lexer: self.lexer.checkpoint_with_error_recovery(),
+            cur_token: self.token,
+            prev_span_end: self.prev_token_end,
+            errors_pos: self.errors.len(),
+            fatal_error: self.fatal_error.take(),
+        }
+    }
+
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
             checkpoint;
@@ -280,7 +290,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         func: impl FnOnce(&mut ParserImpl<'a>) -> T,
     ) -> Option<T> {
-        let checkpoint = self.checkpoint();
+        let checkpoint = self.checkpoint_with_error_recovery();
         let ctx = self.ctx;
         let node = func(self);
         if self.fatal_error.is_none() {
