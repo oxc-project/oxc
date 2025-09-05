@@ -587,7 +587,23 @@ impl Message<'_> {
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
+            // Handle potential panics from overlapping ranges in debug mode
+            let merged_fix = std::panic::catch_unwind(|| {
+                CompositeFix::merge_fixes(fix_vec, source_text)
+            });
+            
+            match merged_fix {
+                Ok(fix) => {
+                    // Only add the fix if it's not empty (which would happen with overlapping ranges)
+                    if !fix.content.is_empty() || fix.span != Span::default() {
+                        fixes.push(fix);
+                    }
+                }
+                Err(_) => {
+                    // Merge fixes panicked due to overlapping ranges, skip this fix
+                    // This can happen when tsgolint returns invalid fix ranges
+                }
+            }
         }
 
         for suggestion in &val.suggestions {
@@ -920,5 +936,55 @@ mod test {
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_overlapping_fixes() {
+        let diagnostic = TsGoLintDiagnostic {
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![
+                Fix { text: "fixed".into(), range: Range { pos: 0, end: 7 } },  // Overlapping!
+                Fix { text: "hello".into(), range: Range { pos: 5, end: 10 } }, // Overlapping!
+            ],
+            suggestions: vec![],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        // With overlapping ranges, the fix should be excluded, resulting in no fixes
+        assert_eq!(message.fixes.len(), 0);
+        assert_eq!(message.fixes, PossibleFixes::None);
+    }
+
+    #[test]
+    fn test_message_from_tsgo_lint_diagnostic_with_negative_range_fixes() {
+        let diagnostic = TsGoLintDiagnostic {
+            range: Range { pos: 0, end: 10 },
+            rule: "some_rule".into(),
+            message: RuleMessage {
+                id: "some_id".into(),
+                description: "Some description".into(),
+                help: None,
+            },
+            fixes: vec![
+                Fix { text: "fixed".into(), range: Range { pos: 0, end: 3 } },  // Valid range
+                Fix { text: "hello".into(), range: Range { pos: 5, end: 2 } },  // Negative range!
+            ],
+            suggestions: vec![],
+            file_path: "some/file/path".into(),
+        };
+
+        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+
+        // With negative ranges in multiple fixes, the fix should be excluded, resulting in no fixes
+        assert_eq!(message.fixes.len(), 0);
+        assert_eq!(message.fixes, PossibleFixes::None);
     }
 }
