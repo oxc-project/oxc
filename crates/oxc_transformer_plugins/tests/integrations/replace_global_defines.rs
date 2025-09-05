@@ -19,7 +19,7 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let _ = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    Compressor::new(&allocator).dead_code_elimination_with_scoping(
+    Compressor::new(&allocator).eliminate_dead_code_with_scoping(
         &mut program,
         scoping,
         CompressOptions::smallest(),
