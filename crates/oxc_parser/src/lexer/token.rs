@@ -42,7 +42,6 @@ const _: () = {
 };
 
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Token(u128);
 
 impl Default for Token {
